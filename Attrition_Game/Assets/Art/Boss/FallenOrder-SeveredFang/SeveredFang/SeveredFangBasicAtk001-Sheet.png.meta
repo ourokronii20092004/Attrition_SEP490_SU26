@@ -1,0 +1,793 @@
+fileFormatVersion: 2
+guid: a10b1f7f09b663e40b904e18cbe19f87
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -3656639577107841058
+    second: SeveredFangBasicAtk001-Sheet_0
+  - first:
+      213: -2782527445595042923
+    second: SeveredFangBasicAtk001-Sheet_1
+  - first:
+      213: 574680572262745464
+    second: SeveredFangBasicAtk001-Sheet_2
+  - first:
+      213: 3000507818036963937
+    second: SeveredFangBasicAtk001-Sheet_3
+  - first:
+      213: 2192985340991944561
+    second: SeveredFangBasicAtk001-Sheet_4
+  - first:
+      213: 4787863170056087179
+    second: SeveredFangBasicAtk001-Sheet_5
+  - first:
+      213: 8909630054160053867
+    second: SeveredFangBasicAtk001-Sheet_6
+  - first:
+      213: 4744339007538846520
+    second: SeveredFangBasicAtk001-Sheet_7
+  - first:
+      213: 7350844764032514623
+    second: SeveredFangBasicAtk001-Sheet_8
+  - first:
+      213: 240204993139290885
+    second: SeveredFangBasicAtk001-Sheet_9
+  - first:
+      213: -7622447289762081571
+    second: SeveredFangBasicAtk001-Sheet_10
+  - first:
+      213: -5504721586778322561
+    second: SeveredFangBasicAtk001-Sheet_11
+  - first:
+      213: 6701024161054570682
+    second: SeveredFangBasicAtk001-Sheet_12
+  - first:
+      213: 1365357101748297577
+    second: SeveredFangBasicAtk001-Sheet_13
+  - first:
+      213: -6945812608998827667
+    second: SeveredFangBasicAtk001-Sheet_14
+  - first:
+      213: 4656771915208489407
+    second: SeveredFangBasicAtk001-Sheet_15
+  - first:
+      213: 7025361541498272121
+    second: SeveredFangBasicAtk001-Sheet_16
+  - first:
+      213: 8066902927909255662
+    second: SeveredFangBasicAtk001-Sheet_17
+  - first:
+      213: -2666000735128210364
+    second: SeveredFangBasicAtk001-Sheet_18
+  - first:
+      213: 2367718860059537213
+    second: SeveredFangBasicAtk001-Sheet_19
+  - first:
+      213: -2108446224742017396
+    second: SeveredFangBasicAtk001-Sheet_20
+  - first:
+      213: 7973181205289602043
+    second: SeveredFangBasicAtk001-Sheet_21
+  - first:
+      213: -4549571475382330443
+    second: SeveredFangBasicAtk001-Sheet_22
+  - first:
+      213: 8394899809437659710
+    second: SeveredFangBasicAtk001-Sheet_23
+  - first:
+      213: -8995327197336050861
+    second: SeveredFangBasicAtk001-Sheet_24
+  - first:
+      213: 341696699036717767
+    second: SeveredFangBasicAtk001-Sheet_25
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: SeveredFangBasicAtk001-Sheet_0
+      rect:
+        serializedVersion: 2
+        x: 28
+        y: 47
+        width: 36
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: edf3ad6ada1014dc0800000000000000
+      internalID: -3656639577107841058
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SeveredFangBasicAtk001-Sheet_1
+      rect:
+        serializedVersion: 2
+        x: 158
+        y: 47
+        width: 34
+        height: 45
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 59b488bd70a7269d0800000000000000
+      internalID: -2782527445595042923
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SeveredFangBasicAtk001-Sheet_2
+      rect:
+        serializedVersion: 2
+        x: 287
+        y: 47
+        width: 35
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8750a098feca9f700800000000000000
+      internalID: 574680572262745464
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SeveredFangBasicAtk001-Sheet_3
+      rect:
+        serializedVersion: 2
+        x: 417
+        y: 47
+        width: 35
+        height: 41
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 16a20ef86f1f3a920800000000000000
+      internalID: 3000507818036963937
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SeveredFangBasicAtk001-Sheet_4
+      rect:
+        serializedVersion: 2
+        x: 541
+        y: 47
+        width: 84
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 177b6777c8c0f6e10800000000000000
+      internalID: 2192985340991944561
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SeveredFangBasicAtk001-Sheet_5
+      rect:
+        serializedVersion: 2
+        x: 670
+        y: 47
+        width: 84
+        height: 39
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b866e5c9f28e17240800000000000000
+      internalID: 4787863170056087179
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SeveredFangBasicAtk001-Sheet_6
+      rect:
+        serializedVersion: 2
+        x: 800
+        y: 47
+        width: 70
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b66ba5a345d55ab70800000000000000
+      internalID: 8909630054160053867
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SeveredFangBasicAtk001-Sheet_7
+      rect:
+        serializedVersion: 2
+        x: 863
+        y: 61
+        width: 20
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 83bd166d03747d140800000000000000
+      internalID: 4744339007538846520
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SeveredFangBasicAtk001-Sheet_8
+      rect:
+        serializedVersion: 2
+        x: 928
+        y: 47
+        width: 83
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f3ab23fcd52730660800000000000000
+      internalID: 7350844764032514623
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SeveredFangBasicAtk001-Sheet_9
+      rect:
+        serializedVersion: 2
+        x: 1054
+        y: 47
+        width: 44
+        height: 39
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 503b7592b21655300800000000000000
+      internalID: 240204993139290885
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SeveredFangBasicAtk001-Sheet_10
+      rect:
+        serializedVersion: 2
+        x: 1180
+        y: 47
+        width: 39
+        height: 43
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dd4979e4390a73690800000000000000
+      internalID: -7622447289762081571
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SeveredFangBasicAtk001-Sheet_11
+      rect:
+        serializedVersion: 2
+        x: 1308
+        y: 47
+        width: 41
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f7947a0d1ec4b93b0800000000000000
+      internalID: -5504721586778322561
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SeveredFangBasicAtk001-Sheet_12
+      rect:
+        serializedVersion: 2
+        x: 1436
+        y: 47
+        width: 33
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ab8b7fe88f1defc50800000000000000
+      internalID: 6701024161054570682
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SeveredFangBasicAtk001-Sheet_13
+      rect:
+        serializedVersion: 2
+        x: 1564
+        y: 47
+        width: 33
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 96f9341dc09b2f210800000000000000
+      internalID: 1365357101748297577
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SeveredFangBasicAtk001-Sheet_14
+      rect:
+        serializedVersion: 2
+        x: 1692
+        y: 47
+        width: 33
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d69123c8b348b9f90800000000000000
+      internalID: -6945812608998827667
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SeveredFangBasicAtk001-Sheet_15
+      rect:
+        serializedVersion: 2
+        x: 1820
+        y: 47
+        width: 29
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fb9740e526d20a040800000000000000
+      internalID: 4656771915208489407
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SeveredFangBasicAtk001-Sheet_16
+      rect:
+        serializedVersion: 2
+        x: 1948
+        y: 47
+        width: 45
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 979f1bb99191f7160800000000000000
+      internalID: 7025361541498272121
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SeveredFangBasicAtk001-Sheet_17
+      rect:
+        serializedVersion: 2
+        x: 2076
+        y: 47
+        width: 45
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ee9f69ff87563ff60800000000000000
+      internalID: 8066902927909255662
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SeveredFangBasicAtk001-Sheet_18
+      rect:
+        serializedVersion: 2
+        x: 2204
+        y: 47
+        width: 45
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 444b0cbd476700bd0800000000000000
+      internalID: -2666000735128210364
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SeveredFangBasicAtk001-Sheet_19
+      rect:
+        serializedVersion: 2
+        x: 2333
+        y: 47
+        width: 29
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d3f67dd22c3dbd020800000000000000
+      internalID: 2367718860059537213
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SeveredFangBasicAtk001-Sheet_20
+      rect:
+        serializedVersion: 2
+        x: 2461
+        y: 47
+        width: 29
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c861d32645b4db2e0800000000000000
+      internalID: -2108446224742017396
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SeveredFangBasicAtk001-Sheet_21
+      rect:
+        serializedVersion: 2
+        x: 2589
+        y: 47
+        width: 29
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bfb8b1fff0e66ae60800000000000000
+      internalID: 7973181205289602043
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SeveredFangBasicAtk001-Sheet_22
+      rect:
+        serializedVersion: 2
+        x: 2716
+        y: 47
+        width: 30
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5bb169909dcacd0c0800000000000000
+      internalID: -4549571475382330443
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SeveredFangBasicAtk001-Sheet_23
+      rect:
+        serializedVersion: 2
+        x: 2844
+        y: 47
+        width: 30
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e32b68a06eca08470800000000000000
+      internalID: 8394899809437659710
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SeveredFangBasicAtk001-Sheet_24
+      rect:
+        serializedVersion: 2
+        x: 2972
+        y: 47
+        width: 36
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 353ef54c29d2a2380800000000000000
+      internalID: -8995327197336050861
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SeveredFangBasicAtk001-Sheet_25
+      rect:
+        serializedVersion: 2
+        x: 847
+        y: 53
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7c2d10f5653fdb400800000000000000
+      internalID: 341696699036717767
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      SeveredFangBasicAtk001-Sheet_0: -3656639577107841058
+      SeveredFangBasicAtk001-Sheet_1: -2782527445595042923
+      SeveredFangBasicAtk001-Sheet_10: -7622447289762081571
+      SeveredFangBasicAtk001-Sheet_11: -5504721586778322561
+      SeveredFangBasicAtk001-Sheet_12: 6701024161054570682
+      SeveredFangBasicAtk001-Sheet_13: 1365357101748297577
+      SeveredFangBasicAtk001-Sheet_14: -6945812608998827667
+      SeveredFangBasicAtk001-Sheet_15: 4656771915208489407
+      SeveredFangBasicAtk001-Sheet_16: 7025361541498272121
+      SeveredFangBasicAtk001-Sheet_17: 8066902927909255662
+      SeveredFangBasicAtk001-Sheet_18: -2666000735128210364
+      SeveredFangBasicAtk001-Sheet_19: 2367718860059537213
+      SeveredFangBasicAtk001-Sheet_2: 574680572262745464
+      SeveredFangBasicAtk001-Sheet_20: -2108446224742017396
+      SeveredFangBasicAtk001-Sheet_21: 7973181205289602043
+      SeveredFangBasicAtk001-Sheet_22: -4549571475382330443
+      SeveredFangBasicAtk001-Sheet_23: 8394899809437659710
+      SeveredFangBasicAtk001-Sheet_24: -8995327197336050861
+      SeveredFangBasicAtk001-Sheet_25: 341696699036717767
+      SeveredFangBasicAtk001-Sheet_3: 3000507818036963937
+      SeveredFangBasicAtk001-Sheet_4: 2192985340991944561
+      SeveredFangBasicAtk001-Sheet_5: 4787863170056087179
+      SeveredFangBasicAtk001-Sheet_6: 8909630054160053867
+      SeveredFangBasicAtk001-Sheet_7: 4744339007538846520
+      SeveredFangBasicAtk001-Sheet_8: 7350844764032514623
+      SeveredFangBasicAtk001-Sheet_9: 240204993139290885
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

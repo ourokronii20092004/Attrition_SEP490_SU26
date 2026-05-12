@@ -1,0 +1,663 @@
+fileFormatVersion: 2
+guid: 08de09708abb69b4ba181b916bd011a0
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -2579664962971612830
+    second: DruidBasicAtk1-Sheet_0
+  - first:
+      213: -7506227783381580749
+    second: DruidBasicAtk1-Sheet_1
+  - first:
+      213: -3926242737084278073
+    second: DruidBasicAtk1-Sheet_2
+  - first:
+      213: -2886896902202569614
+    second: DruidBasicAtk1-Sheet_3
+  - first:
+      213: 9158395516139259268
+    second: DruidBasicAtk1-Sheet_4
+  - first:
+      213: 4413853734171572247
+    second: DruidBasicAtk1-Sheet_5
+  - first:
+      213: -3579987152732504074
+    second: DruidBasicAtk1-Sheet_6
+  - first:
+      213: 4396020728146194851
+    second: DruidBasicAtk1-Sheet_7
+  - first:
+      213: 2858724034249464144
+    second: DruidBasicAtk1-Sheet_8
+  - first:
+      213: 3383215721238655781
+    second: DruidBasicAtk1-Sheet_9
+  - first:
+      213: 5758431489525733239
+    second: DruidBasicAtk1-Sheet_10
+  - first:
+      213: 7210724398662440496
+    second: DruidBasicAtk1-Sheet_11
+  - first:
+      213: 4906274090125938416
+    second: DruidBasicAtk1-Sheet_12
+  - first:
+      213: 1313647332111985174
+    second: DruidBasicAtk1-Sheet_13
+  - first:
+      213: 4654983266220272078
+    second: DruidBasicAtk1-Sheet_14
+  - first:
+      213: -5824540057463942331
+    second: DruidBasicAtk1-Sheet_15
+  - first:
+      213: 3395037565010729732
+    second: DruidBasicAtk1-Sheet_16
+  - first:
+      213: -7260422647406043618
+    second: DruidBasicAtk1-Sheet_17
+  - first:
+      213: 1307509634534401686
+    second: DruidBasicAtk1-Sheet_18
+  - first:
+      213: 8137628704484861938
+    second: DruidBasicAtk1-Sheet_19
+  - first:
+      213: 8313171571748941023
+    second: DruidBasicAtk1-Sheet_20
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: DruidBasicAtk1-Sheet_0
+      rect:
+        serializedVersion: 2
+        x: 26
+        y: 47
+        width: 33
+        height: 48
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2694e824260333cd0800000000000000
+      internalID: -2579664962971612830
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DruidBasicAtk1-Sheet_1
+      rect:
+        serializedVersion: 2
+        x: 154
+        y: 47
+        width: 33
+        height: 47
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3348f58c99584d790800000000000000
+      internalID: -7506227783381580749
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DruidBasicAtk1-Sheet_2
+      rect:
+        serializedVersion: 2
+        x: 282
+        y: 47
+        width: 33
+        height: 52
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7ca5222680f2389c0800000000000000
+      internalID: -3926242737084278073
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DruidBasicAtk1-Sheet_3
+      rect:
+        serializedVersion: 2
+        x: 410
+        y: 47
+        width: 33
+        height: 55
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 27c4a09109eafe7d0800000000000000
+      internalID: -2886896902202569614
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DruidBasicAtk1-Sheet_4
+      rect:
+        serializedVersion: 2
+        x: 538
+        y: 47
+        width: 34
+        height: 51
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 485c20cd238291f70800000000000000
+      internalID: 9158395516139259268
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DruidBasicAtk1-Sheet_5
+      rect:
+        serializedVersion: 2
+        x: 661
+        y: 47
+        width: 41
+        height: 51
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 718f3dbe598214d30800000000000000
+      internalID: 4413853734171572247
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DruidBasicAtk1-Sheet_6
+      rect:
+        serializedVersion: 2
+        x: 788
+        y: 47
+        width: 44
+        height: 51
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6ffbae4f6a4515ec0800000000000000
+      internalID: -3579987152732504074
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DruidBasicAtk1-Sheet_7
+      rect:
+        serializedVersion: 2
+        x: 834
+        y: 47
+        width: 22
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3a17866af8dc10d30800000000000000
+      internalID: 4396020728146194851
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DruidBasicAtk1-Sheet_8
+      rect:
+        serializedVersion: 2
+        x: 920
+        y: 47
+        width: 39
+        height: 51
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0599f4cec5a3ca720800000000000000
+      internalID: 2858724034249464144
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DruidBasicAtk1-Sheet_9
+      rect:
+        serializedVersion: 2
+        x: 949
+        y: 53
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 52372fef5c893fe20800000000000000
+      internalID: 3383215721238655781
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DruidBasicAtk1-Sheet_10
+      rect:
+        serializedVersion: 2
+        x: 961
+        y: 47
+        width: 25
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 777da942eee0aef40800000000000000
+      internalID: 5758431489525733239
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DruidBasicAtk1-Sheet_11
+      rect:
+        serializedVersion: 2
+        x: 1050
+        y: 47
+        width: 34
+        height: 48
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0365483f2a3a11460800000000000000
+      internalID: 7210724398662440496
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DruidBasicAtk1-Sheet_12
+      rect:
+        serializedVersion: 2
+        x: 1084
+        y: 47
+        width: 32
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0fec8a85a46961440800000000000000
+      internalID: 4906274090125938416
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DruidBasicAtk1-Sheet_13
+      rect:
+        serializedVersion: 2
+        x: 1178
+        y: 47
+        width: 33
+        height: 48
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 61aacaed9430b3210800000000000000
+      internalID: 1313647332111985174
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DruidBasicAtk1-Sheet_14
+      rect:
+        serializedVersion: 2
+        x: 1214
+        y: 47
+        width: 30
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ec962721e92d99040800000000000000
+      internalID: 4654983266220272078
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DruidBasicAtk1-Sheet_15
+      rect:
+        serializedVersion: 2
+        x: 1306
+        y: 47
+        width: 33
+        height: 48
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 54314de6da31b2fa0800000000000000
+      internalID: -5824540057463942331
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DruidBasicAtk1-Sheet_16
+      rect:
+        serializedVersion: 2
+        x: 1342
+        y: 47
+        width: 30
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 40b529d7da89d1f20800000000000000
+      internalID: 3395037565010729732
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DruidBasicAtk1-Sheet_17
+      rect:
+        serializedVersion: 2
+        x: 1434
+        y: 47
+        width: 33
+        height: 48
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e1e592ec11ccd3b90800000000000000
+      internalID: -7260422647406043618
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DruidBasicAtk1-Sheet_18
+      rect:
+        serializedVersion: 2
+        x: 1470
+        y: 47
+        width: 42
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 696e2dac515352210800000000000000
+      internalID: 1307509634534401686
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DruidBasicAtk1-Sheet_19
+      rect:
+        serializedVersion: 2
+        x: 1562
+        y: 47
+        width: 33
+        height: 48
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2f7a7d4113aaee070800000000000000
+      internalID: 8137628704484861938
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DruidBasicAtk1-Sheet_20
+      rect:
+        serializedVersion: 2
+        x: 1598
+        y: 47
+        width: 55
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fdca8fadf715e5370800000000000000
+      internalID: 8313171571748941023
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      DruidBasicAtk1-Sheet_0: -2579664962971612830
+      DruidBasicAtk1-Sheet_1: -7506227783381580749
+      DruidBasicAtk1-Sheet_10: 5758431489525733239
+      DruidBasicAtk1-Sheet_11: 7210724398662440496
+      DruidBasicAtk1-Sheet_12: 4906274090125938416
+      DruidBasicAtk1-Sheet_13: 1313647332111985174
+      DruidBasicAtk1-Sheet_14: 4654983266220272078
+      DruidBasicAtk1-Sheet_15: -5824540057463942331
+      DruidBasicAtk1-Sheet_16: 3395037565010729732
+      DruidBasicAtk1-Sheet_17: -7260422647406043618
+      DruidBasicAtk1-Sheet_18: 1307509634534401686
+      DruidBasicAtk1-Sheet_19: 8137628704484861938
+      DruidBasicAtk1-Sheet_2: -3926242737084278073
+      DruidBasicAtk1-Sheet_20: 8313171571748941023
+      DruidBasicAtk1-Sheet_3: -2886896902202569614
+      DruidBasicAtk1-Sheet_4: 9158395516139259268
+      DruidBasicAtk1-Sheet_5: 4413853734171572247
+      DruidBasicAtk1-Sheet_6: -3579987152732504074
+      DruidBasicAtk1-Sheet_7: 4396020728146194851
+      DruidBasicAtk1-Sheet_8: 2858724034249464144
+      DruidBasicAtk1-Sheet_9: 3383215721238655781
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

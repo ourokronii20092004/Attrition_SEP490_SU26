@@ -1,0 +1,481 @@
+fileFormatVersion: 2
+guid: a8bbc84a157d19743842bf6926c336e9
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 8047001106075681537
+    second: ArchDemonDeath001-Sheet_0
+  - first:
+      213: -7581199368947750714
+    second: ArchDemonDeath001-Sheet_1
+  - first:
+      213: 7465368353274475563
+    second: ArchDemonDeath001-Sheet_2
+  - first:
+      213: 3556758124690296332
+    second: ArchDemonDeath001-Sheet_3
+  - first:
+      213: -4415303100036444446
+    second: ArchDemonDeath001-Sheet_4
+  - first:
+      213: -5468289040149557651
+    second: ArchDemonDeath001-Sheet_5
+  - first:
+      213: -7446899051674668864
+    second: ArchDemonDeath001-Sheet_6
+  - first:
+      213: 4886371707018051852
+    second: ArchDemonDeath001-Sheet_7
+  - first:
+      213: 3366741632998350115
+    second: ArchDemonDeath001-Sheet_8
+  - first:
+      213: 4677849531042600246
+    second: ArchDemonDeath001-Sheet_9
+  - first:
+      213: -1006170054695273357
+    second: ArchDemonDeath001-Sheet_10
+  - first:
+      213: -6582368916341167685
+    second: ArchDemonDeath001-Sheet_11
+  - first:
+      213: 5841369646382068937
+    second: ArchDemonDeath001-Sheet_12
+  - first:
+      213: -6119876216279551580
+    second: ArchDemonDeath001-Sheet_13
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: ArchDemonDeath001-Sheet_0
+      rect:
+        serializedVersion: 2
+        x: 41
+        y: 48
+        width: 43
+        height: 62
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 10301d20fd0bcaf60800000000000000
+      internalID: 8047001106075681537
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ArchDemonDeath001-Sheet_1
+      rect:
+        serializedVersion: 2
+        x: 170
+        y: 48
+        width: 43
+        height: 61
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6c82472475b2ac690800000000000000
+      internalID: -7581199368947750714
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ArchDemonDeath001-Sheet_2
+      rect:
+        serializedVersion: 2
+        x: 303
+        y: 50
+        width: 36
+        height: 48
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b243e5ec6f05a9760800000000000000
+      internalID: 7465368353274475563
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ArchDemonDeath001-Sheet_3
+      rect:
+        serializedVersion: 2
+        x: 324
+        y: 94
+        width: 10
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c0e462e7ba42c5130800000000000000
+      internalID: 3556758124690296332
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ArchDemonDeath001-Sheet_4
+      rect:
+        serializedVersion: 2
+        x: 437
+        y: 58
+        width: 26
+        height: 41
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2ee85aa4931b9b2c0800000000000000
+      internalID: -4415303100036444446
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ArchDemonDeath001-Sheet_5
+      rect:
+        serializedVersion: 2
+        x: 568
+        y: 69
+        width: 34
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d6e49b8171cbc14b0800000000000000
+      internalID: -5468289040149557651
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ArchDemonDeath001-Sheet_6
+      rect:
+        serializedVersion: 2
+        x: 695
+        y: 77
+        width: 20
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0c0fcb294cc47a890800000000000000
+      internalID: -7446899051674668864
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ArchDemonDeath001-Sheet_7
+      rect:
+        serializedVersion: 2
+        x: 824
+        y: 86
+        width: 25
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c01845dad21efc340800000000000000
+      internalID: 4886371707018051852
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ArchDemonDeath001-Sheet_8
+      rect:
+        serializedVersion: 2
+        x: 435
+        y: 71
+        width: 10
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 32d926d6da119be20800000000000000
+      internalID: 3366741632998350115
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ArchDemonDeath001-Sheet_9
+      rect:
+        serializedVersion: 2
+        x: 564
+        y: 76
+        width: 9
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 635958a3d5f0be040800000000000000
+      internalID: 4677849531042600246
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ArchDemonDeath001-Sheet_10
+      rect:
+        serializedVersion: 2
+        x: 714
+        y: 80
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 37cb04a8aad5902f0800000000000000
+      internalID: -1006170054695273357
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ArchDemonDeath001-Sheet_11
+      rect:
+        serializedVersion: 2
+        x: 457
+        y: 62
+        width: 9
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bb969e0785ab6a4a0800000000000000
+      internalID: -6582368916341167685
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ArchDemonDeath001-Sheet_12
+      rect:
+        serializedVersion: 2
+        x: 567
+        y: 63
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9c43a569eb6b01150800000000000000
+      internalID: 5841369646382068937
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ArchDemonDeath001-Sheet_13
+      rect:
+        serializedVersion: 2
+        x: 583
+        y: 65
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4a1bb4b7105d11ba0800000000000000
+      internalID: -6119876216279551580
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      ArchDemonDeath001-Sheet_0: 8047001106075681537
+      ArchDemonDeath001-Sheet_1: -7581199368947750714
+      ArchDemonDeath001-Sheet_10: -1006170054695273357
+      ArchDemonDeath001-Sheet_11: -6582368916341167685
+      ArchDemonDeath001-Sheet_12: 5841369646382068937
+      ArchDemonDeath001-Sheet_13: -6119876216279551580
+      ArchDemonDeath001-Sheet_2: 7465368353274475563
+      ArchDemonDeath001-Sheet_3: 3556758124690296332
+      ArchDemonDeath001-Sheet_4: -4415303100036444446
+      ArchDemonDeath001-Sheet_5: -5468289040149557651
+      ArchDemonDeath001-Sheet_6: -7446899051674668864
+      ArchDemonDeath001-Sheet_7: 4886371707018051852
+      ArchDemonDeath001-Sheet_8: 3366741632998350115
+      ArchDemonDeath001-Sheet_9: 4677849531042600246
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
