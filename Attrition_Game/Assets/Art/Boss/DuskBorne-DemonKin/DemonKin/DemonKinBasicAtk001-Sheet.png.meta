@@ -1,0 +1,429 @@
+fileFormatVersion: 2
+guid: 6babcedfd7a171642b9ba92ce8cf03e2
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 544704159867835577
+    second: DemonKinBasicAtk001-Sheet_0
+  - first:
+      213: 744651509738204304
+    second: DemonKinBasicAtk001-Sheet_1
+  - first:
+      213: -1291296797334484846
+    second: DemonKinBasicAtk001-Sheet_2
+  - first:
+      213: -8240213262744419052
+    second: DemonKinBasicAtk001-Sheet_3
+  - first:
+      213: -9141157266511625990
+    second: DemonKinBasicAtk001-Sheet_4
+  - first:
+      213: -6319427149758759055
+    second: DemonKinBasicAtk001-Sheet_5
+  - first:
+      213: -8740086226383586335
+    second: DemonKinBasicAtk001-Sheet_6
+  - first:
+      213: 5494543423698096045
+    second: DemonKinBasicAtk001-Sheet_7
+  - first:
+      213: -3109654996508661179
+    second: DemonKinBasicAtk001-Sheet_8
+  - first:
+      213: -9030093653301325365
+    second: DemonKinBasicAtk001-Sheet_9
+  - first:
+      213: -3699255959852838737
+    second: DemonKinBasicAtk001-Sheet_10
+  - first:
+      213: -8412335743729937893
+    second: DemonKinBasicAtk001-Sheet_11
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: DemonKinBasicAtk001-Sheet_0
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 47
+        width: 41
+        height: 50
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9b499942c8d2f8700800000000000000
+      internalID: 544704159867835577
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DemonKinBasicAtk001-Sheet_1
+      rect:
+        serializedVersion: 2
+        x: 159
+        y: 47
+        width: 43
+        height: 48
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 09c676f4a98855a00800000000000000
+      internalID: 744651509738204304
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DemonKinBasicAtk001-Sheet_2
+      rect:
+        serializedVersion: 2
+        x: 287
+        y: 47
+        width: 43
+        height: 49
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 29847478764641ee0800000000000000
+      internalID: -1291296797334484846
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DemonKinBasicAtk001-Sheet_3
+      rect:
+        serializedVersion: 2
+        x: 414
+        y: 47
+        width: 44
+        height: 50
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 41508a032b1e4ad80800000000000000
+      internalID: -8240213262744419052
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DemonKinBasicAtk001-Sheet_4
+      rect:
+        serializedVersion: 2
+        x: 543
+        y: 47
+        width: 43
+        height: 50
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: af00895e5e5142180800000000000000
+      internalID: -9141157266511625990
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DemonKinBasicAtk001-Sheet_5
+      rect:
+        serializedVersion: 2
+        x: 648
+        y: 47
+        width: 98
+        height: 81
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 17f7ba23d72ec48a0800000000000000
+      internalID: -6319427149758759055
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DemonKinBasicAtk001-Sheet_6
+      rect:
+        serializedVersion: 2
+        x: 777
+        y: 47
+        width: 99
+        height: 81
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1eb3f1252e9f4b680800000000000000
+      internalID: -8740086226383586335
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DemonKinBasicAtk001-Sheet_7
+      rect:
+        serializedVersion: 2
+        x: 946
+        y: 47
+        width: 58
+        height: 61
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dafcb7ce12a804c40800000000000000
+      internalID: 5494543423698096045
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DemonKinBasicAtk001-Sheet_8
+      rect:
+        serializedVersion: 2
+        x: 1074
+        y: 47
+        width: 58
+        height: 53
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 54a251f914948d4d0800000000000000
+      internalID: -3109654996508661179
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DemonKinBasicAtk001-Sheet_9
+      rect:
+        serializedVersion: 2
+        x: 1186
+        y: 47
+        width: 59
+        height: 44
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bc117727aa9aea280800000000000000
+      internalID: -9030093653301325365
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DemonKinBasicAtk001-Sheet_10
+      rect:
+        serializedVersion: 2
+        x: 1316
+        y: 47
+        width: 54
+        height: 48
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fa099b3dd4a99acc0800000000000000
+      internalID: -3699255959852838737
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DemonKinBasicAtk001-Sheet_11
+      rect:
+        serializedVersion: 2
+        x: 1448
+        y: 47
+        width: 41
+        height: 50
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b12d7a72631614b80800000000000000
+      internalID: -8412335743729937893
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      DemonKinBasicAtk001-Sheet_0: 544704159867835577
+      DemonKinBasicAtk001-Sheet_1: 744651509738204304
+      DemonKinBasicAtk001-Sheet_10: -3699255959852838737
+      DemonKinBasicAtk001-Sheet_11: -8412335743729937893
+      DemonKinBasicAtk001-Sheet_2: -1291296797334484846
+      DemonKinBasicAtk001-Sheet_3: -8240213262744419052
+      DemonKinBasicAtk001-Sheet_4: -9141157266511625990
+      DemonKinBasicAtk001-Sheet_5: -6319427149758759055
+      DemonKinBasicAtk001-Sheet_6: -8740086226383586335
+      DemonKinBasicAtk001-Sheet_7: 5494543423698096045
+      DemonKinBasicAtk001-Sheet_8: -3109654996508661179
+      DemonKinBasicAtk001-Sheet_9: -9030093653301325365
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
