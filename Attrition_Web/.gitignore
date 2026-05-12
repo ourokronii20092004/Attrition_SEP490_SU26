@@ -1,0 +1,13 @@
+.env
+*.env.local
+web/node_modules/
+web/.next/
+web/out/
+api/bin/
+api/obj/
+docker-compose.override.yml
+.DS_Store
+Thumbs.db
+uploads/
+.vs/
+.vscode/
