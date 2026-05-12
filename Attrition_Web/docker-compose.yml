@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  web:
+    build: { context: ./web, dockerfile: Dockerfile }
+    container_name: attrition-web
+    ports: ["3000:3000"]
+    environment:
+      - API_URL=http://api:5000
+    depends_on:
+      api: { condition: service_healthy }
+    restart: unless-stopped
+    networks: [attrition-net]
+
+  api:
+    build: { context: ./api, dockerfile: Dockerfile }
+    container_name: attrition-api
+    ports: ["5000:5000"]
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      - Redis__ConnectionString=${REDIS_URL}
+      - Jwt__Secret=${JWT_SECRET}
+      - Jwt__Issuer=${JWT_ISSUER}
+      - Jwt__Audience=${JWT_AUDIENCE}
+      - Jwt__AccessTokenExpiryMinutes=${JWT_ACCESS_TOKEN_EXPIRY_MINUTES}
+      - Jwt__RefreshTokenExpiryDays=${JWT_REFRESH_TOKEN_EXPIRY_DAYS}
+      - FileUpload__MaxAvatarSizeMB=${MAX_AVATAR_SIZE_MB}
+      - FileUpload__UploadPath=${UPLOAD_PATH}
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_started }
+    volumes: [uploads:/app/uploads]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [attrition-net]
+
+  db:
+    image: postgres:16-alpine
+    container_name: attrition-db
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    ports: ["5432:5432"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks: [attrition-net]
+
+  redis:
+    image: redis:7-alpine
+    container_name: attrition-redis
+    command: redis-server --appendonly yes
+    volumes: [redisdata:/data]
+    ports: ["6379:6379"]
+    restart: unless-stopped
+    networks: [attrition-net]
+
+volumes:
+  pgdata:
+  redisdata:
+  uploads:
+
+networks:
+  attrition-net:
+    driver: bridge
