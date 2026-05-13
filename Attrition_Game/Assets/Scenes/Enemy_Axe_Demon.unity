@@ -1067,6 +1067,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NetworkSpawner
   playerPrefab:
     RawGuidValue: 231d0d7375d868a43b49c56a5920b23d
+  player1Prefab:
+    RawGuidValue: 0b46982493b61784d951481334311a3b
   spawnPoints: []
   axeDemonPrefab:
     RawGuidValue: 4296abdb85f86a14ea9477f6722555f6

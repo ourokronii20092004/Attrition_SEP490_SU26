@@ -1,4 +1,4 @@
-﻿using Fusion;
+using Fusion;
 using Fusion.Addons.Physics;
 using Fusion.Sockets;
 using System;
@@ -14,7 +14,8 @@ public class EnemySpawnConfig
 
 public class NetworkSpawner : MonoBehaviour, INetworkRunnerCallbacks
 {
-    public NetworkPrefabRef playerPrefab;
+    public NetworkPrefabRef playerPrefab;      // Prefab cho Host (Player)
+    public NetworkPrefabRef player1Prefab;      // Prefab cho Client (Player 1)
     public Transform[] spawnPoints;
 
     [Header("Enemies")]
@@ -106,6 +107,10 @@ public class NetworkSpawner : MonoBehaviour, INetworkRunnerCallbacks
         if (runner.IsServer)
         {
             // --- 1. ĐẺ PLAYER ---
+            // Host (LocalPlayer) dùng playerPrefab, Client dùng player1Prefab
+            bool isHostPlayer = (player == runner.LocalPlayer);
+            NetworkPrefabRef prefabToSpawn = isHostPlayer ? playerPrefab : player1Prefab;
+
             Vector3 spawnPos;
             if (spawnPoints != null && spawnPoints.Length > 0)
             {
@@ -117,7 +122,7 @@ public class NetworkSpawner : MonoBehaviour, INetworkRunnerCallbacks
                 spawnPos = new Vector3(randomX, 48f, 0);
             }
 
-            NetworkObject playerObj = runner.Spawn(playerPrefab, spawnPos, Quaternion.identity, player);
+            NetworkObject playerObj = runner.Spawn(prefabToSpawn, spawnPos, Quaternion.identity, player);
             runner.SetPlayerObject(player, playerObj);
 
             // --- 2. ĐẺ QUÁI VẬT (Chỉ đẻ 1 lần duy nhất khi Host vừa vào game) ---
