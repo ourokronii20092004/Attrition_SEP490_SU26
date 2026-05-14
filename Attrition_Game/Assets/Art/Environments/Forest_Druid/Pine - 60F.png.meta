@@ -1,0 +1,845 @@
+fileFormatVersion: 2
+guid: f8c904fbf782630498a604f63959b384
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 7086569141140064699
+    second: Pine - 60F_0
+  - first:
+      213: 484268856034355374
+    second: Pine - 60F_1
+  - first:
+      213: 8578368958494556572
+    second: Pine - 60F_2
+  - first:
+      213: -8396706574747657976
+    second: Pine - 60F_3
+  - first:
+      213: -3750821688614092542
+    second: Pine - 60F_4
+  - first:
+      213: -5384347977586367106
+    second: Pine - 60F_5
+  - first:
+      213: 7500539417567699657
+    second: Pine - 60F_6
+  - first:
+      213: 8530866156122811165
+    second: Pine - 60F_7
+  - first:
+      213: -4126208412890875210
+    second: Pine - 60F_8
+  - first:
+      213: -1095696603066122759
+    second: Pine - 60F_9
+  - first:
+      213: -2371197550192575857
+    second: Pine - 60F_10
+  - first:
+      213: 6622255021638889655
+    second: Pine - 60F_11
+  - first:
+      213: -8360313629013736613
+    second: Pine - 60F_12
+  - first:
+      213: -7767155993471579059
+    second: Pine - 60F_13
+  - first:
+      213: 5757189217584290130
+    second: Pine - 60F_14
+  - first:
+      213: -2383183267325526075
+    second: Pine - 60F_15
+  - first:
+      213: 6121750820759513574
+    second: Pine - 60F_16
+  - first:
+      213: 1296763243715267500
+    second: Pine - 60F_17
+  - first:
+      213: -464724550116721694
+    second: Pine - 60F_18
+  - first:
+      213: 8427142392085423427
+    second: Pine - 60F_19
+  - first:
+      213: 5312130615006597358
+    second: Pine - 60F_20
+  - first:
+      213: -7991739043396906031
+    second: Pine - 60F_21
+  - first:
+      213: 2274386719358502258
+    second: Pine - 60F_22
+  - first:
+      213: -4150025620183429872
+    second: Pine - 60F_23
+  - first:
+      213: 2460888941320862172
+    second: Pine - 60F_24
+  - first:
+      213: 6136962782509066721
+    second: Pine - 60F_25
+  - first:
+      213: 8335751276443759548
+    second: Pine - 60F_26
+  - first:
+      213: -4363834604752044320
+    second: Pine - 60F_27
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Pine - 60F_0
+      rect:
+        serializedVersion: 2
+        x: 36
+        y: 520
+        width: 58
+        height: 112
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bb906ed661d885260800000000000000
+      internalID: 7086569141140064699
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine - 60F_1
+      rect:
+        serializedVersion: 2
+        x: 164
+        y: 520
+        width: 58
+        height: 112
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ea866b375f778b600800000000000000
+      internalID: 484268856034355374
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine - 60F_2
+      rect:
+        serializedVersion: 2
+        x: 292
+        y: 520
+        width: 58
+        height: 112
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c914e4b1e1d7c0770800000000000000
+      internalID: 8578368958494556572
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine - 60F_3
+      rect:
+        serializedVersion: 2
+        x: 420
+        y: 520
+        width: 58
+        height: 112
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8099af0abd7e87b80800000000000000
+      internalID: -8396706574747657976
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine - 60F_4
+      rect:
+        serializedVersion: 2
+        x: 548
+        y: 520
+        width: 59
+        height: 112
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 20183520c8762fbc0800000000000000
+      internalID: -3750821688614092542
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine - 60F_5
+      rect:
+        serializedVersion: 2
+        x: 676
+        y: 520
+        width: 59
+        height: 112
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e752fd8ba04f645b0800000000000000
+      internalID: -5384347977586367106
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine - 60F_6
+      rect:
+        serializedVersion: 2
+        x: 36
+        y: 392
+        width: 59
+        height: 112
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9c220f75cd4471860800000000000000
+      internalID: 7500539417567699657
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine - 60F_7
+      rect:
+        serializedVersion: 2
+        x: 164
+        y: 392
+        width: 59
+        height: 112
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d1b2a1e0299b36670800000000000000
+      internalID: 8530866156122811165
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine - 60F_8
+      rect:
+        serializedVersion: 2
+        x: 292
+        y: 392
+        width: 59
+        height: 112
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6ba39606f43ccb6c0800000000000000
+      internalID: -4126208412890875210
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine - 60F_9
+      rect:
+        serializedVersion: 2
+        x: 420
+        y: 392
+        width: 59
+        height: 112
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9fd34a8aebd4bc0f0800000000000000
+      internalID: -1095696603066122759
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine - 60F_10
+      rect:
+        serializedVersion: 2
+        x: 548
+        y: 392
+        width: 59
+        height: 112
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f8abe782460d71fd0800000000000000
+      internalID: -2371197550192575857
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine - 60F_11
+      rect:
+        serializedVersion: 2
+        x: 676
+        y: 392
+        width: 59
+        height: 112
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7b035d02bd9f6eb50800000000000000
+      internalID: 6622255021638889655
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine - 60F_12
+      rect:
+        serializedVersion: 2
+        x: 36
+        y: 264
+        width: 59
+        height: 112
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b5387cb9c033afb80800000000000000
+      internalID: -8360313629013736613
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine - 60F_13
+      rect:
+        serializedVersion: 2
+        x: 164
+        y: 264
+        width: 59
+        height: 112
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d4c841ea6c4853490800000000000000
+      internalID: -7767155993471579059
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine - 60F_14
+      rect:
+        serializedVersion: 2
+        x: 292
+        y: 264
+        width: 58
+        height: 112
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 25912da2715a5ef40800000000000000
+      internalID: 5757189217584290130
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine - 60F_15
+      rect:
+        serializedVersion: 2
+        x: 419
+        y: 264
+        width: 59
+        height: 112
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5cf386ce17b3deed0800000000000000
+      internalID: -2383183267325526075
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine - 60F_16
+      rect:
+        serializedVersion: 2
+        x: 547
+        y: 264
+        width: 59
+        height: 112
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6e9a3d2efe3d4f450800000000000000
+      internalID: 6121750820759513574
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine - 60F_17
+      rect:
+        serializedVersion: 2
+        x: 675
+        y: 264
+        width: 59
+        height: 112
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cab8e63bc470ff110800000000000000
+      internalID: 1296763243715267500
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine - 60F_18
+      rect:
+        serializedVersion: 2
+        x: 35
+        y: 136
+        width: 60
+        height: 112
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2ebb3efdb77fc89f0800000000000000
+      internalID: -464724550116721694
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine - 60F_19
+      rect:
+        serializedVersion: 2
+        x: 163
+        y: 136
+        width: 60
+        height: 112
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 34523ef4b5933f470800000000000000
+      internalID: 8427142392085423427
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine - 60F_20
+      rect:
+        serializedVersion: 2
+        x: 291
+        y: 136
+        width: 60
+        height: 112
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ee012f346aa78b940800000000000000
+      internalID: 5312130615006597358
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine - 60F_21
+      rect:
+        serializedVersion: 2
+        x: 418
+        y: 136
+        width: 61
+        height: 112
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1d315bc9ea3a71190800000000000000
+      internalID: -7991739043396906031
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine - 60F_22
+      rect:
+        serializedVersion: 2
+        x: 546
+        y: 136
+        width: 61
+        height: 112
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 275ca39cbae309f10800000000000000
+      internalID: 2274386719358502258
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine - 60F_23
+      rect:
+        serializedVersion: 2
+        x: 674
+        y: 136
+        width: 61
+        height: 112
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 01d423cafa52866c0800000000000000
+      internalID: -4150025620183429872
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine - 60F_24
+      rect:
+        serializedVersion: 2
+        x: 34
+        y: 8
+        width: 61
+        height: 112
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cd9fd1b2475d62220800000000000000
+      internalID: 2460888941320862172
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine - 60F_25
+      rect:
+        serializedVersion: 2
+        x: 162
+        y: 8
+        width: 61
+        height: 112
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1e9ee3bb22fda2550800000000000000
+      internalID: 6136962782509066721
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine - 60F_26
+      rect:
+        serializedVersion: 2
+        x: 290
+        y: 8
+        width: 61
+        height: 112
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cb370780f998ea370800000000000000
+      internalID: 8335751276443759548
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine - 60F_27
+      rect:
+        serializedVersion: 2
+        x: 418
+        y: 8
+        width: 61
+        height: 112
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0ee723d2c8b8073c0800000000000000
+      internalID: -4363834604752044320
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Pine - 60F_0: 7086569141140064699
+      Pine - 60F_1: 484268856034355374
+      Pine - 60F_10: -2371197550192575857
+      Pine - 60F_11: 6622255021638889655
+      Pine - 60F_12: -8360313629013736613
+      Pine - 60F_13: -7767155993471579059
+      Pine - 60F_14: 5757189217584290130
+      Pine - 60F_15: -2383183267325526075
+      Pine - 60F_16: 6121750820759513574
+      Pine - 60F_17: 1296763243715267500
+      Pine - 60F_18: -464724550116721694
+      Pine - 60F_19: 8427142392085423427
+      Pine - 60F_2: 8578368958494556572
+      Pine - 60F_20: 5312130615006597358
+      Pine - 60F_21: -7991739043396906031
+      Pine - 60F_22: 2274386719358502258
+      Pine - 60F_23: -4150025620183429872
+      Pine - 60F_24: 2460888941320862172
+      Pine - 60F_25: 6136962782509066721
+      Pine - 60F_26: 8335751276443759548
+      Pine - 60F_27: -4363834604752044320
+      Pine - 60F_3: -8396706574747657976
+      Pine - 60F_4: -3750821688614092542
+      Pine - 60F_5: -5384347977586367106
+      Pine - 60F_6: 7500539417567699657
+      Pine - 60F_7: 8530866156122811165
+      Pine - 60F_8: -4126208412890875210
+      Pine - 60F_9: -1095696603066122759
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
