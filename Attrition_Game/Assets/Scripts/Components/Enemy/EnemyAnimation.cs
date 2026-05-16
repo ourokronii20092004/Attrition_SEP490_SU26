@@ -32,12 +32,26 @@ public class EnemyAnimation : NetworkBehaviour
         }
     }
 
-    public void PlayHit() { if (anim != null) anim.SetTrigger("Hit"); }
-    public void PlayDeath() { if (anim != null) anim.SetBool("IsDead", true); }
+    public void PlayHit()
+    {
+        if (anim != null) anim.SetTrigger("Hit");
+    }
+
+    public void PlayDeath()
+    {
+        if (anim != null)
+        {
+            anim.SetBool("IsDead", true);
+            // Thêm Trigger để giải quyết triệt để lỗi Any State lặp vòng
+            anim.SetTrigger("DieTrigger");
+        }
+    }
 
     public void ResetAlive()
     {
         if (anim == null) return;
         anim.SetBool("IsDead", false);
+        // Gọi Trigger hồi sinh để Skeleton biết lúc nào cần đứng dậy
+        anim.SetTrigger("Resurrect");
     }
 }

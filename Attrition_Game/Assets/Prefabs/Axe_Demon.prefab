@@ -220,11 +220,13 @@ MonoBehaviour:
   animationComp: {fileID: 8981913773620505188}
   combatComp: {fileID: 4324008339978122593}
   extraLivesAfterHpZero: 0
-  reviveDelaySeconds: 2.5
+  reviveDelaySeconds: 5
   _Health: 0
   _isDeadNetworked:
     _value: 0
   _IsKnockbackActive:
+    _value: 0
+  _IsAwaitingRevive:
     _value: 0
   maxHealth: 10
 --- !u!114 &6212655201303181169
@@ -249,6 +251,8 @@ MonoBehaviour:
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 64
+  _NetSpeed: 0
+  _NetFacingDir: 1
 --- !u!114 &8981913773620505188
 MonoBehaviour:
   m_ObjectHideFlags: 0

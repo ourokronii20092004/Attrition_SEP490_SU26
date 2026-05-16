@@ -116,12 +116,12 @@ TextureImporter:
       name: attack1_5_0
       rect:
         serializedVersion: 2
-        x: 32
-        y: 5
-        width: 22
-        height: 29
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 33
+        y: 6
+        width: 20
+        height: 27
+      alignment: 9
+      pivot: {x: 0.34131566, y: 0.5559738}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -138,7 +138,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 3790a1d170ec90641bc8e0ec27bcaa64
     internalID: 0
     vertices: []
     indices: 

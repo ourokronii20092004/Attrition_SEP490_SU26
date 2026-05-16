@@ -130,7 +130,7 @@ TextureImporter:
         width: 39
         height: 37
       alignment: 9
-      pivot: {x: 0.5, y: 0.5135}
+      pivot: {x: 0.5000004, y: 0.5134999}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -152,7 +152,7 @@ TextureImporter:
         width: 66
         height: 43
       alignment: 9
-      pivot: {x: 0.4957199, y: 0.4419}
+      pivot: {x: 0.06718098, y: 0.45580834}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -169,12 +169,12 @@ TextureImporter:
       name: _Attack_2
       rect:
         serializedVersion: 2
-        x: 293
+        x: 294
         y: 0
         width: 65
         height: 36
       alignment: 9
-      pivot: {x: 0.5, y: 0.5278}
+      pivot: {x: 0.0000009390024, y: 0.51759505}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -195,8 +195,8 @@ TextureImporter:
         y: 0
         width: 59
         height: 35
-      alignment: 9
-      pivot: {x: 0.5, y: 0.5429}
+      alignment: 4
+      pivot: {x: 0, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
