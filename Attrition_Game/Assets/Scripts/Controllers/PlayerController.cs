@@ -70,7 +70,6 @@ public class PlayerController : NetworkBehaviour, IDamageable
                 rb.bodyType = RigidbodyType2D.Kinematic;
                 Collider2D col = GetComponent<Collider2D>();
                 if (col != null) col.enabled = false;
-                rb.position = new Vector2(rb.position.x, rb.position.y - 1f);
             }
             return;
         }

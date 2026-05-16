@@ -220,7 +220,7 @@ MonoBehaviour:
   animationComp: {fileID: 2053574766879260213}
   combatComp: {fileID: 3048939340092040517}
   extraLivesAfterHpZero: 1
-  reviveDelaySeconds: 2.5
+  reviveDelaySeconds: 5
   _Health: 0
   _isDeadNetworked:
     _value: 0
@@ -228,7 +228,7 @@ MonoBehaviour:
     _value: 0
   _IsAwaitingRevive:
     _value: 0
-  maxHealth: 10
+  maxHealth: 4
 --- !u!114 &4811373818439603535
 MonoBehaviour:
   m_ObjectHideFlags: 0
