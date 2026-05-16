@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Attrition.Controllers
 {
     /// <summary>
-    /// Host chung cho quái: máu, knockback, gọi AI. Có thể cấu hình số lần "giả chết" trước khi despawn (Skeleton).
+    /// Host chung cho quái: máu, knockback, gọi AI. Có thể cấu hình số lần chết.
     /// </summary>
     public class EnemyController : NetworkBehaviour, IDamageable
     {
@@ -23,8 +23,10 @@ namespace Attrition.Controllers
         [Networked] public NetworkBool isDeadNetworked { get; set; }
         [Networked] public NetworkBool IsKnockbackActive { get; set; }
         [Networked] public NetworkBool IsAwaitingRevive { get; set; }
+
         [Networked] private TickTimer knockbackTimer { get; set; }
         [Networked] private TickTimer reviveTimer { get; set; }
+        [Networked] private TickTimer despawnTimer { get; set; }
         [Networked] private int RevivesRemaining { get; set; }
 
         public int maxHealth = 3;
@@ -53,7 +55,18 @@ namespace Attrition.Controllers
 
         public override void FixedUpdateNetwork()
         {
-            if (!HasStateAuthority || isDeadNetworked) return;
+            if (!HasStateAuthority) return;
+
+            // Xử lý Despawn an toàn trên Host
+            if (isDeadNetworked)
+            {
+                if (despawnTimer.Expired(Runner))
+                {
+                    despawnTimer = TickTimer.None;
+                    Runner.Despawn(Object);
+                }
+                return;
+            }
 
             if (IsAwaitingRevive)
             {
@@ -61,7 +74,10 @@ namespace Attrition.Controllers
                 return;
             }
 
-            if (IsKnockbackActive && knockbackTimer.Expired(Runner)) IsKnockbackActive = false;
+            if (IsKnockbackActive && knockbackTimer.Expired(Runner))
+            {
+                IsKnockbackActive = false;
+            }
 
             aiComp.RunAILogic();
         }
@@ -117,15 +133,19 @@ namespace Attrition.Controllers
             {
                 IsKnockbackActive = true;
                 knockbackTimer = TickTimer.CreateFromSeconds(Runner, 0.2f);
-                RPC_ApplyKnockback(knockbackDir, knockbackForce);
+
+                // Host TỰ xử lý vật lý để NetworkRigidbody2D đồng bộ, tránh lỗi Client giật lag
+                rb.linearVelocity = Vector2.zero;
+                rb.AddForce(knockbackDir * knockbackForce, ForceMode2D.Impulse);
+
+                // Chỉ gọi RPC để kích hoạt Animation cho mọi người chơi thấy
+                RPC_PlayHitAnimation();
             }
         }
 
         [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-        private void RPC_ApplyKnockback(Vector2 dir, float force)
+        private void RPC_PlayHitAnimation()
         {
-            rb.linearVelocity = Vector2.zero;
-            rb.AddForce(dir * force, ForceMode2D.Impulse);
             if (!combatComp.IsAttacking) animationComp.PlayHit();
         }
 
@@ -135,12 +155,25 @@ namespace Attrition.Controllers
             combatComp.IsAttacking = false;
             IsKnockbackActive = false;
             reviveTimer = TickTimer.CreateFromSeconds(Runner, reviveDelaySeconds);
+
+            // KHÓA HOÀN TOÀN AI VÀ COMBAT: Ép quái phải nằm im, không được phép gọi lại animation
+            if (aiComp != null) aiComp.enabled = false;
+            if (combatComp != null) combatComp.enabled = false;
+
+            transform.position = new Vector2(transform.position.x, transform.position.y - 0.7f);
         }
 
         private void CompleteRevive()
         {
             IsAwaitingRevive = false;
             Health = maxHealth;
+
+            transform.position = new Vector2(transform.position.x, transform.position.y + 0.7f);
+
+            // MỞ KHÓA LẠI: Cho phép quái hoạt động và đánh tiếp
+            if (aiComp != null) aiComp.enabled = true;
+            if (combatComp != null) combatComp.enabled = true;
+
             if (HasStateAuthority) aiComp.NotifyRevived();
         }
 
@@ -149,7 +182,14 @@ namespace Attrition.Controllers
             isDeadNetworked = true;
             combatComp.IsAttacking = false;
             IsKnockbackActive = false;
-            Invoke(nameof(DespawnEnemy), 1.5f);
+
+            // KHÓA HOÀN TOÀN KHI CHẾT HẲN
+            if (aiComp != null) aiComp.enabled = false;
+            if (combatComp != null) combatComp.enabled = false;
+
+            transform.position = new Vector2(transform.position.x, transform.position.y - 0.7f);
+
+            despawnTimer = TickTimer.CreateFromSeconds(Runner, 1.5f);
         }
 
         private void HandleDownedVisuals()
@@ -160,7 +200,6 @@ namespace Attrition.Controllers
             Collider2D col = GetComponent<Collider2D>();
             if (col != null) col.enabled = false;
 
-            transform.position = new Vector2(transform.position.x, transform.position.y - 0.7f);
             animationComp.PlayDeath();
         }
 
@@ -171,7 +210,6 @@ namespace Attrition.Controllers
             Collider2D col = GetComponent<Collider2D>();
             if (col != null) col.enabled = true;
 
-            transform.position = new Vector2(transform.position.x, transform.position.y + 0.7f);
             animationComp.ResetAlive();
         }
 
@@ -183,13 +221,7 @@ namespace Attrition.Controllers
             Collider2D col = GetComponent<Collider2D>();
             if (col != null) col.enabled = false;
 
-            transform.position = new Vector2(transform.position.x, transform.position.y - 0.7f);
             animationComp.PlayDeath();
-        }
-
-        private void DespawnEnemy()
-        {
-            if (HasStateAuthority) Runner.Despawn(Object);
         }
     }
 }
