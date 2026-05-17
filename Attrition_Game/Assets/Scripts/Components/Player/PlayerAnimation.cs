@@ -50,15 +50,20 @@ public class PlayerAnimation : NetworkBehaviour
         if (sr != null) sr.flipX = !isFacingRight;
     }
 
-    public void PlayAttack()
-    {
-        if (anim != null) anim.SetTrigger("Attack");
-    }
-
-    public void PlayChargeAttack()
+    public void PlayAttack(float attackSpeed = 1f)
     {
         if (anim != null)
         {
+            anim.SetFloat("AttackSpeed", attackSpeed);
+            anim.SetTrigger("Attack");
+        }
+    }
+
+    public void PlayChargeAttack(float attackSpeed = 1f)
+    {
+        if (anim != null)
+        {
+            anim.SetFloat("AttackSpeed", attackSpeed);
             anim.SetTrigger("ChargeAttack");
             // Pause tại frame đầu - player đang tích lực
             anim.speed = 0f;
@@ -74,9 +79,13 @@ public class PlayerAnimation : NetworkBehaviour
         }
     }
 
-    public void PlayCrouchAttack()
+    public void PlayCrouchAttack(float attackSpeed = 1f)
     {
-        if (anim != null) anim.SetTrigger("CrouchAttack");
+        if (anim != null)
+        {
+            anim.SetFloat("AttackSpeed", attackSpeed);
+            anim.SetTrigger("CrouchAttack");
+        }
     }
 
     public void PlayHit()
