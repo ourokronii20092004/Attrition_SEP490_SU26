@@ -3,9 +3,6 @@ using UnityEngine;
 
 namespace Attrition.Controllers
 {
-    /// <summary>
-    /// Host chung cho quái: máu, knockback, gọi AI. Có thể cấu hình số lần chết.
-    /// </summary>
     public class EnemyController : NetworkBehaviour, IDamageable
     {
         [Header("---- INJECT COMPONENTS ----")]
@@ -17,6 +14,10 @@ namespace Attrition.Controllers
         [Tooltip("Số lần HP về 0 nhưng hồi sinh sau reviveDelaySeconds (0 = chết hẳn ngay như Axe_Demon).")]
         [SerializeField] private int extraLivesAfterHpZero;
         [SerializeField] private float reviveDelaySeconds = 2.5f;
+
+        [Header("---- HIT / STUN ----")]
+        [Tooltip("Thời gian bị choáng hoặc bật lùi khi nhận sát thương.")]
+        public float stunDuration = 0.4f;
 
         [Header("---- STATE ----")]
         [Networked] public int Health { get; set; }
@@ -57,7 +58,6 @@ namespace Attrition.Controllers
         {
             if (!HasStateAuthority) return;
 
-            // Xử lý Despawn an toàn trên Host
             if (isDeadNetworked)
             {
                 if (despawnTimer.Expired(Runner))
@@ -74,6 +74,7 @@ namespace Attrition.Controllers
                 return;
             }
 
+            // Kiểm tra thời gian choáng (Khóa AI)
             if (IsKnockbackActive && knockbackTimer.Expired(Runner))
             {
                 IsKnockbackActive = false;
@@ -132,13 +133,17 @@ namespace Attrition.Controllers
             else
             {
                 IsKnockbackActive = true;
-                knockbackTimer = TickTimer.CreateFromSeconds(Runner, 0.2f);
 
-                // Host TỰ xử lý vật lý để NetworkRigidbody2D đồng bộ, tránh lỗi Client giật lag
+                // SỬA: Đặt bộ đếm thời gian choáng bằng biến stunDuration
+                knockbackTimer = TickTimer.CreateFromSeconds(Runner, stunDuration);
+
+                combatComp.IsAttacking = false;
+
                 rb.linearVelocity = Vector2.zero;
+                // Nếu lực force = 0 thì quái chỉ đứng yên tại chỗ chịu choáng (Stun)
+                // Nếu force > 0 thì bị đẩy lùi theo knockbackDir (Knockback)
                 rb.AddForce(knockbackDir * knockbackForce, ForceMode2D.Impulse);
 
-                // Chỉ gọi RPC để kích hoạt Animation cho mọi người chơi thấy
                 RPC_PlayHitAnimation();
             }
         }
@@ -146,7 +151,7 @@ namespace Attrition.Controllers
         [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
         private void RPC_PlayHitAnimation()
         {
-            if (!combatComp.IsAttacking) animationComp.PlayHit();
+            if (animationComp != null) animationComp.PlayHit();
         }
 
         private void BeginDownedPhase()
@@ -156,11 +161,8 @@ namespace Attrition.Controllers
             IsKnockbackActive = false;
             reviveTimer = TickTimer.CreateFromSeconds(Runner, reviveDelaySeconds);
 
-            // KHÓA HOÀN TOÀN AI VÀ COMBAT: Ép quái phải nằm im, không được phép gọi lại animation
             if (aiComp != null) aiComp.enabled = false;
             if (combatComp != null) combatComp.enabled = false;
-
-            transform.position = new Vector2(transform.position.x, transform.position.y - 0.7f);
         }
 
         private void CompleteRevive()
@@ -168,9 +170,6 @@ namespace Attrition.Controllers
             IsAwaitingRevive = false;
             Health = maxHealth;
 
-            transform.position = new Vector2(transform.position.x, transform.position.y + 0.7f);
-
-            // MỞ KHÓA LẠI: Cho phép quái hoạt động và đánh tiếp
             if (aiComp != null) aiComp.enabled = true;
             if (combatComp != null) combatComp.enabled = true;
 
@@ -183,11 +182,8 @@ namespace Attrition.Controllers
             combatComp.IsAttacking = false;
             IsKnockbackActive = false;
 
-            // KHÓA HOÀN TOÀN KHI CHẾT HẲN
             if (aiComp != null) aiComp.enabled = false;
             if (combatComp != null) combatComp.enabled = false;
-
-            transform.position = new Vector2(transform.position.x, transform.position.y - 0.7f);
 
             despawnTimer = TickTimer.CreateFromSeconds(Runner, 1.5f);
         }

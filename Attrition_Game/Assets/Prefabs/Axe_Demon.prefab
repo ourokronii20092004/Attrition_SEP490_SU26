@@ -37,7 +37,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 5.9, y: 49, z: 0}
-  m_LocalScale: {x: 17.711437, y: 15.423617, z: 5}
+  m_LocalScale: {x: 22.966644, y: 20, z: 6.4835634}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 5218382753634733620}
@@ -163,8 +163,8 @@ CapsuleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: -0.005289119, y: 0.011738608}
-  m_Size: {x: 0.22177996, y: 0.34730986}
+  m_Offset: {x: 0.0010148544, y: 0.000044751167}
+  m_Size: {x: 0.183956, y: 0.32392213}
   m_Direction: 0
 --- !u!95 &7480645594272617895
 Animator:
@@ -221,6 +221,7 @@ MonoBehaviour:
   combatComp: {fileID: 4324008339978122593}
   extraLivesAfterHpZero: 0
   reviveDelaySeconds: 5
+  stunDuration: 0.4
   _Health: 0
   _isDeadNetworked:
     _value: 0
@@ -280,12 +281,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyCombat
   animationComp: {fileID: 8981913773620505188}
   attackPoint: {fileID: 5218382753634733620}
-  attackRange: 4
+  attackRange: 5
   attackAngle: 140
   playerLayer:
     serializedVersion: 2
     m_Bits: 128
-  attackDamage: 1
+  attackDamage: 2
+  currentAttackSpeed: 1
   _IsAttacking:
     _value: 0
 --- !u!114 &320469981377886090

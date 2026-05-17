@@ -265,6 +265,7 @@ MonoBehaviour:
   attackDamage: 1
   chargeAttackDamage: 2
   chargeThreshold: 0.25
+  currentAttackSpeed: 1
   _IsAttacking:
     _value: 0
   _IsChargingAttack:

@@ -8,7 +8,11 @@ public class EnemyCombat : NetworkBehaviour
     public float attackRange = 1.5f;
     [Range(0, 360)] public float attackAngle = 90f;
     public LayerMask playerLayer;
+
+    [Header("---- DAMAGE & SPEED ----")]
     public int attackDamage = 1;
+    [Tooltip("Tốc độ đánh (1 là mặc định, 2 là nhanh gấp đôi)")]
+    public float currentAttackSpeed = 1f;
 
     [Networked] public NetworkBool IsAttacking { get; set; }
     [Networked] private TickTimer attackTimer { get; set; }
@@ -29,14 +33,18 @@ public class EnemyCombat : NetworkBehaviour
 
         IsAttacking = true;
         int randomAttackIndex = Random.Range(0, 2);
-        RPC_PlayAttackAnim(randomAttackIndex);
-        attackTimer = TickTimer.CreateFromSeconds(Runner, 1.5f);
+
+        // Truyền tốc độ đánh sang cho mọi Client cập nhật hình ảnh
+        RPC_PlayAttackAnim(randomAttackIndex, currentAttackSpeed);
+
+        // Chia thời gian chờ (1.5s mặc định) cho Tốc độ đánh
+        attackTimer = TickTimer.CreateFromSeconds(Runner, 1.5f / currentAttackSpeed);
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RPC_PlayAttackAnim(int attackIndex)
+    private void RPC_PlayAttackAnim(int attackIndex, float speed)
     {
-        if (animationComp != null) animationComp.PlayAttack(attackIndex);
+        if (animationComp != null) animationComp.PlayAttack(attackIndex, speed);
     }
 
     void OnDrawGizmosSelected()
@@ -58,10 +66,7 @@ public class EnemyCombat : NetworkBehaviour
 
     public void TriggerAttackDamage()
     {
-        // if (!HasStateAuthority) return; 
         if (attackPoint == null) return;
-
-        Debug.Log("==================================");
 
         Collider2D[] results = new Collider2D[10];
         ContactFilter2D filter = new ContactFilter2D();
@@ -69,10 +74,7 @@ public class EnemyCombat : NetworkBehaviour
         filter.layerMask = playerLayer;
         filter.useTriggers = false;
 
-        // TUYỆT CHIÊU CỦA FUSION: Quét trong vũ trụ vật lý của mạng
         int count = Runner.GetPhysicsScene2D().OverlapCircle(attackPoint.position, attackRange, filter, results);
-
-        Debug.Log($"[ENEMY] Fusion quét được {count} mục tiêu.");
 
         for (int i = 0; i < count; i++)
         {
@@ -88,7 +90,6 @@ public class EnemyCombat : NetworkBehaviour
                 {
                     Vector2 pushDir = new Vector2(directionToPlayer.x, 0.5f).normalized;
                     dmg.TakeDamage(attackDamage, pushDir, 8f);
-                    Debug.Log($"[ENEMY] ---> CHÉM TRÚNG: {player.name}");
                 }
             }
         }
