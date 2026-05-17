@@ -56,7 +56,6 @@ public class PlayerController : NetworkBehaviour, IDamageable
         CheckGround();
         NetworkVelocityY = rb.linearVelocity.y;
 
-        // Reset jump count khi chạm đất
         if (IsGrounded)
         {
             JumpCount = 0;
@@ -84,7 +83,6 @@ public class PlayerController : NetworkBehaviour, IDamageable
             }
             else
             {
-                // Đang dash → chỉ di chuyển ngang, không xử lý input khác
                 float dashDir = IsFacingRight ? 1f : -1f;
                 rb.linearVelocity = new Vector2(dashDir * dashSpeed, 0);
                 return;
@@ -94,12 +92,11 @@ public class PlayerController : NetworkBehaviour, IDamageable
 
         if (GetInput(out NetworkInputData data))
         {
-            // --- CROUCH LOGIC ---
             IsCrouching = data.buttons.IsSet(MyButtons.Crouch) && IsGrounded;
 
             // --- MOVEMENT ---
-            // Đứng yên khi đang charge attack (giữ J)
-            if (combatComp.IsChargingAttack)
+            // SỬA: Đứng yên hoàn toàn ngay từ lúc bắt đầu giữ nút (IsHoldingAttack) HOẶC đang vung tay chém
+            if (combatComp.IsHoldingAttack || combatComp.IsAttacking)
             {
                 rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
                 IsMoving = false;
@@ -112,10 +109,11 @@ public class PlayerController : NetworkBehaviour, IDamageable
             }
 
             var pressed = data.buttons.GetPressed(_buttonsPrev);
-            var released = _buttonsPrev.GetPressed(data.buttons); // buttons that were on, now off
+            var released = _buttonsPrev.GetPressed(data.buttons);
 
-            // --- JUMP LOGIC (Variable height + Double jump) ---
-            if (pressed.IsSet(MyButtons.Jump) && !IsCrouching)
+            // --- JUMP LOGIC ---
+            // SỬA: Khóa nhảy khi đang giữ nút J
+            if (pressed.IsSet(MyButtons.Jump) && !IsCrouching && !combatComp.IsHoldingAttack)
             {
                 if (IsGrounded || JumpCount < maxJumps)
                 {
@@ -125,8 +123,6 @@ public class PlayerController : NetworkBehaviour, IDamageable
                 }
             }
 
-            // Variable jump: buông Space sớm → cắt velocity lên
-            // Chỉ cắt khi VỪA BUÔNG (trước đó đang giữ, giờ không giữ)
             bool wasHoldingJump = _buttonsPrev.IsSet(MyButtons.JumpHeld);
             bool isHoldingJump = data.buttons.IsSet(MyButtons.JumpHeld);
             if (wasHoldingJump && !isHoldingJump && rb.linearVelocity.y > 0 && !IsGrounded)
@@ -135,12 +131,13 @@ public class PlayerController : NetworkBehaviour, IDamageable
             }
 
             // --- DASH LOGIC ---
-            if (pressed.IsSet(MyButtons.Dash) && IsGrounded && !IsCrouching && _dashCooldown.ExpiredOrNotRunning(Runner))
+            // SỬA: XÓA ĐIỀU KIỆN `IsGrounded` ĐỂ CÓ THỂ LƯỚT TRÊN KHÔNG
+            if (pressed.IsSet(MyButtons.Dash) && !IsCrouching && !combatComp.IsHoldingAttack && _dashCooldown.ExpiredOrNotRunning(Runner))
             {
                 IsDashing = true;
                 _dashTimer = TickTimer.CreateFromSeconds(Runner, dashDuration);
                 _dashCooldown = TickTimer.CreateFromSeconds(Runner, 0.8f);
-                rb.gravityScale = 0;
+                rb.gravityScale = 0; // Tắt trọng lực để nhân vật lướt thẳng băng trên không
             }
 
             // --- FACING ---
@@ -167,7 +164,6 @@ public class PlayerController : NetworkBehaviour, IDamageable
     {
         IsGrounded = rb.Cast(Vector2.down, new ContactFilter2D { layerMask = groundLayer, useLayerMask = true }, new RaycastHit2D[1], 0.05f) > 0;
     }
-
 
     public void TakeDamage(int damage, Vector2 knockbackDir, float knockbackForce)
     {

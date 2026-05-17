@@ -8,16 +8,20 @@ public class PlayerCombat : NetworkBehaviour
     [SerializeField] private float attackRange = 1.5f;
     [SerializeField] private LayerMask targetLayers;
 
-    [Header("---- DAMAGE ----")]
+    [Header("---- DAMAGE & SPEED ----")]
     public int attackDamage = 1;
     public int chargeAttackDamage = 2;
-    [SerializeField] private float chargeThreshold = 0.25f; // Giữ J bao lâu để thành charge attack
+    [SerializeField] private float chargeThreshold = 0.25f;
+    public float currentAttackSpeed = 1f;
 
     [Networked] public NetworkBool IsAttacking { get; set; }
     [Networked] public NetworkBool IsChargingAttack { get; set; }
+
+    // SỬA: Chuyển biến này thành Public để PlayerController có thể đọc được trạng thái giữ nút
+    [Networked] public NetworkBool IsHoldingAttack { get; set; }
+
     [Networked] private NetworkButtons _combatButtonsPrev { get; set; }
     [Networked] private float _holdTime { get; set; }
-    [Networked] private NetworkBool _isHolding { get; set; }
     [Networked] private NetworkBool _chargeTriggered { get; set; }
 
     private TickTimer attackCooldown;
@@ -29,7 +33,6 @@ public class PlayerCombat : NetworkBehaviour
 
     public void HandleCombat(NetworkInputData data, bool isFacingRight, bool isCrouching)
     {
-        // Cập nhật hướng attack point
         if (attackPoint != null)
         {
             float sign = isFacingRight ? 1f : -1f;
@@ -47,62 +50,61 @@ public class PlayerCombat : NetworkBehaviour
         // --- J VỪA NHẤN ---
         if (attackJustPressed && attackCooldown.ExpiredOrNotRunning(Runner))
         {
-            _isHolding = true;
+            IsHoldingAttack = true;
             _holdTime = 0;
             _chargeTriggered = false;
         }
 
         // --- ĐANG GIỮ J ---
-        if (_isHolding && attackHeld)
+        if (IsHoldingAttack && attackHeld)
         {
             _holdTime += Runner.DeltaTime;
 
-            // Đã giữ đủ lâu → bắt đầu charge attack
             if (_holdTime >= chargeThreshold && !_chargeTriggered)
             {
                 _chargeTriggered = true;
                 IsAttacking = true;
                 IsChargingAttack = true;
-                attackCooldown = TickTimer.CreateFromSeconds(Runner, 1.5f);
+
+                attackCooldown = TickTimer.CreateFromSeconds(Runner, 1.5f / currentAttackSpeed);
 
                 if (Runner.IsForward)
                 {
                     if (isCrouching)
-                        RPC_PlayCrouchAttack();
+                        RPC_PlayCrouchAttack(currentAttackSpeed);
                     else
-                        RPC_PlayChargeAttack();
+                        RPC_PlayChargeAttack(currentAttackSpeed);
                 }
             }
         }
 
         // --- BUÔNG J ---
-        if (_isHolding && !attackHeld)
+        if (IsHoldingAttack && !attackHeld)
         {
             if (_chargeTriggered)
             {
-                // Đã charge → release: unpause animation, chạy hết Attack2
                 IsChargingAttack = false;
                 if (Runner.IsForward) RPC_ReleaseChargeAttack();
             }
             else
             {
-                // Tap nhanh → attack thường
                 if (attackCooldown.ExpiredOrNotRunning(Runner))
                 {
                     IsAttacking = true;
-                    attackCooldown = TickTimer.CreateFromSeconds(Runner, 0.5f);
+
+                    attackCooldown = TickTimer.CreateFromSeconds(Runner, 0.5f / currentAttackSpeed);
 
                     if (Runner.IsForward)
                     {
                         if (isCrouching)
-                            RPC_PlayCrouchAttack();
+                            RPC_PlayCrouchAttack(currentAttackSpeed);
                         else
-                            RPC_PlayAttackAnimation();
+                            RPC_PlayAttackAnimation(currentAttackSpeed);
                     }
                 }
             }
 
-            _isHolding = false;
+            IsHoldingAttack = false;
             _holdTime = 0;
             _chargeTriggered = false;
         }
@@ -117,15 +119,15 @@ public class PlayerCombat : NetworkBehaviour
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
-    private void RPC_PlayAttackAnimation()
+    private void RPC_PlayAttackAnimation(float spd)
     {
-        if (animationComp != null) animationComp.PlayAttack();
+        if (animationComp != null) animationComp.PlayAttack(spd);
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
-    private void RPC_PlayChargeAttack()
+    private void RPC_PlayChargeAttack(float spd)
     {
-        if (animationComp != null) animationComp.PlayChargeAttack();
+        if (animationComp != null) animationComp.PlayChargeAttack(spd);
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
@@ -135,18 +137,16 @@ public class PlayerCombat : NetworkBehaviour
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
-    private void RPC_PlayCrouchAttack()
+    private void RPC_PlayCrouchAttack(float spd)
     {
-        if (animationComp != null) animationComp.PlayCrouchAttack();
+        if (animationComp != null) animationComp.PlayCrouchAttack(spd);
     }
 
-    // Gọi từ Animation Event (Attack1)
     public void TriggerAttackDamage()
     {
         DealDamage(attackDamage);
     }
 
-    // Gọi từ Animation Event (Attack2 charge)
     public void TriggerChargeAttackDamage()
     {
         DealDamage(chargeAttackDamage);
