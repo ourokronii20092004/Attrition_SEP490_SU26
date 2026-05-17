@@ -23,10 +23,11 @@ public class EnemyAnimation : NetworkBehaviour
         transform.localScale = new Vector3(Mathf.Abs(originalScale.x) * dirX, originalScale.y, originalScale.z);
     }
 
-    public void PlayAttack(int attackIndex)
+    public void PlayAttack(int attackIndex, float attackSpeed = 1f)
     {
         if (anim != null)
         {
+            anim.SetFloat("AttackSpeed", attackSpeed); // Đẩy thông số tốc độ lên Animator
             anim.SetInteger("AttackIndex", attackIndex);
             anim.SetTrigger("Attack");
         }
@@ -42,7 +43,6 @@ public class EnemyAnimation : NetworkBehaviour
         if (anim != null)
         {
             anim.SetBool("IsDead", true);
-            // Thêm Trigger để giải quyết triệt để lỗi Any State lặp vòng
             anim.SetTrigger("DieTrigger");
         }
     }
@@ -51,7 +51,6 @@ public class EnemyAnimation : NetworkBehaviour
     {
         if (anim == null) return;
         anim.SetBool("IsDead", false);
-        // Gọi Trigger hồi sinh để Skeleton biết lúc nào cần đứng dậy
         anim.SetTrigger("Resurrect");
     }
 }
