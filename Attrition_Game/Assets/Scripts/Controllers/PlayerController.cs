@@ -11,6 +11,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
     [Header("---- MOVEMENT & PHYSICS ----")]
     [SerializeField] private float moveSpeed = 10f;
     [SerializeField] private float jumpForce = 15f;
+    [SerializeField] private float doubleJumpForce = 12f;
     [SerializeField] private Rigidbody2D rb;
     [SerializeField] private LayerMask groundLayer;
 
@@ -95,8 +96,8 @@ public class PlayerController : NetworkBehaviour, IDamageable
             IsCrouching = data.buttons.IsSet(MyButtons.Crouch) && IsGrounded;
 
             // --- MOVEMENT ---
-            // SỬA: Đứng yên hoàn toàn ngay từ lúc bắt đầu giữ nút (IsHoldingAttack) HOẶC đang vung tay chém
-            if (combatComp.IsHoldingAttack || combatComp.IsAttacking)
+            // SỬA: Chỉ khóa di chuyển ngang khi đang đứng trên mặt đất. Trên không vẫn cho phép di chuyển
+            if ((combatComp.IsHoldingAttack || combatComp.IsAttacking) && IsGrounded)
             {
                 rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
                 IsMoving = false;
@@ -118,14 +119,16 @@ public class PlayerController : NetworkBehaviour, IDamageable
                 if (IsGrounded || JumpCount < maxJumps)
                 {
                     rb.position = new Vector2(rb.position.x, rb.position.y + 0.05f);
-                    rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+                    float currentJumpForce = (JumpCount > 0) ? doubleJumpForce : jumpForce;
+                    rb.linearVelocity = new Vector2(rb.linearVelocity.x, currentJumpForce);
                     JumpCount++;
                 }
             }
 
             bool wasHoldingJump = _buttonsPrev.IsSet(MyButtons.JumpHeld);
             bool isHoldingJump = data.buttons.IsSet(MyButtons.JumpHeld);
-            if (wasHoldingJump && !isHoldingJump && rb.linearVelocity.y > 0 && !IsGrounded)
+            // SỬA: Chỉ cho phép ngắt độ cao nhảy ở lần nhảy đầu tiên (JumpCount <= 1). Jump lần 2 có độ cao cố định.
+            if (wasHoldingJump && !isHoldingJump && rb.linearVelocity.y > 0 && !IsGrounded && JumpCount <= 1)
             {
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, rb.linearVelocity.y * variableJumpCutMultiplier);
             }

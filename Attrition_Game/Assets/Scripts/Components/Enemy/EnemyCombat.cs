@@ -1,4 +1,4 @@
-﻿using Fusion;
+using Fusion;
 using UnityEngine;
 
 public class EnemyCombat : NetworkBehaviour
@@ -9,12 +9,17 @@ public class EnemyCombat : NetworkBehaviour
     [Range(0, 360)] public float attackAngle = 90f;
     public LayerMask playerLayer;
 
+    [Header("---- RANGED ATTACK ----")]
+    public bool isRanged;
+    public NetworkPrefabRef projectilePrefab;
+    public Transform projectileSpawnPoint;
+
     [Header("---- DAMAGE & SPEED ----")]
     public int attackDamage = 1;
     [Tooltip("Tốc độ đánh (1 là mặc định, 2 là nhanh gấp đôi)")]
     public float currentAttackSpeed = 1f;
 
-    [Networked] public NetworkBool IsAttacking { get; set; }
+    [HideInInspector][Networked] public NetworkBool IsAttacking { get; set; }
     [Networked] private TickTimer attackTimer { get; set; }
 
     public override void Spawned()
@@ -67,6 +72,51 @@ public class EnemyCombat : NetworkBehaviour
     public void TriggerAttackDamage()
     {
         if (attackPoint == null) return;
+
+        if (isRanged)
+        {
+            if (projectileSpawnPoint == null || !projectilePrefab.IsValid)
+            {
+                Debug.LogWarning("Chưa gắn Projectile Prefab hoặc Spawn Point cho " + gameObject.name);
+                return;
+            }
+            
+            if (!HasStateAuthority) return; // Chỉ có Host mới được tạo đạn để đồng bộ cho các máy khác
+
+            // Tìm người chơi gần nhất trong tầm để bắn chính xác (đặc biệt khi quái bay cần bắn chéo xuống)
+            Vector2 shootDir = transform.localScale.x > 0 ? Vector2.right : Vector2.left;
+            Collider2D[] rangeResults = new Collider2D[5];
+            ContactFilter2D rangeFilter = new ContactFilter2D();
+            rangeFilter.useLayerMask = true;
+            rangeFilter.layerMask = playerLayer;
+            rangeFilter.useTriggers = false;
+            
+            int pCount = Runner.GetPhysicsScene2D().OverlapCircle(transform.position, attackRange * 1.5f, rangeFilter, rangeResults);
+            float closestDist = float.MaxValue;
+            Transform targetPlayer = null;
+            
+            for (int i = 0; i < pCount; i++)
+            {
+                float dist = Vector2.Distance(transform.position, rangeResults[i].transform.position);
+                if (dist < closestDist)
+                {
+                    closestDist = dist;
+                    targetPlayer = rangeResults[i].transform;
+                }
+            }
+
+            if (targetPlayer != null)
+            {
+                shootDir = (targetPlayer.position - projectileSpawnPoint.position).normalized;
+            }
+
+            Runner.Spawn(projectilePrefab, projectileSpawnPoint.position, Quaternion.identity, null, (runner, obj) =>
+            {
+                EnemyProjectile proj = obj.GetComponent<EnemyProjectile>();
+                if (proj != null) proj.Init(shootDir, attackDamage, 8f);
+            });
+            return;
+        }
 
         Collider2D[] results = new Collider2D[10];
         ContactFilter2D filter = new ContactFilter2D();
