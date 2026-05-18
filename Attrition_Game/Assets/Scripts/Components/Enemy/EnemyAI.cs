@@ -16,6 +16,8 @@ public class EnemyAI : NetworkBehaviour
     public float viewRadius = 5f;
     [Tooltip("Tuần tra ngẫu nhiên theo trục X quanh điểm spawn.")]
     public float patrolRadius = 3f;
+    [Tooltip("Đánh dấu nếu quái là loại bay (di chuyển cả trục Y khi đuổi)")]
+    public bool isFlying = false;
 
     [Header("---- OBSTACLE DETECTION ----")]
     public LayerMask obstacleLayer;
@@ -30,8 +32,8 @@ public class EnemyAI : NetworkBehaviour
     private bool isChasing;
     private PlayerRef cachedChasePlayer;
 
-    [Networked] public float NetSpeed { get; set; }
-    [Networked] public float NetFacingDir { get; set; } = 1f;
+    [HideInInspector][Networked] public float NetSpeed { get; set; }
+    [HideInInspector][Networked] public float NetFacingDir { get; set; } = 1f;
 
     public override void Spawned()
     {
@@ -41,7 +43,7 @@ public class EnemyAI : NetworkBehaviour
         // SỬA LỖI ĐỨNG YÊN: Ép điểm tuần tra đầu tiên phải cách xa điểm spawn để quái di chuyển ngay lập tức
         float randomDir = Random.value > 0.5f ? 1f : -1f;
         float randomDist = Random.Range(1f, patrolRadius);
-        currentTarget = new Vector2(startPosition.x + randomDir * randomDist, transform.position.y);
+        currentTarget = new Vector2(startPosition.x + randomDir * randomDist, startPosition.y);
 
         cachedChasePlayer = default;
     }
@@ -70,7 +72,7 @@ public class EnemyAI : NetworkBehaviour
 
         if (combatComp.IsAttacking)
         {
-            rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+            rb.linearVelocity = isFlying ? Vector2.zero : new Vector2(0f, rb.linearVelocity.y);
             NetSpeed = 0f;
             return;
         }
@@ -81,8 +83,8 @@ public class EnemyAI : NetworkBehaviour
 
         if (previouslyChasing && !isChasing)
         {
-            // Vừa mất dấu người chơi -> Điểm đến mới quay về khu vực tuần tra
-            currentTarget = new Vector2(PickRandomPatrolX(), transform.position.y);
+            // Vừa mất dấu người chơi -> Điểm đến mới quay về khu vực tuần tra, giữ nguyên độ cao ban đầu nếu bay
+            currentTarget = new Vector2(PickRandomPatrolX(), isFlying ? startPosition.y : transform.position.y);
         }
 
         if (isChasing && playerTarget != null)
@@ -93,14 +95,15 @@ public class EnemyAI : NetworkBehaviour
 
             if (dist <= combatComp.attackRange)
             {
-                rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+                rb.linearVelocity = isFlying ? Vector2.zero : new Vector2(0f, rb.linearVelocity.y);
                 NetFacingDir = currentTarget.x > transform.position.x ? 1f : -1f;
                 combatComp.AttemptAttack();
             }
             else
             {
                 // Đang đuổi mà vướng tường -> Dừng lại đứng nhìn, không cắm mặt húc tường nữa
-                if (IsPathBlocked(dirX))
+                // Quái bay có thể bỏ qua check tường ngang hoặc trượt theo tường
+                if (!isFlying && IsPathBlocked(dirX))
                 {
                     rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
                     NetFacingDir = dirX;
@@ -130,18 +133,18 @@ public class EnemyAI : NetworkBehaviour
         float dirX = currentTarget.x > transform.position.x ? 1f : -1f;
 
         // SỬA LỖI CẮM MẶT VÀO TƯỜNG: Nếu đụng tường, lập tức quay đầu
-        if (IsPathBlocked(dirX))
+        if (!isFlying && IsPathBlocked(dirX))
         {
             // Lấy 1 điểm an toàn ở hướng ngược lại
             float newTargetX = transform.position.x - (dirX * Random.Range(1f, patrolRadius));
             newTargetX = Mathf.Clamp(newTargetX, startPosition.x - patrolRadius, startPosition.x + patrolRadius);
 
-            currentTarget = new Vector2(newTargetX, transform.position.y);
+            currentTarget = new Vector2(newTargetX, isFlying ? startPosition.y : transform.position.y);
             dirX = currentTarget.x > transform.position.x ? 1f : -1f; // Cập nhật lại hướng
         }
 
         if (Mathf.Abs(transform.position.x - currentTarget.x) < 0.25f)
-            currentTarget = new Vector2(PickRandomPatrolX(), transform.position.y);
+            currentTarget = new Vector2(PickRandomPatrolX(), isFlying ? startPosition.y : transform.position.y);
 
         MoveTowards(currentTarget, patrolSpeed);
     }
@@ -170,8 +173,17 @@ public class EnemyAI : NetworkBehaviour
     private void MoveTowards(Vector2 target, float speed)
     {
         float dirX = target.x > transform.position.x ? 1f : -1f;
-        rb.linearVelocity = new Vector2(dirX * speed, rb.linearVelocity.y);
         NetFacingDir = dirX;
+
+        if (isFlying)
+        {
+            Vector2 dir = (target - (Vector2)transform.position).normalized;
+            rb.linearVelocity = dir * speed;
+        }
+        else
+        {
+            rb.linearVelocity = new Vector2(dirX * speed, rb.linearVelocity.y);
+        }
     }
 
     private void FindPlayer()
@@ -227,7 +239,7 @@ public class EnemyAI : NetworkBehaviour
     public void NotifyRevived()
     {
         if (!HasStateAuthority) return;
-        currentTarget = new Vector2(PickRandomPatrolX(), transform.position.y);
+        currentTarget = new Vector2(PickRandomPatrolX(), isFlying ? startPosition.y : transform.position.y);
         cachedChasePlayer = default;
         isChasing = false;
         playerTarget = null;

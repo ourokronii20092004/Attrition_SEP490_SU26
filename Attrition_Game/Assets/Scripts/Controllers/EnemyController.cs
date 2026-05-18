@@ -16,14 +16,16 @@ namespace Attrition.Controllers
         [SerializeField] private float reviveDelaySeconds = 2.5f;
 
         [Header("---- HIT / STUN ----")]
+        [Tooltip("Bật nếu quái có thể bị đẩy lùi và choáng. Tắt đi đối với Boss hoặc Quái to.")]
+        public bool canBeKnockedBack = true;
         [Tooltip("Thời gian bị choáng hoặc bật lùi khi nhận sát thương.")]
         public float stunDuration = 0.4f;
 
-        [Header("---- STATE ----")]
-        [Networked] public int Health { get; set; }
-        [Networked] public NetworkBool isDeadNetworked { get; set; }
-        [Networked] public NetworkBool IsKnockbackActive { get; set; }
-        [Networked] public NetworkBool IsAwaitingRevive { get; set; }
+        // Đã ẩn toàn bộ các biến chạy ngầm khỏi Inspector để tránh tick nhầm
+        [HideInInspector][Networked] public int Health { get; set; }
+        [HideInInspector][Networked] public NetworkBool isDeadNetworked { get; set; }
+        [HideInInspector][Networked] public NetworkBool IsKnockbackActive { get; set; }
+        [HideInInspector][Networked] public NetworkBool IsAwaitingRevive { get; set; }
 
         [Networked] private TickTimer knockbackTimer { get; set; }
         [Networked] private TickTimer reviveTimer { get; set; }
@@ -74,8 +76,7 @@ namespace Attrition.Controllers
                 return;
             }
 
-            // Kiểm tra thời gian choáng (Khóa AI)
-            if (IsKnockbackActive && knockbackTimer.Expired(Runner))
+            if (IsKnockbackActive && knockbackTimer.ExpiredOrNotRunning(Runner))
             {
                 IsKnockbackActive = false;
             }
@@ -132,18 +133,24 @@ namespace Attrition.Controllers
             }
             else
             {
-                IsKnockbackActive = true;
+                // Chỉ áp dụng Knockback và ngắt đòn đánh (Stun) nếu quái cho phép
+                if (canBeKnockedBack)
+                {
+                    IsKnockbackActive = true;
+                    knockbackTimer = TickTimer.CreateFromSeconds(Runner, stunDuration);
+                    combatComp.IsAttacking = false; // Bị ngắt đòn đánh
 
-                // SỬA: Đặt bộ đếm thời gian choáng bằng biến stunDuration
-                knockbackTimer = TickTimer.CreateFromSeconds(Runner, stunDuration);
+                    // SỬA: Nếu quái không có trọng lực (quái bay), loại bỏ lực đẩy thẳng đứng để không bị bay tuốt lên trời
+                    if (rb != null && rb.gravityScale == 0)
+                    {
+                        knockbackDir.y = 0;
+                        knockbackDir = knockbackDir.normalized;
+                    }
 
-                combatComp.IsAttacking = false;
+                    rb.linearVelocity = knockbackDir * knockbackForce; // Bị văng đi
+                }
 
-                rb.linearVelocity = Vector2.zero;
-                // Nếu lực force = 0 thì quái chỉ đứng yên tại chỗ chịu choáng (Stun)
-                // Nếu force > 0 thì bị đẩy lùi theo knockbackDir (Knockback)
-                rb.AddForce(knockbackDir * knockbackForce, ForceMode2D.Impulse);
-
+                // Dù có bị knockback hay không, quái vẫn chớp sáng báo hiệu đã nhận sát thương
                 RPC_PlayHitAnimation();
             }
         }
