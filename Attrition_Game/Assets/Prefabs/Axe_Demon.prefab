@@ -221,6 +221,7 @@ MonoBehaviour:
   combatComp: {fileID: 4324008339978122593}
   extraLivesAfterHpZero: 0
   reviveDelaySeconds: 5
+  canBeKnockedBack: 0
   stunDuration: 0.4
   _Health: 0
   _isDeadNetworked:
@@ -252,6 +253,8 @@ MonoBehaviour:
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 64
+  wallCheckDistance: 0.8
+  wallCheckHeightOffset: 0.5
   _NetSpeed: 0
   _NetFacingDir: 1
 --- !u!114 &8981913773620505188
