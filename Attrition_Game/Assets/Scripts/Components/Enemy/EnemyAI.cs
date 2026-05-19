@@ -70,6 +70,7 @@ public class EnemyAI : NetworkBehaviour
             return;
         }
 
+        // Chỉ đứng yên khi ĐANG PHÁT animation đánh (không phải khi đang chờ cooldown)
         if (combatComp.IsAttacking)
         {
             rb.linearVelocity = isFlying ? Vector2.zero : new Vector2(0f, rb.linearVelocity.y);
@@ -83,7 +84,6 @@ public class EnemyAI : NetworkBehaviour
 
         if (previouslyChasing && !isChasing)
         {
-            // Vừa mất dấu người chơi -> Điểm đến mới quay về khu vực tuần tra, giữ nguyên độ cao ban đầu nếu bay
             currentTarget = new Vector2(PickRandomPatrolX(), isFlying ? startPosition.y : transform.position.y);
         }
 
@@ -91,22 +91,29 @@ public class EnemyAI : NetworkBehaviour
         {
             currentTarget = playerTarget.position;
             float dist = Vector2.Distance(transform.position, currentTarget);
-            float dirX = currentTarget.x > transform.position.x ? 1f : -1f;
+            float xDiff = currentTarget.x - transform.position.x;
+            float dirX = xDiff > 0 ? 1f : -1f;
 
             if (dist <= combatComp.attackRange)
             {
+                // Trong tầm đánh → dừng lại và quay mặt về phía Player
                 rb.linearVelocity = isFlying ? Vector2.zero : new Vector2(0f, rb.linearVelocity.y);
-                NetFacingDir = currentTarget.x > transform.position.x ? 1f : -1f;
-                combatComp.AttemptAttack();
+                if (Mathf.Abs(xDiff) > 0.05f) NetFacingDir = dirX;
+
+                // Đánh nếu hết cooldown
+                if (combatComp.CanAttack())
+                {
+                    combatComp.AttemptAttack();
+                }
+                // Nếu đang chờ cooldown → vẫn đứng nhìn chứ không đi lung tung
             }
             else
             {
-                // Đang đuổi mà vướng tường -> Dừng lại đứng nhìn, không cắm mặt húc tường nữa
-                // Quái bay có thể bỏ qua check tường ngang hoặc trượt theo tường
+                // Ngoài tầm đánh → đuổi theo Player (kể cả đang chờ cooldown)
                 if (!isFlying && IsPathBlocked(dirX))
                 {
                     rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
-                    NetFacingDir = dirX;
+                    if (Mathf.Abs(xDiff) > 0.05f) NetFacingDir = dirX;
                 }
                 else
                 {

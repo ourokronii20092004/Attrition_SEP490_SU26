@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!221 &22100000
+AnimatorOverrideController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Cultist_AnimatorOverride
+  m_Controller: {fileID: 9100000, guid: 0501b7ddbbc7af242bc152993f9d9a6d, type: 2}
+  m_Clips:
+  - m_OriginalClip: {fileID: 7400000, guid: 1487af01251893b458bbfcb302dd1134, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 1487af01251893b458bbfcb302dd1134, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: 035b60c7427d5a14794d1617731b793d, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 035b60c7427d5a14794d1617731b793d, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: fb86a7927f79dc44fa2a387adebdd420, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: fb86a7927f79dc44fa2a387adebdd420, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: bb76f1bdfc3dcf2459c6708da5f4bb2d, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: bb76f1bdfc3dcf2459c6708da5f4bb2d, type: 2}
