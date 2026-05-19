@@ -16,11 +16,18 @@ public class EnemyCombat : NetworkBehaviour
 
     [Header("---- DAMAGE & SPEED ----")]
     public int attackDamage = 1;
-    [Tooltip("Tốc độ đánh (1 là mặc định, 2 là nhanh gấp đôi)")]
+    [Tooltip("Số kiểu đòn đánh (1 = chỉ có Attack1, 2 = có Attack1 và Attack2)")]
+    public int attackVariants = 1;
+    [Tooltip("Thời gian đứng yên khi đánh - nên bằng độ dài animation attack (giây)")]
+    public float attackDuration = 0.6f;
+    [Tooltip("Thời gian nghỉ giữa 2 đòn đánh (Cooldown - Tính bằng giây)")]
+    public float attackCooldown = 1.0f;
+    [Tooltip("Tốc độ phát Animation đánh (1 là mặc định, 2 là nhanh gấp đôi)")]
     public float currentAttackSpeed = 1f;
 
     [HideInInspector][Networked] public NetworkBool IsAttacking { get; set; }
     [Networked] private TickTimer attackTimer { get; set; }
+    [Networked] private TickTimer cooldownTimer { get; set; }
 
     public override void Spawned()
     {
@@ -29,22 +36,44 @@ public class EnemyCombat : NetworkBehaviour
 
     public override void FixedUpdateNetwork()
     {
-        if (IsAttacking && attackTimer.Expired(Runner)) IsAttacking = false;
+        // ExpiredOrNotRunning thay vì Expired: tránh miss tick duy nhất gây kẹt IsAttacking
+        if (IsAttacking && attackTimer.ExpiredOrNotRunning(Runner))
+        {
+            IsAttacking = false;
+            cooldownTimer = TickTimer.CreateFromSeconds(Runner, attackCooldown);
+            attackTimer = TickTimer.None;
+        }
+    }
+
+    public bool CanAttack()
+    {
+        return !IsAttacking && cooldownTimer.ExpiredOrNotRunning(Runner);
     }
 
     public void AttemptAttack()
     {
-        if (IsAttacking || !attackTimer.ExpiredOrNotRunning(Runner)) return;
+        if (!CanAttack()) return;
 
         IsAttacking = true;
-        int randomAttackIndex = Random.Range(0, 2);
+        int randomAttackIndex = Random.Range(0, attackVariants);
 
-        // Truyền tốc độ đánh sang cho mọi Client cập nhật hình ảnh
         RPC_PlayAttackAnim(randomAttackIndex, currentAttackSpeed);
 
-        // Chia thời gian chờ (1.5s mặc định) cho Tốc độ đánh
-        attackTimer = TickTimer.CreateFromSeconds(Runner, 1.5f / currentAttackSpeed);
+        // Quái đứng yên trong attackDuration (chia cho tốc độ đánh)
+        attackTimer = TickTimer.CreateFromSeconds(Runner, attackDuration / currentAttackSpeed);
     }
+
+    // Vẫn giữ lại cho ai muốn dùng Animation Event (không bắt buộc)
+    public void FinishAttack()
+    {
+        if (!IsAttacking) return;
+        IsAttacking = false;
+        if (HasStateAuthority)
+        {
+            cooldownTimer = TickTimer.CreateFromSeconds(Runner, attackCooldown);
+        }
+    }
+
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RPC_PlayAttackAnim(int attackIndex, float speed)
@@ -139,14 +168,9 @@ public class EnemyCombat : NetworkBehaviour
                 if (dmg != null && !dmg.IsDead)
                 {
                     Vector2 pushDir = new Vector2(directionToPlayer.x, 0.5f).normalized;
-                    dmg.TakeDamage(attackDamage, pushDir, 8f);
+                    dmg.TakeDamage(attackDamage, pushDir, 0f); // force=0 → Player sẽ dùng knockbackForceOverride
                 }
             }
         }
-    }
-
-    public void FinishAttack()
-    {
-        IsAttacking = false;
     }
 }
