@@ -550,7 +550,7 @@ Transform:
   m_GameObject: {fileID: 252508801}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 16.18, y: 46.89, z: 0}
+  m_LocalPosition: {x: 33.3, y: 47.4, z: 0}
   m_LocalScale: {x: 2.2136812, y: 1.9708055, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -688,7 +688,7 @@ Transform:
   m_GameObject: {fileID: 582188324}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -3.5, y: 48.8, z: -10}
+  m_LocalPosition: {x: -16.2, y: 49.38, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1072,7 +1072,7 @@ MonoBehaviour:
   spawnPoints:
   - {fileID: 2011203877}
   fallbackEnemyPrefab:
-    RawGuidValue: 355c595d1c3b219418331b6c9c727d5d
+    RawGuidValue: 45595655ccba9e042b07004f4299608d
   enemySpawnConfigs:
   - spawnPoint: {fileID: 176590887}
     spawnCount: 1
@@ -1928,7 +1928,7 @@ MonoBehaviour:
   m_StreamingVersion: 20241001
   m_LegacyPriority: 0
   Target:
-    TrackingTarget: {fileID: 0}
+    TrackingTarget: {fileID: 9001223699615762312, guid: 231d0d7375d868a43b49c56a5920b23d, type: 3}
     LookAtTarget: {fileID: 0}
     CustomLookAtTarget: 0
   Lens:
@@ -1960,7 +1960,7 @@ Transform:
   m_GameObject: {fileID: 1236486602}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -3.5, y: 48.8, z: -10}
+  m_LocalPosition: {x: -16.2, y: 49.38, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2098,7 +2098,7 @@ Transform:
   m_GameObject: {fileID: 1258710304}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -4.83, y: 47.45, z: 0}
+  m_LocalPosition: {x: -20.1, y: 47.5, z: 0}
   m_LocalScale: {x: 2.941761, y: 2.9559503, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2191,7 +2191,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -7, y: 45.8, z: 0}
-  m_LocalScale: {x: 57.56336, y: 0.6706, z: 1}
+  m_LocalScale: {x: 1000, y: 0.6706, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}

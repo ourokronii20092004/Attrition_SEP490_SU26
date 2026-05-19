@@ -1,6 +1,7 @@
 using Fusion;
 using UnityEngine;
 using System.Collections;
+using Unity.Cinemachine;
 
 public class PlayerController : NetworkBehaviour, IDamageable
 {
@@ -22,6 +23,22 @@ public class PlayerController : NetworkBehaviour, IDamageable
     [SerializeField] private float variableJumpCutMultiplier = 0.5f;
     [SerializeField] private int maxJumps = 2;
 
+    [Header("---- HOLLOW KNIGHT GRAVITY ----")]
+    [Tooltip("Trọng lực mặc định khi đi trên mặt đất hoặc bay lên")]
+    [SerializeField] private float normalGravity = 2f;
+    [Tooltip("Trọng lực khi rơi xuống (càng cao rơi càng nhanh, Hollow Knight ~4-5)")]
+    [SerializeField] private float fallGravity = 4.5f;
+    [Tooltip("Tốc độ rơi tối đa (giới hạn để không rơi quá nhanh)")]
+    [SerializeField] private float maxFallSpeed = -25f;
+
+    [Header("---- KNOCKBACK (KHI PLAYER BỊ ĐÁNH) ----")]
+    [Tooltip("Lực đẩy lùi khi bị quái đánh (set 0 để không bị knockback)")]
+    [SerializeField] private float knockbackForceOverride = 6f;
+    [Tooltip("Thời gian bị khựng không điều khiển được sau khi bị đánh (giây)")]
+    [SerializeField] private float knockbackDuration = 0.25f;
+    [Tooltip("Thời gian bất tử sau khi bị đánh (giây)")]
+    [SerializeField] private float invincibleDuration = 0.8f;
+
     [Header("---- STATE ----")]
     [Networked] public int currentHP { get; set; }
     [Networked] public NetworkBool isDeadNetworked { get; set; }
@@ -37,6 +54,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
     [Networked] private NetworkButtons _buttonsPrev { get; set; }
     [Networked] private TickTimer _dashTimer { get; set; }
     [Networked] private TickTimer _dashCooldown { get; set; }
+    [Networked] private TickTimer _knockbackTimer { get; set; }
 
     public int maxHP = 100;
     private bool isInvincible = false;
@@ -50,6 +68,24 @@ public class PlayerController : NetworkBehaviour, IDamageable
         if (combatComp == null) combatComp = GetComponent<PlayerCombat>();
         if (animationComp == null) animationComp = GetComponent<PlayerAnimation>();
         if (rb == null) rb = GetComponent<Rigidbody2D>();
+
+        // Tắt va chạm vật lý giữa Player và Enemy để không bị đẩy nhau gây nhấp nháy
+        int playerLayer = gameObject.layer;
+        int enemyLayer = LayerMask.NameToLayer("Enemy");
+        if (enemyLayer >= 0)
+        {
+            Physics2D.IgnoreLayerCollision(playerLayer, enemyLayer, true);
+        }
+
+        // Set camera to follow local player
+        if (HasInputAuthority)
+        {
+            var cam = FindAnyObjectByType<CinemachineCamera>();
+            if (cam != null)
+            {
+                cam.Follow = transform;
+            }
+        }
     }
 
     public override void FixedUpdateNetwork()
@@ -74,13 +110,39 @@ public class PlayerController : NetworkBehaviour, IDamageable
             return;
         }
 
+        // --- KNOCKBACK: Khóa toàn bộ input khi đang bị đẩy lùi ---
+        if (!_knockbackTimer.ExpiredOrNotRunning(Runner))
+        {
+            NetworkVelocityY = rb.linearVelocity.y;
+            return;
+        }
+
+        // --- HOLLOW KNIGHT FAST FALL ---
+        // Khi đang rơi xuống (velocity Y < 0) và không đang dash -> tăng trọng lực
+        if (!IsDashing)
+        {
+            if (rb.linearVelocity.y < 0)
+            {
+                rb.gravityScale = fallGravity;
+                // Giới hạn tốc độ rơi tối đa
+                if (rb.linearVelocity.y < maxFallSpeed)
+                {
+                    rb.linearVelocity = new Vector2(rb.linearVelocity.x, maxFallSpeed);
+                }
+            }
+            else
+            {
+                rb.gravityScale = normalGravity;
+            }
+        }
+
         // --- DASH LOGIC ---
         if (IsDashing)
         {
             if (_dashTimer.Expired(Runner))
             {
                 IsDashing = false;
-                rb.gravityScale = 2f;
+                rb.gravityScale = normalGravity;
             }
             else
             {
@@ -118,6 +180,9 @@ public class PlayerController : NetworkBehaviour, IDamageable
             {
                 if (IsGrounded || JumpCount < maxJumps)
                 {
+                    // SỬA LỖI GÓC ĐẤT: Reset velocity Y về 0 trước khi nhảy
+                    // Tránh trường hợp velocity Y đang dương (do trượt góc đất) cộng dồn với jumpForce gây nhảy quá cao
+                    rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
                     rb.position = new Vector2(rb.position.x, rb.position.y + 0.05f);
                     float currentJumpForce = (JumpCount > 0) ? doubleJumpForce : jumpForce;
                     rb.linearVelocity = new Vector2(rb.linearVelocity.x, currentJumpForce);
@@ -179,15 +244,31 @@ public class PlayerController : NetworkBehaviour, IDamageable
     {
         if (isDeadNetworked) return;
         currentHP -= damage;
-        RPC_ApplyKnockback(knockbackDir, knockbackForce);
+
+        // Luôn dùng knockbackForceOverride từ Inspector để điều chỉnh lực đẩy lùi
+        RPC_ApplyKnockback(knockbackDir, knockbackForceOverride);
         if (currentHP <= 0) Die();
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RPC_ApplyKnockback(Vector2 dir, float force)
     {
-        rb.linearVelocity = Vector2.zero;
-        rb.AddForce(dir * force, ForceMode2D.Impulse);
+        if (force <= 0) 
+        {
+            // Không knockback, chỉ chớp sáng
+            animationComp.PlayHit();
+            StartCoroutine(InvincibleCoroutine());
+            return;
+        }
+        
+        rb.linearVelocity = dir * force;
+
+        // Khóa input trong thời gian knockbackDuration để velocity không bị ghi đè
+        if (HasStateAuthority)
+        {
+            _knockbackTimer = TickTimer.CreateFromSeconds(Runner, knockbackDuration);
+        }
+
         animationComp.PlayHit();
         StartCoroutine(InvincibleCoroutine());
     }
@@ -200,8 +281,8 @@ public class PlayerController : NetworkBehaviour, IDamageable
     IEnumerator InvincibleCoroutine()
     {
         isInvincible = true;
-        StartCoroutine(animationComp.BlinkRoutine(0.8f));
-        yield return new WaitForSeconds(0.8f);
+        StartCoroutine(animationComp.BlinkRoutine(invincibleDuration));
+        yield return new WaitForSeconds(invincibleDuration);
         isInvincible = false;
     }
 }
