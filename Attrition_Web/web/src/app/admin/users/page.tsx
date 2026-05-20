@@ -1,143 +1,177 @@
 'use client';
 import { useState, useEffect } from 'react';
-import GlassCard from '@/components/GlassCard';
-import Breadcrumb from '@/components/Breadcrumb';
-import Button from '@/components/Button';
+import SearchBar from '@/components/SearchBar';
 import Pagination from '@/components/Pagination';
 import Badge from '@/components/Badge';
+import Modal from '@/components/Modal';
 import { api } from '@/lib/api';
-import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
 import { useToast } from '@/contexts/ToastContext';
 
-export default function AdminUsers() {
-  const { user, loading } = useAuth();
-  const router = useRouter();
+export default function AdminUsersPage() {
   const { showToast } = useToast();
-
   const [users, setUsers] = useState<any[]>([]);
-  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [isFetching, setIsFetching] = useState(true);
+  const [totalPages, setTotalPages] = useState(1);
+  const [search, setSearch] = useState('');
+  const [resetModal, setResetModal] = useState<any>(null);
 
-  useEffect(() => {
-    if (!loading && user?.role !== 'Admin') {
-      router.push('/');
-    }
-  }, [user, loading, router]);
+  const fetchUsers = async (p = page, q = search) => {
+    setLoading(true);
+    const params = new URLSearchParams({ page: p.toString(), pageSize: '15' });
+    if (q) params.append('search', q);
 
-  const fetchUsers = async () => {
-    setIsFetching(true);
-    const res = await api.get(`/api/admin/users?page=${page}`);
-    if (res.items) {
+    const res = await api.get(`/api/admin/users?${params}`);
+    if (res?.items) {
       setUsers(res.items);
-      setTotal(res.totalCount);
+      setTotalPages(Math.ceil((res.totalCount || 0) / 15));
     }
-    setIsFetching(false);
+    setLoading(false);
   };
 
-  useEffect(() => {
-    if (user?.role === 'Admin') fetchUsers();
-  }, [page, user]);
+  useEffect(() => { fetchUsers(); }, [page]);
+
+  const handleSearch = (query: string) => {
+    setSearch(query);
+    setPage(1);
+    fetchUsers(1, query);
+  };
 
   const handleRoleChange = async (userId: string, newRole: string) => {
-    const res = await api.put(`/api/admin/users/${userId}/role`, newRole);
+    const res = await api.put(`/api/admin/users/${userId}/role`, { role: newRole });
     if (res.success) {
-      showToast('User role updated', 'success');
+      showToast('Role updated', 'success');
       fetchUsers();
     } else {
       showToast(res.error || 'Failed to update role', 'error');
     }
   };
 
-  const handleToggleBan = async (userId: string) => {
-    const res = await api.post(`/api/admin/users/${userId}/ban`);
+  const handleBanToggle = async (userId: string, isBanned: boolean) => {
+    const endpoint = isBanned
+      ? `/api/admin/users/${userId}/unban`
+      : `/api/admin/users/${userId}/ban`;
+    const res = await api.post(endpoint);
     if (res.success) {
-      showToast('User ban status toggled', 'success');
+      showToast(isBanned ? 'User unbanned' : 'User banned', 'success');
       fetchUsers();
     } else {
-      showToast(res.error || 'Failed to toggle ban', 'error');
+      showToast(res.error || 'Action failed', 'error');
     }
   };
 
-  const handleResetPassword = async (userId: string) => {
-    const newPassword = prompt('Enter new password for this user (must meet complexity requirements):');
-    if (!newPassword) return;
-
-    const res = await api.put(`/api/admin/users/${userId}/reset-password`, newPassword);
+  const handleResetPassword = async () => {
+    if (!resetModal) return;
+    const res = await api.post(`/api/admin/users/${resetModal.id}/reset-password`);
     if (res.success) {
       showToast('Password reset successfully', 'success');
     } else {
       showToast(res.error || 'Failed to reset password', 'error');
     }
+    setResetModal(null);
   };
 
-  if (loading || user?.role !== 'Admin') return null;
-
   return (
-    <div className="container" style={{ padding: 'var(--space-2xl) 0' }}>
-      <Breadcrumb items={[
-        { label: 'Admin', href: '/admin' },
-        { label: 'Manage Users' }
-      ]} />
+    <div>
+      <div className="admin-page-header">
+        <h1>👥 User Management</h1>
+        <SearchBar placeholder="Search users..." onSearch={handleSearch} />
+      </div>
 
-      <GlassCard style={{ overflowX: 'auto' }}>
-        <h1 style={{ marginBottom: 'var(--space-xl)' }}>Manage Users</h1>
-
-        {isFetching ? (
-          <div>Loading...</div>
-        ) : (
-          <>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                  <th style={{ padding: 'var(--space-sm)' }}>Username</th>
-                  <th style={{ padding: 'var(--space-sm)' }}>Role</th>
-                  <th style={{ padding: 'var(--space-sm)' }}>Status</th>
-                  <th style={{ padding: 'var(--space-sm)' }}>Joined</th>
-                  <th style={{ padding: 'var(--space-sm)', textAlign: 'right' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map(u => (
-                  <tr key={u.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                    <td style={{ padding: 'var(--space-sm)' }}>{u.username}</td>
-                    <td style={{ padding: 'var(--space-sm)' }}>
-                      <select 
-                        value={u.role} 
-                        onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                        className="input"
-                        style={{ padding: '4px 8px', width: 'auto' }}
+      <div className="admin-table-wrapper">
+        <table className="admin-table">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Joined</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan={6} className="text-center text-muted" style={{ padding: 'var(--space-2xl)' }}>
+                  <div className="spinner" style={{ margin: '0 auto' }} />
+                </td>
+              </tr>
+            ) : users.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="text-center text-muted" style={{ padding: 'var(--space-2xl)' }}>
+                  No users found
+                </td>
+              </tr>
+            ) : (
+              users.map((u) => (
+                <tr key={u.id}>
+                  <td>
+                    <strong>{u.username}</strong>
+                  </td>
+                  <td className="text-muted">{u.email || '—'}</td>
+                  <td>
+                    <select
+                      className="input btn-sm"
+                      value={u.role}
+                      onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                      style={{ width: 'auto', padding: '4px 8px', fontSize: '12px' }}
+                    >
+                      <option value="User">User</option>
+                      <option value="Moderator">Moderator</option>
+                      <option value="Admin">Admin</option>
+                    </select>
+                  </td>
+                  <td className="text-muted">{new Date(u.createdAt).toLocaleDateString()}</td>
+                  <td>
+                    {u.isBanned ? (
+                      <Badge variant="danger">Banned</Badge>
+                    ) : (
+                      <Badge variant="success">Active</Badge>
+                    )}
+                  </td>
+                  <td>
+                    <div className="actions">
+                      <button
+                        className={`btn btn-sm ${u.isBanned ? 'btn-soul' : 'btn-danger'}`}
+                        onClick={() => handleBanToggle(u.id, u.isBanned)}
                       >
-                        <option value="User">User</option>
-                        <option value="Admin">Admin</option>
-                      </select>
-                    </td>
-                    <td style={{ padding: 'var(--space-sm)' }}>
-                      <Badge variant={u.isBanned ? 'danger' : 'success'}>
-                        {u.isBanned ? 'Banned' : 'Active'}
-                      </Badge>
-                    </td>
-                    <td style={{ padding: 'var(--space-sm)' }}>{new Date(u.joinedAt).toLocaleDateString()}</td>
-                    <td style={{ padding: 'var(--space-sm)', textAlign: 'right' }}>
-                      <div style={{ display: 'flex', gap: 'var(--space-sm)', justifyContent: 'flex-end' }}>
-                        <Button size="sm" variant={u.isBanned ? "primary" : "danger"} onClick={() => handleToggleBan(u.id)}>
-                          {u.isBanned ? 'Unban' : 'Ban'}
-                        </Button>
-                        <Button size="sm" variant="secondary" onClick={() => handleResetPassword(u.id)}>
-                          Reset Password
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            
-            <Pagination currentPage={page} totalPages={Math.ceil(total / 20)} onPageChange={setPage} />
-          </>
-        )}
-      </GlassCard>
+                        {u.isBanned ? 'Unban' : 'Ban'}
+                      </button>
+                      <button
+                        className="btn btn-sm btn-ghost"
+                        onClick={() => setResetModal(u)}
+                      >
+                        Reset PW
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="mt-lg">
+        <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+      </div>
+
+      {/* Reset Password Modal */}
+      <Modal
+        isOpen={!!resetModal}
+        onClose={() => setResetModal(null)}
+        title="Reset Password"
+      >
+        <p className="text-muted mb-lg">
+          Are you sure you want to reset the password for <strong>{resetModal?.username}</strong>?
+          They will receive a temporary password.
+        </p>
+        <div className="modal-actions">
+          <button className="btn btn-ghost" onClick={() => setResetModal(null)}>Cancel</button>
+          <button className="btn btn-danger" onClick={handleResetPassword}>Reset Password</button>
+        </div>
+      </Modal>
     </div>
   );
 }

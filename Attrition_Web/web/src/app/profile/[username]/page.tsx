@@ -1,62 +1,87 @@
-import GlassCard from '@/components/GlassCard';
+'use client';
+import { useState, useEffect } from 'react';
+import Breadcrumb from '@/components/Breadcrumb';
 import Avatar from '@/components/Avatar';
 import Badge from '@/components/Badge';
 import { api } from '@/lib/api';
-import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import ProfileActions from './ProfileActions';
 
-async function getProfile(username: string) {
-  try {
-    const res = await api.get(`/api/users/${username}/profile`);
-    return res.success ? res.data : null;
-  } catch {
-    return null;
+export default function ProfilePage({ params }: { params: { username: string } }) {
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const res = await api.get(`/api/users/${params.username}`);
+      if (res.success) {
+        setProfile(res.data);
+      }
+      setLoading(false);
+    };
+    fetchProfile();
+  }, [params.username]);
+
+  if (loading) {
+    return (
+      <div className="loading-screen">
+        <div className="spinner spinner-lg" />
+      </div>
+    );
   }
-}
-
-export default async function Profile({ params }: { params: { username: string } }) {
-  const profile = await getProfile(params.username);
 
   if (!profile) {
-    notFound();
+    return (
+      <div className="container">
+        <div className="empty-state">
+          <div className="empty-state-icon">👤</div>
+          <h3>User not found</h3>
+          <p>The user &quot;{params.username}&quot; does not exist.</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="container" style={{ padding: 'var(--space-2xl) 0', maxWidth: '800px' }}>
-      <GlassCard style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 'var(--space-md)' }}>
-        <Avatar username={profile.username} src={profile.avatarUrl} size="xl" />
-        
-        <div>
-          <h1 style={{ marginBottom: 'var(--space-xs)' }}>{profile.username}</h1>
-          <Badge variant={profile.role === 'Admin' ? 'admin' : 'user'}>{profile.role}</Badge>
-        </div>
-        
-        <ProfileActions profileUsername={profile.username} />
+    <div className="container">
+      <Breadcrumb items={[
+        { label: 'Home', href: '/' },
+        { label: 'Profile' },
+        { label: profile.username },
+      ]} />
 
-        {profile.bio && (
-          <p style={{ color: 'var(--text-secondary)', maxWidth: '500px', lineHeight: 1.6 }}>
-            {profile.bio}
-          </p>
-        )}
-
-        <div style={{ display: 'flex', gap: 'var(--space-xl)', marginTop: 'var(--space-md)', padding: 'var(--space-md) var(--space-xl)', background: 'var(--bg-tertiary)', borderRadius: 'var(--glass-radius-sm)' }}>
-          <div>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--text-primary)' }}>{profile.postCount}</div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Forum Posts</div>
-          </div>
-          <div>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--text-primary)' }}>{profile.contributionCount}</div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Wiki Edits</div>
-          </div>
-          <div>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--text-primary)' }}>
-              {new Date(profile.joinedAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
+      <div className="glass-card-static" style={{ maxWidth: '800px', margin: '0 auto' }}>
+        <div className="profile-header">
+          <Avatar src={profile.avatarUrl} alt={profile.username} size="xl" />
+          <div className="profile-info">
+            <h1>{profile.username}</h1>
+            <Badge variant={profile.role === 'Admin' ? 'admin' : 'user'}>
+              {profile.role}
+            </Badge>
+            {profile.bio && (
+              <p className="text-muted mt-md">{profile.bio}</p>
+            )}
+            <div className="profile-stats">
+              <div className="profile-stat">
+                <div className="profile-stat-value">{profile.postCount || 0}</div>
+                <div className="profile-stat-label">Posts</div>
+              </div>
+              <div className="profile-stat">
+                <div className="profile-stat-value">{profile.threadCount || 0}</div>
+                <div className="profile-stat-label">Threads</div>
+              </div>
+              <div className="profile-stat">
+                <div className="profile-stat-value">{profile.contributionCount || 0}</div>
+                <div className="profile-stat-label">Wiki Edits</div>
+              </div>
             </div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Joined</div>
           </div>
         </div>
-      </GlassCard>
+
+        <div style={{ borderTop: '1px solid var(--border-dim)', paddingTop: 'var(--space-lg)', marginTop: 'var(--space-lg)' }}>
+          <p className="text-muted" style={{ fontSize: '14px' }}>
+            Member since {new Date(profile.createdAt).toLocaleDateString()}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

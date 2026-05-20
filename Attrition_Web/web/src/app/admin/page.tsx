@@ -1,90 +1,112 @@
 'use client';
 import { useState, useEffect } from 'react';
-import GlassCard from '@/components/GlassCard';
+import Link from 'next/link';
 import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 
 export default function AdminDashboard() {
-  const { user, loading } = useAuth();
-  const router = useRouter();
-  
+  const { user } = useAuth();
   const [stats, setStats] = useState({
     users: 0,
     wikiArticles: 0,
     forumThreads: 0,
-    pendingContributions: 0
+    pendingContributions: 0,
   });
-  
-  useEffect(() => {
-    if (!loading && user?.role !== 'Admin') {
-      router.push('/');
-    }
-  }, [user, loading, router]);
+  const [recentUsers, setRecentUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // In a real implementation we would fetch actual stats from a dedicated /api/admin/stats endpoint
-    // For this boilerplate we'll just show some mock/partial data based on existing endpoints
     const fetchStats = async () => {
       if (user?.role !== 'Admin') return;
-      
+
       try {
-        const usersRes = await api.get('/api/admin/users?pageSize=1');
-        const contRes = await api.get('/api/wiki/contributions?status=Pending');
-        const artsRes = await api.get('/api/wiki/articles?pageSize=1');
-        const threadsRes = await api.get('/api/forum/threads?pageSize=1');
-        
+        const [usersRes, artsRes, threadsRes, contRes] = await Promise.all([
+          api.get('/api/admin/users?pageSize=5'),
+          api.get('/api/wiki/articles?pageSize=1'),
+          api.get('/api/forum/threads?pageSize=1'),
+          api.get('/api/wiki/contributions?status=Pending'),
+        ]);
+
         setStats({
           users: usersRes?.totalCount || 0,
           wikiArticles: artsRes?.totalCount || 0,
           forumThreads: threadsRes?.totalCount || 0,
-          pendingContributions: contRes?.length || 0
+          pendingContributions: Array.isArray(contRes) ? contRes.length : 0,
         });
+
+        if (usersRes?.items) {
+          setRecentUsers(usersRes.items.slice(0, 5));
+        }
       } catch (e) {
-        console.error(e);
+        console.error('Failed to fetch stats:', e);
       }
+      setLoading(false);
     };
     fetchStats();
   }, [user]);
 
-  if (loading || user?.role !== 'Admin') return null;
-
   return (
-    <div className="container" style={{ padding: 'var(--space-2xl) 0' }}>
-      <h1 style={{ marginBottom: 'var(--space-xl)' }}>Admin Dashboard</h1>
-      
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--space-lg)', marginBottom: 'var(--space-2xl)' }}>
-        <GlassCard style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--accent)' }}>{stats.users}</div>
-          <div style={{ color: 'var(--text-secondary)' }}>Total Users</div>
-        </GlassCard>
-        <GlassCard style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--accent)' }}>{stats.pendingContributions}</div>
-          <div style={{ color: 'var(--text-secondary)' }}>Pending Contributions</div>
-        </GlassCard>
-        <GlassCard style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--accent)' }}>{stats.wikiArticles}</div>
-          <div style={{ color: 'var(--text-secondary)' }}>Wiki Articles</div>
-        </GlassCard>
-        <GlassCard style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--accent)' }}>{stats.forumThreads}</div>
-          <div style={{ color: 'var(--text-secondary)' }}>Forum Threads</div>
-        </GlassCard>
+    <div>
+      <div className="admin-page-header">
+        <h1>📊 Dashboard</h1>
+        <span className="text-muted">Welcome back, {user?.username}</span>
       </div>
 
+      {/* Stats Cards */}
+      <div className="stats-grid mb-2xl">
+        <div className="stat-card">
+          <div className="stat-value">{loading ? '—' : stats.users}</div>
+          <div className="stat-label">Total Users</div>
+        </div>
+        <div className="stat-card stat-soul">
+          <div className="stat-value">{loading ? '—' : stats.wikiArticles}</div>
+          <div className="stat-label">Wiki Articles</div>
+        </div>
+        <div className="stat-card stat-gold">
+          <div className="stat-value">{loading ? '—' : stats.forumThreads}</div>
+          <div className="stat-label">Forum Threads</div>
+        </div>
+        <div className="stat-card stat-blood">
+          <div className="stat-value">{loading ? '—' : stats.pendingContributions}</div>
+          <div className="stat-label">Pending Contributions</div>
+        </div>
+      </div>
+
+      {/* Quick Links */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'var(--space-lg)' }}>
-        <GlassCard>
-          <h2 style={{ marginBottom: 'var(--space-md)' }}>Quick Links</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
-            <Link href="/admin/users" style={{ color: 'var(--text-primary)', padding: 'var(--space-sm)', background: 'var(--bg-tertiary)', borderRadius: 'var(--glass-radius-sm)' }}>
-              Manage Users
+        <div className="glass-card-static">
+          <h3 className="mb-md">Quick Actions</h3>
+          <div className="flex-col gap-sm">
+            <Link href="/admin/wiki/new" className="btn btn-ghost" style={{ justifyContent: 'flex-start' }}>
+              ✏️ Create Wiki Article
             </Link>
-            <Link href="/admin/wiki/new" style={{ color: 'var(--text-primary)', padding: 'var(--space-sm)', background: 'var(--bg-tertiary)', borderRadius: 'var(--glass-radius-sm)' }}>
-              Create Wiki Article
+            <Link href="/admin/users" className="btn btn-ghost" style={{ justifyContent: 'flex-start' }}>
+              👥 Manage Users
+            </Link>
+            <Link href="/admin/forum" className="btn btn-ghost" style={{ justifyContent: 'flex-start' }}>
+              💬 Manage Forum
+            </Link>
+            <Link href="/admin/music" className="btn btn-ghost" style={{ justifyContent: 'flex-start' }}>
+              🎵 Manage Music
             </Link>
           </div>
-        </GlassCard>
+        </div>
+
+        <div className="glass-card-static">
+          <h3 className="mb-md">Recent Users</h3>
+          {recentUsers.length > 0 ? (
+            <div className="flex-col gap-sm">
+              {recentUsers.map((u: any) => (
+                <div key={u.id} className="flex-between">
+                  <span>{u.username}</span>
+                  <span className="badge badge-user">{u.role}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-muted" style={{ fontSize: '14px' }}>No recent users</p>
+          )}
+        </div>
       </div>
     </div>
   );

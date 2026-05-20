@@ -12,6 +12,19 @@ services:
     restart: unless-stopped
     networks: [attrition-net]
 
+  collection:
+    build: { context: ./collection, dockerfile: Dockerfile }
+    container_name: attrition-collection
+    ports: ["3001:3001"]
+    environment:
+      - API_URL=http://api:5000
+      - PORT=3001
+      - NEXT_PUBLIC_API_URL=https://attrition.hault.io.vn
+    depends_on:
+      api: { condition: service_healthy }
+    restart: unless-stopped
+    networks: [attrition-net]
+
   api:
     build: { context: ./api, dockerfile: Dockerfile }
     container_name: attrition-api
@@ -26,10 +39,14 @@ services:
       - Jwt__RefreshTokenExpiryDays=${JWT_REFRESH_TOKEN_EXPIRY_DAYS}
       - FileUpload__MaxAvatarSizeMB=${MAX_AVATAR_SIZE_MB}
       - FileUpload__UploadPath=${UPLOAD_PATH}
+      - Authentication__Google__ClientId=${GOOGLE_CLIENT_ID}
+      - Authentication__Google__ClientSecret=${GOOGLE_CLIENT_SECRET}
     depends_on:
       db: { condition: service_healthy }
       redis: { condition: service_started }
-    volumes: [uploads:/app/uploads]
+    volumes:
+      - uploads:/app/uploads
+      - musicdata:/app/uploads/music
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
@@ -68,6 +85,7 @@ volumes:
   pgdata:
   redisdata:
   uploads:
+  musicdata:
 
 networks:
   attrition-net:

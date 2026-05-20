@@ -7,6 +7,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using Google.Apis.Auth;
 
 namespace Attrition.API.Services;
 
@@ -26,9 +27,13 @@ public class AuthService
         if (await _db.Users.AnyAsync(u => u.Username.ToLower() == request.Username.ToLower()))
             return new ApiResponse<AuthResponse>(false, Error: "Username is already taken.");
 
+        if (!string.IsNullOrEmpty(request.Email) && await _db.Users.AnyAsync(u => u.Email != null && u.Email.ToLower() == request.Email.ToLower()))
+            return new ApiResponse<AuthResponse>(false, Error: "Email is already taken.");
+
         var user = new User
         {
             Username = request.Username,
+            Email = request.Email,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password)
         };
 
@@ -47,7 +52,7 @@ public class AuthService
     {
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Username.ToLower() == request.Username.ToLower());
         
-        if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+        if (user == null || user.PasswordHash == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             return new ApiResponse<AuthResponse>(false, Error: "Invalid username or password.");
 
         if (user.IsBanned)
@@ -196,7 +201,139 @@ public class AuthService
         return (accessToken, refreshToken);
     }
 
+    public async Task<ApiResponse<AuthResponse>> GoogleLoginAsync(GoogleAuthRequest request)
+    {
+        try
+        {
+            var payload = await GoogleJsonWebSignature.ValidateAsync(request.Code, new GoogleJsonWebSignature.ValidationSettings
+            {
+                Audience = new[] { _config["Authentication:Google:ClientId"] }
+            });
+
+            if (payload == null)
+                return new ApiResponse<AuthResponse>(false, Error: "Invalid Google token.");
+
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.GoogleId == payload.Subject);
+
+            if (user == null)
+            {
+                user = await _db.Users.FirstOrDefaultAsync(u => u.Email != null && u.Email.ToLower() == payload.Email.ToLower());
+                if (user != null)
+                {
+                    user.GoogleId = payload.Subject;
+                    user.GoogleAvatarUrl = payload.Picture;
+                    user.AuthProvider = "linked";
+                    if (!user.EmailVerified && payload.EmailVerified)
+                        user.EmailVerified = true;
+                }
+                else
+                {
+                    var baseUsername = payload.Email.Split('@')[0];
+                    var username = baseUsername;
+                    int counter = 1;
+                    while (await _db.Users.AnyAsync(u => u.Username == username))
+                    {
+                        username = $"{baseUsername}{counter++}";
+                    }
+
+                    user = new User
+                    {
+                        Username = username,
+                        Email = payload.Email,
+                        EmailVerified = payload.EmailVerified,
+                        DisplayName = payload.Name,
+                        GoogleId = payload.Subject,
+                        GoogleAvatarUrl = payload.Picture,
+                        AuthProvider = "google",
+                        PasswordHash = null
+                    };
+                    _db.Users.Add(user);
+                }
+            }
+
+            if (user.IsBanned)
+                return new ApiResponse<AuthResponse>(false, Error: "Account is suspended.");
+
+            user.LastLoginAt = DateTime.UtcNow;
+
+            var (accessToken, refreshToken) = GenerateTokens(user);
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(double.Parse(_config["Jwt:RefreshTokenExpiryDays"] ?? "7"));
+            
+            await _db.SaveChangesAsync();
+
+            return new ApiResponse<AuthResponse>(true, new AuthResponse(accessToken, refreshToken, MapToDto(user)));
+        }
+        catch (InvalidJwtException)
+        {
+            return new ApiResponse<AuthResponse>(false, Error: "Invalid Google token.");
+        }
+    }
+
+    public async Task<ApiResponse> LinkGoogleAsync(Guid userId, GoogleAuthRequest request)
+    {
+        try
+        {
+            var payload = await GoogleJsonWebSignature.ValidateAsync(request.Code, new GoogleJsonWebSignature.ValidationSettings
+            {
+                Audience = new[] { _config["Authentication:Google:ClientId"] }
+            });
+
+            if (payload == null)
+                return new ApiResponse(false, Error: "Invalid Google token.");
+
+            if (await _db.Users.AnyAsync(u => u.GoogleId == payload.Subject && u.Id != userId))
+                return new ApiResponse(false, Error: "Google account is already linked to another user.");
+
+            var user = await _db.Users.FindAsync(userId);
+            if (user == null) return new ApiResponse(false, Error: "User not found.");
+
+            user.GoogleId = payload.Subject;
+            user.GoogleAvatarUrl = payload.Picture;
+            user.AuthProvider = "linked";
+            if (string.IsNullOrEmpty(user.Email))
+            {
+                user.Email = payload.Email;
+                user.EmailVerified = payload.EmailVerified;
+            }
+
+            await _db.SaveChangesAsync();
+            return new ApiResponse(true);
+        }
+        catch (InvalidJwtException)
+        {
+            return new ApiResponse(false, Error: "Invalid Google token.");
+        }
+    }
+
+    public async Task<ApiResponse> UnlinkGoogleAsync(Guid userId)
+    {
+        var user = await _db.Users.FindAsync(userId);
+        if (user == null) return new ApiResponse(false, Error: "User not found.");
+
+        if (string.IsNullOrEmpty(user.PasswordHash))
+            return new ApiResponse(false, Error: "Cannot unlink Google account without setting a password first.");
+
+        user.GoogleId = null;
+        user.GoogleAvatarUrl = null;
+        user.AuthProvider = "local";
+
+        await _db.SaveChangesAsync();
+        return new ApiResponse(true);
+    }
+
     private UserDto MapToDto(User u) => new UserDto(
-        u.Id, u.Username, u.Role, u.AvatarPath, u.Bio, u.JoinedAt, u.PostCount, u.ContributionCount, u.MustChangePassword
+        u.Id, 
+        u.Username, 
+        u.Email,
+        u.DisplayName,
+        u.Role, 
+        u.AvatarPath ?? u.GoogleAvatarUrl, 
+        u.Bio, 
+        u.AuthProvider,
+        u.JoinedAt, 
+        u.PostCount, 
+        u.ContributionCount, 
+        u.MustChangePassword
     );
 }

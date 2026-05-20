@@ -1,6 +1,4 @@
 import Link from 'next/link';
-import GlassCard from '@/components/GlassCard';
-import Button from '@/components/Button';
 import { api } from '@/lib/api';
 
 async function getWikiArticles() {
@@ -27,107 +25,107 @@ export default async function Home() {
 
   return (
     <div>
-      {/* Hero Section */}
-      <section style={{
-        position: 'relative',
-        padding: 'var(--space-3xl) 0',
-        minHeight: '60vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'linear-gradient(135deg, var(--accent-secondary) 0%, var(--bg-primary) 100%)',
-        overflow: 'hidden'
-      }}>
-        <div style={{
-          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-          backgroundImage: 'url(https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80)',
-          backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.15, mixBlendMode: 'overlay'
-        }} />
-        <div className="container" style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-          <h1 style={{ fontSize: '4rem', fontWeight: 800, marginBottom: 'var(--space-md)', color: '#fff', textShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
-            Attrition
-          </h1>
-          <p style={{ fontSize: '1.5rem', color: '#e2e8f0', marginBottom: 'var(--space-xl)', maxWidth: '600px', margin: '0 auto var(--space-xl) auto' }}>
-            A 2D Roguelike with Built-in Multiplayer
+      {/* ═══ HERO SECTION ═══ */}
+      <section className="hero">
+        <div className="hero-bg" />
+        <div className="hero-content">
+          <h1 className="hero-title">ATTRITION</h1>
+          <p className="hero-subtitle">
+            Embrace the Darkness. Conquer Together.
           </p>
-          <div style={{ display: 'flex', gap: 'var(--space-md)', justifyContent: 'center' }}>
-            <Link href="/wiki">
-              <Button size="lg">Explore Wiki</Button>
+          <div className="hero-actions">
+            <Link href="/wiki" className="btn btn-primary btn-lg">
+              ⚔ Enter the Wiki
             </Link>
-            <Link href="/forum">
-              <Button variant="secondary" size="lg">Join Forum</Button>
+            <Link href="/forum" className="btn btn-secondary btn-lg">
+              💀 Join the Forum
             </Link>
           </div>
         </div>
       </section>
 
-      <div className="container" style={{ marginTop: 'var(--space-2xl)' }}>
-        {/* Features Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'var(--space-lg)', marginBottom: 'var(--space-3xl)' }}>
-          <GlassCard>
-            <h3>🌍 Explore Biomes</h3>
-            <p style={{ color: 'var(--text-secondary)' }}>Procedurally generated dungeons with unique enemies, traps, and secrets.</p>
-          </GlassCard>
-          <GlassCard>
-            <h3>⚔️ Master Weapons</h3>
-            <p style={{ color: 'var(--text-secondary)' }}>Discover and upgrade dozens of weapons to match your playstyle.</p>
-          </GlassCard>
-          <GlassCard>
-            <h3>🤝 Play Together</h3>
-            <p style={{ color: 'var(--text-secondary)' }}>Team up with friends in co-op or battle in dedicated PvP arenas.</p>
-          </GlassCard>
-        </div>
-
-        {/* Latest Wiki Articles */}
-        <section style={{ marginBottom: 'var(--space-3xl)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-lg)' }}>
-            <h2>Recently Updated Wiki Articles</h2>
-            <Link href="/wiki" style={{ color: 'var(--accent)' }}>View all</Link>
+      <div className="container mt-2xl">
+        {/* ═══ FEATURES GRID ═══ */}
+        <section className="mb-2xl">
+          <div className="features-grid">
+            <div className="feature-card">
+              <span className="feature-icon">🌍</span>
+              <h3>Explore Biomes</h3>
+              <p>Procedurally generated dungeons with unique enemies, traps, and ancient secrets hidden in the dark.</p>
+            </div>
+            <div className="feature-card">
+              <span className="feature-icon">⚔️</span>
+              <h3>Master Weapons</h3>
+              <p>Discover and upgrade dozens of weapons, each with unique movesets to match your playstyle.</p>
+            </div>
+            <div className="feature-card">
+              <span className="feature-icon">🤝</span>
+              <h3>Play Together</h3>
+              <p>Team up with friends in co-op campaigns or test your skills in dedicated PvP arenas.</p>
+            </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 'var(--space-md)' }}>
-            {wikiArticles.map((article: any) => (
-              <GlassCard key={article.id}>
-                <Link href={`/wiki/${article.categorySlug}/${article.slug}`}>
-                  <h3 style={{ marginBottom: 'var(--space-xs)', color: 'var(--text-primary)' }}>{article.title}</h3>
+        </section>
+
+        {/* ═══ LATEST WIKI ARTICLES ═══ */}
+        {wikiArticles.length > 0 && (
+          <section className="mb-2xl">
+            <div className="section-header">
+              <h2>📜 Recently Updated Wiki</h2>
+              <Link href="/wiki">View all →</Link>
+            </div>
+            <div className="grid-auto">
+              {wikiArticles.map((article: any) => (
+                <Link
+                  key={article.id}
+                  href={`/wiki/${article.categorySlug}/${article.slug}`}
+                  className="category-card"
+                >
+                  <h3>{article.title}</h3>
+                  <p className="text-muted" style={{ fontSize: '13px', marginTop: 'var(--space-xs)' }}>
+                    Updated {new Date(article.updatedAt).toLocaleDateString()}
+                  </p>
                 </Link>
-                <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Updated {new Date(article.updatedAt).toLocaleDateString()}</p>
-              </GlassCard>
-            ))}
-          </div>
-        </section>
+              ))}
+            </div>
+          </section>
+        )}
 
-        {/* Latest Forum Threads */}
-        <section style={{ marginBottom: 'var(--space-3xl)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-lg)' }}>
-            <h2>Active Forum Threads</h2>
-            <Link href="/forum" style={{ color: 'var(--accent)' }}>View all</Link>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
-            {forumThreads.map((thread: any) => (
-              <GlassCard key={thread.id} style={{ padding: 'var(--space-md)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Link href={`/forum/${thread.categorySlug || 'general'}/${thread.id}`}>
-                    <h3 style={{ fontSize: '1rem', color: 'var(--text-primary)', margin: 0 }}>{thread.title}</h3>
-                  </Link>
-                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{thread.replyCount} replies</span>
+        {/* ═══ ACTIVE FORUM THREADS ═══ */}
+        {forumThreads.length > 0 && (
+          <section className="mb-2xl">
+            <div className="section-header">
+              <h2>💬 Active Forum Threads</h2>
+              <Link href="/forum">View all →</Link>
+            </div>
+            <div className="thread-list">
+              {forumThreads.map((thread: any) => (
+                <div key={thread.id} className="thread-item">
+                  <div>
+                    <Link href={`/forum/${thread.categorySlug || 'general'}/${thread.id}`}>
+                      <h4 style={{ margin: 0 }}>{thread.title}</h4>
+                    </Link>
+                    <p className="text-muted" style={{ fontSize: '13px', marginTop: 'var(--space-xs)' }}>
+                      By {thread.authorName} • Last active {new Date(thread.lastReplyAt || thread.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="thread-meta">
+                    <span>{thread.replyCount || 0} replies</span>
+                  </div>
                 </div>
-                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: 'var(--space-xs)' }}>
-                  By {thread.authorName} • Last active {new Date(thread.lastReplyAt).toLocaleDateString()}
-                </p>
-              </GlassCard>
-            ))}
-          </div>
-        </section>
+              ))}
+            </div>
+          </section>
+        )}
 
-        {/* CTA Banner */}
-        <section>
-          <GlassCard style={{ textAlign: 'center', padding: 'var(--space-2xl)', background: 'var(--accent-light)', borderColor: 'var(--accent)' }}>
-            <h2 style={{ marginBottom: 'var(--space-sm)' }}>Ready to join the community?</h2>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: 'var(--space-lg)' }}>Create an account to contribute to the wiki and post on the forums.</p>
-            <Link href="/auth/register">
-              <Button size="lg">Create Account</Button>
+        {/* ═══ CTA BANNER ═══ */}
+        <section className="mb-2xl">
+          <div className="cta-banner">
+            <h2>The abyss awaits. Join the hunt.</h2>
+            <p>Create an account to contribute to the wiki and post on the forums.</p>
+            <Link href="/auth/register" className="btn btn-primary btn-lg">
+              🔥 Create Account
             </Link>
-          </GlassCard>
+          </div>
         </section>
       </div>
     </div>

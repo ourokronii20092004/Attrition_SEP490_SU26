@@ -1,4 +1,4 @@
-import React from 'react';
+'use client';
 
 interface PaginationProps {
   currentPage: number;
@@ -9,35 +9,49 @@ interface PaginationProps {
 export default function Pagination({ currentPage, totalPages, onPageChange }: PaginationProps) {
   if (totalPages <= 1) return null;
 
-  const pages = [];
-  for (let i = 1; i <= totalPages; i++) {
-    pages.push(
-      <button
-        key={i}
-        className={currentPage === i ? 'active' : ''}
-        onClick={() => onPageChange(i)}
-      >
-        {i}
-      </button>
-    );
+  const pages: (number | string)[] = [];
+
+  if (totalPages <= 7) {
+    for (let i = 1; i <= totalPages; i++) pages.push(i);
+  } else {
+    pages.push(1);
+    if (currentPage > 3) pages.push('...');
+
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
+
+    for (let i = start; i <= end; i++) pages.push(i);
+
+    if (currentPage < totalPages - 2) pages.push('...');
+    pages.push(totalPages);
   }
 
   return (
-    <div className="pagination" style={{ marginTop: 'var(--space-xl)' }}>
+    <div className="pagination">
       <button
         onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        style={{ opacity: currentPage === 1 ? 0.5 : 1, cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+        disabled={currentPage <= 1}
       >
-        &laquo;
+        ‹
       </button>
-      {pages}
+      {pages.map((page, i) =>
+        typeof page === 'string' ? (
+          <span key={`ellipsis-${i}`} className="text-ghost" style={{ padding: '0 4px' }}>…</span>
+        ) : (
+          <button
+            key={page}
+            className={page === currentPage ? 'active' : ''}
+            onClick={() => onPageChange(page)}
+          >
+            {page}
+          </button>
+        )
+      )}
       <button
         onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        style={{ opacity: currentPage === totalPages ? 0.5 : 1, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+        disabled={currentPage >= totalPages}
       >
-        &raquo;
+        ›
       </button>
     </div>
   );

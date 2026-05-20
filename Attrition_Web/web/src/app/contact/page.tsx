@@ -1,45 +1,102 @@
-import GlassCard from '@/components/GlassCard';
-import Button from '@/components/Button';
-import Input from '@/components/Input';
-import { FiMail, FiMessageSquare, FiTwitter } from 'react-icons/fi';
+'use client';
+import { useState } from 'react';
+import Breadcrumb from '@/components/Breadcrumb';
+import { api } from '@/lib/api';
+import { useToast } from '@/contexts/ToastContext';
 
-export default function Contact() {
+export default function ContactPage() {
+  const { showToast } = useToast();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !message.trim()) {
+      showToast('Please fill in all required fields', 'error');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await api.post('/api/contact', { name, email, subject, message });
+      showToast('Message sent! We\'ll get back to you soon.', 'success');
+      setName('');
+      setEmail('');
+      setSubject('');
+      setMessage('');
+    } catch {
+      showToast('Failed to send message. Please try again.', 'error');
+    }
+    setIsSubmitting(false);
+  };
+
   return (
-    <div className="container" style={{ padding: 'var(--space-2xl) 0', maxWidth: '800px' }}>
-      <h1 style={{ marginBottom: 'var(--space-xl)', textAlign: 'center' }}>Contact Us</h1>
-      
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'var(--space-lg)' }}>
-        <GlassCard>
-          <h2 style={{ marginBottom: 'var(--space-md)' }}>Get in Touch</h2>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: 'var(--space-lg)' }}>
-            Have a question, feedback, or business inquiry? We'd love to hear from you.
-          </p>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-              <FiMail style={{ color: 'var(--accent)' }} size={24} />
-              <span>hello@attrition-game.com</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-              <FiMessageSquare style={{ color: 'var(--accent)' }} size={24} />
-              <a href="#" style={{ color: 'var(--text-primary)' }}>Join our Discord Server</a>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-              <FiTwitter style={{ color: 'var(--accent)' }} size={24} />
-              <a href="#" style={{ color: 'var(--text-primary)' }}>@AttritionGame</a>
-            </div>
-          </div>
-        </GlassCard>
+    <div className="container">
+      <Breadcrumb items={[
+        { label: 'Home', href: '/' },
+        { label: 'Contact' },
+      ]} />
 
-        <GlassCard>
-          <h2 style={{ marginBottom: 'var(--space-md)' }}>Send a Message</h2>
-          <form style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
-            <Input label="Name" placeholder="Your name" />
-            <Input label="Email" type="email" placeholder="Your email address" />
-            <Input label="Message" multiline placeholder="How can we help?" />
-            <Button style={{ marginTop: 'var(--space-sm)' }}>Send Message</Button>
-          </form>
-        </GlassCard>
+      <div className="glass-card-static" style={{ maxWidth: '600px', margin: '0 auto' }}>
+        <h1 className="mb-sm">📬 Contact Us</h1>
+        <p className="text-muted mb-xl">
+          Have a question, bug report, or suggestion? Drop us a message and we&apos;ll get back to you.
+        </p>
+
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <div className="input-group">
+            <label>Name *</label>
+            <input
+              className="input"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Your name"
+              required
+            />
+          </div>
+
+          <div className="input-group">
+            <label>Email</label>
+            <input
+              className="input"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="your@email.com (optional)"
+            />
+          </div>
+
+          <div className="input-group">
+            <label>Subject</label>
+            <input
+              className="input"
+              type="text"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="What is this about?"
+            />
+          </div>
+
+          <div className="input-group">
+            <label>Message *</label>
+            <textarea
+              className="input"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Your message..."
+              rows={6}
+              required
+            />
+          </div>
+
+          <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+            {isSubmitting ? 'Sending...' : '📤 Send Message'}
+          </button>
+        </form>
       </div>
     </div>
   );

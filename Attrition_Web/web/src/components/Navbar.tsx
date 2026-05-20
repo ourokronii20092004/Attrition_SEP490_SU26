@@ -1,84 +1,185 @@
 'use client';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import ThemeToggle from './ThemeToggle';
-import { useState } from 'react';
-import { FiMenu, FiX } from 'react-icons/fi';
+import Avatar from './Avatar';
+
+const COLLECTION_BASE_URL = 'https://collection.hault.io.vn';
+
+function getCollectionUrl(): string {
+  if (typeof window === 'undefined') return COLLECTION_BASE_URL;
+  const token = localStorage.getItem('attrition-token');
+  const refresh = localStorage.getItem('attrition-refresh');
+  if (token && refresh) {
+    return `${COLLECTION_BASE_URL}?token=${encodeURIComponent(token)}&refresh=${encodeURIComponent(refresh)}`;
+  }
+  return COLLECTION_BASE_URL;
+}
+
+const NAV_LINKS = [
+  { href: '/', label: 'Home' },
+  { href: '/wiki', label: 'Wiki' },
+  { href: '/forum', label: 'Forum' },
+  { href: '/about', label: 'About' },
+];
 
 export default function Navbar() {
-  const { user, logout } = useAuth();
-  const [isOpen, setIsOpen] = useState(false);
+  const { user, loading, logout } = useAuth();
+  const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileOpen(false);
+    setDropdownOpen(false);
+  }, [pathname]);
+
+  const isActive = (href: string) => {
+    if (href === '/') return pathname === '/';
+    return pathname.startsWith(href);
+  };
 
   return (
-    <nav style={{
-      position: 'fixed', top: 0, width: '100%', height: 'var(--nav-height)',
-      background: 'var(--glass-bg)', backdropFilter: 'blur(var(--glass-blur))',
-      borderBottom: '1px solid var(--glass-border)', zIndex: 1000,
-      display: 'flex', alignItems: 'center'
-    }}>
-      <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-lg)' }}>
-          <Link href="/" style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--text-primary)' }}>
-            Attrition
-          </Link>
-          <div className="nav-links" style={{ display: 'flex', gap: 'var(--space-md)' }}>
-            <Link href="/" className="nav-link">Home</Link>
-            <Link href="/wiki" className="nav-link">Wiki</Link>
-            <Link href="/forum" className="nav-link">Forum</Link>
-            <Link href="/about" className="nav-link">About</Link>
-            {user?.role === 'Admin' && <Link href="/admin" className="nav-link" style={{ color: 'var(--accent)' }}>Admin</Link>}
-          </div>
+    <nav className="navbar">
+      <div className="navbar-inner">
+        {/* Brand */}
+        <Link href="/" className="navbar-brand">
+          ATTRITION
+        </Link>
+
+        {/* Desktop links */}
+        <div className="navbar-links">
+          {NAV_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`nav-link ${isActive(link.href) ? 'active' : ''}`}
+            >
+              {link.label}
+            </Link>
+          ))}
+          <a
+            href={getCollectionUrl()}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="nav-link nav-link-gold"
+          >
+            ✦ Collection
+          </a>
+          {!loading && user?.role === 'Admin' && (
+            <Link
+              href="/admin"
+              className={`nav-link ${pathname.startsWith('/admin') ? 'active' : ''}`}
+            >
+              ⚙ Admin
+            </Link>
+          )}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
-          <ThemeToggle />
-          
-          <div className="nav-auth" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-            {user ? (
-              <>
-                <Link href={`/profile/${user.username}`} className="nav-link">{user.username}</Link>
-                <button onClick={logout} className="btn btn-ghost btn-sm">Logout</button>
-              </>
-            ) : (
-              <>
-                <Link href="/auth/login" className="btn btn-ghost btn-sm">Login</Link>
-                <Link href="/auth/register" className="btn btn-primary btn-sm">Register</Link>
-              </>
-            )}
-          </div>
-          
-          <button className="mobile-menu-btn" onClick={() => setIsOpen(!isOpen)} style={{ display: 'none', background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}>
-            {isOpen ? <FiX size={24} /> : <FiMenu size={24} />}
+        {/* Right side */}
+        <div className="navbar-right">
+          {loading ? (
+            <div className="spinner" />
+          ) : user ? (
+            <div className="navbar-user" ref={dropdownRef}>
+              <button
+                className="navbar-user-btn"
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+              >
+                <Avatar src={user.avatarUrl} alt={user.username} size="sm" />
+                <span>{user.username}</span>
+                <span>{dropdownOpen ? '▴' : '▾'}</span>
+              </button>
+
+              {dropdownOpen && (
+                <div className="navbar-dropdown">
+                  <Link href={`/profile/${user.username}`}>
+                    👤 Profile
+                  </Link>
+                  <Link href="/profile/settings">
+                    ⚙ Settings
+                  </Link>
+                  <div className="dropdown-divider" />
+                  <button onClick={logout}>
+                    ↪ Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="navbar-right gap-sm">
+              <Link href="/auth/login" className="btn btn-ghost btn-sm">
+                Sign In
+              </Link>
+              <Link href="/auth/register" className="btn btn-primary btn-sm">
+                Sign Up
+              </Link>
+            </div>
+          )}
+
+          {/* Mobile hamburger */}
+          <button
+            className="hamburger"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label="Toggle menu"
+          >
+            {mobileOpen ? '✕' : '☰'}
           </button>
         </div>
       </div>
-      
-      {/* Mobile Menu Overlay */}
-      {isOpen && (
-        <div className="mobile-menu" style={{
-          position: 'absolute', top: 'var(--nav-height)', left: 0, width: '100%',
-          background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)',
-          display: 'flex', flexDirection: 'column', padding: 'var(--space-md)', gap: 'var(--space-sm)'
-        }}>
-          <Link href="/" onClick={() => setIsOpen(false)}>Home</Link>
-          <Link href="/wiki" onClick={() => setIsOpen(false)}>Wiki</Link>
-          <Link href="/forum" onClick={() => setIsOpen(false)}>Forum</Link>
-          <Link href="/about" onClick={() => setIsOpen(false)}>About</Link>
-          {user?.role === 'Admin' && <Link href="/admin" onClick={() => setIsOpen(false)}>Admin</Link>}
-          <hr style={{ borderColor: 'var(--border)', margin: 'var(--space-sm) 0' }} />
-          {user ? (
-            <>
-              <Link href={`/profile/${user.username}`} onClick={() => setIsOpen(false)}>Profile</Link>
-              <button onClick={() => { logout(); setIsOpen(false); }} className="btn btn-ghost" style={{ justifyContent: 'flex-start' }}>Logout</button>
-            </>
-          ) : (
-            <>
-              <Link href="/auth/login" onClick={() => setIsOpen(false)}>Login</Link>
-              <Link href="/auth/register" onClick={() => setIsOpen(false)}>Register</Link>
-            </>
-          )}
-        </div>
-      )}
+
+      {/* Mobile menu */}
+      <div className={`mobile-menu ${mobileOpen ? 'open' : ''}`}>
+        {NAV_LINKS.map((link) => (
+          <Link
+            key={link.href}
+            href={link.href}
+            className={`nav-link ${isActive(link.href) ? 'active' : ''}`}
+          >
+            {link.label}
+          </Link>
+        ))}
+        <a
+          href={getCollectionUrl()}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="nav-link nav-link-gold"
+        >
+          ✦ Collection
+        </a>
+        {!loading && user?.role === 'Admin' && (
+          <Link href="/admin" className="nav-link">⚙ Admin</Link>
+        )}
+        {!loading && !user && (
+          <>
+            <Link href="/auth/login" className="nav-link">Sign In</Link>
+            <Link href="/auth/register" className="nav-link">Sign Up</Link>
+          </>
+        )}
+        {!loading && user && (
+          <>
+            <Link href={`/profile/${user.username}`} className="nav-link">👤 Profile</Link>
+            <Link href="/profile/settings" className="nav-link">⚙ Settings</Link>
+            <button className="nav-link" onClick={logout} style={{ background: 'none', border: 'none', textAlign: 'left', width: '100%', cursor: 'pointer' }}>
+              ↪ Logout
+            </button>
+          </>
+        )}
+      </div>
     </nav>
   );
 }

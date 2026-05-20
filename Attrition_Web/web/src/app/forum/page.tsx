@@ -1,59 +1,94 @@
-import GlassCard from '@/components/GlassCard';
+import Link from 'next/link';
 import Breadcrumb from '@/components/Breadcrumb';
 import { api } from '@/lib/api';
-import Link from 'next/link';
 
-async function getCategories() {
+async function getForumCategories() {
   try {
     const res = await api.get('/api/forum/categories');
-    return res || [];
+    return Array.isArray(res) ? res : (res.data || []);
   } catch {
     return [];
   }
 }
 
-export default async function ForumIndex() {
-  const categories = await getCategories();
+async function getRecentThreads() {
+  try {
+    const res = await api.get('/api/forum/threads?pageSize=10');
+    return res.items || [];
+  } catch {
+    return [];
+  }
+}
+
+export default async function ForumPage() {
+  const categories = await getForumCategories();
+  const recentThreads = await getRecentThreads();
 
   return (
-    <div className="container" style={{ padding: 'var(--space-2xl) 0' }}>
-      <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Forum' }]} />
-      
-      <div style={{ marginBottom: 'var(--space-2xl)' }}>
-        <h1 style={{ marginBottom: 'var(--space-md)' }}>Community Forum</h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', maxWidth: '800px', lineHeight: 1.6 }}>
-          Join the conversation! Discuss builds, report bugs, share fan art, or just hang out with other players.
-        </p>
+    <div className="container">
+      <Breadcrumb items={[
+        { label: 'Home', href: '/' },
+        { label: 'Forum' },
+      ]} />
+
+      <div className="section-header mb-xl">
+        <h1>💬 Community Forum</h1>
+        <Link href="/forum/new" className="btn btn-primary btn-sm">
+          ✏️ New Thread
+        </Link>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
-        {categories.map((cat: any) => (
-          <GlassCard key={cat.id} style={{ transition: 'all var(--transition-base)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-md)' }}>
-              <div style={{ flex: 1, minWidth: '300px' }}>
-                <Link href={`/forum/${cat.slug}`} style={{ textDecoration: 'none' }}>
-                  <h2 style={{ margin: '0 0 var(--space-xs) 0', fontSize: '1.25rem', color: 'var(--accent)' }}>{cat.name}</h2>
-                </Link>
-                <p style={{ color: 'var(--text-secondary)', margin: 0 }}>{cat.description}</p>
-              </div>
-              <div style={{ display: 'flex', gap: 'var(--space-xl)', textAlign: 'right' }}>
+      {/* Categories */}
+      {categories.length > 0 && (
+        <section className="mb-2xl">
+          <h2 className="mb-lg">Categories</h2>
+          <div className="category-grid">
+            {categories.map((cat: any) => (
+              <Link key={cat.id} href={`/forum/${cat.slug}`} className="category-card">
+                <h3>{cat.name}</h3>
+                <p>{cat.description || 'Discuss topics in this category'}</p>
+                <div className="category-count">{cat.threadCount || 0} threads</div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Recent Threads */}
+      {recentThreads.length > 0 && (
+        <section>
+          <h2 className="mb-lg">Recent Threads</h2>
+          <div className="thread-list">
+            {recentThreads.map((thread: any) => (
+              <div key={thread.id} className="thread-item">
                 <div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{cat.threadCount}</div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Threads</div>
-                </div>
-                {cat.latestActivity && (
-                  <div>
-                    <div style={{ fontSize: '14px', color: 'var(--text-primary)', marginTop: '4px' }}>
-                      {new Date(cat.latestActivity).toLocaleDateString()}
-                    </div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Latest Activity</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginBottom: 'var(--space-xs)' }}>
+                    {thread.isPinned && <span className="badge badge-pinned">📌 Pinned</span>}
+                    {thread.isLocked && <span className="badge badge-locked">🔒 Locked</span>}
                   </div>
-                )}
+                  <Link href={`/forum/${thread.categorySlug || 'general'}/${thread.id}`}>
+                    <h4 style={{ margin: 0 }}>{thread.title}</h4>
+                  </Link>
+                  <p className="text-muted" style={{ fontSize: '13px', marginTop: 'var(--space-xs)' }}>
+                    By {thread.authorName} • {new Date(thread.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="thread-meta">
+                  <span>{thread.replyCount || 0} replies</span>
+                </div>
               </div>
-            </div>
-          </GlassCard>
-        ))}
-      </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {categories.length === 0 && recentThreads.length === 0 && (
+        <div className="empty-state">
+          <div className="empty-state-icon">💬</div>
+          <h3>Forum is empty</h3>
+          <p>Be the first to start a discussion!</p>
+        </div>
+      )}
     </div>
   );
 }

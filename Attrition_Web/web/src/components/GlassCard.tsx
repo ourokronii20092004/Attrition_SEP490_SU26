@@ -1,8 +1,22 @@
-import React from 'react';
+'use client';
+import { ReactNode } from 'react';
 
-export default function GlassCard({ children, className = '', style = {} }: { children: React.ReactNode, className?: string, style?: React.CSSProperties }) {
+interface GlassCardProps {
+  children: ReactNode;
+  className?: string;
+  hoverable?: boolean;
+  onClick?: () => void;
+}
+
+export default function GlassCard({ children, className = '', hoverable = true, onClick }: GlassCardProps) {
+  const baseClass = hoverable ? 'glass-card' : 'glass-card-static';
   return (
-    <div className={`glass-card ${className}`} style={style}>
+    <div
+      className={`${baseClass} ${className}`}
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+    >
       {children}
     </div>
   );

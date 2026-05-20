@@ -48,6 +48,46 @@ public static class SeedData
         };
         context.ForumCategories.AddRange(forumCategories);
 
+        // Seed Game Data
+        if (!context.Levels.Any())
+        {
+            var levels = new List<Level>();
+            for (int i = 1; i <= 50; i++)
+            {
+                levels.Add(new Level { LevelNumber = i, ExpRequired = i * 100, HpGrowth = 10, AdGrowth = 2 });
+            }
+            context.Levels.AddRange(levels);
+        }
+
+        if (!context.Items.Any())
+        {
+            context.Consumables.Add(new Consumable { Name = "Health Potion", HpRestore = 50, ItemType = "consumable", Description = "Restores 50 HP" });
+            context.Gears.Add(new Gear { Name = "Iron Sword", EquipSlot = "weapon", BonusAd = 10, ItemType = "gear" });
+        }
+
+        if (!context.Enemies.Any())
+        {
+            context.Enemies.Add(new Enemy { EnemyId = "skel_01", Name = "Skeleton", Tier = "normal", Hp = 100, Ad = 10, ExpReward = 50 });
+        }
+
+        // Seed Music Data
+        if (!context.MusicAlbums.Any())
+        {
+            var album = new MusicAlbum { Title = "Attrition: Original Soundtrack", Slug = "attrition-ost", TrackCount = 1 };
+            context.MusicAlbums.Add(album);
+            context.SaveChanges();
+
+            context.MusicTracks.Add(new MusicTrack
+            {
+                AlbumId = album.AlbumId,
+                Title = "Friday Night",
+                Slug = "friday-night",
+                TrackNumber = 1,
+                Duration = 210, // Assuming 3:30
+                FilePath = "albums/attrition-ost/01-friday-night.mp3"
+            });
+        }
+
         await context.SaveChangesAsync();
     }
 }

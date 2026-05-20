@@ -1,27 +1,28 @@
-import React from 'react';
+'use client';
+import { InputHTMLAttributes, TextareaHTMLAttributes } from 'react';
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement | HTMLTextAreaElement> {
+interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
-  multiline?: boolean;
+  textarea?: boolean;
 }
 
-export default function Input({ label, error, multiline, className = '', ...props }: InputProps) {
+export default function Input({ label, error, textarea, className = '', ...props }: InputProps) {
   return (
-    <div className={`input-group ${className}`}>
+    <div className="input-group">
       {label && <label>{label}</label>}
-      {multiline ? (
+      {textarea ? (
         <textarea
-          className={`input ${error ? 'input-error' : ''}`}
-          {...(props as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
+          className={`input ${error ? 'input-error' : ''} ${className}`}
+          {...(props as TextareaHTMLAttributes<HTMLTextAreaElement>)}
         />
       ) : (
         <input
-          className={`input ${error ? 'input-error' : ''}`}
-          {...(props as React.InputHTMLAttributes<HTMLInputElement>)}
+          className={`input ${error ? 'input-error' : ''} ${className}`}
+          {...props}
         />
       )}
-      {error && <span style={{ color: 'var(--danger)', fontSize: '12px' }}>{error}</span>}
+      {error && <span className="text-blood" style={{ fontSize: '13px' }}>{error}</span>}
     </div>
   );
 }

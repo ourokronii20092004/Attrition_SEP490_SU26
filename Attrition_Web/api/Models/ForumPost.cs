@@ -8,4 +8,10 @@ public class ForumPost
     public string Content { get; set; } = string.Empty;   // Markdown
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
+
+    // Reddit-style soft-remove moderation
+    public bool IsRemoved { get; set; } = false;
+    public string? RemovedReason { get; set; }
+    public Guid? RemovedByUserId { get; set; }
+    public DateTime? RemovedAt { get; set; }
 }

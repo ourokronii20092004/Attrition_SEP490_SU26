@@ -1,121 +1,139 @@
 'use client';
-import { useState, useEffect } from 'react';
-import GlassCard from '@/components/GlassCard';
-import Button from '@/components/Button';
-import Input from '@/components/Input';
-import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 
-export default function Register() {
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
+
+export default function RegisterPage() {
+  const { register } = useAuth();
+  const { showToast } = useToast();
+  const router = useRouter();
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
-  const { register, user, loading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (user) {
-      router.push('/');
-    }
-  }, [user, router]);
-
-  const getPasswordStrength = (pass: string) => {
-    let score = 0;
-    if (pass.length >= 8) score += 20;
-    if (/[A-Z]/.test(pass)) score += 20;
-    if (/[a-z]/.test(pass)) score += 20;
-    if (/[0-9]/.test(pass)) score += 20;
-    if (/[^a-zA-Z0-9]/.test(pass)) score += 20;
-    return score;
-  };
-
-  const strength = getPasswordStrength(password);
-  let strengthColor = 'var(--danger)';
-  if (strength >= 60) strengthColor = 'var(--warning)';
-  if (strength >= 100) strengthColor = 'var(--success)';
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-
+    if (!username.trim() || !password.trim()) {
+      showToast('Please fill in all required fields', 'error');
+      return;
+    }
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      showToast('Passwords do not match', 'error');
+      return;
+    }
+    if (password.length < 6) {
+      showToast('Password must be at least 6 characters', 'error');
       return;
     }
 
-    const res = await register(username, password);
-    if (!res.success) {
-      // API typically returns validation errors in a specific format or generic message
-      setError(res.error || 'Failed to register');
+    setIsSubmitting(true);
+    const result = await register(username, password, email || undefined);
+    setIsSubmitting(false);
+
+    if (result.success) {
+      showToast('Account created! Welcome to the hunt.', 'success');
+      router.push('/');
+    } else {
+      showToast(result.error || 'Registration failed', 'error');
     }
   };
 
-  if (loading) return null;
+  const handleGoogleLogin = () => {
+    const redirectUri = `${window.location.origin}/auth/callback/google`;
+    const googleUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=openid%20email%20profile`;
+    window.location.href = googleUrl;
+  };
 
   return (
-    <div className="container" style={{ padding: 'var(--space-3xl) 0', display: 'flex', justifyContent: 'center' }}>
-      <GlassCard style={{ width: '100%', maxWidth: '400px' }}>
-        <h1 style={{ marginBottom: 'var(--space-lg)', textAlign: 'center' }}>Create Account</h1>
-        
-        {error && (
-          <div style={{ padding: '10px', background: 'rgba(220, 38, 38, 0.1)', border: '1px solid var(--danger)', borderRadius: 'var(--glass-radius-sm)', color: 'var(--danger)', marginBottom: 'var(--space-md)', fontSize: '14px' }}>
-            {error}
+    <div className="auth-page">
+      <div className="auth-card">
+        <h1>Join the Hunt</h1>
+        <p className="auth-subtitle">Create your account and enter the abyss</p>
+
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <div className="input-group">
+            <label>Username *</label>
+            <input
+              className="input"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Choose a username"
+              required
+            />
           </div>
+
+          <div className="input-group">
+            <label>Email</label>
+            <input
+              className="input"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="your@email.com (optional)"
+            />
+          </div>
+
+          <div className="input-group">
+            <label>Password *</label>
+            <input
+              className="input"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="At least 6 characters"
+              required
+              minLength={6}
+            />
+          </div>
+
+          <div className="input-group">
+            <label>Confirm Password *</label>
+            <input
+              className="input"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Repeat your password"
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="btn btn-primary btn-full"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Creating account...' : '⚔ Create Account'}
+          </button>
+        </form>
+
+        {GOOGLE_CLIENT_ID && (
+          <>
+            <div className="auth-divider mt-lg">
+              <span>or continue with</span>
+            </div>
+            <button
+              className="google-btn mt-md"
+              onClick={handleGoogleLogin}
+            >
+              <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+              Google
+            </button>
+          </>
         )}
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
-          <Input 
-            label="Username" 
-            value={username} 
-            onChange={(e) => setUsername(e.target.value)} 
-            required 
-            minLength={3}
-            maxLength={30}
-            pattern="^[a-zA-Z0-9_]+$"
-            title="Letters, numbers, and underscores only"
-          />
-          
-          <div>
-            <Input 
-              label="Password" 
-              type="password" 
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
-              required 
-            />
-            {password.length > 0 && (
-              <div style={{ marginTop: '4px' }}>
-                <div style={{ height: '4px', width: '100%', background: 'var(--border)', borderRadius: '2px', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${strength}%`, background: strengthColor, transition: 'var(--transition-fast)' }} />
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '8px', fontSize: '11px', color: 'var(--text-muted)' }}>
-                  <span style={{ color: password.length >= 8 ? 'var(--success)' : 'inherit' }}>✓ 8+ chars</span>
-                  <span style={{ color: /[A-Z]/.test(password) ? 'var(--success)' : 'inherit' }}>✓ Uppercase</span>
-                  <span style={{ color: /[a-z]/.test(password) ? 'var(--success)' : 'inherit' }}>✓ Lowercase</span>
-                  <span style={{ color: /[0-9]/.test(password) ? 'var(--success)' : 'inherit' }}>✓ Number</span>
-                  <span style={{ color: /[^a-zA-Z0-9]/.test(password) ? 'var(--success)' : 'inherit' }}>✓ Special</span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <Input 
-            label="Confirm Password" 
-            type="password" 
-            value={confirmPassword} 
-            onChange={(e) => setConfirmPassword(e.target.value)} 
-            required 
-          />
-          
-          <Button type="submit" style={{ marginTop: 'var(--space-sm)' }} disabled={strength < 100 || password !== confirmPassword}>Register</Button>
-          
-          <p style={{ textAlign: 'center', marginTop: 'var(--space-md)', fontSize: '14px', color: 'var(--text-secondary)' }}>
-            Already have an account? <Link href="/auth/login" style={{ color: 'var(--accent)' }}>Login</Link>
-          </p>
-        </form>
-      </GlassCard>
+        <div className="auth-footer">
+          Already have an account?{' '}
+          <Link href="/auth/login">Sign in</Link>
+        </div>
+      </div>
     </div>
   );
 }

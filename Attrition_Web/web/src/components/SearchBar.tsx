@@ -1,36 +1,51 @@
 'use client';
-import React, { useEffect, useState } from 'react';
-import Input from './Input';
+import { useState, useCallback } from 'react';
 
 interface SearchBarProps {
-  value: string;
-  onChange: (value: string) => void;
   placeholder?: string;
+  onSearch: (query: string) => void;
+  debounceMs?: number;
+  className?: string;
 }
 
-export default function SearchBar({ value, onChange, placeholder = 'Search...' }: SearchBarProps) {
-  const [localValue, setLocalValue] = useState(value);
+export default function SearchBar({
+  placeholder = 'Search...',
+  onSearch,
+  debounceMs = 300,
+  className = '',
+}: SearchBarProps) {
+  const [value, setValue] = useState('');
+  const [timer, setTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onChange(localValue);
-    }, 300);
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newValue = e.target.value;
+      setValue(newValue);
 
-    return () => clearTimeout(timer);
-  }, [localValue, onChange]);
+      if (timer) clearTimeout(timer);
+      const newTimer = setTimeout(() => {
+        onSearch(newValue);
+      }, debounceMs);
+      setTimer(newTimer);
+    },
+    [onSearch, debounceMs, timer]
+  );
 
-  useEffect(() => {
-    setLocalValue(value);
-  }, [value]);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (timer) clearTimeout(timer);
+    onSearch(value);
+  };
 
   return (
-    <Input
-      type="text"
-      value={localValue}
-      onChange={(e) => setLocalValue(e.target.value)}
-      placeholder={placeholder}
-      className="search-bar"
-      style={{ width: '100%', maxWidth: '400px' }}
-    />
+    <form className={`search-bar ${className}`} onSubmit={handleSubmit}>
+      <span className="search-bar-icon">🔍</span>
+      <input
+        type="text"
+        value={value}
+        onChange={handleChange}
+        placeholder={placeholder}
+      />
+    </form>
   );
 }

@@ -12,6 +12,16 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Max upload size: 100MB (for music files)
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 100 * 1024 * 1024; // 100MB
+});
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 100 * 1024 * 1024; // 100MB
+});
+
 // Database
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -42,11 +52,19 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 
+// SignalR
+builder.Services.AddSignalR();
+
 // Services
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<WikiService>();
 builder.Services.AddScoped<ForumService>();
 builder.Services.AddScoped<FileService>();
+builder.Services.AddScoped<GameDataService>();
+builder.Services.AddScoped<CharacterService>();
+builder.Services.AddScoped<GameSaveService>();
+builder.Services.AddScoped<RoomService>();
+builder.Services.AddSingleton<GameSessionService>();
 
 // FluentValidation
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
@@ -56,10 +74,17 @@ builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
-        policy.WithOrigins("http://localhost:3000", "http://web:3000")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials());
+        policy.WithOrigins(
+            "http://localhost:3000",
+            "http://web:3000",
+            "http://localhost:3001",
+            "http://collection:3001",
+            "https://attrition.hault.io.vn",
+            "https://collection.hault.io.vn"
+        )
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials());
 });
 
 builder.Services.AddControllers();
@@ -95,6 +120,7 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = "/uploads"
 });
 app.MapControllers();
+app.MapHub<Attrition.API.Hubs.GameHub>("/gamehub");
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
 
 app.Run();

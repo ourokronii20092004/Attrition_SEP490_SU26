@@ -1,13 +1,15 @@
-import React from 'react';
+'use client';
+import { ReactNode } from 'react';
 
 interface BadgeProps {
-  variant: 'admin' | 'user' | 'pinned' | 'locked' | 'success' | 'warning' | 'danger';
-  children: React.ReactNode;
+  children: ReactNode;
+  variant?: 'admin' | 'mod' | 'user' | 'pinned' | 'locked' | 'ember' | 'success' | 'danger' | 'info' | 'warning';
+  className?: string;
 }
 
-export default function Badge({ variant, children }: BadgeProps) {
+export default function Badge({ children, variant = 'user', className = '' }: BadgeProps) {
   return (
-    <span className={`badge badge-${variant}`}>
+    <span className={`badge badge-${variant} ${className}`}>
       {children}
     </span>
   );
