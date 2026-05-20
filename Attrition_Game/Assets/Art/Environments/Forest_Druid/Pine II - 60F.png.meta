@@ -1,0 +1,1677 @@
+fileFormatVersion: 2
+guid: 43a33428d9bf9c047b0dc02702621c4a
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -4288117856080945125
+    second: Pine II - 60F_0
+  - first:
+      213: 607647825389401637
+    second: Pine II - 60F_1
+  - first:
+      213: -4969930781114541121
+    second: Pine II - 60F_2
+  - first:
+      213: -9098863847106036377
+    second: Pine II - 60F_3
+  - first:
+      213: -4604308218618398792
+    second: Pine II - 60F_4
+  - first:
+      213: -1348469738040545916
+    second: Pine II - 60F_5
+  - first:
+      213: -8455107950278290986
+    second: Pine II - 60F_6
+  - first:
+      213: -3307711276848469146
+    second: Pine II - 60F_7
+  - first:
+      213: -1479053973386429614
+    second: Pine II - 60F_8
+  - first:
+      213: 4905523882901407764
+    second: Pine II - 60F_9
+  - first:
+      213: 8575564965613448168
+    second: Pine II - 60F_10
+  - first:
+      213: 5602502532461394248
+    second: Pine II - 60F_11
+  - first:
+      213: 4574593453568905123
+    second: Pine II - 60F_12
+  - first:
+      213: -3737377522933345047
+    second: Pine II - 60F_13
+  - first:
+      213: 3083655849295000299
+    second: Pine II - 60F_14
+  - first:
+      213: -6210898007317843594
+    second: Pine II - 60F_15
+  - first:
+      213: 2933226417921339893
+    second: Pine II - 60F_16
+  - first:
+      213: -8510340597586963945
+    second: Pine II - 60F_17
+  - first:
+      213: 2398690203318672086
+    second: Pine II - 60F_18
+  - first:
+      213: 1832127717550937227
+    second: Pine II - 60F_19
+  - first:
+      213: -8730047384918741943
+    second: Pine II - 60F_20
+  - first:
+      213: 4589654052504024501
+    second: Pine II - 60F_21
+  - first:
+      213: -3333590509180732471
+    second: Pine II - 60F_22
+  - first:
+      213: 7708349013750666721
+    second: Pine II - 60F_23
+  - first:
+      213: -1550510755713361789
+    second: Pine II - 60F_24
+  - first:
+      213: 8227499002707879721
+    second: Pine II - 60F_25
+  - first:
+      213: -3180334250469962546
+    second: Pine II - 60F_26
+  - first:
+      213: 3775192191822709478
+    second: Pine II - 60F_27
+  - first:
+      213: 948362357892695561
+    second: Pine II - 60F_28
+  - first:
+      213: 8327235480967590072
+    second: Pine II - 60F_29
+  - first:
+      213: 3250255797424842707
+    second: Pine II - 60F_30
+  - first:
+      213: 5370084873940593821
+    second: Pine II - 60F_31
+  - first:
+      213: -443663396016981294
+    second: Pine II - 60F_32
+  - first:
+      213: 6584800251600600710
+    second: Pine II - 60F_33
+  - first:
+      213: 1378817045222967270
+    second: Pine II - 60F_34
+  - first:
+      213: 7907628912055583320
+    second: Pine II - 60F_35
+  - first:
+      213: -4614722828100887706
+    second: Pine II - 60F_36
+  - first:
+      213: 1194374624911511308
+    second: Pine II - 60F_37
+  - first:
+      213: -1940590108411391983
+    second: Pine II - 60F_38
+  - first:
+      213: -9002152104314696254
+    second: Pine II - 60F_39
+  - first:
+      213: -5335104998047351474
+    second: Pine II - 60F_40
+  - first:
+      213: -3005324025453583468
+    second: Pine II - 60F_41
+  - first:
+      213: 5064695631701755260
+    second: Pine II - 60F_42
+  - first:
+      213: -6493580688837563789
+    second: Pine II - 60F_43
+  - first:
+      213: 426965806624656521
+    second: Pine II - 60F_44
+  - first:
+      213: 4760774059742685456
+    second: Pine II - 60F_45
+  - first:
+      213: -3605848213798229184
+    second: Pine II - 60F_46
+  - first:
+      213: -3330725577420643230
+    second: Pine II - 60F_47
+  - first:
+      213: -5470929066454068964
+    second: Pine II - 60F_48
+  - first:
+      213: -2594942839274434534
+    second: Pine II - 60F_49
+  - first:
+      213: 5418335371460313655
+    second: Pine II - 60F_50
+  - first:
+      213: -5837680224166016067
+    second: Pine II - 60F_51
+  - first:
+      213: 2221438718817536488
+    second: Pine II - 60F_52
+  - first:
+      213: 6660696082808304024
+    second: Pine II - 60F_53
+  - first:
+      213: 4607103517731345330
+    second: Pine II - 60F_54
+  - first:
+      213: -951118691695836947
+    second: Pine II - 60F_55
+  - first:
+      213: -1866138200405492069
+    second: Pine II - 60F_56
+  - first:
+      213: -3170843170283093495
+    second: Pine II - 60F_57
+  - first:
+      213: 7087442725947314812
+    second: Pine II - 60F_58
+  - first:
+      213: 3038917300229851502
+    second: Pine II - 60F_59
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Pine II - 60F_0
+      rect:
+        serializedVersion: 2
+        x: 95
+        y: 1858
+        width: 70
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b102941878b8d74c0800000000000000
+      internalID: -4288117856080945125
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_1
+      rect:
+        serializedVersion: 2
+        x: 351
+        y: 1858
+        width: 70
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 526bfdc4a7cce6800800000000000000
+      internalID: 607647825389401637
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_2
+      rect:
+        serializedVersion: 2
+        x: 607
+        y: 1858
+        width: 70
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fbb53615942470bb0800000000000000
+      internalID: -4969930781114541121
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_3
+      rect:
+        serializedVersion: 2
+        x: 863
+        y: 1858
+        width: 70
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 76db995f9875ab180800000000000000
+      internalID: -9098863847106036377
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_4
+      rect:
+        serializedVersion: 2
+        x: 1119
+        y: 1858
+        width: 70
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8b7b6d0e1163a10c0800000000000000
+      internalID: -4604308218618398792
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_5
+      rect:
+        serializedVersion: 2
+        x: 1375
+        y: 1858
+        width: 70
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 48daab1fae5494de0800000000000000
+      internalID: -1348469738040545916
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_6
+      rect:
+        serializedVersion: 2
+        x: 1631
+        y: 1858
+        width: 70
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6d1d416cd1c69aa80800000000000000
+      internalID: -8455107950278290986
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_7
+      rect:
+        serializedVersion: 2
+        x: 1887
+        y: 1858
+        width: 70
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 66ba4e36e16a812d0800000000000000
+      internalID: -3307711276848469146
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_8
+      rect:
+        serializedVersion: 2
+        x: 95
+        y: 1602
+        width: 70
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 25bfba06f38597be0800000000000000
+      internalID: -1479053973386429614
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_9
+      rect:
+        serializedVersion: 2
+        x: 351
+        y: 1602
+        width: 70
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 418888d1bfbe31440800000000000000
+      internalID: 4905523882901407764
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_10
+      rect:
+        serializedVersion: 2
+        x: 607
+        y: 1602
+        width: 70
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8ebaca3a6e6820770800000000000000
+      internalID: 8575564965613448168
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_11
+      rect:
+        serializedVersion: 2
+        x: 863
+        y: 1602
+        width: 70
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8497694be5610cd40800000000000000
+      internalID: 5602502532461394248
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_12
+      rect:
+        serializedVersion: 2
+        x: 1119
+        y: 1602
+        width: 70
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3af4dcf32883c7f30800000000000000
+      internalID: 4574593453568905123
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_13
+      rect:
+        serializedVersion: 2
+        x: 1375
+        y: 1602
+        width: 70
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9e45702c1fa222cc0800000000000000
+      internalID: -3737377522933345047
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_14
+      rect:
+        serializedVersion: 2
+        x: 1631
+        y: 1602
+        width: 70
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: be2b8c238a85bca20800000000000000
+      internalID: 3083655849295000299
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_15
+      rect:
+        serializedVersion: 2
+        x: 1887
+        y: 1602
+        width: 70
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 67173a94b257ec9a0800000000000000
+      internalID: -6210898007317843594
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_16
+      rect:
+        serializedVersion: 2
+        x: 95
+        y: 1346
+        width: 70
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5f13efdd2e9e4b820800000000000000
+      internalID: 2933226417921339893
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_17
+      rect:
+        serializedVersion: 2
+        x: 351
+        y: 1346
+        width: 70
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7125e33f05235e980800000000000000
+      internalID: -8510340597586963945
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_18
+      rect:
+        serializedVersion: 2
+        x: 607
+        y: 1346
+        width: 70
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6dad407f70cd94120800000000000000
+      internalID: 2398690203318672086
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_19
+      rect:
+        serializedVersion: 2
+        x: 863
+        y: 1346
+        width: 70
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b8455cbb3760d6910800000000000000
+      internalID: 1832127717550937227
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_20
+      rect:
+        serializedVersion: 2
+        x: 1119
+        y: 1346
+        width: 70
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 94c279d3824a8d680800000000000000
+      internalID: -8730047384918741943
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_21
+      rect:
+        serializedVersion: 2
+        x: 1375
+        y: 1346
+        width: 70
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5b53f613b0ab1bf30800000000000000
+      internalID: 4589654052504024501
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_22
+      rect:
+        serializedVersion: 2
+        x: 1631
+        y: 1346
+        width: 70
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9cb3ba11815bcb1d0800000000000000
+      internalID: -3333590509180732471
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_23
+      rect:
+        serializedVersion: 2
+        x: 1887
+        y: 1346
+        width: 70
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1e55751669e89fa60800000000000000
+      internalID: 7708349013750666721
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_24
+      rect:
+        serializedVersion: 2
+        x: 95
+        y: 1090
+        width: 70
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3885841ceaa7b7ae0800000000000000
+      internalID: -1550510755713361789
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_25
+      rect:
+        serializedVersion: 2
+        x: 351
+        y: 1090
+        width: 70
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 927a84670c2fd2270800000000000000
+      internalID: 8227499002707879721
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_26
+      rect:
+        serializedVersion: 2
+        x: 607
+        y: 1090
+        width: 70
+        height: 125
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ecccabd69de2dd3d0800000000000000
+      internalID: -3180334250469962546
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_27
+      rect:
+        serializedVersion: 2
+        x: 863
+        y: 1090
+        width: 70
+        height: 125
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6e2cb60fb4d246430800000000000000
+      internalID: 3775192191822709478
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_28
+      rect:
+        serializedVersion: 2
+        x: 1119
+        y: 1090
+        width: 70
+        height: 125
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 906cb843a82492d00800000000000000
+      internalID: 948362357892695561
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_29
+      rect:
+        serializedVersion: 2
+        x: 1375
+        y: 1090
+        width: 70
+        height: 125
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8b03a14ec88409370800000000000000
+      internalID: 8327235480967590072
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_30
+      rect:
+        serializedVersion: 2
+        x: 1631
+        y: 1090
+        width: 70
+        height: 125
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3d769aa5d6a3b1d20800000000000000
+      internalID: 3250255797424842707
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_31
+      rect:
+        serializedVersion: 2
+        x: 1887
+        y: 1090
+        width: 70
+        height: 125
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d9c6decadbf568a40800000000000000
+      internalID: 5370084873940593821
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_32
+      rect:
+        serializedVersion: 2
+        x: 95
+        y: 834
+        width: 70
+        height: 125
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2da7090fd7ac7d9f0800000000000000
+      internalID: -443663396016981294
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_33
+      rect:
+        serializedVersion: 2
+        x: 350
+        y: 834
+        width: 71
+        height: 125
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 68e7e89e0f8e16b50800000000000000
+      internalID: 6584800251600600710
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_34
+      rect:
+        serializedVersion: 2
+        x: 606
+        y: 834
+        width: 71
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6e7c4ce1cca822310800000000000000
+      internalID: 1378817045222967270
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_35
+      rect:
+        serializedVersion: 2
+        x: 862
+        y: 834
+        width: 71
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8528eae599a8dbd60800000000000000
+      internalID: 7907628912055583320
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_36
+      rect:
+        serializedVersion: 2
+        x: 1118
+        y: 834
+        width: 71
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 66b1926a90635ffb0800000000000000
+      internalID: -4614722828100887706
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_37
+      rect:
+        serializedVersion: 2
+        x: 1374
+        y: 834
+        width: 72
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c0f479ea465439010800000000000000
+      internalID: 1194374624911511308
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_38
+      rect:
+        serializedVersion: 2
+        x: 1629
+        y: 834
+        width: 73
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 110908df393a115e0800000000000000
+      internalID: -1940590108411391983
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_39
+      rect:
+        serializedVersion: 2
+        x: 1885
+        y: 834
+        width: 73
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2cd89484b5ee11380800000000000000
+      internalID: -9002152104314696254
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_40
+      rect:
+        serializedVersion: 2
+        x: 93
+        y: 578
+        width: 73
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e4df9f75546e5f5b0800000000000000
+      internalID: -5335104998047351474
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_41
+      rect:
+        serializedVersion: 2
+        x: 349
+        y: 578
+        width: 73
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 49364e3c8b1fa46d0800000000000000
+      internalID: -3005324025453583468
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_42
+      rect:
+        serializedVersion: 2
+        x: 605
+        y: 578
+        width: 73
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c754e07d7d9694640800000000000000
+      internalID: 5064695631701755260
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_43
+      rect:
+        serializedVersion: 2
+        x: 861
+        y: 578
+        width: 73
+        height: 125
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 37a208994ca22e5a0800000000000000
+      internalID: -6493580688837563789
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_44
+      rect:
+        serializedVersion: 2
+        x: 1117
+        y: 578
+        width: 73
+        height: 125
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 98cc9139323ece500800000000000000
+      internalID: 426965806624656521
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_45
+      rect:
+        serializedVersion: 2
+        x: 1373
+        y: 578
+        width: 73
+        height: 125
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0196bde98caa11240800000000000000
+      internalID: 4760774059742685456
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_46
+      rect:
+        serializedVersion: 2
+        x: 1629
+        y: 578
+        width: 73
+        height: 125
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 04b6496772475fdc0800000000000000
+      internalID: -3605848213798229184
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_47
+      rect:
+        serializedVersion: 2
+        x: 1885
+        y: 578
+        width: 73
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 264e889fbb2e6c1d0800000000000000
+      internalID: -3330725577420643230
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_48
+      rect:
+        serializedVersion: 2
+        x: 93
+        y: 322
+        width: 73
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c1155a2100b5314b0800000000000000
+      internalID: -5470929066454068964
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_49
+      rect:
+        serializedVersion: 2
+        x: 349
+        y: 322
+        width: 73
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a109a9c7c39ecfbd0800000000000000
+      internalID: -2594942839274434534
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_50
+      rect:
+        serializedVersion: 2
+        x: 605
+        y: 322
+        width: 73
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 73283d1105bc13b40800000000000000
+      internalID: 5418335371460313655
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_51
+      rect:
+        serializedVersion: 2
+        x: 861
+        y: 322
+        width: 73
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dbb0346f3c46cfea0800000000000000
+      internalID: -5837680224166016067
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_52
+      rect:
+        serializedVersion: 2
+        x: 1117
+        y: 322
+        width: 73
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8e90b6dbeb224de10800000000000000
+      internalID: 2221438718817536488
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_53
+      rect:
+        serializedVersion: 2
+        x: 1374
+        y: 322
+        width: 72
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 891ff942ccb8f6c50800000000000000
+      internalID: 6660696082808304024
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_54
+      rect:
+        serializedVersion: 2
+        x: 1630
+        y: 322
+        width: 72
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b354d96d38bfef30800000000000000
+      internalID: 4607103517731345330
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_55
+      rect:
+        serializedVersion: 2
+        x: 1886
+        y: 322
+        width: 71
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: de04c32d692fcc2f0800000000000000
+      internalID: -951118691695836947
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_56
+      rect:
+        serializedVersion: 2
+        x: 94
+        y: 66
+        width: 71
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b9e3b07a1352a16e0800000000000000
+      internalID: -1866138200405492069
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_57
+      rect:
+        serializedVersion: 2
+        x: 350
+        y: 66
+        width: 71
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9028dccbfe6eef3d0800000000000000
+      internalID: -3170843170283093495
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_58
+      rect:
+        serializedVersion: 2
+        x: 607
+        y: 66
+        width: 70
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c72140ebb97ab5260800000000000000
+      internalID: 7087442725947314812
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pine II - 60F_59
+      rect:
+        serializedVersion: 2
+        x: 863
+        y: 66
+        width: 70
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e694df50f276c2a20800000000000000
+      internalID: 3038917300229851502
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Pine II - 60F_0: -4288117856080945125
+      Pine II - 60F_1: 607647825389401637
+      Pine II - 60F_10: 8575564965613448168
+      Pine II - 60F_11: 5602502532461394248
+      Pine II - 60F_12: 4574593453568905123
+      Pine II - 60F_13: -3737377522933345047
+      Pine II - 60F_14: 3083655849295000299
+      Pine II - 60F_15: -6210898007317843594
+      Pine II - 60F_16: 2933226417921339893
+      Pine II - 60F_17: -8510340597586963945
+      Pine II - 60F_18: 2398690203318672086
+      Pine II - 60F_19: 1832127717550937227
+      Pine II - 60F_2: -4969930781114541121
+      Pine II - 60F_20: -8730047384918741943
+      Pine II - 60F_21: 4589654052504024501
+      Pine II - 60F_22: -3333590509180732471
+      Pine II - 60F_23: 7708349013750666721
+      Pine II - 60F_24: -1550510755713361789
+      Pine II - 60F_25: 8227499002707879721
+      Pine II - 60F_26: -3180334250469962546
+      Pine II - 60F_27: 3775192191822709478
+      Pine II - 60F_28: 948362357892695561
+      Pine II - 60F_29: 8327235480967590072
+      Pine II - 60F_3: -9098863847106036377
+      Pine II - 60F_30: 3250255797424842707
+      Pine II - 60F_31: 5370084873940593821
+      Pine II - 60F_32: -443663396016981294
+      Pine II - 60F_33: 6584800251600600710
+      Pine II - 60F_34: 1378817045222967270
+      Pine II - 60F_35: 7907628912055583320
+      Pine II - 60F_36: -4614722828100887706
+      Pine II - 60F_37: 1194374624911511308
+      Pine II - 60F_38: -1940590108411391983
+      Pine II - 60F_39: -9002152104314696254
+      Pine II - 60F_4: -4604308218618398792
+      Pine II - 60F_40: -5335104998047351474
+      Pine II - 60F_41: -3005324025453583468
+      Pine II - 60F_42: 5064695631701755260
+      Pine II - 60F_43: -6493580688837563789
+      Pine II - 60F_44: 426965806624656521
+      Pine II - 60F_45: 4760774059742685456
+      Pine II - 60F_46: -3605848213798229184
+      Pine II - 60F_47: -3330725577420643230
+      Pine II - 60F_48: -5470929066454068964
+      Pine II - 60F_49: -2594942839274434534
+      Pine II - 60F_5: -1348469738040545916
+      Pine II - 60F_50: 5418335371460313655
+      Pine II - 60F_51: -5837680224166016067
+      Pine II - 60F_52: 2221438718817536488
+      Pine II - 60F_53: 6660696082808304024
+      Pine II - 60F_54: 4607103517731345330
+      Pine II - 60F_55: -951118691695836947
+      Pine II - 60F_56: -1866138200405492069
+      Pine II - 60F_57: -3170843170283093495
+      Pine II - 60F_58: 7087442725947314812
+      Pine II - 60F_59: 3038917300229851502
+      Pine II - 60F_6: -8455107950278290986
+      Pine II - 60F_7: -3307711276848469146
+      Pine II - 60F_8: -1479053973386429614
+      Pine II - 60F_9: 4905523882901407764
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

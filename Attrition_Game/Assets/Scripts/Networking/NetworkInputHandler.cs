@@ -1,4 +1,4 @@
-﻿using Fusion;
+using Fusion;
 using Fusion.Sockets;
 using System;
 using System.Collections.Generic;
@@ -8,33 +8,44 @@ public class NetworkInputHandler : MonoBehaviour, INetworkRunnerCallbacks
 {
     private bool _jumpPressed;
     private bool _attackPressed;
+    private bool _dashPressed;
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.Space))
-        {
+        // One-shot inputs (chỉ bắt lúc nhấn xuống)
+        if (Input.GetKeyDown(KeyCode.Space))
             _jumpPressed = true;
-        }
 
-        if (Input.GetKeyDown(KeyCode.J) || Input.GetMouseButtonDown(0))
-        {
+        if (Input.GetKeyDown(KeyCode.J))
             _attackPressed = true;
-        }
+
+        if (Input.GetKeyDown(KeyCode.LeftShift) || Input.GetKeyDown(KeyCode.RightShift))
+            _dashPressed = true;
     }
 
     public void OnInput(NetworkRunner runner, NetworkInput input)
     {
         var data = new NetworkInputData();
 
+        // Horizontal: A/D hoặc Arrow keys
         data.horizontalInput = Input.GetAxisRaw("Horizontal");
 
+        // One-shot buttons
         data.buttons.Set(MyButtons.Jump, _jumpPressed);
         data.buttons.Set(MyButtons.Attack, _attackPressed);
+        data.buttons.Set(MyButtons.Dash, _dashPressed);
+
+        // Continuous buttons (giữ liên tục)
+        data.buttons.Set(MyButtons.Crouch, Input.GetKey(KeyCode.S));
+        data.buttons.Set(MyButtons.AttackHold, Input.GetKey(KeyCode.J));
+        data.buttons.Set(MyButtons.JumpHeld, Input.GetKey(KeyCode.Space));
 
         input.Set(data);
 
+        // Reset one-shot flags
         _jumpPressed = false;
         _attackPressed = false;
+        _dashPressed = false;
     }
 
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player) { }
