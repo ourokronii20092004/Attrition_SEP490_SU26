@@ -194,7 +194,7 @@ Animation:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6831727267532873526}
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 4
   m_Animation: {fileID: 7400000, guid: 2484ede4b7b850c4296782dd0e33144e, type: 2}
   m_Animations: []
@@ -219,6 +219,7 @@ MonoBehaviour:
   animationComp: {fileID: 8805790379459285585}
   moveSpeed: 15
   jumpForce: 20
+  doubleJumpForce: 12
   rb: {fileID: 8158020556837803344}
   groundLayer:
     serializedVersion: 2
@@ -269,6 +270,8 @@ MonoBehaviour:
   _IsAttacking:
     _value: 0
   _IsChargingAttack:
+    _value: 0
+  _IsHoldingAttack:
     _value: 0
 --- !u!114 &8805790379459285585
 MonoBehaviour:
