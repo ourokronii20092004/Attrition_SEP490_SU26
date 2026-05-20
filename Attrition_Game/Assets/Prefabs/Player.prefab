@@ -219,10 +219,22 @@ MonoBehaviour:
   animationComp: {fileID: 8805790379459285585}
   moveSpeed: 15
   jumpForce: 20
+  doubleJumpForce: 12
   rb: {fileID: 8158020556837803344}
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
+  dashSpeed: 25
+  dashDuration: 0.2
+  crouchSpeedMultiplier: 0.4
+  variableJumpCutMultiplier: 0.5
+  maxJumps: 2
+  normalGravity: 2
+  fallGravity: 4.5
+  maxFallSpeed: -25
+  knockbackForceOverride: 6
+  knockbackDuration: 0.5
+  invincibleDuration: 0.8
   _currentHP: 0
   _isDeadNetworked:
     _value: 0
@@ -233,7 +245,12 @@ MonoBehaviour:
   _IsMoving:
     _value: 0
   _NetworkVelocityY: 0
-  maxHP: 5
+  _IsCrouching:
+    _value: 0
+  _IsDashing:
+    _value: 0
+  _JumpCount: 0
+  maxHP: 15
 --- !u!114 &8687308238461515992
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -253,7 +270,14 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 768
   attackDamage: 1
+  chargeAttackDamage: 2
+  chargeThreshold: 0.25
+  currentAttackSpeed: 1
   _IsAttacking:
+    _value: 0
+  _IsChargingAttack:
+    _value: 0
+  _IsHoldingAttack:
     _value: 0
 --- !u!114 &8805790379459285585
 MonoBehaviour:

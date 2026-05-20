@@ -1,42 +1,46 @@
-﻿using Fusion;
+using Fusion;
 using Fusion.Addons.Physics;
 using Fusion.Sockets;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [System.Serializable]
 public class EnemySpawnConfig
 {
+    [Tooltip("Vị trí spawn (Transform trong scene).")]
     public Transform spawnPoint;
-    public int spawnCount = 1;
+    [Min(1)] public int spawnCount = 1;
+    [Tooltip("Random trong pool biom; null thì dùng fallbackEnemyPrefab.")]
+    public EnemyBiomeDefinition biome;
 }
 
 public class NetworkSpawner : MonoBehaviour, INetworkRunnerCallbacks
 {
     public NetworkPrefabRef playerPrefab;
+    public NetworkPrefabRef player1Prefab;
     public Transform[] spawnPoints;
 
     [Header("Enemies")]
-    public NetworkPrefabRef axeDemonPrefab;
+    [Tooltip("Khi spawn config không gán biome hoặc pool biom rỗng.")]
+    [FormerlySerializedAs("axeDemonPrefab")]
+    public NetworkPrefabRef fallbackEnemyPrefab;
     public EnemySpawnConfig[] enemySpawnConfigs;
 
     [Header("UI References")]
     public GameObject lobbyPanel;
 
     private NetworkRunner _runner;
-    private bool _hasSpawnedEnemies = false;
+    private bool _hasSpawnedEnemies;
 
     private void Awake()
     {
-        // RunnerSimulatePhysics2D phải nằm trên cùng GameObject với NetworkRunner và tồn tại khi StartGame khởi tạo,
-        // thì Fusion mới tự gán Runner (AddGlobal tay yêu cầu instance.Runner != null và sẽ Assert).
         var sim = GetComponent<RunnerSimulatePhysics2D>();
         if (sim == null)
             sim = gameObject.AddComponent<RunnerSimulatePhysics2D>();
         sim.ClientPhysicsSimulation = ClientPhysicsSimulation.SimulateForward;
 
-        // Frame pacing: giảm judder/stutter và xé hình phía client (Fusion tick vẫn lấy từ NetworkProjectConfig).
         QualitySettings.vSyncCount = 1;
 #if UNITY_ANDROID || UNITY_IOS
         Application.targetFrameRate = 60;
@@ -65,11 +69,9 @@ public class NetworkSpawner : MonoBehaviour, INetworkRunnerCallbacks
 
     private void SpawnAllEnemies()
     {
-        Debug.Log("=== BẮT ĐẦU ĐẺ QUÁI ===");
-
         if (enemySpawnConfigs == null || enemySpawnConfigs.Length == 0)
         {
-            Debug.LogWarning("Mảng cấu hình rỗng!");
+            Debug.LogWarning("[NetworkSpawner] enemySpawnConfigs rỗng.");
             return;
         }
 
@@ -77,35 +79,45 @@ public class NetworkSpawner : MonoBehaviour, INetworkRunnerCallbacks
         {
             if (config.spawnPoint == null)
             {
-                Debug.LogWarning("Có một điểm spawn bị null, bỏ qua!");
+                Debug.LogWarning("[NetworkSpawner] spawnPoint null — bỏ qua.");
                 continue;
             }
-
-            Debug.Log($"Đang đẻ {config.spawnCount} quái tại {config.spawnPoint.name}");
 
             for (int i = 0; i < config.spawnCount; i++)
             {
                 float randomXOffset = UnityEngine.Random.Range(-0.5f, 0.5f);
+                Vector3 spawnPos = config.spawnPoint.position + new Vector3(randomXOffset, 0f, 0f);
+                spawnPos.z = 0f;
 
-                // ÉP CỨNG TRỤC Z VỀ 0 ĐỂ CAMERA 2D NHÌN THẤY ĐƯỢC
-                Vector3 spawnPos = config.spawnPoint.position + new Vector3(randomXOffset, 0, 0);
-                spawnPos.z = 0;
-
-                NetworkObject enemyObj = _runner.Spawn(axeDemonPrefab, spawnPos, Quaternion.identity, null);
-
-                if (enemyObj != null)
-                    Debug.Log("-> Đẻ thành công 1 Axe_Demon!");
+                NetworkObject spawned = TrySpawnOneEnemy(config, spawnPos);
+                if (spawned != null)
+                    Debug.Log($"[NetworkSpawner] Spawn quái OK: {spawned.name} tại {spawnPos}");
                 else
-                    Debug.LogError("-> Fusion từ chối đẻ con quái này (Kiểm tra lại Prefab)!");
+                    Debug.LogError("[NetworkSpawner] Spawn thất bại (prefab / Fusion PrefabTable).");
             }
         }
+    }
+
+    private NetworkObject TrySpawnOneEnemy(EnemySpawnConfig config, Vector3 spawnPos)
+    {
+        NetworkObject prefabNo = config.biome != null ? config.biome.PickRandomPrefab() : null;
+
+        if (prefabNo != null)
+            return _runner.Spawn(prefabNo, spawnPos, Quaternion.identity, null);
+
+        if (fallbackEnemyPrefab.IsValid)
+            return _runner.Spawn(fallbackEnemyPrefab, spawnPos, Quaternion.identity, null);
+
+        return null;
     }
 
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
     {
         if (runner.IsServer)
         {
-            // --- 1. ĐẺ PLAYER ---
+            bool isHostPlayer = player == runner.LocalPlayer;
+            NetworkPrefabRef prefabToSpawn = isHostPlayer ? playerPrefab : player1Prefab;
+
             Vector3 spawnPos;
             if (spawnPoints != null && spawnPoints.Length > 0)
             {
@@ -117,10 +129,9 @@ public class NetworkSpawner : MonoBehaviour, INetworkRunnerCallbacks
                 spawnPos = new Vector3(randomX, 48f, 0);
             }
 
-            NetworkObject playerObj = runner.Spawn(playerPrefab, spawnPos, Quaternion.identity, player);
+            NetworkObject playerObj = runner.Spawn(prefabToSpawn, spawnPos, Quaternion.identity, player);
             runner.SetPlayerObject(player, playerObj);
 
-            // --- 2. ĐẺ QUÁI VẬT (Chỉ đẻ 1 lần duy nhất khi Host vừa vào game) ---
             if (player == runner.LocalPlayer && !_hasSpawnedEnemies)
             {
                 SpawnAllEnemies();
@@ -153,10 +164,10 @@ public class NetworkSpawner : MonoBehaviour, INetworkRunnerCallbacks
             }
         }
     }
+
     public void OnInput(NetworkRunner runner, NetworkInput input) { }
     public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
     public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason) { }
-
     public void OnConnectedToServer(NetworkRunner runner) { }
     public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason) { }
     public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] payload) { }

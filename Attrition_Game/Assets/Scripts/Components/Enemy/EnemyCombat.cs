@@ -1,4 +1,4 @@
-﻿using Fusion;
+using Fusion;
 using UnityEngine;
 
 public class EnemyCombat : NetworkBehaviour
@@ -8,10 +8,26 @@ public class EnemyCombat : NetworkBehaviour
     public float attackRange = 1.5f;
     [Range(0, 360)] public float attackAngle = 90f;
     public LayerMask playerLayer;
-    public int attackDamage = 1;
 
-    [Networked] public NetworkBool IsAttacking { get; set; }
+    [Header("---- RANGED ATTACK ----")]
+    public bool isRanged;
+    public NetworkPrefabRef projectilePrefab;
+    public Transform projectileSpawnPoint;
+
+    [Header("---- DAMAGE & SPEED ----")]
+    public int attackDamage = 1;
+    [Tooltip("Số kiểu đòn đánh (1 = chỉ có Attack1, 2 = có Attack1 và Attack2)")]
+    public int attackVariants = 1;
+    [Tooltip("Thời gian đứng yên khi đánh - nên bằng độ dài animation attack (giây)")]
+    public float attackDuration = 0.6f;
+    [Tooltip("Thời gian nghỉ giữa 2 đòn đánh (Cooldown - Tính bằng giây)")]
+    public float attackCooldown = 1.0f;
+    [Tooltip("Tốc độ phát Animation đánh (1 là mặc định, 2 là nhanh gấp đôi)")]
+    public float currentAttackSpeed = 1f;
+
+    [HideInInspector][Networked] public NetworkBool IsAttacking { get; set; }
     [Networked] private TickTimer attackTimer { get; set; }
+    [Networked] private TickTimer cooldownTimer { get; set; }
 
     public override void Spawned()
     {
@@ -20,23 +36,49 @@ public class EnemyCombat : NetworkBehaviour
 
     public override void FixedUpdateNetwork()
     {
-        if (IsAttacking && attackTimer.Expired(Runner)) IsAttacking = false;
+        // ExpiredOrNotRunning thay vì Expired: tránh miss tick duy nhất gây kẹt IsAttacking
+        if (IsAttacking && attackTimer.ExpiredOrNotRunning(Runner))
+        {
+            IsAttacking = false;
+            cooldownTimer = TickTimer.CreateFromSeconds(Runner, attackCooldown);
+            attackTimer = TickTimer.None;
+        }
+    }
+
+    public bool CanAttack()
+    {
+        return !IsAttacking && cooldownTimer.ExpiredOrNotRunning(Runner);
     }
 
     public void AttemptAttack()
     {
-        if (IsAttacking || !attackTimer.ExpiredOrNotRunning(Runner)) return;
+        if (!CanAttack()) return;
 
         IsAttacking = true;
-        int randomAttackIndex = Random.Range(0, 2);
-        RPC_PlayAttackAnim(randomAttackIndex);
-        attackTimer = TickTimer.CreateFromSeconds(Runner, 1.5f);
+        int randomAttackIndex = Random.Range(0, attackVariants);
+
+        RPC_PlayAttackAnim(randomAttackIndex, currentAttackSpeed);
+
+        // Quái đứng yên trong attackDuration (chia cho tốc độ đánh)
+        attackTimer = TickTimer.CreateFromSeconds(Runner, attackDuration / currentAttackSpeed);
     }
 
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RPC_PlayAttackAnim(int attackIndex)
+    // Vẫn giữ lại cho ai muốn dùng Animation Event (không bắt buộc)
+    public void FinishAttack()
     {
-        if (animationComp != null) animationComp.PlayAttack(attackIndex);
+        if (!IsAttacking) return;
+        IsAttacking = false;
+        if (HasStateAuthority)
+        {
+            cooldownTimer = TickTimer.CreateFromSeconds(Runner, attackCooldown);
+        }
+    }
+
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_PlayAttackAnim(int attackIndex, float speed)
+    {
+        if (animationComp != null) animationComp.PlayAttack(attackIndex, speed);
     }
 
     void OnDrawGizmosSelected()
@@ -58,10 +100,52 @@ public class EnemyCombat : NetworkBehaviour
 
     public void TriggerAttackDamage()
     {
-        // if (!HasStateAuthority) return; 
         if (attackPoint == null) return;
 
-        Debug.Log("==================================");
+        if (isRanged)
+        {
+            if (projectileSpawnPoint == null || !projectilePrefab.IsValid)
+            {
+                Debug.LogWarning("Chưa gắn Projectile Prefab hoặc Spawn Point cho " + gameObject.name);
+                return;
+            }
+            
+            if (!HasStateAuthority) return; // Chỉ có Host mới được tạo đạn để đồng bộ cho các máy khác
+
+            // Tìm người chơi gần nhất trong tầm để bắn chính xác (đặc biệt khi quái bay cần bắn chéo xuống)
+            Vector2 shootDir = transform.localScale.x > 0 ? Vector2.right : Vector2.left;
+            Collider2D[] rangeResults = new Collider2D[5];
+            ContactFilter2D rangeFilter = new ContactFilter2D();
+            rangeFilter.useLayerMask = true;
+            rangeFilter.layerMask = playerLayer;
+            rangeFilter.useTriggers = false;
+            
+            int pCount = Runner.GetPhysicsScene2D().OverlapCircle(transform.position, attackRange * 1.5f, rangeFilter, rangeResults);
+            float closestDist = float.MaxValue;
+            Transform targetPlayer = null;
+            
+            for (int i = 0; i < pCount; i++)
+            {
+                float dist = Vector2.Distance(transform.position, rangeResults[i].transform.position);
+                if (dist < closestDist)
+                {
+                    closestDist = dist;
+                    targetPlayer = rangeResults[i].transform;
+                }
+            }
+
+            if (targetPlayer != null)
+            {
+                shootDir = (targetPlayer.position - projectileSpawnPoint.position).normalized;
+            }
+
+            Runner.Spawn(projectilePrefab, projectileSpawnPoint.position, Quaternion.identity, null, (runner, obj) =>
+            {
+                EnemyProjectile proj = obj.GetComponent<EnemyProjectile>();
+                if (proj != null) proj.Init(shootDir, attackDamage, 8f);
+            });
+            return;
+        }
 
         Collider2D[] results = new Collider2D[10];
         ContactFilter2D filter = new ContactFilter2D();
@@ -69,10 +153,7 @@ public class EnemyCombat : NetworkBehaviour
         filter.layerMask = playerLayer;
         filter.useTriggers = false;
 
-        // TUYỆT CHIÊU CỦA FUSION: Quét trong vũ trụ vật lý của mạng
         int count = Runner.GetPhysicsScene2D().OverlapCircle(attackPoint.position, attackRange, filter, results);
-
-        Debug.Log($"[ENEMY] Fusion quét được {count} mục tiêu.");
 
         for (int i = 0; i < count; i++)
         {
@@ -87,15 +168,9 @@ public class EnemyCombat : NetworkBehaviour
                 if (dmg != null && !dmg.IsDead)
                 {
                     Vector2 pushDir = new Vector2(directionToPlayer.x, 0.5f).normalized;
-                    dmg.TakeDamage(attackDamage, pushDir, 8f);
-                    Debug.Log($"[ENEMY] ---> CHÉM TRÚNG: {player.name}");
+                    dmg.TakeDamage(attackDamage, pushDir, 0f); // force=0 → Player sẽ dùng knockbackForceOverride
                 }
             }
         }
-    }
-
-    public void FinishAttack()
-    {
-        IsAttacking = false;
     }
 }
