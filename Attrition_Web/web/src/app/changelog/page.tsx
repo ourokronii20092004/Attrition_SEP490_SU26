@@ -1,48 +1,67 @@
-import GlassCard from '@/components/GlassCard';
+import Breadcrumb from '@/components/Breadcrumb';
 
-export default function Changelog() {
+const CHANGELOG = [
+  {
+    version: '0.3.0',
+    date: '2026-05-15',
+    changes: [
+      'Added music player and soundtrack management',
+      'New forum post moderation system',
+      'Admin dashboard with statistics',
+      'Improved wiki article editor with markdown preview',
+    ],
+  },
+  {
+    version: '0.2.0',
+    date: '2026-04-20',
+    changes: [
+      'Forum system with categories and threads',
+      'Wiki contribution system for community edits',
+      'User profile pages with stats',
+      'Google OAuth integration',
+    ],
+  },
+  {
+    version: '0.1.0',
+    date: '2026-03-10',
+    changes: [
+      'Initial release of the Attrition community hub',
+      'Wiki system with categories and articles',
+      'User registration and authentication',
+      'Dark fantasy UI design system',
+    ],
+  },
+];
+
+export default function ChangelogPage() {
   return (
-    <div className="container" style={{ padding: 'var(--space-2xl) 0' }}>
-      <h1 style={{ marginBottom: 'var(--space-xl)', textAlign: 'center' }}>Changelog</h1>
-      
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xl)' }}>
-        <GlassCard>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
-            <h2 style={{ margin: 0 }}>v0.3.0 — The Multiplayer Update</h2>
-            <span style={{ color: 'var(--text-muted)' }}>October 12, 2025</span>
-          </div>
-          <ul style={{ paddingLeft: 'var(--space-lg)', color: 'var(--text-secondary)' }}>
-            <li>Added drop-in multiplayer lobby system</li>
-            <li>Introduced 3 new PvP arenas</li>
-            <li>Rebalanced the Greatsword and Twin Daggers</li>
-            <li>Fixed a bug where players could clip through walls in the Abyssal Depths</li>
-          </ul>
-        </GlassCard>
+    <div className="container">
+      <Breadcrumb items={[
+        { label: 'Home', href: '/' },
+        { label: 'Changelog' },
+      ]} />
 
-        <GlassCard>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
-            <h2 style={{ margin: 0 }}>v0.2.5 — Biome Expansion</h2>
-            <span style={{ color: 'var(--text-muted)' }}>August 28, 2025</span>
-          </div>
-          <ul style={{ paddingLeft: 'var(--space-lg)', color: 'var(--text-secondary)' }}>
-            <li>Added new biome: The Weeping Forest</li>
-            <li>Introduced 5 new enemy types</li>
-            <li>Added the "Root Snare" boss fight</li>
-            <li>Improved procedural generation algorithms to prevent dead ends</li>
-          </ul>
-        </GlassCard>
+      <h1 className="mb-xl">📋 Changelog</h1>
+      <p className="text-muted mb-2xl">Track the latest updates and improvements to the Attrition platform.</p>
 
-        <GlassCard>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
-            <h2 style={{ margin: 0 }}>v0.1.0 — Initial Alpha Release</h2>
-            <span style={{ color: 'var(--text-muted)' }}>June 1, 2025</span>
+      <div className="flex-col gap-xl" style={{ maxWidth: '700px' }}>
+        {CHANGELOG.map((release) => (
+          <div key={release.version} className="glass-card-static">
+            <div className="flex-between mb-md">
+              <h2 className="text-ember" style={{ fontSize: '1.5rem', margin: 0 }}>
+                v{release.version}
+              </h2>
+              <span className="badge badge-ember">{release.date}</span>
+            </div>
+            <ul style={{ paddingLeft: 'var(--space-lg)' }}>
+              {release.changes.map((change, i) => (
+                <li key={i} className="text-muted" style={{ marginBottom: 'var(--space-xs)', fontSize: '14px' }}>
+                  {change}
+                </li>
+              ))}
+            </ul>
           </div>
-          <ul style={{ paddingLeft: 'var(--space-lg)', color: 'var(--text-secondary)' }}>
-            <li>First playable alpha build available to founders</li>
-            <li>Core combat loop and movement mechanics implemented</li>
-            <li>3 starting weapons and 1 complete biome</li>
-          </ul>
-        </GlassCard>
+        ))}
       </div>
     </div>
   );

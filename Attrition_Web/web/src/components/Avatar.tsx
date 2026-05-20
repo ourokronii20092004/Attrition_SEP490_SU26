@@ -1,43 +1,29 @@
-import React from 'react';
+'use client';
 
 interface AvatarProps {
   src?: string | null;
-  username: string;
+  alt?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl';
+  className?: string;
 }
 
-export default function Avatar({ src, username, size = 'md' }: AvatarProps) {
-  const getInitials = (name: string) => name.charAt(0).toUpperCase();
-
-  const getColor = (name: string) => {
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-      hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const color = Math.floor(Math.abs((Math.sin(hash) * 16777215) % 16777215)).toString(16);
-    return '#' + '000000'.substring(0, 6 - color.length) + color;
-  };
-
-  const sizeClass = size === 'md' ? '' : `avatar-${size}`;
+export default function Avatar({ src, alt = '', size = 'md', className = '' }: AvatarProps) {
+  const sizeClass = size !== 'md' ? `avatar-${size}` : '';
+  const initial = alt ? alt.charAt(0).toUpperCase() : '?';
 
   if (src) {
-    return <img src={process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL}${src}` : src} alt={username} className={`avatar ${sizeClass}`} />;
+    return (
+      <img
+        src={src}
+        alt={alt}
+        className={`avatar ${sizeClass} ${className}`}
+      />
+    );
   }
 
   return (
-    <div
-      className={`avatar ${sizeClass}`}
-      style={{
-        backgroundColor: getColor(username),
-        color: '#fff',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: size === 'sm' ? '12px' : size === 'lg' ? '24px' : size === 'xl' ? '36px' : '16px',
-        fontWeight: 'bold',
-      }}
-    >
-      {getInitials(username)}
+    <div className={`avatar avatar-placeholder ${sizeClass} ${className}`}>
+      {initial}
     </div>
   );
 }

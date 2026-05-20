@@ -1,37 +1,23 @@
 'use client';
-import { useState, useEffect, Suspense } from 'react';
-import GlassCard from '@/components/GlassCard';
+import { useState, useEffect } from 'react';
 import Breadcrumb from '@/components/Breadcrumb';
 import RichEditor from '@/components/RichEditor';
-import Button from '@/components/Button';
-import Input from '@/components/Input';
 import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/contexts/ToastContext';
+import { useRouter } from 'next/navigation';
 
-export default function ContributePage() {
-  return (
-    <Suspense fallback={<div className="container" style={{ padding: 'var(--space-2xl) 0' }}>Loading...</div>}>
-      <Contribute />
-    </Suspense>
-  );
-}
-
-function Contribute() {
+export default function WikiContributePage() {
   const { user, loading } = useAuth();
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const { showToast } = useToast();
-  
-  const articleId = searchParams.get('articleId');
-  const title = searchParams.get('title');
+  const router = useRouter();
 
-  const [articles, setArticles] = useState<any[]>([]);
-  const [selectedArticleId, setSelectedArticleId] = useState(articleId || '');
+  const [categories, setCategories] = useState<any[]>([]);
+  const [articleSlug, setArticleSlug] = useState('');
   const [content, setContent] = useState('');
   const [changeNote, setChangeNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [articles, setArticles] = useState<any[]>([]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -40,91 +26,99 @@ function Contribute() {
   }, [user, loading, router]);
 
   useEffect(() => {
-    const fetchArticles = async () => {
-      // Just fetch a bunch of articles to populate the dropdown, though in a real app this might need search/pagination
-      const res = await api.get('/api/wiki/articles?pageSize=100');
-      if (res.items) {
-        setArticles(res.items);
-      }
+    const fetchData = async () => {
+      const catsRes = await api.get('/api/wiki/categories');
+      if (Array.isArray(catsRes)) setCategories(catsRes);
+
+      const artsRes = await api.get('/api/wiki/articles?pageSize=200');
+      if (artsRes.items) setArticles(artsRes.items);
     };
-    fetchArticles();
+    fetchData();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedArticleId) {
-      showToast('Please select an article', 'error');
+    if (!articleSlug || !content.trim()) {
+      showToast('Please select an article and add your contribution', 'error');
       return;
     }
 
     setIsSubmitting(true);
-    const res = await api.post(`/api/wiki/articles/${selectedArticleId}/suggest`, {
-      suggestedContent: content,
-      changeNote
+    const res = await api.post('/api/wiki/contributions', {
+      articleSlug,
+      content,
+      changeNote: changeNote || 'Community contribution',
     });
-
     setIsSubmitting(false);
 
     if (res.success) {
-      showToast('Suggestion submitted for review!', 'success');
+      showToast('Contribution submitted for review!', 'success');
       router.push('/wiki');
     } else {
-      showToast(res.error || 'Failed to submit suggestion', 'error');
+      showToast(res.error || 'Failed to submit contribution', 'error');
     }
   };
 
   if (loading || !user) return null;
 
   return (
-    <div className="container" style={{ padding: 'var(--space-2xl) 0' }}>
+    <div className="container">
       <Breadcrumb items={[
         { label: 'Home', href: '/' },
         { label: 'Wiki', href: '/wiki' },
-        { label: 'Contribute' }
+        { label: 'Contribute' },
       ]} />
 
-      <GlassCard style={{ maxWidth: '800px', margin: '0 auto' }}>
-        <h1 style={{ marginBottom: 'var(--space-md)' }}>Suggest an Edit</h1>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: 'var(--space-xl)' }}>
-          Your contribution will be reviewed by a moderator before it becomes public.
+      <div className="glass-card-static" style={{ maxWidth: '800px', margin: '0 auto' }}>
+        <h1 className="mb-md">✏️ Contribute to the Wiki</h1>
+        <p className="text-muted mb-xl">
+          Submit an edit to an existing article. Your contribution will be reviewed by an admin before being published.
         </p>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+        <form onSubmit={handleSubmit} className="auth-form">
           <div className="input-group">
-            <label>Article</label>
-            <select 
-              className="input" 
-              value={selectedArticleId} 
-              onChange={(e) => setSelectedArticleId(e.target.value)}
+            <label>Select Article</label>
+            <select
+              className="input"
+              value={articleSlug}
+              onChange={(e) => setArticleSlug(e.target.value)}
               required
             >
-              <option value="" disabled>Select an article to edit...</option>
-              {title && articleId && !articles.find(a => a.id === articleId) && (
-                <option value={articleId}>{title}</option>
-              )}
-              {articles.map(a => (
-                <option key={a.id} value={a.id}>{a.title}</option>
+              <option value="" disabled>Choose an article to edit...</option>
+              {articles.map((article) => (
+                <option key={article.id} value={article.slug}>
+                  {article.title}
+                </option>
               ))}
             </select>
           </div>
 
           <div className="input-group">
-            <label>Suggested Content</label>
+            <label>Your Changes</label>
             <RichEditor value={content} onChange={setContent} height={400} />
           </div>
 
-          <Input 
-            label="Change Note (Optional)" 
-            value={changeNote} 
-            onChange={(e) => setChangeNote(e.target.value)} 
-            placeholder="Briefly describe what you changed and why" 
-          />
+          <div className="input-group">
+            <label>Change Note</label>
+            <input
+              className="input"
+              type="text"
+              value={changeNote}
+              onChange={(e) => setChangeNote(e.target.value)}
+              placeholder="Describe what you changed..."
+            />
+          </div>
 
-          <Button type="submit" disabled={isSubmitting || !content || !selectedArticleId} style={{ alignSelf: 'flex-start', marginTop: 'var(--space-sm)' }}>
-            {isSubmitting ? 'Submitting...' : 'Submit for Review'}
-          </Button>
+          <div style={{ display: 'flex', gap: 'var(--space-md)', marginTop: 'var(--space-md)' }}>
+            <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+              {isSubmitting ? 'Submitting...' : '📤 Submit Contribution'}
+            </button>
+            <button type="button" className="btn btn-ghost" onClick={() => router.back()}>
+              Cancel
+            </button>
+          </div>
         </form>
-      </GlassCard>
+      </div>
     </div>
   );
 }

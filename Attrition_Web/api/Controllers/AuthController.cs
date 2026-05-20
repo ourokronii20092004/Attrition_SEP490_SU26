@@ -26,6 +26,31 @@ public class AuthController : ControllerBase
         return result.Success ? Ok(result) : Unauthorized(result);
     }
 
+    [HttpPost("google")]
+    public async Task<IActionResult> GoogleLogin(GoogleAuthRequest request)
+    {
+        var result = await _auth.GoogleLoginAsync(request);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    [Authorize]
+    [HttpPost("google/link")]
+    public async Task<IActionResult> LinkGoogle(GoogleAuthRequest request)
+    {
+        var userId = Guid.Parse(User.FindFirst("sub")!.Value);
+        var result = await _auth.LinkGoogleAsync(userId, request);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    [Authorize]
+    [HttpPost("google/unlink")]
+    public async Task<IActionResult> UnlinkGoogle()
+    {
+        var userId = Guid.Parse(User.FindFirst("sub")!.Value);
+        var result = await _auth.UnlinkGoogleAsync(userId);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
     [HttpPost("refresh")]
     public async Task<IActionResult> Refresh(RefreshRequest request)
     {
