@@ -1,177 +1,228 @@
-'use client';
-import { useState, useEffect } from 'react';
-import SearchBar from '@/components/SearchBar';
-import Pagination from '@/components/Pagination';
-import Badge from '@/components/Badge';
-import Modal from '@/components/Modal';
-import { api } from '@/lib/api';
-import { useToast } from '@/contexts/ToastContext';
+"use client";
+
+import { useEffect, useState, useCallback } from "react";
+import { api } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/contexts/ToastContext";
+import { formatDate, cn, debounce } from "@/lib/utils";
+import { Trash2 } from "lucide-react";
+import styles from "../admin.module.css";
+
+interface UserRow {
+  id: string;
+  username: string;
+  email: string | null;
+  role: string;
+  authProvider: string;
+  isBanned: boolean;
+  joinedAt: string;
+}
 
 export default function AdminUsersPage() {
-  const { showToast } = useToast();
-  const [users, setUsers] = useState<any[]>([]);
+  const toast = useToast();
+  const { user: currentUser } = useAuth();
+  const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [search, setSearch] = useState('');
-  const [resetModal, setResetModal] = useState<any>(null);
+  const [totalCount, setTotalCount] = useState(0);
+  const pageSize = 20;
 
-  const fetchUsers = async (p = page, q = search) => {
-    setLoading(true);
-    const params = new URLSearchParams({ page: p.toString(), pageSize: '15' });
-    if (q) params.append('search', q);
+  const fetchUsers = useCallback(
+    async (searchTerm: string, pageNum: number) => {
+      setLoading(true);
+      try {
+        const res = await api.get<UserRow[]>(
+          "/admin/users",
+          { search: searchTerm, page: pageNum, pageSize }
+        );
+        if (res.success) {
+          const list = Array.isArray(res.data) ? res.data : [];
+          setUsers(list);
+          setTotalCount(res.totalCount ?? list.length);
+        }
+      } catch {
+        toast.error("Failed to load users");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [toast]
+  );
 
-    const res = await api.get(`/api/admin/users?${params}`);
-    if (res?.items) {
-      setUsers(res.items);
-      setTotalPages(Math.ceil((res.totalCount || 0) / 15));
-    }
-    setLoading(false);
-  };
+  useEffect(() => {
+    fetchUsers(search, page);
+  }, [page, fetchUsers, search]);
 
-  useEffect(() => { fetchUsers(); }, [page]);
-
-  const handleSearch = (query: string) => {
-    setSearch(query);
-    setPage(1);
-    fetchUsers(1, query);
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedSearch = useCallback(
+    debounce((term: string) => {
+      setPage(1);
+      setSearch(term);
+    }, 300),
+    []
+  );
 
   const handleRoleChange = async (userId: string, newRole: string) => {
-    const res = await api.put(`/api/admin/users/${userId}/role`, { role: newRole });
-    if (res.success) {
-      showToast('Role updated', 'success');
-      fetchUsers();
-    } else {
-      showToast(res.error || 'Failed to update role', 'error');
+    try {
+      await api.put(`/admin/users/${userId}/role`, { role: newRole });
+      setUsers((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
+      );
+      toast.success("Role updated");
+    } catch {
+      toast.error("Failed to update role");
     }
   };
 
-  const handleBanToggle = async (userId: string, isBanned: boolean) => {
-    const endpoint = isBanned
-      ? `/api/admin/users/${userId}/unban`
-      : `/api/admin/users/${userId}/ban`;
-    const res = await api.post(endpoint);
-    if (res.success) {
-      showToast(isBanned ? 'User unbanned' : 'User banned', 'success');
-      fetchUsers();
-    } else {
-      showToast(res.error || 'Action failed', 'error');
+  // Ban is a TOGGLE — single endpoint that flips isBanned
+  const handleBanToggle = async (userId: string, currentlyBanned: boolean) => {
+    try {
+      await api.post(`/admin/users/${userId}/ban`);
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === userId ? { ...u, isBanned: !currentlyBanned } : u
+        )
+      );
+      toast.success(currentlyBanned ? "User unbanned" : "User banned");
+    } catch {
+      toast.error("Failed to update ban status");
     }
   };
 
-  const handleResetPassword = async () => {
-    if (!resetModal) return;
-    const res = await api.post(`/api/admin/users/${resetModal.id}/reset-password`);
-    if (res.success) {
-      showToast('Password reset successfully', 'success');
-    } else {
-      showToast(res.error || 'Failed to reset password', 'error');
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  // Check if a user can be banned (not self, not admin)
+  const canBan = (user: UserRow) => {
+    if (user.id === currentUser?.id) return false; // can't ban self
+    if (user.role === "Admin") return false; // can't ban admins
+    return true;
+  };
+
+  const canDelete = (user: UserRow) => user.id !== currentUser?.id;
+
+  const handleDelete = async (userId: string, username: string) => {
+    if (!confirm(`Permanently delete user "${username}"? This will remove all their posts, threads, and contributions. This cannot be undone.`)) return;
+    try {
+      await api.delete(`/admin/users/${userId}`);
+      setUsers((prev) => prev.filter((u) => u.id !== userId));
+      setTotalCount((c) => c - 1);
+      toast.success(`User "${username}" deleted`);
+    } catch {
+      toast.error("Failed to delete user");
     }
-    setResetModal(null);
   };
 
   return (
     <div>
-      <div className="admin-page-header">
-        <h1>👥 User Management</h1>
-        <SearchBar placeholder="Search users..." onSearch={handleSearch} />
-      </div>
+      <h1 style={{ marginBottom: "var(--space-6)" }}>Users</h1>
 
-      <div className="admin-table-wrapper">
-        <table className="admin-table">
+      <div className={styles.adminTableWrapper}>
+        <div className={styles.adminTableHeader}>
+          <input
+            type="text"
+            className="input"
+            placeholder="Search users..."
+            onChange={(e) => debouncedSearch(e.target.value)}
+            style={{ maxWidth: 300 }}
+          />
+          <span className="text-sm text-muted">{totalCount} users</span>
+        </div>
+
+        <table className="table">
           <thead>
             <tr>
               <th>Username</th>
               <th>Email</th>
               <th>Role</th>
-              <th>Joined</th>
+              <th>Provider</th>
               <th>Status</th>
+              <th>Joined</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr>
-                <td colSpan={6} className="text-center text-muted" style={{ padding: 'var(--space-2xl)' }}>
-                  <div className="spinner" style={{ margin: '0 auto' }} />
-                </td>
-              </tr>
-            ) : users.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="text-center text-muted" style={{ padding: 'var(--space-2xl)' }}>
-                  No users found
-                </td>
-              </tr>
-            ) : (
-              users.map((u) => (
-                <tr key={u.id}>
-                  <td>
-                    <strong>{u.username}</strong>
-                  </td>
-                  <td className="text-muted">{u.email || '—'}</td>
+              Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i}>
+                  {Array.from({ length: 7 }).map((_, j) => (
+                    <td key={j}><div className="skeleton skeleton-text" /></td>
+                  ))}
+                </tr>
+              ))
+            ) : users.length > 0 ? (
+              users.map((user) => (
+                <tr key={user.id}>
+                  <td><strong>{user.username}</strong></td>
+                  <td>{user.email || "—"}</td>
                   <td>
                     <select
-                      className="input btn-sm"
-                      value={u.role}
-                      onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                      style={{ width: 'auto', padding: '4px 8px', fontSize: '12px' }}
+                      value={user.role}
+                      onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                      className="input"
+                      disabled={user.id === currentUser?.id}
+                      style={{ height: 32, fontSize: "var(--text-xs)", padding: "0 var(--space-2)", width: 100 }}
                     >
                       <option value="User">User</option>
-                      <option value="Moderator">Moderator</option>
                       <option value="Admin">Admin</option>
                     </select>
                   </td>
-                  <td className="text-muted">{new Date(u.createdAt).toLocaleDateString()}</td>
                   <td>
-                    {u.isBanned ? (
-                      <Badge variant="danger">Banned</Badge>
-                    ) : (
-                      <Badge variant="success">Active</Badge>
-                    )}
+                    <span className="badge badge-default">{user.authProvider || "local"}</span>
                   </td>
                   <td>
-                    <div className="actions">
+                    {user.isBanned ? (
+                      <span className="badge badge-danger badge-dot">Banned</span>
+                    ) : (
+                      <span className="badge badge-success badge-dot">Active</span>
+                    )}
+                  </td>
+                  <td>{formatDate(user.joinedAt)}</td>
+                  <td>
+                    {canBan(user) ? (
                       <button
-                        className={`btn btn-sm ${u.isBanned ? 'btn-soul' : 'btn-danger'}`}
-                        onClick={() => handleBanToggle(u.id, u.isBanned)}
+                        className={cn("btn btn-sm", user.isBanned ? "btn-secondary" : "btn-danger")}
+                        onClick={() => handleBanToggle(user.id, user.isBanned)}
+                        style={{ fontSize: "var(--text-xs)" }}
                       >
-                        {u.isBanned ? 'Unban' : 'Ban'}
+                        {user.isBanned ? "Unban" : "Ban"}
                       </button>
+                    ) : (
+                      <span style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>—</span>
+                    )}
+                    {canDelete(user) && (
                       <button
-                        className="btn btn-sm btn-ghost"
-                        onClick={() => setResetModal(u)}
+                        className="btn btn-sm"
+                        onClick={() => handleDelete(user.id, user.username)}
+                        style={{ fontSize: "var(--text-xs)", color: "var(--danger)", background: "transparent", border: "1px solid var(--border)", marginLeft: 4 }}
+                        title="Delete user"
                       >
-                        Reset PW
+                        <Trash2 size={13} />
                       </button>
-                    </div>
+                    )}
                   </td>
                 </tr>
               ))
+            ) : (
+              <tr>
+                <td colSpan={7} style={{ textAlign: "center", padding: "var(--space-8)" }}>
+                  No users found
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
-      </div>
 
-      <div className="mt-lg">
-        <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+        {totalPages > 1 && (
+          <div className={styles.adminTableFooter}>
+            <span>Page {page} of {totalPages}</span>
+            <div className="pagination">
+              <button className="pagination-btn" disabled={page === 1} onClick={() => setPage(page - 1)}>←</button>
+              <button className="pagination-btn" disabled={page === totalPages} onClick={() => setPage(page + 1)}>→</button>
+            </div>
+          </div>
+        )}
       </div>
-
-      {/* Reset Password Modal */}
-      <Modal
-        isOpen={!!resetModal}
-        onClose={() => setResetModal(null)}
-        title="Reset Password"
-      >
-        <p className="text-muted mb-lg">
-          Are you sure you want to reset the password for <strong>{resetModal?.username}</strong>?
-          They will receive a temporary password.
-        </p>
-        <div className="modal-actions">
-          <button className="btn btn-ghost" onClick={() => setResetModal(null)}>Cancel</button>
-          <button className="btn btn-danger" onClick={handleResetPassword}>Reset Password</button>
-        </div>
-      </Modal>
     </div>
   );
 }

@@ -1,8 +1,12 @@
 .env
 *.env.local
+client_secret*.json
 web/node_modules/
 web/.next/
 web/out/
+collection/node_modules/
+collection/.next/
+collection/out/
 api/bin/
 api/obj/
 docker-compose.override.yml
@@ -12,3 +16,5 @@ uploads/
 .vs/
 .vscode/
 docs/
+problems/
+*.zip
