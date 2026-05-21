@@ -18,3 +18,4 @@ uploads/
 docs/
 problems/
 *.zip
+deploy.py
