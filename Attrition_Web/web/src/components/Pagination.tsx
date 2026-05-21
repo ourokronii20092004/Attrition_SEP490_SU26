@@ -1,58 +1,81 @@
-'use client';
+import React from "react";
+import Link from "next/link";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface PaginationProps {
   currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
+  totalCount: number;
+  pageSize: number;
+  baseUrl: string;
+  searchParams?: URLSearchParams | Record<string, string>;
 }
 
-export default function Pagination({ currentPage, totalPages, onPageChange }: PaginationProps) {
+export function Pagination({ currentPage, totalCount, pageSize, baseUrl, searchParams }: PaginationProps) {
+  const totalPages = Math.ceil(totalCount / pageSize);
   if (totalPages <= 1) return null;
 
-  const pages: (number | string)[] = [];
+  const buildUrl = (page: number) => {
+    const params = new URLSearchParams(searchParams as Record<string, string>);
+    params.set("page", page.toString());
+    return `${baseUrl}?${params.toString()}`;
+  };
 
-  if (totalPages <= 7) {
-    for (let i = 1; i <= totalPages; i++) pages.push(i);
-  } else {
-    pages.push(1);
-    if (currentPage > 3) pages.push('...');
+  const pages = [];
+  // simple logic to show max 5 pages around current
+  let start = Math.max(1, currentPage - 2);
+  let end = Math.min(totalPages, start + 4);
+  if (end - start < 4) start = Math.max(1, end - 4);
 
-    const start = Math.max(2, currentPage - 1);
-    const end = Math.min(totalPages - 1, currentPage + 1);
-
-    for (let i = start; i <= end; i++) pages.push(i);
-
-    if (currentPage < totalPages - 2) pages.push('...');
-    pages.push(totalPages);
+  for (let i = start; i <= end; i++) {
+    pages.push(i);
   }
 
   return (
-    <div className="pagination">
-      <button
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage <= 1}
-      >
-        ‹
-      </button>
-      {pages.map((page, i) =>
-        typeof page === 'string' ? (
-          <span key={`ellipsis-${i}`} className="text-ghost" style={{ padding: '0 4px' }}>…</span>
-        ) : (
-          <button
-            key={page}
-            className={page === currentPage ? 'active' : ''}
-            onClick={() => onPageChange(page)}
-          >
-            {page}
-          </button>
-        )
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: "var(--space-6)" }}>
+      {currentPage > 1 ? (
+        <Link href={buildUrl(currentPage - 1)} className="btn btn-secondary btn-sm" style={{ padding: "0 var(--space-2)" }}>
+          <ChevronLeft size={16} />
+        </Link>
+      ) : (
+        <button className="btn btn-secondary btn-sm" disabled style={{ padding: "0 var(--space-2)" }}>
+          <ChevronLeft size={16} />
+        </button>
       )}
-      <button
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage >= totalPages}
-      >
-        ›
-      </button>
+
+      {start > 1 && (
+        <>
+          <Link href={buildUrl(1)} className="btn btn-secondary btn-sm">1</Link>
+          {start > 2 && <span style={{ color: "var(--text-muted)", padding: "0 4px" }}>...</span>}
+        </>
+      )}
+
+      {pages.map((p) => (
+        <Link
+          key={p}
+          href={buildUrl(p)}
+          className={cn("btn btn-sm", p === currentPage ? "btn-primary" : "btn-secondary")}
+        >
+          {p}
+        </Link>
+      ))}
+
+      {end < totalPages && (
+        <>
+          {end < totalPages - 1 && <span style={{ color: "var(--text-muted)", padding: "0 4px" }}>...</span>}
+          <Link href={buildUrl(totalPages)} className="btn btn-secondary btn-sm">{totalPages}</Link>
+        </>
+      )}
+
+      {currentPage < totalPages ? (
+        <Link href={buildUrl(currentPage + 1)} className="btn btn-secondary btn-sm" style={{ padding: "0 var(--space-2)" }}>
+          <ChevronRight size={16} />
+        </Link>
+      ) : (
+        <button className="btn btn-secondary btn-sm" disabled style={{ padding: "0 var(--space-2)" }}>
+          <ChevronRight size={16} />
+        </button>
+      )}
     </div>
   );
 }

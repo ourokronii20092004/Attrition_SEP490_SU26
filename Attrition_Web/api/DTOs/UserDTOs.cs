@@ -7,6 +7,9 @@ public record UserDto(
     string? DisplayName,
     string Role,
     string? AvatarUrl,       // resolved: AvatarPath ?? GoogleAvatarUrl ?? null
+    string? BackgroundUrl,
+    string ThemeMode,
+    string ThemeAccent,
     string? Bio,
     string AuthProvider,
     DateTime JoinedAt,
@@ -14,5 +17,6 @@ public record UserDto(
     int ContributionCount,
     bool MustChangePassword
 );
-public record UpdateProfileRequest(string? Bio);
+public record UpdateProfileRequest(string? Bio, string? Email);
+public record UpdateThemeRequest(string ThemeMode, string ThemeAccent);
 public record UserListItem(Guid Id, string Username, string Role, bool IsBanned, DateTime JoinedAt);

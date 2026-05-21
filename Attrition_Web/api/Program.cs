@@ -65,6 +65,10 @@ builder.Services.AddScoped<CharacterService>();
 builder.Services.AddScoped<GameSaveService>();
 builder.Services.AddScoped<RoomService>();
 builder.Services.AddSingleton<GameSessionService>();
+builder.Services.AddScoped<MusicService>();
+builder.Services.AddScoped<AdminService>();
+builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<SearchService>();
 
 // FluentValidation
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();

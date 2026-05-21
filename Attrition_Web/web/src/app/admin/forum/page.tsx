@@ -1,165 +1,134 @@
-'use client';
-import { useState, useEffect } from 'react';
-import Modal from '@/components/Modal';
-import Badge from '@/components/Badge';
-import Pagination from '@/components/Pagination';
-import SearchBar from '@/components/SearchBar';
-import { api } from '@/lib/api';
-import { useToast } from '@/contexts/ToastContext';
+"use client";
+
+import { useEffect, useState, useCallback } from "react";
+import { api } from "@/lib/api";
+import { useToast } from "@/contexts/ToastContext";
+import { formatDate, cn, debounce } from "@/lib/utils";
+import styles from "../admin.module.css";
+
+interface ForumThread {
+  id: number;
+  title: string;
+  categoryName: string;
+  authorUsername: string;
+  isPinned: boolean;
+  isLocked: boolean;
+  postCount: number;
+  createdAt: string;
+}
 
 export default function AdminForumPage() {
-  const { showToast } = useToast();
-  const [threads, setThreads] = useState<any[]>([]);
+  const toast = useToast();
+  const [threads, setThreads] = useState<ForumThread[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [search, setSearch] = useState('');
-  const [deleteTarget, setDeleteTarget] = useState<any>(null);
+  const [totalCount, setTotalCount] = useState(0);
+  const pageSize = 20;
 
-  const fetchThreads = async (p = page, q = search) => {
+  const fetchThreads = useCallback(async (searchTerm: string, pageNum: number) => {
     setLoading(true);
-    const params = new URLSearchParams({ page: p.toString(), pageSize: '15' });
-    if (q) params.append('search', q);
-    const res = await api.get(`/api/forum/threads?${params}`);
-    if (res?.items) {
-      setThreads(res.items);
-      setTotalPages(Math.ceil((res.totalCount || 0) / 15));
+    try {
+      const res = await api.get<ForumThread[]>(
+        "/admin/forum/threads", { search: searchTerm, page: pageNum, pageSize }
+      );
+      if (res.success && res.data) {
+        setThreads(res.data);
+        setTotalCount(res.totalCount ?? res.data.length);
+      }
+    } catch {
+      toast.error("Failed to load threads");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
+  }, [toast]);
+
+  useEffect(() => { fetchThreads(search, page); }, [fetchThreads, search, page]);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedSearch = useCallback(debounce((term: string) => { setPage(1); setSearch(term); }, 300), []);
+
+  const handlePin = async (id: number, isPinned: boolean) => {
+    try {
+      await api.put(`/admin/forum/threads/${id}/pin`, { isPinned: !isPinned });
+      setThreads((prev) => prev.map((t) => t.id === id ? { ...t, isPinned: !isPinned } : t));
+      toast.success(isPinned ? "Unpinned" : "Pinned");
+    } catch { toast.error("Failed to update"); }
   };
 
-  useEffect(() => { fetchThreads(); }, [page]);
-
-  const handleSearch = (query: string) => {
-    setSearch(query);
-    setPage(1);
-    fetchThreads(1, query);
+  const handleLock = async (id: number, isLocked: boolean) => {
+    try {
+      await api.put(`/admin/forum/threads/${id}/lock`, { isLocked: !isLocked });
+      setThreads((prev) => prev.map((t) => t.id === id ? { ...t, isLocked: !isLocked } : t));
+      toast.success(isLocked ? "Unlocked" : "Locked");
+    } catch { toast.error("Failed to update"); }
   };
 
-  const handleTogglePin = async (thread: any) => {
-    const res = await api.put(`/api/forum/threads/${thread.id}`, { isPinned: !thread.isPinned });
-    if (res.success) {
-      showToast(thread.isPinned ? 'Unpinned' : 'Pinned', 'success');
-      fetchThreads();
-    } else {
-      showToast(res.error || 'Failed', 'error');
-    }
+  const handleDelete = async (id: number) => {
+    if (!confirm("Delete this thread and all its posts?")) return;
+    try {
+      await api.delete(`/admin/forum/threads/${id}`);
+      setThreads((prev) => prev.filter((t) => t.id !== id));
+      toast.success("Thread deleted");
+    } catch { toast.error("Failed to delete"); }
   };
 
-  const handleToggleLock = async (thread: any) => {
-    const res = await api.put(`/api/forum/threads/${thread.id}`, { isLocked: !thread.isLocked });
-    if (res.success) {
-      showToast(thread.isLocked ? 'Unlocked' : 'Locked', 'success');
-      fetchThreads();
-    } else {
-      showToast(res.error || 'Failed', 'error');
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!deleteTarget) return;
-    const res = await api.delete(`/api/forum/threads/${deleteTarget.id}`);
-    if (res.success) {
-      showToast('Thread deleted', 'success');
-      fetchThreads();
-    } else {
-      showToast(res.error || 'Failed', 'error');
-    }
-    setDeleteTarget(null);
-  };
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   return (
     <div>
-      <div className="admin-page-header">
-        <h1>💬 Forum Threads</h1>
-        <SearchBar placeholder="Search threads..." onSearch={handleSearch} />
-      </div>
-
-      <div className="admin-table-wrapper">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Category</th>
-              <th>Author</th>
-              <th>Replies</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={6} className="text-center text-muted" style={{ padding: 'var(--space-2xl)' }}>
-                  <div className="spinner" style={{ margin: '0 auto' }} />
-                </td>
-              </tr>
-            ) : threads.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="text-center text-muted" style={{ padding: 'var(--space-2xl)' }}>
-                  No threads found
-                </td>
-              </tr>
-            ) : (
-              threads.map((thread) => (
-                <tr key={thread.id}>
-                  <td><strong>{thread.title}</strong></td>
-                  <td className="text-muted">{thread.categoryName || thread.categorySlug}</td>
-                  <td className="text-muted">{thread.authorName}</td>
-                  <td>{thread.replyCount || 0}</td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 'var(--space-xs)' }}>
-                      {thread.isPinned && <Badge variant="pinned">📌</Badge>}
-                      {thread.isLocked && <Badge variant="locked">🔒</Badge>}
-                      {!thread.isPinned && !thread.isLocked && <span className="text-ghost">—</span>}
-                    </div>
-                  </td>
-                  <td>
-                    <div className="actions">
-                      <button
-                        className={`btn btn-sm ${thread.isPinned ? 'btn-ghost' : 'btn-gold'}`}
-                        onClick={() => handleTogglePin(thread)}
-                      >
-                        {thread.isPinned ? 'Unpin' : 'Pin'}
-                      </button>
-                      <button
-                        className={`btn btn-sm ${thread.isLocked ? 'btn-ghost' : 'btn-secondary'}`}
-                        onClick={() => handleToggleLock(thread)}
-                      >
-                        {thread.isLocked ? 'Unlock' : 'Lock'}
-                      </button>
-                      <button
-                        className="btn btn-sm btn-danger"
-                        onClick={() => setDeleteTarget(thread)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="mt-lg">
-        <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
-      </div>
-
-      <Modal
-        isOpen={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        title="Delete Thread"
-      >
-        <p className="text-muted mb-lg">
-          Are you sure you want to delete <strong>&quot;{deleteTarget?.title}&quot;</strong>? This will also delete all replies.
-        </p>
-        <div className="modal-actions">
-          <button className="btn btn-ghost" onClick={() => setDeleteTarget(null)}>Cancel</button>
-          <button className="btn btn-danger" onClick={handleDelete}>Delete</button>
+      <h1 style={{ marginBottom: "var(--space-6)" }}>Forum Threads</h1>
+      <div className={styles.adminTableWrapper}>
+        <div className={styles.adminTableHeader}>
+          <input type="text" className="input" placeholder="Search threads..." onChange={(e) => debouncedSearch(e.target.value)} style={{ maxWidth: 300 }} />
+          <span className="text-sm text-muted">{totalCount} threads</span>
         </div>
-      </Modal>
+        <div className="table-wrapper" style={{ border: "none", borderRadius: 0 }}>
+          <table className="table">
+            <thead><tr><th>Title</th><th>Category</th><th>Author</th><th>Posts</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+            <tbody>
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i}>{Array.from({ length: 7 }).map((_, j) => (<td key={j}><div className="skeleton skeleton-text" /></td>))}</tr>
+                ))
+              ) : threads.length > 0 ? (
+                threads.map((t) => (
+                  <tr key={t.id}>
+                    <td><strong>{t.title}</strong></td>
+                    <td>{t.categoryName || "—"}</td>
+                    <td>{t.authorUsername || "—"}</td>
+                    <td>{t.postCount}</td>
+                    <td style={{ display: "flex", gap: "var(--space-1)", flexWrap: "wrap" }}>
+                      {t.isPinned && <span className="badge badge-warning badge-dot">Pinned</span>}
+                      {t.isLocked && <span className="badge badge-danger badge-dot">Locked</span>}
+                      {!t.isPinned && !t.isLocked && <span className="badge badge-success badge-dot">Open</span>}
+                    </td>
+                    <td>{formatDate(t.createdAt)}</td>
+                    <td>
+                      <div style={{ display: "flex", gap: "var(--space-1)" }}>
+                        <button className={cn("btn btn-sm", t.isPinned ? "btn-warning" : "btn-secondary")} style={{ fontSize: "var(--text-xs)" }} onClick={() => handlePin(t.id, t.isPinned)}>{t.isPinned ? "Unpin" : "Pin"}</button>
+                        <button className={cn("btn btn-sm", t.isLocked ? "btn-warning" : "btn-secondary")} style={{ fontSize: "var(--text-xs)" }} onClick={() => handleLock(t.id, t.isLocked)}>{t.isLocked ? "Unlock" : "Lock"}</button>
+                        <button className="btn btn-danger btn-sm" style={{ fontSize: "var(--text-xs)" }} onClick={() => handleDelete(t.id)}>Delete</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr><td colSpan={7} style={{ textAlign: "center", padding: "var(--space-8)" }}>No threads found</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        {totalPages > 1 && (
+          <div className={styles.adminTableFooter}>
+            <span>Page {page} of {totalPages}</span>
+            <div className="pagination">
+              <button className="pagination-btn" disabled={page === 1} onClick={() => setPage(page - 1)}>←</button>
+              <button className="pagination-btn" disabled={page === totalPages} onClick={() => setPage(page + 1)}>→</button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
