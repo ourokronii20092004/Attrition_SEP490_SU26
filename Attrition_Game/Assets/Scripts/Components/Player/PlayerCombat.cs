@@ -156,6 +156,9 @@ public class PlayerCombat : NetworkBehaviour
     {
         if (attackPoint == null) return;
 
+        // Xác định hướng Player đang nhìn dựa vào vị trí attackPoint
+        Vector2 facingDir = attackPoint.localPosition.x >= 0 ? Vector2.right : Vector2.left;
+
         Collider2D[] results = new Collider2D[10];
         ContactFilter2D filter = new ContactFilter2D();
         filter.useLayerMask = true;
@@ -169,10 +172,14 @@ public class PlayerCombat : NetworkBehaviour
             Collider2D hit = results[i];
             if (hit.gameObject == this.gameObject) continue;
 
+            // CHỈ gây sát thương cho mục tiêu PHÍA TRƯỚC (trong 180° hướng nhìn)
+            Vector2 dirToTarget = (hit.transform.position - transform.position).normalized;
+            if (Vector2.Dot(facingDir, dirToTarget) < 0f) continue; // Mục tiêu ở phía sau → bỏ qua
+
             IDamageable dmg = hit.GetComponentInParent<IDamageable>();
             if (dmg != null && !dmg.IsDead)
             {
-                Vector2 pushDir = new Vector2((hit.transform.position - transform.position).normalized.x, 0.5f).normalized;
+                Vector2 pushDir = new Vector2(dirToTarget.x, 0.5f).normalized;
                 float force = damage > attackDamage ? 8f : 5f;
                 dmg.TakeDamage(damage, pushDir, force);
             }
