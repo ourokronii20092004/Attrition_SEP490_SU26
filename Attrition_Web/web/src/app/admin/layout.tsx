@@ -1,84 +1,183 @@
-'use client';
-import { useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import Link from 'next/link';
-import { useAuth } from '@/contexts/AuthContext';
+"use client";
+
+import React, { useEffect } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
+import styles from "./admin.module.css";
 
 const SIDEBAR_LINKS = [
-  { href: '/admin', label: 'Dashboard', icon: '📊' },
-  { section: 'Users' },
-  { href: '/admin/users', label: 'Manage Users', icon: '👥' },
-  { section: 'Wiki' },
-  { href: '/admin/wiki', label: 'Wiki Articles', icon: '📖' },
-  { href: '/admin/wiki/categories', label: 'Wiki Categories', icon: '🏷️' },
-  { href: '/admin/wiki/new', label: 'New Article', icon: '✏️' },
-  { section: 'Forum' },
-  { href: '/admin/forum', label: 'Forum Threads', icon: '💬' },
-  { href: '/admin/forum/posts', label: 'Forum Posts', icon: '📝' },
-  { section: 'Music' },
-  { href: '/admin/music', label: 'Music Albums', icon: '🎵' },
-  { href: '/admin/music/tracks', label: 'Music Tracks', icon: '🎶' },
+  { href: "/admin", label: "Dashboard", icon: "◉" },
+  { href: "/admin/users", label: "Users", icon: "👤" },
+  {
+    label: "Wiki",
+    icon: "📖",
+    children: [
+      { href: "/admin/wiki", label: "Articles" },
+      { href: "/admin/wiki/categories", label: "Categories" },
+      { href: "/admin/wiki/contributions", label: "Contributions" },
+    ],
+  },
+  {
+    label: "Forum",
+    icon: "💬",
+    children: [
+      { href: "/admin/forum", label: "Threads" },
+      { href: "/admin/forum/posts", label: "Posts" },
+    ],
+  },
+  {
+    label: "Music",
+    icon: "🎵",
+    children: [
+      { href: "/admin/music", label: "Albums" },
+      { href: "/admin/music/tracks", label: "Tracks" },
+    ],
+  },
 ];
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
-  const router = useRouter();
+function AdminSidebar() {
   const pathname = usePathname();
 
-  useEffect(() => {
-    if (!loading && user?.role !== 'Admin') {
-      router.push('/');
-    }
-  }, [user, loading, router]);
+  return (
+    <aside className={styles.sidebar} aria-label="Admin navigation">
+      <div className={styles.sidebarHeader}>
+        <Link href="/admin" className={styles.sidebarLogo}>
+          ATTRITION
+        </Link>
+        <span className={styles.sidebarBadge}>Admin</span>
+      </div>
 
-  if (loading) {
+      <nav className={styles.sidebarNav}>
+        {SIDEBAR_LINKS.map((link) => {
+          if ("children" in link && link.children) {
+            const isActive = link.children.some((child) =>
+              pathname.startsWith(child.href)
+            );
+            return (
+              <div key={link.label} className={styles.navGroup}>
+                <span
+                  className={cn(
+                    styles.navGroupLabel,
+                    isActive && styles.navGroupLabelActive
+                  )}
+                >
+                  <span className={styles.navIcon}>{link.icon}</span>
+                  {link.label}
+                </span>
+                <div className={styles.navGroupItems}>
+                  {link.children.map((child) => (
+                    <Link
+                      key={child.href}
+                      href={child.href}
+                      className={cn(
+                        styles.navItem,
+                        styles.navItemChild,
+                        pathname === child.href && styles.navItemActive
+                      )}
+                    >
+                      {child.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            );
+          }
+
+          return (
+            <Link
+              key={link.href}
+              href={link.href!}
+              className={cn(
+                styles.navItem,
+                pathname === link.href && styles.navItemActive
+              )}
+            >
+              <span className={styles.navIcon}>{link.icon}</span>
+              {link.label}
+            </Link>
+          );
+        })}
+      </nav>
+
+      <div className={styles.sidebarFooter}>
+        <Link
+          href="/"
+          className={styles.exitAdmin}
+          title="Leave admin panel"
+        >
+          ← Back to Site
+        </Link>
+      </div>
+    </aside>
+  );
+}
+
+function AdminHeader() {
+  const { user, logout } = useAuth();
+  const router = useRouter();
+
+  return (
+    <header className={styles.header}>
+      <div className={styles.headerLeft}>
+        <h2 className={styles.headerTitle}>Admin Panel</h2>
+      </div>
+      <div className={styles.headerRight}>
+        {user && (
+          <div className={styles.headerUser}>
+            <span className={styles.headerUserName}>
+              {user.displayName || user.username}
+            </span>
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => {
+                logout();
+                router.push("/");
+              }}
+            >
+              Logout
+            </button>
+          </div>
+        )}
+      </div>
+    </header>
+  );
+}
+
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const { user, isLoading, isAdmin } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && (!user || !isAdmin)) {
+      router.replace("/login?redirect=/admin");
+    }
+  }, [isLoading, user, isAdmin, router]);
+
+  // Show nothing while checking auth
+  if (isLoading) {
     return (
-      <div className="loading-screen">
-        <div className="spinner spinner-lg" />
-        <p className="text-muted">Loading admin panel...</p>
+      <div className={styles.loadingScreen}>
+        <div className={styles.loadingSpinner} />
       </div>
     );
   }
 
-  if (user?.role !== 'Admin') return null;
+  if (!user || !isAdmin) {
+    return null;
+  }
 
   return (
-    <div className="admin-layout">
-      <aside className="admin-sidebar">
-        <div className="admin-sidebar-header">
-          <h3>⚔ Admin Panel</h3>
-        </div>
-
-        <div className="admin-sidebar-section">
-          {SIDEBAR_LINKS.map((item, i) => {
-            if ('section' in item) {
-              return (
-                <div key={`section-${i}`} className="admin-sidebar-label">
-                  {item.section}
-                </div>
-              );
-            }
-
-            const isActive = item.href === '/admin'
-              ? pathname === '/admin'
-              : pathname.startsWith(item.href!) && item.href !== '/admin';
-
-            return (
-              <Link
-                key={item.href}
-                href={item.href!}
-                className={`admin-sidebar-link ${isActive ? 'active' : ''}`}
-              >
-                <span className="sidebar-icon">{item.icon}</span>
-                {item.label}
-              </Link>
-            );
-          })}
-        </div>
-      </aside>
-
-      <div className="admin-content">
-        {children}
+    <div className={styles.adminLayout}>
+      <AdminSidebar />
+      <div className={styles.adminMain}>
+        <AdminHeader />
+        <main className={styles.adminContent}>{children}</main>
       </div>
     </div>
   );

@@ -18,8 +18,13 @@ public class User
     // ─── Profile ───
     public string Role { get; set; } = "User";
     public string? AvatarPath { get; set; }               // uploaded avatar (overrides Google)
+    public string? BackgroundUrl { get; set; }            // NEW: profile background
     public string? Bio { get; set; }
     public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
+
+    // ─── UI Config ───
+    public string ThemeMode { get; set; } = "system";     // NEW: "light" | "dark" | "system"
+    public string ThemeAccent { get; set; } = "ember";    // NEW: accent color key
 
     // ─── Stats ───
     public int PostCount { get; set; } = 0;

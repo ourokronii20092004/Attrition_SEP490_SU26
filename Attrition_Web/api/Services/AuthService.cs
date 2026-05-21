@@ -102,6 +102,15 @@ public class AuthService
         var user = await _db.Users.FindAsync(userId);
         if (user == null) return new ApiResponse<UserDto>(false, Error: "User not found.");
 
+        if (!string.IsNullOrEmpty(request.Email) && request.Email != user.Email)
+        {
+            if (await _db.Users.AnyAsync(u => u.Email == request.Email && u.Id != userId))
+                return new ApiResponse<UserDto>(false, Error: "Email is already in use by another account.");
+            
+            user.Email = request.Email;
+            user.EmailVerified = false; // reset verification if email changes
+        }
+
         user.Bio = request.Bio;
         await _db.SaveChangesAsync();
 
@@ -323,17 +332,20 @@ public class AuthService
     }
 
     private UserDto MapToDto(User u) => new UserDto(
-        u.Id, 
-        u.Username, 
+        u.Id,
+        u.Username,
         u.Email,
         u.DisplayName,
-        u.Role, 
-        u.AvatarPath ?? u.GoogleAvatarUrl, 
-        u.Bio, 
+        u.Role,
+        u.AvatarPath ?? u.GoogleAvatarUrl,
+        u.BackgroundUrl,
+        u.ThemeMode,
+        u.ThemeAccent,
+        u.Bio,
         u.AuthProvider,
-        u.JoinedAt, 
-        u.PostCount, 
-        u.ContributionCount, 
+        u.JoinedAt,
+        u.PostCount,
+        u.ContributionCount,
         u.MustChangePassword
     );
 }

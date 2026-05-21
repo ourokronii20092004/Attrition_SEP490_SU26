@@ -1,155 +1,141 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback } from 'react';
-import { useParams } from 'next/navigation';
-import Link from 'next/link';
-import {
-  FiPlay,
-  FiPause,
-  FiShuffle,
-  FiHeart,
-  FiMusic,
-  FiClock,
-  FiChevronLeft,
-} from 'react-icons/fi';
-import { api } from '@/lib/api';
-import { usePlayer, Track } from '@/contexts/PlayerContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { api } from "@/lib/api";
+import { usePlayer, type Track } from "@/contexts/PlayerContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/contexts/ToastContext";
+import { formatDuration, formatDurationLong, cn, assetUrl } from "@/lib/utils";
+import styles from "../../collection.module.css";
 
 interface AlbumDetail {
-  id: string | number;
+  albumId: number;
   title: string;
-  artistName?: string;
-  description?: string;
-  coverImagePath?: string | null;
+  artists: string[]; // Updated from artist: string
+  description: string;
+  coverPath: string | null;
+  albumType: string;
+  releaseDate: string;
   tracks: TrackItem[];
 }
 
-interface TrackItem extends Track {
-  trackNumber?: number;
-  playCount?: number;
-}
-
-function formatDuration(seconds?: number): string {
-  if (!seconds) return '--:--';
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}
-
-function formatTotalDuration(seconds: number): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  if (h > 0) return `${h} hr ${m} min`;
-  return `${m} min`;
+interface TrackItem {
+  trackId: number;
+  title: string;
+  trackNumber: number;
+  duration: number;
+  genre: string | null;
+  artists?: string[]; // Added: track-specific artists list
+  coverPath?: string | null; // Added: track-specific cover art
 }
 
 export default function AlbumDetailPage() {
   const params = useParams();
   const albumId = params.id as string;
+  const { play, currentTrack, isPlaying, togglePlayPause } = usePlayer();
+  const { isAuthenticated } = useAuth();
+  const toast = useToast();
 
   const [album, setAlbum] = useState<AlbumDetail | null>(null);
+  const [favorites, setFavorites] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
-  const [favorites, setFavorites] = useState<Set<string | number>>(new Set());
-
-  const { currentTrack, isPlaying, play, togglePlay } = usePlayer();
-  const { user } = useAuth();
 
   useEffect(() => {
-    async function load() {
-      try {
-        const res = await api.get(`/api/music/albums/${albumId}`);
-        if (res?.data) {
-          const data = res.data;
-          setAlbum({
-            ...data,
-            tracks: (data.tracks || []).map((t: any, i: number) => ({
-              ...t,
-              albumTitle: data.title,
-              albumCoverPath: data.coverImagePath,
-              trackNumber: t.trackNumber || i + 1,
-            })),
-          });
-        }
-      } catch {
-        // album not found or API error
-      } finally {
-        setLoading(false);
-      }
+    api
+      .get<AlbumDetail>(`/music/albums/${albumId}`)
+      .then((res) => {
+        if (res.success && res.data) setAlbum(res.data);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+
+    if (isAuthenticated) {
+      api
+        .get<number[]>("/music/favorites/ids")
+        .then((res) => {
+          if (res.success && res.data) setFavorites(new Set(res.data));
+        })
+        .catch(() => {});
     }
-    load();
-  }, [albumId]);
+  }, [albumId, isAuthenticated]);
 
-  // Load favorites
-  useEffect(() => {
-    if (!user) return;
-    async function loadFavorites() {
-      try {
-        const res = await api.get('/api/music/favorites');
-        if (res?.data) {
-          const items = Array.isArray(res.data)
-            ? res.data
-            : res.data.items || [];
-          setFavorites(new Set(items.map((f: any) => f.trackId || f.id)));
-        }
-      } catch {}
+  const handlePlayTrack = (track: TrackItem) => {
+    if (!album) return;
+    const fullTrack: Track = {
+      id: track.trackId,
+      title: track.title,
+      trackNumber: track.trackNumber,
+      duration: track.duration,
+      genre: track.genre,
+      albumId: album.albumId,
+      albumTitle: album.title,
+      albumArtist: album.artists?.join(", ") || "Attrition OST",
+      albumArtists: album.artists || [],
+      artists: track.artists || [],
+      coverPath: track.coverPath || null,
+      albumCoverPath: album.coverPath || null,
+    };
+    const fullQueue: Track[] = album.tracks.map((t) => ({
+      id: t.trackId,
+      title: t.title,
+      trackNumber: t.trackNumber,
+      duration: t.duration,
+      genre: t.genre,
+      albumId: album.albumId,
+      albumTitle: album.title,
+      albumArtist: album.artists?.join(", ") || "Attrition OST",
+      albumArtists: album.artists || [],
+      artists: t.artists || [],
+      coverPath: t.coverPath || null,
+      albumCoverPath: album.coverPath || null,
+    }));
+    play(fullTrack, fullQueue);
+  };
+
+  const handlePlayAll = () => {
+    if (album && album.tracks.length > 0) {
+      handlePlayTrack(album.tracks[0]);
     }
-    loadFavorites();
-  }, [user]);
+  };
 
-  const handlePlayAll = useCallback(() => {
-    if (!album || album.tracks.length === 0) return;
-    play(album.tracks[0], album.tracks);
-  }, [album, play]);
+  const toggleFavorite = async (trackId: number) => {
+    if (!isAuthenticated) {
+      toast.info("Sign in to save favorites");
+      return;
+    }
+    // Optimistic UI
+    const wasFavorited = favorites.has(trackId);
+    setFavorites((prev) => {
+      const next = new Set(prev);
+      if (wasFavorited) next.delete(trackId);
+      else next.add(trackId);
+      return next;
+    });
 
-  const handleShuffle = useCallback(() => {
-    if (!album || album.tracks.length === 0) return;
-    const shuffled = [...album.tracks].sort(() => Math.random() - 0.5);
-    play(shuffled[0], shuffled);
-  }, [album, play]);
-
-  const handlePlayTrack = useCallback(
-    (track: TrackItem) => {
-      if (!album) return;
-      if (currentTrack?.id === track.id && isPlaying) {
-        togglePlay();
-      } else {
-        play(track, album.tracks);
-      }
-    },
-    [album, currentTrack, isPlaying, play, togglePlay]
-  );
-
-  const handleToggleFavorite = useCallback(
-    async (trackId: string | number) => {
-      if (!user) return;
-      try {
-        await api.post(`/api/music/favorites/${trackId}`);
-        setFavorites((prev) => {
-          const next = new Set(prev);
-          if (next.has(trackId)) {
-            next.delete(trackId);
-          } else {
-            next.add(trackId);
-          }
-          return next;
-        });
-      } catch {}
-    },
-    [user]
-  );
+    try {
+      await api.post(`/music/favorites/${trackId}`);
+    } catch {
+      // Rollback
+      setFavorites((prev) => {
+        const next = new Set(prev);
+        if (wasFavorited) next.add(trackId);
+        else next.delete(trackId);
+        return next;
+      });
+      toast.error("Failed to update favorites");
+    }
+  };
 
   if (loading) {
     return (
       <div>
-        <div className="album-detail-header">
-          <div className="album-detail-cover">
-            <div className="skeleton" style={{ width: '100%', height: '100%' }} />
-          </div>
-          <div className="album-detail-info" style={{ flex: 1 }}>
-            <div className="skeleton skeleton-text" style={{ width: '80px' }} />
-            <div className="skeleton skeleton-title" style={{ width: '60%' }} />
-            <div className="skeleton skeleton-text" style={{ width: '200px' }} />
+        <div className={styles.albumHeader}>
+          <div className={`${styles.albumHeaderCover} skeleton`} />
+          <div className={styles.albumHeaderInfo}>
+            <div className="skeleton skeleton-text" style={{ width: "60px" }} />
+            <div className="skeleton skeleton-heading" style={{ width: "200px" }} />
+            <div className="skeleton skeleton-text" style={{ width: "120px" }} />
           </div>
         </div>
       </div>
@@ -159,139 +145,96 @@ export default function AlbumDetailPage() {
   if (!album) {
     return (
       <div className="empty-state">
-        <div className="empty-state-icon">
-          <FiMusic />
-        </div>
+        <span className="empty-state-icon">🎵</span>
         <h3>Album not found</h3>
-        <p>This album may have been removed or doesn&apos;t exist.</p>
-        <Link href="/" className="btn btn-secondary" style={{ marginTop: 'var(--space-lg)' }}>
-          Back to Home
-        </Link>
+        <p>This album doesn&apos;t exist or has been removed.</p>
       </div>
     );
   }
 
-  const totalDuration = album.tracks.reduce(
-    (acc, t) => acc + (t.duration || 0),
-    0
-  );
-
-  const coverUrl = album.coverImagePath
-    ? `/uploads/${album.coverImagePath}`
-    : null;
+  const totalDuration = album.tracks.reduce((sum, t) => sum + t.duration, 0);
 
   return (
-    <div className="animate-fade-in">
-      {/* Breadcrumb */}
-      <div className="breadcrumb">
-        <Link href="/">Home</Link>
-        <span className="sep">/</span>
-        <Link href="/albums">Albums</Link>
-        <span className="sep">/</span>
-        <span>{album.title}</span>
-      </div>
-
-      {/* Header */}
-      <div className="album-detail-header">
-        <div className="album-detail-cover">
-          {coverUrl ? (
-            <img src={coverUrl} alt={album.title} />
+    <div>
+      {/* Album header */}
+      <div className={styles.albumHeader}>
+        <div className={styles.albumHeaderCover}>
+          {album.coverPath ? (
+            <img src={assetUrl(album.coverPath)} alt={album.title} />
           ) : (
-            <FiMusic className="album-detail-cover-placeholder" />
+            <span className={styles.albumCoverPlaceholder}>♫</span>
           )}
         </div>
-        <div className="album-detail-info">
-          <div className="album-detail-label">Album</div>
-          <h1 className="album-detail-title">{album.title}</h1>
-          <div className="album-detail-meta">
-            <span>{album.artistName || 'Attrition OST'}</span>
-            <span className="dot" />
-            <span>{album.tracks.length} tracks</span>
-            {totalDuration > 0 && (
-              <>
-                <span className="dot" />
-                <span>{formatTotalDuration(totalDuration)}</span>
-              </>
-            )}
+        <div className={styles.albumHeaderInfo}>
+          <span className={styles.albumHeaderType}>{album.albumType || "Album"}</span>
+          <h1 className={styles.albumHeaderTitle}>{album.title}</h1>
+          <p className={styles.albumHeaderMeta}>
+            {album.artists?.join(", ") || "Attrition OST"} · {album.tracks.length} tracks · {formatDurationLong(totalDuration)}
+          </p>
+          <div className={styles.albumActions}>
+            <button className="btn btn-primary btn-md" onClick={handlePlayAll}>
+              ▶ Play All
+            </button>
           </div>
         </div>
-      </div>
-
-      {/* Actions */}
-      <div className="album-detail-actions">
-        <button className="btn btn-primary btn-lg btn-round" onClick={handlePlayAll}>
-          <FiPlay /> Play All
-        </button>
-        <button className="btn btn-secondary btn-round" onClick={handleShuffle}>
-          <FiShuffle /> Shuffle
-        </button>
       </div>
 
       {/* Track list */}
-      {album.tracks.length === 0 ? (
-        <div className="empty-state">
-          <h3>No tracks yet</h3>
-          <p>Tracks haven&apos;t been added to this album yet.</p>
-        </div>
-      ) : (
-        <div className="track-list">
-          <div className="track-list-header">
-            <span>#</span>
-            <span>Title</span>
-            <span />
-            <span><FiClock /></span>
-          </div>
-          {album.tracks.map((track) => {
-            const isCurrentTrack = currentTrack?.id === track.id;
-            return (
-              <div
-                key={track.id}
-                className={`track-item ${isCurrentTrack ? 'playing' : ''}`}
-                onClick={() => handlePlayTrack(track)}
-              >
-                <div>
-                  <span className="track-number">
-                    {isCurrentTrack && isPlaying ? '♫' : track.trackNumber}
-                  </span>
-                  <button className="track-play-btn">
-                    {isCurrentTrack && isPlaying ? (
-                      <FiPause />
-                    ) : (
-                      <FiPlay />
-                    )}
-                  </button>
-                </div>
-                <div className="track-title-cell">
-                  <span className="track-title-text">{track.title}</span>
-                  <span className="track-title-artist">
-                    {track.artistName || album.artistName || 'Attrition OST'}
-                  </span>
-                </div>
-                <div>
-                  {user && (
-                    <button
-                      className={`track-favorite-btn ${
-                        favorites.has(track.id) ? 'favorited' : ''
-                      }`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleToggleFavorite(track.id);
-                      }}
-                    >
-                      <FiHeart
-                        fill={favorites.has(track.id) ? 'currentColor' : 'none'}
-                      />
-                    </button>
-                  )}
-                </div>
-                <span className="track-duration">
-                  {formatDuration(track.duration)}
+      <div className={styles.trackListHeader}>
+        <span>#</span>
+        <span>Title</span>
+        <span></span>
+        <span>Duration</span>
+      </div>
+      <div className={styles.trackList}>
+        {album.tracks.map((track) => {
+          const isActive = currentTrack?.id === track.trackId;
+          return (
+            <div
+              key={track.trackId}
+              className={cn(styles.trackRow, isActive && styles.trackRowActive)}
+              onClick={() => {
+                if (isActive) {
+                  togglePlayPause();
+                } else {
+                  handlePlayTrack(track);
+                }
+              }}
+            >
+              <div>
+                <span className={styles.trackNumber}>{track.trackNumber}</span>
+                <span className={styles.trackPlayIcon}>
+                  {isActive && isPlaying ? "⏸" : "▶"}
                 </span>
               </div>
-            );
-          })}
-        </div>
-      )}
+              <div className={styles.trackInfo}>
+                <span className={styles.trackTitle}>{track.title}</span>
+                {track.artists && track.artists.length > 0 && (
+                  <span className={styles.trackArtist} style={{ display: "block", marginTop: "2px" }}>
+                    {track.artists.join(", ")}
+                  </span>
+                )}
+              </div>
+              <button
+                className={cn(
+                  styles.trackFavorite,
+                  favorites.has(track.trackId) && styles.trackFavoriteActive
+                )}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleFavorite(track.trackId);
+                }}
+                aria-label={favorites.has(track.trackId) ? "Remove from favorites" : "Add to favorites"}
+              >
+                {favorites.has(track.trackId) ? "♥" : "♡"}
+              </button>
+              <span className={styles.trackDuration}>
+                {formatDuration(track.duration)}
+              </span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

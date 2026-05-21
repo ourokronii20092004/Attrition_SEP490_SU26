@@ -1,139 +1,115 @@
-'use client';
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import Modal from '@/components/Modal';
-import Pagination from '@/components/Pagination';
-import SearchBar from '@/components/SearchBar';
-import { api } from '@/lib/api';
-import { useToast } from '@/contexts/ToastContext';
+"use client";
+
+import { useEffect, useState, useCallback } from "react";
+import { api } from "@/lib/api";
+import { useToast } from "@/contexts/ToastContext";
+import { formatDate, cn, debounce } from "@/lib/utils";
+import styles from "../admin.module.css";
+
+interface WikiArticle {
+  id: number;
+  title: string;
+  slug: string;
+  categoryName: string;
+  authorUsername: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function AdminWikiPage() {
-  const { showToast } = useToast();
-  const [articles, setArticles] = useState<any[]>([]);
+  const toast = useToast();
+  const [articles, setArticles] = useState<WikiArticle[]>([]);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [search, setSearch] = useState('');
-  const [deleteTarget, setDeleteTarget] = useState<any>(null);
+  const [search, setSearch] = useState("");
 
-  const fetchArticles = async (p = page, q = search) => {
+  const fetchArticles = useCallback(async (searchTerm: string) => {
     setLoading(true);
-    const params = new URLSearchParams({ page: p.toString(), pageSize: '15' });
-    if (q) params.append('search', q);
-    const res = await api.get(`/api/wiki/articles?${params}`);
-    if (res?.items) {
-      setArticles(res.items);
-      setTotalPages(Math.ceil((res.totalCount || 0) / 15));
+    try {
+      const params: Record<string, string> = {};
+      if (searchTerm) params.search = searchTerm;
+      const res = await api.get<WikiArticle[]>("/admin/wiki/articles", params);
+      if (res.success && res.data) {
+        setArticles(Array.isArray(res.data) ? res.data : []);
+      }
+    } catch {
+      toast.error("Failed to load articles");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  };
+  }, [toast]);
 
-  useEffect(() => { fetchArticles(); }, [page]);
+  useEffect(() => { fetchArticles(search); }, [fetchArticles, search]);
 
-  const handleSearch = (query: string) => {
-    setSearch(query);
-    setPage(1);
-    fetchArticles(1, query);
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedSearch = useCallback(
+    debounce((term: string) => setSearch(term), 300), []
+  );
 
-  const handleDelete = async () => {
-    if (!deleteTarget) return;
-    const res = await api.delete(`/api/wiki/articles/${deleteTarget.id}`);
-    if (res.success) {
-      showToast('Article deleted', 'success');
-      fetchArticles();
-    } else {
-      showToast(res.error || 'Failed to delete', 'error');
+  const handleDelete = async (id: number) => {
+    if (!confirm("Delete this article?")) return;
+    try {
+      await api.delete(`/admin/wiki/articles/${id}`);
+      setArticles((prev) => prev.filter((a) => a.id !== id));
+      toast.success("Article deleted");
+    } catch {
+      toast.error("Failed to delete article");
     }
-    setDeleteTarget(null);
   };
 
   return (
     <div>
-      <div className="admin-page-header">
-        <h1>📖 Wiki Articles</h1>
-        <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'center' }}>
-          <SearchBar placeholder="Search articles..." onSearch={handleSearch} />
-          <Link href="/admin/wiki/new" className="btn btn-primary btn-sm">
-            + New Article
-          </Link>
+      <h1 style={{ marginBottom: "var(--space-6)" }}>Wiki Articles</h1>
+      <div className={styles.adminTableWrapper}>
+        <div className={styles.adminTableHeader}>
+          <input
+            type="text" className="input"
+            placeholder="Search articles..."
+            onChange={(e) => debouncedSearch(e.target.value)}
+            style={{ maxWidth: 300 }}
+          />
+          <span className="text-sm text-muted">{articles.length} articles</span>
+        </div>
+        <div className="table-wrapper" style={{ border: "none", borderRadius: 0 }}>
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Category</th>
+                <th>Author</th>
+                <th>Status</th>
+                <th>Updated</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i}>{Array.from({ length: 6 }).map((_, j) => (
+                    <td key={j}><div className="skeleton skeleton-text" /></td>
+                  ))}</tr>
+                ))
+              ) : articles.length > 0 ? (
+                articles.map((a) => (
+                  <tr key={a.id}>
+                    <td><strong>{a.title}</strong></td>
+                    <td>{a.categoryName || "—"}</td>
+                    <td>{a.authorUsername || "—"}</td>
+                    <td><span className="badge badge-default">{a.status || "published"}</span></td>
+                    <td>{formatDate(a.updatedAt || a.createdAt)}</td>
+                    <td>
+                      <button className="btn btn-danger btn-sm" style={{ fontSize: "var(--text-xs)" }}
+                        onClick={() => handleDelete(a.id)}>Delete</button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr><td colSpan={6} style={{ textAlign: "center", padding: "var(--space-8)" }}>No articles found</td></tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
-
-      <div className="admin-table-wrapper">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Category</th>
-              <th>Author</th>
-              <th>Updated</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={6} className="text-center text-muted" style={{ padding: 'var(--space-2xl)' }}>
-                  <div className="spinner" style={{ margin: '0 auto' }} />
-                </td>
-              </tr>
-            ) : articles.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="text-center text-muted" style={{ padding: 'var(--space-2xl)' }}>
-                  No articles found
-                </td>
-              </tr>
-            ) : (
-              articles.map((article) => (
-                <tr key={article.id}>
-                  <td><strong>{article.title}</strong></td>
-                  <td className="text-muted">{article.categoryName || article.categorySlug}</td>
-                  <td className="text-muted">{article.authorName || '—'}</td>
-                  <td className="text-muted">{new Date(article.updatedAt).toLocaleDateString()}</td>
-                  <td>
-                    <span className={`badge ${article.status === 'Published' ? 'badge-success' : 'badge-warning'}`}>
-                      {article.status}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="actions">
-                      <Link href={`/admin/wiki/edit/${article.id}`} className="btn btn-sm btn-ghost">
-                        Edit
-                      </Link>
-                      <button
-                        className="btn btn-sm btn-danger"
-                        onClick={() => setDeleteTarget(article)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="mt-lg">
-        <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
-      </div>
-
-      <Modal
-        isOpen={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        title="Delete Article"
-      >
-        <p className="text-muted mb-lg">
-          Are you sure you want to delete <strong>&quot;{deleteTarget?.title}&quot;</strong>? This action cannot be undone.
-        </p>
-        <div className="modal-actions">
-          <button className="btn btn-ghost" onClick={() => setDeleteTarget(null)}>Cancel</button>
-          <button className="btn btn-danger" onClick={handleDelete}>Delete</button>
-        </div>
-      </Modal>
     </div>
   );
 }

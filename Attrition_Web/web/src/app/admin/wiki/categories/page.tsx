@@ -1,182 +1,143 @@
-'use client';
-import { useState, useEffect } from 'react';
-import Modal from '@/components/Modal';
-import { api } from '@/lib/api';
-import { useToast } from '@/contexts/ToastContext';
+"use client";
+
+import { useEffect, useState, useCallback } from "react";
+import { api } from "@/lib/api";
+import { useToast } from "@/contexts/ToastContext";
+import styles from "../../admin.module.css";
+
+interface WikiCategory {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  articleCount?: number;
+}
 
 export default function AdminWikiCategoriesPage() {
-  const { showToast } = useToast();
-  const [categories, setCategories] = useState<any[]>([]);
+  const toast = useToast();
+  const [categories, setCategories] = useState<WikiCategory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editModal, setEditModal] = useState<any>(null);
-  const [deleteTarget, setDeleteTarget] = useState<any>(null);
-  const [formName, setFormName] = useState('');
-  const [formSlug, setFormSlug] = useState('');
-  const [formDescription, setFormDescription] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [editId, setEditId] = useState<number | null>(null);
+  const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
+  const [description, setDescription] = useState("");
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     setLoading(true);
-    const res = await api.get('/api/wiki/categories');
-    const cats = Array.isArray(res) ? res : (res.data || []);
-    setCategories(cats);
-    setLoading(false);
-  };
-
-  useEffect(() => { fetchCategories(); }, []);
-
-  const openCreateModal = () => {
-    setFormName('');
-    setFormSlug('');
-    setFormDescription('');
-    setEditModal({ isNew: true });
-  };
-
-  const openEditModal = (cat: any) => {
-    setFormName(cat.name);
-    setFormSlug(cat.slug);
-    setFormDescription(cat.description || '');
-    setEditModal(cat);
-  };
-
-  const handleSave = async () => {
-    if (!formName.trim() || !formSlug.trim()) {
-      showToast('Name and slug are required', 'error');
-      return;
+    try {
+      const res = await api.get<WikiCategory[]>("/admin/wiki/categories");
+      if (res.success && res.data) setCategories(res.data);
+    } catch {
+      toast.error("Failed to load categories");
+    } finally {
+      setLoading(false);
     }
+  }, [toast]);
 
-    setIsSubmitting(true);
-    const payload = { name: formName, slug: formSlug, description: formDescription };
+  useEffect(() => { fetchCategories(); }, [fetchCategories]);
 
-    let res;
-    if (editModal?.isNew) {
-      res = await api.post('/api/wiki/categories', payload);
-    } else {
-      res = await api.put(`/api/wiki/categories/${editModal.id}`, payload);
-    }
+  const resetForm = () => {
+    setShowForm(false); setEditId(null);
+    setName(""); setSlug(""); setDescription("");
+  };
 
-    setIsSubmitting(false);
-
-    if (res.success) {
-      showToast(editModal?.isNew ? 'Category created' : 'Category updated', 'success');
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editId) {
+        await api.put(`/admin/wiki/categories/${editId}`, { name, slug, description });
+        toast.success("Category updated");
+      } else {
+        await api.post("/admin/wiki/categories", { name, slug, description });
+        toast.success("Category created");
+      }
+      resetForm();
       fetchCategories();
-      setEditModal(null);
-    } else {
-      showToast(res.error || 'Failed to save', 'error');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save category");
     }
   };
 
-  const handleDelete = async () => {
-    if (!deleteTarget) return;
-    const res = await api.delete(`/api/wiki/categories/${deleteTarget.id}`);
-    if (res.success) {
-      showToast('Category deleted', 'success');
-      fetchCategories();
-    } else {
-      showToast(res.error || 'Failed to delete', 'error');
+  const handleEdit = (cat: WikiCategory) => {
+    setEditId(cat.id); setName(cat.name); setSlug(cat.slug);
+    setDescription(cat.description || ""); setShowForm(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Delete this category?")) return;
+    try {
+      await api.delete(`/admin/wiki/categories/${id}`);
+      setCategories((prev) => prev.filter((c) => c.id !== id));
+      toast.success("Category deleted");
+    } catch {
+      toast.error("Failed to delete category");
     }
-    setDeleteTarget(null);
   };
 
   return (
     <div>
-      <div className="admin-page-header">
-        <h1>🏷️ Wiki Categories</h1>
-        <button className="btn btn-primary btn-sm" onClick={openCreateModal}>
-          + New Category
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-6)" }}>
+        <h1>Wiki Categories</h1>
+        <button className="btn btn-primary btn-sm" onClick={() => { resetForm(); setShowForm(true); }}>
+          Add Category
         </button>
       </div>
 
-      <div className="admin-table-wrapper">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Slug</th>
-              <th>Description</th>
-              <th>Articles</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={5} className="text-center text-muted" style={{ padding: 'var(--space-2xl)' }}>
-                  <div className="spinner" style={{ margin: '0 auto' }} />
-                </td>
-              </tr>
-            ) : categories.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="text-center text-muted" style={{ padding: 'var(--space-2xl)' }}>
-                  No categories yet
-                </td>
-              </tr>
-            ) : (
-              categories.map((cat) => (
-                <tr key={cat.id}>
-                  <td><strong>{cat.name}</strong></td>
-                  <td className="text-muted">{cat.slug}</td>
-                  <td className="text-muted">{cat.description || '—'}</td>
-                  <td>{cat.articleCount || 0}</td>
-                  <td>
-                    <div className="actions">
-                      <button className="btn btn-sm btn-ghost" onClick={() => openEditModal(cat)}>
-                        Edit
-                      </button>
-                      <button className="btn btn-sm btn-danger" onClick={() => setDeleteTarget(cat)}>
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+      {showForm && (
+        <form onSubmit={handleSubmit} style={{
+          background: "var(--surface)", border: "1px solid var(--border)",
+          borderRadius: "var(--radius-lg)", padding: "var(--space-5)",
+          marginBottom: "var(--space-6)", display: "flex", flexDirection: "column", gap: "var(--space-4)"
+        }}>
+          <div className="input-group">
+            <label className="input-label">Name</label>
+            <input className="input" value={name} onChange={(e) => { setName(e.target.value); if (!editId) setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "-")); }} required />
+          </div>
+          <div className="input-group">
+            <label className="input-label">Slug</label>
+            <input className="input" value={slug} onChange={(e) => setSlug(e.target.value)} required />
+          </div>
+          <div className="input-group">
+            <label className="input-label">Description</label>
+            <textarea className="input" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
+          </div>
+          <div style={{ display: "flex", gap: "var(--space-3)" }}>
+            <button type="submit" className="btn btn-primary btn-sm">{editId ? "Update" : "Create"}</button>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={resetForm}>Cancel</button>
+          </div>
+        </form>
+      )}
+
+      <div className={styles.adminTableWrapper}>
+        <div className="table-wrapper" style={{ border: "none", borderRadius: 0 }}>
+          <table className="table">
+            <thead><tr><th>Name</th><th>Slug</th><th>Description</th><th>Articles</th><th>Actions</th></tr></thead>
+            <tbody>
+              {loading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <tr key={i}>{Array.from({ length: 5 }).map((_, j) => (<td key={j}><div className="skeleton skeleton-text" /></td>))}</tr>
+                ))
+              ) : categories.length > 0 ? (
+                categories.map((cat) => (
+                  <tr key={cat.id}>
+                    <td><strong>{cat.name}</strong></td>
+                    <td><code>{cat.slug}</code></td>
+                    <td>{cat.description || "—"}</td>
+                    <td>{cat.articleCount ?? 0}</td>
+                    <td style={{ display: "flex", gap: "var(--space-2)" }}>
+                      <button className="btn btn-secondary btn-sm" style={{ fontSize: "var(--text-xs)" }} onClick={() => handleEdit(cat)}>Edit</button>
+                      <button className="btn btn-danger btn-sm" style={{ fontSize: "var(--text-xs)" }} onClick={() => handleDelete(cat.id)}>Delete</button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr><td colSpan={5} style={{ textAlign: "center", padding: "var(--space-8)" }}>No categories yet</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-
-      {/* Create/Edit Modal */}
-      <Modal
-        isOpen={!!editModal}
-        onClose={() => setEditModal(null)}
-        title={editModal?.isNew ? 'Create Category' : 'Edit Category'}
-      >
-        <div className="auth-form">
-          <div className="input-group">
-            <label>Name</label>
-            <input className="input" value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Category name" />
-          </div>
-          <div className="input-group">
-            <label>Slug</label>
-            <input className="input" value={formSlug} onChange={(e) => setFormSlug(e.target.value)} placeholder="category-slug" />
-          </div>
-          <div className="input-group">
-            <label>Description</label>
-            <textarea className="input" value={formDescription} onChange={(e) => setFormDescription(e.target.value)} placeholder="Optional description" rows={3} />
-          </div>
-        </div>
-        <div className="modal-actions">
-          <button className="btn btn-ghost" onClick={() => setEditModal(null)}>Cancel</button>
-          <button className="btn btn-primary" onClick={handleSave} disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : 'Save'}
-          </button>
-        </div>
-      </Modal>
-
-      {/* Delete Modal */}
-      <Modal
-        isOpen={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        title="Delete Category"
-      >
-        <p className="text-muted mb-lg">
-          Are you sure you want to delete <strong>&quot;{deleteTarget?.name}&quot;</strong>? All articles in this category may be affected.
-        </p>
-        <div className="modal-actions">
-          <button className="btn btn-ghost" onClick={() => setDeleteTarget(null)}>Cancel</button>
-          <button className="btn btn-danger" onClick={handleDelete}>Delete</button>
-        </div>
-      </Modal>
     </div>
   );
 }
