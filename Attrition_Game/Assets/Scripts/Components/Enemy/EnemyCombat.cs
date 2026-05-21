@@ -3,6 +3,17 @@ using UnityEngine;
 
 public class EnemyCombat : NetworkBehaviour
 {
+    [Header("---- DASH ATTACK ----")]
+    [Tooltip("Bật nếu quái lao về phía Player khi tấn công (kiểu Slime)")]
+    public bool isDashAttack;
+    [Tooltip("Tốc độ lao tới khi dash attack")]
+    public float dashSpeed = 10f;
+    [Tooltip("Thời gian lao tới (giây) - nên ngắn hơn attackDuration")]
+    public float dashDuration = 0.3f;
+
+    [HideInInspector][Networked] public NetworkBool IsDashAttacking { get; set; }
+    [HideInInspector][Networked] public Vector2 DashDirection { get; set; }
+    [Networked] private TickTimer dashTimer { get; set; }
     [SerializeField] private EnemyAnimation animationComp;
     public Transform attackPoint;
     public float attackRange = 1.5f;
@@ -36,10 +47,18 @@ public class EnemyCombat : NetworkBehaviour
 
     public override void FixedUpdateNetwork()
     {
+        // Hết thời gian dash → tắt dash
+        if (IsDashAttacking && dashTimer.ExpiredOrNotRunning(Runner))
+        {
+            IsDashAttacking = false;
+            dashTimer = TickTimer.None;
+        }
+
         // ExpiredOrNotRunning thay vì Expired: tránh miss tick duy nhất gây kẹt IsAttacking
         if (IsAttacking && attackTimer.ExpiredOrNotRunning(Runner))
         {
             IsAttacking = false;
+            IsDashAttacking = false;
             cooldownTimer = TickTimer.CreateFromSeconds(Runner, attackCooldown);
             attackTimer = TickTimer.None;
         }
@@ -63,6 +82,26 @@ public class EnemyCombat : NetworkBehaviour
         attackTimer = TickTimer.CreateFromSeconds(Runner, attackDuration / currentAttackSpeed);
     }
 
+    /// <summary>
+    /// Gọi bởi AI khi muốn dash attack (truyền hướng tới player).
+    /// Quái sẽ lao về phía player trong dashDuration giây.
+    /// </summary>
+    public void AttemptDashAttack(Vector2 directionToPlayer)
+    {
+        if (!CanAttack()) return;
+
+        IsAttacking = true;
+        int randomAttackIndex = Random.Range(0, attackVariants);
+
+        RPC_PlayAttackAnim(randomAttackIndex, currentAttackSpeed);
+        attackTimer = TickTimer.CreateFromSeconds(Runner, attackDuration / currentAttackSpeed);
+
+        // Bật dash
+        IsDashAttacking = true;
+        DashDirection = directionToPlayer.normalized;
+        dashTimer = TickTimer.CreateFromSeconds(Runner, dashDuration);
+    }
+
     // Vẫn giữ lại cho ai muốn dùng Animation Event (không bắt buộc)
     public void FinishAttack()
     {
@@ -81,6 +120,23 @@ public class EnemyCombat : NetworkBehaviour
         if (animationComp != null) animationComp.PlayAttack(attackIndex, speed);
     }
 
+    /// <summary>
+    /// Lấy hướng nhìn thực tế, có tính đến defaultFacingLeft của EnemyAnimation.
+    /// Khi sprite gốc quay trái, scale.x > 0 nghĩa là đang nhìn trái (ngược lại bình thường).
+    /// </summary>
+    private Vector2 GetFacingDirection()
+    {
+        bool defaultLeft = animationComp != null && animationComp.defaultFacingLeft;
+        float scaleX = transform.localScale.x;
+
+        // defaultFacingLeft = false (gốc quay phải): scale.x > 0 → phải, scale.x < 0 → trái
+        // defaultFacingLeft = true  (gốc quay trái): scale.x > 0 → trái, scale.x < 0 → phải
+        if (defaultLeft)
+            return scaleX > 0 ? Vector2.left : Vector2.right;
+        else
+            return scaleX > 0 ? Vector2.right : Vector2.left;
+    }
+
     void OnDrawGizmosSelected()
     {
         if (attackPoint == null) return;
@@ -88,7 +144,15 @@ public class EnemyCombat : NetworkBehaviour
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(attackPoint.position, attackRange);
 
-        Vector3 facingDirection = transform.localScale.x > 0 ? Vector3.right : Vector3.left;
+        // Lấy hướng nhìn có tính defaultFacingLeft
+        EnemyAnimation anim = animationComp != null ? animationComp : GetComponent<EnemyAnimation>();
+        bool defaultLeft = anim != null && anim.defaultFacingLeft;
+        float scaleX = transform.localScale.x;
+        Vector3 facingDirection;
+        if (defaultLeft)
+            facingDirection = scaleX > 0 ? Vector3.left : Vector3.right;
+        else
+            facingDirection = scaleX > 0 ? Vector3.right : Vector3.left;
 
         Vector3 upperLimit = Quaternion.Euler(0, 0, attackAngle / 2f) * facingDirection;
         Vector3 lowerLimit = Quaternion.Euler(0, 0, -attackAngle / 2f) * facingDirection;
@@ -160,7 +224,7 @@ public class EnemyCombat : NetworkBehaviour
             Collider2D player = results[i];
 
             Vector2 directionToPlayer = (player.transform.position - transform.position).normalized;
-            Vector2 facingDirection = transform.localScale.x > 0 ? Vector2.right : Vector2.left;
+            Vector2 facingDirection = GetFacingDirection();
 
             if (Vector2.Angle(facingDirection, directionToPlayer) < attackAngle / 2f)
             {

@@ -70,11 +70,27 @@ public class EnemyAI : NetworkBehaviour
             return;
         }
 
-        // Chỉ đứng yên khi ĐANG PHÁT animation đánh (không phải khi đang chờ cooldown)
+        // Khi đang tấn công:
+        // - Nếu đang dash → lao về phía player
+        // - Nếu không dash → đứng yên như bình thường
         if (combatComp.IsAttacking)
         {
-            rb.linearVelocity = isFlying ? Vector2.zero : new Vector2(0f, rb.linearVelocity.y);
-            NetSpeed = 0f;
+            if (combatComp.IsDashAttacking)
+            {
+                // Lao về phía player với tốc độ dashSpeed
+                Vector2 dashDir = combatComp.DashDirection;
+                if (isFlying)
+                    rb.linearVelocity = dashDir * combatComp.dashSpeed;
+                else
+                    rb.linearVelocity = new Vector2(dashDir.x * combatComp.dashSpeed, rb.linearVelocity.y);
+                
+                NetSpeed = Mathf.Abs(rb.linearVelocity.x);
+            }
+            else
+            {
+                rb.linearVelocity = isFlying ? Vector2.zero : new Vector2(0f, rb.linearVelocity.y);
+                NetSpeed = 0f;
+            }
             return;
         }
 
@@ -103,7 +119,16 @@ public class EnemyAI : NetworkBehaviour
                 // Đánh nếu hết cooldown
                 if (combatComp.CanAttack())
                 {
-                    combatComp.AttemptAttack();
+                    if (combatComp.isDashAttack)
+                    {
+                        // Dash attack: lao về phía player
+                        Vector2 dashDir = (playerTarget.position - transform.position).normalized;
+                        combatComp.AttemptDashAttack(dashDir);
+                    }
+                    else
+                    {
+                        combatComp.AttemptAttack();
+                    }
                 }
                 // Nếu đang chờ cooldown → vẫn đứng nhìn chứ không đi lung tung
             }
@@ -250,5 +275,36 @@ public class EnemyAI : NetworkBehaviour
         cachedChasePlayer = default;
         isChasing = false;
         playerTarget = null;
+    }
+
+    void OnDrawGizmosSelected()
+    {
+        // Vòng tròn tầm nhìn (View Radius) - CYAN
+        Gizmos.color = new Color(0f, 1f, 1f, 0.3f);
+        Gizmos.DrawWireSphere(transform.position, viewRadius);
+        // Tô mờ bên trong
+        Gizmos.color = new Color(0f, 1f, 1f, 0.05f);
+        Gizmos.DrawSphere(transform.position, viewRadius);
+
+        // Vùng tuần tra (Patrol Radius) - GREEN
+        Vector2 spawnPos = Application.isPlaying ? startPosition : (Vector2)transform.position;
+        if (patrolRadius > 0.05f)
+        {
+            Gizmos.color = new Color(0f, 1f, 0f, 0.25f);
+            Gizmos.DrawWireSphere(spawnPos, patrolRadius);
+        }
+
+        // Đường đến mục tiêu hiện tại - RED (chỉ khi đang chạy)
+        if (Application.isPlaying && isChasing && playerTarget != null)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawLine(transform.position, playerTarget.position);
+        }
+
+        // Tia quét tường - MAGENTA
+        Gizmos.color = Color.magenta;
+        Vector2 wallOrigin = new Vector2(transform.position.x, transform.position.y + wallCheckHeightOffset);
+        Gizmos.DrawRay(wallOrigin, Vector2.right * wallCheckDistance);
+        Gizmos.DrawRay(wallOrigin, Vector2.left * wallCheckDistance);
     }
 }
