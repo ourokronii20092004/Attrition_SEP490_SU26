@@ -1,197 +1,200 @@
-'use client';
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import Modal from '@/components/Modal';
-import { api } from '@/lib/api';
-import { useToast } from '@/contexts/ToastContext';
-
+"use client";
+ 
+import { useEffect, useState, useCallback, useRef } from "react";
+import { api } from "@/lib/api";
+import { useToast } from "@/contexts/ToastContext";
+import { formatDate } from "@/lib/utils";
+import styles from "../admin.module.css";
+ 
+interface MusicAlbum {
+  albumId: number;
+  title: string;
+  artists: string[];
+  description: string | null;
+  coverPath: string | null;
+  isCoverUserDefined: boolean;
+  trackCount: number;
+  createdAt: string;
+}
+ 
 export default function AdminMusicPage() {
-  const { showToast } = useToast();
-  const [albums, setAlbums] = useState<any[]>([]);
+  const toast = useToast();
+  const [albums, setAlbums] = useState<MusicAlbum[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editModal, setEditModal] = useState<any>(null);
-  const [deleteTarget, setDeleteTarget] = useState<any>(null);
-  const [formTitle, setFormTitle] = useState('');
-  const [formArtist, setFormArtist] = useState('');
-  const [formDescription, setFormDescription] = useState('');
-  const [coverFile, setCoverFile] = useState<File | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const fetchAlbums = async () => {
+  const [showForm, setShowForm] = useState(false);
+  const [editId, setEditId] = useState<number | null>(null);
+  const [title, setTitle] = useState("");
+  const [artist, setArtist] = useState("");
+  const [description, setDescription] = useState("");
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const pendingCoverAlbumId = useRef<number | null>(null);
+ 
+  const fetchAlbums = useCallback(async () => {
     setLoading(true);
-    const res = await api.get('/api/music/albums');
-    const data = Array.isArray(res) ? res : (res.items || res.data || []);
-    setAlbums(data);
-    setLoading(false);
-  };
-
-  useEffect(() => { fetchAlbums(); }, []);
-
-  const openCreateModal = () => {
-    setFormTitle('');
-    setFormArtist('');
-    setFormDescription('');
-    setCoverFile(null);
-    setEditModal({ isNew: true });
-  };
-
-  const openEditModal = (album: any) => {
-    setFormTitle(album.title);
-    setFormArtist(album.artist || '');
-    setFormDescription(album.description || '');
-    setCoverFile(null);
-    setEditModal(album);
-  };
-
-  const handleSave = async () => {
-    if (!formTitle.trim()) {
-      showToast('Title is required', 'error');
-      return;
+    try {
+      const res = await api.get<MusicAlbum[]>("/music/albums");
+      if (res.success && res.data) setAlbums(Array.isArray(res.data) ? res.data : []);
+    } catch {
+      toast.error("Failed to load albums");
+    } finally {
+      setLoading(false);
     }
-
-    setIsSubmitting(true);
-    const payload = { title: formTitle, artist: formArtist, description: formDescription };
-
-    let res;
-    if (editModal?.isNew) {
-      res = await api.post('/api/music/albums', payload);
-    } else {
-      res = await api.put(`/api/music/albums/${editModal.id}`, payload);
-    }
-
-    if (res.success) {
-      // Upload cover if provided
-      if (coverFile && (res.data?.id || editModal.id)) {
-        const albumId = res.data?.id || editModal.id;
-        await api.upload(`/api/music/albums/${albumId}/cover`, coverFile, 'cover');
+  }, [toast]);
+ 
+  useEffect(() => { fetchAlbums(); }, [fetchAlbums]);
+ 
+  const resetForm = () => {
+    setShowForm(false); setEditId(null);
+    setTitle(""); setArtist(""); setDescription("");
+  };
+ 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const artistsList = artist.split(/[,/;|\\]/).map(a => a.trim()).filter(Boolean);
+    try {
+      if (editId) {
+        await api.put(`/music/albums/${editId}`, { title, artists: artistsList, description });
+        toast.success("Album updated");
+      } else {
+        await api.post("/music/albums", { title, artists: artistsList, description });
+        toast.success("Album created");
       }
-      showToast(editModal?.isNew ? 'Album created' : 'Album updated', 'success');
+      resetForm();
       fetchAlbums();
-      setEditModal(null);
-    } else {
-      showToast(res.error || 'Failed to save', 'error');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save album");
     }
-    setIsSubmitting(false);
   };
-
-  const handleDelete = async () => {
-    if (!deleteTarget) return;
-    const res = await api.delete(`/api/music/albums/${deleteTarget.id}`);
-    if (res.success) {
-      showToast('Album deleted', 'success');
+ 
+  const handleCoverFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const albumId = pendingCoverAlbumId.current;
+    e.target.value = ""; // reset input
+    if (!file || !albumId) return;
+ 
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      await api.upload(`/music/albums/${albumId}/cover`, formData);
+      toast.success("Cover uploaded");
       fetchAlbums();
-    } else {
-      showToast(res.error || 'Failed to delete', 'error');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to upload cover");
     }
-    setDeleteTarget(null);
   };
-
+ 
+  const triggerCoverUpload = (albumId: number) => {
+    pendingCoverAlbumId.current = albumId;
+    coverInputRef.current?.click();
+  };
+ 
+  const handleDelete = async (id: number) => {
+    if (!confirm("Delete this album and all its tracks?")) return;
+    try {
+      await api.delete(`/music/albums/${id}`);
+      setAlbums((prev) => prev.filter((a) => a.albumId !== id));
+      toast.success("Album deleted");
+    } catch {
+      toast.error("Failed to delete album");
+    }
+  };
+ 
   return (
     <div>
-      <div className="admin-page-header">
-        <h1>🎵 Music Albums</h1>
-        <button className="btn btn-primary btn-sm" onClick={openCreateModal}>
-          + New Album
-        </button>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-6)" }}>
+        <h1>Music Albums</h1>
+        <button className="btn btn-primary btn-sm" onClick={() => { resetForm(); setShowForm(true); }}>Add Album</button>
       </div>
-
-      <div className="admin-table-wrapper">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Artist</th>
-              <th>Tracks</th>
-              <th>Created</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
+ 
+      {showForm && (
+        <form onSubmit={handleSubmit} style={{
+          background: "var(--surface)", border: "1px solid var(--border)",
+          borderRadius: "var(--radius-lg)", padding: "var(--space-5)",
+          marginBottom: "var(--space-6)", display: "flex", flexDirection: "column", gap: "var(--space-4)"
+        }}>
+          <div className="input-group">
+            <label className="input-label">Title</label>
+            <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} required />
+          </div>
+          <div className="input-group">
+            <label className="input-label">Artists (comma-separated)</label>
+            <input className="input" value={artist} onChange={(e) => setArtist(e.target.value)} required placeholder="Attrition OST, Composer A" />
+          </div>
+          <div className="input-group">
+            <label className="input-label">Description</label>
+            <textarea className="input" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
+          </div>
+          <div style={{ display: "flex", gap: "var(--space-3)" }}>
+            <button type="submit" className="btn btn-primary btn-sm">{editId ? "Update" : "Create"}</button>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={resetForm}>Cancel</button>
+          </div>
+        </form>
+      )}
+ 
+      {/* Hidden file input — albumId stored in ref, not state */}
+      <input ref={coverInputRef} type="file" accept="image/*" hidden onChange={handleCoverFileChange} />
+ 
+      <div className={styles.adminTableWrapper}>
+        <table className="table">
+          <thead><tr><th>Cover</th><th>Title</th><th>Artists</th><th>Tracks</th><th>Created</th><th>Actions</th></tr></thead>
           <tbody>
             {loading ? (
-              <tr>
-                <td colSpan={5} className="text-center text-muted" style={{ padding: 'var(--space-2xl)' }}>
-                  <div className="spinner" style={{ margin: '0 auto' }} />
-                </td>
-              </tr>
-            ) : albums.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="text-center text-muted" style={{ padding: 'var(--space-2xl)' }}>
-                  No albums yet
-                </td>
-              </tr>
-            ) : (
-              albums.map((album) => (
-                <tr key={album.id}>
-                  <td><strong>{album.title}</strong></td>
-                  <td className="text-muted">{album.artist || '—'}</td>
-                  <td>{album.trackCount || 0}</td>
-                  <td className="text-muted">{new Date(album.createdAt).toLocaleDateString()}</td>
+              Array.from({ length: 3 }).map((_, i) => (
+                <tr key={i}>{Array.from({ length: 6 }).map((_, j) => (<td key={j}><div className="skeleton skeleton-text" /></td>))}</tr>
+              ))
+            ) : albums.length > 0 ? (
+              albums.map((a) => (
+                <tr key={a.albumId}>
                   <td>
-                    <div className="actions">
-                      <button className="btn btn-sm btn-ghost" onClick={() => openEditModal(album)}>
-                        Edit
-                      </button>
-                      <Link href={`/admin/music/tracks?album=${album.id}`} className="btn btn-sm btn-soul">
-                        Tracks
-                      </Link>
-                      <button className="btn btn-sm btn-danger" onClick={() => setDeleteTarget(album)}>
-                        Delete
-                      </button>
+                    <div style={{ position: "relative", width: 40, height: 40 }}>
+                      <div style={{ width: 40, height: 40, borderRadius: "var(--radius-sm)", overflow: "hidden", background: "var(--bg-secondary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "var(--text-lg)" }}>
+                        {a.coverPath ? <img src={a.coverPath} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : "🎵"}
+                      </div>
+                      {a.coverPath && (
+                        <span style={{
+                          position: "absolute",
+                          bottom: -4,
+                          right: -4,
+                          fontSize: "8px",
+                          padding: "2px 4px",
+                          borderRadius: "4px",
+                          background: a.isCoverUserDefined ? "#22c55e" : "#64748b",
+                          color: "#fff",
+                          fontWeight: "bold",
+                          lineHeight: 1,
+                          border: "1px solid var(--border)"
+                        }}>
+                          {a.isCoverUserDefined ? "User" : "Auto"}
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td><strong>{a.title}</strong></td>
+                  <td>
+                    <span style={{ display: "inline-flex", gap: "var(--space-1)", alignItems: "center" }}>
+                      {a.artists && a.artists.length > 0 ? a.artists.join(", ") : "Attrition OST"}
+                    </span>
+                  </td>
+                  <td>{a.trackCount ?? 0}</td>
+                  <td>{formatDate(a.createdAt)}</td>
+                  <td>
+                    <div style={{ display: "flex", gap: "var(--space-1)" }}>
+                      <button className="btn btn-secondary btn-sm" style={{ fontSize: "var(--text-xs)" }}
+                        onClick={() => { setEditId(a.albumId); setTitle(a.title); setArtist(a.artists?.join(", ") || ""); setDescription(a.description || ""); setShowForm(true); }}>Edit</button>
+                      <button className="btn btn-secondary btn-sm" style={{ fontSize: "var(--text-xs)" }}
+                        onClick={() => triggerCoverUpload(a.albumId)}>Cover</button>
+                      <button className="btn btn-danger btn-sm" style={{ fontSize: "var(--text-xs)" }}
+                        onClick={() => handleDelete(a.albumId)}>Delete</button>
                     </div>
                   </td>
                 </tr>
               ))
+            ) : (
+              <tr><td colSpan={6} style={{ textAlign: "center", padding: "var(--space-8)" }}>No albums yet</td></tr>
             )}
           </tbody>
         </table>
       </div>
-
-      {/* Create/Edit Modal */}
-      <Modal
-        isOpen={!!editModal}
-        onClose={() => setEditModal(null)}
-        title={editModal?.isNew ? 'Create Album' : 'Edit Album'}
-      >
-        <div className="auth-form">
-          <div className="input-group">
-            <label>Title</label>
-            <input className="input" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="Album title" />
-          </div>
-          <div className="input-group">
-            <label>Artist</label>
-            <input className="input" value={formArtist} onChange={(e) => setFormArtist(e.target.value)} placeholder="Artist name" />
-          </div>
-          <div className="input-group">
-            <label>Description</label>
-            <textarea className="input" value={formDescription} onChange={(e) => setFormDescription(e.target.value)} placeholder="Album description" rows={3} />
-          </div>
-          <div className="input-group">
-            <label>Cover Image</label>
-            <input type="file" accept="image/*" className="input" onChange={(e) => setCoverFile(e.target.files?.[0] || null)} />
-          </div>
-        </div>
-        <div className="modal-actions">
-          <button className="btn btn-ghost" onClick={() => setEditModal(null)}>Cancel</button>
-          <button className="btn btn-primary" onClick={handleSave} disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : 'Save'}
-          </button>
-        </div>
-      </Modal>
-
-      {/* Delete Modal */}
-      <Modal
-        isOpen={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        title="Delete Album"
-      >
-        <p className="text-muted mb-lg">
-          Are you sure you want to delete <strong>&quot;{deleteTarget?.title}&quot;</strong>? All tracks in this album will also be deleted.
-        </p>
-        <div className="modal-actions">
-          <button className="btn btn-ghost" onClick={() => setDeleteTarget(null)}>Cancel</button>
-          <button className="btn btn-danger" onClick={handleDelete}>Delete</button>
-        </div>
-      </Modal>
     </div>
   );
 }

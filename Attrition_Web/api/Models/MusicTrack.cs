@@ -7,6 +7,8 @@ public class MusicTrack
     public MusicAlbum Album { get; set; } = null!;
     public string Title { get; set; } = string.Empty;
     public string Slug { get; set; } = string.Empty;
+    public List<string> Artists { get; set; } = new(); // NEW: multiple artists
+    public string? CoverPath { get; set; }             // NEW: track-specific cover
     public int TrackNumber { get; set; }
     public int Duration { get; set; }
     public string FilePath { get; set; } = string.Empty;

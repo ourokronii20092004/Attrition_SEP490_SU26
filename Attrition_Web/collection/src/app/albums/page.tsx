@@ -1,16 +1,20 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { FiMusic } from 'react-icons/fi';
-import { api } from '@/lib/api';
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { api } from "@/lib/api";
+import styles from "../collection.module.css";
+import { assetUrl } from "@/lib/utils";
 
 interface Album {
-  id: string | number;
+  albumId: number;
   title: string;
-  artistName?: string;
-  coverImagePath?: string | null;
-  trackCount?: number;
+  artists: string[]; // Updated from artist: string
+  coverPath: string | null;
+  trackCount: number;
+  totalDuration: number;
+  albumType: string;
+  releaseDate: string;
 }
 
 export default function AlbumsPage() {
@@ -18,76 +22,66 @@ export default function AlbumsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function load() {
-      try {
-        const res = await api.get('/api/music/albums');
-        if (res?.data) {
-          setAlbums(
-            Array.isArray(res.data) ? res.data : res.data.items || []
-          );
-        }
-      } catch {
-        // API might not be ready
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
+    api
+      .get<Album[]>("/music/albums")
+      .then((res) => {
+        if (res.success && res.data) setAlbums(res.data);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   return (
-    <>
-      <div className="section-header" style={{ marginBottom: 'var(--space-xl)' }}>
-        <h1 className="section-title" style={{ fontSize: '32px' }}>Albums</h1>
+    <div>
+      <div className={styles.favoritesHeader}>
+        <h1 className={styles.favoritesTitle}>Albums</h1>
+        <p className={styles.favoritesCount}>
+          {albums.length} {albums.length === 1 ? "album" : "albums"}
+        </p>
       </div>
 
       {loading ? (
-        <div className="album-grid">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="album-card" style={{ cursor: 'default' }}>
-              <div className="album-card-cover">
-                <div className="skeleton skeleton-cover" />
-              </div>
-              <div className="skeleton skeleton-text" style={{ width: '80%' }} />
-              <div className="skeleton skeleton-text" style={{ width: '50%' }} />
+        <div className={styles.albumGrid}>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className={styles.albumCard}>
+              <div className={`${styles.albumCover} skeleton`} />
+              <div className="skeleton skeleton-text" style={{ width: "80%" }} />
+              <div className="skeleton skeleton-text" style={{ width: "50%" }} />
             </div>
           ))}
         </div>
-      ) : albums.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-state-icon">
-            <FiMusic />
-          </div>
-          <h3>No albums yet</h3>
-          <p>The soundtrack collection is being prepared. Check back soon.</p>
-        </div>
-      ) : (
-        <div className="album-grid">
+      ) : albums.length > 0 ? (
+        <div className={styles.albumGrid}>
           {albums.map((album) => (
             <Link
-              key={album.id}
-              href={`/albums/${album.id}`}
-              className="album-card"
+              key={album.albumId}
+              href={`/albums/${album.albumId}`}
+              className={styles.albumCard}
             >
-              <div className="album-card-cover">
-                {album.coverImagePath ? (
-                  <img
-                    src={`/uploads/${album.coverImagePath}`}
-                    alt={album.title}
-                  />
+              <div className={styles.albumCover}>
+                {album.coverPath ? (
+                  <img src={assetUrl(album.coverPath)} alt={album.title} />
                 ) : (
-                  <FiMusic className="album-card-cover-placeholder" />
+                  <span className={styles.albumCoverPlaceholder}>♫</span>
                 )}
+                <div className={styles.albumPlayOverlay}>
+                  <span className={styles.albumPlayBtn}>▶</span>
+                </div>
               </div>
-              <div className="album-card-title">{album.title}</div>
-              <div className="album-card-meta">
-                {album.artistName || 'Attrition OST'}
-                {album.trackCount != null && ` · ${album.trackCount} tracks`}
-              </div>
+              <h3 className={styles.albumTitle}>{album.title}</h3>
+              <p className={styles.albumArtist}>
+                {album.artists?.join(", ") || "Attrition OST"} · {album.trackCount} tracks
+              </p>
             </Link>
           ))}
         </div>
+      ) : (
+        <div className="empty-state">
+          <span className="empty-state-icon">🎵</span>
+          <h3>No albums yet</h3>
+          <p>Albums will appear here once music is uploaded.</p>
+        </div>
       )}
-    </>
+    </div>
   );
 }

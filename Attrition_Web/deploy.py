@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Attrition deploy script — copies project to remote server and starts Docker stack."""
+"""Attrition deploy script — nukes remote, uploads fresh, rebuilds Docker stack."""
 
 import paramiko
 import os
@@ -17,7 +17,8 @@ EXCLUDE = {
     "uploads", "docs", "reflect", "__pycache__", ".env.local",
     ".env.example", "web-game-test.sln", ".gitignore",
     "tsconfig.tsbuildinfo", ".eslintrc.json", "README.md",
-    "page.module.css", "Attrition.API.http",
+    "Attrition.API.http", ".system_generated", "scratch",
+    "brain", ".gemini", "client_secret*",
 }
 # ────────────────────────────────────────────────────────
 
@@ -51,7 +52,12 @@ def ssh_exec(client: paramiko.SSHClient, cmd: str, check=True):
 
 def should_exclude(name: str) -> bool:
     """Check if a file or directory should be excluded from upload."""
-    return name in EXCLUDE
+    if name in EXCLUDE:
+        return True
+    # Wildcard match for client_secret* files
+    if name.startswith("client_secret"):
+        return True
+    return False
 
 
 def upload_directory(sftp: paramiko.SFTPClient, local_path: str, remote_path: str):
@@ -80,24 +86,31 @@ def upload_directory(sftp: paramiko.SFTPClient, local_path: str, remote_path: st
 
 def main():
     print("=" * 50)
-    print("  Attrition Deploy")
+    print("  Attrition Deploy (FULL NUKE)")
     print(f"  Target: {REMOTE_USER}@{REMOTE_HOST}:{REMOTE_DIR}")
     print("=" * 50)
 
     client = ssh_connect()
 
     try:
-        # Create remote directory
-        ssh_exec(client, f"mkdir -p {REMOTE_DIR}")
+        # ── Step 1: Stop containers ──
+        print("\n[1/5] Stopping existing containers...")
+        ssh_exec(client, f"cd {REMOTE_DIR} && docker compose down 2>/dev/null || true", check=False)
 
-        # Upload project files
-        print("\nUploading project files...")
+        # ── Step 2: Nuke remote directory (except Docker volumes) ──
+        print("\n[2/5] Nuking remote directory...")
+        ssh_exec(client, f"rm -rf {REMOTE_DIR}", check=False)
+        ssh_exec(client, f"mkdir -p {REMOTE_DIR}")
+        print("Remote directory wiped clean.")
+
+        # ── Step 3: Upload all project files ──
+        print("\n[3/5] Uploading project files...")
         sftp = client.open_sftp()
         upload_directory(sftp, PROJECT_DIR, REMOTE_DIR)
         sftp.close()
-        print("Files synced.\n")
+        print("All files uploaded.\n")
 
-        # Check if .env exists, if not copy from example
+        # ── Step 4: Ensure .env exists on remote ──
         _, _, code = ssh_exec(
             client,
             f"test -f {REMOTE_DIR}/.env",
@@ -111,14 +124,11 @@ def main():
             print("   Then run this script again.")
             return
 
-        # Build and start Docker stack
-        print("Stopping existing containers...")
-        ssh_exec(client, f"cd {REMOTE_DIR} && docker compose down", check=False)
-
-        print("Building and starting containers...")
+        # ── Step 5: Build and start Docker stack ──
+        print("[4/5] Building and starting containers (this takes a minute)...")
         ssh_exec(client, f"cd {REMOTE_DIR} && docker compose up -d --build")
 
-        print("\nWaiting for services to start...")
+        print("\n[5/5] Waiting for services to start...")
         import time
         time.sleep(10)
 
@@ -127,7 +137,7 @@ def main():
         print("\n" + "=" * 50)
         print("  Deploy complete!")
         print(f"  Web:  http://{REMOTE_HOST}:3000")
-        print(f"  API:  http://{REMOTE_HOST}:5000")
+        print(f"  API:  via nginx on :3000/api")
         print("=" * 50)
 
     finally:

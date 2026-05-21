@@ -1,184 +1,176 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback } from 'react';
-import {
-  FiHeart,
-  FiPlay,
-  FiPause,
-  FiMusic,
-  FiLogIn,
-  FiClock,
-} from 'react-icons/fi';
-import { api } from '@/lib/api';
-import { useAuth } from '@/contexts/AuthContext';
-import { usePlayer, Track } from '@/contexts/PlayerContext';
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { api } from "@/lib/api";
+import { usePlayer, type Track } from "@/contexts/PlayerContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/contexts/ToastContext";
+import { formatDuration, cn, assetUrl } from "@/lib/utils";
+import styles from "../collection.module.css";
 
-const LOGIN_URL =
-  'https://attrition.hault.io.vn/auth/login?returnUrl=https://collection.hault.io.vn/auth/relay';
-
-interface FavoriteTrack extends Track {
-  trackNumber?: number;
-}
-
-function formatDuration(seconds?: number): string {
-  if (!seconds) return '--:--';
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return `${m}:${s.toString().padStart(2, '0')}`;
+interface FavoriteTrack {
+  trackId: number;
+  title: string;
+  trackNumber: number;
+  duration: number;
+  genre: string | null;
+  albumId: number;
+  albumTitle: string;
+  albumCoverPath: string | null;
+  artists?: string[]; // Added: track-specific artists list
+  coverPath?: string | null; // Added: track-specific cover art
 }
 
 export default function FavoritesPage() {
-  const { user, loading: authLoading } = useAuth();
-  const { currentTrack, isPlaying, play, togglePlay } = usePlayer();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { play, currentTrack, isPlaying, togglePlayPause } = usePlayer();
+  const toast = useToast();
 
   const [tracks, setTracks] = useState<FavoriteTrack[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) {
+    if (!isAuthenticated) {
       setLoading(false);
       return;
     }
 
-    async function load() {
-      try {
-        const res = await api.get('/api/music/favorites');
-        if (res?.data) {
-          const items = Array.isArray(res.data)
-            ? res.data
-            : res.data.items || [];
-          setTracks(items);
-        }
-      } catch {
-        // API error
-      } finally {
-        setLoading(false);
-      }
+    api
+      .get<FavoriteTrack[]>("/music/favorites")
+      .then((res) => {
+        if (res.success && res.data) setTracks(res.data);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [isAuthenticated]);
+
+  const handlePlayTrack = (track: FavoriteTrack) => {
+    const fullTrack: Track = {
+      id: track.trackId,
+      title: track.title,
+      trackNumber: track.trackNumber,
+      duration: track.duration,
+      genre: track.genre,
+      albumId: track.albumId,
+      albumTitle: track.albumTitle,
+      albumArtist: track.artists?.join(", ") || "",
+      artists: track.artists || [],
+      coverPath: track.coverPath || null,
+      albumCoverPath: track.albumCoverPath || null,
+    };
+    const fullQueue: Track[] = tracks.map((t) => ({
+      id: t.trackId,
+      title: t.title,
+      trackNumber: t.trackNumber,
+      duration: t.duration,
+      genre: t.genre,
+      albumId: t.albumId,
+      albumTitle: t.albumTitle,
+      albumArtist: t.artists?.join(", ") || "",
+      artists: t.artists || [],
+      coverPath: t.coverPath || null,
+      albumCoverPath: t.albumCoverPath || null,
+    }));
+    play(fullTrack, fullQueue);
+  };
+
+  const removeFavorite = async (trackId: number) => {
+    // Optimistic
+    const removed = tracks.find((t) => t.trackId === trackId);
+    setTracks((prev) => prev.filter((t) => t.trackId !== trackId));
+
+    try {
+      await api.post(`/music/favorites/${trackId}`);
+      toast.success("Removed from favorites");
+    } catch {
+      if (removed) setTracks((prev) => [...prev, removed]);
+      toast.error("Failed to remove from favorites");
     }
-    load();
-  }, [user]);
+  };
 
-  const handlePlayTrack = useCallback(
-    (track: FavoriteTrack) => {
-      if (currentTrack?.id === track.id && isPlaying) {
-        togglePlay();
-      } else {
-        play(track, tracks);
-      }
-    },
-    [currentTrack, isPlaying, play, togglePlay, tracks]
-  );
-
-  const handleRemoveFavorite = useCallback(
-    async (trackId: string | number) => {
-      try {
-        await api.post(`/api/music/favorites/${trackId}`);
-        setTracks((prev) => prev.filter((t) => t.id !== trackId));
-      } catch {}
-    },
-    []
-  );
-
-  // Not logged in
-  if (!authLoading && !user) {
+  if (!authLoading && !isAuthenticated) {
     return (
-      <div className="favorites-empty animate-fade-in-up">
-        <div className="favorites-empty-icon">
-          <FiHeart />
-        </div>
-        <h2>Your Favorites</h2>
-        <p>
-          Login to save your favorite tracks and access them anytime.
-        </p>
-        <a href={LOGIN_URL} className="btn btn-primary btn-lg btn-round">
-          <FiLogIn /> Login to Save Favorites
-        </a>
+      <div className="empty-state">
+        <span className="empty-state-icon">♥</span>
+        <h3>Sign in to see your favorites</h3>
+        <p>Save your favorite tracks and access them anytime.</p>
       </div>
     );
   }
 
   return (
-    <div className="animate-fade-in">
-      <div className="section-header" style={{ marginBottom: 'var(--space-xl)' }}>
-        <h1 className="section-title" style={{ fontSize: '32px' }}>
-          Your Favorites
-        </h1>
+    <div>
+      <div className={styles.favoritesHeader}>
+        <h1 className={styles.favoritesTitle}>Favorites</h1>
+        <p className={styles.favoritesCount}>
+          {tracks.length} {tracks.length === 1 ? "track" : "tracks"}
+        </p>
       </div>
 
       {loading ? (
-        <div className="track-list">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="track-item" style={{ cursor: 'default' }}>
-              <div className="skeleton" style={{ width: '24px', height: '14px' }} />
+        <div className={styles.trackList}>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className={styles.trackRow}>
+              <div className="skeleton" style={{ width: 24, height: 14, borderRadius: 4 }} />
               <div>
-                <div className="skeleton skeleton-text" style={{ width: '200px' }} />
-                <div className="skeleton skeleton-text" style={{ width: '120px' }} />
+                <div className="skeleton skeleton-text" style={{ width: "60%" }} />
               </div>
               <div />
-              <div className="skeleton" style={{ width: '40px', height: '14px' }} />
+              <div className="skeleton skeleton-text" style={{ width: 30 }} />
             </div>
           ))}
         </div>
-      ) : tracks.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-state-icon">
-            <FiHeart />
-          </div>
-          <h3>No favorites yet</h3>
-          <p>Start exploring albums and add tracks to your favorites.</p>
-        </div>
-      ) : (
-        <div className="track-list">
-          <div className="track-list-header">
-            <span>#</span>
-            <span>Title</span>
-            <span />
-            <span><FiClock /></span>
-          </div>
-          {tracks.map((track, index) => {
-            const isCurrentTrack = currentTrack?.id === track.id;
+      ) : tracks.length > 0 ? (
+        <div className={styles.trackList}>
+          {tracks.map((track, i) => {
+            const isActive = currentTrack?.id === track.trackId;
             return (
               <div
-                key={track.id}
-                className={`track-item ${isCurrentTrack ? 'playing' : ''}`}
-                onClick={() => handlePlayTrack(track)}
+                key={track.trackId}
+                className={cn(styles.trackRow, isActive && styles.trackRowActive)}
+                onClick={() => {
+                  if (isActive) togglePlayPause();
+                  else handlePlayTrack(track);
+                }}
               >
                 <div>
-                  <span className="track-number">
-                    {isCurrentTrack && isPlaying ? '♫' : index + 1}
-                  </span>
-                  <button className="track-play-btn">
-                    {isCurrentTrack && isPlaying ? (
-                      <FiPause />
-                    ) : (
-                      <FiPlay />
-                    )}
-                  </button>
-                </div>
-                <div className="track-title-cell">
-                  <span className="track-title-text">{track.title}</span>
-                  <span className="track-title-artist">
-                    {track.albumTitle || 'Attrition OST'}
+                  <span className={styles.trackNumber}>{i + 1}</span>
+                  <span className={styles.trackPlayIcon}>
+                    {isActive && isPlaying ? "⏸" : "▶"}
                   </span>
                 </div>
-                <div>
-                  <button
-                    className="track-favorite-btn favorited"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemoveFavorite(track.id);
-                    }}
-                    title="Remove from favorites"
-                  >
-                    <FiHeart fill="currentColor" />
-                  </button>
+                <div className={styles.trackInfo}>
+                  <span className={styles.trackTitle}>{track.title}</span>
+                  <span className={styles.trackArtist}>
+                    {track.artists && track.artists.length > 0 ? track.artists.join(", ") + " · " : ""}{track.albumTitle}
+                  </span>
                 </div>
-                <span className="track-duration">
+                <button
+                  className={cn(styles.trackFavorite, styles.trackFavoriteActive)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeFavorite(track.trackId);
+                  }}
+                  aria-label="Remove from favorites"
+                >
+                  ♥
+                </button>
+                <span className={styles.trackDuration}>
                   {formatDuration(track.duration)}
                 </span>
               </div>
             );
           })}
+        </div>
+      ) : (
+        <div className="empty-state">
+          <span className="empty-state-icon">♥</span>
+          <h3>No favorites yet</h3>
+          <p>Explore albums and click the heart icon to save tracks you love.</p>
+          <Link href="/albums" className="btn btn-primary btn-md" style={{ marginTop: "var(--space-4)" }}>
+            Browse Albums
+          </Link>
         </div>
       )}
     </div>
