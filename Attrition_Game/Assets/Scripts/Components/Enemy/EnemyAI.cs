@@ -26,6 +26,20 @@ public class EnemyAI : NetworkBehaviour
     [Tooltip("Độ cao của tia laser so với mặt đất (dời lên để không quét trúng sàn nhà)")]
     public float wallCheckHeightOffset = 0.5f;
 
+    [Header("---- TELEPORT ----")]
+    [Tooltip("Bật nếu quái có khả năng teleport (dịch chuyển ngẫu nhiên, không tấn công)")]
+    public bool canTeleport = false;
+    [Tooltip("Cooldown giữa 2 lần teleport (giây)")]
+    public float teleportCooldown = 5f;
+    [Tooltip("Khoảng cách teleport tối thiểu")]
+    public float teleportMinDistance = 2f;
+    [Tooltip("Khoảng cách teleport tối đa")]
+    public float teleportMaxDistance = 5f;
+    [Tooltip("Thời gian hoàn tất teleport (chờ animation xong rồi mới dịch chuyển - giây)")]
+    public float teleportDuration = 0.4f;
+    [Tooltip("Chỉ teleport khi player trong khoảng cách này (0 = luôn teleport khi chase)")]
+    public float teleportTriggerRange = 0f;
+
     private Vector2 startPosition;
     private Vector2 currentTarget;
     private Transform playerTarget;
@@ -34,6 +48,10 @@ public class EnemyAI : NetworkBehaviour
 
     [HideInInspector][Networked] public float NetSpeed { get; set; }
     [HideInInspector][Networked] public float NetFacingDir { get; set; } = 1f;
+    [HideInInspector][Networked] public NetworkBool IsTeleporting { get; set; }
+    [Networked] private TickTimer teleportCooldownTimer { get; set; }
+    [Networked] private TickTimer teleportActiveTimer { get; set; }
+    [Networked] private Vector2 teleportTargetPos { get; set; }
 
     public override void Spawned()
     {
@@ -94,6 +112,23 @@ public class EnemyAI : NetworkBehaviour
             return;
         }
 
+        // Khi đang teleport → đứng yên chờ animation xong rồi dịch chuyển
+        if (IsTeleporting)
+        {
+            rb.linearVelocity = isFlying ? Vector2.zero : new Vector2(0f, rb.linearVelocity.y);
+            NetSpeed = 0f;
+
+            if (teleportActiveTimer.ExpiredOrNotRunning(Runner))
+            {
+                // Animation xong → dịch chuyển tới vị trí mới
+                transform.position = new Vector3(teleportTargetPos.x, teleportTargetPos.y, transform.position.z);
+                IsTeleporting = false;
+                teleportActiveTimer = TickTimer.None;
+                teleportCooldownTimer = TickTimer.CreateFromSeconds(Runner, teleportCooldown);
+            }
+            return;
+        }
+
         bool previouslyChasing = isChasing;
 
         FindPlayer();
@@ -130,12 +165,21 @@ public class EnemyAI : NetworkBehaviour
                         combatComp.AttemptAttack();
                     }
                 }
-                // Nếu đang chờ cooldown → vẫn đứng nhìn chứ không đi lung tung
+                // Teleport: kiểm tra nếu đang chờ cooldown attack, có thể teleport ngẫu nhiên
+                else if (canTeleport && CanTeleport(dist))
+                {
+                    ExecuteTeleport();
+                }
             }
             else
             {
                 // Ngoài tầm đánh → đuổi theo Player (kể cả đang chờ cooldown)
-                if (!isFlying && IsPathBlocked(dirX))
+                // Teleport khi đang đuổi và cooldown sẵn sàng
+                if (canTeleport && CanTeleport(dist))
+                {
+                    ExecuteTeleport();
+                }
+                else if (!isFlying && IsPathBlocked(dirX))
                 {
                     rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
                     if (Mathf.Abs(xDiff) > 0.05f) NetFacingDir = dirX;
@@ -275,6 +319,57 @@ public class EnemyAI : NetworkBehaviour
         cachedChasePlayer = default;
         isChasing = false;
         playerTarget = null;
+        IsTeleporting = false;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // TELEPORT
+    // ═══════════════════════════════════════════════════════════════
+    private bool CanTeleport(float distToPlayer)
+    {
+        if (!canTeleport || IsTeleporting) return false;
+        if (!teleportCooldownTimer.ExpiredOrNotRunning(Runner)) return false;
+        if (teleportTriggerRange > 0 && distToPlayer > teleportTriggerRange) return false;
+        return true;
+    }
+
+    private void ExecuteTeleport()
+    {
+        if (playerTarget == null) return;
+
+        // Tìm vị trí teleport ngẫu nhiên quanh player
+        Vector2 playerPos = playerTarget.position;
+        float randomAngle = Random.Range(0f, 360f);
+        float randomDist = Random.Range(teleportMinDistance, teleportMaxDistance);
+        Vector2 offset = new Vector2(Mathf.Cos(randomAngle * Mathf.Deg2Rad), Mathf.Sin(randomAngle * Mathf.Deg2Rad)) * randomDist;
+        Vector2 targetPos = playerPos + offset;
+
+        // Nếu không bay, giữ nguyên Y (để không teleport lên trời)
+        if (!isFlying)
+        {
+            targetPos.y = transform.position.y;
+            // Chỉ teleport theo trục X: ngẫu nhiên trái/phải player
+            float randomSide = Random.value > 0.5f ? 1f : -1f;
+            targetPos = new Vector2(playerPos.x + randomSide * randomDist, transform.position.y);
+        }
+
+        // Bắt đầu teleport
+        IsTeleporting = true;
+        teleportTargetPos = targetPos;
+        teleportActiveTimer = TickTimer.CreateFromSeconds(Runner, teleportDuration);
+
+        // Quay mặt về hướng player trước khi teleport
+        float xDiff = playerTarget.position.x - transform.position.x;
+        if (Mathf.Abs(xDiff) > 0.05f) NetFacingDir = xDiff > 0 ? 1f : -1f;
+
+        // Phát animation teleport trên tất cả clients
+        RPC_PlayTeleportAnim();
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_PlayTeleportAnim()
+    {
+        if (animationComp != null) animationComp.PlayTeleport();
     }
 
     void OnDrawGizmosSelected()

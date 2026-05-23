@@ -37,6 +37,11 @@ public class EnemyAnimation : NetworkBehaviour
         }
     }
 
+    public void PlayTeleport()
+    {
+        if (anim != null) anim.SetTrigger("Teleport");
+    }
+
     public void PlayHit()
     {
         if (anim != null) anim.SetTrigger("Hit");
