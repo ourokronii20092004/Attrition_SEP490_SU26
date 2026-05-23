@@ -14,6 +14,7 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
     {
         Idle, Walk, Run, Fly,
         Attack1, Attack2, Attack3, Attack4, Attack5,
+        Teleport,
         Hit, Dead, Corps, Reborn,
         Jump, Fall, Land,
         Skill1, Skill2,
@@ -47,6 +48,7 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
         (new[]{"attack_4","attack4"}, ClipCategory.Attack4),
         (new[]{"attack_5","attack5"}, ClipCategory.Attack5),
         (new[]{"attack"}, ClipCategory.Attack1), // fallback nếu chỉ có "attack" không số
+        (new[]{"teleport","dash","blink","warp"}, ClipCategory.Teleport),
         (new[]{"idle"}, ClipCategory.Idle),
         (new[]{"walk"}, ClipCategory.Walk),
         (new[]{"run"}, ClipCategory.Run),
@@ -84,7 +86,7 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
             "Công cụ tự động tạo Animator Controller hoàn chỉnh cho Enemy.\n" +
             "• Tự động scan & phân loại Animation Clips theo tên\n" +
             "• Hỗ trợ số lượng Attack tùy ý (1~5 đòn)\n" +
-            "• Hỗ trợ Walk/Run/Fly, Jump/Fall/Land, Corps/Reborn\n" +
+            "• Hỗ trợ Teleport, Walk/Run/Fly, Jump/Fall/Land, Corps/Reborn\n" +
             "• Tự động tạo Parameters, States, Transitions",
             MessageType.Info);
 
@@ -164,6 +166,7 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
             int attackCount = included.Count(c => c.category >= ClipCategory.Attack1 && c.category <= ClipCategory.Attack5);
             EditorGUILayout.HelpBox(
                 $"Sẽ tạo: {included.Count} states | {attackCount} đòn Attack | " +
+                $"{(included.Any(c => c.category == ClipCategory.Teleport) ? "Có Teleport" : "Không Teleport")} | " +
                 $"{(included.Any(c => c.category == ClipCategory.Run) ? "Có Run" : "Không Run")} | " +
                 $"{(included.Any(c => c.category == ClipCategory.Fly) ? "Có Fly" : "Không Fly")} | " +
                 $"{(included.Any(c => c.category == ClipCategory.Reborn) ? "Có Reborn" : "Không Reborn")}",
@@ -282,9 +285,11 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
         bool hasReborn = included.Any(c => c.category == ClipCategory.Reborn);
         bool hasJump = included.Any(c => c.category == ClipCategory.Jump);
         bool hasRun = included.Any(c => c.category == ClipCategory.Run);
+        bool hasTeleport = included.Any(c => c.category == ClipCategory.Teleport);
 
         if (hasReborn) controller.AddParameter("Resurrect", AnimatorControllerParameterType.Trigger);
         if (hasJump) controller.AddParameter("Jump", AnimatorControllerParameterType.Trigger);
+        if (hasTeleport) controller.AddParameter("Teleport", AnimatorControllerParameterType.Trigger);
 
         // ── Tạo States ──
         Dictionary<ClipCategory, AnimatorState> states = new Dictionary<ClipCategory, AnimatorState>();
@@ -301,6 +306,7 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
             { ClipCategory.Attack3, new Vector3(40, 420, 0) },
             { ClipCategory.Attack4, new Vector3(40, 530, 0) },
             { ClipCategory.Attack5, new Vector3(40, 640, 0) },
+            { ClipCategory.Teleport, new Vector3(300, 310, 0) },
             { ClipCategory.Hit,     new Vector3(560, 200, 0) },
             { ClipCategory.Dead,    new Vector3(830, 230, 0) },
             { ClipCategory.Corps,   new Vector3(830, 60, 0) },
@@ -466,6 +472,27 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
             }
         }
 
+        // ─── Teleport (AnyState) ───
+        if (states.ContainsKey(ClipCategory.Teleport))
+        {
+            AnimatorState teleportState = states[ClipCategory.Teleport];
+
+            var tTele = rootSM.AddAnyStateTransition(teleportState);
+            tTele.hasExitTime = false;
+            tTele.duration = 0;
+            tTele.canTransitionToSelf = false;
+            tTele.AddCondition(AnimatorConditionMode.If, 0, "Teleport");
+
+            // Teleport → Idle: ExitTime = 1
+            if (idleState != null)
+            {
+                var tBack = teleportState.AddTransition(idleState);
+                tBack.hasExitTime = true;
+                tBack.exitTime = 1f;
+                tBack.duration = 0.1f;
+            }
+        }
+
         // ─── Jump (AnyState) ───
         if (jumpState != null)
         {
@@ -511,8 +538,10 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
 
         // ── Log kết quả ──
         int atkCount = included.Count(c => c.category >= ClipCategory.Attack1 && c.category <= ClipCategory.Attack5);
+        AnimatorState teleportStateLog = states.ContainsKey(ClipCategory.Teleport) ? states[ClipCategory.Teleport] : null;
         Debug.Log($"[AnimatorBuilder] ✅ Tạo thành công: {savePath}\n" +
                   $"  States: {states.Count} | Attacks: {atkCount} | " +
+                  $"Teleport: {(teleportStateLog != null ? "✓" : "✗")} | " +
                   $"Run: {(runState != null ? "✓" : "✗")} | " +
                   $"Fly: {(flyState != null ? "✓" : "✗")} | " +
                   $"Reborn: {(rebornState != null ? "✓" : "✗")} | " +
