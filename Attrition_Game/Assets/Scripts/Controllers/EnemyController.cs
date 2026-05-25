@@ -9,6 +9,8 @@ namespace Attrition.Controllers
         [SerializeField] private EnemyAI aiComp;
         [SerializeField] private EnemyAnimation animationComp;
         [SerializeField] private EnemyCombat combatComp;
+        [Tooltip("Gắn EliteEnemySkills nếu đây là quái tinh anh. Bỏ trống nếu quái thường.")]
+        [SerializeField] private EliteEnemySkills eliteSkills;
 
         [Header("---- DEATH / REVIVE ----")]
         [Tooltip("Số lần HP về 0 nhưng hồi sinh sau reviveDelaySeconds (0 = chết hẳn ngay như Axe_Demon).")]
@@ -38,6 +40,7 @@ namespace Attrition.Controllers
         private bool _localDownedHandled;
 
         public bool IsDead => isDeadNetworked || IsAwaitingRevive;
+        public int CurrentHealth => Health;
 
         public override void Spawned()
         {
@@ -54,6 +57,15 @@ namespace Attrition.Controllers
 
             _localDeathHandled = false;
             _localDownedHandled = false;
+
+            // Khởi tạo EliteEnemySkills (nếu có)
+            if (eliteSkills != null)
+            {
+                eliteSkills.Init(
+                    amount => Heal(amount),
+                    aiComp != null && aiComp.isFlying
+                );
+            }
         }
 
         public override void FixedUpdateNetwork()
@@ -133,6 +145,9 @@ namespace Attrition.Controllers
             }
             else
             {
+                // Ngắt heal nếu đang heal (Elite)
+                if (eliteSkills != null) eliteSkills.InterruptHealing();
+
                 // Chỉ áp dụng Knockback và ngắt đòn đánh (Stun) nếu quái cho phép
                 if (canBeKnockedBack)
                 {
@@ -225,6 +240,16 @@ namespace Attrition.Controllers
             if (col != null) col.enabled = false;
 
             animationComp.PlayDeath();
+        }
+
+        /// <summary>
+        /// Hồi máu cho quái. Gọi bởi EliteEnemySkills khi heal xong.
+        /// </summary>
+        public void Heal(int amount)
+        {
+            if (!HasStateAuthority) return;
+            if (isDeadNetworked || IsAwaitingRevive) return;
+            Health = Mathf.Min(Health + amount, maxHealth);
         }
     }
 }

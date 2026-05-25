@@ -37,6 +37,28 @@ public class EnemyAnimation : NetworkBehaviour
         }
     }
 
+    // ─── ANIMATION EVENT: Đóng băng / Rã đông ───
+    // Đặt FreezeAnimation() làm Animation Event ở frame muốn giữ lại.
+    // Code sẽ gọi UnfreezeAnimation() khi dash/leap xong để tiếp tục animation.
+
+    /// <summary>
+    /// [ANIMATION EVENT] Đóng băng animation tại frame hiện tại.
+    /// Thêm event này vào animation clip ở frame muốn giữ (vd: frame giơ kiếm).
+    /// </summary>
+    public void FreezeAnimation()
+    {
+        if (anim != null) anim.speed = 0f;
+    }
+
+    /// <summary>
+    /// Rã đông animation — tiếp tục chơi từ frame đang đóng băng.
+    /// Gọi bởi code khi dash/leap kết thúc.
+    /// </summary>
+    public void UnfreezeAnimation()
+    {
+        if (anim != null) anim.speed = 1f;
+    }
+
     public void PlayTeleport()
     {
         if (anim != null) anim.SetTrigger("Teleport");
@@ -61,5 +83,23 @@ public class EnemyAnimation : NetworkBehaviour
         if (anim == null) return;
         anim.SetBool("IsDead", false);
         anim.SetTrigger("Resurrect");
+    }
+
+    // ─── HEALING (Elite only) ───
+    public void PlayHealing()
+    {
+        if (anim != null)
+        {
+            anim.SetBool("IsHealing", true);
+            anim.SetTrigger("Heal");
+        }
+    }
+
+    public void StopHealing()
+    {
+        if (anim != null)
+        {
+            anim.SetBool("IsHealing", false);
+        }
     }
 }

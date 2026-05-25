@@ -131,7 +131,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 5.9, y: 49, z: 0}
-  m_LocalScale: {x: 22.966644, y: 20, z: 6.4835634}
+  m_LocalScale: {x: 17.711437, y: 15.423617, z: 5}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 5218382753634733620}
@@ -351,8 +351,16 @@ MonoBehaviour:
     m_Bits: 64
   wallCheckDistance: 0.8
   wallCheckHeightOffset: 0.5
+  canTeleport: 0
+  teleportCooldown: 5
+  teleportMinDistance: 2
+  teleportMaxDistance: 5
+  teleportDuration: 0.4
+  teleportTriggerRange: 0
   _NetSpeed: 0
   _NetFacingDir: 1
+  _IsTeleporting:
+    _value: 0
 --- !u!114 &8981913773620505188
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -379,6 +387,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a0f1e1211565723478e7f9602af1dfb1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyCombat
+  isDashAttack: 0
+  dashSpeed: 10
+  dashDuration: 0.3
+  _IsDashAttacking:
+    _value: 0
+  _DashDirection: {x: 0, y: 0}
   animationComp: {fileID: 8981913773620505188}
   attackPoint: {fileID: 5218382753634733620}
   attackRange: 5
