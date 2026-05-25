@@ -16,6 +16,7 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
         Attack1, Attack2, Attack3, Attack4, Attack5,
         Teleport,
         Hit, Dead, Corps, Reborn,
+        Healing,
         Jump, Fall, Land,
         Skill1, Skill2,
         Unknown
@@ -57,6 +58,7 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
         (new[]{"dead","death","die"}, ClipCategory.Dead),
         (new[]{"corps","corpse"}, ClipCategory.Corps),
         (new[]{"reborn","resurrect","revive","stand_up","standup"}, ClipCategory.Reborn),
+        (new[]{"healing","heal","recovery"}, ClipCategory.Healing),
         (new[]{"jump"}, ClipCategory.Jump),
         (new[]{"fall","fallback"}, ClipCategory.Fall),
         (new[]{"land","landing"}, ClipCategory.Land),
@@ -167,6 +169,7 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
             EditorGUILayout.HelpBox(
                 $"Sẽ tạo: {included.Count} states | {attackCount} đòn Attack | " +
                 $"{(included.Any(c => c.category == ClipCategory.Teleport) ? "Có Teleport" : "Không Teleport")} | " +
+                $"{(included.Any(c => c.category == ClipCategory.Healing) ? "Có Healing" : "Không Healing")} | " +
                 $"{(included.Any(c => c.category == ClipCategory.Run) ? "Có Run" : "Không Run")} | " +
                 $"{(included.Any(c => c.category == ClipCategory.Fly) ? "Có Fly" : "Không Fly")} | " +
                 $"{(included.Any(c => c.category == ClipCategory.Reborn) ? "Có Reborn" : "Không Reborn")}",
@@ -286,10 +289,16 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
         bool hasJump = included.Any(c => c.category == ClipCategory.Jump);
         bool hasRun = included.Any(c => c.category == ClipCategory.Run);
         bool hasTeleport = included.Any(c => c.category == ClipCategory.Teleport);
+        bool hasHealing = included.Any(c => c.category == ClipCategory.Healing);
 
         if (hasReborn) controller.AddParameter("Resurrect", AnimatorControllerParameterType.Trigger);
         if (hasJump) controller.AddParameter("Jump", AnimatorControllerParameterType.Trigger);
         if (hasTeleport) controller.AddParameter("Teleport", AnimatorControllerParameterType.Trigger);
+        if (hasHealing)
+        {
+            controller.AddParameter("Heal", AnimatorControllerParameterType.Trigger);
+            controller.AddParameter("IsHealing", AnimatorControllerParameterType.Bool);
+        }
 
         // ── Tạo States ──
         Dictionary<ClipCategory, AnimatorState> states = new Dictionary<ClipCategory, AnimatorState>();
@@ -311,6 +320,7 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
             { ClipCategory.Dead,    new Vector3(830, 230, 0) },
             { ClipCategory.Corps,   new Vector3(830, 60, 0) },
             { ClipCategory.Reborn,  new Vector3(570, 60, 0) },
+            { ClipCategory.Healing, new Vector3(570, 310, 0) },
             { ClipCategory.Jump,    new Vector3(820, -70, 0) },
             { ClipCategory.Fall,    new Vector3(820, 60, 0) },
             { ClipCategory.Land,    new Vector3(820, 170, 0) },
@@ -490,6 +500,27 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
                 tBack.hasExitTime = true;
                 tBack.exitTime = 1f;
                 tBack.duration = 0.1f;
+            }
+        }
+
+        // ─── Healing (AnyState → Healing via Heal trigger) ───
+        if (states.ContainsKey(ClipCategory.Healing))
+        {
+            AnimatorState healingState = states[ClipCategory.Healing];
+
+            var tHeal = rootSM.AddAnyStateTransition(healingState);
+            tHeal.hasExitTime = false;
+            tHeal.duration = 0;
+            tHeal.canTransitionToSelf = false;
+            tHeal.AddCondition(AnimatorConditionMode.If, 0, "Heal");
+
+            // Healing → Idle: khi IsHealing = false
+            if (idleState != null)
+            {
+                var tBack = healingState.AddTransition(idleState);
+                tBack.hasExitTime = false;
+                tBack.duration = 0.1f;
+                tBack.AddCondition(AnimatorConditionMode.IfNot, 0, "IsHealing");
             }
         }
 
