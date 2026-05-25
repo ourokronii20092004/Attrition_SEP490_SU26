@@ -239,6 +239,7 @@ MonoBehaviour:
   aiComp: {fileID: 7384970758939645637}
   animationComp: {fileID: 7857092475179132347}
   combatComp: {fileID: 4428154600715241200}
+  eliteSkills: {fileID: 0}
   extraLivesAfterHpZero: 1
   reviveDelaySeconds: 5
   canBeKnockedBack: 1
@@ -266,6 +267,7 @@ MonoBehaviour:
   animationComp: {fileID: 7857092475179132347}
   combatComp: {fileID: 4428154600715241200}
   controller: {fileID: 2295487008783615839}
+  eliteSkills: {fileID: 0}
   patrolSpeed: 2
   chaseSpeed: 5
   viewRadius: 15
@@ -304,12 +306,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a0f1e1211565723478e7f9602af1dfb1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyCombat
-  isDashAttack: 1
+  enableDashSlash: 1
+  dashSlashAttacks: 01
   dashSpeed: 15
-  dashDuration: 1
-  _IsDashAttacking:
-    _value: 0
-  _DashDirection: {x: 0, y: 0}
+  dashDuration: 0.5
+  enableLeapAttack: 0
+  leapAttacks: 01
+  leapHeight: 3
+  leapDuration: 0.6
   animationComp: {fileID: 7857092475179132347}
   attackPoint: {fileID: 7502643014723364202}
   attackRange: 4
@@ -317,17 +321,26 @@ MonoBehaviour:
   playerLayer:
     serializedVersion: 2
     m_Bits: 128
-  isRanged: 0
-  projectilePrefab:
-    RawGuidValue: 00000000000000000000000000000000
-  projectileSpawnPoint: {fileID: 0}
   attackDamage: 1
   attackVariants: 1
   attackDuration: 0.6
   attackCooldown: 1.5
   currentAttackSpeed: 1
+  isRanged: 0
+  projectilePrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  projectileSpawnPoint: {fileID: 0}
   _IsAttacking:
     _value: 0
+  _IsDashAttacking:
+    _value: 0
+  _DashDirection: {x: 0, y: 0}
+  _IsLeapAttacking:
+    _value: 0
+  _LeapTargetPos: {x: 0, y: 0}
+  _LeapStartPos: {x: 0, y: 0}
+  _LeapProgress: 0
+  currentAttackStyle: 0
 --- !u!114 &4679243729813567865
 MonoBehaviour:
   m_ObjectHideFlags: 0

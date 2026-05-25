@@ -113,6 +113,7 @@ GameObject:
   - component: {fileID: 7016946132362314715}
   - component: {fileID: 5902785264049614041}
   - component: {fileID: 7078952800249788785}
+  - component: {fileID: 3908624317478850453}
   m_Layer: 8
   m_Name: Cultist
   m_TagString: Enemy
@@ -275,6 +276,7 @@ MonoBehaviour:
   aiComp: {fileID: 4811373818439603535}
   animationComp: {fileID: 2053574766879260213}
   combatComp: {fileID: 3048939340092040517}
+  eliteSkills: {fileID: 3908624317478850453}
   extraLivesAfterHpZero: 0
   reviveDelaySeconds: 5
   canBeKnockedBack: 0
@@ -302,6 +304,7 @@ MonoBehaviour:
   animationComp: {fileID: 2053574766879260213}
   combatComp: {fileID: 3048939340092040517}
   controller: {fileID: 7808732846637604145}
+  eliteSkills: {fileID: 3908624317478850453}
   patrolSpeed: 2
   chaseSpeed: 5
   viewRadius: 20
@@ -340,12 +343,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a0f1e1211565723478e7f9602af1dfb1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyCombat
-  isDashAttack: 0
+  enableDashSlash: 0
+  dashSlashUseAttack1: 1
+  dashSlashUseAttack2: 0
   dashSpeed: 10
   dashDuration: 0.3
-  _IsDashAttacking:
-    _value: 0
-  _DashDirection: {x: 0, y: 0}
+  enableLeapAttack: 0
+  leapUseAttack1: 1
+  leapUseAttack2: 0
+  leapHeight: 3
+  leapDuration: 0.6
   animationComp: {fileID: 2053574766879260213}
   attackPoint: {fileID: 683336405131911001}
   attackRange: 6
@@ -353,17 +360,26 @@ MonoBehaviour:
   playerLayer:
     serializedVersion: 2
     m_Bits: 128
-  isRanged: 0
-  projectilePrefab:
-    RawGuidValue: 00000000000000000000000000000000
-  projectileSpawnPoint: {fileID: 0}
   attackDamage: 1
   attackVariants: 1
   attackDuration: 0.6
   attackCooldown: 1.5
   currentAttackSpeed: 1
+  isRanged: 0
+  projectilePrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  projectileSpawnPoint: {fileID: 0}
   _IsAttacking:
     _value: 0
+  _IsDashAttacking:
+    _value: 0
+  _DashDirection: {x: 0, y: 0}
+  _IsLeapAttacking:
+    _value: 0
+  _LeapTargetPos: {x: 0, y: 0}
+  _LeapStartPos: {x: 0, y: 0}
+  _LeapProgress: 0
+  currentAttackStyle: 0
 --- !u!114 &7016946132362314715
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -386,6 +402,7 @@ MonoBehaviour:
   - {fileID: 2053574766879260213}
   - {fileID: 3048939340092040517}
   - {fileID: 5902785264049614041}
+  - {fileID: 3908624317478850453}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &5902785264049614041
 MonoBehaviour:
@@ -432,6 +449,34 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &3908624317478850453
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6812451834404064305}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44d0b63d575e6e3419313a5d1b3da87a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EliteEnemySkills
+  animationComp: {fileID: 2053574766879260213}
+  canTeleport: 0
+  teleportCooldown: 5
+  teleportMinDistance: 2
+  teleportMaxDistance: 5
+  teleportDuration: 0.4
+  teleportTriggerRange: 0
+  canHeal: 0
+  healAmount: 1
+  healDuration: 1
+  healThreshold: 0.7
+  healChancePerSecond: 0.15
+  _IsTeleporting:
+    _value: 0
+  _IsHealing:
+    _value: 0
 --- !u!1 &8808143850718501648
 GameObject:
   m_ObjectHideFlags: 0

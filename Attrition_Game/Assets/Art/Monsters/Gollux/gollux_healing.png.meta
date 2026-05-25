@@ -148,7 +148,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 1
+    filterMode: 0
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -183,7 +183,7 @@ TextureImporter:
   platformSettings:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
-    maxTextureSize: 2048
+    maxTextureSize: 16384
     resizeAlgorithm: 0
     textureFormat: -1
     textureCompression: 1
@@ -214,12 +214,12 @@ TextureImporter:
       name: gollux_healing_0
       rect:
         serializedVersion: 2
-        x: 162
+        x: 166
         y: 0
         width: 67
         height: 61
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 9
+      pivot: {x: 0.533859, y: 0.68783367}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -240,8 +240,8 @@ TextureImporter:
         y: 0
         width: 67
         height: 61
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 9
+      pivot: {x: 0.533859, y: 0.6878337}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -262,8 +262,8 @@ TextureImporter:
         y: 0
         width: 67
         height: 60
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 9
+      pivot: {x: 0.5338593, y: 0.6878337}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -284,8 +284,8 @@ TextureImporter:
         y: 0
         width: 67
         height: 60
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 9
+      pivot: {x: 0.5338593, y: 0.6878335}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -306,8 +306,8 @@ TextureImporter:
         y: 0
         width: 67
         height: 61
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 9
+      pivot: {x: 0.5338593, y: 0.6878337}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -328,8 +328,8 @@ TextureImporter:
         y: 0
         width: 67
         height: 61
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 9
+      pivot: {x: 0.5338593, y: 0.6878337}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -350,8 +350,8 @@ TextureImporter:
         y: 0
         width: 67
         height: 61
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 9
+      pivot: {x: 0.5338593, y: 0.6878337}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -372,8 +372,8 @@ TextureImporter:
         y: 0
         width: 67
         height: 60
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 9
+      pivot: {x: 0.5338593, y: 0.6878337}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -394,8 +394,8 @@ TextureImporter:
         y: 0
         width: 67
         height: 60
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 9
+      pivot: {x: 0.5338593, y: 0.6878337}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -416,8 +416,8 @@ TextureImporter:
         y: 0
         width: 67
         height: 61
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 9
+      pivot: {x: 0.5338593, y: 0.6878337}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -434,12 +434,12 @@ TextureImporter:
       name: gollux_healing_10
       rect:
         serializedVersion: 2
-        x: 4002
+        x: 4004
         y: 0
         width: 67
         height: 61
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 9
+      pivot: {x: 0.5338593, y: 0.6878337}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -460,8 +460,8 @@ TextureImporter:
         y: 0
         width: 67
         height: 61
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 9
+      pivot: {x: 0.5338593, y: 0.6878337}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -482,8 +482,8 @@ TextureImporter:
         y: 0
         width: 67
         height: 60
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 9
+      pivot: {x: 0.5338593, y: 0.6878337}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -504,8 +504,8 @@ TextureImporter:
         y: 0
         width: 67
         height: 60
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 9
+      pivot: {x: 0.5338593, y: 0.6878337}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -526,8 +526,8 @@ TextureImporter:
         y: 0
         width: 67
         height: 61
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 9
+      pivot: {x: 0.5338593, y: 0.6878337}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -549,7 +549,7 @@ TextureImporter:
         width: 22
         height: 25
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -570,8 +570,8 @@ TextureImporter:
         y: 0
         width: 67
         height: 61
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 9
+      pivot: {x: 0.5338593, y: 0.6878337}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -593,7 +593,7 @@ TextureImporter:
         width: 11
         height: 12
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -615,7 +615,7 @@ TextureImporter:
         width: 13
         height: 15
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -636,8 +636,8 @@ TextureImporter:
         y: 0
         width: 67
         height: 61
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 9
+      pivot: {x: 0.5338593, y: 0.6878337}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -659,7 +659,7 @@ TextureImporter:
         width: 11
         height: 11
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -681,7 +681,7 @@ TextureImporter:
         width: 13
         height: 13
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -698,12 +698,12 @@ TextureImporter:
       name: gollux_healing_22
       rect:
         serializedVersion: 2
-        x: 6690
+        x: 6689
         y: 0
         width: 67
         height: 60
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 9
+      pivot: {x: 0.5338593, y: 0.6878337}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -725,7 +725,7 @@ TextureImporter:
         width: 13
         height: 11
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -747,7 +747,7 @@ TextureImporter:
         width: 13
         height: 13
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -764,12 +764,12 @@ TextureImporter:
       name: gollux_healing_25
       rect:
         serializedVersion: 2
-        x: 7074
+        x: 7073
         y: 0
         width: 76
         height: 60
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 9
+      pivot: {x: 0.47406328, y: 0.6878337}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -790,8 +790,8 @@ TextureImporter:
         y: 0
         width: 67
         height: 61
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 9
+      pivot: {x: 0.516055, y: 0.6878334}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -808,12 +808,12 @@ TextureImporter:
       name: gollux_healing_27
       rect:
         serializedVersion: 2
-        x: 7842
+        x: 7844
         y: 0
         width: 67
         height: 61
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 9
+      pivot: {x: 0.4740633, y: 0.6878337}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -834,8 +834,8 @@ TextureImporter:
         y: 0
         width: 67
         height: 61
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 9
+      pivot: {x: 0.5, y: 0.6878337}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -856,8 +856,8 @@ TextureImporter:
         y: 0
         width: 67
         height: 60
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 9
+      pivot: {x: 0.5, y: 0.6878337}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -874,12 +874,12 @@ TextureImporter:
       name: gollux_healing_30
       rect:
         serializedVersion: 2
-        x: 8994
+        x: 8992
         y: 0
         width: 67
         height: 60
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 9
+      pivot: {x: 0.5, y: 0.6878337}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -896,12 +896,12 @@ TextureImporter:
       name: gollux_healing_31
       rect:
         serializedVersion: 2
-        x: 9378
+        x: 9380
         y: 0
         width: 67
         height: 61
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 9
+      pivot: {x: 0.5, y: 0.6878337}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -923,7 +923,7 @@ TextureImporter:
         width: 25
         height: 25
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -945,7 +945,7 @@ TextureImporter:
         width: 8
         height: 10
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -967,7 +967,7 @@ TextureImporter:
         width: 8
         height: 9
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -989,7 +989,7 @@ TextureImporter:
         width: 11
         height: 7
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1011,7 +1011,7 @@ TextureImporter:
         width: 11
         height: 7
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1033,7 +1033,7 @@ TextureImporter:
         width: 8
         height: 11
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1050,7 +1050,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 2793a1508cbc5bd468b99ad7f655e13d
     internalID: 0
     vertices: []
     indices: 
