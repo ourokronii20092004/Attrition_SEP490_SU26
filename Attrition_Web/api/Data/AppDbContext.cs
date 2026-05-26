@@ -16,6 +16,8 @@ public class AppDbContext : DbContext
     public DbSet<ForumThread> ForumThreads => Set<ForumThread>();
     public DbSet<ForumPost> ForumPosts => Set<ForumPost>();
     public DbSet<ForumReaction> ForumReactions => Set<ForumReaction>();
+    public DbSet<ThreadSubscription> ThreadSubscriptions => Set<ThreadSubscription>();
+    public DbSet<PostReport> PostReports => Set<PostReport>();
 
     // Game Models
     public DbSet<Item> Items => Set<Item>();
@@ -33,6 +35,10 @@ public class AppDbContext : DbContext
     public DbSet<CharacterSkill> CharacterSkills => Set<CharacterSkill>();
     public DbSet<GameRoom> GameRooms => Set<GameRoom>();
     public DbSet<RoomPlayer> RoomPlayers => Set<RoomPlayer>();
+    public DbSet<SpawnPoint> SpawnPoints => Set<SpawnPoint>();
+    public DbSet<GameConfig> GameConfigs => Set<GameConfig>();
+    public DbSet<Asset> Assets => Set<Asset>();
+
 
     // Music Models
     public DbSet<MusicAlbum> MusicAlbums => Set<MusicAlbum>();
@@ -53,6 +59,12 @@ public class AppDbContext : DbContext
             e.Property(u => u.JoinedAt).HasDefaultValueSql("NOW()");
             e.Property(u => u.IsBanned).HasDefaultValue(false);
             e.Property(u => u.MustChangePassword).HasDefaultValue(false);
+            e.Property(u => u.FailedLoginAttempts).HasDefaultValue(0);
+            e.Property(u => u.IsEmailVerified).HasDefaultValue(false);
+            e.Property(u => u.NotifyOnReply).HasDefaultValue(true);
+            e.Property(u => u.NotifyOnMention).HasDefaultValue(true);
+            e.HasIndex(u => u.PasswordResetToken).HasFilter("\"PasswordResetToken\" IS NOT NULL");
+            e.HasIndex(u => u.EmailVerificationToken).HasFilter("\"EmailVerificationToken\" IS NOT NULL");
         });
 
         // Wiki
@@ -110,6 +122,22 @@ public class AppDbContext : DbContext
             e.HasIndex(r => new { r.PostId, r.UserId, r.ReactionType }).IsUnique();
         });
 
+        modelBuilder.Entity<ThreadSubscription>(e =>
+        {
+            e.HasKey(ts => ts.Id);
+            e.HasOne(ts => ts.Thread).WithMany().HasForeignKey(ts => ts.ThreadId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(ts => ts.User).WithMany().HasForeignKey(ts => ts.UserId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(ts => new { ts.ThreadId, ts.UserId }).IsUnique();
+        });
+
+        modelBuilder.Entity<PostReport>(e =>
+        {
+            e.HasKey(pr => pr.Id);
+            e.HasOne(pr => pr.Post).WithMany().HasForeignKey(pr => pr.PostId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(pr => pr.Reporter).WithMany().HasForeignKey(pr => pr.ReporterId).OnDelete(DeleteBehavior.Cascade);
+            e.Property(pr => pr.Status).HasDefaultValue("Pending");
+        });
+
         // Game - Items & Equipment (Table-Per-Type)
         modelBuilder.Entity<Item>().ToTable("items");
         modelBuilder.Entity<Gear>().ToTable("gears");
@@ -131,6 +159,26 @@ public class AppDbContext : DbContext
         {
             e.HasKey(l => l.LevelNumber);
         });
+
+        // SpawnPoint
+        modelBuilder.Entity<SpawnPoint>(e =>
+        {
+            e.HasKey(sp => sp.Id);
+        });
+
+        // GameConfig
+        modelBuilder.Entity<GameConfig>(e =>
+        {
+            e.HasKey(gc => gc.Key);
+        });
+
+        // Asset
+        modelBuilder.Entity<Asset>(e =>
+        {
+            e.HasKey(a => a.Id);
+            e.HasOne<User>().WithMany().HasForeignKey(a => a.UploadedById).OnDelete(DeleteBehavior.SetNull);
+        });
+
 
         // Character
         modelBuilder.Entity<Character>(e =>

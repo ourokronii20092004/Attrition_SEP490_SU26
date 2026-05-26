@@ -9,11 +9,11 @@ namespace Attrition.API.Controllers;
 [Route("api/users")]
 public class UsersController : ControllerBase
 {
-    private readonly AuthService _auth;
-    private readonly FileService _files;
-    private readonly UserService _users;
+    private readonly IAuthService _auth;
+    private readonly IFileService _files;
+    private readonly IUserService _users;
 
-    public UsersController(AuthService auth, FileService files, UserService users)
+    public UsersController(IAuthService auth, IFileService files, IUserService users)
     {
         _auth = auth;
         _files = files;
@@ -32,7 +32,7 @@ public class UsersController : ControllerBase
     {
         var result = await _users.GetUserPostsAsync(username, page, pageSize);
         if (result == null) return NotFound(new ApiResponse(false, "User not found."));
-        return Ok(result);
+        return Ok(new ApiResponse<PaginatedResponse<UserPostDto>>(true, result));
     }
 
     [HttpGet("{username}/contributions")]
@@ -40,7 +40,7 @@ public class UsersController : ControllerBase
     {
         var result = await _users.GetUserContributionsAsync(username, page, pageSize);
         if (result == null) return NotFound(new ApiResponse(false, "User not found."));
-        return Ok(result);
+        return Ok(new ApiResponse<PaginatedResponse<UserContributionDto>>(true, result));
     }
 
     [Authorize]
@@ -110,6 +110,33 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> UploadContentImage(IFormFile file)
     {
         var result = await _files.UploadContentImageAsync(file);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    [Authorize]
+    [HttpPost("set-password")]
+    public async Task<IActionResult> SetPassword(SetPasswordRequest request)
+    {
+        var userId = Guid.Parse(User.FindFirst("sub")!.Value);
+        var result = await _users.SetPasswordAsync(userId, request);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    [Authorize]
+    [HttpPut("email")]
+    public async Task<IActionResult> UpdateEmail(UpdateEmailRequest request)
+    {
+        var userId = Guid.Parse(User.FindFirst("sub")!.Value);
+        var result = await _users.UpdateEmailAsync(userId, request);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    [Authorize]
+    [HttpDelete("me")]
+    public async Task<IActionResult> DeleteAccount()
+    {
+        var userId = Guid.Parse(User.FindFirst("sub")!.Value);
+        var result = await _users.DeleteAccountAsync(userId);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 }

@@ -11,6 +11,16 @@ const SIDEBAR_LINKS = [
   { href: "/admin", label: "Dashboard", icon: "◉" },
   { href: "/admin/users", label: "Users", icon: "👤" },
   {
+    label: "Game Data",
+    icon: "🎮",
+    children: [
+      { href: "/admin/enemies", label: "Enemies" },
+      { href: "/admin/gamedata", label: "Subsystems" },
+    ],
+  },
+  { href: "/admin/assets", label: "Assets", icon: "📁" },
+  { href: "/admin/rooms", label: "Rooms", icon: "👥" },
+  {
     label: "Wiki",
     icon: "📖",
     children: [
@@ -25,8 +35,10 @@ const SIDEBAR_LINKS = [
     children: [
       { href: "/admin/forum", label: "Threads" },
       { href: "/admin/forum/posts", label: "Posts" },
+      { href: "/admin/forum/reports", label: "Reports" },
     ],
   },
+
   {
     label: "Music",
     icon: "🎵",

@@ -9,8 +9,8 @@ namespace Attrition.API.Controllers;
 [Route("api/auth")]
 public class AuthController : ControllerBase
 {
-    private readonly AuthService _auth;
-    public AuthController(AuthService auth) => _auth = auth;
+    private readonly IAuthService _auth;
+    public AuthController(IAuthService auth) => _auth = auth;
 
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterRequest request)
@@ -73,6 +73,45 @@ public class AuthController : ControllerBase
     {
         var userId = Guid.Parse(User.FindFirst("sub")!.Value);
         var result = await _auth.ChangePasswordAsync(userId, request);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    [Authorize]
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        var userId = Guid.Parse(User.FindFirst("sub")!.Value);
+        var result = await _auth.LogoutAsync(userId);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request)
+    {
+        var result = await _auth.ForgotPasswordAsync(request);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword(ResetPasswordRequest request)
+    {
+        var result = await _auth.ResetPasswordAsync(request);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    [HttpPost("verify-email")]
+    public async Task<IActionResult> VerifyEmail(VerifyEmailRequest request)
+    {
+        var result = await _auth.VerifyEmailAsync(request);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    [Authorize]
+    [HttpPost("verify-email/resend")]
+    public async Task<IActionResult> ResendVerificationEmail()
+    {
+        var userId = Guid.Parse(User.FindFirst("sub")!.Value);
+        var result = await _auth.SendVerificationEmailAsync(userId);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 }
