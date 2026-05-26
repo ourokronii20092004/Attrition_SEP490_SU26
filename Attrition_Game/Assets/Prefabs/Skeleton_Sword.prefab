@@ -67,7 +67,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: -0.0023433305, y: -0.0067265034}
+  m_Offset: {x: -0.0023432374, y: 0.24386406}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -77,7 +77,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.053392492, y: 0.2762165}
+  m_Size: {x: 0.30887115, y: 1.0218773}
   m_EdgeRadius: 0
 --- !u!114 &6080363425073500125
 MonoBehaviour:
@@ -114,6 +114,7 @@ GameObject:
   - component: {fileID: 3048939340092040517}
   - component: {fileID: 7016946132362314715}
   - component: {fileID: 5902785264049614041}
+  - component: {fileID: 5279661819170920940}
   m_Layer: 8
   m_Name: Skeleton_Sword
   m_TagString: Enemy
@@ -130,8 +131,8 @@ Transform:
   m_GameObject: {fileID: 6812451834404064305}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -31.391777, y: 51.63889, z: 0}
-  m_LocalScale: {x: 17.711437, y: 15.423617, z: 5}
+  m_LocalPosition: {x: -37.738842, y: 47.05, z: 0}
+  m_LocalScale: {x: 1.1483322, y: 0.99999994, z: 0.32417816}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 683336405131911001}
@@ -258,8 +259,8 @@ CapsuleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: -0.001975308, y: -0.0022138357}
-  m_Size: {x: 0.2063159, y: 0.30925733}
+  m_Offset: {x: -0.021680677, y: -0.00039482123}
+  m_Size: {x: 1.1208012, y: 1.8467524}
   m_Direction: 0
 --- !u!95 &698859146310536272
 Animator:
@@ -314,6 +315,7 @@ MonoBehaviour:
   aiComp: {fileID: 4811373818439603535}
   animationComp: {fileID: 2053574766879260213}
   combatComp: {fileID: 3048939340092040517}
+  eliteSkills: {fileID: 0}
   extraLivesAfterHpZero: 1
   reviveDelaySeconds: 5
   canBeKnockedBack: 1
@@ -341,6 +343,7 @@ MonoBehaviour:
   animationComp: {fileID: 2053574766879260213}
   combatComp: {fileID: 3048939340092040517}
   controller: {fileID: 7808732846637604145}
+  eliteSkills: {fileID: 0}
   patrolSpeed: 2
   chaseSpeed: 5
   viewRadius: 10
@@ -379,24 +382,45 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a0f1e1211565723478e7f9602af1dfb1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyCombat
+  enableDashSlash: 0
+  dashSlashAttacks: 01
+  dashSpeed: 10
+  dashDuration: 0.3
+  enableLeapAttack: 0
+  leapAttacks: 01
+  leapHeight: 3
+  leapDuration: 0.6
   animationComp: {fileID: 2053574766879260213}
   attackPoint: {fileID: 683336405131911001}
-  attackRange: 4
-  attackAngle: 140
+  attackRange: 2
+  attackRanges:
+  - 2
+  - 3
+  attackAngle: 103
   playerLayer:
     serializedVersion: 2
     m_Bits: 128
-  isRanged: 0
-  projectilePrefab:
-    RawGuidValue: 00000000000000000000000000000000
-  projectileSpawnPoint: {fileID: 0}
   attackDamage: 1
   attackVariants: 2
   attackDuration: 0.6
   attackCooldown: 1.5
   currentAttackSpeed: 1
+  isRanged: 0
+  projectilePrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  projectileSpawnPoint: {fileID: 0}
   _IsAttacking:
     _value: 0
+  _IsDashAttacking:
+    _value: 0
+  _DashDirection: {x: 0, y: 0}
+  _IsLeapAttacking:
+    _value: 0
+  _LeapTargetPos: {x: 0, y: 0}
+  _LeapStartPos: {x: 0, y: 0}
+  _LeapProgress: 0
+  _CurrentAttackIndex: 0
+  currentAttackStyle: 0
 --- !u!114 &7016946132362314715
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -443,6 +467,20 @@ MonoBehaviour:
     Position: 0.01
     Rotation: 0.01
     Scale: 0.01
+--- !u!114 &5279661819170920940
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6812451834404064305}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1541381998, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObjectPrefabData
+  Guid:
+    RawGuidValue: ce2bc03a37a1e7243a264f4c87eba8e5
 --- !u!1 &8808143850718501648
 GameObject:
   m_ObjectHideFlags: 0

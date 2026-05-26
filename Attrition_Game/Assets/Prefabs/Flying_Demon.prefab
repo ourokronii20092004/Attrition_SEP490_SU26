@@ -19,6 +19,7 @@ GameObject:
   - component: {fileID: 320469981377886090}
   - component: {fileID: 5328899925062977967}
   - component: {fileID: 4911119748226872292}
+  - component: {fileID: -2449157290097528782}
   m_Layer: 8
   m_Name: Flying_Demon
   m_TagString: Enemy
@@ -35,8 +36,8 @@ Transform:
   m_GameObject: {fileID: 2368997048418387079}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -7.59, y: 51.21, z: 0}
-  m_LocalScale: {x: 3.542287, y: 3.0847235, z: 1}
+  m_LocalPosition: {x: -35.51, y: 49.69, z: 0}
+  m_LocalScale: {x: 0.34449965, y: 0.3, z: 0.09725345}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 5218382753634733620}
@@ -163,8 +164,8 @@ CapsuleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: -0.09212751, y: -0.0742315}
-  m_Size: {x: 0.4530337, y: 0.52023315}
+  m_Offset: {x: -0.5351655, y: 0.010573864}
+  m_Size: {x: 3.6281185, y: 4.166285}
   m_Direction: 0
 --- !u!114 &1225760942499329285
 MonoBehaviour:
@@ -181,6 +182,7 @@ MonoBehaviour:
   aiComp: {fileID: 6212655201303181169}
   animationComp: {fileID: 8981913773620505188}
   combatComp: {fileID: 4324008339978122593}
+  eliteSkills: {fileID: 0}
   extraLivesAfterHpZero: 0
   reviveDelaySeconds: 5
   canBeKnockedBack: 0
@@ -208,6 +210,7 @@ MonoBehaviour:
   animationComp: {fileID: 8981913773620505188}
   combatComp: {fileID: 4324008339978122593}
   controller: {fileID: 1225760942499329285}
+  eliteSkills: {fileID: 0}
   patrolSpeed: 2
   chaseSpeed: 5
   viewRadius: 10
@@ -246,22 +249,43 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a0f1e1211565723478e7f9602af1dfb1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyCombat
+  enableDashSlash: 0
+  dashSlashAttacks: 01
+  dashSpeed: 10
+  dashDuration: 0.3
+  enableLeapAttack: 0
+  leapAttacks: 01
+  leapHeight: 3
+  leapDuration: 0.6
   animationComp: {fileID: 8981913773620505188}
   attackPoint: {fileID: 5218382753634733620}
   attackRange: 10
+  attackRanges: []
   attackAngle: 360
   playerLayer:
     serializedVersion: 2
     m_Bits: 128
+  attackDamage: 1
+  attackVariants: 1
+  attackDuration: 0.6
+  attackCooldown: 1.5
+  currentAttackSpeed: 0.8
   isRanged: 1
   projectilePrefab:
     RawGuidValue: 905ff5a81333ca143a6997cd345b8277
   projectileSpawnPoint: {fileID: 5218382753634733620}
-  attackDamage: 1
-  attackCooldown: 1.5
-  currentAttackSpeed: 0.8
   _IsAttacking:
     _value: 0
+  _IsDashAttacking:
+    _value: 0
+  _DashDirection: {x: 0, y: 0}
+  _IsLeapAttacking:
+    _value: 0
+  _LeapTargetPos: {x: 0, y: 0}
+  _LeapStartPos: {x: 0, y: 0}
+  _LeapProgress: 0
+  _CurrentAttackIndex: 0
+  currentAttackStyle: 0
 --- !u!114 &320469981377886090
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -330,6 +354,22 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!111 &-2449157290097528782
+Animation:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2368997048418387079}
+  m_Enabled: 1
+  serializedVersion: 4
+  m_Animation: {fileID: 7400000, guid: 3dc2592c8a275b24c8a3c4b66d212039, type: 2}
+  m_Animations: []
+  m_WrapMode: 0
+  m_PlayAutomatically: 1
+  m_AnimatePhysics: 0
+  m_UpdateMode: 0
+  m_CullingType: 0
 --- !u!1 &6239148214477598644
 GameObject:
   m_ObjectHideFlags: 0
@@ -443,7 +483,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: -0.09421246, y: -0.016904935}
+  m_Offset: {x: -0.5566225, y: -0.22785497}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -453,5 +493,5 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.1952695, y: 0.27649936}
+  m_Size: {x: 0.7146947, y: 1.425781}
   m_EdgeRadius: 0
