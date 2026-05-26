@@ -663,7 +663,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 20
+  orthographic size: 15
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
@@ -688,7 +688,7 @@ Transform:
   m_GameObject: {fileID: 582188324}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -16.2, y: 49.38, z: -10}
+  m_LocalPosition: {x: -41.5257, y: 47.069, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1072,7 +1072,7 @@ MonoBehaviour:
   spawnPoints:
   - {fileID: 2011203877}
   fallbackEnemyPrefab:
-    RawGuidValue: 2c14826e69a370c42a6aa1cda4e08651
+    RawGuidValue: ce2bc03a37a1e7243a264f4c87eba8e5
   enemySpawnConfigs:
   - spawnPoint: {fileID: 176590887}
     spawnCount: 1
@@ -1933,7 +1933,7 @@ MonoBehaviour:
     CustomLookAtTarget: 0
   Lens:
     FieldOfView: 60
-    OrthographicSize: 20
+    OrthographicSize: 15
     NearClipPlane: 0.3
     FarClipPlane: 1000
     Dutch: 0
@@ -1960,7 +1960,7 @@ Transform:
   m_GameObject: {fileID: 1236486602}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -16.2, y: 49.38, z: -10}
+  m_LocalPosition: {x: -41.5257, y: 47.069, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

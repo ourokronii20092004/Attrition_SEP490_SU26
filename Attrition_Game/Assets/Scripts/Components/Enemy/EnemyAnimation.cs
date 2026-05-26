@@ -85,6 +85,25 @@ public class EnemyAnimation : NetworkBehaviour
         anim.SetTrigger("Resurrect");
     }
 
+    // ─── SLEEP / WAKEUP (Bat-type enemies) ───
+    public void PlaySleep()
+    {
+        if (anim != null)
+        {
+            anim.SetBool("IsSleeping", true);
+            anim.SetTrigger("Sleep");
+        }
+    }
+
+    public void PlayWakeUp()
+    {
+        if (anim != null)
+        {
+            anim.SetBool("IsSleeping", false);
+            anim.SetTrigger("WakeUp");
+        }
+    }
+
     // ─── HEALING (Elite only) ───
     public void PlayHealing()
     {
