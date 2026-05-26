@@ -1,0 +1,10 @@
+tunnel: 0aeafd9e-039c-40e2-a208-f21f57145b95
+credentials-file: /etc/cloudflared/credentials.json
+
+ingress:
+  - hostname: attrition.io.vn
+    service: http://nginx:80
+  - hostname: collection.attrition.io.vn
+    service: http://collection:3001
+  # catch-all rule (required by cloudflared)
+  - service: http_status:404
