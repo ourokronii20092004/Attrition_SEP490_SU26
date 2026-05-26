@@ -6,7 +6,7 @@ import os
 import sys
 
 # ── Config ──────────────────────────────────────────────
-REMOTE_HOST = "192.168.1.110"
+REMOTE_HOST = "100.100.201.68"
 REMOTE_USER = "root"
 REMOTE_PASS = "12345"
 REMOTE_DIR  = "/opt/attrition"

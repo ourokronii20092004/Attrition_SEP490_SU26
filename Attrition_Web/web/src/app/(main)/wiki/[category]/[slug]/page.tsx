@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatDate } from "@/lib/utils";
 import styles from "../../wiki.module.css";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface Article {
   id: string;
@@ -48,6 +50,7 @@ export async function generateMetadata({
 }
 
 // Simple markdown-to-HTML for headings extraction
+// Kept for Table of Contents rendering
 function extractHeadings(content: string): { id: string; text: string; level: number }[] {
   const headingRegex = /^(#{2,3})\s+(.+)$/gm;
   const headings: { id: string; text: string; level: number }[] = [];
@@ -63,45 +66,6 @@ function extractHeadings(content: string): { id: string; text: string; level: nu
   return headings;
 }
 
-// Simple markdown renderer (basic subset)
-function renderMarkdown(content: string): string {
-  let html = content
-    // Headings
-    .replace(/^### (.+)$/gm, '<h3 id="$1">$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2 id="$1">$1</h2>')
-    // Bold / Italic
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\*(.+?)\*/g, "<em>$1</em>")
-    // Code
-    .replace(/`(.+?)`/g, "<code>$1</code>")
-    // Links
-    .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2">$1</a>')
-    // Line breaks into paragraphs
-    .replace(/\n\n/g, "</p><p>")
-    // Lists
-    .replace(/^- (.+)$/gm, "<li>$1</li>");
-
-  // Fix heading IDs
-  html = html.replace(/<h([23]) id="(.+?)">/g, (_, level, text) => {
-    const id = text
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, "")
-      .replace(/\s+/g, "-");
-    return `<h${level} id="${id}">`;
-  });
-
-  // Wrap in paragraphs
-  html = `<p>${html}</p>`;
-  // Clean up empty paragraphs
-  html = html.replace(/<p>\s*<\/p>/g, "");
-  html = html.replace(/<p>\s*<h/g, "<h");
-  html = html.replace(/<\/h([23])>\s*<\/p>/g, "</h$1>");
-  // Wrap lists
-  html = html.replace(/(<li>[\s\S]*?<\/li>)/g, "<ul>$1</ul>");
-
-  return html;
-}
-
 export default async function ArticlePage({
   params,
 }: {
@@ -113,7 +77,6 @@ export default async function ArticlePage({
 
   const categoryName = (article.categorySlug || category).replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   const headings = extractHeadings(article.content);
-  const html = renderMarkdown(article.content);
 
   return (
     <div className="page">
@@ -137,10 +100,25 @@ export default async function ArticlePage({
               <span>By {article.authorName}</span>
               <span>Updated {formatDate(article.updatedAt)}</span>
             </div>
-            <div
-              className={styles.articleBody}
-              dangerouslySetInnerHTML={{ __html: html }}
-            />
+            <div className={styles.articleBody}>
+              <ReactMarkdown 
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  h2: ({ children }) => {
+                    const text = String(children);
+                    const id = text.toLowerCase().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-");
+                    return <h2 id={id}>{children}</h2>;
+                  },
+                  h3: ({ children }) => {
+                    const text = String(children);
+                    const id = text.toLowerCase().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-");
+                    return <h3 id={id}>{children}</h3>;
+                  }
+                }}
+              >
+                {article.content}
+              </ReactMarkdown>
+            </div>
           </article>
 
           {/* TOC Sidebar */}

@@ -1,0 +1,271 @@
+/* ─── Persistent Player Bar (Glassmorphism) ──────────────── */
+
+.playerBar {
+  position: fixed;
+  bottom: var(--space-4);
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - var(--space-8));
+  max-width: 1200px;
+  height: 76px;
+  background: rgba(20, 20, 22, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-lg);
+  display: grid;
+  grid-template-columns: 280px 1fr 200px;
+  align-items: center;
+  padding: 0 var(--space-6);
+  gap: var(--space-6);
+  z-index: 999;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.playerBarEmpty {
+  display: none; /* hidden if no track playing, or displays placeholder */
+}
+
+/* Track info */
+
+.playerTrackInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.playerArt {
+  width: 46px;
+  height: 46px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  color: var(--accent);
+  font-size: var(--text-lg);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.playerArt img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.playerTrackMeta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.playerTrackTitle {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+
+.playerTrackArtist {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Controls */
+
+.playerControls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.playerButtons {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.controlBtn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--text-muted);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+.controlBtn:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.controlBtnActive {
+  color: var(--accent);
+  text-shadow: 0 0 10px var(--accent-subtle);
+}
+
+.playPauseBtn {
+  width: 38px;
+  height: 38px;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  box-shadow: 0 4px 14px rgba(232, 93, 58, 0.3);
+}
+
+.playPauseBtn:hover {
+  background: var(--accent-hover);
+  color: var(--accent-contrast);
+  transform: scale(1.05);
+}
+
+.playPauseBtn:active {
+  transform: scale(0.95);
+}
+
+/* Progress */
+
+.progressRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 600px;
+}
+
+.timeLabel {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  min-width: 36px;
+  text-align: center;
+}
+
+.progressBar {
+  flex: 1;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  cursor: pointer;
+  position: relative;
+  transition: height var(--transition-fast);
+}
+
+.progressBar:hover {
+  height: 6px;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  position: relative;
+  transition: width 100ms linear;
+  box-shadow: 0 0 8px var(--accent);
+}
+
+.progressFill::after {
+  content: '';
+  position: absolute;
+  right: -5px;
+  top: 50%;
+  transform: translateY(-50%) scale(0);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+  transition: transform var(--transition-fast);
+}
+
+.progressBar:hover .progressFill::after {
+  transform: translateY(-50%) scale(1);
+}
+
+.progressBar[data-dragging] .progressFill::after {
+  transform: translateY(-50%) scale(1);
+}
+
+.progressBar[data-dragging] {
+  height: 6px;
+}
+
+/* Volume */
+
+.playerVolume {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+.volumeBar {
+  width: 90px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  cursor: pointer;
+  position: relative;
+}
+
+.volumeBar:hover {
+  height: 6px;
+}
+
+.volumeFill {
+  height: 100%;
+  background: var(--text-muted);
+  border-radius: 2px;
+  transition: width 50ms ease-out;
+}
+
+.volumeBar:hover .volumeFill {
+  background: var(--accent);
+}
+
+/* ─── Responsive ────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .playerBar {
+    bottom: var(--space-2);
+    left: var(--space-2);
+    transform: none;
+    width: calc(100% - var(--space-4));
+    grid-template-columns: 1fr auto;
+    gap: var(--space-3);
+    height: 64px;
+    padding: 0 var(--space-4);
+    border-radius: var(--radius-md);
+  }
+
+  .playerControls {
+    display: none;
+  }
+
+  .playerVolume {
+    display: none;
+  }
+
+  .playerTrackInfo {
+    flex: 1;
+  }
+}

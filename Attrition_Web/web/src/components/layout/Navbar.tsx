@@ -11,10 +11,13 @@ import styles from "./Navbar.module.css";
 // ─── Nav Links ─────────────────────────────────────────────
 
 const NAV_LINKS = [
+  { href: "/rooms", label: "Lobbies" },
   { href: "/wiki", label: "Wiki" },
   { href: "/forum", label: "Forum" },
+  { href: "/collection", label: "Collection" },
   { href: "/about", label: "About" },
 ];
+
 
 // ─── Theme Toggle ──────────────────────────────────────────
 

@@ -23,6 +23,56 @@ namespace Attrition.API.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Attrition.API.Models.Asset", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AssetType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("MimeType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Tags")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Title")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UploadedById")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UploadedById");
+
+                    b.ToTable("Assets");
+                });
+
             modelBuilder.Entity("Attrition.API.Models.Character", b =>
                 {
                     b.Property<Guid>("CharacterId")
@@ -223,6 +273,9 @@ namespace Attrition.API.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Attachments")
+                        .HasColumnType("text");
+
                     b.Property<Guid>("AuthorId")
                         .HasColumnType("uuid");
 
@@ -328,6 +381,23 @@ namespace Attrition.API.Migrations
                     b.HasIndex("CategoryId");
 
                     b.ToTable("ForumThreads");
+                });
+
+            modelBuilder.Entity("Attrition.API.Models.GameConfig", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Key");
+
+                    b.ToTable("GameConfigs");
                 });
 
             modelBuilder.Entity("Attrition.API.Models.GameRoom", b =>
@@ -715,6 +785,40 @@ namespace Attrition.API.Migrations
                     b.ToTable("PlaylistTracks");
                 });
 
+            modelBuilder.Entity("Attrition.API.Models.PostReport", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("PostId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("ReporterId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasDefaultValue("Pending");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PostId");
+
+                    b.HasIndex("ReporterId");
+
+                    b.ToTable("PostReports");
+                });
+
             modelBuilder.Entity("Attrition.API.Models.RoomPlayer", b =>
                 {
                     b.Property<Guid>("RoomId")
@@ -728,6 +832,9 @@ namespace Attrition.API.Migrations
 
                     b.Property<Guid>("GameRoomRoomId")
                         .HasColumnType("uuid");
+
+                    b.Property<bool>("IsReady")
+                        .HasColumnType("boolean");
 
                     b.Property<DateTime>("JoinedAt")
                         .HasColumnType("timestamp with time zone");
@@ -819,6 +926,65 @@ namespace Attrition.API.Migrations
                     b.ToTable("SkillEffects");
                 });
 
+            modelBuilder.Entity("Attrition.API.Models.SpawnPoint", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EnemyId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("MaxActiveCount")
+                        .HasColumnType("integer");
+
+                    b.Property<float>("PositionX")
+                        .HasColumnType("real");
+
+                    b.Property<float>("PositionY")
+                        .HasColumnType("real");
+
+                    b.Property<float>("PositionZ")
+                        .HasColumnType("real");
+
+                    b.Property<string>("SceneName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("SpawnIntervalSeconds")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SpawnPoints");
+                });
+
+            modelBuilder.Entity("Attrition.API.Models.ThreadSubscription", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("SubscribedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ThreadId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("ThreadId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("ThreadSubscriptions");
+                });
+
             modelBuilder.Entity("Attrition.API.Models.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -847,8 +1013,13 @@ namespace Attrition.API.Migrations
                     b.Property<string>("Email")
                         .HasColumnType("text");
 
-                    b.Property<bool>("EmailVerified")
-                        .HasColumnType("boolean");
+                    b.Property<string>("EmailVerificationToken")
+                        .HasColumnType("text");
+
+                    b.Property<int>("FailedLoginAttempts")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
 
                     b.Property<string>("GoogleAvatarUrl")
                         .HasColumnType("text");
@@ -857,6 +1028,11 @@ namespace Attrition.API.Migrations
                         .HasColumnType("text");
 
                     b.Property<bool>("IsBanned")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsEmailVerified")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
@@ -872,12 +1048,34 @@ namespace Attrition.API.Migrations
                     b.Property<string>("LastLoginIp")
                         .HasColumnType("text");
 
+                    b.Property<DateTime?>("LockoutEnd")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("MustChangePassword")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
+                    b.Property<bool>("NotifyOnMention")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("NotifyOnReply")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
                     b.Property<string>("PasswordHash")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PasswordResetToken")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("PasswordResetTokenExpiry")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PendingEmail")
                         .HasColumnType("text");
 
                     b.Property<int>("PostCount")
@@ -915,8 +1113,14 @@ namespace Attrition.API.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
+                    b.HasIndex("EmailVerificationToken")
+                        .HasFilter("\"EmailVerificationToken\" IS NOT NULL");
+
                     b.HasIndex("GoogleId")
                         .IsUnique();
+
+                    b.HasIndex("PasswordResetToken")
+                        .HasFilter("\"PasswordResetToken\" IS NOT NULL");
 
                     b.HasIndex("Username")
                         .IsUnique();
@@ -1039,6 +1243,9 @@ namespace Attrition.API.Migrations
                     b.Property<string>("ChangeNote")
                         .HasColumnType("text");
 
+                    b.Property<string>("Content")
+                        .HasColumnType("text");
+
                     b.Property<Guid>("ContributorId")
                         .HasColumnType("uuid");
 
@@ -1158,6 +1365,14 @@ namespace Attrition.API.Migrations
                         .HasColumnType("integer");
 
                     b.ToTable("gears", (string)null);
+                });
+
+            modelBuilder.Entity("Attrition.API.Models.Asset", b =>
+                {
+                    b.HasOne("Attrition.API.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UploadedById")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("Attrition.API.Models.Character", b =>
@@ -1345,6 +1560,25 @@ namespace Attrition.API.Migrations
                     b.Navigation("Track");
                 });
 
+            modelBuilder.Entity("Attrition.API.Models.PostReport", b =>
+                {
+                    b.HasOne("Attrition.API.Models.ForumPost", "Post")
+                        .WithMany()
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Attrition.API.Models.User", "Reporter")
+                        .WithMany()
+                        .HasForeignKey("ReporterId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Post");
+
+                    b.Navigation("Reporter");
+                });
+
             modelBuilder.Entity("Attrition.API.Models.RoomPlayer", b =>
                 {
                     b.HasOne("Attrition.API.Models.Character", "Character")
@@ -1379,6 +1613,25 @@ namespace Attrition.API.Migrations
                         .IsRequired();
 
                     b.Navigation("Skill");
+                });
+
+            modelBuilder.Entity("Attrition.API.Models.ThreadSubscription", b =>
+                {
+                    b.HasOne("Attrition.API.Models.ForumThread", "Thread")
+                        .WithMany()
+                        .HasForeignKey("ThreadId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Attrition.API.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Thread");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Attrition.API.Models.UserFavorite", b =>

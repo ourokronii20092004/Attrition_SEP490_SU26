@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme, ACCENT_COLORS, type ThemeMode, type AccentName } from "@/contexts/ThemeContext";
 import { useToast } from "@/contexts/ToastContext";
@@ -12,9 +13,10 @@ import styles from "./settings.module.css";
 import ImageCropper from "@/components/ImageCropper";
 
 export default function SettingsPage() {
-  const { user, isLoading, refreshUser, changePassword } = useAuth();
+  const { user, isLoading, refreshUser, changePassword, logout } = useAuth();
   const { mode, setMode, accent, setAccent } = useTheme();
   const toast = useToast();
+  const router = useRouter();
 
   // Profile
   const [bio, setBio] = useState(user?.bio || "");
@@ -37,6 +39,31 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
+
+  // Email verification resend
+  const [sendingVerification, setSendingVerification] = useState(false);
+
+  // Secure email change
+  const [showEmailConfirm, setShowEmailConfirm] = useState(false);
+  const [emailPassword, setEmailPassword] = useState("");
+  const [savingEmail, setSavingEmail] = useState(false);
+
+  // Notification Preferences
+  const [notifyOnReply, setNotifyOnReply] = useState(user?.notifyOnReply ?? true);
+  const [notifyOnMention, setNotifyOnMention] = useState(user?.notifyOnMention ?? true);
+
+  // Account deletion
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setBio(user.bio || "");
+      setEmail(user.email || "");
+      setNotifyOnReply(user.notifyOnReply);
+      setNotifyOnMention(user.notifyOnMention);
+    }
+  }, [user]);
 
   if (isLoading || !user) {
     return (
@@ -146,13 +173,95 @@ export default function SettingsPage() {
   const handleSaveProfile = async () => {
     setSavingProfile(true);
     try {
-      await api.put("/users/profile", { bio, email });
+      await api.put("/users/profile", { bio, notifyOnReply, notifyOnMention });
       await refreshUser();
       toast.success("Profile updated");
     } catch {
       toast.error("Failed to update profile");
     } finally {
       setSavingProfile(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setSendingVerification(true);
+    try {
+      const res = await api.post("/auth/verify-email/resend", {});
+      if (res.success) {
+        toast.success("Verification email sent!");
+      } else {
+        toast.error(res.error || "Failed to send verification email");
+      }
+    } catch {
+      toast.error("Failed to send verification email");
+    } finally {
+      setSendingVerification(false);
+    }
+  };
+
+  const handleConfirmEmailChange = async () => {
+    setSavingEmail(true);
+    try {
+      const res = await api.put("/users/email", { newEmail: email, currentPassword: emailPassword });
+      if (res.success) {
+        await refreshUser();
+        setShowEmailConfirm(false);
+        setEmailPassword("");
+        toast.success("Verification link sent to your new email address!");
+      } else {
+        toast.error(res.error || "Failed to update email");
+      }
+    } catch {
+      toast.error("Failed to update email");
+    } finally {
+      setSavingEmail(false);
+    }
+  };
+
+  const handleSetPassword = async () => {
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords don't match");
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+
+    setSavingPassword(true);
+    try {
+      const res = await api.post("/users/set-password", { newPassword });
+      if (res.success) {
+        setNewPassword("");
+        setConfirmPassword("");
+        await refreshUser();
+        toast.success("Password set successfully! You can now log in locally.");
+      } else {
+        toast.error(res.error || "Failed to set password");
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to set password");
+    } finally {
+      setSavingPassword(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeletingAccount(true);
+    try {
+      const res = await api.delete("/users/me");
+      if (res.success) {
+        toast.success("Your account has been permanently deleted.");
+        logout();
+        router.push("/");
+      } else {
+        toast.error(res.error || "Failed to delete account");
+      }
+    } catch {
+      toast.error("Failed to delete account");
+    } finally {
+      setDeletingAccount(false);
+      setShowDeleteModal(false);
     }
   };
 
@@ -193,6 +302,55 @@ export default function SettingsPage() {
           <h1>Settings</h1>
           <p>Manage your profile, account, and appearance.</p>
         </div>
+
+        {/* Email Verification Alerts */}
+        {!user.isEmailVerified && user.email && !user.pendingEmail && (
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: "var(--space-6)",
+            padding: "var(--space-4)",
+            borderRadius: "var(--radius-md)",
+            borderLeft: "4px solid var(--accent)",
+            background: "var(--accent-subtle)",
+            gap: "var(--space-4)"
+          }}>
+            <div>
+              <h4 style={{ margin: 0, fontSize: "var(--text-sm)", fontWeight: "var(--weight-semibold)" }}>Verify your email address</h4>
+              <p style={{ margin: "4px 0 0 0", fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>
+                Please verify your email <strong>{user.email}</strong> to unlock full account features.
+              </p>
+            </div>
+            <button className="btn btn-secondary btn-sm" onClick={handleResendVerification} disabled={sendingVerification}>
+              {sendingVerification ? "Sending..." : "Resend Link"}
+            </button>
+          </div>
+        )}
+
+        {user.pendingEmail && (
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: "var(--space-6)",
+            padding: "var(--space-4)",
+            borderRadius: "var(--radius-md)",
+            borderLeft: "4px solid var(--accent)",
+            background: "var(--accent-subtle)",
+            gap: "var(--space-4)"
+          }}>
+            <div>
+              <h4 style={{ margin: 0, fontSize: "var(--text-sm)", fontWeight: "var(--weight-semibold)" }}>Pending email verification</h4>
+              <p style={{ margin: "4px 0 0 0", fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>
+                A verification link was sent to your new email <strong>{user.pendingEmail}</strong>. Please verify it to update your email.
+              </p>
+            </div>
+            <button className="btn btn-secondary btn-sm" onClick={handleResendVerification} disabled={sendingVerification}>
+              {sendingVerification ? "Sending..." : "Resend Link"}
+            </button>
+          </div>
+        )}
 
         {/* Avatar & Profile */}
         <section className={styles.settingsSection}>
@@ -287,14 +445,79 @@ export default function SettingsPage() {
             </div>
 
             <div className="input-group" style={{ marginBottom: "var(--space-4)" }}>
-              <label className="input-label">Email</label>
-              <input
-                type="email"
-                className="input"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your.email@example.com"
-              />
+              <label className="input-label">Email Address</label>
+              <div style={{ display: "flex", gap: "var(--space-3)" }}>
+                <input
+                  type="email"
+                  className="input"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="your.email@example.com"
+                  style={{ flex: 1 }}
+                  disabled={user.authProvider === "google" && !user.email}
+                />
+                {email !== (user.email || "") && (
+                  <button 
+                    className="btn btn-primary btn-sm"
+                    onClick={() => {
+                      if (user.authProvider === "google" && !user.email) {
+                        toast.error("Please set a password first before associating an email address.");
+                        return;
+                      }
+                      setShowEmailConfirm(true);
+                    }}
+                  >
+                    Change Email
+                  </button>
+                )}
+              </div>
+              {user.authProvider === "google" && !user.email && (
+                <p style={{ margin: "4px 0 0 0", fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>
+                  Please set a password in the Password section below before adding an email address to your account.
+                </p>
+              )}
+
+              {showEmailConfirm && (
+                <div style={{ 
+                  marginTop: "var(--space-3)", 
+                  padding: "var(--space-4)", 
+                  background: "var(--bg-secondary)", 
+                  borderRadius: "var(--radius-md)", 
+                  border: "1px solid var(--border)" 
+                }}>
+                  <p style={{ margin: "0 0 var(--space-3) 0", fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>
+                    Please enter your current password to confirm this email change.
+                  </p>
+                  <div className="input-group" style={{ marginBottom: "var(--space-3)" }}>
+                    <input
+                      type="password"
+                      className="input"
+                      placeholder="Current Password"
+                      value={emailPassword}
+                      onChange={(e) => setEmailPassword(e.target.value)}
+                    />
+                  </div>
+                  <div style={{ display: "flex", gap: "var(--space-2)" }}>
+                    <button 
+                      className={cn("btn btn-primary btn-sm", savingEmail && "btn-loading")}
+                      onClick={handleConfirmEmailChange}
+                      disabled={savingEmail || !emailPassword}
+                    >
+                      Confirm Change
+                    </button>
+                    <button 
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => {
+                        setShowEmailConfirm(false);
+                        setEmailPassword("");
+                        setEmail(user.email || "");
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="input-group">
@@ -311,6 +534,29 @@ export default function SettingsPage() {
                 {bio.length}/500
               </span>
             </div>
+
+            <div style={{ marginBottom: "var(--space-5)" }}>
+              <label className="input-label" style={{ marginBottom: "var(--space-2)" }}>Notification Preferences</label>
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", fontSize: "var(--text-sm)", cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={notifyOnReply}
+                    onChange={(e) => setNotifyOnReply(e.target.checked)}
+                  />
+                  <span>Email me when someone replies to my posts</span>
+                </label>
+                <label style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", fontSize: "var(--text-sm)", cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={notifyOnMention}
+                    onChange={(e) => setNotifyOnMention(e.target.checked)}
+                  />
+                  <span>Email me when someone mentions me in a thread</span>
+                </label>
+              </div>
+            </div>
+
             <button
               className={cn("btn btn-primary btn-sm", savingProfile && "btn-loading")}
               onClick={handleSaveProfile}
@@ -325,43 +571,80 @@ export default function SettingsPage() {
         <section className={styles.settingsSection}>
           <h2 className={styles.sectionTitle}>Password</h2>
           <div className={styles.settingsCard}>
-            <div className="input-group">
-              <label className="input-label">Current Password</label>
-              <input
-                type="password"
-                className="input"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                autoComplete="current-password"
-              />
-            </div>
-            <div className="input-group">
-              <label className="input-label">New Password</label>
-              <input
-                type="password"
-                className="input"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                autoComplete="new-password"
-              />
-            </div>
-            <div className="input-group">
-              <label className="input-label">Confirm New Password</label>
-              <input
-                type="password"
-                className="input"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                autoComplete="new-password"
-              />
-            </div>
-            <button
-              className={cn("btn btn-primary btn-sm", savingPassword && "btn-loading")}
-              onClick={handleChangePassword}
-              disabled={savingPassword || !currentPassword || !newPassword}
-            >
-              Change Password
-            </button>
+            {user.authProvider === "google" && !user.mustChangePassword ? (
+              <>
+                <p style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", marginBottom: "var(--space-4)" }}>
+                  You currently sign in using Google OAuth. You can set a password to allow signing in directly with your email.
+                </p>
+                <div className="input-group">
+                  <label className="input-label">Password</label>
+                  <input
+                    type="password"
+                    className="input"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="At least 6 characters"
+                  />
+                </div>
+                <div className="input-group">
+                  <label className="input-label">Confirm Password</label>
+                  <input
+                    type="password"
+                    className="input"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="At least 6 characters"
+                  />
+                </div>
+                <button
+                  className={cn("btn btn-primary btn-sm", savingPassword && "btn-loading")}
+                  onClick={handleSetPassword}
+                  disabled={savingPassword || !newPassword || !confirmPassword}
+                >
+                  Set Password
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="input-group">
+                  <label className="input-label">Current Password</label>
+                  <input
+                    type="password"
+                    className="input"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    autoComplete="current-password"
+                  />
+                </div>
+                <div className="input-group">
+                  <label className="input-label">New Password</label>
+                  <input
+                    type="password"
+                    className="input"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    autoComplete="new-password"
+                  />
+                </div>
+                <div className="input-group">
+                  <label className="input-label">Confirm New Password</label>
+                  <input
+                    type="password"
+                    className="input"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    autoComplete="new-password"
+                  />
+                </div>
+                <button
+                  className={cn("btn btn-primary btn-sm", savingPassword && "btn-loading")}
+                  onClick={handleChangePassword}
+                  disabled={savingPassword || !currentPassword || !newPassword}
+                >
+                  Change Password
+                </button>
+              </>
+            )}
           </div>
         </section>
 
@@ -420,6 +703,23 @@ export default function SettingsPage() {
             </div>
           </div>
         </section>
+
+        {/* Danger Zone */}
+        <section className={styles.settingsSection} style={{ border: "1px solid var(--text-danger)", borderRadius: "var(--radius-md)", padding: "var(--space-2)", marginTop: "var(--space-6)" }}>
+          <h2 className={styles.sectionTitle} style={{ color: "var(--text-danger)", margin: "var(--space-3) var(--space-4)" }}>Danger Zone</h2>
+          <div className={styles.settingsCard} style={{ background: "transparent", border: "none" }}>
+            <p style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", marginBottom: "var(--space-4)" }}>
+              Once you delete your account, all of your personal information will be permanently anonymized. There is no going back.
+            </p>
+            <button
+              className="btn btn-secondary btn-sm"
+              style={{ color: "var(--text-danger)", borderColor: "var(--text-danger)" }}
+              onClick={() => setShowDeleteModal(true)}
+            >
+              Delete Account
+            </button>
+          </div>
+        </section>
       </div>
 
       {/* Image Cropper Modal */}
@@ -438,6 +738,37 @@ export default function SettingsPage() {
           }}
           onCancel={() => setCropFile(null)}
         />
+      )}
+
+      {/* Delete Account Modal */}
+      {showDeleteModal && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          background: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex",
+          alignItems: "center", justifyContent: "center", backdropFilter: "blur(4px)"
+        }}>
+          <div className={styles.settingsCard} style={{ maxWidth: 400, width: "90%", boxShadow: "var(--shadow-lg)", border: "1px solid var(--border)" }}>
+            <h3 style={{ margin: "0 0 var(--space-3) 0", fontSize: "var(--text-lg)", fontWeight: "var(--weight-semibold)", color: "var(--text-danger)" }}>
+              Delete Account
+            </h3>
+            <p style={{ margin: "0 0 var(--space-4) 0", fontSize: "var(--text-sm)", color: "var(--text-muted)" }}>
+              Are you absolutely sure you want to permanently delete your account? This action is irreversible. All of your forum posts and wiki guides will be anonymized.
+            </p>
+            <div style={{ display: "flex", gap: "var(--space-3)", justifyContent: "flex-end" }}>
+              <button className="btn btn-secondary btn-sm" onClick={() => setShowDeleteModal(false)} disabled={deletingAccount}>
+                Cancel
+              </button>
+              <button
+                className="btn btn-primary btn-sm"
+                style={{ background: "var(--text-danger)", borderColor: "var(--text-danger)", color: "white" }}
+                onClick={handleDeleteAccount}
+                disabled={deletingAccount}
+              >
+                {deletingAccount ? "Deleting..." : "Permanently Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

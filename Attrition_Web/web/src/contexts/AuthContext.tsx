@@ -22,6 +22,10 @@ export interface User {
   postCount: number;
   contributionCount: number;
   mustChangePassword: boolean;
+  isEmailVerified: boolean;
+  pendingEmail: string | null;
+  notifyOnReply: boolean;
+  notifyOnMention: boolean;
 }
 
 interface AuthResponse {
@@ -190,7 +194,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch {}
     clearTokens();
     setUser(null);
     resetTheme();
