@@ -1,9 +1,6 @@
 version: '3.8'
 
 services:
-  # ── Nginx: reverse proxy for web domain ───────────────────
-  # attrition.hault.io.vn → port 3000 → nginx
-  # nginx routes /api/* → api:5000, /uploads/* → api:5000, else → web:3000
   nginx:
     image: nginx:alpine
     container_name: attrition-nginx
@@ -22,36 +19,33 @@ services:
       context: ./web
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=https://attrition.hault.io.vn
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
         - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-        - NEXT_PUBLIC_COLLECTION_URL=https://collection.hault.io.vn
+        - NEXT_PUBLIC_COLLECTION_URL=${NEXT_PUBLIC_COLLECTION_URL}
     container_name: attrition-web
     expose: ["3000"]
     environment:
-      - API_URL=http://api:5000
-      - NEXT_PUBLIC_API_URL=https://attrition.hault.io.vn
+      - API_URL=${API_URL}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
     depends_on:
       api: { condition: service_healthy }
     restart: unless-stopped
     networks: [attrition-net]
 
-  # ── Collection: runs on port 3001 directly ────────────────
-  # collection.hault.io.vn → port 3001 → collection container
-  # API calls go to NEXT_PUBLIC_API_URL (attrition.hault.io.vn/api) → nginx → api
   collection:
     build:
       context: ./collection
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=https://attrition.hault.io.vn
-        - NEXT_PUBLIC_WEB_URL=https://attrition.hault.io.vn
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+        - NEXT_PUBLIC_WEB_URL=${NEXT_PUBLIC_WEB_URL}
     container_name: attrition-collection
     ports: ["3001:3001"]
     environment:
-      - API_URL=http://api:5000
+      - API_URL=${API_URL}
       - PORT=3001
-      - NEXT_PUBLIC_API_URL=https://attrition.hault.io.vn
-      - NEXT_PUBLIC_WEB_URL=https://attrition.hault.io.vn
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+      - NEXT_PUBLIC_WEB_URL=${NEXT_PUBLIC_WEB_URL}
     depends_on:
       api: { condition: service_healthy }
     restart: unless-stopped
@@ -110,6 +104,19 @@ services:
     command: redis-server --appendonly yes
     volumes: [redisdata:/data]
     ports: ["6379:6379"]
+    restart: unless-stopped
+    networks: [attrition-net]
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: attrition-cloudflared
+    command: tunnel --no-autoupdate --config /etc/cloudflared/config.yml run
+    volumes:
+      - ./cloudflared/config.yml:/etc/cloudflared/config.yml:ro
+      - ./cloudflared/credentials.json:/etc/cloudflared/credentials.json:ro
+    depends_on:
+      - nginx
+      - collection
     restart: unless-stopped
     networks: [attrition-net]
 

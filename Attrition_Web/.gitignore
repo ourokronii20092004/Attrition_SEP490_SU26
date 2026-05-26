@@ -19,3 +19,7 @@ docs/
 problems/
 *.zip
 deploy.py
+deploy_scp.py
+diagnose.py
+sensitive file.txt
+cloudflared/credentials.json
