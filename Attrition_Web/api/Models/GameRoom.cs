@@ -9,7 +9,7 @@ public class GameRoom
     public string? RoomName { get; set; }
     public short MaxPlayers { get; set; } = 4;
     public string? CurrentScene { get; set; }
-    public string Status { get; set; } = "waiting";
+    public string Status { get; set; } = RoomStatus.Waiting;
     public bool IsPrivate { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? EndedAt { get; set; }

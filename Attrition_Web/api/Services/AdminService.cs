@@ -1,23 +1,55 @@
-using Attrition.API.Data;
 using Attrition.API.DTOs;
 using Attrition.API.Models;
-using Microsoft.EntityFrameworkCore;
+using Attrition.API.Repositories;
 using System.Text.RegularExpressions;
+using System.Linq.Expressions;
 
 namespace Attrition.API.Services;
 
-public class AdminService
+public class AdminService : IAdminService
 {
-    private readonly AppDbContext _db;
+    private readonly IUserRepository _userRepo;
+    private readonly IWikiRepository _wikiRepo;
+    private readonly IForumRepository _forumRepo;
+    private readonly IRepository<WikiCategory> _wikiCategoryRepo;
+    private readonly IRepository<ForumCategory> _forumCategoryRepo;
+    private readonly IRepository<ForumPost> _forumPostRepo;
+    private readonly IRepository<ForumReaction> _forumReactionRepo;
+    private readonly IRepository<WikiContribution> _wikiContributionRepo;
+    private readonly IRepository<MusicAlbum> _musicAlbumRepo;
+    private readonly IRepository<MusicTrack> _musicTrackRepo;
+    private readonly IRepository<PostReport> _reportRepo;
 
-    public AdminService(AppDbContext db)
+    public AdminService(
+        IUserRepository userRepo,
+        IWikiRepository wikiRepo,
+        IForumRepository forumRepo,
+        IRepository<WikiCategory> wikiCategoryRepo,
+        IRepository<ForumCategory> forumCategoryRepo,
+        IRepository<ForumPost> forumPostRepo,
+        IRepository<ForumReaction> forumReactionRepo,
+        IRepository<WikiContribution> wikiContributionRepo,
+        IRepository<MusicAlbum> musicAlbumRepo,
+        IRepository<MusicTrack> musicTrackRepo,
+        IRepository<PostReport> reportRepo)
     {
-        _db = db;
+        _userRepo = userRepo;
+        _wikiRepo = wikiRepo;
+        _forumRepo = forumRepo;
+        _wikiCategoryRepo = wikiCategoryRepo;
+        _forumCategoryRepo = forumCategoryRepo;
+        _forumPostRepo = forumPostRepo;
+        _forumReactionRepo = forumReactionRepo;
+        _wikiContributionRepo = wikiContributionRepo;
+        _musicAlbumRepo = musicAlbumRepo;
+        _musicTrackRepo = musicTrackRepo;
+        _reportRepo = reportRepo;
     }
 
-    public async Task<object> ListUsersAsync(int page, int pageSize, string? search, string sort)
+
+    public async Task<PaginatedResponse<AdminUserDto>> ListUsersAsync(int page, int pageSize, string? search, string sort)
     {
-        var query = _db.Users.AsQueryable();
+        Expression<Func<User, bool>>? filter = null;
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -26,241 +58,266 @@ public class AdminService
             {
                 var tag = match.Groups[1].Value.ToLower();
                 var term = match.Groups[2].Value.ToLower();
-                if (tag == "role") query = query.Where(u => u.Role.ToLower() == term);
-                else if (tag == "email") query = query.Where(u => u.Email != null && u.Email.ToLower().Contains(term));
+                if (tag == "role") filter = u => u.Role.ToLower() == term;
+                else if (tag == "email") filter = u => u.Email != null && u.Email.ToLower().Contains(term);
             }
             else
             {
-                query = query.Where(u => u.Username.Contains(search) || (u.Email != null && u.Email.Contains(search)));
+                filter = u => u.Username.Contains(search) || (u.Email != null && u.Email.Contains(search));
             }
         }
 
+        Func<IQueryable<User>, IOrderedQueryable<User>> orderBy;
         if (sort == "role")
-            query = query.OrderBy(u => u.Role == "Admin" ? 0 : 1).ThenByDescending(u => u.JoinedAt);
+            orderBy = q => q.OrderBy(u => u.Role == "Admin" ? 0 : 1).ThenByDescending(u => u.JoinedAt);
         else
-            query = query.OrderByDescending(u => u.JoinedAt);
+            orderBy = q => q.OrderByDescending(u => u.JoinedAt);
 
-        var totalCount = await query.CountAsync();
-        var users = await query
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(u => new
-            {
-                u.Id, u.Username, u.Email, u.DisplayName, u.Role,
-                u.AvatarPath, u.GoogleAvatarUrl, u.AuthProvider,
-                u.IsBanned, u.JoinedAt, u.LastLoginAt,
-                u.PostCount, u.ContributionCount
-            })
-            .ToListAsync();
+        var (items, totalCount) = await _userRepo.GetPagedAsync(page, pageSize, filter, orderBy);
 
-        return new { success = true, data = users, totalCount, page, pageSize };
+        var dtos = items.Select(u => new AdminUserDto(
+            u.Id, u.Username, u.Email, u.DisplayName, u.Role,
+            u.AvatarPath, u.GoogleAvatarUrl, u.AuthProvider,
+            u.IsBanned, u.JoinedAt, u.LastLoginAt,
+            u.PostCount, u.ContributionCount
+        )).ToList();
+
+        return new PaginatedResponse<AdminUserDto>(dtos, totalCount, page, pageSize);
     }
 
-    public async Task<object?> DeleteUserAsync(Guid id, Guid adminId)
+    public async Task<ApiResponse> DeleteUserAsync(Guid id, Guid adminId)
     {
-        if (id == adminId) return new { success = false, error = "Cannot delete your own account." };
+        if (id == adminId) return new ApiResponse(false, "Cannot delete your own account.");
 
-        var user = await _db.Users.FindAsync(id);
-        if (user == null) return null;
+        var user = await _userRepo.GetByIdAsync(id);
+        if (user == null) return new ApiResponse(false, "User not found.");
 
-        // Cascade: reactions, posts, threads, wiki contributions
-        var reactions = _db.ForumReactions.Where(r => r.UserId == id);
-        _db.ForumReactions.RemoveRange(reactions);
+        // Cascade delete reactions
+        var (reactions, _) = await _forumReactionRepo.GetPagedAsync(1, int.MaxValue, r => r.UserId == id);
+        foreach (var r in reactions) await _forumReactionRepo.DeleteAsync(r);
 
-        var posts = _db.ForumPosts.Where(p => p.AuthorId == id);
-        _db.ForumPosts.RemoveRange(posts);
+        // Cascade delete posts
+        var (posts, _) = await _forumPostRepo.GetPagedAsync(1, int.MaxValue, p => p.AuthorId == id);
+        foreach (var p in posts) await _forumPostRepo.DeleteAsync(p);
 
-        var threads = _db.ForumThreads.Where(t => t.AuthorId == id);
-        _db.ForumThreads.RemoveRange(threads);
+        // Cascade delete threads
+        var (threads, _) = await _forumRepo.GetPagedAsync(1, int.MaxValue, t => t.AuthorId == id);
+        foreach (var t in threads) await _forumRepo.DeleteAsync(t);
 
-        var wikiContributions = _db.WikiContributions.Where(c => c.ContributorId == id);
-        _db.WikiContributions.RemoveRange(wikiContributions);
+        // Cascade delete contributions
+        var (contributions, _) = await _wikiContributionRepo.GetPagedAsync(1, int.MaxValue, c => c.ContributorId == id);
+        foreach (var c in contributions) await _wikiContributionRepo.DeleteAsync(c);
 
-        _db.Users.Remove(user);
-        await _db.SaveChangesAsync();
-        return new { success = true };
+        await _userRepo.DeleteAsync(user);
+        return new ApiResponse(true);
     }
 
-    public async Task<object> ListWikiArticlesAsync(int page, int pageSize, string? search)
+    public async Task<PaginatedResponse<AdminWikiArticleDto>> ListWikiArticlesAsync(int page, int pageSize, string? search)
     {
-        var query = _db.WikiArticles.AsQueryable();
+        Expression<Func<WikiArticle, bool>>? filter = null;
         if (!string.IsNullOrEmpty(search))
-            query = query.Where(a => a.Title.Contains(search) || a.Slug.Contains(search));
+            filter = a => a.Title.Contains(search) || a.Slug.Contains(search);
 
-        var totalCount = await query.CountAsync();
-        var articles = await query
-            .OrderByDescending(a => a.UpdatedAt)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(a => new
-            {
-                a.Id, a.Title, a.Slug,
-                CategoryName = _db.WikiCategories.Where(c => c.Id == a.CategoryId).Select(c => c.Name).FirstOrDefault(),
-                AuthorName = _db.Users.Where(u => u.Id == a.CreatedById).Select(u => u.Username).FirstOrDefault(),
-                a.CreatedAt, a.UpdatedAt
-            })
-            .ToListAsync();
+        var (items, totalCount) = await _wikiRepo.GetPagedAsync(
+            page, pageSize, filter,
+            q => q.OrderByDescending(a => a.UpdatedAt)
+        );
 
-        return new { success = true, data = articles, totalCount, page, pageSize };
+        var categoryIds = items.Select(a => a.CategoryId).Distinct().ToList();
+        var authorIds = items.Select(a => a.CreatedById).Distinct().ToList();
+
+        var (categories, _) = await _wikiCategoryRepo.GetPagedAsync(1, int.MaxValue, c => categoryIds.Contains(c.Id));
+        var (authors, _) = await _userRepo.GetPagedAsync(1, int.MaxValue, u => authorIds.Contains(u.Id));
+
+        var categoryMap = categories.ToDictionary(c => c.Id, c => c.Name);
+        var authorMap = authors.ToDictionary(u => u.Id, u => u.Username);
+
+        var dtos = items.Select(a => new AdminWikiArticleDto(
+            a.Id, a.Title, a.Slug,
+            categoryMap.GetValueOrDefault(a.CategoryId),
+            a.CreatedById.HasValue ? authorMap.GetValueOrDefault(a.CreatedById.Value) : null,
+            a.CreatedAt, a.UpdatedAt
+        )).ToList();
+
+        return new PaginatedResponse<AdminWikiArticleDto>(dtos, totalCount, page, pageSize);
     }
 
     public async Task<bool> DeleteWikiArticleAsync(Guid id)
     {
-        var article = await _db.WikiArticles.FindAsync(id);
+        var article = await _wikiRepo.GetByIdAsync(id);
         if (article == null) return false;
 
-        _db.WikiArticles.Remove(article);
-        await _db.SaveChangesAsync();
+        await _wikiRepo.DeleteAsync(article);
         return true;
     }
 
-    public async Task<object> ListWikiCategoriesAsync(int page, int pageSize, string? search)
+    public async Task<PaginatedResponse<AdminWikiCategoryDto>> ListWikiCategoriesAsync(int page, int pageSize, string? search)
     {
-        var query = _db.WikiCategories.AsQueryable();
+        Expression<Func<WikiCategory, bool>>? filter = null;
         if (!string.IsNullOrEmpty(search))
-            query = query.Where(c => c.Name.Contains(search) || (c.Description != null && c.Description.Contains(search)));
+            filter = c => c.Name.Contains(search) || (c.Description != null && c.Description.Contains(search));
 
-        var totalCount = await query.CountAsync();
-        var categories = await query
-            .OrderBy(c => c.Name)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(c => new
-            {
-                c.Id, c.Name, c.Slug, c.Description, c.IconUrl,
-                ArticleCount = _db.WikiArticles.Count(a => a.CategoryId == c.Id)
-            })
-            .ToListAsync();
+        var (items, totalCount) = await _wikiCategoryRepo.GetPagedAsync(
+            page, pageSize, filter,
+            q => q.OrderBy(c => c.Name)
+        );
 
-        return new { success = true, data = categories, totalCount, page, pageSize };
+        var dtos = new List<AdminWikiCategoryDto>();
+        foreach (var c in items)
+        {
+            var articleCount = await _wikiRepo.CountAsync(a => a.CategoryId == c.Id);
+            dtos.Add(new AdminWikiCategoryDto(
+                c.Id, c.Name, c.Slug, c.Description, c.IconUrl, articleCount
+            ));
+        }
+
+        return new PaginatedResponse<AdminWikiCategoryDto>(dtos, totalCount, page, pageSize);
     }
 
-    public async Task<object> CreateWikiCategoryAsync(WikiCategoryRequest req)
+    public async Task<WikiCategory> CreateWikiCategoryAsync(WikiCategoryRequest req)
     {
         var category = new WikiCategory
         {
             Name = req.Name,
             Slug = req.Name.ToLower().Replace(" ", "-"),
-            Description = req.Description,
+            Description = req.Description ?? string.Empty,
             IconUrl = req.IconUrl
         };
-        _db.WikiCategories.Add(category);
-        await _db.SaveChangesAsync();
-        return new { success = true, data = category };
+        return await _wikiCategoryRepo.AddAsync(category);
     }
 
-    public async Task<object?> UpdateWikiCategoryAsync(int id, WikiCategoryRequest req)
+    public async Task<WikiCategory?> UpdateWikiCategoryAsync(int id, WikiCategoryRequest req)
     {
-        var category = await _db.WikiCategories.FindAsync(id);
+        var category = await _wikiCategoryRepo.GetByIdAsync(id);
         if (category == null) return null;
 
         category.Name = req.Name;
         category.Slug = req.Name.ToLower().Replace(" ", "-");
-        category.Description = req.Description;
+        category.Description = req.Description ?? string.Empty;
         category.IconUrl = req.IconUrl;
 
-        await _db.SaveChangesAsync();
-        return new { success = true, data = category };
+        await _wikiCategoryRepo.UpdateAsync(category);
+        return category;
     }
 
-    public async Task<(bool found, bool hasArticles)> DeleteWikiCategoryAsync(int id)
+    public async Task<(bool Found, bool HasArticles)> DeleteWikiCategoryAsync(int id)
     {
-        var category = await _db.WikiCategories.FindAsync(id);
+        var category = await _wikiCategoryRepo.GetByIdAsync(id);
         if (category == null) return (false, false);
 
-        var hasArticles = await _db.WikiArticles.AnyAsync(a => a.CategoryId == id);
+        var hasArticles = await _wikiRepo.CountAsync(a => a.CategoryId == id) > 0;
         if (hasArticles) return (true, true);
 
-        _db.WikiCategories.Remove(category);
-        await _db.SaveChangesAsync();
+        await _wikiCategoryRepo.DeleteAsync(category);
         return (true, false);
     }
 
-    public async Task<object> ListForumThreadsAsync(int page, int pageSize, string? search)
+    public async Task<PaginatedResponse<AdminForumThreadDto>> ListForumThreadsAsync(int page, int pageSize, string? search)
     {
-        var query = _db.ForumThreads.AsQueryable();
+        Expression<Func<ForumThread, bool>>? filter = null;
         if (!string.IsNullOrEmpty(search))
-            query = query.Where(t => t.Title.Contains(search));
+            filter = t => t.Title.Contains(search);
 
-        var totalCount = await query.CountAsync();
-        var threads = await query
-            .OrderByDescending(t => t.CreatedAt)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(t => new
-            {
-                t.Id, t.Title, t.IsPinned, t.IsLocked,
-                t.ReplyCount, t.CreatedAt, t.LastReplyAt,
-                CategoryName = _db.ForumCategories.Where(c => c.Id == t.CategoryId).Select(c => c.Name).FirstOrDefault(),
-                AuthorName = _db.Users.Where(u => u.Id == t.AuthorId).Select(u => u.Username).FirstOrDefault()
-            })
-            .ToListAsync();
+        var (items, totalCount) = await _forumRepo.GetPagedAsync(
+            page, pageSize, filter,
+            q => q.OrderByDescending(t => t.CreatedAt)
+        );
 
-        return new { success = true, data = threads, totalCount, page, pageSize };
+        var categoryIds = items.Select(t => t.CategoryId).Distinct().ToList();
+        var authorIds = items.Select(t => t.AuthorId).Distinct().ToList();
+
+        var (categories, _) = await _forumCategoryRepo.GetPagedAsync(1, int.MaxValue, c => categoryIds.Contains(c.Id));
+        var (authors, _) = await _userRepo.GetPagedAsync(1, int.MaxValue, u => authorIds.Contains(u.Id));
+
+        var categoryMap = categories.ToDictionary(c => c.Id, c => c.Name);
+        var authorMap = authors.ToDictionary(u => u.Id, u => u.Username);
+
+        var dtos = items.Select(t => new AdminForumThreadDto(
+            t.Id, t.Title, t.IsPinned, t.IsLocked, t.ReplyCount, t.CreatedAt, t.LastReplyAt,
+            categoryMap.GetValueOrDefault(t.CategoryId),
+            authorMap.GetValueOrDefault(t.AuthorId)
+        )).ToList();
+
+        return new PaginatedResponse<AdminForumThreadDto>(dtos, totalCount, page, pageSize);
     }
 
-    public async Task<object?> TogglePinAsync(Guid id)
+    public async Task<AdminTogglePinResponse?> TogglePinAsync(Guid id)
     {
-        var thread = await _db.ForumThreads.FindAsync(id);
+        var thread = await _forumRepo.GetByIdAsync(id);
         if (thread == null) return null;
 
         thread.IsPinned = !thread.IsPinned;
-        await _db.SaveChangesAsync();
-        return new { success = true, data = new { isPinned = thread.IsPinned } };
+        await _forumRepo.UpdateAsync(thread);
+        return new AdminTogglePinResponse(thread.IsPinned);
     }
 
-    public async Task<object?> ToggleLockAsync(Guid id)
+    public async Task<AdminToggleLockResponse?> ToggleLockAsync(Guid id)
     {
-        var thread = await _db.ForumThreads.FindAsync(id);
+        var thread = await _forumRepo.GetByIdAsync(id);
         if (thread == null) return null;
 
         thread.IsLocked = !thread.IsLocked;
-        await _db.SaveChangesAsync();
-        return new { success = true, data = new { isLocked = thread.IsLocked } };
+        await _forumRepo.UpdateAsync(thread);
+        return new AdminToggleLockResponse(thread.IsLocked);
     }
 
     public async Task<bool> DeleteThreadAsync(Guid id)
     {
-        var thread = await _db.ForumThreads.FindAsync(id);
+        var thread = await _forumRepo.GetByIdAsync(id);
         if (thread == null) return false;
 
         // Delete all posts in thread
-        var posts = await _db.ForumPosts.Where(p => p.ThreadId == id).ToListAsync();
-        _db.ForumPosts.RemoveRange(posts);
-        _db.ForumThreads.Remove(thread);
-        await _db.SaveChangesAsync();
+        var (posts, _) = await _forumPostRepo.GetPagedAsync(1, int.MaxValue, p => p.ThreadId == id);
+        foreach (var post in posts)
+        {
+            await _forumPostRepo.DeleteAsync(post);
+        }
+
+        await _forumRepo.DeleteAsync(thread);
         return true;
     }
 
-    public async Task<object> ListForumPostsAsync(int page, int pageSize, bool? removedOnly, string? search)
+    public async Task<PaginatedResponse<AdminForumPostDto>> ListForumPostsAsync(int page, int pageSize, bool? removedOnly, string? search)
     {
-        var query = _db.ForumPosts.AsQueryable();
-        if (removedOnly == true) query = query.Where(p => p.IsRemoved);
-        if (!string.IsNullOrEmpty(search)) query = query.Where(p => p.Content.Contains(search));
+        Expression<Func<ForumPost, bool>>? filter = null;
+        if (removedOnly == true && !string.IsNullOrEmpty(search))
+            filter = p => p.IsRemoved && p.Content.Contains(search);
+        else if (removedOnly == true)
+            filter = p => p.IsRemoved;
+        else if (!string.IsNullOrEmpty(search))
+            filter = p => p.Content.Contains(search);
 
-        var totalCount = await query.CountAsync();
-        var posts = await query
-            .OrderByDescending(p => p.CreatedAt)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(p => new
-            {
-                p.Id, p.ThreadId, p.Content, p.CreatedAt, p.UpdatedAt,
-                p.IsRemoved, p.RemovedReason, p.RemovedAt,
-                AuthorName = _db.Users.Where(u => u.Id == p.AuthorId).Select(u => u.Username).FirstOrDefault(),
-                ThreadTitle = _db.ForumThreads.Where(t => t.Id == p.ThreadId).Select(t => t.Title).FirstOrDefault(),
-                RemovedByName = p.RemovedByUserId != null
-                    ? _db.Users.Where(u => u.Id == p.RemovedByUserId).Select(u => u.Username).FirstOrDefault()
-                    : null
-            })
-            .ToListAsync();
+        var (items, totalCount) = await _forumPostRepo.GetPagedAsync(
+            page, pageSize, filter,
+            q => q.OrderByDescending(p => p.CreatedAt)
+        );
 
-        return new { success = true, data = posts, totalCount, page, pageSize };
+        var authorIds = items.Select(p => p.AuthorId).Distinct().ToList();
+        var threadIds = items.Select(p => p.ThreadId).Distinct().ToList();
+        var removedByIds = items.Where(p => p.RemovedByUserId != null).Select(p => p.RemovedByUserId!.Value).Distinct().ToList();
+
+        var (authors, _) = await _userRepo.GetPagedAsync(1, int.MaxValue, u => authorIds.Contains(u.Id));
+        var (threads, _) = await _forumRepo.GetPagedAsync(1, int.MaxValue, t => threadIds.Contains(t.Id));
+        var (moderators, _) = await _userRepo.GetPagedAsync(1, int.MaxValue, u => removedByIds.Contains(u.Id));
+
+        var authorMap = authors.ToDictionary(u => u.Id, u => u.Username);
+        var threadMap = threads.ToDictionary(t => t.Id, t => t.Title);
+        var moderatorMap = moderators.ToDictionary(u => u.Id, u => u.Username);
+
+        var dtos = items.Select(p => new AdminForumPostDto(
+            p.Id, p.ThreadId, p.Content, p.CreatedAt, p.UpdatedAt,
+            p.IsRemoved, p.RemovedReason, p.RemovedAt,
+            authorMap.GetValueOrDefault(p.AuthorId),
+            threadMap.GetValueOrDefault(p.ThreadId),
+            p.RemovedByUserId.HasValue ? moderatorMap.GetValueOrDefault(p.RemovedByUserId.Value) : null
+        )).ToList();
+
+        return new PaginatedResponse<AdminForumPostDto>(dtos, totalCount, page, pageSize);
     }
 
     public async Task<bool> RemovePostAsync(Guid id, Guid adminId, string reason)
     {
-        var post = await _db.ForumPosts.FindAsync(id);
+        var post = await _forumPostRepo.GetByIdAsync(id);
         if (post == null) return false;
 
         post.IsRemoved = true;
@@ -268,13 +325,22 @@ public class AdminService
         post.RemovedByUserId = adminId;
         post.RemovedAt = DateTime.UtcNow;
 
-        await _db.SaveChangesAsync();
+        await _forumPostRepo.UpdateAsync(post);
+
+        // Mark pending reports as Resolved
+        var (reports, _) = await _reportRepo.GetPagedAsync(1, int.MaxValue, r => r.PostId == id && r.Status == "Pending");
+        foreach (var report in reports)
+        {
+            report.Status = "Resolved";
+            await _reportRepo.UpdateAsync(report);
+        }
+
         return true;
     }
 
     public async Task<bool> RestorePostAsync(Guid id)
     {
-        var post = await _db.ForumPosts.FindAsync(id);
+        var post = await _forumPostRepo.GetByIdAsync(id);
         if (post == null) return false;
 
         post.IsRemoved = false;
@@ -282,26 +348,67 @@ public class AdminService
         post.RemovedByUserId = null;
         post.RemovedAt = null;
 
-        await _db.SaveChangesAsync();
+        await _forumPostRepo.UpdateAsync(post);
         return true;
     }
 
-    public async Task<object> GetStatsAsync()
+    public async Task<AdminStatsDto> GetStatsAsync()
     {
-        return new
+        return new AdminStatsDto(
+            TotalUsers: await _userRepo.CountAsync(),
+            TotalWikiArticles: await _wikiRepo.CountAsync(),
+            TotalForumThreads: await _forumRepo.CountAsync(),
+            TotalForumPosts: await _forumPostRepo.CountAsync(),
+            PendingContributions: await _wikiContributionRepo.CountAsync(c => c.Status == "Pending"),
+            TotalMusicAlbums: await _musicAlbumRepo.CountAsync(),
+            TotalMusicTracks: await _musicTrackRepo.CountAsync(),
+            RemovedPosts: await _forumPostRepo.CountAsync(p => p.IsRemoved)
+        );
+    }
+
+    public async Task<PaginatedResponse<AdminPostReportDto>> ListForumReportsAsync(int page, int pageSize, string? status)
+    {
+        Expression<Func<PostReport, bool>>? filter = null;
+        if (!string.IsNullOrEmpty(status))
         {
-            success = true,
-            data = new
-            {
-                totalUsers = await _db.Users.CountAsync(),
-                totalWikiArticles = await _db.WikiArticles.CountAsync(),
-                totalForumThreads = await _db.ForumThreads.CountAsync(),
-                totalForumPosts = await _db.ForumPosts.CountAsync(),
-                pendingContributions = await _db.WikiContributions.CountAsync(c => c.Status == "Pending"),
-                totalMusicAlbums = await _db.MusicAlbums.CountAsync(),
-                totalMusicTracks = await _db.MusicTracks.CountAsync(),
-                removedPosts = await _db.ForumPosts.CountAsync(p => p.IsRemoved)
-            }
-        };
+            filter = r => r.Status == status;
+        }
+
+        var (items, totalCount) = await _reportRepo.GetPagedAsync(
+            page, pageSize, filter,
+            q => q.OrderByDescending(r => r.CreatedAt)
+        );
+
+        var dtos = new List<AdminPostReportDto>();
+        foreach (var r in items)
+        {
+            var post = await _forumPostRepo.GetByIdAsync(r.PostId);
+            var reporter = await _userRepo.GetByIdAsync(r.ReporterId);
+            var author = post != null ? await _userRepo.GetByIdAsync(post.AuthorId) : null;
+
+            dtos.Add(new AdminPostReportDto(
+                r.Id,
+                r.PostId,
+                post?.Content ?? "[Deleted]",
+                author?.Username ?? "Unknown",
+                reporter?.Username ?? "Unknown",
+                r.Reason,
+                r.Status,
+                r.CreatedAt
+            ));
+        }
+
+        return new PaginatedResponse<AdminPostReportDto>(dtos, totalCount, page, pageSize);
+    }
+
+    public async Task<bool> DismissReportAsync(Guid reportId)
+    {
+        var report = await _reportRepo.GetByIdAsync(reportId);
+        if (report == null) return false;
+
+        report.Status = "Dismissed";
+        await _reportRepo.UpdateAsync(report);
+        return true;
     }
 }
+

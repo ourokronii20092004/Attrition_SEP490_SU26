@@ -6,7 +6,8 @@ import Link from "next/link";
 import { api } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatDate, getAvatarUrl, getInitials } from "@/lib/utils";
-import { Settings, MessageSquare, BookOpen, Calendar, Mail, Shield, Globe, User as UserIcon } from "lucide-react";
+import { Settings, MessageSquare, BookOpen, Calendar, Mail, Shield, Globe, User as UserIcon, Sword, Trash2, Edit2, Check, X } from "lucide-react";
+import { useToast } from "@/contexts/ToastContext";
 
 interface UserProfile {
   id: string;
@@ -44,6 +45,29 @@ interface UserContribution {
   articleSlug: string;
 }
 
+interface Character {
+  characterId: string;
+  characterName: string;
+  characterClass: string;
+  currentLevel: number;
+  gold: number;
+}
+
+interface GameSave {
+  saveId: string;
+  characterId: string;
+  saveName: string | null;
+  currentScene: string;
+  currentHp: number;
+  maxHp: number;
+  currentMana: number;
+  maxMana: number;
+  currentStamina: number;
+  maxStamina: number;
+  isAutoSave: boolean;
+  createdAt: string;
+}
+
 export default function UserProfilePage() {
   const params = useParams();
   const username = params.username as string;
@@ -53,7 +77,16 @@ export default function UserProfilePage() {
   const [contributions, setContributions] = useState<UserContribution[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [activeTab, setActiveTab] = useState<"posts" | "contributions">("posts");
+  const [activeTab, setActiveTab] = useState<"posts" | "contributions" | "saves">("posts");
+  const toast = useToast();
+
+  // Characters & Saves
+  const [characters, setCharacters] = useState<Character[]>([]);
+  const [selectedCharId, setSelectedCharId] = useState<string>("");
+  const [saves, setSaves] = useState<GameSave[]>([]);
+  const [loadingSaves, setLoadingSaves] = useState(false);
+  const [editingSaveId, setEditingSaveId] = useState<string | null>(null);
+  const [newSaveName, setNewSaveName] = useState("");
 
   const [postPage, setPostPage] = useState(1);
   const [postTotal, setPostTotal] = useState(0);
@@ -98,6 +131,58 @@ export default function UserProfilePage() {
 
   useEffect(() => { fetchPosts(); }, [username, postPage]);
   useEffect(() => { fetchContribs(); }, [username, contribPage]);
+
+  useEffect(() => {
+    if (isOwnProfile && activeTab === "saves") {
+      api.get<Character[]>("/characters").then((res) => {
+        if (res.success && res.data) {
+          setCharacters(res.data);
+          if (res.data.length > 0) {
+            setSelectedCharId(res.data[0].characterId);
+          }
+        }
+      });
+    }
+  }, [isOwnProfile, activeTab]);
+
+  useEffect(() => {
+    if (selectedCharId) {
+      setLoadingSaves(true);
+      api.get<GameSave[]>(`/characters/${selectedCharId}/saves`).then((res) => {
+        if (res.success && res.data) {
+          setSaves(res.data);
+        }
+      }).finally(() => setLoadingSaves(false));
+    }
+  }, [selectedCharId]);
+
+  const handleRenameSave = async (saveId: string) => {
+    if (!newSaveName.trim()) return;
+    try {
+      const res = await api.put<GameSave>(`/characters/${selectedCharId}/saves/${saveId}`, { newName: newSaveName });
+      if (res.success) {
+        setSaves(saves.map(s => s.saveId === saveId ? { ...s, saveName: newSaveName } : s));
+        setEditingSaveId(null);
+        setNewSaveName("");
+        toast.success("Save renamed successfully");
+      }
+    } catch {
+      toast.error("Failed to rename save");
+    }
+  };
+
+  const handleDeleteSave = async (saveId: string) => {
+    if (!confirm("Are you sure you want to delete this save? This action is irreversible.")) return;
+    try {
+      const res = await api.delete(`/characters/${selectedCharId}/saves/${saveId}`);
+      if (res.success) {
+        setSaves(saves.filter(s => s.saveId !== saveId));
+        toast.success("Save deleted successfully");
+      }
+    } catch {
+      toast.error("Failed to delete save");
+    }
+  };
 
   if (loading) {
     return (
@@ -269,6 +354,15 @@ export default function UserProfilePage() {
               >
                 Recent Contributions
               </button>
+              {isOwnProfile && (
+                <button
+                  className={`btn btn-sm ${activeTab === "saves" ? "" : "btn-secondary"}`}
+                  style={{ borderRadius: 0, borderBottom: activeTab === "saves" ? "2px solid var(--accent)" : "2px solid transparent", background: "none" }}
+                  onClick={() => setActiveTab("saves")}
+                >
+                  Game Saves
+                </button>
+              )}
             </div>
 
             {/* Tab Content */}
@@ -337,6 +431,136 @@ export default function UserProfilePage() {
                         <span style={{ fontSize: "var(--text-sm)", display: "flex", alignItems: "center" }}>Page {contribPage} of {Math.ceil(contribTotal / 10)}</span>
                         <button className="btn btn-secondary btn-sm" disabled={contribPage >= Math.ceil(contribTotal / 10)} onClick={() => setContribPage(p => p + 1)}>Next</button>
                       </div>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {activeTab === "saves" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
+                  {characters.length === 0 ? (
+                    <div className="empty-state" style={{ padding: "var(--space-6) 0" }}>
+                      <span className="empty-state-icon"><Sword size={24} /></span>
+                      <h4>No characters found</h4>
+                      <p>You have not created any characters yet.</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="input-group">
+                        <label className="input-label">Select Character</label>
+                        <select
+                          className="input"
+                          value={selectedCharId}
+                          onChange={(e) => setSelectedCharId(e.target.value)}
+                          style={{ maxWidth: 300 }}
+                        >
+                          {characters.map(char => (
+                            <option key={char.characterId} value={char.characterId}>
+                              {char.characterName} (Lvl {char.currentLevel} {char.characterClass})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {loadingSaves ? (
+                        <div style={{ display: "flex", justifyContent: "center", padding: "var(--space-6) 0" }}>
+                          <span className="text-muted text-sm">Loading save files...</span>
+                        </div>
+                      ) : saves.length === 0 ? (
+                        <p style={{ color: "var(--text-muted)", fontSize: "var(--text-sm)" }}>No saves found for this character.</p>
+                      ) : (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
+                          {saves.map(save => (
+                            <div key={save.saveId} style={{ 
+                              padding: "var(--space-4)", 
+                              background: "var(--bg-secondary)", 
+                              borderRadius: "var(--radius-md)", 
+                              border: "1px solid var(--border)",
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              gap: "var(--space-4)"
+                            }}>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", marginBottom: "var(--space-2)" }}>
+                                  {editingSaveId === save.saveId ? (
+                                    <div style={{ display: "flex", gap: "var(--space-2)", alignItems: "center" }}>
+                                      <input
+                                        type="text"
+                                        className="input"
+                                        value={newSaveName}
+                                        onChange={(e) => setNewSaveName(e.target.value)}
+                                        style={{ padding: "4px 8px", fontSize: "var(--text-sm)", width: 180 }}
+                                        autoFocus
+                                      />
+                                      <button 
+                                        className="btn btn-primary btn-sm" 
+                                        style={{ padding: "4px 8px" }}
+                                        onClick={() => handleRenameSave(save.saveId)}
+                                      >
+                                        <Check size={14} />
+                                      </button>
+                                      <button 
+                                        className="btn btn-secondary btn-sm" 
+                                        style={{ padding: "4px 8px" }}
+                                        onClick={() => {
+                                          setEditingSaveId(null);
+                                          setNewSaveName("");
+                                        }}
+                                      >
+                                        <X size={14} />
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <>
+                                      <span style={{ fontWeight: "var(--weight-semibold)" }}>
+                                        {save.saveName || `Save #${save.saveId.substring(0, 8)}`}
+                                      </span>
+                                      <button 
+                                        style={{ background: "none", border: "none", padding: 2, cursor: "pointer", color: "var(--text-muted)" }}
+                                        onClick={() => {
+                                          setEditingSaveId(save.saveId);
+                                          setNewSaveName(save.saveName || "");
+                                        }}
+                                      >
+                                        <Edit2 size={12} />
+                                      </button>
+                                    </>
+                                  )}
+                                  {save.isAutoSave && (
+                                    <span style={{ 
+                                      fontSize: "10px", 
+                                      padding: "1px 5px", 
+                                      borderRadius: "var(--radius-sm)", 
+                                      background: "var(--accent-subtle)", 
+                                      color: "var(--accent)" 
+                                    }}>
+                                      Auto
+                                    </span>
+                                  )}
+                                </div>
+                                
+                                <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-4)", fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>
+                                  <span>Scene: <strong>{save.currentScene}</strong></span>
+                                  <span>HP: <strong>{save.currentHp}/{save.maxHp}</strong></span>
+                                  <span>Mana: <strong>{save.currentMana}/{save.maxMana}</strong></span>
+                                  <span>Stamina: <strong>{save.currentStamina}/{save.maxStamina}</strong></span>
+                                  <span>Saved: <strong>{formatDate(save.createdAt)}</strong></span>
+                                </div>
+                              </div>
+
+                              <button 
+                                className="btn btn-secondary btn-sm" 
+                                style={{ color: "var(--text-danger)", borderColor: "transparent", background: "none", padding: "var(--space-2)" }}
+                                onClick={() => handleDeleteSave(save.saveId)}
+                                title="Delete Save"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </>
                   )}
                 </div>

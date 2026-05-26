@@ -6,6 +6,8 @@ import Link from "next/link";
 import { api } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/contexts/ToastContext";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { timeAgo, getInitials } from "@/lib/utils";
 import { ThumbsUp, ThumbsDown, Pencil, Trash2, Lock, MessageCircle, Pin } from "lucide-react";
 import styles from "../../forum.module.css";
@@ -330,11 +332,11 @@ export default function ForumThreadPage() {
                 {editingPostId === post.id ? (
                   <div style={{ padding: "var(--space-4) var(--space-5)" }}>
                     <textarea
-                      className="input"
-                      rows={4}
-                      value={editContent}
-                      onChange={(e) => setEditContent(e.target.value)}
-                      style={{ resize: "vertical", marginBottom: "var(--space-3)" }}
+                       className="input"
+                       rows={4}
+                       value={editContent}
+                       onChange={(e) => setEditContent(e.target.value)}
+                       style={{ resize: "vertical", marginBottom: "var(--space-3)" }}
                     />
                     <div style={{ display: "flex", gap: "var(--space-2)" }}>
                       <button className="btn btn-primary btn-sm" onClick={() => handleEditPost(post.id)}>Save</button>
@@ -342,14 +344,12 @@ export default function ForumThreadPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className={styles.postBody}
-                    dangerouslySetInnerHTML={{ __html: post.content
-                      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-                      .replace(/!\[([^\]]*)\]\((https?:\/\/[^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%;border-radius:8px;margin:8px 0" />')
-                      .replace(/\n/g, "<br/>")
-                    }}
-                  />
-                )}
+                  <div className={styles.postBody}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {post.content}
+                    </ReactMarkdown>
+                  </div>
+                ) }
 
                 <div className={styles.postActions}>
                   <button

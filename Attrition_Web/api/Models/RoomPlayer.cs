@@ -12,5 +12,6 @@ public class RoomPlayer
     public Character? Character { get; set; }
 
     public short PlayerRole { get; set; } = 0; // 0=guest, 1=host
+    public bool IsReady { get; set; } = false;
     public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
 }

@@ -4,7 +4,7 @@ using Attrition.API.Data;
 using Attrition.API.Models;
 using Microsoft.EntityFrameworkCore;
 
-public class CharacterService
+public class CharacterService : ICharacterService
 {
     private readonly AppDbContext _db;
     public CharacterService(AppDbContext db) => _db = db;

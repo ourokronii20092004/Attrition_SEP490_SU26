@@ -2,6 +2,7 @@ using Attrition.API.DTOs;
 using Attrition.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Attrition.API.Models;
 
 namespace Attrition.API.Controllers;
 
@@ -9,16 +10,17 @@ namespace Attrition.API.Controllers;
 [Route("api/wiki")]
 public class WikiController : ControllerBase
 {
-    private readonly WikiService _wiki;
-    public WikiController(WikiService wiki) => _wiki = wiki;
+    private readonly IWikiService _wiki;
+    public WikiController(IWikiService wiki) => _wiki = wiki;
 
     [HttpGet("categories")]
-    public async Task<IActionResult> GetCategories() => Ok(await _wiki.GetCategoriesAsync());
+    public async Task<IActionResult> GetCategories() 
+        => Ok(new ApiResponse<List<WikiCategoryDto>>(true, await _wiki.GetCategoriesAsync()));
 
     [HttpGet("articles")]
     public async Task<IActionResult> GetArticles([FromQuery] string? category, [FromQuery] string? search,
         [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
-        => Ok(await _wiki.GetArticlesAsync(category, search, page, pageSize));
+        => Ok(new ApiResponse<PaginatedResponse<WikiArticleListDto>>(true, await _wiki.GetArticlesAsync(category, search, page, pageSize)));
 
     [HttpGet("articles/{slug}")]
     public async Task<IActionResult> GetArticle(string slug)
@@ -28,7 +30,16 @@ public class WikiController : ControllerBase
     }
 
     [HttpGet("articles/{id:guid}/revisions")]
-    public async Task<IActionResult> GetRevisions(Guid id) => Ok(await _wiki.GetRevisionsAsync(id));
+    public async Task<IActionResult> GetRevisions(Guid id) 
+        => Ok(new ApiResponse<List<WikiRevision>>(true, await _wiki.GetRevisionsAsync(id)));
+
+    [HttpGet("articles/{id:guid}/revisions/{revisionId:guid}")]
+    public async Task<IActionResult> GetRevision(Guid id, Guid revisionId)
+    {
+        var revision = await _wiki.GetRevisionByIdAsync(id, revisionId);
+        return revision != null ? Ok(new ApiResponse<WikiRevision>(true, revision)) : NotFound(new ApiResponse(false, "Revision not found"));
+    }
+
 
     // Admin-only: create article
     [Authorize(Roles = "Admin")]
@@ -64,7 +75,7 @@ public class WikiController : ControllerBase
     [Authorize(Roles = "Admin")]
     [HttpGet("contributions")]
     public async Task<IActionResult> GetContributions([FromQuery] string status = "Pending")
-        => Ok(await _wiki.GetContributionsAsync(status));
+        => Ok(new ApiResponse<List<WikiContributionDto>>(true, await _wiki.GetContributionsAsync(status)));
 
     // Admin: review contribution
     [Authorize(Roles = "Admin")]
@@ -79,5 +90,9 @@ public class WikiController : ControllerBase
     // Admin: delete article
     [Authorize(Roles = "Admin")]
     [HttpDelete("articles/{id:guid}")]
-    public async Task<IActionResult> DeleteArticle(Guid id) => Ok(await _wiki.DeleteArticleAsync(id));
+    public async Task<IActionResult> DeleteArticle(Guid id)
+    {
+        var result = await _wiki.DeleteArticleAsync(id);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
 }

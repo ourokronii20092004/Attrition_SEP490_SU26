@@ -2,6 +2,7 @@ using System.Text;
 using Attrition.API.Data;
 using Attrition.API.Middleware;
 using Attrition.API.Services;
+using Attrition.API.Repositories;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -29,7 +30,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Redis
 builder.Services.AddSingleton<IConnectionMultiplexer>(
     ConnectionMultiplexer.Connect((builder.Configuration["Redis:ConnectionString"] ?? "localhost:6379") + ",abortConnect=false"));
-builder.Services.AddScoped<CacheService>();
+builder.Services.AddScoped<ICacheService, CacheService>();
 
 // JWT Authentication
 var jwtSecret = builder.Configuration["Jwt:Secret"] ?? throw new Exception("JWT Secret not configured");
@@ -49,42 +50,71 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ClockSkew = TimeSpan.Zero,
             RoleClaimType = System.Security.Claims.ClaimTypes.Role
         };
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/gamehub"))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
+        };
     });
 builder.Services.AddAuthorization();
 
 // SignalR
 builder.Services.AddSignalR();
 
+// Background services
+builder.Services.AddHostedService<RoomCleanupService>();
+
+// Repositories
+builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IEnemyRepository, EnemyRepository>();
+builder.Services.AddScoped<IWikiRepository, WikiRepository>();
+builder.Services.AddScoped<IForumRepository, ForumRepository>();
+
 // Services
-builder.Services.AddScoped<AuthService>();
-builder.Services.AddScoped<WikiService>();
-builder.Services.AddScoped<ForumService>();
-builder.Services.AddScoped<FileService>();
-builder.Services.AddScoped<GameDataService>();
-builder.Services.AddScoped<CharacterService>();
-builder.Services.AddScoped<GameSaveService>();
-builder.Services.AddScoped<RoomService>();
-builder.Services.AddSingleton<GameSessionService>();
-builder.Services.AddScoped<MusicService>();
-builder.Services.AddScoped<AdminService>();
-builder.Services.AddScoped<UserService>();
-builder.Services.AddScoped<SearchService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IWikiService, WikiService>();
+builder.Services.AddScoped<IForumService, ForumService>();
+builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddScoped<IFileStorage, LocalFileStorage>();
+builder.Services.AddScoped<IAssetService, AssetService>();
+
+
+builder.Services.AddScoped<IGameDataService, GameDataService>();
+builder.Services.AddScoped<ICharacterService, CharacterService>();
+builder.Services.AddScoped<IGameSaveService, GameSaveService>();
+builder.Services.AddScoped<IRoomService, RoomService>();
+builder.Services.AddSingleton<IGameSessionService, GameSessionService>();
+builder.Services.AddScoped<IAlbumService, AlbumService>();
+builder.Services.AddScoped<ITrackService, TrackService>();
+builder.Services.AddScoped<IFavoriteService, FavoriteService>();
+builder.Services.AddScoped<IPlaylistService, PlaylistService>();
+
+
+builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ISearchService, SearchService>();
+builder.Services.AddScoped<IEmailService, ConsoleEmailService>();
 
 // FluentValidation
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddFluentValidationAutoValidation();
 
-// CORS
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
         policy.WithOrigins(
             "http://localhost:3000",
             "http://web:3000",
-            "http://localhost:3001",
-            "http://collection:3001",
-            "https://attrition.hault.io.vn",
-            "https://collection.hault.io.vn"
+            "https://attrition.hault.io.vn"
         )
         .AllowAnyHeader()
         .AllowAnyMethod()
