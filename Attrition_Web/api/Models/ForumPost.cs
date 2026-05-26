@@ -6,6 +6,7 @@ public class ForumPost
     public Guid ThreadId { get; set; }
     public Guid AuthorId { get; set; }
     public string Content { get; set; } = string.Empty;   // Markdown
+    public string? Attachments { get; set; } // string, nullable, JSON array
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 

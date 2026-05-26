@@ -6,6 +6,7 @@ public class WikiContribution
     public Guid ArticleId { get; set; }
     public Guid ContributorId { get; set; }
     public string SuggestedContent { get; set; } = string.Empty;
+    public string? Content { get; set; }
     public string? ChangeNote { get; set; }
     public string Status { get; set; } = "Pending";    // Pending, Approved, Rejected
     public DateTime SubmittedAt { get; set; } = DateTime.UtcNow;

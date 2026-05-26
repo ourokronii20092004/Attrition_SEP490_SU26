@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http;
+
 namespace Attrition.API.DTOs;
 
 public record CreateAlbumRequest(
@@ -33,3 +35,97 @@ public record UpdateTrackRequest(
     string? Genre,
     bool? IsFeatured
 );
+
+public record MusicAlbumDto(
+    int AlbumId,
+    string Title,
+    string Slug,
+    List<string> Artists,
+    string? Description,
+    string? CoverPath,
+    bool IsCoverUserDefined,
+    DateTime? ReleaseDate,
+    string AlbumType,
+    string? Genre,
+    int TrackCount,
+    int TotalDuration,
+    DateTime CreatedAt
+);
+
+public record MusicTrackDto(
+    int TrackId,
+    int AlbumId,
+    string Title,
+    string Slug,
+    int TrackNumber,
+    List<string> Artists,
+    int Duration,
+    string? Genre,
+    string? CoverPath,
+    int PlayCount,
+    bool IsFeatured,
+    long FileSize,
+    string? AlbumTitle = null,
+    string? AlbumCoverPath = null
+);
+
+public record AlbumDetailDto(
+    int AlbumId,
+    string Title,
+    string Slug,
+    List<string> Artists,
+    string? Description,
+    string? CoverPath,
+    bool IsCoverUserDefined,
+    DateTime? ReleaseDate,
+    string AlbumType,
+    string? Genre,
+    int TrackCount,
+    int TotalDuration,
+    DateTime CreatedAt,
+    IEnumerable<MusicTrackDto> Tracks
+);
+
+public record NewestAlbumDto(
+    int AlbumId,
+    string Title,
+    string? CoverPath,
+    List<string> Artists,
+    int TrackCount,
+    DateTime NewestTrackAddedAt
+);
+
+public record FeaturedTracksResponse(
+    IEnumerable<MusicTrackDto> FeaturedTracks,
+    IEnumerable<NewestAlbumDto> NewestAlbums
+);
+
+public record ScanTrackResponse(
+    string TempFileKey,
+    string Title,
+    string? Album,
+    List<string> Artists,
+    string? Genre,
+    int TrackNumber,
+    int Duration,
+    string? TempCoverPath
+);
+
+public record FavoriteTrackDto(
+    int TrackId,
+    int AlbumId,
+    string Title,
+    string Slug,
+    List<string> Artists,
+    int TrackNumber,
+    int Duration,
+    string? Genre,
+    string? CoverPath,
+    int PlayCount,
+    string AlbumTitle,
+    string AlbumCoverPath,
+    DateTime FavoritedAt
+);
+
+public record CreatePlaylistReq(string Name, string? Description);
+public record AddTrackToPlaylistReq(int TrackId);

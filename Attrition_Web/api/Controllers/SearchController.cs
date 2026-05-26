@@ -1,3 +1,4 @@
+using Attrition.API.DTOs;
 using Attrition.API.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,10 +8,10 @@ namespace Attrition.API.Controllers;
 [Route("api/search")]
 public class SearchController : ControllerBase
 {
-    private readonly SearchService _search;
-    public SearchController(SearchService search) => _search = search;
+    private readonly ISearchService _search;
+    public SearchController(ISearchService search) => _search = search;
 
     [HttpGet]
     public async Task<IActionResult> GlobalSearch([FromQuery] string q)
-        => Ok(await _search.GlobalSearchAsync(q));
+        => Ok(new ApiResponse<GlobalSearchResponse>(true, await _search.GlobalSearchAsync(q)));
 }

@@ -23,3 +23,6 @@ deploy_scp.py
 diagnose.py
 sensitive file.txt
 cloudflared/credentials.json
+*.dll
+[Bb]in/
+[Oo]bj/

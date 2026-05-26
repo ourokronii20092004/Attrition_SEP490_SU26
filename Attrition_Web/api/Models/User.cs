@@ -6,7 +6,6 @@ public class User
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Username { get; set; } = string.Empty;
     public string? Email { get; set; }                    // NEW: from Google or manual
-    public bool EmailVerified { get; set; } = false;      // NEW: true if from OAuth
     public string? DisplayName { get; set; }              // NEW: shown in UI
     public string? PasswordHash { get; set; }             // CHANGED: nullable (OAuth users may not have password)
 
@@ -35,6 +34,19 @@ public class User
     public bool MustChangePassword { get; set; } = false;
     public DateTime? LastLoginAt { get; set; }            // NEW
     public string? LastLoginIp { get; set; }              // NEW
+    public int FailedLoginAttempts { get; set; } = 0;
+    public DateTime? LockoutEnd { get; set; }
+
+    // ─── Verification & Recovery ───
+    public bool IsEmailVerified { get; set; } = false;
+    public string? EmailVerificationToken { get; set; }
+    public string? PendingEmail { get; set; }
+    public string? PasswordResetToken { get; set; }
+    public DateTime? PasswordResetTokenExpiry { get; set; }
+
+    // ─── Preferences ───
+    public bool NotifyOnReply { get; set; } = true;
+    public bool NotifyOnMention { get; set; } = true;
 
     // ─── Tokens ───
     public string? RefreshToken { get; set; }

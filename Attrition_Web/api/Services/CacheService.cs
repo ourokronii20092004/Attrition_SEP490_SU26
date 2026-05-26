@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace Attrition.API.Services;
 
-public class CacheService
+public class CacheService : ICacheService
 {
     private readonly IDatabase _db;
 

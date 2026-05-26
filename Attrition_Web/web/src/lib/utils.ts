@@ -272,9 +272,6 @@ export function getContrastColor(hex: string): string {
   return l > 55 ? "#000000" : "#ffffff";
 }
 
-/**
- * Generate accent color variants from a base hex color.
- */
 export function generateAccentVariants(hex: string) {
   const { h, s, l } = hexToHsl(hex);
   return {
@@ -286,3 +283,16 @@ export function generateAccentVariants(hex: string) {
     contrast: getContrastColor(hex),
   };
 }
+
+
+/**
+ * Get absolute URL for asset path.
+ */
+export function assetUrl(path: string | null): string {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+  const baseUrl = process.env.NEXT_PUBLIC_ASSET_URL || (process.env.NEXT_PUBLIC_API_URL || "").replace("/api", "/uploads");
+  const cleanPath = path.replace(/^\/?uploads\/?/, "/");
+  return `${baseUrl}${cleanPath}`.replace(/([^:]\/)\/+/g, "$1");
+}
+

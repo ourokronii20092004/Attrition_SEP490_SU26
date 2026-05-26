@@ -21,31 +21,11 @@ services:
       args:
         - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
         - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-        - NEXT_PUBLIC_COLLECTION_URL=${NEXT_PUBLIC_COLLECTION_URL}
     container_name: attrition-web
     expose: ["3000"]
     environment:
       - API_URL=${API_URL}
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-    depends_on:
-      api: { condition: service_healthy }
-    restart: unless-stopped
-    networks: [attrition-net]
-
-  collection:
-    build:
-      context: ./collection
-      dockerfile: Dockerfile
-      args:
-        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-        - NEXT_PUBLIC_WEB_URL=${NEXT_PUBLIC_WEB_URL}
-    container_name: attrition-collection
-    ports: ["3001:3001"]
-    environment:
-      - API_URL=${API_URL}
-      - PORT=3001
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-      - NEXT_PUBLIC_WEB_URL=${NEXT_PUBLIC_WEB_URL}
     depends_on:
       api: { condition: service_healthy }
     restart: unless-stopped
@@ -116,7 +96,6 @@ services:
       - ./cloudflared/credentials.json:/etc/cloudflared/credentials.json:ro
     depends_on:
       - nginx
-      - collection
     restart: unless-stopped
     networks: [attrition-net]
 

@@ -13,3 +13,4 @@ public record CreatePostRequest(string Content);
 public record UpdatePostRequest(string Content);
 public record ReactRequest(string ReactionType); // "like" or "dislike"
 public record PaginatedResponse<T>(List<T> Items, int TotalCount, int Page, int PageSize);
+public record ReportPostReq(string Reason);
