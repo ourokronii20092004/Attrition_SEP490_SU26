@@ -17,6 +17,7 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
         Teleport,
         Hit, Dead, Corps, Reborn,
         Healing,
+        Sleep, WakeUp,
         Jump, Fall, Land,
         Skill1, Skill2,
         Unknown
@@ -59,6 +60,8 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
         (new[]{"corps","corpse"}, ClipCategory.Corps),
         (new[]{"reborn","resurrect","revive","stand_up","standup"}, ClipCategory.Reborn),
         (new[]{"healing","heal","recovery"}, ClipCategory.Healing),
+        (new[]{"sleep","sleeping"}, ClipCategory.Sleep),
+        (new[]{"wakeup","wake_up","wake","awake"}, ClipCategory.WakeUp),
         (new[]{"jump"}, ClipCategory.Jump),
         (new[]{"fall","fallback"}, ClipCategory.Fall),
         (new[]{"land","landing"}, ClipCategory.Land),
@@ -170,6 +173,7 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
                 $"Sẽ tạo: {included.Count} states | {attackCount} đòn Attack | " +
                 $"{(included.Any(c => c.category == ClipCategory.Teleport) ? "Có Teleport" : "Không Teleport")} | " +
                 $"{(included.Any(c => c.category == ClipCategory.Healing) ? "Có Healing" : "Không Healing")} | " +
+                $"{(included.Any(c => c.category == ClipCategory.Sleep) ? "Có Sleep" : "Không Sleep")} | " +
                 $"{(included.Any(c => c.category == ClipCategory.Run) ? "Có Run" : "Không Run")} | " +
                 $"{(included.Any(c => c.category == ClipCategory.Fly) ? "Có Fly" : "Không Fly")} | " +
                 $"{(included.Any(c => c.category == ClipCategory.Reborn) ? "Có Reborn" : "Không Reborn")}",
@@ -201,19 +205,29 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
             return;
         }
 
-        // Tìm tất cả AnimationClip trong folder (bao gồm subfolder)
-        string[] guids = AssetDatabase.FindAssets("t:AnimationClip", new[] { targetFolder });
+        // Tìm tất cả assets trong folder (bao gồm subfolder)
+        // SỬA: Dùng "t:Object" thay vì "t:AnimationClip" để tìm được cả clip nằm
+        // bên trong file .ase/.aseprite/.png (sub-asset) mà FindAssets("t:AnimationClip") bỏ qua
+        string[] guids = AssetDatabase.FindAssets("", new[] { targetFolder });
         string prefixLower = prefix.ToLower();
+        HashSet<int> addedClipIds = new HashSet<int>(); // Tránh trùng lặp
 
         foreach (string guid in guids)
         {
             string path = AssetDatabase.GUIDToAssetPath(guid);
-            // Load tất cả assets tại path (cho trường hợp spritesheet chứa nhiều clip)
+            // Bỏ qua thư mục
+            if (AssetDatabase.IsValidFolder(path)) continue;
+
+            // Load tất cả assets tại path (bao gồm sub-assets)
             Object[] assets = AssetDatabase.LoadAllAssetsAtPath(path);
             foreach (Object asset in assets)
             {
                 AnimationClip clip = asset as AnimationClip;
                 if (clip == null || clip.name.StartsWith("__preview__")) continue;
+
+                // Tránh thêm trùng clip (cùng clip có thể xuất hiện nhiều lần)
+                int clipId = clip.GetInstanceID();
+                if (addedClipIds.Contains(clipId)) continue;
 
                 string nameLower = clip.name.ToLower();
                 // Chỉ lấy clip có chứa prefix
@@ -226,6 +240,7 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
                     include = true
                 };
                 detectedClips.Add(entry);
+                addedClipIds.Add(clipId);
             }
         }
 
@@ -290,6 +305,7 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
         bool hasRun = included.Any(c => c.category == ClipCategory.Run);
         bool hasTeleport = included.Any(c => c.category == ClipCategory.Teleport);
         bool hasHealing = included.Any(c => c.category == ClipCategory.Healing);
+        bool hasSleep = included.Any(c => c.category == ClipCategory.Sleep);
 
         if (hasReborn) controller.AddParameter("Resurrect", AnimatorControllerParameterType.Trigger);
         if (hasJump) controller.AddParameter("Jump", AnimatorControllerParameterType.Trigger);
@@ -298,6 +314,12 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
         {
             controller.AddParameter("Heal", AnimatorControllerParameterType.Trigger);
             controller.AddParameter("IsHealing", AnimatorControllerParameterType.Bool);
+        }
+        if (hasSleep)
+        {
+            controller.AddParameter("Sleep", AnimatorControllerParameterType.Trigger);
+            controller.AddParameter("WakeUp", AnimatorControllerParameterType.Trigger);
+            controller.AddParameter("IsSleeping", AnimatorControllerParameterType.Bool);
         }
 
         // ── Tạo States ──
@@ -321,6 +343,8 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
             { ClipCategory.Corps,   new Vector3(830, 60, 0) },
             { ClipCategory.Reborn,  new Vector3(570, 60, 0) },
             { ClipCategory.Healing, new Vector3(570, 310, 0) },
+            { ClipCategory.Sleep,   new Vector3(570, 420, 0) },
+            { ClipCategory.WakeUp,  new Vector3(570, 530, 0) },
             { ClipCategory.Jump,    new Vector3(820, -70, 0) },
             { ClipCategory.Fall,    new Vector3(820, 60, 0) },
             { ClipCategory.Land,    new Vector3(820, 170, 0) },
@@ -524,6 +548,50 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
             }
         }
 
+        // ─── Sleep / WakeUp ───
+        if (states.ContainsKey(ClipCategory.Sleep))
+        {
+            AnimatorState sleepState = states[ClipCategory.Sleep];
+
+            // AnyState → Sleep: Sleep trigger
+            var tSleep = rootSM.AddAnyStateTransition(sleepState);
+            tSleep.hasExitTime = false;
+            tSleep.duration = 0;
+            tSleep.canTransitionToSelf = false;
+            tSleep.AddCondition(AnimatorConditionMode.If, 0, "Sleep");
+
+            // Sleep giữ nguyên (loop) khi IsSleeping = true
+            // Sleep → WakeUp (hoặc Idle) khi IsSleeping = false
+            if (states.ContainsKey(ClipCategory.WakeUp))
+            {
+                AnimatorState wakeUpState = states[ClipCategory.WakeUp];
+
+                // AnyState → WakeUp: WakeUp trigger
+                var tWake = rootSM.AddAnyStateTransition(wakeUpState);
+                tWake.hasExitTime = false;
+                tWake.duration = 0;
+                tWake.canTransitionToSelf = false;
+                tWake.AddCondition(AnimatorConditionMode.If, 0, "WakeUp");
+
+                // WakeUp → Idle: ExitTime = 1
+                if (idleState != null)
+                {
+                    var tBack = wakeUpState.AddTransition(idleState);
+                    tBack.hasExitTime = true;
+                    tBack.exitTime = 1f;
+                    tBack.duration = 0.1f;
+                }
+            }
+            else if (idleState != null)
+            {
+                // Không có WakeUp clip → Sleep → Idle khi IsSleeping = false
+                var tBack = sleepState.AddTransition(idleState);
+                tBack.hasExitTime = false;
+                tBack.duration = 0.1f;
+                tBack.AddCondition(AnimatorConditionMode.IfNot, 0, "IsSleeping");
+            }
+        }
+
         // ─── Jump (AnyState) ───
         if (jumpState != null)
         {
@@ -576,7 +644,8 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
                   $"Run: {(runState != null ? "✓" : "✗")} | " +
                   $"Fly: {(flyState != null ? "✓" : "✗")} | " +
                   $"Reborn: {(rebornState != null ? "✓" : "✗")} | " +
-                  $"Jump: {(jumpState != null ? "✓" : "✗")}");
+                  $"Jump: {(jumpState != null ? "✓" : "✗")} | " +
+                  $"Sleep: {(states.ContainsKey(ClipCategory.Sleep) ? "✓" : "✗")}");
 
         EditorUtility.DisplayDialog("Thành công!",
             $"Đã tạo Animator Controller tại:\n{savePath}\n\n" +

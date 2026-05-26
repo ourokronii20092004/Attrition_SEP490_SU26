@@ -42,7 +42,6 @@ GameObject:
   - component: {fileID: 6354375916597387186}
   - component: {fileID: 4163127218224870691}
   - component: {fileID: 8590948547708573557}
-  - component: {fileID: 9164386142616970959}
   - component: {fileID: 8738232666211969138}
   - component: {fileID: 2188909734104438995}
   - component: {fileID: 1165490181894134186}
@@ -52,6 +51,7 @@ GameObject:
   - component: {fileID: 6222785015092670363}
   - component: {fileID: 6970653684899995114}
   - component: {fileID: 3231601818936640140}
+  - component: {fileID: 5132593007529148729}
   m_Layer: 8
   m_Name: Gollux
   m_TagString: Enemy
@@ -68,8 +68,8 @@ Transform:
   m_GameObject: {fileID: 955679001856809933}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -6.3, y: 49.41, z: 0}
-  m_LocalScale: {x: 10.626862, y: 9.25417, z: 3}
+  m_LocalPosition: {x: -36.52, y: 48.81, z: 0}
+  m_LocalScale: {x: 1.1483322, y: 1, z: 0.32417816}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 1862415374355557567}
@@ -162,43 +162,6 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 4
---- !u!70 &9164386142616970959
-CapsuleCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 955679001856809933}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Density: 1
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_IsTrigger: 0
-  m_UsedByEffector: 0
-  m_CompositeOperation: 0
-  m_CompositeOrder: 0
-  m_Offset: {x: 0.026884597, y: -0.027492294}
-  m_Size: {x: 0.6609418, y: 0.75898075}
-  m_Direction: 0
 --- !u!114 &8738232666211969138
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -291,9 +254,9 @@ MonoBehaviour:
   leapDuration: 1
   animationComp: {fileID: 1165490181894134186}
   attackPoint: {fileID: 1862415374355557567}
-  attackRange: 5
+  attackRange: 3
   attackRanges: []
-  attackAngle: 75
+  attackAngle: 125
   playerLayer:
     serializedVersion: 2
     m_Bits: 128
@@ -431,6 +394,52 @@ MonoBehaviour:
     _value: 0
   _IsHealing:
     _value: 0
+--- !u!61 &5132593007529148729
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 955679001856809933}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: -0.15822399, y: -0.79427755}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.69383085}
+    oldSize: {x: 4.1875, y: 3.8125}
+    newSize: {x: 1, y: 1}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 3.4858105, y: 3.701905}
+  m_EdgeRadius: 0
 --- !u!1 &8487023232547127402
 GameObject:
   m_ObjectHideFlags: 0
@@ -513,7 +522,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0.5906756, y: -1.8991458}
+  m_Offset: {x: -6.2030478, y: -23.070305}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -523,5 +532,5 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 2.9694047, y: 6.7799954}
+  m_Size: {x: 26.036451, y: 51.650154}
   m_EdgeRadius: 0

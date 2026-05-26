@@ -66,6 +66,10 @@ namespace Attrition.Controllers
                     aiComp != null && aiComp.isFlying
                 );
             }
+
+            // Tắt va chạm vật lý giữa Enemy và Player để Player đi xuyên qua được
+            // CHỈ dùng Collider-based (không dùng IgnoreLayerCollision vì nó chặn cả trigger → ContactDamage không hoạt động)
+            IgnoreAllPlayerColliders();
         }
 
         public override void FixedUpdateNetwork()
@@ -250,6 +254,50 @@ namespace Attrition.Controllers
             if (!HasStateAuthority) return;
             if (isDeadNetworked || IsAwaitingRevive) return;
             Health = Mathf.Min(Health + amount, maxHealth);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // IGNORE PLAYER COLLIDERS — Đảm bảo Player đi xuyên qua quái
+        // ═══════════════════════════════════════════════════════════════
+
+        private void IgnoreAllPlayerColliders()
+        {
+            Collider2D[] myCols = GetComponentsInChildren<Collider2D>();
+
+            PlayerController[] players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+            foreach (var player in players)
+            {
+                Collider2D playerCol = player.GetComponent<Collider2D>();
+                if (playerCol == null) continue;
+
+                foreach (var myCol in myCols)
+                {
+                    if (!myCol.isTrigger && !playerCol.isTrigger)
+                    {
+                        Physics2D.IgnoreCollision(myCol, playerCol, true);
+                    }
+                }
+            }
+        }
+
+        private void OnCollisionEnter2D(Collision2D collision)
+        {
+            PlayerController player = collision.gameObject.GetComponentInParent<PlayerController>();
+            if (player == null) player = collision.gameObject.GetComponent<PlayerController>();
+            if (player != null)
+            {
+                Collider2D playerCol = player.GetComponent<Collider2D>();
+                if (playerCol == null) return;
+
+                Collider2D[] myCols = GetComponentsInChildren<Collider2D>();
+                foreach (var myCol in myCols)
+                {
+                    if (!myCol.isTrigger)
+                    {
+                        Physics2D.IgnoreCollision(myCol, playerCol, true);
+                    }
+                }
+            }
         }
     }
 }

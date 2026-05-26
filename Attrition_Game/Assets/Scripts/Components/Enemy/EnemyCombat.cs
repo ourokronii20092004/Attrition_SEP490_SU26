@@ -281,15 +281,47 @@ public class EnemyCombat : NetworkBehaviour
 
     /// <summary>
     /// Trả về danh sách attack styles đang bật để AI random chọn.
-    /// Normal luôn có trong danh sách.
+    /// Normal chỉ được thêm nếu còn đòn chưa bị gán cho dash/leap.
     /// </summary>
     public List<AttackStyle> GetEnabledAttackStyles()
     {
         List<AttackStyle> styles = new List<AttackStyle>();
-        styles.Add(AttackStyle.Normal);
         if (enableDashSlash) styles.Add(AttackStyle.DashSlash);
         if (enableLeapAttack) styles.Add(AttackStyle.LeapAttack);
+
+        // Chỉ thêm Normal nếu còn đòn attack chưa bị gán cho dash/leap
+        if (HasAvailableNormalAttacks())
+        {
+            styles.Add(AttackStyle.Normal);
+        }
+
+        // Fallback: nếu không bật style nào cả → dùng Normal
+        if (styles.Count == 0) styles.Add(AttackStyle.Normal);
         return styles;
+    }
+
+    /// <summary>
+    /// Kiểm tra xem còn đòn attack nào chưa bị gán cho dash/leap không.
+    /// </summary>
+    private bool HasAvailableNormalAttacks()
+    {
+        HashSet<int> reserved = new HashSet<int>();
+        if (enableDashSlash && dashSlashAttacks != null)
+        {
+            for (int i = 0; i < dashSlashAttacks.Length; i++)
+                if (dashSlashAttacks[i]) reserved.Add(i);
+        }
+        if (enableLeapAttack && leapAttacks != null)
+        {
+            for (int i = 0; i < leapAttacks.Length; i++)
+                if (leapAttacks[i]) reserved.Add(i);
+        }
+
+        for (int i = 0; i < attackVariants; i++)
+        {
+            if (!reserved.Contains(i)) return true;
+        }
+        return false;
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]

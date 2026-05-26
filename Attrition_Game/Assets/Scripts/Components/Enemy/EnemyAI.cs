@@ -21,6 +21,26 @@ public class EnemyAI : NetworkBehaviour
     [Tooltip("Đánh dấu nếu quái là loại bay (di chuyển cả trục Y khi đuổi)")]
     public bool isFlying = false;
 
+    [Header("---- FLY MELEE (Bat swoop) ----")]
+    [Tooltip("Bật nếu quái bay cận chiến: tấn công xong bay lên cao rồi lao xuống đánh tiếp. Không ảnh hưởng quái bay bắn xa.")]
+    public bool flyMeleeRetreat = false;
+    [Tooltip("Độ cao bay lên so với vị trí spawn sau khi tấn công xong (units)")]
+    public float flyMeleeRetreatAltitude = 3f;
+    [Tooltip("Tốc độ bay lên vị trí cao sau khi tấn công")]
+    public float flyMeleeRetreatSpeed = 8f;
+
+    [Header("---- SLEEP / WAKEUP (Bat) ----")]
+    [Tooltip("Bật nếu quái ngủ tại chỗ spawn và thức dậy khi Player đến gần")]
+    public bool enableSleep = false;
+    [Tooltip("Thời gian chờ sau khi Player rời tầm nhìn mới bay về ngủ lại (giây)")]
+    public float sleepReturnDelay = 3f;
+    [Tooltip("Tốc độ bay về vị trí ngủ")]
+    public float returnToSleepSpeed = 6f;
+    [Tooltip("Bật = ngủ trên trần (tìm mặt phẳng phía trên). Tắt = ngủ tại vị trí spawn ban đầu")]
+    public bool sleepOnCeiling = true;
+    [Tooltip("Layer dùng để tìm trần/sàn khi quay về ngủ")]
+    public LayerMask sleepSurfaceLayer;
+
     [Header("---- OBSTACLE DETECTION ----")]
     public LayerMask obstacleLayer;
     [Tooltip("Độ dài tia laser quét tường phía trước")]
@@ -29,10 +49,23 @@ public class EnemyAI : NetworkBehaviour
     public float wallCheckHeightOffset = 0.5f;
 
     private Vector2 startPosition;
+    private Vector2 sleepPosition; // Vị trí ngủ (có thể khác startPosition nếu sleepOnCeiling)
     private Vector2 currentTarget;
     private Transform playerTarget;
     private bool isChasing;
     private PlayerRef cachedChasePlayer;
+
+    // ─── Sleep state ───
+    [HideInInspector][Networked] public NetworkBool IsSleeping { get; set; }
+    [HideInInspector][Networked] public NetworkBool IsReturningToSleep { get; set; }
+    private bool isWakingUp; // local flag chờ animation wakeup xong
+    private float noPlayerTimer; // đếm thời gian không thấy player
+    private bool localSleepHandled; // tránh gọi anim lặp
+    private bool localWakeHandled;
+
+    // ─── Fly Melee retreat state ───
+    private bool wasAttackingLastTick;
+    [HideInInspector][Networked] public NetworkBool IsRetreatingUp { get; set; }
 
     [HideInInspector][Networked] public float NetSpeed { get; set; }
     [HideInInspector][Networked] public float NetFacingDir { get; set; } = 1f;
@@ -42,12 +75,34 @@ public class EnemyAI : NetworkBehaviour
         rb = GetComponent<Rigidbody2D>();
         startPosition = transform.position;
 
+        // Tính vị trí ngủ
+        if (enableSleep)
+        {
+            sleepPosition = FindSleepPosition();
+            if (HasStateAuthority)
+            {
+                IsSleeping = true;
+                IsReturningToSleep = false;
+            }
+            noPlayerTimer = 0f;
+            isWakingUp = false;
+            localSleepHandled = false;
+            localWakeHandled = false;
+        }
+        else
+        {
+            sleepPosition = startPosition;
+        }
+
         // SỬA LỖI ĐỨNG YÊN: Ép điểm tuần tra đầu tiên phải cách xa điểm spawn để quái di chuyển ngay lập tức
         float randomDir = Random.value > 0.5f ? 1f : -1f;
         float randomDist = Random.Range(1f, patrolRadius);
         currentTarget = new Vector2(startPosition.x + randomDir * randomDist, startPosition.y);
 
         cachedChasePlayer = default;
+
+        wasAttackingLastTick = false;
+        if (HasStateAuthority) IsRetreatingUp = false;
     }
 
     public override void Render()
@@ -60,6 +115,23 @@ public class EnemyAI : NetworkBehaviour
             return;
         }
 
+        // ─── Sleep/WakeUp animation ───
+        if (enableSleep)
+        {
+            if (IsSleeping && !localSleepHandled)
+            {
+                animationComp.PlaySleep();
+                localSleepHandled = true;
+                localWakeHandled = false;
+            }
+            else if (!IsSleeping && !localWakeHandled && localSleepHandled)
+            {
+                animationComp.PlayWakeUp();
+                localWakeHandled = true;
+                localSleepHandled = false;
+            }
+        }
+
         animationComp.UpdateSpeed(NetSpeed);
         animationComp.FaceDirection(NetFacingDir);
     }
@@ -68,8 +140,112 @@ public class EnemyAI : NetworkBehaviour
     {
         if (controller.IsKnockbackActive)
         {
+            // Bị đánh → tỉnh dậy ngay
+            if (enableSleep && IsSleeping)
+            {
+                IsSleeping = false;
+                IsReturningToSleep = false;
+                isWakingUp = false;
+                noPlayerTimer = 0f;
+            }
             NetSpeed = Mathf.Abs(rb.linearVelocity.x);
             return;
+        }
+
+        // ─── SLEEP LOGIC ───
+        if (enableSleep)
+        {
+            // Đang ngủ → đứng yên, chờ player vào tầm nhìn
+            if (IsSleeping)
+            {
+                rb.linearVelocity = isFlying ? Vector2.zero : new Vector2(0f, rb.linearVelocity.y);
+                NetSpeed = 0f;
+
+                // Kiểm tra player có trong tầm nhìn không
+                FindPlayer();
+                if (isChasing && playerTarget != null)
+                {
+                    // Thức dậy!
+                    IsSleeping = false;
+                    IsReturningToSleep = false;
+                    isWakingUp = true;
+                    noPlayerTimer = 0f;
+                }
+                return;
+            }
+
+            // Đang bay về vị trí ngủ
+            if (IsReturningToSleep)
+            {
+                float distToSleep = Vector2.Distance(transform.position, sleepPosition);
+                if (distToSleep < 0.3f)
+                {
+                    // Đã về đến nơi → ngủ
+                    transform.position = new Vector3(sleepPosition.x, sleepPosition.y, transform.position.z);
+                    rb.linearVelocity = Vector2.zero;
+                    IsSleeping = true;
+                    IsReturningToSleep = false;
+                    NetSpeed = 0f;
+                    cachedChasePlayer = default;
+                    playerTarget = null;
+                    isChasing = false;
+                }
+                else
+                {
+                    // Bay về vị trí ngủ
+                    Vector2 dir = (sleepPosition - (Vector2)transform.position).normalized;
+                    rb.linearVelocity = dir * returnToSleepSpeed;
+                    NetFacingDir = dir.x > 0 ? 1f : -1f;
+                    NetSpeed = returnToSleepSpeed;
+
+                    // Nếu bất ngờ thấy player khi đang bay về → tỉnh dậy đuổi
+                    FindPlayer();
+                    if (isChasing && playerTarget != null)
+                    {
+                        IsReturningToSleep = false;
+                        noPlayerTimer = 0f;
+                    }
+                }
+                return;
+            }
+
+            // WakeUp animation delay (chờ ~0.4s cho animation wakeup)
+            if (isWakingUp)
+            {
+                rb.linearVelocity = isFlying ? Vector2.zero : new Vector2(0f, rb.linearVelocity.y);
+                NetSpeed = 0f;
+                noPlayerTimer += Runner.DeltaTime;
+                if (noPlayerTimer >= 0.4f)
+                {
+                    isWakingUp = false;
+                    noPlayerTimer = 0f;
+                    // SỬA: Reset cache để FindPlayer() chạy lại fresh trong AI logic bên dưới
+                    cachedChasePlayer = default;
+                    playerTarget = null;
+                    isChasing = false;
+                }
+                return;
+            }
+
+            // Đang thức → kiểm tra player và đếm thời gian không thấy player
+            // SỬA: Phải gọi FindPlayer() ở đây để cập nhật isChasing trước khi check timer
+            FindPlayer();
+            if (!isChasing)
+            {
+                noPlayerTimer += Runner.DeltaTime;
+                if (noPlayerTimer >= sleepReturnDelay)
+                {
+                    // Hết thời gian chờ → bay về ngủ
+                    IsReturningToSleep = true;
+                    noPlayerTimer = 0f;
+                    return;
+                }
+            }
+            else
+            {
+                noPlayerTimer = 0f;
+            }
+            // Không return ở đây — cho phép rơi xuống AI logic bình thường bên dưới
         }
 
         // ─── Khi đang heal (elite) → đứng yên ───
@@ -96,6 +272,7 @@ public class EnemyAI : NetworkBehaviour
         // Khi đang tấn công:
         if (combatComp.IsAttacking)
         {
+            wasAttackingLastTick = true;
             if (combatComp.IsLeapAttacking)
             {
                 // Leap attack: di chuyển theo arc parabol
@@ -124,10 +301,56 @@ public class EnemyAI : NetworkBehaviour
             return;
         }
 
+        // ─── FLY MELEE RETREAT: Vừa đánh xong → bay lên cao ───
+        if (flyMeleeRetreat && isFlying && wasAttackingLastTick)
+        {
+            wasAttackingLastTick = false;
+            IsRetreatingUp = true;
+        }
+
+        if (IsRetreatingUp && flyMeleeRetreat && isFlying)
+        {
+            // Vị trí retreat: ngay trên đầu player + retreat altitude (một đoạn nhỏ)
+            float retreatY;
+            float retreatX = transform.position.x;
+
+            if (playerTarget != null)
+            {
+                retreatY = playerTarget.position.y + flyMeleeRetreatAltitude;
+                retreatX = playerTarget.position.x;
+            }
+            else
+            {
+                retreatY = transform.position.y + flyMeleeRetreatAltitude;
+            }
+
+            // Chỉ cần bay đủ cao so với player → xong
+            if (transform.position.y >= retreatY - 0.3f)
+            {
+                // Đã lên cao đủ → tiếp tục AI bình thường (sẽ lao xuống đánh tiếp)
+                IsRetreatingUp = false;
+            }
+            else
+            {
+                // Bay lên vị trí retreat
+                Vector2 retreatTarget = new Vector2(retreatX, retreatY);
+                Vector2 dir = (retreatTarget - (Vector2)transform.position).normalized;
+                rb.linearVelocity = dir * flyMeleeRetreatSpeed;
+                NetFacingDir = playerTarget != null
+                    ? (playerTarget.position.x > transform.position.x ? 1f : -1f)
+                    : NetFacingDir;
+                NetSpeed = flyMeleeRetreatSpeed;
+                return;
+            }
+        }
+
         bool previouslyChasing = isChasing;
 
-        FindPlayer();
-
+        // SỬA: Nếu enableSleep thì FindPlayer() đã được gọi ở sleep block rồi, không cần gọi lại
+        if (!enableSleep)
+        {
+            FindPlayer();
+        }
         if (previouslyChasing && !isChasing)
         {
             currentTarget = new Vector2(PickRandomPatrolX(), isFlying ? startPosition.y : transform.position.y);
@@ -184,7 +407,15 @@ public class EnemyAI : NetworkBehaviour
         }
         else
         {
-            Patrol();
+            // SỬA: Quái enableSleep không patrol, đứng yên chờ (sleep timer sẽ xử lý)
+            if (enableSleep)
+            {
+                rb.linearVelocity = isFlying ? Vector2.zero : new Vector2(0f, rb.linearVelocity.y);
+            }
+            else
+            {
+                Patrol();
+            }
 
             // Elite: roll heal ngẫu nhiên khi patrol
             if (eliteSkills != null)
@@ -347,6 +578,35 @@ public class EnemyAI : NetworkBehaviour
         cachedChasePlayer = default;
         isChasing = false;
         playerTarget = null;
+
+        // Reset sleep state khi hồi sinh
+        if (enableSleep)
+        {
+            IsSleeping = false;
+            IsReturningToSleep = false;
+            isWakingUp = false;
+            noPlayerTimer = 0f;
+        }
+    }
+
+    /// <summary>
+    /// Tìm vị trí ngủ: Raycast lên trần (hoặc xuống sàn) từ điểm spawn.
+    /// Nếu không tìm được surface → dùng startPosition.
+    /// </summary>
+    private Vector2 FindSleepPosition()
+    {
+        if (sleepSurfaceLayer == 0)
+            return startPosition;
+
+        Vector2 rayDir = sleepOnCeiling ? Vector2.up : Vector2.down;
+        RaycastHit2D hit = Physics2D.Raycast(startPosition, rayDir, 20f, sleepSurfaceLayer);
+        if (hit.collider != null)
+        {
+            // Dời ra 1 chút khỏi bề mặt để không chìm vào
+            float offset = sleepOnCeiling ? -0.3f : 0.3f;
+            return hit.point + new Vector2(0f, offset);
+        }
+        return startPosition;
     }
 
     void OnDrawGizmosSelected()
@@ -378,5 +638,22 @@ public class EnemyAI : NetworkBehaviour
         Vector2 wallOrigin = new Vector2(transform.position.x, transform.position.y + wallCheckHeightOffset);
         Gizmos.DrawRay(wallOrigin, Vector2.right * wallCheckDistance);
         Gizmos.DrawRay(wallOrigin, Vector2.left * wallCheckDistance);
+
+        // Vị trí ngủ - BLUE (Sleep)
+        if (enableSleep)
+        {
+            Vector2 sleepPos = Application.isPlaying ? sleepPosition : (Vector2)transform.position;
+            Gizmos.color = new Color(0.3f, 0.3f, 1f, 0.7f);
+            Gizmos.DrawWireSphere(sleepPos, 0.3f);
+            Gizmos.DrawLine(transform.position, (Vector3)sleepPos);
+
+            // Vẽ tia raycast tìm trần/sàn
+            if (!Application.isPlaying)
+            {
+                Gizmos.color = new Color(0.3f, 0.3f, 1f, 0.4f);
+                Vector2 rayDir = sleepOnCeiling ? Vector2.up : Vector2.down;
+                Gizmos.DrawRay(transform.position, (Vector3)(rayDir * 20f));
+            }
+        }
     }
 }
