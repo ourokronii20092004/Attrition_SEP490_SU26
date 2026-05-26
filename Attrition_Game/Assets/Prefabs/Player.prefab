@@ -35,8 +35,8 @@ Transform:
   m_GameObject: {fileID: 6831727267532873526}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -16.2, y: 49.38, z: 0}
-  m_LocalScale: {x: 9.148171, y: 9.536046, z: 1}
+  m_LocalPosition: {x: -41.5257, y: 47.069, z: 0}
+  m_LocalScale: {x: 0.8105186, y: 0.78099453, z: 6}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7035351457917283103}
@@ -103,8 +103,8 @@ CapsuleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0.00010820791}
-  m_Size: {x: 0.22000001, y: 0.38778156}
+  m_Offset: {x: -0.01633882, y: 0.000108007895}
+  m_Size: {x: 1.2591336, y: 2.3940566}
   m_Direction: 0
 --- !u!212 &6644002639049578078
 SpriteRenderer:
@@ -217,14 +217,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   combatComp: {fileID: 8687308238461515992}
   animationComp: {fileID: 8805790379459285585}
-  moveSpeed: 15
-  jumpForce: 20
-  doubleJumpForce: 12
+  moveSpeed: 10
+  jumpForce: 15
+  doubleJumpForce: 8
   rb: {fileID: 8158020556837803344}
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
-  dashSpeed: 25
+  dashSpeed: 20
   dashDuration: 0.2
   crouchSpeedMultiplier: 0.4
   variableJumpCutMultiplier: 0.5
@@ -269,7 +269,7 @@ MonoBehaviour:
   targetLayers:
     serializedVersion: 2
     m_Bits: 768
-  attackDamage: 1
+  attackDamage: 2
   chargeAttackDamage: 2
   chargeThreshold: 0.25
   currentAttackSpeed: 1

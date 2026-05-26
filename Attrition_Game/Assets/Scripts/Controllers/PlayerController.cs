@@ -2,6 +2,7 @@ using Fusion;
 using UnityEngine;
 using System.Collections;
 using Unity.Cinemachine;
+using Attrition.Controllers;
 
 public class PlayerController : NetworkBehaviour, IDamageable
 {
@@ -69,13 +70,9 @@ public class PlayerController : NetworkBehaviour, IDamageable
         if (animationComp == null) animationComp = GetComponent<PlayerAnimation>();
         if (rb == null) rb = GetComponent<Rigidbody2D>();
 
-        // Tắt va chạm vật lý giữa Player và Enemy để không bị đẩy nhau gây nhấp nháy
-        int playerLayer = gameObject.layer;
-        int enemyLayer = LayerMask.NameToLayer("Enemy");
-        if (enemyLayer >= 0)
-        {
-            Physics2D.IgnoreLayerCollision(playerLayer, enemyLayer, true);
-        }
+        // Tắt va chạm vật lý giữa Player và Enemy để Player đi xuyên qua được
+        // CHỈ dùng Collider-based (không dùng IgnoreLayerCollision vì nó chặn cả trigger → ContactDamage không hoạt động)
+        IgnoreAllEnemyColliders();
 
         // Set camera to follow local player
         if (HasInputAuthority)
@@ -96,16 +93,39 @@ public class PlayerController : NetworkBehaviour, IDamageable
         if (IsGrounded)
         {
             JumpCount = 0;
+
+            // SỬA LỖI GÓC ĐẤT: Nếu đang đứng trên mặt đất mà velocity Y > 0 (bị đẩy lên bởi góc cạnh)
+            // → ép velocity Y = 0 để không bị bật nhảy bất ngờ
+            if (rb.linearVelocity.y > 0.1f && !IsDashing)
+            {
+                rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
+            }
         }
 
         if (isDeadNetworked)
         {
-            if (IsGrounded && rb.bodyType != RigidbodyType2D.Kinematic)
+            // SỬA LỖI XÁC BAY: Khi chết, dừng di chuyển ngang nhưng vẫn để trọng lực kéo xuống
+            // Chỉ đóng băng hoàn toàn khi đã chạm đất
+            if (IsGrounded)
             {
-                rb.linearVelocity = Vector2.zero;
-                rb.bodyType = RigidbodyType2D.Kinematic;
-                Collider2D col = GetComponent<Collider2D>();
-                if (col != null) col.enabled = false;
+                if (rb.bodyType != RigidbodyType2D.Kinematic)
+                {
+                    rb.linearVelocity = Vector2.zero;
+                    rb.bodyType = RigidbodyType2D.Kinematic;
+                    Collider2D col = GetComponent<Collider2D>();
+                    if (col != null) col.enabled = false;
+                }
+            }
+            else
+            {
+                // Đang rơi xuống: dừng ngang, giữ trọng lực rơi tự nhiên
+                rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+                rb.gravityScale = fallGravity;
+                // Giới hạn tốc độ rơi
+                if (rb.linearVelocity.y < maxFallSpeed)
+                {
+                    rb.linearVelocity = new Vector2(0f, maxFallSpeed);
+                }
             }
             return;
         }
@@ -230,6 +250,8 @@ public class PlayerController : NetworkBehaviour, IDamageable
 
     private void CheckGround()
     {
+        // Dùng rb.Cast vì nó tự động dùng đúng physics scene của Fusion
+        // Fix góc đất được xử lý bằng cách clamp velocity Y ở trên
         IsGrounded = rb.Cast(Vector2.down, new ContactFilter2D { layerMask = groundLayer, useLayerMask = true }, new RaycastHit2D[1], 0.05f) > 0;
     }
 
@@ -284,5 +306,59 @@ public class PlayerController : NetworkBehaviour, IDamageable
         StartCoroutine(animationComp.BlinkRoutine(invincibleDuration));
         yield return new WaitForSeconds(invincibleDuration);
         isInvincible = false;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // IGNORE ENEMY COLLIDERS — Đảm bảo Player đi xuyên qua quái
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Tìm tất cả Enemy trong scene và ignore collision với collider của chúng.
+    /// Gọi khi Spawned() để xử lý Enemy đã có sẵn.
+    /// </summary>
+    private void IgnoreAllEnemyColliders()
+    {
+        Collider2D myCol = GetComponent<Collider2D>();
+        if (myCol == null) return;
+
+        EnemyController[] enemies = FindObjectsByType<EnemyController>(FindObjectsSortMode.None);
+        foreach (var enemy in enemies)
+        {
+            IgnoreCollidersWithObject(myCol, enemy.gameObject);
+        }
+    }
+
+    /// <summary>
+    /// Khi Player va chạm vật lý với bất kỳ object nào có EnemyController → ignore collision ngay.
+    /// Xử lý Enemy spawn sau Player.
+    /// </summary>
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        EnemyController enemy = collision.gameObject.GetComponentInParent<EnemyController>();
+        if (enemy == null) enemy = collision.gameObject.GetComponent<EnemyController>();
+        if (enemy != null)
+        {
+            Collider2D myCol = GetComponent<Collider2D>();
+            if (myCol != null)
+            {
+                IgnoreCollidersWithObject(myCol, enemy.gameObject);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Ignore tất cả non-trigger collider trên 1 GameObject (bao gồm children).
+    /// </summary>
+    private void IgnoreCollidersWithObject(Collider2D myCol, GameObject target)
+    {
+        Collider2D[] cols = target.GetComponentsInChildren<Collider2D>();
+        foreach (var col in cols)
+        {
+            // Chỉ ignore non-trigger collider (trigger dùng cho ContactDamage, cần giữ)
+            if (!col.isTrigger)
+            {
+                Physics2D.IgnoreCollision(myCol, col, true);
+            }
+        }
     }
 }
