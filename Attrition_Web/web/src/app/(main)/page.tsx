@@ -90,14 +90,12 @@ export default function LandingPage() {
                 Explore the original soundtrack — atmospheric compositions that bring 
                 Attrition&apos;s dark-fantasy world to life.
               </p>
-              <a
-                href="https://collection.hault.io.vn"
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                href="/collection"
                 className="btn btn-accent-subtle btn-lg"
               >
                 Open Collection →
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -121,11 +119,11 @@ export default function LandingPage() {
                 <p>Discuss strategies, report bugs, share your journey.</p>
               </div>
             </Link>
-            <Link href="/gallery" className={styles.quickLink}>
+            <Link href="/collection" className={styles.quickLink}>
               <span className={styles.quickLinkIcon}>→</span>
               <div>
-                <h4>Art Gallery</h4>
-                <p>Concept art, character designs, and world building.</p>
+                <h4>Collection</h4>
+                <p>Soundtrack, concept art, and game assets.</p>
               </div>
             </Link>
           </div>

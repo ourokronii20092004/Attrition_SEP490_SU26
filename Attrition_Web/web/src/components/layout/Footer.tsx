@@ -22,7 +22,7 @@ export default function Footer() {
             <nav className={styles.links}>
               <Link href="/wiki">Wiki</Link>
               <Link href="/forum">Forum</Link>
-              <Link href="/gallery">Gallery</Link>
+              <Link href="/collection">Collection</Link>
               <Link href="/download">Download</Link>
             </nav>
           </div>
@@ -33,9 +33,9 @@ export default function Footer() {
             <nav className={styles.links}>
               <Link href="/about">About</Link>
               <Link href="/forum">Discussions</Link>
-              <a href="/collection-relay" target="_blank" rel="noopener noreferrer">
+              <Link href="/collection">
                 Soundtrack
-              </a>
+              </Link>
             </nav>
           </div>
 
