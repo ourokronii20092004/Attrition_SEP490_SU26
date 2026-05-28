@@ -157,7 +157,7 @@ namespace Attrition.Controllers
                 {
                     IsKnockbackActive = true;
                     knockbackTimer = TickTimer.CreateFromSeconds(Runner, stunDuration);
-                    combatComp.IsAttacking = false; // Bị ngắt đòn đánh
+                    combatComp.CancelAllActions(); // Ngắt TOÀN BỘ hành động (attack, dash, leap, freeze anim)
 
                     // SỬA: Nếu quái không có trọng lực (quái bay), loại bỏ lực đẩy thẳng đứng để không bị bay tuốt lên trời
                     if (rb != null && rb.gravityScale == 0)
