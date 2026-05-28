@@ -6,6 +6,9 @@ public class PlayerCombat : NetworkBehaviour
     [SerializeField] private PlayerAnimation animationComp;
     [SerializeField] private Transform attackPoint;
     [SerializeField] private float attackRange = 1.5f;
+    [Range(0, 360)]
+    [Tooltip("Góc đánh của Player (180 = nửa vòng phía trước, 360 = xung quanh)")]
+    [SerializeField] private float attackAngle = 180f;
     [SerializeField] private LayerMask targetLayers;
 
     [Header("---- DAMAGE & SPEED ----")]
@@ -172,9 +175,9 @@ public class PlayerCombat : NetworkBehaviour
             Collider2D hit = results[i];
             if (hit.gameObject == this.gameObject) continue;
 
-            // CHỈ gây sát thương cho mục tiêu PHÍA TRƯỚC (trong 180° hướng nhìn)
+            // CHỈ gây sát thương cho mục tiêu trong góc đánh
             Vector2 dirToTarget = (hit.transform.position - transform.position).normalized;
-            if (Vector2.Dot(facingDir, dirToTarget) < 0f) continue; // Mục tiêu ở phía sau → bỏ qua
+            if (Vector2.Angle(facingDir, dirToTarget) > attackAngle / 2f) continue;
 
             IDamageable dmg = hit.GetComponentInParent<IDamageable>();
             if (dmg != null && !dmg.IsDead)
@@ -190,5 +193,32 @@ public class PlayerCombat : NetworkBehaviour
     {
         IsAttacking = false;
         IsChargingAttack = false;
+    }
+
+    void OnDrawGizmosSelected()
+    {
+        if (attackPoint == null) return;
+
+        // Xác định hướng nhìn
+        Vector3 facingDir = attackPoint.localPosition.x >= 0 ? Vector3.right : Vector3.left;
+
+        // Vòng tròn tầm đánh — vàng
+        Gizmos.color = new Color(1f, 0.92f, 0.016f, 0.4f);
+        Gizmos.DrawWireSphere(attackPoint.position, attackRange);
+
+        // Tô mờ vùng đánh
+        Gizmos.color = new Color(1f, 0.92f, 0.016f, 0.07f);
+        Gizmos.DrawSphere(attackPoint.position, attackRange);
+
+        // Tia biên góc đánh
+        Vector3 upperLimit = Quaternion.Euler(0, 0, attackAngle / 2f) * facingDir;
+        Vector3 lowerLimit = Quaternion.Euler(0, 0, -attackAngle / 2f) * facingDir;
+        Gizmos.color = new Color(1f, 0.4f, 0f, 0.8f);
+        Gizmos.DrawRay(attackPoint.position, upperLimit * attackRange);
+        Gizmos.DrawRay(attackPoint.position, lowerLimit * attackRange);
+
+        // Đường trung tâm — cam
+        Gizmos.color = new Color(1f, 0.6f, 0f, 0.5f);
+        Gizmos.DrawRay(attackPoint.position, facingDir * attackRange);
     }
 }

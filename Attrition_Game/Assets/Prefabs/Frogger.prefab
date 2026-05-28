@@ -221,6 +221,7 @@ MonoBehaviour:
   flyMeleeRetreatAltitude: 3
   flyMeleeRetreatSpeed: 8
   enableSleep: 0
+  sleepWakeOnTouch: 0
   sleepReturnDelay: 3
   returnToSleepSpeed: 6
   sleepOnCeiling: 1
@@ -266,6 +267,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a0f1e1211565723478e7f9602af1dfb1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyCombat
+  attacks:
+  - hitboxShape: 2
+    range: 1.5
+    angle: 90
+    rectSize: {x: 4.5, y: 1}
+    damage: 1
+    duration: 0.5
+    cooldown: 1.5
+  - hitboxShape: 2
+    range: 1.5
+    angle: 90
+    rectSize: {x: 4.5, y: 1}
+    damage: 1
+    duration: 0.5
+    cooldown: 1.5
   enableDashSlash: 0
   dashSlashAttacks: 01
   dashSpeed: 10
@@ -276,18 +292,9 @@ MonoBehaviour:
   leapDuration: 0.6
   animationComp: {fileID: 8344025966577294432}
   attackPoint: {fileID: 1057518791346881983}
-  attackRange: 5
-  attackRanges:
-  - 5
-  - 4
-  attackAngle: 39
   playerLayer:
     serializedVersion: 2
     m_Bits: 128
-  attackDamage: 1
-  attackVariants: 2
-  attackDuration: 0.5
-  attackCooldown: 1.5
   currentAttackSpeed: 1
   isRanged: 0
   projectilePrefab:

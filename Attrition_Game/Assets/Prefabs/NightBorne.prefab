@@ -342,11 +342,28 @@ MonoBehaviour:
   viewRadius: 10
   patrolRadius: 4
   isFlying: 0
+  flyMeleeRetreat: 0
+  flyMeleeRetreatAltitude: 3
+  flyMeleeRetreatSpeed: 8
+  enableSleep: 0
+  sleepWakeOnTouch: 0
+  sleepReturnDelay: 3
+  returnToSleepSpeed: 6
+  sleepOnCeiling: 1
+  sleepSurfaceLayer:
+    serializedVersion: 2
+    m_Bits: 0
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 64
   wallCheckDistance: 0.8
   wallCheckHeightOffset: 0.5
+  _IsSleeping:
+    _value: 0
+  _IsReturningToSleep:
+    _value: 0
+  _IsRetreatingUp:
+    _value: 0
   _NetSpeed: 0
   _NetFacingDir: 1
 --- !u!114 &1428157971251512417
@@ -375,6 +392,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a0f1e1211565723478e7f9602af1dfb1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyCombat
+  attacks:
+  - hitboxShape: 0
+    range: 4
+    angle: 154
+    rectSize: {x: 1, y: 1}
+    damage: 2
+    duration: 0.5
+    cooldown: 1.5
   enableDashSlash: 0
   dashSlashAttacks: 01
   dashSpeed: 10
@@ -385,16 +410,9 @@ MonoBehaviour:
   leapDuration: 0.6
   animationComp: {fileID: 1428157971251512417}
   attackPoint: {fileID: 6904719395874627402}
-  attackRange: 3
-  attackRanges: []
-  attackAngle: 118
   playerLayer:
     serializedVersion: 2
     m_Bits: 128
-  attackDamage: 1
-  attackVariants: 1
-  attackDuration: 0.55
-  attackCooldown: 1.5
   currentAttackSpeed: 1
   isRanged: 0
   projectilePrefab:

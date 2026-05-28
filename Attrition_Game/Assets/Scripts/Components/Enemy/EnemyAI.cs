@@ -29,9 +29,11 @@ public class EnemyAI : NetworkBehaviour
     [Tooltip("Tốc độ bay lên vị trí cao sau khi tấn công")]
     public float flyMeleeRetreatSpeed = 8f;
 
-    [Header("---- SLEEP / WAKEUP (Bat) ----")]
+    [Header("---- SLEEP / WAKEUP (Bat / Mimic) ----")]
     [Tooltip("Bật nếu quái ngủ tại chỗ spawn và thức dậy khi Player đến gần")]
     public bool enableSleep = false;
+    [Tooltip("Bật nếu quái thức dậy khi Player chạm collider (Mimic), thay vì khi Player vào tầm nhìn (Bat)")]
+    public bool sleepWakeOnTouch = false;
     [Tooltip("Thời gian chờ sau khi Player rời tầm nhìn mới bay về ngủ lại (giây)")]
     public float sleepReturnDelay = 3f;
     [Tooltip("Tốc độ bay về vị trí ngủ")]
@@ -140,6 +142,9 @@ public class EnemyAI : NetworkBehaviour
     {
         if (controller.IsKnockbackActive)
         {
+            // Reset retreat state khi bị stun
+            if (IsRetreatingUp) IsRetreatingUp = false;
+
             // Bị đánh → tỉnh dậy ngay
             if (enableSleep && IsSleeping)
             {
@@ -155,21 +160,29 @@ public class EnemyAI : NetworkBehaviour
         // ─── SLEEP LOGIC ───
         if (enableSleep)
         {
-            // Đang ngủ → đứng yên, chờ player vào tầm nhìn
+            // Đang ngủ → đứng yên
             if (IsSleeping)
             {
                 rb.linearVelocity = isFlying ? Vector2.zero : new Vector2(0f, rb.linearVelocity.y);
                 NetSpeed = 0f;
 
-                // Kiểm tra player có trong tầm nhìn không
-                FindPlayer();
-                if (isChasing && playerTarget != null)
+                if (sleepWakeOnTouch)
                 {
-                    // Thức dậy!
-                    IsSleeping = false;
-                    IsReturningToSleep = false;
-                    isWakingUp = true;
-                    noPlayerTimer = 0f;
+                    // Mimic: Chờ WakeUpFromTouch() được gọi từ MimicSleepTrigger
+                    // Không dùng FindPlayer() khi đang ngủ
+                }
+                else
+                {
+                    // Bat: Kiểm tra player có trong tầm nhìn không
+                    FindPlayer();
+                    if (isChasing && playerTarget != null)
+                    {
+                        // Thức dậy!
+                        IsSleeping = false;
+                        IsReturningToSleep = false;
+                        isWakingUp = true;
+                        noPlayerTimer = 0f;
+                    }
                 }
                 return;
             }
@@ -310,21 +323,26 @@ public class EnemyAI : NetworkBehaviour
 
         if (IsRetreatingUp && flyMeleeRetreat && isFlying)
         {
-            // Vị trí retreat: ngay trên đầu player + retreat altitude (một đoạn nhỏ)
+            // Vị trí retreat: bay lên cao hợp lý, tránh là đà dưới đất
             float retreatY;
             float retreatX = transform.position.x;
 
             if (playerTarget != null)
             {
-                retreatY = playerTarget.position.y + flyMeleeRetreatAltitude;
+                // Lấy điểm cao nhất giữa player và spawn, rồi cộng altitude
+                float baseY = Mathf.Max(playerTarget.position.y, startPosition.y);
+                retreatY = baseY + flyMeleeRetreatAltitude;
                 retreatX = playerTarget.position.x;
             }
             else
             {
-                retreatY = transform.position.y + flyMeleeRetreatAltitude;
+                retreatY = startPosition.y + flyMeleeRetreatAltitude;
             }
 
-            // Chỉ cần bay đủ cao so với player → xong
+            // Clamp tối thiểu: luôn bay cao hơn điểm spawn ít nhất 1 unit
+            retreatY = Mathf.Max(retreatY, startPosition.y + 1f);
+
+            // Chỉ cần bay đủ cao → xong
             if (transform.position.y >= retreatY - 0.3f)
             {
                 // Đã lên cao đủ → tiếp tục AI bình thường (sẽ lao xuống đánh tiếp)
@@ -363,7 +381,7 @@ public class EnemyAI : NetworkBehaviour
             float xDiff = currentTarget.x - transform.position.x;
             float dirX = xDiff > 0 ? 1f : -1f;
 
-            if (dist <= combatComp.attackRange)
+            if (dist <= combatComp.MaxAttackRange)
             {
                 // Trong tầm đánh → dừng lại và quay mặt về phía Player
                 rb.linearVelocity = isFlying ? Vector2.zero : new Vector2(0f, rb.linearVelocity.y);
@@ -400,7 +418,7 @@ public class EnemyAI : NetworkBehaviour
             }
 
             // Elite: roll heal ngẫu nhiên khi đang chase (nhưng không trong tầm đánh)
-            if (eliteSkills != null && !combatComp.IsAttacking && dist > combatComp.attackRange)
+            if (eliteSkills != null && !combatComp.IsAttacking && dist > combatComp.MaxAttackRange)
             {
                 eliteSkills.TryRandomHeal(controller.CurrentHealth, controller.maxHealth);
             }
@@ -567,8 +585,25 @@ public class EnemyAI : NetworkBehaviour
 
     public void ForceFacePlayer()
     {
+        // SỬA: Không quay mặt khi đang tấn công (giữ hướng đánh)
+        if (combatComp != null && combatComp.IsAttacking) return;
         if (playerTarget != null)
             NetFacingDir = playerTarget.position.x > transform.position.x ? 1f : -1f;
+    }
+
+    /// <summary>
+    /// Gọi bởi MimicSleepTrigger khi Player chạm collider của Mimic.
+    /// Chỉ hoạt động khi sleepWakeOnTouch = true.
+    /// </summary>
+    public void WakeUpFromTouch()
+    {
+        if (!enableSleep || !sleepWakeOnTouch) return;
+        if (!IsSleeping) return;
+
+        IsSleeping = false;
+        IsReturningToSleep = false;
+        isWakingUp = true;
+        noPlayerTimer = 0f;
     }
 
     public void NotifyRevived()
@@ -591,20 +626,36 @@ public class EnemyAI : NetworkBehaviour
 
     /// <summary>
     /// Tìm vị trí ngủ: Raycast lên trần (hoặc xuống sàn) từ điểm spawn.
+    /// Mimic (sleepWakeOnTouch) luôn ngủ dưới đất, raycast xuống sàn.
     /// Nếu không tìm được surface → dùng startPosition.
     /// </summary>
     private Vector2 FindSleepPosition()
     {
+        // Mimic: luôn ngủ dưới đất, bỏ qua sleepOnCeiling
+        if (sleepWakeOnTouch)
+        {
+            if (sleepSurfaceLayer == 0)
+                return startPosition;
+
+            // Raycast xuống sàn từ điểm spawn
+            RaycastHit2D hit = Physics2D.Raycast(startPosition, Vector2.down, 20f, sleepSurfaceLayer);
+            if (hit.collider != null)
+            {
+                return hit.point + new Vector2(0f, 0.3f); // Dời lên 1 chút khỏi sàn
+            }
+            return startPosition;
+        }
+
         if (sleepSurfaceLayer == 0)
             return startPosition;
 
         Vector2 rayDir = sleepOnCeiling ? Vector2.up : Vector2.down;
-        RaycastHit2D hit = Physics2D.Raycast(startPosition, rayDir, 20f, sleepSurfaceLayer);
-        if (hit.collider != null)
+        RaycastHit2D hitSurface = Physics2D.Raycast(startPosition, rayDir, 20f, sleepSurfaceLayer);
+        if (hitSurface.collider != null)
         {
             // Dời ra 1 chút khỏi bề mặt để không chìm vào
             float offset = sleepOnCeiling ? -0.3f : 0.3f;
-            return hit.point + new Vector2(0f, offset);
+            return hitSurface.point + new Vector2(0f, offset);
         }
         return startPosition;
     }
