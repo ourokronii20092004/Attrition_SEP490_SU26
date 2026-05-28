@@ -3,7 +3,6 @@ import { Inter, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ToastProvider } from "@/contexts/ToastContext";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { PlayerProvider } from "@/contexts/PlayerContext";
 import "./globals.css";
 
 
@@ -109,9 +108,7 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <ToastProvider>
-              <PlayerProvider>
-                {children}
-              </PlayerProvider>
+              {children}
             </ToastProvider>
           </AuthProvider>
         </ThemeProvider>

@@ -38,7 +38,7 @@ public class GameDataService : IGameDataService
     {
         var pubsub = _redis.GetSubscriber();
         var msg = JsonSerializer.Serialize(new { Entity = entity, Action = action, Data = data, Timestamp = DateTime.UtcNow });
-        await pubsub.PublishAsync("game-server-events", msg);
+        await pubsub.PublishAsync(RedisChannel.Literal("game-server-events"), msg);
     }
 
     public async Task<List<Item>> GetItemsAsync()

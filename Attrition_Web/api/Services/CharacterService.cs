@@ -1,20 +1,23 @@
 namespace Attrition.API.Services;
 
-using Attrition.API.Data;
 using Attrition.API.Models;
-using Microsoft.EntityFrameworkCore;
+using Attrition.API.Repositories;
 
 public class CharacterService : ICharacterService
 {
-    private readonly AppDbContext _db;
-    public CharacterService(AppDbContext db) => _db = db;
+    private readonly IRepository<Character> _characterRepo;
+    public CharacterService(IRepository<Character> characterRepo) => _characterRepo = characterRepo;
 
     public async Task<List<Character>> GetUserCharactersAsync(Guid userId)
-        => await _db.Characters.Where(c => c.UserId == userId).ToListAsync();
+    {
+        var (characters, _) = await _characterRepo.GetPagedAsync(1, int.MaxValue, c => c.UserId == userId);
+        return characters;
+    }
 
     public async Task<Character?> CreateCharacterAsync(Guid userId, string name, string charClass)
     {
-        if (await _db.Characters.AnyAsync(c => c.UserId == userId && c.CharacterName == name)) return null;
+        var (existing, _) = await _characterRepo.GetPagedAsync(1, 1, c => c.UserId == userId && c.CharacterName == name);
+        if (existing.Count > 0) return null;
 
         var character = new Character
         {
@@ -22,20 +25,27 @@ public class CharacterService : ICharacterService
             CharacterName = name,
             CharacterClass = charClass
         };
-        _db.Characters.Add(character);
-        await _db.SaveChangesAsync();
+        await _characterRepo.AddAsync(character);
         return character;
     }
 
     public async Task<Character?> GetCharacterAsync(Guid id, Guid userId)
-        => await _db.Characters.Include(c => c.Inventory).Include(c => c.Skills).FirstOrDefaultAsync(c => c.CharacterId == id && c.UserId == userId);
+    {
+        var (characters, _) = await _characterRepo.GetPagedAsync(
+            1, 1,
+            c => c.CharacterId == id && c.UserId == userId,
+            null,
+            c => c.Inventory,
+            c => c.Skills
+        );
+        return characters.FirstOrDefault();
+    }
 
     public async Task<bool> DeleteCharacterAsync(Guid id, Guid userId)
     {
         var ch = await GetCharacterAsync(id, userId);
         if (ch == null) return false;
-        _db.Characters.Remove(ch);
-        await _db.SaveChangesAsync();
+        await _characterRepo.DeleteAsync(ch);
         return true;
     }
 }

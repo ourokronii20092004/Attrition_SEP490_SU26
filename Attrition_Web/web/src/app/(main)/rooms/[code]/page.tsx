@@ -197,8 +197,8 @@ export default function RoomLobby() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-slate-950">
-        <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-indigo-500" role="status"></div>
+      <div className={styles.container} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
+        <div className="skeleton" style={{ width: 32, height: 32, borderRadius: '50%' }} />
       </div>
     );
   }
@@ -213,25 +213,25 @@ export default function RoomLobby() {
     <div className={styles.container}>
       <div className={styles.lobbyContainer}>
         {/* Lobby Top bar */}
-        <div className={styles.glassCard + ' flex flex-col md:flex-row justify-between items-start md:items-center gap-4'}>
+        <div className={styles.glassCard} style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--space-4)' }}>
           <div>
-            <span className="text-sm font-semibold tracking-wider text-indigo-400 uppercase">Room Session Lobby</span>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-white mt-1">{room.roomName}</h1>
-            <div className="flex items-center gap-4 mt-2 text-sm text-gray-400">
+            <span className="text-sm font-semibold" style={{ letterSpacing: '0.05em', color: 'var(--accent)', textTransform: 'uppercase' }}>Room Session Lobby</span>
+            <h1 style={{ fontSize: 'var(--text-3xl)', fontWeight: 'var(--weight-extrabold)', color: 'var(--text)', marginTop: 'var(--space-1)' }}>{room.roomName}</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)', marginTop: 'var(--space-2)', fontSize: 'var(--text-sm)', color: 'var(--text-tertiary)' }}>
               <span className="flex items-center gap-1">
                 <Users size={16} /> {room.players.length} / {room.maxPlayers} Players
               </span>
               <span className="flex items-center gap-1">
-                <Clock size={16} /> Status: <strong className="text-indigo-300 capitalize">{room.status}</strong>
+                <Clock size={16} /> Status: <strong style={{ color: 'var(--accent)', textTransform: 'capitalize' }}>{room.status}</strong>
               </span>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             <div className={styles.inviteCodeBox}>
-              <span className="text-xs text-indigo-300 uppercase tracking-widest mr-1">Invite Code</span>
+              <span className="text-xs" style={{ color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.1em', marginRight: 'var(--space-1)' }}>Invite Code</span>
               <span className={styles.inviteCode}>{room.roomCode}</span>
-              <button onClick={copyCode} className="text-indigo-400 hover:text-indigo-200 transition">
+              <button onClick={copyCode} className="btn btn-ghost btn-sm btn-icon">
                 <Copy size={16} />
               </button>
             </div>
@@ -247,7 +247,7 @@ export default function RoomLobby() {
         {/* Players grid */}
         <div>
           <div className={styles.sectionTitle}>
-            <Users size={24} className="text-indigo-400" />
+            <Users size={24} style={{ color: 'var(--accent)' }} />
             <h2>Lobby Players</h2>
           </div>
 
@@ -267,20 +267,20 @@ export default function RoomLobby() {
                     </span>
                   )}
 
-                  <div className={styles.charAvatar + ' mb-3'}>
+                  <div className={styles.charAvatar} style={{ marginBottom: 'var(--space-3)' }}>
                     {player.character?.name[0].toUpperCase() || 'P'}
                   </div>
 
-                  <span className="font-bold text-lg text-white">
-                    {player.user?.username} {isSelf && <span className="text-xs text-indigo-400 font-normal">(You)</span>}
+                  <span style={{ fontWeight: 'var(--weight-bold)', fontSize: 'var(--text-lg)', color: 'var(--text)' }}>
+                    {player.user?.username} {isSelf && <span style={{ fontSize: 'var(--text-xs)', color: 'var(--accent)', fontWeight: 'var(--weight-normal)' }}>(You)</span>}
                   </span>
 
-                  <span className="text-xs text-indigo-300 font-semibold tracking-wider uppercase mt-1">
+                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--accent)', fontWeight: 'var(--weight-semibold)', letterSpacing: '0.05em', textTransform: 'uppercase', marginTop: 'var(--space-1)' }}>
                     {player.character?.class} (Lv. {player.character?.level})
                   </span>
 
-                  <span className="text-sm font-medium text-indigo-200 mt-1 italic">
-                    "{player.character?.name}"
+                  <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--weight-medium)', color: 'var(--text-secondary)', marginTop: 'var(--space-1)', fontStyle: 'italic' }}>
+                    &ldquo;{player.character?.name}&rdquo;
                   </span>
 
                   <div className={styles.readyIndicator}>
@@ -294,26 +294,26 @@ export default function RoomLobby() {
 
             {/* Empty slots placeholders */}
             {Array.from({ length: Math.max(0, room.maxPlayers - room.players.length) }).map((_, idx) => (
-              <div key={`empty-${idx}`} className={`${styles.playerCard} border-dashed opacity-40`}>
-                <div className="w-12 h-12 rounded-full border-2 border-dashed border-gray-600 flex items-center justify-center text-gray-500 mb-3">
+              <div key={`empty-${idx}`} className={styles.playerCard} style={{ borderStyle: 'dashed', opacity: 0.4 }}>
+                <div style={{ width: 48, height: 48, borderRadius: '50%', border: '2px dashed var(--border-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', marginBottom: 'var(--space-3)' }}>
                   +
                 </div>
-                <span className="font-semibold text-gray-500">Waiting for Player...</span>
-                <span className="text-xs text-gray-600 uppercase tracking-widest mt-1">Empty Slot</span>
+                <span style={{ fontWeight: 'var(--weight-semibold)', color: 'var(--text-muted)' }}>Waiting for Player...</span>
+                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 'var(--space-1)' }}>Empty Slot</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* Lobby Footer Action buttons */}
-        <div className={styles.glassCard + ' flex flex-col md:flex-row justify-between items-center gap-4 border-indigo-950 bg-slate-900/50'}>
+        <div className={styles.glassCard} style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--space-4)' }}>
           <div className="flex items-center gap-2">
             {allReady ? (
-              <span className="flex items-center gap-2 text-emerald-400 font-semibold text-sm">
+              <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', color: 'var(--success)', fontWeight: 'var(--weight-semibold)', fontSize: 'var(--text-sm)' }}>
                 <CheckCircle size={18} /> All players are ready!
               </span>
             ) : (
-              <span className="flex items-center gap-2 text-amber-400 font-semibold text-sm">
+              <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', color: 'var(--warning)', fontWeight: 'var(--weight-semibold)', fontSize: 'var(--text-sm)' }}>
                 <Clock size={18} /> Waiting for all players to set Ready...
               </span>
             )}
@@ -333,7 +333,7 @@ export default function RoomLobby() {
               <button
                 onClick={handleStartGame}
                 disabled={startLoading || !allReady || room.status !== 'waiting'}
-                className="btn btn-primary bg-gradient-to-r from-fuchsia-600 to-indigo-600 hover:from-fuchsia-500 hover:to-indigo-500 text-white font-extrabold px-8 flex items-center gap-2 shadow-lg shadow-indigo-500/25"
+                className="btn btn-primary btn-lg"
               >
                 <Play size={16} />
                 {startLoading ? 'Launching...' : 'Start Game'}

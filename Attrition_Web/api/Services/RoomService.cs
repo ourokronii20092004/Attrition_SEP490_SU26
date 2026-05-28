@@ -59,6 +59,7 @@ public class RoomService : IRoomService
         
         var room = await _roomRepo.GetByIdAsync(roomId);
         if (room == null) return false;
+        if (room.Status != RoomStatus.Waiting) return false;
 
         var count = await _roomPlayerRepo.CountAsync(rp => rp.RoomId == roomId);
         if (count >= room.MaxPlayers) return false;

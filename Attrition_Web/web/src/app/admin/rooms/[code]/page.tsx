@@ -193,20 +193,21 @@ export default function AdminRoomInspector() {
         <button onClick={() => router.push('/admin/rooms')} className="btn btn-secondary btn-sm p-2">
           <ArrowLeft size={16} />
         </button>
-        <span className="text-sm font-semibold tracking-wider text-indigo-400 uppercase">Lobby Session Telemetry</span>
+        <span className="text-sm font-semibold" style={{ letterSpacing: '0.05em', color: 'var(--accent)', textTransform: 'uppercase' }}>Lobby Session Telemetry</span>
       </div>
 
       <div className={styles.header}>
         <div>
           <h1 className={styles.title}>Session Inspector: {code}</h1>
-          <p className="text-gray-400 mt-1">Real-time Redis telemetry, game command dispatch pipelines, and visual coordinate rendering.</p>
+          <p className="text-sm" style={{ color: 'var(--text-tertiary)', marginTop: 'var(--space-1)' }}>Real-time Redis telemetry, game command dispatch pipelines, and visual coordinate rendering.</p>
         </div>
 
         <button 
           onClick={toggleSimulation}
-          className={`btn ${isSimulating ? 'btn-secondary text-pink-500 border-pink-900/30' : 'btn-primary'} flex items-center gap-2`}
+          className={`btn ${isSimulating ? 'btn-danger' : 'btn-primary'}`}
+          style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}
         >
-          <Play size={16} className={isSimulating ? 'animate-pulse' : ''} />
+          <Play size={16} />
           {isSimulating ? 'Stop Telemetry Simulation' : 'Launch Mock Simulator'}
         </button>
       </div>
@@ -216,45 +217,45 @@ export default function AdminRoomInspector() {
         <div className="flex flex-col gap-6">
           <div className={styles.panel}>
             <div className={styles.panelTitle}>
-              <Users size={18} className="inline mr-2 text-indigo-400" />
+              <Users size={18} style={{ display: 'inline', marginRight: 'var(--space-2)', color: 'var(--accent)' }} />
               Room Players
             </div>
 
             {telemetry ? (
               <div className="flex flex-col gap-4">
-                <div className="grid grid-cols-3 gap-4 text-sm bg-slate-900/40 p-3 rounded-lg border border-slate-800">
-                  <div>Scene: <strong className="text-white">{telemetry.scene}</strong></div>
-                  <div>Monsters: <strong className="text-white">{telemetry.monstersAlive}</strong></div>
-                  <div>Elapsed: <strong className="text-white">{telemetry.secondsElapsed}s</strong></div>
+                <div className="card" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-4)', fontSize: 'var(--text-sm)', padding: 'var(--space-3)' }}>
+                  <div>Scene: <strong style={{ color: 'var(--text)' }}>{telemetry.scene}</strong></div>
+                  <div>Monsters: <strong style={{ color: 'var(--text)' }}>{telemetry.monstersAlive}</strong></div>
+                  <div>Elapsed: <strong style={{ color: 'var(--text)' }}>{telemetry.secondsElapsed}s</strong></div>
                 </div>
 
                 <div className="flex flex-col gap-3">
                   {telemetry.players.map((p, idx) => (
-                    <div key={idx} className="flex justify-between items-center p-3 bg-slate-900/20 border border-slate-800/50 rounded-lg">
+                    <div key={idx} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--space-3)' }}>
                       <div>
-                        <span className="font-bold text-white block">{p.username}</span>
-                        <span className="text-xs text-indigo-300 uppercase tracking-widest">{p.characterClass}</span>
+                        <span style={{ fontWeight: 'var(--weight-bold)', color: 'var(--text)', display: 'block' }}>{p.username}</span>
+                        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{p.characterClass}</span>
                       </div>
-                      <div className="text-right">
-                        <span className="text-xs text-gray-400 block">Position: ({Math.round(p.x)}, {Math.round(p.y)})</span>
-                        <span className="text-xs text-emerald-400 font-semibold">HP: {p.hp}/{p.maxHp}</span>
+                      <div style={{ textAlign: 'right' }}>
+                        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', display: 'block' }}>Position: ({Math.round(p.x)}, {Math.round(p.y)})</span>
+                        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--success)', fontWeight: 'var(--weight-semibold)' }}>HP: {p.hp}/{p.maxHp}</span>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
             ) : (
-              <div className="text-center py-10 text-gray-400">
-                <Compass className="mx-auto mb-2 opacity-30 text-indigo-400" size={36} />
+              <div className="empty-state" style={{ padding: 'var(--space-10)' }}>
+                <span className="empty-state-icon">🧭</span>
                 <p>Waiting for Photon active session state...</p>
-                <p className="text-xs text-gray-500 mt-1">Activate the Telemetry Simulator on the right to start plotting mock values.</p>
+                <p className="text-xs" style={{ color: 'var(--text-muted)', marginTop: 'var(--space-1)' }}>Activate the Telemetry Simulator on the right to start plotting mock values.</p>
               </div>
             )}
           </div>
 
           <div className={styles.panel}>
             <div className={styles.panelTitle}>
-              <Zap size={18} className="inline mr-2 text-indigo-400" />
+              <Zap size={18} style={{ display: 'inline', marginRight: 'var(--space-2)', color: 'var(--accent)' }} />
               Developer Command Dispatcher
             </div>
             
@@ -294,7 +295,7 @@ export default function AdminRoomInspector() {
 
           <div className={styles.panel}>
             <div className={styles.panelTitle}>
-              <TermIcon size={18} className="inline mr-2 text-emerald-400" />
+              <TermIcon size={18} style={{ display: 'inline', marginRight: 'var(--space-2)', color: 'var(--success)' }} />
               Telemetry Log Terminal
             </div>
             <div className={styles.terminal}>
@@ -314,7 +315,7 @@ export default function AdminRoomInspector() {
         {/* Right Column: Radar Sweep 2D Map */}
         <div className={styles.panel}>
           <div className={styles.panelTitle}>
-            <Map size={18} className="inline mr-2 text-indigo-400" />
+              <Map size={18} style={{ display: 'inline', marginRight: 'var(--space-2)', color: 'var(--accent)' }} />
             2D Arena Map Plot
           </div>
 
@@ -339,8 +340,8 @@ export default function AdminRoomInspector() {
               })}
             </div>
 
-            <div className="text-center text-xs text-gray-500 mt-2">
-              <Compass size={14} className="inline mr-1" /> Grid coordinates represent active [500x500] gameplay bounds.
+            <div style={{ textAlign: 'center', fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginTop: 'var(--space-2)' }}>
+              <Compass size={14} style={{ display: 'inline', marginRight: 'var(--space-1)' }} /> Grid coordinates represent active [500x500] gameplay bounds.
             </div>
           </div>
         </div>

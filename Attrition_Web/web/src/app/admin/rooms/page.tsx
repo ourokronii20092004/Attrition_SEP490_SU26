@@ -78,40 +78,43 @@ export default function AdminRooms() {
       <div className={styles.header}>
         <div>
           <h1 className={styles.title}>Manage Game Rooms</h1>
-          <p className="text-gray-400 mt-1">Monitor active lobbies, inspect real-time player telemetry, and publish admin game commands.</p>
+          <p className="text-sm" style={{ color: 'var(--text-tertiary)', marginTop: 'var(--space-1)' }}>Monitor active lobbies, inspect real-time player telemetry, and publish admin game commands.</p>
         </div>
         <button 
           onClick={fetchRooms} 
           className="btn btn-secondary btn-md flex items-center gap-2"
           disabled={loading}
         >
-          <RefreshCw className={loading ? 'animate-spin' : ''} size={16} />
+          <RefreshCw style={loading ? { animation: 'spin 0.8s linear infinite' } : {}} size={16} />
           Refresh list
         </button>
       </div>
 
       <div className="flex justify-between items-center mb-6 gap-4">
         {/* Search bar */}
-        <div className="relative flex-1 max-w-md">
+        <div style={{ position: 'relative', flex: 1, maxWidth: 400 }}>
           <input 
             type="text" 
             placeholder="Search by room name or code..."
-            className="w-full bg-slate-900 border border-slate-800 rounded-md py-2 pl-10 pr-4 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
+            className="input"
+            style={{ paddingLeft: 'var(--space-10)' }}
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
           />
-          <Search className="absolute left-3 top-2.5 text-gray-500" size={18} />
+          <span style={{ position: 'absolute', left: 'var(--space-3)', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>
+            <Search size={18} />
+          </span>
         </div>
       </div>
 
       <div className={styles.tableCard}>
         {loading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-indigo-500" role="status"></div>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 'var(--space-20) 0' }}>
+            <div className="skeleton" style={{ width: 32, height: 32, borderRadius: '50%' }} />
           </div>
         ) : filteredRooms.length === 0 ? (
-          <div className="text-center py-10 text-gray-500">
-            <Gamepad2 size={48} className="mx-auto mb-3 opacity-30" />
+          <div className="empty-state" style={{ padding: 'var(--space-10)' }}>
+            <span className="empty-state-icon">🎮</span>
             <p>No game rooms matching search found.</p>
           </div>
         ) : (
@@ -131,10 +134,10 @@ export default function AdminRooms() {
               {filteredRooms.map(room => (
                 <tr key={room.roomId}>
                   <td>
-                    <strong className="text-indigo-400 font-mono text-sm">{room.roomCode}</strong>
+                    <strong style={{ color: 'var(--accent)', fontFamily: 'var(--font-mono)', fontSize: 'var(--text-sm)' }}>{room.roomCode}</strong>
                   </td>
                   <td>
-                    <span className="font-semibold text-white">{room.roomName}</span>
+                    <span style={{ fontWeight: 'var(--weight-semibold)', color: 'var(--text)' }}>{room.roomName}</span>
                   </td>
                   <td>
                     {room.isPrivate ? (
@@ -148,7 +151,7 @@ export default function AdminRooms() {
                     )}
                   </td>
                   <td>
-                    <span className="text-gray-300 font-semibold">{room.players?.length || 0} / {room.maxPlayers}</span>
+                    <span style={{ color: 'var(--text-secondary)', fontWeight: 'var(--weight-semibold)' }}>{room.players?.length || 0} / {room.maxPlayers}</span>
                   </td>
                   <td>
                     {room.status === 'waiting' && (
@@ -162,7 +165,7 @@ export default function AdminRooms() {
                     )}
                   </td>
                   <td>
-                    <span className="text-gray-400 text-xs flex items-center gap-1">
+                    <span style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-xs)', display: 'flex', alignItems: 'center', gap: 'var(--space-1)' }}>
                       <Clock size={12} />
                       {new Date(room.createdAt).toLocaleString()}
                     </span>
@@ -178,7 +181,7 @@ export default function AdminRooms() {
                       {room.status !== 'ended' && (
                         <button 
                           onClick={() => handleTerminateRoom(room.roomCode)}
-                          className="btn btn-secondary btn-sm text-pink-500 border-pink-900/30 hover:bg-pink-950/20 py-1"
+                          className="btn btn-danger btn-sm"
                         >
                           <Trash2 size={14} /> End
                         </button>
