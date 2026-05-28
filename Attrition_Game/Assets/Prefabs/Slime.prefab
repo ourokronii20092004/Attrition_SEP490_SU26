@@ -114,7 +114,6 @@ GameObject:
   - component: {fileID: 2980856980071944095}
   - component: {fileID: 3954889945825479461}
   - component: {fileID: 8267031098573397828}
-  - component: {fileID: 6210745562468537874}
   m_Layer: 8
   m_Name: Slime
   m_TagString: Enemy
@@ -274,11 +273,28 @@ MonoBehaviour:
   viewRadius: 15
   patrolRadius: 3
   isFlying: 0
+  flyMeleeRetreat: 0
+  flyMeleeRetreatAltitude: 3
+  flyMeleeRetreatSpeed: 8
+  enableSleep: 0
+  sleepWakeOnTouch: 0
+  sleepReturnDelay: 3
+  returnToSleepSpeed: 6
+  sleepOnCeiling: 1
+  sleepSurfaceLayer:
+    serializedVersion: 2
+    m_Bits: 0
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 64
   wallCheckDistance: 0.8
   wallCheckHeightOffset: 0.5
+  _IsSleeping:
+    _value: 0
+  _IsReturningToSleep:
+    _value: 0
+  _IsRetreatingUp:
+    _value: 0
   _NetSpeed: 0
   _NetFacingDir: 1
 --- !u!114 &7857092475179132347
@@ -307,6 +323,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a0f1e1211565723478e7f9602af1dfb1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyCombat
+  attacks:
+  - hitboxShape: 0
+    range: 3
+    angle: 77
+    rectSize: {x: 1, y: 1}
+    damage: 1
+    duration: 0.2
+    cooldown: 1.5
   enableDashSlash: 1
   dashSlashAttacks: 01
   dashSpeed: 15
@@ -317,16 +341,9 @@ MonoBehaviour:
   leapDuration: 0.6
   animationComp: {fileID: 7857092475179132347}
   attackPoint: {fileID: 7502643014723364202}
-  attackRange: 4
-  attackRanges: []
-  attackAngle: 0
   playerLayer:
     serializedVersion: 2
     m_Bits: 128
-  attackDamage: 1
-  attackVariants: 1
-  attackDuration: 0.2
-  attackCooldown: 1.5
   currentAttackSpeed: 1
   isRanged: 0
   projectilePrefab:
@@ -474,20 +491,6 @@ Animation:
   m_AnimatePhysics: 0
   m_UpdateMode: 0
   m_CullingType: 0
---- !u!114 &6210745562468537874
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2310814986676720764}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 1541381998, guid: e725a070cec140c4caffb81624c8c787, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObjectPrefabData
-  Guid:
-    RawGuidValue: c948649596b77424aad2dc36b7fa4f88
 --- !u!1 &7739523964751484513
 GameObject:
   m_ObjectHideFlags: 0
