@@ -266,6 +266,7 @@ MonoBehaviour:
   animationComp: {fileID: 8805790379459285585}
   attackPoint: {fileID: 7035351457917283103}
   attackRange: 3
+  attackAngle: 75
   targetLayers:
     serializedVersion: 2
     m_Bits: 768

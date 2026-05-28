@@ -229,8 +229,12 @@ public class PlayerController : NetworkBehaviour, IDamageable
             }
 
             // --- FACING ---
-            if (data.horizontalInput > 0) IsFacingRight = true;
-            else if (data.horizontalInput < 0) IsFacingRight = false;
+            // SỬA: Không cho quay mặt khi đang tấn công hoặc giữ nút đánh
+            if (!combatComp.IsAttacking && !combatComp.IsHoldingAttack)
+            {
+                if (data.horizontalInput > 0) IsFacingRight = true;
+                else if (data.horizontalInput < 0) IsFacingRight = false;
+            }
 
             _buttonsPrev = data.buttons;
 
