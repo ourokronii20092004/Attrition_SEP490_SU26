@@ -5,15 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
-import { formatDate } from '@/lib/utils';
-import { 
-  Search, 
-  BookOpen, 
-  MessageSquare, 
-  User, 
-  HelpCircle,
-  Hash
-} from 'lucide-react';
+import { formatDate, cn } from '@/lib/utils';
 
 interface SearchWikiResult {
   id: string;
@@ -86,7 +78,6 @@ function SearchPageContent() {
   // Safe search highlight matching function
   const highlightText = (text: string, term: string) => {
     if (!term || !text) return text;
-    // Extract actual search term in case tags exist (e.g. wiki:boss -> boss)
     const cleanTerm = term.replace(/^(wiki|user|post):\s*/i, '').trim();
     if (!cleanTerm) return text;
 
@@ -96,7 +87,7 @@ function SearchPageContent() {
       <>
         {parts.map((part, i) => 
           regex.test(part) ? (
-            <mark key={i} className="bg-yellow-500/30 text-yellow-200 px-0.5 rounded">{part}</mark>
+            <mark key={i} style={{ background: 'var(--warning-bg)', color: 'var(--warning)', padding: '0 2px', borderRadius: 'var(--radius-sm)' }}>{part}</mark>
           ) : part
         )}
       </>
@@ -113,23 +104,50 @@ function SearchPageContent() {
     results.postResults.length > 0
   );
 
+  const tabStyle = (isActive: boolean): React.CSSProperties => ({
+    paddingBottom: 'var(--space-3)',
+    paddingInline: 'var(--space-1)',
+    borderBottom: isActive ? '2px solid var(--accent)' : '2px solid transparent',
+    color: isActive ? 'var(--accent)' : 'var(--text-tertiary)',
+    background: 'none',
+    border: 'none',
+    borderBottomWidth: 2,
+    borderBottomStyle: 'solid',
+    borderBottomColor: isActive ? 'var(--accent)' : 'transparent',
+    cursor: 'pointer',
+    transition: 'color 0.2s, border-color 0.2s'
+  });
+
+  const sectionHeaderStyle: React.CSSProperties = {
+    fontSize: 'var(--text-xs)',
+    fontWeight: 'var(--weight-semibold)' as any,
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    color: 'var(--text-tertiary)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 'var(--space-2)',
+    marginBottom: 'var(--space-2)'
+  };
+
   return (
-    <div className="container" style={{ maxWidth: '1000px', padding: '40px 20px', color: '#f3f4f6' }}>
+    <div className="page container" style={{ maxWidth: 1000 }}>
       {/* Search Bar Input */}
-      <form onSubmit={handleSearchSubmit} className="flex gap-2 mb-8">
-        <div className="relative flex-1">
+      <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-8)' }}>
+        <div style={{ position: 'relative', flex: 1 }}>
           <input
             type="text"
-            className="w-full bg-slate-900 border border-slate-800 rounded-md py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 text-lg"
+            className="input"
+            style={{ paddingLeft: 'var(--space-12)', fontSize: 'var(--text-lg)' }}
             placeholder="Search wiki, posts, users... e.g. Boss guides, user:Admin..."
             value={inputVal}
             onChange={e => setInputVal(e.target.value)}
           />
-          <Search className="absolute left-4 top-3.5 text-gray-500" size={22} />
+          <span style={{ position: 'absolute', left: 'var(--space-4)', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>🔍</span>
         </div>
         <button 
           type="submit" 
-          className="btn btn-primary bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 px-8 text-lg font-bold"
+          className="btn btn-primary btn-lg"
           disabled={loading}
         >
           {loading ? 'Searching...' : 'Search'}
@@ -137,83 +155,90 @@ function SearchPageContent() {
       </form>
 
       {/* Advanced Tag Tips */}
-      <div className="bg-slate-900/40 border border-slate-800/80 rounded-lg p-3 mb-6 text-xs text-gray-400 flex items-center gap-2">
-        <Hash size={14} className="text-indigo-400" />
-        <span><strong>ProTip:</strong> Scope searches using filters like <code className="text-indigo-300 font-mono">wiki:Boss</code>, <code className="text-indigo-300 font-mono">user:Admin</code>, or <code className="text-indigo-300 font-mono">post:Lore</code>.</span>
+      <div
+        className="card"
+        style={{
+          padding: 'var(--space-3)',
+          marginBottom: 'var(--space-6)',
+          fontSize: 'var(--text-xs)',
+          color: 'var(--text-tertiary)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 'var(--space-2)'
+        }}
+      >
+        <span style={{ color: 'var(--accent)' }}>#</span>
+        <span>
+          <strong>ProTip:</strong> Scope searches using filters like{' '}
+          <code style={{ color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>wiki:Boss</code>,{' '}
+          <code style={{ color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>user:Admin</code>, or{' '}
+          <code style={{ color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>post:Lore</code>.
+        </span>
       </div>
 
       {loading ? (
-        <div className="flex justify-center items-center py-20">
-          <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-indigo-500" role="status"></div>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 'var(--space-20) 0' }}>
+          <div className="skeleton" style={{ width: 32, height: 32, borderRadius: '50%' }} />
         </div>
       ) : !results ? (
-        <div className="text-center py-20 text-gray-500">
-          <Search size={48} className="mx-auto mb-3 opacity-30 text-indigo-300" />
-          <p className="text-lg font-semibold">Start exploring the Attrition Universe</p>
-          <p className="text-sm">Type a search query above to browse guides, players, and forum threads.</p>
+        <div className="empty-state">
+          <span className="empty-state-icon">🔍</span>
+          <h3>Start exploring the Attrition Universe</h3>
+          <p>Type a search query above to browse guides, players, and forum threads.</p>
         </div>
       ) : !hasResults ? (
-        <div className="text-center py-20 text-gray-500">
-          <HelpCircle size={48} className="mx-auto mb-3 opacity-30" />
-          <p className="text-lg font-semibold">No results found for "{query}"</p>
-          <p className="text-sm mt-1">Double check spelling or try adding advanced filters.</p>
+        <div className="empty-state">
+          <span className="empty-state-icon">❓</span>
+          <h3>No results found for &ldquo;{query}&rdquo;</h3>
+          <p>Double check spelling or try adding advanced filters.</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-6">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
           {/* Tab selector */}
-          <div className="flex border-b border-slate-850 gap-6 text-sm font-semibold mb-4">
-            <button 
-              onClick={() => setActiveTab('all')}
-              className={`pb-3 px-1 border-b-2 ${activeTab === 'all' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-gray-400 hover:text-white'}`}
-            >
+          <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', gap: 'var(--space-6)', fontSize: 'var(--text-sm)', fontWeight: 'var(--weight-semibold)' as any, marginBottom: 'var(--space-4)' }}>
+            <button onClick={() => setActiveTab('all')} style={tabStyle(activeTab === 'all')}>
               All Results
             </button>
             {results.wikiResults.length > 0 && (
-              <button 
-                onClick={() => setActiveTab('wiki')}
-                className={`pb-3 px-1 border-b-2 ${activeTab === 'wiki' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-gray-400 hover:text-white'}`}
-              >
+              <button onClick={() => setActiveTab('wiki')} style={tabStyle(activeTab === 'wiki')}>
                 Wiki ({results.wikiResults.length})
               </button>
             )}
             {results.postResults.length > 0 && (
-              <button 
-                onClick={() => setActiveTab('posts')}
-                className={`pb-3 px-1 border-b-2 ${activeTab === 'posts' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-gray-400 hover:text-white'}`}
-              >
+              <button onClick={() => setActiveTab('posts')} style={tabStyle(activeTab === 'posts')}>
                 Forum ({results.postResults.length})
               </button>
             )}
             {results.userResults.length > 0 && (
-              <button 
-                onClick={() => setActiveTab('users')}
-                className={`pb-3 px-1 border-b-2 ${activeTab === 'users' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-gray-400 hover:text-white'}`}
-              >
+              <button onClick={() => setActiveTab('users')} style={tabStyle(activeTab === 'users')}>
                 Users ({results.userResults.length})
               </button>
             )}
           </div>
 
           {/* Results Grid */}
-          <div className="flex flex-col gap-6">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
             {/* Wiki results */}
             {(activeTab === 'all' || activeTab === 'wiki') && results.wikiResults.length > 0 && (
-              <div className="flex flex-col gap-3">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 flex items-center gap-2 mb-2">
-                  <BookOpen size={16} className="text-indigo-400" />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+                <h3 style={sectionHeaderStyle}>
+                  <span style={{ color: 'var(--accent)' }}>📖</span>
                   Wiki Lore Guides
                 </h3>
-                <div className="grid gap-3">
+                <div style={{ display: 'grid', gap: 'var(--space-3)' }}>
                   {results.wikiResults.map(art => (
                     <Link 
                       key={art.id} 
                       href={getWikiUrl(art.slug)}
-                      className="block p-4 rounded-xl border border-slate-800 bg-slate-900/30 hover:border-indigo-900/40 hover:bg-indigo-950/5 transition"
+                      className="card card-hoverable"
+                      style={{ padding: 'var(--space-4)', display: 'block', textDecoration: 'none' }}
                     >
-                      <strong className="text-white text-lg block hover:text-indigo-300 transition">
+                      <strong style={{ color: 'var(--text)', fontSize: 'var(--text-lg)', display: 'block' }}>
                         {highlightText(art.title, query)}
                       </strong>
-                      <span className="text-xs text-gray-500 block mt-1">attrition.wiki/articles/{art.slug}</span>
+                      <span className="text-xs" style={{ color: 'var(--text-muted)', display: 'block', marginTop: 'var(--space-1)' }}>
+                        attrition.wiki/articles/{art.slug}
+                      </span>
                     </Link>
                   ))}
                 </div>
@@ -222,25 +247,26 @@ function SearchPageContent() {
 
             {/* Forum post results */}
             {(activeTab === 'all' || activeTab === 'posts') && results.postResults.length > 0 && (
-              <div className="flex flex-col gap-3">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 flex items-center gap-2 mb-2">
-                  <MessageSquare size={16} className="text-indigo-400" />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+                <h3 style={sectionHeaderStyle}>
+                  <span style={{ color: 'var(--accent)' }}>💬</span>
                   Forum Posts & Discussions
                 </h3>
-                <div className="grid gap-3">
+                <div style={{ display: 'grid', gap: 'var(--space-3)' }}>
                   {results.postResults.map(post => (
                     <Link 
                       key={post.id} 
                       href={getThreadUrl(post.threadId)}
-                      className="block p-4 rounded-xl border border-slate-800 bg-slate-900/30 hover:border-indigo-900/40 hover:bg-indigo-950/5 transition"
+                      className="card card-hoverable"
+                      style={{ padding: 'var(--space-4)', display: 'block', textDecoration: 'none' }}
                     >
-                      <strong className="text-indigo-300 block text-md mb-1 hover:text-white transition">
+                      <strong style={{ color: 'var(--accent)', display: 'block', marginBottom: 'var(--space-1)' }}>
                         {post.threadTitle}
                       </strong>
-                      <p className="text-gray-300 text-sm italic font-medium leading-relaxed max-h-20 overflow-hidden text-ellipsis mb-2">
-                        "{highlightText(post.content.slice(0, 200) + (post.content.length > 200 ? '...' : ''), query)}"
+                      <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--text-sm)', fontStyle: 'italic', lineHeight: 'var(--leading-relaxed)', maxHeight: 80, overflow: 'hidden', marginBottom: 'var(--space-2)' }}>
+                        &ldquo;{highlightText(post.content.slice(0, 200) + (post.content.length > 200 ? '...' : ''), query)}&rdquo;
                       </p>
-                      <span className="text-xs text-gray-500 block">{formatDate(post.createdAt)}</span>
+                      <span className="text-xs" style={{ color: 'var(--text-muted)', display: 'block' }}>{formatDate(post.createdAt)}</span>
                     </Link>
                   ))}
                 </div>
@@ -249,12 +275,12 @@ function SearchPageContent() {
 
             {/* User results */}
             {(activeTab === 'all' || activeTab === 'users') && results.userResults.length > 0 && (
-              <div className="flex flex-col gap-3">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 flex items-center gap-2 mb-2">
-                  <User size={16} className="text-indigo-400" />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+                <h3 style={sectionHeaderStyle}>
+                  <span style={{ color: 'var(--accent)' }}>👤</span>
                   Attrition Players
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 'var(--space-4)' }}>
                   {results.userResults.map(u => {
                     const avatarUrl = u.avatarPath 
                       ? (u.avatarPath.startsWith("http") ? u.avatarPath : `https://attrition.hault.io.vn${u.avatarPath}`) 
@@ -264,21 +290,23 @@ function SearchPageContent() {
                       <Link 
                         key={u.id} 
                         href={getUserUrl(u.username)}
-                        className="flex items-center gap-4 p-4 rounded-xl border border-slate-800 bg-slate-900/30 hover:border-indigo-900/40 hover:bg-indigo-950/5 transition"
+                        className="card card-hoverable"
+                        style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)', padding: 'var(--space-4)', textDecoration: 'none' }}
                       >
-                        <div className="w-12 h-12 rounded-full bg-indigo-950 flex items-center justify-center font-bold text-indigo-300 border border-indigo-900/50 overflow-hidden flex-shrink-0">
+                        <div className="avatar avatar-md" style={{ background: 'var(--accent-subtle)', color: 'var(--accent)', flexShrink: 0 }}>
                           {avatarUrl ? (
-                            <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           ) : (
                             u.username[0].toUpperCase()
                           )}
                         </div>
                         <div>
-                          <strong className="text-white block hover:text-indigo-300 transition">
+                          <strong style={{ color: 'var(--text)', display: 'block' }}>
                             {highlightText(u.displayName || u.username, query)}
                           </strong>
-                          <span className="text-xs text-gray-500">@{u.username}</span>
-                          <span className="ml-2 inline-block px-1.5 py-0.5 rounded text-[10px] uppercase font-bold bg-indigo-950 text-indigo-400 border border-indigo-900/40">
+                          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>@{u.username}</span>
+                          <span className="badge badge-accent" style={{ marginLeft: 'var(--space-2)', fontSize: 10, textTransform: 'uppercase' }}>
                             {u.role}
                           </span>
                         </div>
@@ -298,8 +326,8 @@ function SearchPageContent() {
 export default function SearchPage() {
   return (
     <Suspense fallback={
-      <div className="flex justify-center items-center py-20 bg-slate-950 min-h-screen">
-        <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-indigo-500" role="status"></div>
+      <div className="page container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div className="skeleton" style={{ width: 32, height: 32, borderRadius: '50%' }} />
       </div>
     }>
       <SearchPageContent />

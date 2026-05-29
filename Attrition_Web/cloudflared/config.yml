@@ -4,7 +4,4 @@ credentials-file: /etc/cloudflared/credentials.json
 ingress:
   - hostname: attrition.io.vn
     service: http://nginx:80
-  - hostname: collection.attrition.io.vn
-    service: http://collection:3001
-  # catch-all rule (required by cloudflared)
   - service: http_status:404

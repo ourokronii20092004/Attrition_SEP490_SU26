@@ -75,7 +75,7 @@ public class GameHub : Hub
         {
             var (memberships, _) = await _roomPlayerRepo.GetPagedAsync(
                 1, int.MaxValue,
-                rp => rp.UserId == userId && rp.GameRoom.Status != "ended",
+                rp => rp.UserId == userId,
                 null,
                 rp => rp.GameRoom
             );
@@ -83,7 +83,7 @@ public class GameHub : Hub
             foreach (var membership in memberships)
             {
                 var room = membership.GameRoom;
-                if (room != null && room.Status != "ended")
+                if (room != null && room.Status != RoomStatus.Ended)
                 {
                     await _roomService.LeaveRoomAsync(room.RoomId, userId);
                     await Clients.Group(room.RoomCode).SendAsync("OnPlayerLeft", userId.ToString());

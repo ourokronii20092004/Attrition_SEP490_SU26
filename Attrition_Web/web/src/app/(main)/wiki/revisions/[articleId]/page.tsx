@@ -5,14 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
 import { formatDate } from '@/lib/utils';
-import { 
-  History, 
-  ArrowLeft, 
-  ArrowRightLeft,
-  FileText,
-  Clock,
-  User
-} from 'lucide-react';
 
 interface WikiRevision {
   id: string;
@@ -77,7 +69,6 @@ export default function ArticleRevisionsPage() {
           oldIdx++;
           newIdx++;
         } else {
-          // Lookahead to see if it was an addition or deletion
           const oldLook = oldLines.slice(oldIdx, oldIdx + 5);
           const newLook = newLines.slice(newIdx, newIdx + 5);
           
@@ -85,19 +76,16 @@ export default function ArticleRevisionsPage() {
           const foundInOld = newLook.indexOf(oldLines[oldIdx]);
 
           if (foundInOld !== -1) {
-            // Lines were added in new version
             for (let i = 0; i < foundInOld; i++) {
               diffResult.push({ type: 'added', text: newLines[newIdx], lineNum: newIdx + 1 });
               newIdx++;
             }
           } else if (foundInNew !== -1) {
-            // Lines were removed from old version
             for (let i = 0; i < foundInNew; i++) {
               diffResult.push({ type: 'removed', text: oldLines[oldIdx] });
               oldIdx++;
             }
           } else {
-            // Replacement: show removal then addition
             diffResult.push({ type: 'removed', text: oldLines[oldIdx] });
             diffResult.push({ type: 'added', text: newLines[newIdx], lineNum: newIdx + 1 });
             oldIdx++;
@@ -118,8 +106,8 @@ export default function ArticleRevisionsPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-20 bg-slate-950 min-h-screen">
-        <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-indigo-500" role="status"></div>
+      <div className="page container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div className="skeleton" style={{ width: 32, height: 32, borderRadius: '50%' }} />
       </div>
     );
   }
@@ -130,47 +118,45 @@ export default function ArticleRevisionsPage() {
     : [];
 
   return (
-    <div className="container" style={{ maxWidth: '1100px', padding: '40px 20px', color: '#f3f4f6' }}>
-      <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => router.back()} className="btn btn-secondary btn-sm p-2">
-          <ArrowLeft size={16} />
+    <div className="page container" style={{ maxWidth: '1100px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-6)' }}>
+        <button onClick={() => router.back()} className="btn btn-secondary btn-sm btn-icon">
+          ←
         </button>
-        <span className="text-sm font-semibold tracking-wider text-indigo-400 uppercase">Wiki Article Revision Manager</span>
+        <span className="text-sm text-accent font-semibold" style={{ letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+          Wiki Article Revision Manager
+        </span>
       </div>
 
-      <div className="flex justify-between items-start mb-8 gap-4 flex-col sm:flex-row">
-        <div>
-          <h1 className="text-3xl font-extrabold text-white flex items-center gap-2">
-            <History className="text-indigo-400" size={32} />
-            Revision History & Diffs
-          </h1>
-          <p className="text-sm text-gray-400 mt-1">Audit previous modifications, compare differences between versions, and view contribution notes.</p>
-        </div>
+      <div className="page-header">
+        <h1>📜 Revision History &amp; Diffs</h1>
+        <p>Audit previous modifications, compare differences between versions, and view contribution notes.</p>
       </div>
 
       {!hasHistory ? (
-        <div className="text-center py-20 bg-slate-900/30 border border-slate-800 rounded-xl text-gray-500">
-          <Clock size={48} className="mx-auto mb-3 opacity-30 text-indigo-400" />
-          <p className="text-lg font-semibold">No revision history recorded for this article.</p>
+        <div className="card empty-state">
+          <span className="empty-state-icon">🕐</span>
+          <h3>No revision history recorded for this article.</h3>
         </div>
       ) : (
-        <div className="flex flex-col gap-6">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
           {/* Version selectors */}
           <div 
+            className="card"
             style={{
-              background: 'rgba(15, 15, 25, 0.7)',
-              backdropFilter: 'blur(12px)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: '12px',
-              padding: '20px'
+              padding: 'var(--space-5)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: 'var(--space-4)',
+              flexWrap: 'wrap'
             }}
-            className="flex flex-col md:flex-row justify-between items-center gap-4"
           >
             {/* Version 1 selector (Older) */}
-            <div className="flex flex-col gap-1.5 w-full md:w-auto">
-              <label className="text-xs font-semibold tracking-wider text-gray-400 uppercase">Compare Version (Older)</label>
+            <div className="input-group" style={{ flex: 1, minWidth: 220 }}>
+              <label className="input-label">Compare Version (Older)</label>
               <select
-                className="bg-slate-900 border border-slate-800 rounded-md py-2 px-3 text-white focus:outline-none focus:border-indigo-500 text-sm"
+                className="input"
                 value={rev1Index}
                 onChange={e => setRev1Index(Number(e.target.value))}
               >
@@ -182,13 +168,13 @@ export default function ArticleRevisionsPage() {
               </select>
             </div>
 
-            <ArrowRightLeft className="text-indigo-400 rotate-90 md:rotate-0 flex-shrink-0" size={20} />
+            <span className="text-accent" style={{ flexShrink: 0 }}>⇄</span>
 
             {/* Version 2 selector (Newer) */}
-            <div className="flex flex-col gap-1.5 w-full md:w-auto">
-              <label className="text-xs font-semibold tracking-wider text-gray-400 uppercase">Against Version (Newer)</label>
+            <div className="input-group" style={{ flex: 1, minWidth: 220 }}>
+              <label className="input-label">Against Version (Newer)</label>
               <select
-                className="bg-slate-900 border border-slate-800 rounded-md py-2 px-3 text-white focus:outline-none focus:border-indigo-500 text-sm"
+                className="input"
                 value={rev2Index}
                 onChange={e => setRev2Index(Number(e.target.value))}
               >
@@ -202,33 +188,46 @@ export default function ArticleRevisionsPage() {
           </div>
 
           {/* Diff Grid output view */}
-          <div 
-            style={{
-              background: '#04040a',
-              border: '1px solid #111122',
-              borderRadius: '12px',
-              overflow: 'hidden',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.5)'
-            }}
-          >
-            <div className="bg-slate-950 p-4 border-b border-slate-900 flex justify-between items-center text-xs text-gray-400 uppercase tracking-widest font-semibold">
-              <span className="flex items-center gap-1.5"><FileText size={14} /> Side-by-side Audit Diff</span>
-              <span className="flex items-center gap-4">
-                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-emerald-500/20 border border-emerald-500/40 inline-block"></span> Additions</span>
-                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-pink-500/20 border border-pink-500/40 inline-block"></span> Deletions</span>
+          <div className="card" style={{ overflow: 'hidden' }}>
+            <div
+              style={{
+                padding: 'var(--space-4)',
+                borderBottom: '1px solid var(--border)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                fontSize: 'var(--text-xs)',
+                color: 'var(--text-tertiary)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                fontWeight: 'var(--weight-semibold)'
+              }}
+            >
+              <span>📄 Side-by-side Audit Diff</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)' }}>
+                  <span style={{ width: 10, height: 10, borderRadius: 'var(--radius-sm)', background: 'var(--success-bg)', border: '1px solid var(--success)', display: 'inline-block' }} />
+                  Additions
+                </span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)' }}>
+                  <span style={{ width: 10, height: 10, borderRadius: 'var(--radius-sm)', background: 'var(--danger-bg)', border: '1px solid var(--danger)', display: 'inline-block' }} />
+                  Deletions
+                </span>
               </span>
             </div>
 
             <div 
               style={{
-                fontFamily: 'monospace',
-                fontSize: '13px',
+                fontFamily: 'var(--font-mono)',
+                fontSize: 'var(--text-sm)',
                 lineHeight: '1.6',
                 maxHeight: '600px',
                 overflowY: 'auto',
-                padding: '16px'
+                padding: 'var(--space-4)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 1
               }}
-              className="flex flex-col gap-0.5"
             >
               {diffLines.map((line, idx) => (
                 <div 
@@ -236,29 +235,35 @@ export default function ArticleRevisionsPage() {
                   style={{
                     display: 'flex',
                     background: 
-                      line.type === 'added' ? 'rgba(16, 185, 129, 0.12)' : 
-                      line.type === 'removed' ? 'rgba(244, 63, 94, 0.12)' : 
+                      line.type === 'added' ? 'var(--success-bg)' : 
+                      line.type === 'removed' ? 'var(--danger-bg)' : 
                       'transparent',
                     borderLeft: 
-                      line.type === 'added' ? '3px solid #10b981' : 
-                      line.type === 'removed' ? '3px solid #f43f5e' : 
+                      line.type === 'added' ? '3px solid var(--success)' : 
+                      line.type === 'removed' ? '3px solid var(--danger)' : 
                       '3px solid transparent',
-                    padding: '2px 8px'
+                    padding: '2px 8px',
+                    borderRadius: 'var(--radius-sm)'
                   }}
                 >
-                  <span style={{ width: '40px', color: '#4b5563', userSelect: 'none', flexShrink: 0 }}>
+                  <span style={{ width: 40, color: 'var(--text-muted)', userSelect: 'none', flexShrink: 0 }}>
                     {line.lineNum || ''}
                   </span>
-                  <span style={{ width: '15px', color: line.type === 'added' ? '#10b981' : line.type === 'removed' ? '#f43f5e' : '#4b5563', userSelect: 'none', flexShrink: 0 }}>
+                  <span style={{ 
+                    width: 15, 
+                    color: line.type === 'added' ? 'var(--success)' : line.type === 'removed' ? 'var(--danger)' : 'var(--text-muted)', 
+                    userSelect: 'none', 
+                    flexShrink: 0 
+                  }}>
                     {line.type === 'added' ? '+' : line.type === 'removed' ? '-' : ' '}
                   </span>
                   <span style={{ 
                     whiteSpace: 'pre-wrap', 
                     wordBreak: 'break-all', 
                     color: 
-                      line.type === 'added' ? '#a7f3d0' : 
-                      line.type === 'removed' ? '#fecdd3' : 
-                      '#9ca3af' 
+                      line.type === 'added' ? 'var(--success)' : 
+                      line.type === 'removed' ? 'var(--danger)' : 
+                      'var(--text-secondary)' 
                   }}>
                     {line.text}
                   </span>

@@ -4,9 +4,6 @@ client_secret*.json
 web/node_modules/
 web/.next/
 web/out/
-collection/node_modules/
-collection/.next/
-collection/out/
 api/bin/
 api/obj/
 docker-compose.override.yml
@@ -19,9 +16,6 @@ docs/
 problems/
 *.zip
 deploy.py
-deploy_scp.py
-diagnose.py
-sensitive file.txt
 cloudflared/credentials.json
 *.dll
 [Bb]in/
