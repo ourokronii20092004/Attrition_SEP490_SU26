@@ -1,19 +1,162 @@
-version: '3.8'
+# Attrition microservices stack — single orchestrator, driven entirely by /.env
+# Public entry: cloudflared (token) -> nginx -> { web (Next.js) | gateway (YARP) -> services }.
+# Build context ./backend so each Dockerfile pulls in building-blocks + services.
+name: attrition
+
+x-service-defaults: &service-defaults
+  restart: unless-stopped
+  networks: [ attrition-net ]
+
+x-healthcheck: &svc-healthcheck
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+    interval: 10s
+    timeout: 3s
+    retries: 5
+
+x-jwt-env: &jwt-env
+  Jwt__Secret: ${JWT_SECRET}
+  Jwt__Issuer: ${JWT_ISSUER:-attrition-api}
+  Jwt__Audience: ${JWT_AUDIENCE:-attrition-web}
+  Internal__ApiKey: ${INTERNAL_API_KEY}
 
 services:
-  nginx:
-    image: nginx:alpine
-    container_name: attrition-nginx
-    ports:
-      - "3000:80"
-    volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-    depends_on:
-      - web
-      - api
+  # ─────────────── Infrastructure ───────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: attrition-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-attrition}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes: [ "pgdata:/var/lib/postgresql/data" ]
+    ports: [ "5435:5432" ]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-attrition}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
     restart: unless-stopped
-    networks: [attrition-net]
+    networks: [ attrition-net ]
 
+  # ─────────────── Data services ───────────────
+  identity-service:
+    <<: [ *service-defaults, *svc-healthcheck ]
+    build: { context: ./backend, dockerfile: services/Identity.Service/Dockerfile }
+    container_name: attrition-identity
+    environment:
+      <<: *jwt-env
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=${POSTGRES_DB:-attrition};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
+      Jwt__AccessTokenExpiryMinutes: ${JWT_ACCESS_TOKEN_EXPIRY_MINUTES:-15}
+      Jwt__RefreshTokenExpiryDays: ${JWT_REFRESH_TOKEN_EXPIRY_DAYS:-7}
+      Authentication__Google__ClientId: ${GOOGLE_CLIENT_ID:-}
+      App__ClientUrl: ${APP_CLIENT_URL:-http://localhost:3000}
+      FileUpload__UploadPath: ${UPLOAD_PATH:-/app/uploads}
+    volumes: [ "identity-data:/app/uploads" ]
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  enemy-service:
+    <<: [ *service-defaults, *svc-healthcheck ]
+    build: { context: ./backend, dockerfile: services/Enemy.Service/Dockerfile }
+    container_name: attrition-enemy
+    environment:
+      <<: *jwt-env
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=${POSTGRES_DB:-attrition};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  wiki-service:
+    <<: [ *service-defaults, *svc-healthcheck ]
+    build: { context: ./backend, dockerfile: services/Wiki.Service/Dockerfile }
+    container_name: attrition-wiki
+    environment:
+      <<: *jwt-env
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=${POSTGRES_DB:-attrition};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  forum-service:
+    <<: [ *service-defaults, *svc-healthcheck ]
+    build: { context: ./backend, dockerfile: services/Forum.Service/Dockerfile }
+    container_name: attrition-forum
+    environment:
+      <<: *jwt-env
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=${POSTGRES_DB:-attrition};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  assets-service:
+    <<: [ *service-defaults, *svc-healthcheck ]
+    build: { context: ./backend, dockerfile: services/Assets.Service/Dockerfile }
+    container_name: attrition-assets
+    environment:
+      <<: *jwt-env
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=${POSTGRES_DB:-attrition};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
+      FileUpload__UploadPath: ${UPLOAD_PATH:-/app/uploads}
+    volumes: [ "assets-data:/app/uploads" ]
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  music-service:
+    <<: [ *service-defaults, *svc-healthcheck ]
+    build: { context: ./backend, dockerfile: services/Music.Service/Dockerfile }
+    container_name: attrition-music
+    environment:
+      <<: *jwt-env
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=${POSTGRES_DB:-attrition};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
+      FileUpload__UploadPath: ${UPLOAD_PATH:-/app/uploads}
+    volumes: [ "music-data:/app/uploads" ]
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  # ─────────────── Aggregators (no DB) ───────────────
+  search-service:
+    <<: [ *service-defaults, *svc-healthcheck ]
+    build: { context: ./backend, dockerfile: services/Search.Service/Dockerfile }
+    container_name: attrition-search
+    environment:
+      <<: *jwt-env
+      Services__Wiki: "http://wiki-service:8080/"
+      Services__Forum: "http://forum-service:8080/"
+      Services__Identity: "http://identity-service:8080/"
+      Services__Enemy: "http://enemy-service:8080/"
+    depends_on: [ wiki-service, forum-service, identity-service, enemy-service ]
+
+  admin-service:
+    <<: [ *service-defaults, *svc-healthcheck ]
+    build: { context: ./backend, dockerfile: services/Admin.Service/Dockerfile }
+    container_name: attrition-admin
+    environment:
+      <<: *jwt-env
+      Services__Identity: "http://identity-service:8080/"
+      Services__Enemy: "http://enemy-service:8080/"
+      Services__Wiki: "http://wiki-service:8080/"
+      Services__Forum: "http://forum-service:8080/"
+      Services__Assets: "http://assets-service:8080/"
+      Services__Music: "http://music-service:8080/"
+    depends_on: [ identity-service, enemy-service, wiki-service, forum-service, assets-service, music-service ]
+
+  # ─────────────── Gateway (YARP) ───────────────
+  gateway:
+    <<: [ *service-defaults, *svc-healthcheck ]
+    build: { context: ./backend, dockerfile: services/Gateway/Dockerfile }
+    container_name: attrition-gateway
+    ports: [ "8080:8080" ]   # exposed for local dev; nginx reaches it over the network in prod
+    environment:
+      Cors__AllowedOrigins__0: "http://localhost:3000"
+      Cors__AllowedOrigins__1: ${APP_CLIENT_URL:-https://attrition.io.vn}
+    depends_on:
+      - identity-service
+      - enemy-service
+      - wiki-service
+      - forum-service
+      - assets-service
+      - music-service
+      - search-service
+      - admin-service
+
+  # ─────────────── Edge: Next.js web + nginx + cloudflared ───────────────
   web:
     build:
       context: ./web
@@ -22,88 +165,40 @@ services:
         - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
         - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
     container_name: attrition-web
-    expose: ["3000"]
+    expose: [ "3000" ]
     environment:
-      - API_URL=${API_URL}
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
     depends_on:
-      api: { condition: service_healthy }
+      gateway: { condition: service_started }
     restart: unless-stopped
-    networks: [attrition-net]
+    networks: [ attrition-net ]
 
-  api:
-    build: { context: ./api, dockerfile: Dockerfile }
-    container_name: attrition-api
-    expose: ["5000"]
-    environment:
-      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
-      - Redis__ConnectionString=${REDIS_URL}
-      - Jwt__Secret=${JWT_SECRET}
-      - Jwt__Issuer=${JWT_ISSUER}
-      - Jwt__Audience=${JWT_AUDIENCE}
-      - Jwt__AccessTokenExpiryMinutes=${JWT_ACCESS_TOKEN_EXPIRY_MINUTES}
-      - Jwt__RefreshTokenExpiryDays=${JWT_REFRESH_TOKEN_EXPIRY_DAYS}
-      - FileUpload__MaxAvatarSizeMB=${MAX_AVATAR_SIZE_MB}
-      - FileUpload__UploadPath=${UPLOAD_PATH}
-      - Authentication__Google__ClientId=${GOOGLE_CLIENT_ID}
-      - Authentication__Google__ClientSecret=${GOOGLE_CLIENT_SECRET}
-    depends_on:
-      db: { condition: service_healthy }
-      redis: { condition: service_started }
+  nginx:
+    image: nginx:alpine
+    container_name: attrition-nginx
+    ports: [ "3000:80" ]
     volumes:
-      - uploads:/app/uploads
-      - musicdata:/app/uploads/music
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - web
+      - gateway
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks: [attrition-net]
-
-  db:
-    image: postgres:16-alpine
-    container_name: attrition-db
-    environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-    volumes: [pgdata:/var/lib/postgresql/data]
-    ports: ["5435:5432"]
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks: [attrition-net]
-
-  redis:
-    image: redis:7-alpine
-    container_name: attrition-redis
-    command: redis-server --appendonly yes
-    volumes: [redisdata:/data]
-    ports: ["6379:6379"]
-    restart: unless-stopped
-    networks: [attrition-net]
+    networks: [ attrition-net ]
 
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: attrition-cloudflared
-    command: tunnel --no-autoupdate --config /etc/cloudflared/config.yml run
-    volumes:
-      - ./cloudflared/config.yml:/etc/cloudflared/config.yml:ro
-      - ./cloudflared/credentials.json:/etc/cloudflared/credentials.json:ro
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
     depends_on:
       - nginx
     restart: unless-stopped
-    networks: [attrition-net]
+    networks: [ attrition-net ]
 
 volumes:
   pgdata:
-  redisdata:
-  uploads:
-  musicdata:
+  identity-data:
+  assets-data:
+  music-data:
 
 networks:
   attrition-net:
