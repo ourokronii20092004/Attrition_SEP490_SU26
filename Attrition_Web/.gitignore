@@ -1,22 +1,32 @@
+# Secrets / env
 .env
 *.env.local
 client_secret*.json
+cloudflared/credentials.json
+
+# Frontend
 web/node_modules/
 web/.next/
 web/out/
-api/bin/
-api/obj/
-docker-compose.override.yml
-.DS_Store
-Thumbs.db
+
+# .NET build artifacts
+[Bb]in/
+[Oo]bj/
+*.dll
+*.user
+
+# Runtime data
 uploads/
+docker-compose.override.yml
+
+# Editors / OS
 .vs/
 .vscode/
+.DS_Store
+Thumbs.db
+
+# Local-only docs / scratch
 docs/
 problems/
 *.zip
 deploy.py
-cloudflared/credentials.json
-*.dll
-[Bb]in/
-[Oo]bj/

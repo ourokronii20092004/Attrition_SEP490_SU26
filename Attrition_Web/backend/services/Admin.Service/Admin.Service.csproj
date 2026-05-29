@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <ProjectReference Include="..\..\building-blocks\BuildingBlocks.Contracts\BuildingBlocks.Contracts.csproj" />
+    <ProjectReference Include="..\..\building-blocks\BuildingBlocks.Authentication\BuildingBlocks.Authentication.csproj" />
+    <ProjectReference Include="..\..\building-blocks\BuildingBlocks.Web\BuildingBlocks.Web.csproj" />
+  </ItemGroup>
+</Project>
