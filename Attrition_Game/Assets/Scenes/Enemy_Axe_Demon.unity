@@ -1068,11 +1068,11 @@ MonoBehaviour:
   playerPrefab:
     RawGuidValue: 231d0d7375d868a43b49c56a5920b23d
   player1Prefab:
-    RawGuidValue: 0b46982493b61784d951481334311a3b
+    RawGuidValue: 0f0dc7e3badb4d6488c5a0c8badbe531
   spawnPoints:
   - {fileID: 2011203877}
   fallbackEnemyPrefab:
-    RawGuidValue: 5b4d661d4119c034f982e5bf747186c4
+    RawGuidValue: a572d177761db2043ae5fd2dd427dc74
   enemySpawnConfigs:
   - spawnPoint: {fileID: 176590887}
     spawnCount: 1
@@ -3052,7 +3052,7 @@ Transform:
   m_GameObject: {fileID: 2011203876}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -24.4, y: 52.5, z: 0}
+  m_LocalPosition: {x: -29.04, y: 48.24, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
