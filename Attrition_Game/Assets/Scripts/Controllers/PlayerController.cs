@@ -4,6 +4,11 @@ using System.Collections;
 using Unity.Cinemachine;
 using Attrition.Controllers;
 
+/// <summary>
+/// Đồng bộ vật lý giữa Host và Client:
+/// - Input Authority (người chơi local): dùng physics prediction bình thường.
+/// - Proxy (người chơi khác nhìn thấy trên màn hình bạn): nhận vị trí + velocity từ server.
+/// </summary>
 public class PlayerController : NetworkBehaviour, IDamageable
 {
     [Header("---- INJECT COMPONENTS ----")]
@@ -57,6 +62,11 @@ public class PlayerController : NetworkBehaviour, IDamageable
     [Networked] private TickTimer _dashCooldown { get; set; }
     [Networked] private TickTimer _knockbackTimer { get; set; }
 
+    // ─── Đồng bộ vị trí cho proxy ───
+    [Networked] public Vector2 NetworkPosition { get; set; }
+    [Networked] public Vector2 NetworkVelocity { get; set; }
+    [Networked] public float NetworkGravityScale { get; set; }
+
     public int maxHP = 100;
     private bool isInvincible = false;
 
@@ -90,13 +100,53 @@ public class PlayerController : NetworkBehaviour, IDamageable
         CheckGround();
         NetworkVelocityY = rb.linearVelocity.y;
 
+        // ─── Đồng bộ vị trí/velocity ───
+        if (HasStateAuthority)
+        {
+            // Host: ghi vị trí chuẩn cho client nhận
+            NetworkPosition = rb.position;
+            NetworkVelocity = rb.linearVelocity;
+            NetworkGravityScale = rb.gravityScale;
+        }
+        else if (HasInputAuthority)
+        {
+            // Client player: sửa lệch vị trí so với server (chống chìm đất, trôi drift)
+            Vector2 serverPos = NetworkPosition;
+            Vector2 localPos = rb.position;
+            float dist = Vector2.Distance(serverPos, localPos);
+
+            if (dist > 1.5f)
+            {
+                // Lệch lớn → snap ngay về server
+                rb.position = serverPos;
+                rb.linearVelocity = NetworkVelocity;
+            }
+            else if (dist > 0.05f)
+            {
+                // Lệch nhỏ → lerp mượt về server
+                rb.position = Vector2.Lerp(localPos, serverPos, 0.3f);
+            }
+        }
+        else
+        {
+            // Proxy (người chơi khác trên màn hình): ép hoàn toàn từ server
+            rb.position = NetworkPosition;
+            rb.linearVelocity = NetworkVelocity;
+            rb.gravityScale = NetworkGravityScale;
+            return;
+        }
+
         if (IsGrounded)
         {
             JumpCount = 0;
 
-            // SỬA LỖI GÓC ĐẤT: Nếu đang đứng trên mặt đất mà velocity Y > 0 (bị đẩy lên bởi góc cạnh)
-            // → ép velocity Y = 0 để không bị bật nhảy bất ngờ
+            // Chống bật lên bởi góc cạnh địa hình
             if (rb.linearVelocity.y > 0.1f && !IsDashing)
+            {
+                rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
+            }
+            // Chống chìm xuống dưới mặt đất
+            if (rb.linearVelocity.y < -0.1f && !IsDashing)
             {
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
             }

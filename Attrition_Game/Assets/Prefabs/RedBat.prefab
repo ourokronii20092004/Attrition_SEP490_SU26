@@ -342,10 +342,10 @@ MonoBehaviour:
   patrolRadius: 3
   isFlying: 1
   flyMeleeRetreat: 1
-  flyMeleeRetreatAltitude: 3
-  flyMeleeRetreatSpeed: 8
+  flyMeleeRetreatAltitude: 4
+  flyMeleeRetreatSpeed: 3
   enableSleep: 0
-  sleepWakeOnTouch: 0
+  wakeUpRadius: 0
   sleepReturnDelay: 3
   returnToSleepSpeed: 6
   sleepOnCeiling: 0
@@ -392,10 +392,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyCombat
   attacks:
-  - hitboxShape: 0
+  - hitboxShape: 2
     range: 1
     angle: 144
-    rectSize: {x: 1, y: 1}
+    rectSize: {x: 1, y: 3}
     damage: 1
     duration: 0.5
     cooldown: 1.5

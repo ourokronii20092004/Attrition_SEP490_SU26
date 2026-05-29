@@ -36,7 +36,7 @@ Transform:
   m_GameObject: {fileID: 4701131624194402601}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -7.87, y: 46.76, z: 0}
+  m_LocalPosition: {x: -23.62, y: 46.84, z: 0}
   m_LocalScale: {x: 1.1483322, y: 1, z: 0.32417816}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -183,7 +183,7 @@ MonoBehaviour:
   flyMeleeRetreatAltitude: 3
   flyMeleeRetreatSpeed: 8
   enableSleep: 1
-  sleepWakeOnTouch: 1
+  wakeUpRadius: 2
   sleepReturnDelay: 3
   returnToSleepSpeed: 6
   sleepOnCeiling: 0
@@ -203,6 +203,7 @@ MonoBehaviour:
     _value: 0
   _NetSpeed: 0
   _NetFacingDir: 1
+  _AttackLockedFacingDir: 1
 --- !u!114 &3569929855488808794
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -354,7 +355,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0.01219213, y: -0.0012340546}
+  m_Offset: {x: 0.01219213, y: 0.27298355}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
@@ -364,7 +365,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 2.5190394, y: 1.7491264}
+  m_Size: {x: 2.5190394, y: 1.6599121}
   m_EdgeRadius: 0
 --- !u!95 &7426953254575256559
 Animator:
