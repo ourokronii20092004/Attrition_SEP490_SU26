@@ -43,5 +43,3 @@ public class GameSaveController : ControllerBase
         return Ok(new ApiResponse<GameSave>(true, result));
     }
 }
-
-public record RenameSaveRequest(string NewName);

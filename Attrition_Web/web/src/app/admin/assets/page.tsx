@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { api } from "@/lib/api";
+import { api, getAccessToken } from "@/lib/api";
 import { useToast } from "@/contexts/ToastContext";
 import { formatDate, cn, debounce } from "@/lib/utils";
 import styles from "../admin.module.css";
@@ -76,7 +76,7 @@ export default function AdminAssetsPage() {
 
     try {
       // Direct fetch call because next api wrapper handles standard JSON bodies
-      const token = localStorage.getItem("token");
+      const token = getAccessToken();
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/admin/assets`, {
         method: "POST",
         headers: {
@@ -184,26 +184,11 @@ export default function AdminAssetsPage() {
                   return (
                     <div
                       key={a.id}
-                      className="card"
+                      className="card card-hoverable"
                       style={{
                         padding: "var(--space-3)",
                         display: "flex",
                         flexDirection: "column",
-                        background: "rgba(20, 20, 25, 0.6)",
-                        backdropFilter: "blur(8px)",
-                        border: "1px solid rgba(255, 255, 255, 0.08)",
-                        boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.2)",
-                        transition: "all 0.3s ease",
-                        position: "relative",
-                        overflow: "hidden"
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.border = "1px solid var(--color-primary-semi)";
-                        e.currentTarget.style.boxShadow = "0 8px 32px 0 rgba(235, 94, 40, 0.15)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.border = "1px solid rgba(255, 255, 255, 0.08)";
-                        e.currentTarget.style.boxShadow = "0 8px 32px 0 rgba(0, 0, 0, 0.2)";
                       }}
                     >
                       {/* Thumbnail Container */}
@@ -212,7 +197,7 @@ export default function AdminAssetsPage() {
                           height: 120,
                           borderRadius: "var(--radius-md)",
                           overflow: "hidden",
-                          background: "#0c0c0e",
+                          background: "var(--bg-secondary)",
                           display: "flex",
                           justifyContent: "center",
                           alignItems: "center",
@@ -249,7 +234,7 @@ export default function AdminAssetsPage() {
                             overflow: "hidden",
                             textOverflow: "ellipsis",
                             whiteSpace: "nowrap",
-                            color: "var(--color-text-bright)"
+                            color: "var(--text)"
                           }}
                           title={a.fileName}
                         >
@@ -267,7 +252,7 @@ export default function AdminAssetsPage() {
                           gap: "var(--space-1)",
                           marginTop: "var(--space-3)",
                           paddingTop: "var(--space-2)",
-                          borderTop: "1px solid rgba(255, 255, 255, 0.05)"
+                          borderTop: "1px solid var(--border)"
                         }}
                       >
                         <button
@@ -313,13 +298,10 @@ export default function AdminAssetsPage() {
         <div
           className="card"
           style={{
-            background: "rgba(20, 20, 25, 0.6)",
-            backdropFilter: "blur(12px)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
             padding: "var(--space-5)"
           }}
         >
-          <h3 style={{ marginBottom: "var(--space-4)", color: "var(--color-primary)" }}>Upload Asset</h3>
+          <h3 style={{ marginBottom: "var(--space-4)", color: "var(--accent)" }}>Upload Asset</h3>
           <form onSubmit={handleUpload} style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
             <div className="input-group">
               <label className="input-label">Asset File</label>

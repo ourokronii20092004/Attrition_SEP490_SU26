@@ -218,7 +218,7 @@ export default function RoomsBrowser() {
           className="btn btn-secondary btn-sm flex items-center gap-2"
           disabled={refreshing || loading}
         >
-          <RefreshCw className={refreshing ? 'animate-spin' : ''} size={16} />
+          <RefreshCw style={refreshing ? { animation: 'spin 0.8s linear infinite' } : {}} size={16} />
           {refreshing ? 'Refreshing...' : 'Refresh'}
         </button>
       </div>
@@ -227,17 +227,17 @@ export default function RoomsBrowser() {
         {/* Left Side: Lobby Browser list */}
         <div className={styles.glassCard}>
           <div className={styles.sectionTitle}>
-            <Gamepad2 size={24} className="text-indigo-400" />
+            <Gamepad2 size={24} style={{ color: 'var(--accent)' }} />
             <h2>Active Game Lobbies</h2>
           </div>
 
           {loading ? (
-            <div className="flex justify-center items-center py-20">
-              <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-indigo-500" role="status"></div>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 'var(--space-20) 0' }}>
+              <div className="skeleton" style={{ width: 32, height: 32, borderRadius: '50%' }} />
             </div>
           ) : rooms.length === 0 ? (
             <div className={styles.emptyState}>
-              <Users size={48} className="mx-auto mb-4 opacity-30 text-indigo-300" />
+              <Users size={48} style={{ margin: '0 auto var(--space-4)', opacity: 0.3, color: 'var(--accent)' }} />
               <p>No active public lobbies. Why not create one?</p>
             </div>
           ) : (
@@ -248,12 +248,12 @@ export default function RoomsBrowser() {
                     <div className="flex items-center gap-2">
                       <span className={styles.lobbyName}>{room.roomName}</span>
                       {room.isPrivate ? (
-                        <Lock size={14} className="text-pink-500" />
+                        <Lock size={14} style={{ color: 'var(--danger)' }} />
                       ) : (
-                        <Unlock size={14} className="text-emerald-500" />
+                        <Unlock size={14} style={{ color: 'var(--success)' }} />
                       )}
                     </div>
-                    <span className={styles.lobbyHost}>Room Code: <strong className="text-indigo-300">{room.roomCode}</strong></span>
+                    <span className={styles.lobbyHost}>Room Code: <strong style={{ color: 'var(--accent)' }}>{room.roomCode}</strong></span>
                   </div>
                   <div className="flex items-center gap-4">
                     <div className={styles.lobbyPlayers}>
@@ -279,7 +279,7 @@ export default function RoomsBrowser() {
           {/* Character selection card */}
           <div className={styles.glassCard}>
             <div className={styles.sectionTitle}>
-              <User size={20} className="text-purple-400" />
+              <User size={20} style={{ color: 'var(--accent)' }} />
               <h2>Your Character</h2>
             </div>
 
@@ -329,10 +329,10 @@ export default function RoomsBrowser() {
               <div className={styles.characterSelector}>
                 {characters.length === 0 ? (
                   <div className="text-center py-4">
-                    <p className="text-gray-400 mb-4">You have no characters yet.</p>
+                    <p style={{ color: 'var(--text-muted)', marginBottom: 'var(--space-4)' }}>You have no characters yet.</p>
                     <button 
                       onClick={() => setIsCreatingChar(true)}
-                      className="btn btn-primary btn-sm flex items-center gap-1 mx-auto"
+                      className="btn btn-primary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)', margin: '0 auto' }}
                     >
                       <Plus size={16} /> Create Character
                     </button>
@@ -356,7 +356,7 @@ export default function RoomsBrowser() {
                     </div>
                     <button 
                       onClick={() => setIsCreatingChar(true)}
-                      className="btn btn-secondary btn-sm flex items-center gap-1 mx-auto mt-2"
+                      className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)', margin: 'var(--space-2) auto 0' }}
                     >
                       <Plus size={14} /> Create Another
                     </button>
@@ -369,7 +369,7 @@ export default function RoomsBrowser() {
           {/* Create room card */}
           <div className={styles.glassCard}>
             <div className={styles.sectionTitle}>
-              <Plus size={20} className="text-indigo-400" />
+              <Plus size={20} style={{ color: 'var(--accent)' }} />
               <h2>Create A Room</h2>
             </div>
             <form onSubmit={handleCreateRoom}>
@@ -395,7 +395,7 @@ export default function RoomsBrowser() {
               </div>
               <button 
                 type="submit" 
-                className="btn btn-primary w-full"
+                className="btn btn-primary" style={{ width: '100%' }}
                 disabled={creating || !selectedCharId}
               >
                 {creating ? 'Creating...' : 'Create & Host'}
@@ -406,7 +406,7 @@ export default function RoomsBrowser() {
           {/* Join by code card */}
           <div className={styles.glassCard}>
             <div className={styles.sectionTitle}>
-              <Lock size={20} className="text-pink-400" />
+              <Lock size={20} style={{ color: 'var(--danger)' }} />
               <h2>Join Private Room</h2>
             </div>
             <form onSubmit={handleJoinByCode}>
@@ -423,7 +423,7 @@ export default function RoomsBrowser() {
               </div>
               <button 
                 type="submit" 
-                className="btn btn-primary w-full"
+                className="btn btn-primary" style={{ width: '100%' }}
                 disabled={joining || !selectedCharId}
               >
                 {joining ? 'Joining...' : 'Join Code'}

@@ -1,4 +1,4 @@
-/* ─── Persistent Player Bar (Glassmorphism) ──────────────── */
+/* ─── Persistent Player Bar (Glassmorphism & Animations) ──────────────── */
 
 .playerBar {
   position: fixed;
@@ -8,23 +8,23 @@
   width: calc(100% - var(--space-8));
   max-width: 1200px;
   height: 76px;
-  background: rgba(20, 20, 22, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-lg);
+  background: rgba(20, 20, 22, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-xl);
   display: grid;
-  grid-template-columns: 280px 1fr 200px;
+  grid-template-columns: 320px 1fr 320px;
   align-items: center;
-  padding: 0 var(--space-6);
-  gap: var(--space-6);
+  padding: 0 var(--space-4);
+  gap: var(--space-4);
   z-index: 999;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .playerBarEmpty {
-  display: none; /* hidden if no track playing, or displays placeholder */
+  display: none;
 }
 
 /* Track info */
@@ -32,24 +32,50 @@
 .playerTrackInfo {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-4);
   min-width: 0;
+  padding: var(--space-2);
+}
+
+.playerArtWrapper {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  padding: 2px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .playerArt {
-  width: 46px;
-  height: 46px;
-  border-radius: var(--radius-md);
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
   background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  flex-shrink: 0;
   color: var(--accent);
   font-size: var(--text-lg);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(0, 0, 0, 0.5);
+  position: relative;
+}
+
+/* Vinyl Hole */
+.playerArt::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 10px;
+  background: rgba(20, 20, 22, 0.9);
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.1);
+  z-index: 2;
 }
 
 .playerArt img {
@@ -58,21 +84,35 @@
   object-fit: cover;
 }
 
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.playerArtSpinning {
+  animation: spin 10s linear infinite;
+}
+
+.playerArtPaused {
+  animation-play-state: paused;
+}
+
 .playerTrackMeta {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, #000 80%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, #000 80%, transparent);
 }
 
 .playerTrackTitle {
   font-size: var(--text-sm);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
   color: var(--text);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.02em;
 }
 
 .playerTrackArtist {
@@ -81,6 +121,24 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: 0.03em;
+}
+
+/* Marquee animation for long titles */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  20% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+
+.marquee {
+  display: inline-block;
+  animation: marquee 10s linear infinite;
+  animation-play-state: running;
+}
+
+.playerTrackMeta:hover .marquee {
+  animation-play-state: paused;
 }
 
 /* Controls */
@@ -89,14 +147,15 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 8px;
   width: 100%;
 }
 
 .playerButtons {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-5);
 }
 
 .controlBtn {
@@ -115,26 +174,27 @@
 
 .controlBtn:hover {
   color: var(--text);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .controlBtnActive {
   color: var(--accent);
-  text-shadow: 0 0 10px var(--accent-subtle);
+  text-shadow: 0 0 12px var(--accent-subtle);
 }
 
 .playPauseBtn {
-  width: 38px;
-  height: 38px;
-  background: var(--accent);
-  color: var(--accent-contrast);
-  box-shadow: 0 4px 14px rgba(232, 93, 58, 0.3);
+  width: 42px;
+  height: 42px;
+  background: var(--text);
+  color: var(--bg);
+  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.15);
 }
 
 .playPauseBtn:hover {
-  background: var(--accent-hover);
-  color: var(--accent-contrast);
-  transform: scale(1.05);
+  background: var(--text);
+  color: var(--bg);
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.25);
 }
 
 .playPauseBtn:active {
@@ -146,55 +206,59 @@
 .progressRow {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-4);
   width: 100%;
   max-width: 600px;
 }
 
 .timeLabel {
-  font-size: var(--text-xs);
+  font-size: 0.7rem;
   color: var(--text-muted);
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  min-width: 36px;
+  min-width: 40px;
   text-align: center;
+  opacity: 0.8;
 }
 
 .progressBar {
   flex: 1;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
   cursor: pointer;
   position: relative;
   transition: height var(--transition-fast);
+  overflow: hidden;
 }
 
 .progressBar:hover {
-  height: 6px;
+  height: 8px;
 }
 
 .progressFill {
   height: 100%;
-  background: var(--accent);
-  border-radius: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+  border-radius: 3px;
   position: relative;
   transition: width 100ms linear;
-  box-shadow: 0 0 8px var(--accent);
+  box-shadow: 0 0 12px rgba(232, 93, 58, 0.5); /* Ember glow */
 }
 
+/* Draggable handle inside progress */
 .progressFill::after {
   content: '';
   position: absolute;
-  right: -5px;
+  right: -6px;
   top: 50%;
   transform: translateY(-50%) scale(0);
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   background: var(--text);
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
   transition: transform var(--transition-fast);
+  z-index: 3;
 }
 
 .progressBar:hover .progressFill::after {
@@ -202,47 +266,220 @@
 }
 
 .progressBar[data-dragging] .progressFill::after {
-  transform: translateY(-50%) scale(1);
+  transform: translateY(-50%) scale(1.2);
 }
 
 .progressBar[data-dragging] {
-  height: 6px;
+  height: 8px;
 }
 
-/* Volume */
+/* Volume & Extras */
+
+.playerExtras {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  justify-content: flex-end;
+  padding-right: var(--space-2);
+}
 
 .playerVolume {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  justify-content: flex-end;
 }
 
 .volumeBar {
-  width: 90px;
-  height: 4px;
+  width: 80px;
+  height: 5px;
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
+  border-radius: 2.5px;
   cursor: pointer;
   position: relative;
+  transition: height var(--transition-fast);
 }
 
 .volumeBar:hover {
-  height: 6px;
+  height: 7px;
 }
 
 .volumeFill {
   height: 100%;
   background: var(--text-muted);
-  border-radius: 2px;
-  transition: width 50ms ease-out;
+  border-radius: 2.5px;
+  transition: width 50ms ease-out, background 0.2s;
 }
 
 .volumeBar:hover .volumeFill {
   background: var(--accent);
 }
 
+/* Queue Drawer */
+
+.queueBtn {
+  position: relative;
+}
+
+.queueBadge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-size: 0.6rem;
+  font-weight: bold;
+  border-radius: 10px;
+  padding: 0 4px;
+  min-width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(25%, -25%);
+}
+
+.queueDrawer {
+  position: absolute;
+  bottom: calc(100% + var(--space-4));
+  right: 0;
+  width: 380px;
+  max-height: 60vh;
+  background: rgba(20, 20, 22, 0.95);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 1000;
+  animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform-origin: bottom right;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.queueHeader {
+  padding: var(--space-4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.queueTitle {
+  font-weight: var(--weight-bold);
+  font-size: var(--text-base);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.queueClearBtn {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.queueClearBtn:hover {
+  color: var(--danger);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.queueList {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-2);
+}
+
+.queueItem {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.queueItem:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.queueItemActive {
+  background: rgba(232, 93, 58, 0.1); /* accent-subtle */
+}
+
+.queueItemActive:hover {
+  background: rgba(232, 93, 58, 0.15);
+}
+
+.queueItemNum {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.queueItemActive .queueItemNum {
+  color: var(--accent);
+}
+
+.queueItemTitle {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.queueItemActive .queueItemTitle {
+  color: var(--accent);
+}
+
+.queueItemArtist {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.queueItemDuration {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.queueEmpty {
+  padding: var(--space-10) var(--space-4);
+  text-align: center;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+}
+
 /* ─── Responsive ────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .playerBar {
+    grid-template-columns: 240px 1fr 180px;
+  }
+}
 
 @media (max-width: 768px) {
   .playerBar {
@@ -252,20 +489,26 @@
     width: calc(100% - var(--space-4));
     grid-template-columns: 1fr auto;
     gap: var(--space-3);
-    height: 64px;
+    height: 68px;
     padding: 0 var(--space-4);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
   }
 
   .playerControls {
     display: none;
   }
 
-  .playerVolume {
+  .playerExtras {
     display: none;
   }
 
   .playerTrackInfo {
     flex: 1;
   }
+  
+  /* Show minimal play/pause on mobile */
+  .playerBar::after {
+    /* Need to inject the mobile controls via TSX, so we just hide the other parts */
+  }
 }
+
