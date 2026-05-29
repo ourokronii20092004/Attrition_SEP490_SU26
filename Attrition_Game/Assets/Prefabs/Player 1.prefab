@@ -35,8 +35,8 @@ Transform:
   m_GameObject: {fileID: 6831727267532873526}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -16.2, y: 49.38, z: 0}
-  m_LocalScale: {x: 0.8105186, y: 0.7809945, z: 6}
+  m_LocalPosition: {x: -41.5257, y: 47.069, z: 0}
+  m_LocalScale: {x: 0.8105186, y: 0.78099453, z: 6}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7035351457917283103}
@@ -103,8 +103,8 @@ CapsuleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0.00010820791}
-  m_Size: {x: 0.22000001, y: 0.38778156}
+  m_Offset: {x: -0.01633882, y: 0.000108007895}
+  m_Size: {x: 1.2591336, y: 2.3940566}
   m_Direction: 0
 --- !u!212 &6644002639049578078
 SpriteRenderer:
@@ -156,7 +156,7 @@ SpriteRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 3204480812468917802, guid: 0a1f8a85df257174e8103af5a44c099e, type: 3}
-  m_Color: {r: 0.972549, g: 0.93131673, b: 0.6745098, a: 1}
+  m_Color: {r: 0.9926711, g: 1, b: 0.54901963, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -194,7 +194,7 @@ Animation:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6831727267532873526}
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 4
   m_Animation: {fileID: 7400000, guid: 2484ede4b7b850c4296782dd0e33144e, type: 2}
   m_Animations: []
@@ -217,14 +217,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   combatComp: {fileID: 8687308238461515992}
   animationComp: {fileID: 8805790379459285585}
-  moveSpeed: 15
-  jumpForce: 20
-  doubleJumpForce: 12
+  moveSpeed: 10
+  jumpForce: 15
+  doubleJumpForce: 8
   rb: {fileID: 8158020556837803344}
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
-  dashSpeed: 25
+  dashSpeed: 20
   dashDuration: 0.2
   crouchSpeedMultiplier: 0.4
   variableJumpCutMultiplier: 0.5
@@ -233,7 +233,7 @@ MonoBehaviour:
   fallGravity: 4.5
   maxFallSpeed: -25
   knockbackForceOverride: 6
-  knockbackDuration: 0.25
+  knockbackDuration: 0.5
   invincibleDuration: 0.8
   _currentHP: 0
   _isDeadNetworked:
@@ -250,7 +250,10 @@ MonoBehaviour:
   _IsDashing:
     _value: 0
   _JumpCount: 0
-  maxHP: 5
+  _NetworkPosition: {x: 0, y: 0}
+  _NetworkVelocity: {x: 0, y: 0}
+  _NetworkGravityScale: 0
+  maxHP: 15
 --- !u!114 &8687308238461515992
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -270,7 +273,7 @@ MonoBehaviour:
   targetLayers:
     serializedVersion: 2
     m_Bits: 768
-  attackDamage: 1
+  attackDamage: 2
   chargeAttackDamage: 2
   chargeThreshold: 0.25
   currentAttackSpeed: 1
@@ -306,7 +309,7 @@ MonoBehaviour:
   m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
-  SortKey: 1491685976
+  SortKey: 3887127902
   ObjectInterest: 1
   Flags: 262145
   NestedObjects: []

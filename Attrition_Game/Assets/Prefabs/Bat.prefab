@@ -345,7 +345,7 @@ MonoBehaviour:
   flyMeleeRetreatAltitude: 3
   flyMeleeRetreatSpeed: 8
   enableSleep: 1
-  sleepWakeOnTouch: 0
+  wakeUpRadius: 10
   sleepReturnDelay: 3
   returnToSleepSpeed: 6
   sleepOnCeiling: 1
@@ -365,6 +365,7 @@ MonoBehaviour:
     _value: 0
   _NetSpeed: 0
   _NetFacingDir: 1
+  _AttackLockedFacingDir: 1
 --- !u!114 &5801043150008164472
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -393,14 +394,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyCombat
   attacks:
   - hitboxShape: 0
-    range: 1.5
+    range: 1
     angle: 180
-    rectSize: {x: 1, y: 1}
+    rectSize: {x: 1, y: 3}
     damage: 1
     duration: 0.5
     cooldown: 1.5
   - hitboxShape: 0
-    range: 3
+    range: 2
     angle: 180
     rectSize: {x: 1, y: 1}
     damage: 1
@@ -419,7 +420,7 @@ MonoBehaviour:
   playerLayer:
     serializedVersion: 2
     m_Bits: 128
-  currentAttackSpeed: 0.8
+  currentAttackSpeed: 1
   isRanged: 0
   projectilePrefab:
     RawGuidValue: 905ff5a81333ca143a6997cd345b8277
