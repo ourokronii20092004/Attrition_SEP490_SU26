@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using BuildingBlocks.Caching;
 using BuildingBlocks.Contracts;
 using BuildingBlocks.Persistence;
 using Microsoft.AspNetCore.Http;
@@ -14,14 +15,20 @@ public class TrackService : ITrackService
     private readonly IRepository<MusicAlbum> _albumRepo;
     private readonly IRepository<MusicTrack> _trackRepo;
     private readonly MusicDbContext _db;
+    private readonly ICacheService _cache;
     private readonly string _uploadPath;
     private readonly string _publicPrefix;
 
-    public TrackService(IRepository<MusicAlbum> albumRepo, IRepository<MusicTrack> trackRepo, MusicDbContext db, IConfiguration config)
+    // Write-behind: count plays in Redis and only flush to Postgres every Nth play.
+    private const int PlayFlushEvery = 10;
+
+    public TrackService(IRepository<MusicAlbum> albumRepo, IRepository<MusicTrack> trackRepo, MusicDbContext db,
+        ICacheService cache, IConfiguration config)
     {
         _albumRepo = albumRepo;
         _trackRepo = trackRepo;
         _db = db;
+        _cache = cache;
         _uploadPath = config["FileUpload:UploadPath"] ?? "/app/uploads";
         _publicPrefix = config["FileUpload:PublicPrefix"] ?? "/api/music/media";
     }
@@ -121,12 +128,46 @@ public class TrackService : ITrackService
         return (filePath, true);
     }
 
+    public async Task<(string? filePath, string fileName, bool trackExists)> GetTrackDownloadInfoAsync(int id)
+    {
+        var track = await _trackRepo.GetByIdAsync(id);
+        if (track == null) return (null, string.Empty, false);
+        var filePath = Path.Combine(MusicDir, track.FilePath);
+        if (!File.Exists(filePath)) return (null, string.Empty, true);
+
+        // Friendly download name: "<NN> <Title>.<ext>", sanitized of path-hostile chars.
+        var ext = Path.GetExtension(track.FilePath);
+        var safeTitle = string.Join("_", track.Title.Split(Path.GetInvalidFileNameChars()));
+        var fileName = $"{track.TrackNumber:D2} {safeTitle}{ext}";
+        return (filePath, fileName, true);
+    }
+
     public async Task<bool> IncrementPlayCountAsync(int id)
     {
-        var rows = await _db.MusicTracks
-            .Where(t => t.TrackId == id)
-            .ExecuteUpdateAsync(s => s.SetProperty(t => t.PlayCount, t => t.PlayCount + 1));
-        return rows > 0;
+        // Write-behind: buffer the play in Redis; flush to Postgres once PlayFlushEvery accrue.
+        // If Redis is unavailable, IncrementAsync returns null and we fall back to a direct DB write.
+        var buffered = await _cache.IncrementAsync($"plays:{id}", 1, TimeSpan.FromDays(1));
+        if (buffered == null)
+        {
+            var rows = await _db.MusicTracks
+                .Where(t => t.TrackId == id)
+                .ExecuteUpdateAsync(s => s.SetProperty(t => t.PlayCount, t => t.PlayCount + 1));
+            return rows > 0;
+        }
+
+        if (buffered % PlayFlushEvery == 0)
+        {
+            var rows = await _db.MusicTracks
+                .Where(t => t.TrackId == id)
+                .ExecuteUpdateAsync(s => s.SetProperty(t => t.PlayCount, t => t.PlayCount + PlayFlushEvery));
+            if (rows == 0)
+            {
+                // Track no longer exists — drop the buffered counter so it can't leak.
+                await _cache.RemoveAsync($"plays:{id}");
+                return false;
+            }
+        }
+        return true;
     }
 
     public async Task<(bool success, string? error, ScanTrackResponse? data)> ScanTrackAsync(IFormFile file)

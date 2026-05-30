@@ -32,8 +32,14 @@ public class MusicController : ControllerBase
 
     // ─── Albums (public) ───
     [HttpGet("albums")]
-    public async Task<IActionResult> GetAlbums()
-        => Ok(ApiResponse<IEnumerable<MusicAlbumDto>>.Ok(await _albums.GetAlbumsAsync()));
+    public async Task<IActionResult> GetAlbums([FromQuery] int? page, [FromQuery] int pageSize = 24)
+    {
+        // Paged when ?page is supplied; otherwise the full list (back-compat for admin dropdowns).
+        if (page is { } p)
+            return Ok(ApiResponse<PaginatedResponse<MusicAlbumDto>>.Ok(
+                await _albums.GetAlbumsPagedAsync(p < 1 ? 1 : p, pageSize)));
+        return Ok(ApiResponse<IEnumerable<MusicAlbumDto>>.Ok(await _albums.GetAlbumsAsync()));
+    }
 
     [HttpGet("albums/{id:int}")]
     public async Task<IActionResult> GetAlbum(int id)
@@ -58,6 +64,16 @@ public class MusicController : ControllerBase
         if (!trackExists) return NotFound(ApiResponse.Fail("Track not found"));
         if (filePath == null) return NotFound(ApiResponse.Fail("Track audio file not found on disk"));
         return PhysicalFile(filePath, "audio/mpeg", enableRangeProcessing: true);
+    }
+
+    [HttpGet("tracks/{id:int}/download")]
+    public async Task<IActionResult> Download(int id)
+    {
+        var (filePath, fileName, trackExists) = await _tracks.GetTrackDownloadInfoAsync(id);
+        if (!trackExists) return NotFound(ApiResponse.Fail("Track not found"));
+        if (filePath == null) return NotFound(ApiResponse.Fail("Track audio file not found on disk"));
+        // fileDownloadName sets Content-Disposition: attachment so the browser saves it.
+        return PhysicalFile(filePath, "application/octet-stream", fileName);
     }
 
     [Authorize]

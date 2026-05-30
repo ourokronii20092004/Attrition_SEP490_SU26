@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using BuildingBlocks.Caching;
 using BuildingBlocks.Contracts;
 using BuildingBlocks.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -15,36 +16,45 @@ public class WikiService : IWikiService
     private readonly IRepository<WikiRevision> _revisionRepo;
     private readonly IRepository<WikiContribution> _contributionRepo;
     private readonly DbContext _db;
+    private readonly ICacheService _cache;
 
     public WikiService(
         IWikiRepository wikiRepo,
         IRepository<WikiCategory> categoryRepo,
         IRepository<WikiRevision> revisionRepo,
         IRepository<WikiContribution> contributionRepo,
-        DbContext db)
+        DbContext db,
+        ICacheService cache)
     {
         _wikiRepo = wikiRepo;
         _categoryRepo = categoryRepo;
         _revisionRepo = revisionRepo;
         _contributionRepo = contributionRepo;
         _db = db;
+        _cache = cache;
     }
 
     public async Task<List<WikiCategoryDto>> GetCategoriesAsync()
     {
-        var categories = await _wikiRepo.GetCategoriesAsync();
-        var dtos = new List<WikiCategoryDto>();
-        foreach (var c in categories)
+        // Categories + per-category article counts change rarely but are read on every wiki page.
+        return await _cache.GetOrSetAsync("categories", async () =>
         {
-            var count = await _wikiRepo.CountArticlesInCategoryAsync(c.Id);
-            dtos.Add(new WikiCategoryDto(c.Id, c.Name, c.Slug, c.Description, c.IconUrl, count));
-        }
-        return dtos;
+            var categories = await _wikiRepo.GetCategoriesAsync();
+            var dtos = new List<WikiCategoryDto>();
+            foreach (var c in categories)
+            {
+                var count = await _wikiRepo.CountArticlesInCategoryAsync(c.Id);
+                dtos.Add(new WikiCategoryDto(c.Id, c.Name, c.Slug, c.Description, c.IconUrl, count));
+            }
+            return dtos;
+        }, TimeSpan.FromMinutes(10));
     }
 
-    public async Task<PaginatedResponse<WikiArticleListDto>> GetArticlesAsync(string? categorySlug, string? search, int page, int pageSize)
+    /// <summary>Drop cached category/article listings after any write that could change them.</summary>
+    private Task InvalidateAsync() => _cache.RemoveByPrefixAsync("");
+
+    public async Task<PaginatedResponse<WikiArticleListDto>> GetArticlesAsync(string? categorySlug, string? search, int page, int pageSize, Guid? authorId = null)
     {
-        Expression<Func<WikiArticle, bool>> filter = a => a.Status == "Published";
         int? categoryId = null;
 
         if (!string.IsNullOrEmpty(categorySlug))
@@ -56,13 +66,12 @@ public class WikiService : IWikiService
         }
 
         var search_ = search?.ToLower();
-        filter = (categoryId, search_) switch
-        {
-            (int cid, string s) => a => a.Status == "Published" && a.CategoryId == cid && a.Title.ToLower().Contains(s),
-            (int cid, null) => a => a.Status == "Published" && a.CategoryId == cid,
-            (null, string s) => a => a.Status == "Published" && a.Title.ToLower().Contains(s),
-            _ => a => a.Status == "Published"
-        };
+        // Published only; layer on the optional category, search, and author filters.
+        Expression<Func<WikiArticle, bool>> filter = a =>
+            a.Status == "Published" &&
+            (categoryId == null || a.CategoryId == categoryId.Value) &&
+            (search_ == null || a.Title.ToLower().Contains(search_)) &&
+            (authorId == null || a.CreatedById == authorId.Value);
 
         var (items, total) = await _wikiRepo.GetPagedAsync(page, pageSize, filter,
             q => q.OrderByDescending(a => a.UpdatedAt));
@@ -146,6 +155,7 @@ public class WikiService : IWikiService
             throw;
         }
 
+        await InvalidateAsync();
         return ApiResponse<string>.Ok(slug);
     }
 
@@ -181,6 +191,7 @@ public class WikiService : IWikiService
         article.UpdatedAt = DateTime.UtcNow;
 
         await _wikiRepo.UpdateAsync(article);
+        await InvalidateAsync();
         return ApiResponse.Ok();
     }
 
@@ -189,6 +200,7 @@ public class WikiService : IWikiService
         var article = await _wikiRepo.GetByIdAsync(articleId);
         if (article == null) return ApiResponse.Fail("Article not found.");
         await _wikiRepo.DeleteAsync(article);
+        await InvalidateAsync();
         return ApiResponse.Ok();
     }
 
@@ -291,6 +303,7 @@ public class WikiService : IWikiService
             IconUrl = request.IconUrl
         };
         await _categoryRepo.AddAsync(category);
+        await InvalidateAsync();
         return ApiResponse<int>.Ok(category.Id);
     }
 
@@ -311,6 +324,7 @@ public class WikiService : IWikiService
         category.Description = request.Description ?? string.Empty;
         category.IconUrl = request.IconUrl;
         await _categoryRepo.UpdateAsync(category);
+        await InvalidateAsync();
         return ApiResponse.Ok();
     }
 
@@ -323,6 +337,7 @@ public class WikiService : IWikiService
         if (count > 0) return (true, true);
 
         await _categoryRepo.DeleteAsync(category);
+        await InvalidateAsync();
         return (true, false);
     }
 

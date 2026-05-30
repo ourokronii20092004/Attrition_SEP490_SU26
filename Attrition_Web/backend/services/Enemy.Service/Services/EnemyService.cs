@@ -1,3 +1,4 @@
+using BuildingBlocks.Caching;
 using BuildingBlocks.Contracts;
 using Enemy.Service.DTOs;
 using Enemy.Service.Models;
@@ -8,13 +9,23 @@ namespace Enemy.Service.Services;
 public class EnemyService : IEnemyService
 {
     private readonly IEnemyRepository _repo;
+    private readonly ICacheService _cache;
 
-    public EnemyService(IEnemyRepository repo) => _repo = repo;
+    public EnemyService(IEnemyRepository repo, ICacheService cache)
+    {
+        _repo = repo;
+        _cache = cache;
+    }
 
     public async Task<List<EnemyResponse>> GetAllAsync(string? tier, string? search)
     {
-        var enemies = await _repo.GetAllWithLootAsync(tier, search);
-        return enemies.Select(ToResponse).ToList();
+        // Bestiary listings are read-heavy and change only via admin edits.
+        var key = $"list:{tier ?? "*"}:{search ?? "*"}";
+        return await _cache.GetOrSetAsync(key, async () =>
+        {
+            var enemies = await _repo.GetAllWithLootAsync(tier, search);
+            return enemies.Select(ToResponse).ToList();
+        }, TimeSpan.FromMinutes(10));
     }
 
     public async Task<EnemyResponse?> GetByIdAsync(string enemyId)
@@ -22,6 +33,8 @@ public class EnemyService : IEnemyService
         var enemy = await _repo.GetWithLootAsync(enemyId);
         return enemy == null ? null : ToResponse(enemy);
     }
+
+    private Task InvalidateAsync() => _cache.RemoveByPrefixAsync("list:");
 
     public async Task<ApiResponse<EnemyResponse>> CreateAsync(EnemyCreateRequest request)
     {
@@ -49,6 +62,7 @@ public class EnemyService : IEnemyService
         };
 
         await _repo.AddAsync(enemy);
+        await InvalidateAsync();
         return ApiResponse<EnemyResponse>.Ok(ToResponse(enemy));
     }
 
@@ -83,6 +97,7 @@ public class EnemyService : IEnemyService
         // (Routing through the generic UpdateAsync would re-mark the root Modified and
         // not reliably diff the owned collection.)
         await _repo.SaveTrackedAsync();
+        await InvalidateAsync();
         return ApiResponse<EnemyResponse>.Ok(ToResponse(enemy));
     }
 
@@ -91,6 +106,7 @@ public class EnemyService : IEnemyService
         var enemy = await _repo.GetByIdAsync(enemyId);
         if (enemy == null) return ApiResponse.Fail("Enemy not found.");
         await _repo.DeleteAsync(enemy);
+        await InvalidateAsync();
         return ApiResponse.Ok();
     }
 

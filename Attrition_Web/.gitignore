@@ -32,3 +32,4 @@ problems/
 deploy.py
 *.txt
 .claude
+test-data/

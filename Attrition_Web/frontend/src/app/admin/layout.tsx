@@ -3,13 +3,15 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Menu, X, Shield } from "lucide-react";
+import { Menu, X, Shield, User, LogOut } from "lucide-react";
 import { useAuth } from "@/lib/providers";
+import { Avatar } from "@/components/ui/avatar";
 import { PageLoader } from "@/components/ui/spinner";
 import { AdminNav } from "./admin-nav";
+import { AdminTopBar } from "./admin-top-bar";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
   const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -42,7 +44,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="mt-6 flex-1 overflow-y-auto">
           <AdminNav />
         </div>
-        <BackToSite />
+        <AdminAccountBlock user={user} logout={logout} />
       </aside>
 
       {/* Mobile drawer */}
@@ -59,7 +61,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="mt-6 flex-1 overflow-y-auto">
               <AdminNav onNavigate={() => setDrawerOpen(false)} />
             </div>
-            <BackToSite />
+            <AdminAccountBlock user={user} logout={logout} onNavigate={() => setDrawerOpen(false)} />
           </aside>
         </div>
       )}
@@ -72,6 +74,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </button>
           <span className="font-display font-bold text-fg">Admin</span>
         </header>
+        <AdminTopBar />
         <main id="main-content" className="flex-1 p-4 sm:p-6 lg:p-8">
           {children}
         </main>
@@ -91,13 +94,39 @@ function AdminSidebarHeader() {
   );
 }
 
-function BackToSite() {
+function AdminAccountBlock({ user, logout, onNavigate }: {
+  user: { username: string; displayName: string | null; avatarUrl: string | null };
+  logout: () => void;
+  onNavigate?: () => void;
+}) {
   return (
-    <Link
-      href="/"
-      className="mt-4 flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
-    >
-      <ArrowLeft size={16} /> Back to site
-    </Link>
+    <div className="mt-4 border-t border-border pt-3">
+      <Link
+        href="/admin/account"
+        onClick={onNavigate}
+        className="flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-surface-2"
+      >
+        <Avatar src={user.avatarUrl} name={user.displayName ?? user.username} size="sm" />
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium text-fg">{user.displayName ?? user.username}</p>
+          <p className="truncate text-xs text-fg-muted">@{user.username}</p>
+        </div>
+      </Link>
+      <div className="mt-1 space-y-0.5">
+        <Link
+          href="/admin/account"
+          onClick={onNavigate}
+          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
+        >
+          <User size={16} /> Account
+        </Link>
+        <button
+          onClick={() => { logout(); onNavigate?.(); }}
+          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-danger transition-colors hover:bg-danger/10"
+        >
+          <LogOut size={16} /> Sign Out
+        </button>
+      </div>
+    </div>
   );
 }

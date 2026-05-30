@@ -6,7 +6,7 @@ export { enemiesApi } from "./enemies";
 export { wikiApi } from "./wiki";
 export { forumApi } from "./forum";
 export { assetsApi } from "./assets";
-export { musicApi, getStreamUrl } from "./music";
+export { musicApi, getStreamUrl, getDownloadUrl } from "./music";
 export { searchApi } from "./search";
 export { charactersApi } from "./characters";
 export { adminApi } from "./admin";

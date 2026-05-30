@@ -86,6 +86,7 @@ export interface UpdateProfileRequest {
   email?: string;
   notifyOnReply?: boolean;
   notifyOnMention?: boolean;
+  displayName?: string;
 }
 
 export interface UpdateThemeRequest {

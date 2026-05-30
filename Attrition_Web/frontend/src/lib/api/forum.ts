@@ -22,9 +22,10 @@ export const forumApi = {
   getCategories: () =>
     apiFetch<ApiResponse<ForumCategoryDto[]>>("/api/forum/categories", { auth: false }),
 
-  getThreads: (params?: { categoryId?: number; page?: number; pageSize?: number }) => {
+  getThreads: (params?: { categoryId?: number; authorId?: string; page?: number; pageSize?: number }) => {
     const sp = new URLSearchParams();
     if (params?.categoryId != null) sp.set("categoryId", String(params.categoryId));
+    if (params?.authorId) sp.set("authorId", params.authorId);
     if (params?.page) sp.set("page", String(params.page));
     if (params?.pageSize) sp.set("pageSize", String(params.pageSize));
     const qs = sp.toString();

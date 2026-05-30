@@ -18,10 +18,11 @@ export const wikiApi = {
   getCategories: () =>
     apiFetch<ApiResponse<WikiCategoryDto[]>>("/api/wiki/categories", { auth: false }),
 
-  getArticles: (params?: { category?: string; search?: string; page?: number; pageSize?: number }) => {
+  getArticles: (params?: { category?: string; search?: string; authorId?: string; page?: number; pageSize?: number }) => {
     const sp = new URLSearchParams();
     if (params?.category) sp.set("category", params.category);
     if (params?.search) sp.set("search", params.search);
+    if (params?.authorId) sp.set("authorId", params.authorId);
     if (params?.page) sp.set("page", String(params.page));
     if (params?.pageSize) sp.set("pageSize", String(params.pageSize));
     const qs = sp.toString();
