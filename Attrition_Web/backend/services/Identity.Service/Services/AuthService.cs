@@ -171,6 +171,14 @@ public class AuthService : IAuthService
             : ApiResponse<UserDto>.Ok(TokenService.MapToDto(user));
     }
 
+    public async Task<ApiResponse<SessionStatusDto>> CheckSessionAsync(Guid userId)
+    {
+        var user = await _userRepo.GetByIdAsync(userId);
+        if (user == null) return ApiResponse<SessionStatusDto>.Fail("User not found.");
+        return ApiResponse<SessionStatusDto>.Ok(
+            new SessionStatusDto(user.Id, user.Username, user.Role, user.IsBanned));
+    }
+
     public async Task<ApiResponse> ChangePasswordAsync(Guid userId, ChangePasswordRequest request)
     {
         var user = await _userRepo.GetByIdAsync(userId);

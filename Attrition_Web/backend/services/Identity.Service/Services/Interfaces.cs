@@ -10,6 +10,7 @@ public interface IAuthService
     Task<ApiResponse<AuthResponse>> RefreshAsync(RefreshRequest request);
     Task<ApiResponse<AuthResponse>> GoogleLoginAsync(GoogleAuthRequest request);
     Task<ApiResponse<UserDto>> GetCurrentUserAsync(Guid userId);
+    Task<ApiResponse<SessionStatusDto>> CheckSessionAsync(Guid userId);
     Task<ApiResponse> ChangePasswordAsync(Guid userId, ChangePasswordRequest request);
     Task<ApiResponse> LogoutAsync(Guid userId);
     Task<ApiResponse> ForgotPasswordAsync(ForgotPasswordRequest request);
