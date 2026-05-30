@@ -3,10 +3,15 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { ArrowLeft, History, PencilLine } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { wikiApi } from "@/lib/api/wiki";
-import { PageLoader } from "@/components/ui/spinner";
+import { PageShell } from "@/components/ui/page-shell";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
+import { formatDate } from "@/lib/format-date";
 import { useAuth } from "@/lib/providers";
 import type { WikiArticleDto } from "@/lib/types";
 
@@ -29,45 +34,77 @@ export default function WikiArticlePage() {
     return () => { ignore = true; };
   }, [params.slug]);
 
-  if (loading) return <PageLoader />;
+  if (loading) {
+    return (
+      <PageShell size="md">
+        <Skeleton className="h-4 w-16" />
+        <Skeleton className="mt-4 h-10 w-2/3" />
+        <Skeleton className="mt-3 h-4 w-1/2" />
+        <div className="mt-8 space-y-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-4 w-full" />
+          ))}
+        </div>
+      </PageShell>
+    );
+  }
+
   if (!article) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-12 text-center">
-        <h1 className="font-display text-3xl font-bold text-fg">Article Not Found</h1>
-        <Link href="/wiki" className="mt-4 inline-block text-accent hover:underline">Back to Wiki</Link>
-      </div>
+      <PageShell size="md">
+        <EmptyState
+          title="Article not found"
+          description="This article may have been moved or removed."
+          action={<Link href="/wiki"><Button variant="secondary">Back to Wiki</Button></Link>}
+        />
+      </PageShell>
     );
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <div>
-          <Link href="/wiki" className="text-sm text-accent hover:underline">&larr; Wiki</Link>
-          <h1 className="mt-2 font-display text-4xl font-bold text-fg">{article.title}</h1>
-          <p className="mt-1 text-sm text-fg-muted">
-            {article.categorySlug} &middot; by {article.authorName ?? "Unknown"} &middot; {new Date(article.updatedAt).toLocaleDateString()}
-          </p>
+    <PageShell size="md">
+      <Link
+        href="/wiki"
+        className="inline-flex items-center gap-1.5 text-sm text-fg-muted transition-colors hover:text-fg"
+      >
+        <ArrowLeft size={16} /> Wiki
+      </Link>
+
+      <div className="mt-4 flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="font-display text-3xl font-bold tracking-tight text-balance text-fg sm:text-4xl">
+            {article.title}
+          </h1>
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-fg-muted">
+            <span className="rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-medium text-accent">
+              {article.categorySlug}
+            </span>
+            <span>by {article.authorName ?? "Unknown"}</span>
+            <span className="text-fg-subtle">&middot;</span>
+            <span>Updated {formatDate(article.updatedAt)}</span>
+          </div>
         </div>
         {user && (
-          <Link
-            href={`/wiki/${params.slug}/suggest`}
-            className="shrink-0 rounded-md border border-border px-3 py-1.5 text-sm text-fg-muted hover:bg-surface-2"
-          >
-            Suggest Edit
+          <Link href={`/wiki/${params.slug}/suggest`} className="shrink-0">
+            <Button variant="secondary" size="sm">
+              <PencilLine size={15} className="mr-1.5" /> Suggest Edit
+            </Button>
           </Link>
         )}
       </div>
 
-      <article className="prose-content">
+      <article className="prose-content mt-8 border-t border-border pt-8">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{article.content}</ReactMarkdown>
       </article>
 
-      <div className="mt-8 border-t border-border pt-4">
-        <Link href={`/wiki/${params.slug}/revisions`} className="text-sm text-accent hover:underline">
-          View revision history
+      <div className="mt-10 border-t border-border pt-4">
+        <Link
+          href={`/wiki/${params.slug}/revisions`}
+          className="inline-flex items-center gap-1.5 text-sm text-fg-muted transition-colors hover:text-fg"
+        >
+          <History size={16} /> View revision history
         </Link>
       </div>
-    </div>
+    </PageShell>
   );
 }

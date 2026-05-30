@@ -2,11 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Heart, Coins, MapPin, Clock, ChevronDown, ChevronRight } from "lucide-react";
+import { Heart, Coins, MapPin, Clock, ChevronDown, Gamepad2 } from "lucide-react";
 import { charactersApi } from "@/lib/api/characters";
 import { useAuth } from "@/lib/providers";
-import { PageLoader } from "@/components/ui/spinner";
+import { PageShell } from "@/components/ui/page-shell";
+import { PageTitle } from "@/components/ui/page-title";
+import { Card } from "@/components/ui/card";
+import { SkeletonList } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 import { SnapshotTimeline } from "@/components/snapshot-timeline";
+import { RelativeTime } from "@/components/ui/relative-time";
 import type { CharacterSummaryDto, CharacterDetailDto, SnapshotDto } from "@/lib/types";
 
 export default function CharactersPage() {
@@ -24,32 +29,35 @@ export default function CharactersPage() {
     charactersApi
       .getMine()
       .then((res) => {
-        if (res.success) setCharacters(res.data);
+        if (res.success) setCharacters(res.data ?? []);
       })
       .finally(() => setLoading(false));
   }, [user, authLoading, router]);
 
-  if (authLoading || loading) return <PageLoader />;
-  if (!user) return null;
+  if (!user && !authLoading) return null;
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
-      <h1 className="font-display text-4xl font-bold text-fg">Character Status</h1>
-      <p className="mt-2 text-fg-muted">Your characters and their progression across runs</p>
+    <PageShell size="lg">
+      <PageTitle description="Your characters and their progression across runs.">Character Status</PageTitle>
 
-      {characters.length === 0 ? (
-        <div className="mt-10 rounded-lg border border-dashed border-border py-16 text-center">
-          <p className="text-fg-muted">No characters yet.</p>
-          <p className="mt-1 text-sm text-fg-subtle">Play a session in the game client to see your characters here.</p>
-        </div>
+      {authLoading || loading ? (
+        <SkeletonList rows={4} />
+      ) : characters.length === 0 ? (
+        <EmptyState
+          icon={Gamepad2}
+          title="No characters yet"
+          description="Play a session in the game client and your characters will appear here."
+        />
       ) : (
-        <div className="mt-6 space-y-3">
-          {characters.map((c) => (
-            <CharacterCard key={c.id} character={c} />
+        <div className="stagger space-y-3">
+          {characters.map((c, i) => (
+            <div key={c.id} style={{ "--i": i } as React.CSSProperties}>
+              <CharacterCard character={c} />
+            </div>
           ))}
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }
 
@@ -74,17 +82,17 @@ function CharacterCard({ character }: { character: CharacterSummaryDto }) {
   };
 
   return (
-    <div className="card overflow-hidden">
-      <button onClick={toggle} className="flex w-full items-center gap-4 p-4 text-left transition hover:bg-surface-2">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-accent-soft font-display text-lg font-bold text-accent">
+    <Card className="overflow-hidden p-0">
+      <button onClick={toggle} className="flex w-full items-center gap-4 p-4 text-left transition-colors hover:bg-surface-2">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-accent-soft font-display text-lg font-bold text-accent">
           {character.name[0]?.toUpperCase() ?? "?"}
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
             <h3 className="truncate font-medium text-fg">{character.name}</h3>
-            <span className="rounded bg-surface-3 px-2 py-0.5 text-xs text-fg-muted">{character.archetype}</span>
+            <span className="rounded-full bg-surface-3 px-2 py-0.5 text-xs text-fg-muted">{character.archetype}</span>
             {snap && (
-              <span className={`rounded px-2 py-0.5 text-xs ${snap.isAlive ? "bg-success/10 text-success" : "bg-danger/10 text-danger"}`}>
+              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${snap.isAlive ? "bg-success/10 text-success" : "bg-danger/10 text-danger"}`}>
                 {snap.isAlive ? "Alive" : "Dead"}
               </span>
             )}
@@ -95,7 +103,7 @@ function CharacterCard({ character }: { character: CharacterSummaryDto }) {
             <p className="mt-1 text-xs text-fg-subtle">No status reported yet</p>
           )}
         </div>
-        {expanded ? <ChevronDown size={18} className="text-fg-subtle" /> : <ChevronRight size={18} className="text-fg-subtle" />}
+        <ChevronDown size={18} className={`shrink-0 text-fg-subtle transition-transform duration-200 ${expanded ? "rotate-180" : ""}`} />
       </button>
 
       {expanded && (
@@ -108,7 +116,7 @@ function CharacterCard({ character }: { character: CharacterSummaryDto }) {
           )}
         </div>
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -119,17 +127,7 @@ function StatLine({ snap }: { snap: SnapshotDto }) {
       <span className="flex items-center gap-1"><Heart size={12} /> {snap.hp}/{snap.maxHp}</span>
       <span className="flex items-center gap-1"><Coins size={12} /> {snap.gold}</span>
       {snap.roomCode && <span className="flex items-center gap-1"><MapPin size={12} /> {snap.roomCode}</span>}
-      <span className="flex items-center gap-1"><Clock size={12} /> {formatRelative(snap.capturedAt)}</span>
+      <span className="flex items-center gap-1"><Clock size={12} /> <RelativeTime iso={snap.capturedAt} /></span>
     </div>
   );
-}
-
-function formatRelative(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
 }

@@ -4,7 +4,12 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { accountApi } from "@/lib/api/account";
 import { resolveMediaUrl } from "@/lib/api/media";
-import { PageLoader } from "@/components/ui/spinner";
+import { PageShell } from "@/components/ui/page-shell";
+import { Card } from "@/components/ui/card";
+import { Avatar } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
+import { formatDate } from "@/lib/format-date";
 import type { UserDto } from "@/lib/types";
 
 export default function ProfilePage() {
@@ -25,54 +30,63 @@ export default function ProfilePage() {
     return () => { ignore = true; };
   }, [params.username]);
 
-  if (loading) return <PageLoader />;
+  if (loading) {
+    return (
+      <PageShell size="md">
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-20 w-20 rounded-full" />
+          <div className="space-y-2">
+            <Skeleton className="h-7 w-40" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+        </div>
+      </PageShell>
+    );
+  }
+
   if (!profile) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-12 text-center">
-        <h1 className="font-display text-3xl font-bold text-fg">User Not Found</h1>
-      </div>
+      <PageShell size="md">
+        <EmptyState title="User not found" description="This profile doesn't exist or has been removed." />
+      </PageShell>
     );
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
+    <PageShell size="md">
       {profile.backgroundUrl && (
-        <div className="relative -mx-4 -mt-8 mb-6 h-48 overflow-hidden rounded-b-xl">
+        <div className="relative -mx-4 -mt-8 mb-6 h-48 overflow-hidden sm:rounded-b-2xl">
           <img src={resolveMediaUrl(profile.backgroundUrl) ?? ""} alt="" className="h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-bg/80 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-bg to-transparent" />
         </div>
       )}
 
       <div className="flex items-center gap-4">
-        {profile.avatarUrl ? (
-          <img src={resolveMediaUrl(profile.avatarUrl) ?? ""} alt="" className="h-20 w-20 rounded-full border-4 border-surface object-cover" />
-        ) : (
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-surface-3 text-2xl font-bold text-fg-muted">
-            {(profile.displayName ?? profile.username)[0]}
-          </div>
-        )}
-        <div>
-          <h1 className="font-display text-3xl font-bold text-fg">{profile.displayName ?? profile.username}</h1>
+        <span className="rounded-full ring-4 ring-bg">
+          <Avatar src={profile.avatarUrl} name={profile.displayName ?? profile.username} size="xl" />
+        </span>
+        <div className="min-w-0">
+          <h1 className="font-display text-3xl font-bold tracking-tight text-fg">{profile.displayName ?? profile.username}</h1>
           <p className="text-fg-muted">@{profile.username}</p>
-          <div className="mt-1 flex items-center gap-3 text-sm text-fg-subtle">
-            <span>{profile.role}</span>
-            <span>Joined {new Date(profile.joinedAt).toLocaleDateString()}</span>
+          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-sm text-fg-subtle">
+            <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs font-medium">{profile.role}</span>
+            <span>Joined {formatDate(profile.joinedAt)}</span>
           </div>
         </div>
       </div>
 
-      {profile.bio && <p className="mt-6 text-fg-muted leading-relaxed">{profile.bio}</p>}
+      {profile.bio && <p className="mt-6 leading-relaxed text-fg-muted">{profile.bio}</p>}
 
       <div className="mt-6 grid grid-cols-2 gap-4">
-        <div className="card p-4 text-center">
-          <p className="text-2xl font-bold text-fg">{profile.postCount}</p>
-          <p className="text-sm text-fg-muted">Posts</p>
-        </div>
-        <div className="card p-4 text-center">
-          <p className="text-2xl font-bold text-fg">{profile.contributionCount}</p>
-          <p className="text-sm text-fg-muted">Contributions</p>
-        </div>
+        <Card className="p-5 text-center">
+          <p className="font-display text-3xl font-bold text-fg">{profile.postCount}</p>
+          <p className="mt-1 text-sm text-fg-muted">Posts</p>
+        </Card>
+        <Card className="p-5 text-center">
+          <p className="font-display text-3xl font-bold text-fg">{profile.contributionCount}</p>
+          <p className="mt-1 text-sm text-fg-muted">Contributions</p>
+        </Card>
       </div>
-    </div>
+    </PageShell>
   );
 }

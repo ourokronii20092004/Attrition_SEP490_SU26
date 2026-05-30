@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { wikiApi } from "@/lib/api/wiki";
 import { PageLoader } from "@/components/ui/spinner";
+import { formatDateTime } from "@/lib/format-date";
 import type { WikiRevisionDto } from "@/lib/types";
 
 export default function RevisionsPage() {
@@ -53,7 +54,7 @@ export default function RevisionsPage() {
             <div key={rev.id} className="card flex items-center justify-between p-4">
               <div>
                 <p className="text-sm font-medium text-fg">{rev.changeNote || "No summary"}</p>
-                <p className="text-xs text-fg-muted">by {rev.editedByName ?? "Unknown"} &middot; {new Date(rev.editedAt).toLocaleString()}</p>
+                <p className="text-xs text-fg-muted">by {rev.editedByName ?? "Unknown"} &middot; {formatDateTime(rev.editedAt)}</p>
               </div>
             </div>
           ))}

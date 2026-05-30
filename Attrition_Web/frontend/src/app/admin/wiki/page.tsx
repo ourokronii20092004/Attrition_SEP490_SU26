@@ -5,6 +5,7 @@ import { wikiApi } from "@/lib/api/wiki";
 import { useAuth } from "@/lib/providers";
 import { Button } from "@/components/ui/button";
 import { PageLoader } from "@/components/ui/spinner";
+import { formatDate } from "@/lib/format-date";
 import type { WikiContributionDto } from "@/lib/types";
 
 export default function AdminWikiPage() {
@@ -38,7 +39,7 @@ export default function AdminWikiPage() {
   const pending = contributions.filter((c) => c.status === "Pending");
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
+    <div className="mx-auto max-w-6xl">
       <h1 className="font-display text-3xl font-bold text-fg">Wiki Management</h1>
       <p className="mt-2 text-fg-muted">{pending.length} pending contributions</p>
 
@@ -48,7 +49,7 @@ export default function AdminWikiPage() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="font-medium text-fg">{c.articleTitle}</p>
-                <p className="mt-1 text-sm text-fg-muted">by {c.contributorName} &middot; {new Date(c.submittedAt).toLocaleDateString()}</p>
+                <p className="mt-1 text-sm text-fg-muted">by {c.contributorName} &middot; {formatDate(c.submittedAt)}</p>
                 <p className="mt-1 text-sm text-fg-subtle">{c.changeNote ?? "No note"}</p>
               </div>
               <div className="flex shrink-0 gap-2">

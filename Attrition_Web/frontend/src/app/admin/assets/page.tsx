@@ -40,7 +40,7 @@ export default function AdminAssetsPage() {
   if (!user || user.role !== "Admin") return null;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
+    <div className="mx-auto max-w-6xl">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-3xl font-bold text-fg">Assets Management</h1>
         <Button onClick={() => setShowUpload(true)}>Upload Asset</Button>

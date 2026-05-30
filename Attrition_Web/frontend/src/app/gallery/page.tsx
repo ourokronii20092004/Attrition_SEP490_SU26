@@ -1,9 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { X, Images } from "lucide-react";
 import { assetsApi } from "@/lib/api/assets";
 import { resolveMediaUrl } from "@/lib/api/media";
-import { PageLoader } from "@/components/ui/spinner";
+import { PageShell } from "@/components/ui/page-shell";
+import { PageTitle } from "@/components/ui/page-title";
+import { Card } from "@/components/ui/card";
+import { SkeletonGrid } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Pagination } from "@/components/ui/pagination";
 import type { AssetDto, PaginatedResponse } from "@/lib/types";
 
 export default function GalleryPage() {
@@ -23,61 +29,80 @@ export default function GalleryPage() {
       .finally(() => setLoading(false));
   }, [page]);
 
+  useEffect(() => {
+    if (!lightbox) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setLightbox(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightbox]);
+
   const parseTags = (tags: string | null): string[] => {
     if (!tags) return [];
     return tags.split(",").map((t) => t.trim()).filter(Boolean);
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
-      <h1 className="font-display text-4xl font-bold text-fg">Gallery</h1>
-      <p className="mt-2 text-fg-muted">Concept art, sprites, and assets from Attrition</p>
+    <PageShell>
+      <PageTitle description="Concept art, sprites, and assets from the Attrition world.">Gallery</PageTitle>
 
       {loading ? (
-        <PageLoader />
+        <SkeletonGrid count={12} />
+      ) : !assets?.items.length ? (
+        <EmptyState icon={Images} title="Nothing here yet" description="Artwork and assets will appear here once uploaded." />
       ) : (
         <>
-          <div className="mt-6 grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
-            {assets?.items.map((asset) => (
-              <button
-                key={asset.id}
-                onClick={() => setLightbox(asset)}
-                className="group card overflow-hidden transition hover:border-accent"
-              >
-                <img
-                  src={resolveMediaUrl(asset.filePath) ?? ""}
-                  alt={asset.title ?? asset.fileName}
-                  className="aspect-square w-full object-cover transition group-hover:scale-105"
-                />
-                <div className="p-2">
-                  <p className="truncate text-xs font-medium text-fg">{asset.title ?? asset.fileName}</p>
-                  <p className="text-xs text-fg-subtle">{asset.assetType}</p>
-                </div>
-              </button>
+          <div className="stagger grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            {assets.items.map((asset, i) => (
+              <Card key={asset.id} interactive style={{ "--i": i } as React.CSSProperties} className="overflow-hidden p-0">
+                <button onClick={() => setLightbox(asset)} className="group block w-full text-left">
+                  <div className="overflow-hidden">
+                    <img
+                      src={resolveMediaUrl(asset.filePath) ?? ""}
+                      alt={asset.title ?? asset.fileName}
+                      loading="lazy"
+                      className="aspect-square w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  </div>
+                  <div className="p-2.5">
+                    <p className="truncate text-xs font-medium text-fg">{asset.title ?? asset.fileName}</p>
+                    <p className="text-xs text-fg-subtle">{asset.assetType}</p>
+                  </div>
+                </button>
+              </Card>
             ))}
           </div>
-
-          {totalPages > 1 && (
-            <div className="mt-8 flex items-center justify-center gap-2">
-              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1} className="rounded-md border border-border px-3 py-1 text-sm text-fg-muted disabled:opacity-50">Prev</button>
-              <span className="text-sm text-fg-muted">{page} / {totalPages}</span>
-              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages} className="rounded-md border border-border px-3 py-1 text-sm text-fg-muted disabled:opacity-50">Next</button>
-            </div>
-          )}
+          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
         </>
       )}
 
       {lightbox && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 backdrop-blur-sm" onClick={() => setLightbox(null)}>
-          <div className="max-h-[90vh] max-w-[90vw] overflow-auto" onClick={(e) => e.stopPropagation()}>
-            <img src={resolveMediaUrl(lightbox.filePath) ?? ""} alt={lightbox.title ?? lightbox.fileName} className="max-h-[85vh] rounded-lg" />
-            <div className="mt-3 text-center">
-              <p className="font-medium text-fg">{lightbox.title ?? lightbox.fileName}</p>
+        <div
+          className="fixed inset-0 z-[400] flex items-center justify-center bg-bg/85 p-4 backdrop-blur-md motion-safe:animate-fade-in"
+          onClick={() => setLightbox(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label={lightbox.title ?? lightbox.fileName}
+        >
+          <button
+            onClick={() => setLightbox(null)}
+            className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-surface/80 text-fg-muted transition-colors hover:text-fg"
+            aria-label="Close"
+          >
+            <X size={20} />
+          </button>
+          <div className="max-h-[90vh] max-w-3xl overflow-auto motion-safe:animate-rise-in" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={resolveMediaUrl(lightbox.filePath) ?? ""}
+              alt={lightbox.title ?? lightbox.fileName}
+              className="mx-auto max-h-[78vh] rounded-xl shadow-[var(--shadow-lg)]"
+            />
+            <div className="mt-4 text-center">
+              <p className="font-display text-lg font-semibold text-fg">{lightbox.title ?? lightbox.fileName}</p>
               {lightbox.description && <p className="mt-1 text-sm text-fg-muted">{lightbox.description}</p>}
               {parseTags(lightbox.tags).length > 0 && (
-                <div className="mt-2 flex flex-wrap justify-center gap-1">
+                <div className="mt-3 flex flex-wrap justify-center gap-1.5">
                   {parseTags(lightbox.tags).map((tag) => (
-                    <span key={tag} className="rounded bg-surface-3 px-2 py-0.5 text-xs text-fg-muted">{tag}</span>
+                    <span key={tag} className="rounded-full bg-surface-3 px-2.5 py-0.5 text-xs text-fg-muted">{tag}</span>
                   ))}
                 </div>
               )}
@@ -85,6 +110,6 @@ export default function GalleryPage() {
           </div>
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }

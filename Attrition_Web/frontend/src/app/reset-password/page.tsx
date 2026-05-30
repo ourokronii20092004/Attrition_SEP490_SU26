@@ -64,28 +64,39 @@ function ResetPasswordContent() {
 
   if (success) {
     return (
-      <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 py-12 text-center">
-        <h1 className="font-display text-3xl font-bold text-fg">Password Reset</h1>
-        <p className="mt-4 text-fg-muted">Your password has been updated successfully.</p>
-        <Link href="/login" className="mt-6 text-accent hover:underline">Sign in with your new password</Link>
+      <div className="mx-auto flex min-h-[80vh] max-w-md flex-col justify-center px-4 py-12">
+        <div className="glass rounded-2xl p-6 text-center shadow-[var(--shadow-lg)] sm:p-8 motion-safe:animate-rise-in">
+          <h1 className="font-display text-3xl font-bold tracking-tight text-fg">Password Reset</h1>
+          <p className="mt-4 text-fg-muted">Your password has been updated successfully.</p>
+          <Link href="/login" className="mt-6 inline-block font-medium text-accent transition-opacity hover:opacity-80">
+            Sign in with your new password
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 py-12">
-      <h1 className="font-display text-3xl font-bold text-fg">Reset Password</h1>
-      <p className="mt-2 text-fg-muted">Choose a new password</p>
+    <div className="relative mx-auto flex min-h-[80vh] max-w-md flex-col justify-center px-4 py-12">
+      <span aria-hidden className="pointer-events-none absolute left-1/2 top-10 h-56 w-56 -translate-x-1/2 rounded-full bg-accent/15 blur-[90px]" />
+      <div className="glass relative rounded-2xl p-6 shadow-[var(--shadow-lg)] sm:p-8 motion-safe:animate-rise-in">
+        <h1 className="font-display text-3xl font-bold tracking-tight text-fg">Reset Password</h1>
+        <p className="mt-2 text-fg-muted">Choose a new password.</p>
 
-      {error && <div className="mt-4 rounded-lg bg-danger/10 px-4 py-3 text-sm text-danger">{error}</div>}
+        {error && (
+          <div className="mt-4 rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger" role="alert">
+            {error}
+          </div>
+        )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
-        <Input label="New Password" type="password" {...register("newPassword")} error={errors.newPassword?.message} />
-        <Input label="Confirm Password" type="password" {...register("confirmPassword")} error={errors.confirmPassword?.message} />
-        <Button type="submit" loading={loading} className="w-full">
-          Reset Password
-        </Button>
-      </form>
+        <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
+          <Input label="New Password" type="password" autoComplete="new-password" {...register("newPassword")} error={errors.newPassword?.message} />
+          <Input label="Confirm Password" type="password" autoComplete="new-password" {...register("confirmPassword")} error={errors.confirmPassword?.message} />
+          <Button type="submit" loading={loading} className="w-full">
+            Reset Password
+          </Button>
+        </form>
+      </div>
     </div>
   );
 }

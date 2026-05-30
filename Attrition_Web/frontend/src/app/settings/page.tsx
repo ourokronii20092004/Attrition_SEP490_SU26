@@ -2,15 +2,31 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Sun, Moon } from "lucide-react";
 import { useAuth } from "@/lib/providers";
 import { accountApi } from "@/lib/api/account";
 import { authApi } from "@/lib/api/auth";
-import { resolveMediaUrl } from "@/lib/api/media";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { Avatar } from "@/components/ui/avatar";
+import { PageShell } from "@/components/ui/page-shell";
+import { PageTitle } from "@/components/ui/page-title";
 import { PageLoader } from "@/components/ui/spinner";
 
-const ACCENTS = ["crimson", "ember", "gold", "emerald", "azure", "violet", "rose"];
+const ACCENTS: { name: string; color: string }[] = [
+  { name: "corruption", color: "#38e8a0" },
+  { name: "crimson", color: "#ff4365" },
+  { name: "ember", color: "#ff7a45" },
+  { name: "gold", color: "#e7b549" },
+  { name: "azure", color: "#4d9bff" },
+  { name: "violet", color: "#a274ff" },
+  { name: "rose", color: "#ff5fa8" },
+  { name: "cyan", color: "#2fd6e8" },
+  { name: "amber", color: "#ffb02e" },
+  { name: "sky", color: "#34b3f1" },
+  { name: "bone", color: "#d8d2c0" },
+];
 
 export default function SettingsPage() {
   const { user, loading, refreshUser, logout, setUser } = useAuth();
@@ -23,10 +39,10 @@ export default function SettingsPage() {
   if (loading || !user) return <PageLoader />;
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="font-display text-3xl font-bold text-fg">Settings</h1>
+    <PageShell size="md">
+      <PageTitle>Settings</PageTitle>
 
-      <div className="mt-8 space-y-10">
+      <div className="space-y-6">
         <ProfileSection user={user} refreshUser={refreshUser} setUser={setUser} />
         <AvatarSection user={user} refreshUser={refreshUser} />
         <ThemeSection user={user} refreshUser={refreshUser} />
@@ -34,7 +50,16 @@ export default function SettingsPage() {
         <EmailSection user={user} refreshUser={refreshUser} />
         <DangerSection logout={logout} />
       </div>
-    </div>
+    </PageShell>
+  );
+}
+
+function SettingsCard({ title, children, danger }: { title: string; children: React.ReactNode; danger?: boolean }) {
+  return (
+    <Card className="p-5 sm:p-6">
+      <h2 className={`text-lg font-semibold ${danger ? "text-danger" : "text-fg"}`}>{title}</h2>
+      <div className="mt-4">{children}</div>
+    </Card>
   );
 }
 
@@ -58,16 +83,15 @@ function ProfileSection({ user, refreshUser, setUser }: any) {
   };
 
   return (
-    <section>
-      <h2 className="text-lg font-semibold text-fg">Profile</h2>
-      <div className="mt-4 space-y-3">
-        <div className="space-y-1">
+    <SettingsCard title="Profile">
+      <div className="space-y-4">
+        <div className="space-y-1.5">
           <label className="block text-sm font-medium text-fg-muted">Bio</label>
           <textarea
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             rows={3}
-            className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-fg outline-none focus:border-accent"
+            className="w-full resize-y rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-fg outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent"
           />
         </div>
         <div className="space-y-2">
@@ -76,7 +100,7 @@ function ProfileSection({ user, refreshUser, setUser }: any) {
               type="checkbox"
               checked={notifyOnReply}
               onChange={(e) => setNotifyOnReply(e.target.checked)}
-              className="rounded border-border"
+              className="rounded border-border accent-accent"
             />
             Notify on replies
           </label>
@@ -85,7 +109,7 @@ function ProfileSection({ user, refreshUser, setUser }: any) {
               type="checkbox"
               checked={notifyOnMention}
               onChange={(e) => setNotifyOnMention(e.target.checked)}
-              className="rounded border-border"
+              className="rounded border-border accent-accent"
             />
             Notify on mentions
           </label>
@@ -93,7 +117,7 @@ function ProfileSection({ user, refreshUser, setUser }: any) {
         <Button onClick={save} loading={saving}>Save Profile</Button>
         {error && <p className="text-sm text-danger">{error}</p>}
       </div>
-    </section>
+    </SettingsCard>
   );
 }
 
@@ -126,32 +150,27 @@ function AvatarSection({ user, refreshUser }: any) {
   };
 
   return (
-    <section>
-      <h2 className="text-lg font-semibold text-fg">Avatar & Background</h2>
-      <div className="mt-4 flex items-center gap-4">
-        {user.avatarUrl ? (
-          <img src={resolveMediaUrl(user.avatarUrl) ?? ""} alt="" className="h-16 w-16 rounded-full object-cover" />
-        ) : (
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-surface-3 text-fg-muted">?</div>
-        )}
-        <div className="space-y-2">
-          <label className="cursor-pointer rounded-md border border-border px-3 py-1.5 text-sm text-fg-muted hover:bg-surface-2">
+    <SettingsCard title="Avatar & Background">
+      <div className="flex items-center gap-4">
+        <Avatar src={user.avatarUrl} name={user.displayName ?? user.username} size="lg" />
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="cursor-pointer rounded-lg border border-border-strong px-3 py-1.5 text-sm text-fg-muted transition-colors hover:border-accent/60 hover:text-fg">
             {uploading ? "Uploading..." : "Upload Avatar"}
             <input type="file" accept="image/*" onChange={handleUpload} className="hidden" />
           </label>
           {user.avatarUrl && (
-            <button onClick={handleDelete} className="ml-2 text-sm text-danger hover:underline">Remove</button>
+            <button onClick={handleDelete} className="text-sm text-danger transition-opacity hover:opacity-80">Remove</button>
           )}
         </div>
       </div>
       {error && <p className="mt-2 text-sm text-danger">{error}</p>}
-    </section>
+    </SettingsCard>
   );
 }
 
 function ThemeSection({ user, refreshUser }: any) {
   const [mode, setMode] = useState(user.themeMode ?? "dark");
-  const [accent, setAccent] = useState(user.themeAccent ?? "crimson");
+  const [accent, setAccent] = useState(user.themeAccent ?? "corruption");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -168,38 +187,45 @@ function ThemeSection({ user, refreshUser }: any) {
   };
 
   return (
-    <section>
-      <h2 className="text-lg font-semibold text-fg">Theme</h2>
-      <div className="mt-4 space-y-4">
-        <div className="flex gap-3">
-          <button
-            onClick={() => setMode("dark")}
-            className={`rounded-md px-4 py-2 text-sm ${mode === "dark" ? "bg-accent text-accent-fg" : "border border-border text-fg-muted"}`}
-          >
-            Dark
-          </button>
-          <button
-            onClick={() => setMode("light")}
-            className={`rounded-md px-4 py-2 text-sm ${mode === "light" ? "bg-accent text-accent-fg" : "border border-border text-fg-muted"}`}
-          >
-            Light
-          </button>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {ACCENTS.map((a) => (
+    <SettingsCard title="Theme">
+      <div className="space-y-5">
+        <div>
+          <p className="mb-2 text-sm font-medium text-fg-muted">Mode</p>
+          <div className="grid max-w-xs grid-cols-2 gap-2">
             <button
-              key={a}
-              onClick={() => setAccent(a)}
-              className={`rounded-md px-3 py-1.5 text-sm capitalize ${accent === a ? "bg-accent text-accent-fg" : "border border-border text-fg-muted"}`}
+              onClick={() => setMode("dark")}
+              className={`flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors ${mode === "dark" ? "border-accent bg-accent-soft text-accent" : "border-border text-fg-muted hover:text-fg"}`}
             >
-              {a}
+              <Moon size={16} /> Dark
             </button>
-          ))}
+            <button
+              onClick={() => setMode("light")}
+              className={`flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors ${mode === "light" ? "border-accent bg-accent-soft text-accent" : "border-border text-fg-muted hover:text-fg"}`}
+            >
+              <Sun size={16} /> Light
+            </button>
+          </div>
+        </div>
+        <div>
+          <p className="mb-2 text-sm font-medium text-fg-muted">Accent color</p>
+          <div className="flex flex-wrap gap-2.5">
+            {ACCENTS.map((a) => (
+              <button
+                key={a.name}
+                onClick={() => setAccent(a.name)}
+                title={a.name}
+                aria-label={a.name}
+                aria-pressed={accent === a.name}
+                style={{ backgroundColor: a.color }}
+                className={`h-9 w-9 rounded-full transition-transform duration-150 hover:scale-110 ${accent === a.name ? "ring-2 ring-fg ring-offset-2 ring-offset-surface" : ""}`}
+              />
+            ))}
+          </div>
         </div>
         <Button onClick={save} loading={saving}>Save Theme</Button>
         {error && <p className="text-sm text-danger">{error}</p>}
       </div>
-    </section>
+    </SettingsCard>
   );
 }
 
@@ -224,15 +250,14 @@ function PasswordSection() {
   };
 
   return (
-    <section>
-      <h2 className="text-lg font-semibold text-fg">Password</h2>
-      <div className="mt-4 space-y-3">
-        <Input label="Current Password" type="password" value={current} onChange={(e) => setCurrent(e.target.value)} />
-        <Input label="New Password" type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} />
+    <SettingsCard title="Password">
+      <div className="space-y-3">
+        <Input label="Current Password" type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} />
+        <Input label="New Password" type="password" autoComplete="new-password" value={newPw} onChange={(e) => setNewPw(e.target.value)} />
         {msg && <p className="text-sm text-fg-muted">{msg}</p>}
         <Button onClick={save} loading={saving} disabled={!current || !newPw}>Change Password</Button>
       </div>
-    </section>
+    </SettingsCard>
   );
 }
 
@@ -256,16 +281,15 @@ function EmailSection({ user, refreshUser }: any) {
   };
 
   return (
-    <section>
-      <h2 className="text-lg font-semibold text-fg">Email</h2>
-      <p className="mt-1 text-sm text-fg-muted">Current: {user.email}</p>
+    <SettingsCard title="Email">
+      <p className="-mt-2 text-sm text-fg-muted">Current: {user.email}</p>
       <div className="mt-4 space-y-3">
-        <Input label="New Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <Input label="Current Password" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+        <Input label="New Email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <Input label="Current Password" type="password" autoComplete="current-password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
         {msg && <p className="text-sm text-fg-muted">{msg}</p>}
         <Button onClick={save} loading={saving} disabled={!email || !currentPassword}>Update Email</Button>
       </div>
-    </section>
+    </SettingsCard>
   );
 }
 
@@ -287,13 +311,12 @@ function DangerSection({ logout }: { logout: () => void }) {
   };
 
   return (
-    <section className="border-t border-border pt-6">
-      <h2 className="text-lg font-semibold text-danger">Danger Zone</h2>
+    <SettingsCard title="Danger Zone" danger>
       {!confirming ? (
-        <Button variant="danger" className="mt-4" onClick={() => setConfirming(true)}>Delete Account</Button>
+        <Button variant="danger" onClick={() => setConfirming(true)}>Delete Account</Button>
       ) : (
-        <div className="mt-4 space-y-2">
-          <p className="text-sm text-fg-muted">This action is irreversible. Are you sure?</p>
+        <div className="space-y-3">
+          <p className="text-sm text-fg-muted">This action is irreversible. All your data will be permanently removed. Are you sure?</p>
           <div className="flex gap-2">
             <Button variant="danger" onClick={handleDelete} loading={deleting}>Yes, Delete</Button>
             <Button variant="secondary" onClick={() => setConfirming(false)}>Cancel</Button>
@@ -301,6 +324,6 @@ function DangerSection({ logout }: { logout: () => void }) {
           {error && <p className="text-sm text-danger">{error}</p>}
         </div>
       )}
-    </section>
+    </SettingsCard>
   );
 }

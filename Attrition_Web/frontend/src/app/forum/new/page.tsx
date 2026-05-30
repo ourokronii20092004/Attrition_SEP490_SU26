@@ -8,8 +8,13 @@ import { z } from "zod";
 import Link from "next/link";
 import { forumApi } from "@/lib/api/forum";
 import { useAuth } from "@/lib/providers";
+import { ArrowLeft } from "lucide-react";
+import { PageShell } from "@/components/ui/page-shell";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { EmptyState } from "@/components/ui/empty-state";
 import type { ForumCategoryDto } from "@/lib/types";
 
 const schema = z.object({
@@ -39,10 +44,13 @@ export default function NewThreadPage() {
 
   if (!user) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-12 text-center">
-        <p className="text-fg-muted">You must be signed in to create a thread.</p>
-        <Link href="/login" className="mt-4 inline-block text-accent hover:underline">Sign in</Link>
-      </div>
+      <PageShell size="md">
+        <EmptyState
+          title="Sign in required"
+          description="You must be signed in to create a thread."
+          action={<Link href="/login"><Button variant="secondary">Sign in</Button></Link>}
+        />
+      </PageShell>
     );
   }
 
@@ -62,38 +70,39 @@ export default function NewThreadPage() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
-      <Link href="/forum" className="text-sm text-accent hover:underline">&larr; Forum</Link>
-      <h1 className="mt-4 font-display text-3xl font-bold text-fg">New Thread</h1>
+    <PageShell size="md">
+      <Link href="/forum" className="inline-flex items-center gap-1.5 text-sm text-fg-muted transition-colors hover:text-fg">
+        <ArrowLeft size={16} /> Forum
+      </Link>
+      <h1 className="mt-4 font-display text-3xl font-bold tracking-tight text-fg">New Thread</h1>
 
-      {error && <div className="mt-4 rounded-lg bg-danger/10 px-4 py-3 text-sm text-danger">{error}</div>}
+      {error && (
+        <div className="mt-4 rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger" role="alert">
+          {error}
+        </div>
+      )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
-        <Input label="Title" {...register("title")} error={errors.title?.message} />
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-fg-muted">Category</label>
-          <select
-            {...register("categoryId")}
-            className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-fg outline-none"
-          >
+      <Card className="mt-6 p-5 sm:p-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <Input label="Title" {...register("title")} error={errors.title?.message} />
+          <Select label="Category" {...register("categoryId")} error={errors.categoryId?.message}>
             <option value="">Select category...</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
-          </select>
-          {errors.categoryId && <p className="text-xs text-danger">{errors.categoryId.message}</p>}
-        </div>
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-fg-muted">Content</label>
-          <textarea
-            {...register("content")}
-            rows={10}
-            className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-fg outline-none placeholder:text-fg-subtle focus:border-accent"
-          />
-          {errors.content && <p className="text-xs text-danger">{errors.content.message}</p>}
-        </div>
-        <Button type="submit" loading={loading}>Create Thread</Button>
-      </form>
-    </div>
+          </Select>
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-fg-muted">Content</label>
+            <textarea
+              {...register("content")}
+              rows={10}
+              className="w-full resize-y rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-fg outline-none transition-colors placeholder:text-fg-subtle focus:border-accent focus:ring-1 focus:ring-accent"
+            />
+            {errors.content && <p className="text-xs text-danger">{errors.content.message}</p>}
+          </div>
+          <Button type="submit" loading={loading}>Create Thread</Button>
+        </form>
+      </Card>
+    </PageShell>
   );
 }

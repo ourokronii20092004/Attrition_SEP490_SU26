@@ -52,8 +52,17 @@ export function SearchModal({ onClose }: { onClose: () => void }) {
   const hasResults = results && (results.wiki.length || results.users.length || results.posts.length || results.enemies.length);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-bg/70 pt-[15vh] backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-lg rounded-xl border border-border bg-surface p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-[300] flex items-start justify-center bg-bg/70 pt-[15vh] backdrop-blur-sm motion-safe:animate-fade-in"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Site search"
+    >
+      <div
+        className="glass w-full max-w-lg origin-top rounded-2xl p-4 shadow-[var(--shadow-lg)] motion-safe:animate-rise-in"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center gap-3 border-b border-border pb-3">
           <Search size={18} className="text-fg-muted" />
           <input
@@ -63,7 +72,10 @@ export function SearchModal({ onClose }: { onClose: () => void }) {
             placeholder="Search wiki, users, forum, enemies..."
             className="flex-1 bg-transparent text-fg outline-none placeholder:text-fg-subtle"
           />
-          <button onClick={onClose} className="text-fg-muted hover:text-fg">
+          <kbd className="hidden rounded border border-border bg-surface-2 px-1.5 py-0.5 text-[10px] font-medium text-fg-subtle sm:inline">
+            ESC
+          </kbd>
+          <button onClick={onClose} className="text-fg-muted transition-colors hover:text-fg" aria-label="Close search">
             <X size={18} />
           </button>
         </div>
@@ -124,9 +136,12 @@ function SearchSection({ title, children }: { title: string; children: React.Rea
 
 function SearchItem({ label, sub, onClick }: { label: string; sub: string; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="block w-full rounded-md px-3 py-2 text-left hover:bg-surface-2">
-      <p className="text-sm font-medium text-fg">{label}</p>
-      <p className="text-xs text-fg-muted line-clamp-1">{sub}</p>
+    <button
+      onClick={onClick}
+      className="group block w-full rounded-lg px-3 py-2 text-left transition-colors hover:bg-surface-2"
+    >
+      <p className="text-sm font-medium text-fg transition-colors group-hover:text-accent">{label}</p>
+      <p className="line-clamp-1 text-xs text-fg-muted">{sub}</p>
     </button>
   );
 }

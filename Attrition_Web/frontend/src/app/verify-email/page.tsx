@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { CheckCircle2, XCircle, Mail } from "lucide-react";
 import { authApi } from "@/lib/api/auth";
 import { useAuth } from "@/lib/providers";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,16 @@ export default function VerifyEmailPage() {
     <Suspense fallback={<PageLoader />}>
       <VerifyEmailContent />
     </Suspense>
+  );
+}
+
+function AuthCard({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mx-auto flex min-h-[80vh] max-w-md flex-col justify-center px-4 py-12">
+      <div className="glass rounded-2xl p-6 text-center shadow-[var(--shadow-lg)] sm:p-8 motion-safe:animate-rise-in">
+        {children}
+      </div>
+    </div>
   );
 }
 
@@ -41,48 +52,51 @@ function VerifyEmailContent() {
 
   if (status === "verifying") {
     return (
-      <div className="mx-auto flex min-h-[70vh] max-w-md flex-col items-center justify-center px-4 py-12">
-        <Spinner className="h-8 w-8" />
+      <AuthCard>
+        <Spinner className="mx-auto h-8 w-8" />
         <p className="mt-4 text-fg-muted">Verifying your email...</p>
-      </div>
+      </AuthCard>
     );
   }
 
   if (status === "success") {
     return (
-      <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 py-12 text-center">
-        <h1 className="font-display text-3xl font-bold text-fg">Email Verified</h1>
-        <p className="mt-4 text-fg-muted">Your email has been verified successfully.</p>
-        <Link href="/" className="mt-6 text-accent hover:underline">Go to home</Link>
-      </div>
+      <AuthCard>
+        <CheckCircle2 size={44} className="mx-auto text-success" />
+        <h1 className="mt-4 font-display text-3xl font-bold tracking-tight text-fg">Email Verified</h1>
+        <p className="mt-3 text-fg-muted">Your email has been verified successfully.</p>
+        <Link href="/" className="mt-6 inline-block font-medium text-accent transition-opacity hover:opacity-80">Go to home</Link>
+      </AuthCard>
     );
   }
 
   if (status === "error") {
     return (
-      <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 py-12 text-center">
-        <h1 className="font-display text-3xl font-bold text-fg">Verification Failed</h1>
-        <p className="mt-4 text-fg-muted">The link may have expired or is invalid.</p>
+      <AuthCard>
+        <XCircle size={44} className="mx-auto text-danger" />
+        <h1 className="mt-4 font-display text-3xl font-bold tracking-tight text-fg">Verification Failed</h1>
+        <p className="mt-3 text-fg-muted">The link may have expired or is invalid.</p>
         {user && (
           <Button onClick={handleResend} loading={resending} className="mx-auto mt-6">
             Resend Verification Email
           </Button>
         )}
-      </div>
+      </AuthCard>
     );
   }
 
   return (
-    <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 py-12 text-center">
-      <h1 className="font-display text-3xl font-bold text-fg">Verify Your Email</h1>
-      <p className="mt-4 text-fg-muted">
-        Check your inbox for a verification link.
-      </p>
+    <AuthCard>
+      <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-accent-soft text-accent">
+        <Mail size={26} />
+      </span>
+      <h1 className="mt-4 font-display text-3xl font-bold tracking-tight text-fg">Verify Your Email</h1>
+      <p className="mt-3 text-fg-muted">Check your inbox for a verification link.</p>
       {user && (
         <Button onClick={handleResend} loading={resending} className="mx-auto mt-6">
           Resend Verification Email
         </Button>
       )}
-    </div>
+    </AuthCard>
   );
 }
