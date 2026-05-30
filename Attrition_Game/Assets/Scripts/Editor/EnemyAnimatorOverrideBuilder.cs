@@ -20,6 +20,8 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
         Sleep, WakeUp,
         Jump, Fall, Land,
         Skill1, Skill2,
+        Summon,
+        Appear,
         Unknown
     }
 
@@ -67,6 +69,8 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
         (new[]{"land","landing"}, ClipCategory.Land),
         (new[]{"skill_1","skill1"}, ClipCategory.Skill1),
         (new[]{"skill_2","skill2"}, ClipCategory.Skill2),
+        (new[]{"summon","summoning"}, ClipCategory.Summon),
+        (new[]{"appear","spawn","emerge"}, ClipCategory.Appear),
     };
 
     [MenuItem("Tools/Enemy Animator Builder (Pro) %#e")]
@@ -176,7 +180,10 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
                 $"{(included.Any(c => c.category == ClipCategory.Sleep) ? "Có Sleep" : "Không Sleep")} | " +
                 $"{(included.Any(c => c.category == ClipCategory.Run) ? "Có Run" : "Không Run")} | " +
                 $"{(included.Any(c => c.category == ClipCategory.Fly) ? "Có Fly" : "Không Fly")} | " +
-                $"{(included.Any(c => c.category == ClipCategory.Reborn) ? "Có Reborn" : "Không Reborn")}",
+                $"{(included.Any(c => c.category == ClipCategory.Reborn) ? "Có Reborn" : "Không Reborn")} | " +
+                $"{(included.Any(c => c.category == ClipCategory.Skill1 || c.category == ClipCategory.Skill2) ? "Có Skill" : "Không Skill")} | " +
+                $"{(included.Any(c => c.category == ClipCategory.Summon) ? "Có Summon" : "Không Summon")} | " +
+                $"{(included.Any(c => c.category == ClipCategory.Appear) ? "Có Appear" : "Không Appear")}",
                 MessageType.None);
 
             EditorGUILayout.Space(5);
@@ -322,6 +329,28 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
             controller.AddParameter("IsSleeping", AnimatorControllerParameterType.Bool);
         }
 
+        // Skill parameters
+        bool hasSkill = included.Any(c => c.category == ClipCategory.Skill1 || c.category == ClipCategory.Skill2);
+        if (hasSkill)
+        {
+            controller.AddParameter("Skill", AnimatorControllerParameterType.Trigger);
+            controller.AddParameter("SkillIndex", AnimatorControllerParameterType.Int);
+        }
+
+        // Summon parameter
+        bool hasSummon = included.Any(c => c.category == ClipCategory.Summon);
+        if (hasSummon)
+        {
+            controller.AddParameter("Summon", AnimatorControllerParameterType.Trigger);
+        }
+
+        // Appear parameter
+        bool hasAppear = included.Any(c => c.category == ClipCategory.Appear);
+        if (hasAppear)
+        {
+            controller.AddParameter("Appear", AnimatorControllerParameterType.Trigger);
+        }
+
         // ── Tạo States ──
         Dictionary<ClipCategory, AnimatorState> states = new Dictionary<ClipCategory, AnimatorState>();
 
@@ -350,6 +379,8 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
             { ClipCategory.Land,    new Vector3(820, 170, 0) },
             { ClipCategory.Skill1,  new Vector3(300, 420, 0) },
             { ClipCategory.Skill2,  new Vector3(300, 530, 0) },
+            { ClipCategory.Summon,  new Vector3(300, 640, 0) },
+            { ClipCategory.Appear,  new Vector3(300, 750, 0) },
         };
 
         foreach (var entry in included)
@@ -629,6 +660,70 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
             }
         }
 
+        // ─── Skill1, Skill2 (AnyState → Skill via Skill trigger + SkillIndex) ───
+        ClipCategory[] skillCats = { ClipCategory.Skill1, ClipCategory.Skill2 };
+        for (int i = 0; i < skillCats.Length; i++)
+        {
+            if (!states.ContainsKey(skillCats[i])) continue;
+            AnimatorState skillState = states[skillCats[i]];
+
+            var tSkill = rootSM.AddAnyStateTransition(skillState);
+            tSkill.hasExitTime = false;
+            tSkill.duration = 0;
+            tSkill.canTransitionToSelf = false;
+            tSkill.AddCondition(AnimatorConditionMode.If, 0, "Skill");
+            tSkill.AddCondition(AnimatorConditionMode.Equals, i, "SkillIndex");
+
+            // Skill → Idle: ExitTime = 1
+            if (idleState != null)
+            {
+                var tBack = skillState.AddTransition(idleState);
+                tBack.hasExitTime = true;
+                tBack.exitTime = 1f;
+                tBack.duration = 0.1f;
+            }
+        }
+
+        // ─── Summon (AnyState → Summon via Summon trigger) ───
+        if (states.ContainsKey(ClipCategory.Summon))
+        {
+            AnimatorState summonState = states[ClipCategory.Summon];
+
+            var tSummon = rootSM.AddAnyStateTransition(summonState);
+            tSummon.hasExitTime = false;
+            tSummon.duration = 0;
+            tSummon.canTransitionToSelf = false;
+            tSummon.AddCondition(AnimatorConditionMode.If, 0, "Summon");
+
+            if (idleState != null)
+            {
+                var tBack = summonState.AddTransition(idleState);
+                tBack.hasExitTime = true;
+                tBack.exitTime = 1f;
+                tBack.duration = 0.1f;
+            }
+        }
+
+        // ─── Appear (AnyState → Appear via Appear trigger) ───
+        if (states.ContainsKey(ClipCategory.Appear))
+        {
+            AnimatorState appearState = states[ClipCategory.Appear];
+
+            var tAppear = rootSM.AddAnyStateTransition(appearState);
+            tAppear.hasExitTime = false;
+            tAppear.duration = 0;
+            tAppear.canTransitionToSelf = false;
+            tAppear.AddCondition(AnimatorConditionMode.If, 0, "Appear");
+
+            if (idleState != null)
+            {
+                var tBack = appearState.AddTransition(idleState);
+                tBack.hasExitTime = true;
+                tBack.exitTime = 1f;
+                tBack.duration = 0.1f;
+            }
+        }
+
         // ── Save ──
         EditorUtility.SetDirty(controller);
         AssetDatabase.SaveAssets();
@@ -637,10 +732,13 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
 
         // ── Log kết quả ──
         int atkCount = included.Count(c => c.category >= ClipCategory.Attack1 && c.category <= ClipCategory.Attack5);
+        int skillCount = included.Count(c => c.category == ClipCategory.Skill1 || c.category == ClipCategory.Skill2);
         AnimatorState teleportStateLog = states.ContainsKey(ClipCategory.Teleport) ? states[ClipCategory.Teleport] : null;
         Debug.Log($"[AnimatorBuilder] ✅ Tạo thành công: {savePath}\n" +
-                  $"  States: {states.Count} | Attacks: {atkCount} | " +
+                  $"  States: {states.Count} | Attacks: {atkCount} | Skills: {skillCount} | " +
                   $"Teleport: {(teleportStateLog != null ? "✓" : "✗")} | " +
+                  $"Summon: {(states.ContainsKey(ClipCategory.Summon) ? "✓" : "✗")} | " +
+                  $"Appear: {(states.ContainsKey(ClipCategory.Appear) ? "✓" : "✗")} | " +
                   $"Run: {(runState != null ? "✓" : "✗")} | " +
                   $"Fly: {(flyState != null ? "✓" : "✗")} | " +
                   $"Reborn: {(rebornState != null ? "✓" : "✗")} | " +
@@ -649,7 +747,9 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
 
         EditorUtility.DisplayDialog("Thành công!",
             $"Đã tạo Animator Controller tại:\n{savePath}\n\n" +
-            $"States: {states.Count} | Attacks: {atkCount}\n" +
+            $"States: {states.Count} | Attacks: {atkCount} | Skills: {skillCount}\n" +
+            $"Summon: {(states.ContainsKey(ClipCategory.Summon) ? "✓" : "✗")} | " +
+            $"Appear: {(states.ContainsKey(ClipCategory.Appear) ? "✓" : "✗")}\n" +
             $"Hãy gán controller này vào Animator component của Enemy.",
             "OK");
     }
