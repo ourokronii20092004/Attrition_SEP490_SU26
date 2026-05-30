@@ -9,7 +9,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const root = document.documentElement;
     const mode = user?.themeMode ?? "dark";
-    const accent = user?.themeAccent ?? "crimson";
+    const accent = user?.themeAccent ?? "corruption";
 
     root.setAttribute("data-theme", mode);
     root.setAttribute("data-accent", accent);

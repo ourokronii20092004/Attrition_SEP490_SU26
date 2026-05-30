@@ -77,7 +77,7 @@ export function AudioPlayer() {
         onEnded={handleEnded}
         hidden
       />
-      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-surface/95 backdrop-blur-md">
+      <div className="glass fixed inset-x-0 bottom-0 z-[200] border-x-0 border-b-0 motion-safe:animate-rise-in">
         <div className="mx-auto flex h-20 max-w-7xl items-center gap-4 px-4">
           {/* Track info */}
           <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -85,7 +85,7 @@ export function AudioPlayer() {
               <img
                 src={resolveMediaUrl(currentTrack.coverPath) ?? ""}
                 alt=""
-                className="h-12 w-12 rounded object-cover"
+                className="h-12 w-12 rounded-lg object-cover shadow-[var(--shadow-sm)]"
               />
             )}
             <div className="min-w-0">
@@ -97,17 +97,17 @@ export function AudioPlayer() {
           {/* Controls */}
           <div className="flex flex-col items-center gap-1">
             <div className="flex items-center gap-3">
-              <button onClick={prev} className="text-fg-muted hover:text-fg" aria-label="Previous">
+              <button onClick={prev} className="text-fg-muted transition-colors hover:text-fg" aria-label="Previous">
                 <SkipBack size={18} />
               </button>
               <button
                 onClick={isPlaying ? pause : resume}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-accent-fg"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-accent-fg shadow-sm transition-transform duration-150 hover:brightness-110 active:scale-95"
                 aria-label={isPlaying ? "Pause" : "Play"}
               >
                 {isPlaying ? <Pause size={16} /> : <Play size={16} className="ml-0.5" />}
               </button>
-              <button onClick={next} className="text-fg-muted hover:text-fg" aria-label="Next">
+              <button onClick={next} className="text-fg-muted transition-colors hover:text-fg" aria-label="Next">
                 <SkipForward size={18} />
               </button>
             </div>

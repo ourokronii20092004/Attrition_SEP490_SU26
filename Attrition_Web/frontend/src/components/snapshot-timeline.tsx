@@ -1,4 +1,5 @@
 import type { SnapshotDto } from "@/lib/types";
+import { formatDateTime } from "@/lib/format-date";
 
 export function SnapshotTimeline({ snapshots }: { snapshots: SnapshotDto[] }) {
   if (snapshots.length === 0) {
@@ -16,7 +17,7 @@ export function SnapshotTimeline({ snapshots }: { snapshots: SnapshotDto[] }) {
             {s.roomCode && <span className="text-fg-muted">{s.roomCode}</span>}
             <span className="rounded bg-surface-3 px-1.5 py-0.5 text-fg-subtle">{s.eventType}</span>
             <span className="text-fg-subtle">{formatPlaytime(s.playtimeSeconds)}</span>
-            <span className="ml-auto text-fg-subtle">{new Date(s.capturedAt).toLocaleString()}</span>
+            <span className="ml-auto text-fg-subtle">{formatDateTime(s.capturedAt)}</span>
           </div>
         </li>
       ))}

@@ -6,6 +6,7 @@ import { charactersApi } from "@/lib/api/characters";
 import { useAuth } from "@/lib/providers";
 import { PageLoader } from "@/components/ui/spinner";
 import { SnapshotTimeline } from "@/components/snapshot-timeline";
+import { formatDateTime } from "@/lib/format-date";
 import type { AdminCharacterDto, CharacterDetailDto, SnapshotDto } from "@/lib/types";
 
 export default function AdminCharactersPage() {
@@ -34,7 +35,7 @@ export default function AdminCharactersPage() {
     : characters;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
+    <div className="mx-auto max-w-5xl">
       <h1 className="font-display text-3xl font-bold text-fg">Character Status</h1>
       <p className="mt-2 text-fg-muted">All players&apos; characters across the game ({characters.length})</p>
 
@@ -115,7 +116,7 @@ function AdminStatLine({ snap }: { snap: SnapshotDto }) {
       <span className="flex items-center gap-1"><Heart size={12} /> {snap.hp}/{snap.maxHp}</span>
       <span className="flex items-center gap-1"><Coins size={12} /> {snap.gold}</span>
       {snap.roomCode && <span className="flex items-center gap-1"><MapPin size={12} /> {snap.roomCode}</span>}
-      <span className="text-fg-subtle">{new Date(snap.capturedAt).toLocaleString()}</span>
+      <span className="text-fg-subtle">{formatDateTime(snap.capturedAt)}</span>
     </div>
   );
 }

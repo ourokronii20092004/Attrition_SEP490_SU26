@@ -9,9 +9,9 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 export const Input = forwardRef<HTMLInputElement, InputProps>(({ label, error, className, id, ...props }, ref) => {
   const inputId = id ?? label?.toLowerCase().replace(/\s+/g, "-");
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
       {label && (
-        <label htmlFor={inputId} className="block text-sm font-medium text-fg-muted">
+        <label htmlFor={inputId} className="block text-xs font-medium uppercase tracking-wider text-fg-muted">
           {label}
         </label>
       )}
@@ -19,8 +19,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({ label, error, c
         ref={ref}
         id={inputId}
         className={clsx(
-          "w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-fg outline-none transition",
-          "placeholder:text-fg-subtle focus:border-accent focus:ring-1 focus:ring-accent",
+          "w-full rounded-md border border-border bg-surface-2/60 px-3.5 py-2.5 text-fg outline-none transition-colors",
+          "placeholder:text-fg-subtle focus:border-accent focus:bg-surface-2 focus:ring-1 focus:ring-accent",
           error && "border-danger focus:border-danger focus:ring-danger",
           className,
         )}

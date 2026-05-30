@@ -3,7 +3,12 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { SearchX } from "lucide-react";
 import { searchApi } from "@/lib/api/search";
+import { PageShell } from "@/components/ui/page-shell";
+import { PageTitle, SectionTitle } from "@/components/ui/page-title";
+import { SkeletonList } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 import { PageLoader } from "@/components/ui/spinner";
 import type { GlobalSearchResponse } from "@/lib/types";
 
@@ -35,69 +40,67 @@ function SearchContent() {
   const hasResults = results && (results.wiki.length || results.users.length || results.posts.length || results.enemies.length);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
-      <h1 className="font-display text-3xl font-bold text-fg">Search Results</h1>
-      {q && <p className="mt-2 text-fg-muted">Results for &ldquo;{q}&rdquo;</p>}
+    <PageShell size="lg">
+      <PageTitle description={q ? <>Results for <span className="text-fg">&ldquo;{q}&rdquo;</span></> : undefined}>
+        Search
+      </PageTitle>
 
-      {loading && <PageLoader />}
+      {loading && <SkeletonList rows={5} />}
 
       {!loading && !hasResults && q && (
-        <p className="mt-8 text-center text-fg-muted">No results found.</p>
+        <EmptyState icon={SearchX} title="No results found" description={`Nothing matched "${q}". Try different keywords.`} />
       )}
 
       {!loading && hasResults && (
-        <div className="mt-6 space-y-8">
+        <div className="space-y-8">
           {results.wiki.length > 0 && (
             <Section title="Wiki">
               {results.wiki.map((item) => (
-                <Link key={item.id} href={`/wiki/${item.slug}`} className="block rounded-lg p-3 transition hover:bg-surface-2">
-                  <p className="font-medium text-fg">{item.title}</p>
-                  <p className="mt-1 text-sm text-fg-muted">{item.categorySlug}</p>
-                </Link>
+                <ResultRow key={item.id} href={`/wiki/${item.slug}`} title={item.title} sub={item.categorySlug} />
               ))}
             </Section>
           )}
           {results.enemies.length > 0 && (
             <Section title="Enemies">
               {results.enemies.map((item) => (
-                <Link key={item.enemyId} href={`/bestiary/${item.enemyId}`} className="block rounded-lg p-3 transition hover:bg-surface-2">
-                  <p className="font-medium text-fg">{item.name}</p>
-                  <p className="mt-1 text-sm text-fg-muted">{item.tier}</p>
-                </Link>
+                <ResultRow key={item.enemyId} href={`/bestiary/${item.enemyId}`} title={item.name} sub={item.tier} />
               ))}
             </Section>
           )}
           {results.posts.length > 0 && (
             <Section title="Forum">
               {results.posts.map((item) => (
-                <Link key={item.id} href={`/forum/${item.threadId}`} className="block rounded-lg p-3 transition hover:bg-surface-2">
-                  <p className="font-medium text-fg">{item.threadTitle}</p>
-                  <p className="mt-1 text-sm text-fg-muted line-clamp-2">{item.snippet}</p>
-                </Link>
+                <ResultRow key={item.id} href={`/forum/${item.threadId}`} title={item.threadTitle} sub={item.snippet} />
               ))}
             </Section>
           )}
           {results.users.length > 0 && (
             <Section title="Users">
               {results.users.map((item) => (
-                <Link key={item.id} href={`/u/${item.username}`} className="block rounded-lg p-3 transition hover:bg-surface-2">
-                  <p className="font-medium text-fg">{item.displayName ?? item.username}</p>
-                  <p className="mt-1 text-sm text-fg-muted">@{item.username}</p>
-                </Link>
+                <ResultRow key={item.id} href={`/u/${item.username}`} title={item.displayName ?? item.username} sub={`@${item.username}`} />
               ))}
             </Section>
           )}
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h2 className="font-display text-xl font-semibold text-fg">{title}</h2>
-      <div className="mt-3 space-y-2">{children}</div>
+      <SectionTitle>{title}</SectionTitle>
+      <div className="mt-3 divide-y divide-border overflow-hidden rounded-card border border-border">{children}</div>
     </div>
+  );
+}
+
+function ResultRow({ href, title, sub }: { href: string; title: string; sub: string }) {
+  return (
+    <Link href={href} className="group block bg-surface p-4 transition-colors hover:bg-surface-2">
+      <p className="font-medium text-fg transition-colors group-hover:text-accent">{title}</p>
+      <p className="mt-0.5 line-clamp-2 text-sm text-fg-muted">{sub}</p>
+    </Link>
   );
 }

@@ -31,3 +31,4 @@ problems/
 *.zip
 deploy.py
 *.txt
+.claude

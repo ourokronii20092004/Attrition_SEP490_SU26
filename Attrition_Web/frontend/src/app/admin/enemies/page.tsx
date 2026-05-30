@@ -38,7 +38,7 @@ export default function AdminEnemiesPage() {
   if (loading) return <PageLoader />;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
+    <div className="mx-auto max-w-6xl">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-3xl font-bold text-fg">Enemies Management</h1>
         <Button onClick={() => { setEditing(null); setShowForm(true); }}>Add Enemy</Button>

@@ -5,6 +5,7 @@ import { forumApi } from "@/lib/api/forum";
 import { useAuth } from "@/lib/providers";
 import { Button } from "@/components/ui/button";
 import { PageLoader } from "@/components/ui/spinner";
+import { formatDate } from "@/lib/format-date";
 import type { AdminPostReportDto } from "@/lib/types";
 
 export default function AdminForumPage() {
@@ -43,7 +44,7 @@ export default function AdminForumPage() {
   const pending = reports.filter((r) => r.status === "Pending");
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
+    <div className="mx-auto max-w-6xl">
       <h1 className="font-display text-3xl font-bold text-fg">Forum Moderation</h1>
       <p className="mt-2 text-fg-muted">{pending.length} pending reports</p>
 
@@ -54,7 +55,7 @@ export default function AdminForumPage() {
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-fg">Post by {r.authorName}</p>
                 <p className="mt-1 text-sm text-fg whitespace-pre-wrap line-clamp-3">{r.postContent}</p>
-                <p className="mt-2 text-sm text-fg-muted">Reported by {r.reporterName} &middot; {new Date(r.createdAt).toLocaleDateString()}</p>
+                <p className="mt-2 text-sm text-fg-muted">Reported by {r.reporterName} &middot; {formatDate(r.createdAt)}</p>
                 <p className="mt-1 text-sm text-fg-subtle">Reason: {r.reason}</p>
               </div>
               <div className="flex shrink-0 gap-2">

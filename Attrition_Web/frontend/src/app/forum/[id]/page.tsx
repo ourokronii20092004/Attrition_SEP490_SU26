@@ -3,12 +3,16 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ThumbsUp, ThumbsDown, Flag } from "lucide-react";
+import { ArrowLeft, ThumbsUp, ThumbsDown, Flag, Lock } from "lucide-react";
 import { forumApi } from "@/lib/api/forum";
 import { useAuth } from "@/lib/providers";
-import { resolveMediaUrl } from "@/lib/api/media";
-import { PageLoader } from "@/components/ui/spinner";
+import { PageShell } from "@/components/ui/page-shell";
+import { Card } from "@/components/ui/card";
+import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { SkeletonList, Skeleton } from "@/components/ui/skeleton";
+import { Pagination } from "@/components/ui/pagination";
+import { RelativeTime } from "@/components/ui/relative-time";
 import type { ForumThreadDto, ForumPostDto, PaginatedResponse } from "@/lib/types";
 
 export default function ThreadPage() {
@@ -86,57 +90,73 @@ export default function ThreadPage() {
     setReportingId(null);
   };
 
-  if (loading && !thread) return <PageLoader />;
+  if (loading && !thread) {
+    return (
+      <PageShell size="lg">
+        <Skeleton className="h-4 w-16" />
+        <Skeleton className="mt-4 h-9 w-2/3" />
+        <SkeletonList rows={4} className="mt-6" />
+      </PageShell>
+    );
+  }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
-      <Link href="/forum" className="text-sm text-accent hover:underline">&larr; Forum</Link>
+    <PageShell size="lg">
+      <Link href="/forum" className="inline-flex items-center gap-1.5 text-sm text-fg-muted transition-colors hover:text-fg">
+        <ArrowLeft size={16} /> Forum
+      </Link>
 
       {thread && (
         <div className="mt-4">
-          <h1 className="font-display text-3xl font-bold text-fg">{thread.title}</h1>
-          <p className="mt-1 text-sm text-fg-muted">
-            {thread.categorySlug} &middot; by {thread.authorName} &middot; {thread.replyCount} replies
-          </p>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-balance text-fg sm:text-3xl">
+            {thread.title}
+          </h1>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-fg-muted">
+            <span className="rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-medium text-accent">
+              {thread.categorySlug}
+            </span>
+            <span>by {thread.authorName}</span>
+            <span className="text-fg-subtle">&middot;</span>
+            <span>{thread.replyCount} replies</span>
+            {thread.isLocked && (
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-fg-subtle">
+                <Lock size={12} /> Locked
+              </span>
+            )}
+          </div>
         </div>
       )}
 
       {loading ? (
-        <PageLoader />
+        <SkeletonList rows={4} className="mt-6" />
       ) : (
-        <div className="mt-6 space-y-4">
+        <div className="mt-6 space-y-3">
           {posts?.items.map((post) => (
-            <div key={post.id} className="card p-4">
+            <Card key={post.id} className="p-4">
               <div className="flex items-start gap-3">
-                <div className="shrink-0">
-                  {post.authorAvatar ? (
-                    <img src={resolveMediaUrl(post.authorAvatar) ?? ""} alt="" className="h-10 w-10 rounded-full object-cover" />
-                  ) : (
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-3 text-sm font-medium text-fg-muted">
-                      {post.authorName[0]}
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <Link href={`/u/${encodeURIComponent(post.authorName)}`} className="text-sm font-medium text-fg hover:text-accent">
+                <Avatar src={post.authorAvatar} name={post.authorName} size="md" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Link href={`/u/${encodeURIComponent(post.authorName)}`} className="text-sm font-medium text-fg transition-colors hover:text-accent">
                       {post.authorName}
                     </Link>
-                    {post.authorRole === "Admin" && <span className="rounded bg-accent-soft px-1.5 py-0.5 text-xs text-accent">Admin</span>}
-                    <span className="text-xs text-fg-subtle">{new Date(post.createdAt).toLocaleString()}</span>
+                    {post.authorRole === "Admin" && (
+                      <span className="rounded bg-accent-soft px-1.5 py-0.5 text-xs font-medium text-accent">Admin</span>
+                    )}
+                    <span className="text-xs text-fg-subtle"><RelativeTime iso={post.createdAt} /></span>
                   </div>
-                  <div className="mt-2 text-sm text-fg whitespace-pre-wrap">{post.content}</div>
+                  <div className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-fg">{post.content}</div>
 
-                  <div className="mt-3 flex items-center gap-4">
+                  <div className="mt-3 flex items-center gap-1">
                     <button
                       onClick={() => handleReact(post.id, "like")}
-                      className={`flex items-center gap-1 text-xs ${post.currentUserReaction === "like" ? "text-accent" : "text-fg-subtle hover:text-fg"}`}
+                      className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs transition-colors ${post.currentUserReaction === "like" ? "bg-accent-soft text-accent" : "text-fg-subtle hover:bg-surface-2 hover:text-fg"}`}
                     >
                       <ThumbsUp size={14} /> {post.likeCount}
                     </button>
                     <button
                       onClick={() => handleReact(post.id, "dislike")}
-                      className={`flex items-center gap-1 text-xs ${post.currentUserReaction === "dislike" ? "text-danger" : "text-fg-subtle hover:text-fg"}`}
+                      className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs transition-colors ${post.currentUserReaction === "dislike" ? "bg-danger/10 text-danger" : "text-fg-subtle hover:bg-surface-2 hover:text-fg"}`}
                     >
                       <ThumbsDown size={14} /> {post.dislikeCount}
                     </button>
@@ -144,7 +164,7 @@ export default function ThreadPage() {
                       <button
                         onClick={() => handleReport(post.id)}
                         disabled={reportingId === post.id}
-                        className="flex items-center gap-1 text-xs text-fg-subtle hover:text-warning disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-fg-subtle transition-colors hover:bg-surface-2 hover:text-warning disabled:opacity-50"
                       >
                         <Flag size={14} /> Report
                       </button>
@@ -152,35 +172,39 @@ export default function ThreadPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}
 
       {actionError && <p className="mt-4 text-sm text-danger">{actionError}</p>}
 
-      {totalPages > 1 && (
-        <div className="mt-6 flex items-center justify-center gap-2">
-          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1} className="rounded-md border border-border px-3 py-1 text-sm text-fg-muted disabled:opacity-50">Prev</button>
-          <span className="text-sm text-fg-muted">{page} / {totalPages}</span>
-          <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages} className="rounded-md border border-border px-3 py-1 text-sm text-fg-muted disabled:opacity-50">Next</button>
-        </div>
-      )}
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} />
 
       {user && thread && !thread.isLocked && (
-        <div className="mt-6">
+        <Card className="mt-6 p-4">
+          <label htmlFor="reply" className="text-sm font-medium text-fg">Write a reply</label>
           <textarea
+            id="reply"
             value={replyContent}
             onChange={(e) => setReplyContent(e.target.value)}
-            placeholder="Write a reply..."
+            placeholder="Share your thoughts..."
             rows={4}
-            className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-fg outline-none placeholder:text-fg-subtle focus:border-accent"
+            className="mt-2 w-full resize-y rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-fg outline-none transition-colors placeholder:text-fg-subtle focus:border-accent focus:ring-1 focus:ring-accent"
           />
-          <Button onClick={handleReply} loading={replying} disabled={!replyContent.trim()} className="mt-2">
-            Post Reply
-          </Button>
-        </div>
+          <div className="mt-2 flex justify-end">
+            <Button onClick={handleReply} loading={replying} disabled={!replyContent.trim()}>
+              Post Reply
+            </Button>
+          </div>
+        </Card>
       )}
-    </div>
+
+      {thread?.isLocked && (
+        <p className="mt-6 rounded-lg border border-border bg-surface-2 px-4 py-3 text-center text-sm text-fg-muted">
+          This thread is locked. New replies are disabled.
+        </p>
+      )}
+    </PageShell>
   );
 }

@@ -5,6 +5,7 @@ import { adminApi } from "@/lib/api/admin";
 import { useAuth } from "@/lib/providers";
 import { Button } from "@/components/ui/button";
 import { PageLoader } from "@/components/ui/spinner";
+import { formatDate } from "@/lib/format-date";
 import type { UserListItem, PaginatedResponse } from "@/lib/types";
 
 export default function AdminUsersPage() {
@@ -43,7 +44,7 @@ export default function AdminUsersPage() {
   if (loading && !users) return <PageLoader />;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
+    <div className="mx-auto max-w-6xl">
       <h1 className="font-display text-3xl font-bold text-fg">User Management</h1>
 
       <div className="mt-6 overflow-x-auto">
@@ -79,7 +80,7 @@ export default function AdminUsersPage() {
                     <span className="text-xs text-success">Active</span>
                   )}
                 </td>
-                <td className="py-3 pr-4 text-fg-muted">{new Date(u.joinedAt).toLocaleDateString()}</td>
+                <td className="py-3 pr-4 text-fg-muted">{formatDate(u.joinedAt)}</td>
                 <td className="py-3">
                   {u.id !== me.id && (
                     <Button
