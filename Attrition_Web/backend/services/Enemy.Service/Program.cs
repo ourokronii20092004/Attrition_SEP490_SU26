@@ -1,4 +1,5 @@
 using BuildingBlocks.Authentication;
+using BuildingBlocks.Caching;
 using BuildingBlocks.Persistence;
 using BuildingBlocks.Web;
 using Enemy.Service.Data;
@@ -19,13 +20,14 @@ builder.Services.AddScoped<DbContext>(sp => sp.GetRequiredService<EnemyDbContext
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IEnemyRepository, EnemyRepository>();
 builder.Services.AddScoped<IEnemyService, EnemyService>();
+builder.Services.AddAttritionCache(builder.Configuration, "enemy");
 
 builder.Services.AddAttritionJwtAuth(builder.Configuration);
 
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddFluentValidationAutoValidation();
 
-builder.Services.AddControllers();
+builder.Services.AddAttritionControllers();
 builder.Services.AddAttritionSwagger("Enemy.Service");
 
 var app = builder.Build();

@@ -29,7 +29,8 @@ public sealed class TokenService
         {
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new("username", user.Username),
-            new(ClaimTypes.Role, user.Role)
+            new(ClaimTypes.Role, user.Role),
+            new("email_verified", user.IsEmailVerified ? "true" : "false")
         };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Secret"]!));

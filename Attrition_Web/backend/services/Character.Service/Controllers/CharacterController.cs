@@ -22,20 +22,22 @@ public class CharacterController : ControllerBase
         _user = user;
     }
 
-    private Guid UserId => _user.UserId!.Value;
-
     [HttpGet]
     public async Task<IActionResult> GetMine()
-        => Ok(ApiResponse<List<CharacterSummaryDto>>.Ok(await _service.GetByOwnerAsync(UserId)));
+    {
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        return Ok(ApiResponse<List<CharacterSummaryDto>>.Ok(await _service.GetByOwnerAsync(userId)));
+    }
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> Get(Guid id)
     {
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
         var character = await _service.GetDetailAsync(id);
         if (character == null) return NotFound(ApiResponse.Fail("Character not found."));
         // Ownership guard: a player may only read their own; admins may read any.
-        if (character.OwnerId != UserId && !_user.IsAdmin)
-            return Forbid();
+        if (character.OwnerId != userId && !_user.IsAdmin)
+            return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Fail("You do not have access to this character."));
         return Ok(ApiResponse<CharacterDetailDto>.Ok(character));
     }
 }

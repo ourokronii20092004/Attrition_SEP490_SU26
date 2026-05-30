@@ -14,5 +14,6 @@
     <ProjectReference Include="..\..\building-blocks\BuildingBlocks.Authentication\BuildingBlocks.Authentication.csproj" />
     <ProjectReference Include="..\..\building-blocks\BuildingBlocks.Web\BuildingBlocks.Web.csproj" />
     <ProjectReference Include="..\..\building-blocks\BuildingBlocks.Persistence\BuildingBlocks.Persistence.csproj" />
+    <ProjectReference Include="..\..\building-blocks\BuildingBlocks.Caching\BuildingBlocks.Caching.csproj" />
   </ItemGroup>
 </Project>

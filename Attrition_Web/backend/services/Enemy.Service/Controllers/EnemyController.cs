@@ -1,6 +1,7 @@
 using BuildingBlocks.Contracts;
 using Enemy.Service.DTOs;
 using Enemy.Service.Services;
+using Enemy.Service.Validators;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,7 +16,11 @@ public class EnemyController : ControllerBase
 
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] string? tier = null, [FromQuery] string? search = null)
-        => Ok(ApiResponse<List<EnemyResponse>>.Ok(await _service.GetAllAsync(tier, search)));
+    {
+        if (tier != null && !EnemyTiers.All.Contains(tier))
+            return BadRequest(ApiResponse.Fail($"Invalid tier '{tier}'. Valid tiers: {string.Join(", ", EnemyTiers.All)}."));
+        return Ok(ApiResponse<List<EnemyResponse>>.Ok(await _service.GetAllAsync(tier, search)));
+    }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> Get(string id)

@@ -35,6 +35,7 @@ public class EnemyRepository : Repository<EnemyEntity>, IEnemyRepository
 
     public async Task<List<EnemyEntity>> SearchAsync(string query, int limit)
     {
+        if (string.IsNullOrWhiteSpace(query)) return new List<EnemyEntity>();
         var s = query.ToLower();
         return await _context.Enemies
             .Where(e => e.Name.ToLower().Contains(s) || e.EnemyId.ToLower().Contains(s))

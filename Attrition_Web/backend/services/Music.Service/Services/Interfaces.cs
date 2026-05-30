@@ -6,6 +6,7 @@ namespace Music.Service.Services;
 public interface IAlbumService
 {
     Task<IEnumerable<MusicAlbumDto>> GetAlbumsAsync();
+    Task<BuildingBlocks.Contracts.PaginatedResponse<MusicAlbumDto>> GetAlbumsPagedAsync(int page, int pageSize);
     Task<AlbumDetailDto?> GetAlbumAsync(int id);
     Task<MusicAlbumDto> CreateAlbumAsync(CreateAlbumRequest req);
     Task<MusicAlbumDto?> UpdateAlbumAsync(int id, CreateAlbumRequest req);
@@ -19,6 +20,7 @@ public interface ITrackService
     Task<IEnumerable<MusicTrackDto>> GetTracksAsync(int? albumId);
     Task<FeaturedTracksResponse> GetFeaturedTracksAsync();
     Task<(string? filePath, bool trackExists)> GetTrackStreamInfoAsync(int id);
+    Task<(string? filePath, string fileName, bool trackExists)> GetTrackDownloadInfoAsync(int id);
     Task<bool> IncrementPlayCountAsync(int id);
     Task<(bool success, string? error, ScanTrackResponse? data)> ScanTrackAsync(Microsoft.AspNetCore.Http.IFormFile file);
     Task<(bool success, string? error, MusicTrackDto? data)> UploadTrackAsync(UploadTrackRequest req);

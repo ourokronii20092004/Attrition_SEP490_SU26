@@ -76,6 +76,7 @@ public class AdminStatsService : IAdminStatsService
     private async Task<int?> Safe(string source, Func<Task<int>> call, ConcurrentBag<string> down)
     {
         try { return await call(); }
+        catch (OperationCanceledException) { throw; }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Admin stats source '{Source}' unavailable", source);
@@ -87,6 +88,7 @@ public class AdminStatsService : IAdminStatsService
     private async Task<JsonElement?> Safe(string source, Func<Task<JsonElement>> call, ConcurrentBag<string> down)
     {
         try { return await call(); }
+        catch (OperationCanceledException) { throw; }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Admin stats source '{Source}' unavailable", source);

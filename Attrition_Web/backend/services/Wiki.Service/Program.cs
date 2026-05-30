@@ -1,4 +1,5 @@
 using BuildingBlocks.Authentication;
+using BuildingBlocks.Caching;
 using BuildingBlocks.Persistence;
 using BuildingBlocks.Web;
 using FluentValidation;
@@ -19,19 +20,25 @@ builder.Services.AddScoped<DbContext>(sp => sp.GetRequiredService<WikiDbContext>
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IWikiRepository, WikiRepository>();
 builder.Services.AddScoped<IWikiService, WikiService>();
+builder.Services.AddAttritionCache(builder.Configuration, "wiki");
 
 builder.Services.AddAttritionJwtAuth(builder.Configuration);
 
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddFluentValidationAutoValidation();
 
-builder.Services.AddControllers();
+builder.Services.AddAttritionControllers();
 builder.Services.AddAttritionSwagger("Wiki.Service");
 
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
-    await scope.ServiceProvider.GetRequiredService<WikiDbContext>().Database.MigrateAsync();
+{
+    var db = scope.ServiceProvider.GetRequiredService<WikiDbContext>();
+    await db.Database.MigrateAsync();
+    await CategorySeeder.SeedCategoriesAsync(db,
+        scope.ServiceProvider.GetRequiredService<ILogger<Program>>());
+}
 
 app.UseAttritionPipeline();
 app.Run();

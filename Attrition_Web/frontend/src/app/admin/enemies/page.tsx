@@ -5,7 +5,9 @@ import { useAuth } from "@/lib/providers";
 import { enemiesApi } from "@/lib/api/enemies";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { PageLoader } from "@/components/ui/spinner";
+import { ENEMY_TIERS } from "@/lib/enemy-tiers";
 import type { EnemyResponse, EnemyCreateRequest, EnemyUpdateRequest, LootEntryDto } from "@/lib/types";
 
 export default function AdminEnemiesPage() {
@@ -76,7 +78,7 @@ function EnemyForm({ initial, onDone, onCancel }: { initial: EnemyResponse | nul
   const [saving, setSaving] = useState(false);
   const [enemyId, setEnemyId] = useState(initial?.enemyId ?? "");
   const [name, setName] = useState(initial?.name ?? "");
-  const [tier, setTier] = useState(initial?.tier ?? "Common");
+  const [tier, setTier] = useState(initial?.tier ?? "Normal");
   const [spawnBiome, setSpawnBiome] = useState(initial?.spawnBiome ?? "");
   const [hp, setHp] = useState(initial?.hp ?? 100);
   const [ad, setAd] = useState(initial?.ad ?? 10);
@@ -118,7 +120,9 @@ function EnemyForm({ initial, onDone, onCancel }: { initial: EnemyResponse | nul
       <div className="grid gap-3 sm:grid-cols-2">
         {!initial && <Input label="Enemy ID" value={enemyId} onChange={(e) => setEnemyId(e.target.value)} />}
         <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} />
-        <Input label="Tier" value={tier} onChange={(e) => setTier(e.target.value)} />
+        <Select label="Tier" value={tier} onChange={(e) => setTier(e.target.value)}>
+          {ENEMY_TIERS.map((t) => <option key={t} value={t}>{t}</option>)}
+        </Select>
         <Input label="Biome" value={spawnBiome} onChange={(e) => setSpawnBiome(e.target.value)} />
         <Input label="HP" type="number" value={hp} onChange={(e) => setHp(+e.target.value)} />
         <Input label="AD" type="number" value={ad} onChange={(e) => setAd(+e.target.value)} />

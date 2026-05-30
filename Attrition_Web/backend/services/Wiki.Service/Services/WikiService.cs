@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using BuildingBlocks.Caching;
 using BuildingBlocks.Contracts;
 using BuildingBlocks.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -15,36 +16,47 @@ public class WikiService : IWikiService
     private readonly IRepository<WikiRevision> _revisionRepo;
     private readonly IRepository<WikiContribution> _contributionRepo;
     private readonly DbContext _db;
+    private readonly ICacheService _cache;
 
     public WikiService(
         IWikiRepository wikiRepo,
         IRepository<WikiCategory> categoryRepo,
         IRepository<WikiRevision> revisionRepo,
         IRepository<WikiContribution> contributionRepo,
-        DbContext db)
+        DbContext db,
+        ICacheService cache)
     {
         _wikiRepo = wikiRepo;
         _categoryRepo = categoryRepo;
         _revisionRepo = revisionRepo;
         _contributionRepo = contributionRepo;
         _db = db;
+        _cache = cache;
     }
 
     public async Task<List<WikiCategoryDto>> GetCategoriesAsync()
     {
-        var categories = await _wikiRepo.GetCategoriesAsync();
-        var dtos = new List<WikiCategoryDto>();
-        foreach (var c in categories)
+        // Categories + per-category article counts change rarely but are read on every wiki page.
+        return await _cache.GetOrSetAsync("categories", async () =>
         {
-            var count = await _wikiRepo.CountArticlesInCategoryAsync(c.Id);
-            dtos.Add(new WikiCategoryDto(c.Id, c.Name, c.Slug, c.Description, c.IconUrl, count));
-        }
-        return dtos;
+            var categories = await _wikiRepo.GetCategoriesAsync();
+            var dtos = new List<WikiCategoryDto>();
+            foreach (var c in categories)
+            {
+                var count = await _wikiRepo.CountArticlesInCategoryAsync(c.Id);
+                dtos.Add(new WikiCategoryDto(c.Id, c.Name, c.Slug, c.Description, c.IconUrl, count));
+            }
+            return dtos;
+        }, TimeSpan.FromMinutes(10));
     }
 
-    public async Task<PaginatedResponse<WikiArticleListDto>> GetArticlesAsync(string? categorySlug, string? search, int page, int pageSize)
+    /// <summary>Drop the cached category listing after any write that could change it.
+    /// Only "categories" is cached today; if article-body caching is added later, give it its
+    /// own scoped invalidator rather than widening this back to a blanket wiki:* wipe.</summary>
+    private Task InvalidateAsync() => _cache.RemoveAsync("categories");
+
+    public async Task<PaginatedResponse<WikiArticleListDto>> GetArticlesAsync(string? categorySlug, string? search, int page, int pageSize, Guid? authorId = null)
     {
-        Expression<Func<WikiArticle, bool>> filter = a => a.Status == "Published";
         int? categoryId = null;
 
         if (!string.IsNullOrEmpty(categorySlug))
@@ -56,13 +68,12 @@ public class WikiService : IWikiService
         }
 
         var search_ = search?.ToLower();
-        filter = (categoryId, search_) switch
-        {
-            (int cid, string s) => a => a.Status == "Published" && a.CategoryId == cid && a.Title.ToLower().Contains(s),
-            (int cid, null) => a => a.Status == "Published" && a.CategoryId == cid,
-            (null, string s) => a => a.Status == "Published" && a.Title.ToLower().Contains(s),
-            _ => a => a.Status == "Published"
-        };
+        // Published only; layer on the optional category, search, and author filters.
+        Expression<Func<WikiArticle, bool>> filter = a =>
+            a.Status == "Published" &&
+            (categoryId == null || a.CategoryId == categoryId.Value) &&
+            (search_ == null || a.Title.ToLower().Contains(search_)) &&
+            (authorId == null || a.CreatedById == authorId.Value);
 
         var (items, total) = await _wikiRepo.GetPagedAsync(page, pageSize, filter,
             q => q.OrderByDescending(a => a.UpdatedAt));
@@ -112,12 +123,16 @@ public class WikiService : IWikiService
         if (existing.TotalCount > 0)
             return ApiResponse<string>.Fail("An article with a similar title already exists.");
 
+        // Don't create an article pointing at a non-existent category (no FK enforces this).
+        if (await _categoryRepo.GetByIdAsync(request.CategoryId) is null)
+            return ApiResponse<string>.Fail("The specified category does not exist.");
+
         var article = new WikiArticle
         {
             Title = request.Title,
             Slug = slug,
             CategoryId = request.CategoryId,
-            Content = request.Content,
+            Content = ContentSanitizer.Sanitize(request.Content),
             CreatedById = userId,
             CreatedByName = userName,
             LastEditedById = userId,
@@ -140,12 +155,19 @@ public class WikiService : IWikiService
 
             await tx.CommitAsync();
         }
+        catch (DbUpdateException)
+        {
+            // Lost the slug race between the check above and commit.
+            await tx.RollbackAsync();
+            return ApiResponse<string>.Fail("An article with a similar title already exists.");
+        }
         catch
         {
             await tx.RollbackAsync();
             throw;
         }
 
+        await InvalidateAsync();
         return ApiResponse<string>.Ok(slug);
     }
 
@@ -154,33 +176,57 @@ public class WikiService : IWikiService
         var article = await _wikiRepo.GetByIdAsync(id);
         if (article == null) return ApiResponse.Fail("Article not found.");
 
-        await _revisionRepo.AddAsync(new WikiRevision
-        {
-            ArticleId = article.Id,
-            Content = article.Content,
-            EditedById = userId,
-            EditedByName = userName,
-            ChangeNote = request.ChangeNote ?? "Update"
-        });
-
+        // Validate the slug change FIRST. Previously the revision was written before this check, so a
+        // slug clash returned failure but left an orphaned revision committed (W-1).
+        string? newSlug = null;
         if (request.Title != null)
         {
-            var newSlug = SlugHelper.GenerateSlug(request.Title);
+            newSlug = SlugHelper.GenerateSlug(request.Title);
             if (newSlug != article.Slug)
             {
                 var (clash, _) = await _wikiRepo.GetPagedAsync(1, 1, a => a.Slug == newSlug && a.Id != id);
                 if (clash.Count > 0) return ApiResponse.Fail("An article with a similar title already exists.");
             }
-            article.Title = request.Title;
-            article.Slug = newSlug;
         }
-        if (request.Content != null) article.Content = request.Content;
-        if (request.Status != null) article.Status = request.Status;
-        article.LastEditedById = userId;
-        article.LastEditedByName = userName;
-        article.UpdatedAt = DateTime.UtcNow;
 
-        await _wikiRepo.UpdateAsync(article);
+        await using var tx = await _db.Database.BeginTransactionAsync();
+        try
+        {
+            await _revisionRepo.AddAsync(new WikiRevision
+            {
+                ArticleId = article.Id,
+                Content = article.Content,
+                EditedById = userId,
+                EditedByName = userName,
+                ChangeNote = request.ChangeNote ?? "Update"
+            });
+
+            if (request.Title != null)
+            {
+                article.Title = request.Title;
+                article.Slug = newSlug!;
+            }
+            if (request.Content != null) article.Content = ContentSanitizer.Sanitize(request.Content);
+            if (request.Status != null) article.Status = request.Status;
+            article.LastEditedById = userId;
+            article.LastEditedByName = userName;
+            article.UpdatedAt = DateTime.UtcNow;
+
+            await _wikiRepo.UpdateAsync(article);
+            await tx.CommitAsync();
+        }
+        catch (DbUpdateException)
+        {
+            await tx.RollbackAsync();
+            return ApiResponse.Fail("An article with a similar title already exists.");
+        }
+        catch
+        {
+            await tx.RollbackAsync();
+            throw;
+        }
+
+        await InvalidateAsync();
         return ApiResponse.Ok();
     }
 
@@ -189,6 +235,7 @@ public class WikiService : IWikiService
         var article = await _wikiRepo.GetByIdAsync(articleId);
         if (article == null) return ApiResponse.Fail("Article not found.");
         await _wikiRepo.DeleteAsync(article);
+        await InvalidateAsync();
         return ApiResponse.Ok();
     }
 
@@ -202,7 +249,7 @@ public class WikiService : IWikiService
             ArticleId = articleId,
             ContributorId = userId,
             ContributorName = userName,
-            SuggestedContent = request.SuggestedContent,
+            SuggestedContent = ContentSanitizer.Sanitize(request.SuggestedContent),
             ChangeNote = request.ChangeNote
         });
         return ApiResponse.Ok();
@@ -235,6 +282,11 @@ public class WikiService : IWikiService
         var contribution = await _contributionRepo.GetByIdAsync(contributionId);
         if (contribution == null || contribution.Status != "Pending")
             return ApiResponse.Fail("Contribution not found or already reviewed.");
+
+        // If approving, make sure the target article still exists — otherwise we'd mark the
+        // contribution Approved while silently applying nothing (W-4).
+        if (request.Status == "Approved" && await _wikiRepo.GetByIdAsync(contribution.ArticleId) is null)
+            return ApiResponse.Fail("The target article has been deleted; this contribution can no longer be applied.");
 
         contribution.Status = request.Status;
         contribution.ReviewedById = reviewerId;
@@ -290,7 +342,10 @@ public class WikiService : IWikiService
             Description = request.Description ?? string.Empty,
             IconUrl = request.IconUrl
         };
-        await _categoryRepo.AddAsync(category);
+        // Optimistic check above for the message; TryAddAsync makes the unique-slug insert race-safe.
+        if (!await _categoryRepo.TryAddAsync(category))
+            return ApiResponse<int>.Fail("A category with a similar name already exists.");
+        await InvalidateAsync();
         return ApiResponse<int>.Ok(category.Id);
     }
 
@@ -310,7 +365,15 @@ public class WikiService : IWikiService
         category.Slug = newSlug;
         category.Description = request.Description ?? string.Empty;
         category.IconUrl = request.IconUrl;
-        await _categoryRepo.UpdateAsync(category);
+        try
+        {
+            await _categoryRepo.UpdateAsync(category);
+        }
+        catch (DbUpdateException)
+        {
+            return ApiResponse.Fail("A category with a similar name already exists.");
+        }
+        await InvalidateAsync();
         return ApiResponse.Ok();
     }
 
@@ -323,6 +386,7 @@ public class WikiService : IWikiService
         if (count > 0) return (true, true);
 
         await _categoryRepo.DeleteAsync(category);
+        await InvalidateAsync();
         return (true, false);
     }
 

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,8 +21,17 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const { login } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -33,8 +43,11 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      await login(data);
-      router.push("/");
+      const loggedIn = await login(data);
+      const redirect = searchParams.get("redirect");
+      // Admins are confined to the admin panel; everyone else honors ?redirect or lands home.
+      if (loggedIn?.role === "Admin") router.push("/admin");
+      else router.push(redirect || "/");
     } catch (e) {
       if (e instanceof ApiError) {
         const body = tryParseError(e.body);

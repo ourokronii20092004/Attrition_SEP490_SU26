@@ -15,13 +15,20 @@ public class LocalFileStorage : IFileStorage
     public async Task<string> SaveAsync(string subfolder, string fileName, Stream stream)
     {
         var targetDir = Path.Combine(_uploadPath, subfolder);
-        Directory.CreateDirectory(targetDir);
+        try
+        {
+            Directory.CreateDirectory(targetDir);
 
-        var filePath = Path.Combine(targetDir, fileName);
-        await using var fileStream = new FileStream(filePath, FileMode.Create);
-        await stream.CopyToAsync(fileStream);
+            var filePath = Path.Combine(targetDir, fileName);
+            await using var fileStream = new FileStream(filePath, FileMode.Create);
+            await stream.CopyToAsync(fileStream);
 
-        return $"{_publicPrefix}/{subfolder}/{fileName}";
+            return $"{_publicPrefix}/{subfolder}/{fileName}";
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            throw new InvalidOperationException($"Failed to save uploaded file to '{subfolder}/{fileName}'.", ex);
+        }
     }
 
     public Task<bool> DeleteAsync(string relativePath)
@@ -48,8 +55,16 @@ public class LocalFileStorage : IFileStorage
 
         if (File.Exists(fullPath))
         {
-            File.Delete(fullPath);
-            return Task.FromResult(true);
+            try
+            {
+                File.Delete(fullPath);
+                return Task.FromResult(true);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                // Best-effort: a locked/again-permission-denied file shouldn't fault the caller.
+                return Task.FromResult(false);
+            }
         }
         return Task.FromResult(false);
     }

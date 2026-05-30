@@ -1,10 +1,28 @@
 using System.Threading.RateLimiting;
+using Gateway;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// The gateway proxies uploads (assets up to 50MB, music up to 100MB). Without raising
+// Kestrel's default ~28.6MB body limit, large uploads 413 at the gateway before reaching
+// the owning service. Configurable via Gateway:MaxRequestBodySizeMB (default 110MB headroom).
+var maxBodyMb = long.TryParse(builder.Configuration["Gateway:MaxRequestBodySizeMB"], out var mb) && mb > 0 ? mb : 110;
+builder.WebHost.ConfigureKestrel(o => o.Limits.MaxRequestBodySize = maxBodyMb * 1024 * 1024);
+
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+
+// Honor X-Forwarded-For from the nginx/cloudflared edge so the rate limiter partitions by the real
+// client IP (ClientIp reads Connection.RemoteIpAddress, which UseForwardedHeaders rewrites) instead
+// of lumping every request behind the proxy into a single bucket.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 // Centralized CORS — only the gateway sets CORS headers; downstream services do not.
 // Origins come from the root .env via CORS_ORIGINS (comma-separated), surfaced as Cors:Origins.
@@ -52,6 +70,8 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
+app.UseForwardedHeaders();
+app.UseMiddleware<GatewayErrorMiddleware>();
 app.UseCors();
 app.UseRateLimiter();
 app.MapReverseProxy();

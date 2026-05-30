@@ -27,7 +27,7 @@ builder.Services.AddScoped<IAdminStatsService, AdminStatsService>();
 
 builder.Services.AddAttritionJwtAuth(builder.Configuration);
 
-builder.Services.AddControllers();
+builder.Services.AddAttritionControllers();
 builder.Services.AddAttritionSwagger("Admin.Service");
 
 var app = builder.Build();

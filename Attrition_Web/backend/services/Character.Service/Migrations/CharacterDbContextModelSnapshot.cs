@@ -52,6 +52,9 @@ namespace Character.Service.Migrations
 
                     b.HasIndex("OwnerId");
 
+                    b.HasIndex("OwnerId", "Name")
+                        .IsUnique();
+
                     b.ToTable("characters", "character");
                 });
 

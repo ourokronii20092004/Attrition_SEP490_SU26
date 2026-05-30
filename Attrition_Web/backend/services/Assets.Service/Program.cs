@@ -12,8 +12,11 @@ using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.WebHost.ConfigureKestrel(o => o.Limits.MaxRequestBodySize = 100 * 1024 * 1024);
-builder.Services.Configure<FormOptions>(o => o.MultipartBodyLengthLimit = 100 * 1024 * 1024);
+// Allow uploads up to the configured asset cap (default 50MB) plus headroom for multipart overhead.
+var maxAssetMb = long.TryParse(builder.Configuration["FileUpload:MaxImageSizeMB"], out var mb) && mb > 0 ? mb : 50;
+var maxBytes = (maxAssetMb + 5) * 1024 * 1024;
+builder.WebHost.ConfigureKestrel(o => o.Limits.MaxRequestBodySize = maxBytes);
+builder.Services.Configure<FormOptions>(o => o.MultipartBodyLengthLimit = maxBytes);
 
 builder.Services.AddDbContext<AssetsDbContext>(opt =>
     opt.UseNpgsql(
@@ -31,7 +34,7 @@ builder.Services.AddAttritionJwtAuth(builder.Configuration);
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddFluentValidationAutoValidation();
 
-builder.Services.AddControllers();
+builder.Services.AddAttritionControllers();
 builder.Services.AddAttritionSwagger("Assets.Service");
 
 var app = builder.Build();

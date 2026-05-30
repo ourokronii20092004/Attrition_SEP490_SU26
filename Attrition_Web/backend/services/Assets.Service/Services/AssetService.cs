@@ -4,6 +4,7 @@ using Assets.Service.Models;
 using Assets.Service.Repositories;
 using BuildingBlocks.Contracts;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
 namespace Assets.Service.Services;
 
@@ -14,12 +15,14 @@ public class AssetService : IAssetService
 
     private readonly IAssetRepository _repo;
     private readonly IFileStorage _storage;
+    private readonly ILogger<AssetService> _logger;
     private readonly long _maxSize;
 
-    public AssetService(IAssetRepository repo, IFileStorage storage, IConfiguration config)
+    public AssetService(IAssetRepository repo, IFileStorage storage, IConfiguration config, ILogger<AssetService> logger)
     {
         _repo = repo;
         _storage = storage;
+        _logger = logger;
         var mb = long.TryParse(config["FileUpload:MaxImageSizeMB"], out var v) && v > 0 ? v : 20;
         _maxSize = mb * 1024 * 1024;
     }
@@ -104,7 +107,19 @@ public class AssetService : IAssetService
             UploadedById = userId,
             UploadedByName = userName
         };
-        await _repo.AddAsync(asset);
+        try
+        {
+            await _repo.AddAsync(asset);
+        }
+        catch (Exception ex)
+        {
+            // The file is already on disk; if the row never persisted, delete it so we don't leak
+            // an orphaned blob with no DB record pointing at it.
+            _logger.LogError(ex, "Asset DB insert failed; cleaning up stored file {Path}", storedPath);
+            try { await _storage.DeleteAsync(storedPath); }
+            catch (Exception cleanupEx) { _logger.LogWarning(cleanupEx, "Failed to clean up orphaned asset file {Path}", storedPath); }
+            throw;
+        }
 
         return ApiResponse<AssetDto>.Ok(ToDto(asset));
     }
