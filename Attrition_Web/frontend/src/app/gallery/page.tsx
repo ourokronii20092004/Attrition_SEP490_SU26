@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Images } from "lucide-react";
+import { X, Images, ChevronLeft, ChevronRight } from "lucide-react";
 import { assetsApi } from "@/lib/api/assets";
 import { resolveMediaUrl } from "@/lib/api/media";
 import { PageShell } from "@/components/ui/page-shell";
@@ -16,8 +16,11 @@ export default function GalleryPage() {
   const [assets, setAssets] = useState<PaginatedResponse<AssetDto> | null>(null);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [lightbox, setLightbox] = useState<AssetDto | null>(null);
+  // Lightbox tracks an index into the current page's items so prev/next can navigate.
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const totalPages = assets ? Math.ceil(assets.totalCount / assets.pageSize) : 0;
+  const items = assets?.items ?? [];
+  const lightbox = lightboxIdx != null ? items[lightboxIdx] ?? null : null;
 
   useEffect(() => {
     setLoading(true);
@@ -29,12 +32,19 @@ export default function GalleryPage() {
       .finally(() => setLoading(false));
   }, [page]);
 
+  const showPrev = () => setLightboxIdx((i) => (i == null ? i : (i - 1 + items.length) % items.length));
+  const showNext = () => setLightboxIdx((i) => (i == null ? i : (i + 1) % items.length));
+
   useEffect(() => {
-    if (!lightbox) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setLightbox(null); };
+    if (lightboxIdx == null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightboxIdx(null);
+      else if (e.key === "ArrowLeft") showPrev();
+      else if (e.key === "ArrowRight") showNext();
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [lightbox]);
+  }, [lightboxIdx, items.length]);
 
   const parseTags = (tags: string | null): string[] => {
     if (!tags) return [];
@@ -54,7 +64,7 @@ export default function GalleryPage() {
           <div className="stagger grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {assets.items.map((asset, i) => (
               <Card key={asset.id} interactive style={{ "--i": i } as React.CSSProperties} className="overflow-hidden p-0">
-                <button onClick={() => setLightbox(asset)} className="group block w-full text-left">
+                <button onClick={() => setLightboxIdx(i)} className="group block w-full text-left">
                   <div className="overflow-hidden">
                     <img
                       src={resolveMediaUrl(asset.filePath) ?? ""}
@@ -77,37 +87,69 @@ export default function GalleryPage() {
 
       {lightbox && (
         <div
-          className="fixed inset-0 z-[400] flex items-center justify-center bg-bg/85 p-4 backdrop-blur-md motion-safe:animate-fade-in"
-          onClick={() => setLightbox(null)}
+          className="fixed inset-0 z-[400] flex flex-col bg-black/90 backdrop-blur-md motion-safe:animate-fade-in"
           role="dialog"
           aria-modal="true"
           aria-label={lightbox.title ?? lightbox.fileName}
         >
-          <button
-            onClick={() => setLightbox(null)}
-            className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-surface/80 text-fg-muted transition-colors hover:text-fg"
-            aria-label="Close"
-          >
-            <X size={20} />
-          </button>
-          <div className="max-h-[90vh] max-w-3xl overflow-auto motion-safe:animate-rise-in" onClick={(e) => e.stopPropagation()}>
+          {/* Top bar: title + counter + close */}
+          <div className="flex items-center justify-between gap-4 px-4 py-3 sm:px-6">
+            <div className="min-w-0">
+              <p className="truncate font-display text-base font-semibold text-white">{lightbox.title ?? lightbox.fileName}</p>
+              <p className="text-xs text-white/50">{(lightboxIdx ?? 0) + 1} of {items.length}</p>
+            </div>
+            <button
+              onClick={() => setLightboxIdx(null)}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white/80 transition-colors hover:bg-white/20 hover:text-white"
+              aria-label="Close"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Stage: image flanked by edge nav arrows. Click backdrop to close. */}
+          <div className="relative flex flex-1 items-center justify-center overflow-hidden px-2 sm:px-16" onClick={() => setLightboxIdx(null)}>
+            {items.length > 1 && (
+              <button
+                onClick={(e) => { e.stopPropagation(); showPrev(); }}
+                className="absolute left-2 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white/80 transition-colors hover:bg-white/20 hover:text-white sm:left-4"
+                aria-label="Previous image"
+              >
+                <ChevronLeft size={26} />
+              </button>
+            )}
+
             <img
               src={resolveMediaUrl(lightbox.filePath) ?? ""}
               alt={lightbox.title ?? lightbox.fileName}
-              className="mx-auto max-h-[78vh] rounded-xl shadow-[var(--shadow-lg)]"
+              onClick={(e) => e.stopPropagation()}
+              className="max-h-full max-w-full rounded-lg object-contain shadow-[var(--shadow-lg)] motion-safe:animate-fade-in"
             />
-            <div className="mt-4 text-center">
-              <p className="font-display text-lg font-semibold text-fg">{lightbox.title ?? lightbox.fileName}</p>
-              {lightbox.description && <p className="mt-1 text-sm text-fg-muted">{lightbox.description}</p>}
+
+            {items.length > 1 && (
+              <button
+                onClick={(e) => { e.stopPropagation(); showNext(); }}
+                className="absolute right-2 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white/80 transition-colors hover:bg-white/20 hover:text-white sm:right-4"
+                aria-label="Next image"
+              >
+                <ChevronRight size={26} />
+              </button>
+            )}
+          </div>
+
+          {/* Caption: description + tags */}
+          {(lightbox.description || parseTags(lightbox.tags).length > 0) && (
+            <div className="px-4 pb-5 pt-2 text-center sm:px-6">
+              {lightbox.description && <p className="mx-auto max-w-2xl text-sm text-white/70">{lightbox.description}</p>}
               {parseTags(lightbox.tags).length > 0 && (
-                <div className="mt-3 flex flex-wrap justify-center gap-1.5">
+                <div className="mt-2 flex flex-wrap justify-center gap-1.5">
                   {parseTags(lightbox.tags).map((tag) => (
-                    <span key={tag} className="rounded-full bg-surface-3 px-2.5 py-0.5 text-xs text-fg-muted">{tag}</span>
+                    <span key={tag} className="rounded-full bg-white/10 px-2.5 py-0.5 text-xs text-white/60">{tag}</span>
                   ))}
                 </div>
               )}
             </div>
-          </div>
+          )}
         </div>
       )}
     </PageShell>

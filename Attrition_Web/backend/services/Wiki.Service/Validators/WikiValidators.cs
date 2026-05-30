@@ -42,3 +42,12 @@ public class WikiCategoryRequestValidator : AbstractValidator<WikiCategoryReques
         RuleFor(x => x.Name).NotEmpty().Length(2, 50);
     }
 }
+
+public class ReviewContributionRequestValidator : AbstractValidator<ReviewContributionRequest>
+{
+    public ReviewContributionRequestValidator()
+    {
+        RuleFor(x => x.Status).Must(s => s is "Approved" or "Rejected")
+            .WithMessage("Status must be 'Approved' or 'Rejected'.");
+    }
+}

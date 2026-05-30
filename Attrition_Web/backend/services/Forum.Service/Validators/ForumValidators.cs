@@ -55,3 +55,12 @@ public class ReportPostReqValidator : AbstractValidator<ReportPostReq>
         RuleFor(x => x.Reason).NotEmpty().MaximumLength(500);
     }
 }
+
+public class RemovePostRequestValidator : AbstractValidator<RemovePostRequest>
+{
+    public RemovePostRequestValidator()
+    {
+        RuleFor(x => x.Reason).NotEmpty().MaximumLength(500)
+            .WithMessage("A removal reason (max 500 chars) is required.");
+    }
+}

@@ -25,15 +25,15 @@ public class InternalWikiController : ControllerBase
     [HttpGet("search")]
     public async Task<IActionResult> Search([FromQuery] string q, [FromQuery] int limit = 5)
     {
-        if (!KeyValid()) return Unauthorized();
+        if (!KeyValid()) return Unauthorized(ApiResponse.Fail("Valid service authentication is required."));
         if (string.IsNullOrWhiteSpace(q)) return Ok(ApiResponse<List<WikiSearchResultDto>>.Ok(new()));
-        return Ok(ApiResponse<List<WikiSearchResultDto>>.Ok(await _wiki.SearchAsync(q, limit)));
+        return Ok(ApiResponse<List<WikiSearchResultDto>>.Ok(await _wiki.SearchAsync(q, Math.Clamp(limit, 1, 50))));
     }
 
     [HttpGet("stats")]
     public async Task<IActionResult> Stats()
     {
-        if (!KeyValid()) return Unauthorized();
+        if (!KeyValid()) return Unauthorized(ApiResponse.Fail("Valid service authentication is required."));
         var articles = await _wiki.CountArticlesAsync();
         var pending = await _wiki.CountPendingContributionsAsync();
         return Ok(ApiResponse<object>.Ok(new { articles, pendingContributions = pending }));

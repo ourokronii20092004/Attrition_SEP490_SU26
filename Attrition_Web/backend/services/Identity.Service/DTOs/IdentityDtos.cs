@@ -12,7 +12,7 @@ public record ResetPasswordRequest(string Token, string NewPassword);
 public record VerifyEmailRequest(string Token);
 
 // ─── Account requests ───
-public record UpdateProfileRequest(string? Bio, string? Email, bool? NotifyOnReply, bool? NotifyOnMention);
+public record UpdateProfileRequest(string? Bio, string? Email, bool? NotifyOnReply, bool? NotifyOnMention, string? DisplayName);
 public record UpdateThemeRequest(string ThemeMode, string ThemeAccent);
 public record SetPasswordRequest(string NewPassword);
 public record UpdateEmailRequest(string NewEmail, string CurrentPassword);

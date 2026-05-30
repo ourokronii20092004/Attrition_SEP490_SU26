@@ -12,9 +12,9 @@ interface AuthState {
 }
 
 interface AuthContextValue extends AuthState {
-  login: (data: LoginRequest) => Promise<void>;
-  register: (data: RegisterRequest) => Promise<void>;
-  loginWithGoogle: (idToken: string) => Promise<void>;
+  login: (data: LoginRequest) => Promise<UserDto | null>;
+  register: (data: RegisterRequest) => Promise<UserDto | null>;
+  loginWithGoogle: (idToken: string) => Promise<UserDto | null>;
   logout: () => void;
   refreshUser: () => Promise<void>;
   setUser: (user: UserDto) => void;
@@ -85,7 +85,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (res.success && res.data) {
       setTokens(res.data.accessToken, res.data.refreshToken);
       setState({ user: res.data.user, loading: false });
+      return res.data.user;
     }
+    return null;
   }, []);
 
   const register = useCallback(async (data: RegisterRequest) => {
@@ -93,7 +95,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (res.success && res.data) {
       setTokens(res.data.accessToken, res.data.refreshToken);
       setState({ user: res.data.user, loading: false });
+      return res.data.user;
     }
+    return null;
   }, []);
 
   const loginWithGoogle = useCallback(async (idToken: string) => {
@@ -101,7 +105,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (res.success && res.data) {
       setTokens(res.data.accessToken, res.data.refreshToken);
       setState({ user: res.data.user, loading: false });
+      return res.data.user;
     }
+    return null;
   }, []);
 
   const logout = useCallback(() => {

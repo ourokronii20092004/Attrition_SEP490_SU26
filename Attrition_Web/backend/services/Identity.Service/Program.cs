@@ -11,6 +11,17 @@ using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Fail fast on a missing/garbage JWT secret rather than throwing an opaque 500 on the first login.
+var jwtSecret = builder.Configuration["Jwt:Secret"];
+if (string.IsNullOrWhiteSpace(jwtSecret))
+    throw new InvalidOperationException("FATAL: 'Jwt:Secret' is not configured.");
+foreach (var key in new[] { "Jwt:AccessTokenExpiryMinutes", "Jwt:RefreshTokenExpiryDays" })
+{
+    var raw = builder.Configuration[key];
+    if (raw is not null && !double.TryParse(raw, out _))
+        throw new InvalidOperationException($"FATAL: '{key}' value '{raw}' is not a valid number.");
+}
+
 builder.Services.Configure<FormOptions>(o => o.MultipartBodyLengthLimit = 20 * 1024 * 1024);
 
 builder.Services.AddDbContext<IdentityDbContext>(opt =>
@@ -38,13 +49,18 @@ builder.Services.AddAttritionJwtAuth(builder.Configuration);
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddFluentValidationAutoValidation();
 
-builder.Services.AddControllers();
+builder.Services.AddAttritionControllers();
 builder.Services.AddAttritionSwagger("Identity.Service");
 
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
-    await scope.ServiceProvider.GetRequiredService<IdentityDbContext>().Database.MigrateAsync();
+{
+    var db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
+    await db.Database.MigrateAsync();
+    await AdminSeeder.SeedAdminAsync(db, app.Configuration,
+        scope.ServiceProvider.GetRequiredService<ILogger<Program>>());
+}
 
 // Serve uploaded avatars/backgrounds under the public prefix the storage layer returns.
 var uploadPath = builder.Configuration["FileUpload:UploadPath"] ?? "/app/uploads";

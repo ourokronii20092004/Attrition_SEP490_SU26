@@ -1,3 +1,4 @@
+using BuildingBlocks.Authentication;
 using BuildingBlocks.Contracts;
 using Identity.Service.DTOs;
 using Identity.Service.Services;
@@ -11,9 +12,12 @@ namespace Identity.Service.Controllers;
 public class AccountController : ControllerBase
 {
     private readonly IAccountService _account;
-    public AccountController(IAccountService account) => _account = account;
-
-    private Guid CurrentUserId => Guid.Parse(User.FindFirst("sub")!.Value);
+    private readonly ICurrentUser _user;
+    public AccountController(IAccountService account, ICurrentUser user)
+    {
+        _account = account;
+        _user = user;
+    }
 
     [HttpGet("profile/{username}")]
     public async Task<IActionResult> GetProfile(string username)
@@ -26,7 +30,8 @@ public class AccountController : ControllerBase
     [HttpPut("profile")]
     public async Task<IActionResult> UpdateProfile(UpdateProfileRequest request)
     {
-        var result = await _account.UpdateProfileAsync(CurrentUserId, request);
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        var result = await _account.UpdateProfileAsync(userId, request);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
@@ -34,15 +39,18 @@ public class AccountController : ControllerBase
     [HttpPut("theme")]
     public async Task<IActionResult> UpdateTheme(UpdateThemeRequest request)
     {
-        var result = await _account.UpdateThemeAsync(CurrentUserId, request.ThemeMode, request.ThemeAccent);
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        var result = await _account.UpdateThemeAsync(userId, request.ThemeMode, request.ThemeAccent);
         return result.Success ? Ok(result) : NotFound(result);
     }
 
     [Authorize]
     [HttpPost("avatar")]
-    public async Task<IActionResult> UploadAvatar(IFormFile file)
+    public async Task<IActionResult> UploadAvatar(IFormFile? file)
     {
-        var result = await _account.UpdateAvatarAsync(CurrentUserId, file);
+        if (file is null) return BadRequest(ApiResponse.Fail("No file was provided."));
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        var result = await _account.UpdateAvatarAsync(userId, file);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
@@ -50,15 +58,18 @@ public class AccountController : ControllerBase
     [HttpDelete("avatar")]
     public async Task<IActionResult> DeleteAvatar()
     {
-        await _account.DeleteAvatarAsync(CurrentUserId);
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        await _account.DeleteAvatarAsync(userId);
         return Ok(ApiResponse.Ok());
     }
 
     [Authorize]
     [HttpPost("background")]
-    public async Task<IActionResult> UploadBackground(IFormFile file)
+    public async Task<IActionResult> UploadBackground(IFormFile? file)
     {
-        var result = await _account.UpdateBackgroundAsync(CurrentUserId, file);
+        if (file is null) return BadRequest(ApiResponse.Fail("No file was provided."));
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        var result = await _account.UpdateBackgroundAsync(userId, file);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
@@ -66,7 +77,8 @@ public class AccountController : ControllerBase
     [HttpDelete("background")]
     public async Task<IActionResult> DeleteBackground()
     {
-        await _account.DeleteBackgroundAsync(CurrentUserId);
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        await _account.DeleteBackgroundAsync(userId);
         return Ok(ApiResponse.Ok());
     }
 
@@ -74,7 +86,8 @@ public class AccountController : ControllerBase
     [HttpPost("set-password")]
     public async Task<IActionResult> SetPassword(SetPasswordRequest request)
     {
-        var result = await _account.SetPasswordAsync(CurrentUserId, request);
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        var result = await _account.SetPasswordAsync(userId, request);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
@@ -82,7 +95,8 @@ public class AccountController : ControllerBase
     [HttpPut("email")]
     public async Task<IActionResult> UpdateEmail(UpdateEmailRequest request)
     {
-        var result = await _account.UpdateEmailAsync(CurrentUserId, request);
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        var result = await _account.UpdateEmailAsync(userId, request);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
@@ -90,7 +104,8 @@ public class AccountController : ControllerBase
     [HttpDelete("me")]
     public async Task<IActionResult> DeleteAccount()
     {
-        var result = await _account.DeleteAccountAsync(CurrentUserId);
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        var result = await _account.DeleteAccountAsync(userId);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 }

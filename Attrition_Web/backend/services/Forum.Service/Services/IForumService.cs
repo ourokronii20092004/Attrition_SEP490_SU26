@@ -9,7 +9,7 @@ public record Author(Guid Id, string Name, string? Avatar, string Role);
 public interface IForumService
 {
     Task<List<ForumCategoryDto>> GetCategoriesAsync();
-    Task<PaginatedResponse<ForumThreadListDto>> GetThreadsAsync(string? categorySlug, string? search, int page, int pageSize);
+    Task<PaginatedResponse<ForumThreadListDto>> GetThreadsAsync(string? categorySlug, string? search, int page, int pageSize, Guid? authorId = null);
     Task<ForumThreadDto?> GetThreadAsync(Guid threadId);
     Task<PaginatedResponse<ForumPostDto>> GetPostsAsync(Guid threadId, int page, int pageSize, Guid? currentUserId);
 

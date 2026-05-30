@@ -10,16 +10,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { TIER_COLOR } from "@/lib/enemy-tiers";
 import type { EnemyResponse } from "@/lib/types";
-
-const TIER_COLOR: Record<string, string> = {
-  Common: "text-fg-muted bg-surface-3",
-  Uncommon: "text-success bg-success/10",
-  Rare: "text-info bg-info/10",
-  Epic: "text-violet-400 bg-violet-500/10",
-  Legendary: "text-warning bg-warning/10",
-  Boss: "text-danger bg-danger/10",
-};
 
 export default function EnemyDetailPage() {
   const params = useParams<{ id: string }>();

@@ -1,8 +1,11 @@
 using System.Linq.Expressions;
+using BuildingBlocks.Caching;
 using BuildingBlocks.Contracts;
 using BuildingBlocks.Persistence;
+using BuildingBlocks.Web;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Music.Service.Data;
 using Music.Service.DTOs;
 using Music.Service.Models;
@@ -14,14 +17,27 @@ public class TrackService : ITrackService
     private readonly IRepository<MusicAlbum> _albumRepo;
     private readonly IRepository<MusicTrack> _trackRepo;
     private readonly MusicDbContext _db;
+    private readonly ICacheService _cache;
+    private readonly ILogger<TrackService> _logger;
     private readonly string _uploadPath;
     private readonly string _publicPrefix;
 
-    public TrackService(IRepository<MusicAlbum> albumRepo, IRepository<MusicTrack> trackRepo, MusicDbContext db, IConfiguration config)
+    // Write-behind: count plays in Redis and only flush to Postgres every Nth play.
+    // Durability tradeoff: Redis is an ephemeral cache (no persistence, allkeys-lru eviction),
+    // so up to (PlayFlushEvery - 1) buffered plays per track can be lost on a Redis restart or
+    // eviction. The counter also carries a 1-day TTL, so a track with fewer than PlayFlushEvery
+    // plays in 24h may not flush until the next play tips it over. Accepted on purpose: play
+    // counts are informational, not transactional. Lower this value to shrink the loss window.
+    private const int PlayFlushEvery = 10;
+
+    public TrackService(IRepository<MusicAlbum> albumRepo, IRepository<MusicTrack> trackRepo, MusicDbContext db,
+        ICacheService cache, IConfiguration config, ILogger<TrackService> logger)
     {
         _albumRepo = albumRepo;
         _trackRepo = trackRepo;
         _db = db;
+        _cache = cache;
+        _logger = logger;
         _uploadPath = config["FileUpload:UploadPath"] ?? "/app/uploads";
         _publicPrefix = config["FileUpload:PublicPrefix"] ?? "/api/music/media";
     }
@@ -121,12 +137,46 @@ public class TrackService : ITrackService
         return (filePath, true);
     }
 
+    public async Task<(string? filePath, string fileName, bool trackExists)> GetTrackDownloadInfoAsync(int id)
+    {
+        var track = await _trackRepo.GetByIdAsync(id);
+        if (track == null) return (null, string.Empty, false);
+        var filePath = Path.Combine(MusicDir, track.FilePath);
+        if (!File.Exists(filePath)) return (null, string.Empty, true);
+
+        // Friendly download name: "<NN> <Title>.<ext>", sanitized of path-hostile chars.
+        var ext = Path.GetExtension(track.FilePath);
+        var safeTitle = string.Join("_", track.Title.Split(Path.GetInvalidFileNameChars()));
+        var fileName = $"{track.TrackNumber:D2} {safeTitle}{ext}";
+        return (filePath, fileName, true);
+    }
+
     public async Task<bool> IncrementPlayCountAsync(int id)
     {
-        var rows = await _db.MusicTracks
-            .Where(t => t.TrackId == id)
-            .ExecuteUpdateAsync(s => s.SetProperty(t => t.PlayCount, t => t.PlayCount + 1));
-        return rows > 0;
+        // Write-behind: buffer the play in Redis; flush to Postgres once PlayFlushEvery accrue.
+        // If Redis is unavailable, IncrementAsync returns null and we fall back to a direct DB write.
+        var buffered = await _cache.IncrementAsync($"plays:{id}", 1, TimeSpan.FromDays(1));
+        if (buffered == null)
+        {
+            var rows = await _db.MusicTracks
+                .Where(t => t.TrackId == id)
+                .ExecuteUpdateAsync(s => s.SetProperty(t => t.PlayCount, t => t.PlayCount + 1));
+            return rows > 0;
+        }
+
+        if (buffered % PlayFlushEvery == 0)
+        {
+            var rows = await _db.MusicTracks
+                .Where(t => t.TrackId == id)
+                .ExecuteUpdateAsync(s => s.SetProperty(t => t.PlayCount, t => t.PlayCount + PlayFlushEvery));
+            if (rows == 0)
+            {
+                // Track no longer exists — drop the buffered counter so it can't leak.
+                await _cache.RemoveAsync($"plays:{id}");
+                return false;
+            }
+        }
+        return true;
     }
 
     public async Task<(bool success, string? error, ScanTrackResponse? data)> ScanTrackAsync(IFormFile file)
@@ -173,7 +223,11 @@ public class TrackService : ITrackService
                 tempCoverPath = $"{_publicPrefix}/music/temp/{coverFileName}";
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            // Corrupt/unreadable tags shouldn't fail the scan — fall back to filename-derived metadata.
+            _logger.LogWarning(ex, "Metadata extraction failed for scanned upload {File}", file.FileName);
+        }
 
         return (true, null, new ScanTrackResponse(tempFileKey, title, albumTitle, artists, genre, trackNumber, duration, tempCoverPath));
     }
@@ -232,7 +286,11 @@ public class TrackService : ITrackService
                 coverExt = pic.MimeType == "image/png" ? ".png" : ".jpg";
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            // Corrupt/unreadable tags shouldn't fail the upload — proceed with the request-supplied values.
+            _logger.LogWarning(ex, "Metadata extraction failed during track upload");
+        }
 
         MusicAlbum? album = null;
         if (req.AlbumId.HasValue)
@@ -310,10 +368,23 @@ public class TrackService : ITrackService
             var src = MusicHelpers.ResolveContainedPath(tempDir, req.TempCoverPath);
             if (src != null && MusicHelpers.IsAllowedImageExtension(src) && File.Exists(src))
             {
-                var ext = Path.GetExtension(src);
-                var coverFileName = $"track-{Guid.NewGuid()}{ext}";
-                File.Move(src, Path.Combine(coverDir, coverFileName), true);
-                coverPath = $"{_publicPrefix}/music/covers/{coverFileName}";
+                // Validate magic bytes too (the direct-upload path does); a .png-named non-image
+                // shouldn't be promoted into the public covers dir just because it sits in temp.
+                bool looksValid;
+                await using (var check = new FileStream(src, FileMode.Open, FileAccess.Read, FileShare.Read))
+                    looksValid = await MusicHelpers.LooksLikeImageAsync(check);
+
+                if (looksValid)
+                {
+                    var ext = Path.GetExtension(src);
+                    var coverFileName = $"track-{Guid.NewGuid()}{ext}";
+                    if (await SafeFileOperations.SafeMoveAsync(src, Path.Combine(coverDir, coverFileName), _logger))
+                        coverPath = $"{_publicPrefix}/music/covers/{coverFileName}";
+                }
+                else
+                {
+                    await SafeFileOperations.SafeDeleteAsync(src, _logger);
+                }
             }
         }
         else if (coverData != null)
@@ -330,7 +401,8 @@ public class TrackService : ITrackService
             await _trackRepo.CountAsync(t => t.Slug == s) > 0);
         var audioExt = Path.GetExtension(tempAudioPath);
         var fileName = $"{trackNumber:D2}-{Guid.NewGuid().ToString()[..8]}-{slug}{audioExt}";
-        File.Move(tempAudioPath, Path.Combine(trackDir, fileName), true);
+        if (!await SafeFileOperations.SafeMoveAsync(tempAudioPath, Path.Combine(trackDir, fileName), _logger))
+            return (false, "Could not move the uploaded file into storage. Please try again.", null);
 
         var track = new MusicTrack
         {
@@ -385,7 +457,10 @@ public class TrackService : ITrackService
         if (track == null) return false;
 
         var filePath = Path.Combine(MusicDir, track.FilePath);
-        if (File.Exists(filePath)) File.Delete(filePath);
+        // Remove the file before the DB row; if the file is locked, keep the row so we don't
+        // end up with a DB record pointing at an orphaned-but-undeletable file.
+        if (!await SafeFileOperations.SafeDeleteAsync(filePath, _logger))
+            return false;
 
         var albumId = track.AlbumId;
         await _trackRepo.DeleteAsync(track);

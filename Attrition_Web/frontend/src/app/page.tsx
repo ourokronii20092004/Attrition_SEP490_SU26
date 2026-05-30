@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, BookOpen, Skull, MessagesSquare, Music, Images } from "lucide-react";
 import { SITE_NAME } from "@/lib/config";
+import { HeroCta } from "./hero-cta";
 
 const DESTINATIONS = [
   { href: "/wiki", label: "Wiki", icon: BookOpen, blurb: "Lore, mechanics, and the canon of a dying world." },
@@ -23,29 +24,15 @@ export default function HomePage() {
           <p className="animate-rise-in text-xs font-medium uppercase tracking-[0.4em] text-accent [animation-delay:0ms]">
             Companion Archive
           </p>
-          <h1 className="reveal-lines mt-6 font-display text-5xl font-extrabold leading-[1.02] tracking-tight text-balance sm:text-7xl lg:text-8xl">
-            <span className="block" style={{ "--i": 0 } as React.CSSProperties}>Everything dies.</span>
-            <span className="sheen block" style={{ "--i": 1 } as React.CSSProperties}>Nothing is forgotten.</span>
+          <h1 className="reveal-lines mt-6 font-display text-5xl font-extrabold leading-[1.12] tracking-tight text-balance sm:text-7xl lg:text-8xl">
+            <span className="block pb-[0.08em]" style={{ "--i": 0 } as React.CSSProperties}>Everything dies.</span>
+            <span className="sheen block pb-[0.08em]" style={{ "--i": 1 } as React.CSSProperties}>Nothing is forgotten.</span>
           </h1>
-          <p className="animate-rise-in mx-auto mt-7 max-w-xl text-lg leading-relaxed text-fg-muted [animation-delay:450ms]">
+          <p className="animate-rise-in mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-fg-muted [animation-delay:450ms]">
             The official record of {SITE_NAME} — a 2D co-op souls-like. Lore, enemies,
             and the people who survive them, kept in one place while the world rots.
           </p>
-          <div className="animate-rise-in mt-10 flex flex-wrap items-center justify-center gap-4 [animation-delay:600ms]">
-            <Link
-              href="/wiki"
-              className="group inline-flex items-center gap-2 rounded-md bg-accent px-7 py-3.5 text-sm font-semibold uppercase tracking-[0.15em] text-accent-fg animate-pulse-glow transition-[transform,filter] duration-200 hover:brightness-105 active:scale-[0.97]"
-            >
-              Enter the Archive
-              <ArrowRight size={17} className="transition-transform duration-200 group-hover:translate-x-1" />
-            </Link>
-            <Link
-              href="/forum"
-              className="inline-flex items-center rounded-md border border-border-strong px-7 py-3.5 text-sm font-semibold uppercase tracking-[0.15em] text-fg transition-colors duration-200 hover:border-accent hover:text-accent active:scale-[0.97]"
-            >
-              Find a Partner
-            </Link>
-          </div>
+          <HeroCta />
         </div>
       </section>
 

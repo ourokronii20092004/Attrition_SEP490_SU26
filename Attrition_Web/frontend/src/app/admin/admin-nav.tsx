@@ -9,8 +9,8 @@ import {
 const NAV = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/users", label: "Users", icon: Users },
-  { href: "/admin/wiki", label: "Wiki Queue", icon: BookOpen },
-  { href: "/admin/forum", label: "Forum Reports", icon: MessagesSquare },
+  { href: "/admin/wiki", label: "Wiki", icon: BookOpen },
+  { href: "/admin/forum", label: "Forum", icon: MessagesSquare },
   { href: "/admin/enemies", label: "Enemies", icon: Skull },
   { href: "/admin/assets", label: "Assets", icon: ImageIcon },
   { href: "/admin/music", label: "Music", icon: Music },
