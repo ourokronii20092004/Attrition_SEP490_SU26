@@ -63,7 +63,9 @@ namespace Attrition.Controllers
             {
                 eliteSkills.Init(
                     amount => Heal(amount),
-                    aiComp != null && aiComp.isFlying
+                    aiComp != null && aiComp.isFlying,
+                    combatComp != null ? combatComp.attackPoint : null,
+                    combatComp != null ? combatComp.playerLayer : default
                 );
             }
 
@@ -149,8 +151,13 @@ namespace Attrition.Controllers
             }
             else
             {
-                // Ngắt heal nếu đang heal (Elite)
-                if (eliteSkills != null) eliteSkills.InterruptHealing();
+                // Ngắt heal, skill, summon nếu đang thực hiện (Elite)
+                if (eliteSkills != null)
+                {
+                    eliteSkills.InterruptHealing();
+                    eliteSkills.InterruptSkill();
+                    eliteSkills.InterruptSummon();
+                }
 
                 // Chỉ áp dụng Knockback và ngắt đòn đánh (Stun) nếu quái cho phép
                 if (canBeKnockedBack)
@@ -210,6 +217,9 @@ namespace Attrition.Controllers
 
             if (aiComp != null) aiComp.enabled = false;
             if (combatComp != null) combatComp.enabled = false;
+
+            // Despawn tất cả summon khi Undead chết
+            if (eliteSkills != null) eliteSkills.DespawnAllSummons();
 
             despawnTimer = TickTimer.CreateFromSeconds(Runner, 1.5f);
         }

@@ -38,6 +38,10 @@ public class EnemyCombat : NetworkBehaviour
         public float duration = 0.6f;
         [Tooltip("Thời gian nghỉ giữa 2 đòn đánh (Cooldown - giây)")]
         public float cooldown = 1.0f;
+
+        [Header("── Recovery ──")]
+        [Tooltip("Thời gian hồi phục sau đòn đánh (giây) — quái đứng yên, giữ nguyên hướng nhìn. Đòn nặng nên có recovery lâu hơn.")]
+        public float recoveryDuration = 0.25f;
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -138,6 +142,7 @@ public class EnemyCombat : NetworkBehaviour
     public int GetAttackDamage(int index) => GetConfig(index).damage;
     public float GetAttackDuration(int index) => GetConfig(index).duration;
     public float GetAttackCooldown(int index) => GetConfig(index).cooldown;
+    public float GetRecoveryDuration(int index) => GetConfig(index).recoveryDuration;
 
     // ═══════════════════════════════════════════════════════════════
     // LIFECYCLE
