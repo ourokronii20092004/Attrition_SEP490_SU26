@@ -20,44 +20,70 @@ export default function ThreadPage() {
   const [loading, setLoading] = useState(true);
   const [replyContent, setReplyContent] = useState("");
   const [replying, setReplying] = useState(false);
+  const [actionError, setActionError] = useState("");
+  const [reportingId, setReportingId] = useState<string | null>(null);
   const totalPages = posts ? Math.ceil(posts.totalCount / posts.pageSize) : 0;
 
   useEffect(() => {
     if (!params.id) return;
+    let ignore = false;
     forumApi.getThread(params.id).then((res) => {
-      if (res.success) setThread(res.data);
+      if (!ignore && res.success) setThread(res.data);
     });
+    return () => { ignore = true; };
   }, [params.id]);
 
   useEffect(() => {
     if (!params.id) return;
+    let ignore = false;
     setLoading(true);
     forumApi
       .getPosts(params.id, { page, pageSize: 20 })
       .then((res) => {
-        if (res.success) setPosts(res.data);
+        if (!ignore && res.success) setPosts(res.data);
       })
-      .finally(() => setLoading(false));
+      .finally(() => { if (!ignore) setLoading(false); });
+    return () => { ignore = true; };
   }, [params.id, page]);
 
   const handleReply = async () => {
     if (!replyContent.trim() || !params.id) return;
     setReplying(true);
+    setActionError("");
     try {
       await forumApi.createPost(params.id, { content: replyContent });
       setReplyContent("");
       const res = await forumApi.getPosts(params.id, { page, pageSize: 20 });
       if (res.success) setPosts(res.data);
-    } catch {}
+    } catch {
+      setActionError("Failed to post reply. Please try again.");
+    }
     setReplying(false);
   };
 
   const handleReact = async (postId: string, type: "like" | "dislike") => {
+    setActionError("");
     try {
       await forumApi.react(postId, { reactionType: type });
       const res = await forumApi.getPosts(params.id, { page, pageSize: 20 });
       if (res.success) setPosts(res.data);
-    } catch {}
+    } catch {
+      setActionError("Failed to register your reaction. Please try again.");
+    }
+  };
+
+  const handleReport = async (postId: string) => {
+    const reason = window.prompt("Why are you reporting this post?");
+    if (!reason?.trim()) return;
+    setReportingId(postId);
+    setActionError("");
+    try {
+      await forumApi.report(postId, { reason: reason.trim() });
+      window.alert("Report submitted. Thank you.");
+    } catch {
+      setActionError("Failed to submit report. Please try again.");
+    }
+    setReportingId(null);
   };
 
   if (loading && !thread) return <PageLoader />;
@@ -93,7 +119,7 @@ export default function ThreadPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <Link href={`/u/${post.authorName}`} className="text-sm font-medium text-fg hover:text-accent">
+                    <Link href={`/u/${encodeURIComponent(post.authorName)}`} className="text-sm font-medium text-fg hover:text-accent">
                       {post.authorName}
                     </Link>
                     {post.authorRole === "Admin" && <span className="rounded bg-accent-soft px-1.5 py-0.5 text-xs text-accent">Admin</span>}
@@ -115,7 +141,11 @@ export default function ThreadPage() {
                       <ThumbsDown size={14} /> {post.dislikeCount}
                     </button>
                     {user && (
-                      <button className="flex items-center gap-1 text-xs text-fg-subtle hover:text-warning">
+                      <button
+                        onClick={() => handleReport(post.id)}
+                        disabled={reportingId === post.id}
+                        className="flex items-center gap-1 text-xs text-fg-subtle hover:text-warning disabled:opacity-50"
+                      >
                         <Flag size={14} /> Report
                       </button>
                     )}
@@ -126,6 +156,8 @@ export default function ThreadPage() {
           ))}
         </div>
       )}
+
+      {actionError && <p className="mt-4 text-sm text-danger">{actionError}</p>}
 
       {totalPages > 1 && (
         <div className="mt-6 flex items-center justify-center gap-2">

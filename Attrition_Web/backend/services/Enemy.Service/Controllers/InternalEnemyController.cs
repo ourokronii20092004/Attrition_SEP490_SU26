@@ -1,3 +1,4 @@
+using BuildingBlocks.Authentication;
 using BuildingBlocks.Contracts;
 using Enemy.Service.DTOs;
 using Enemy.Service.Services;
@@ -19,13 +20,7 @@ public class InternalEnemyController : ControllerBase
         _config = config;
     }
 
-    private bool KeyValid()
-    {
-        var expected = _config["Internal:ApiKey"];
-        return !string.IsNullOrEmpty(expected)
-            && Request.Headers.TryGetValue("X-Internal-Key", out var got)
-            && got == expected;
-    }
+    private bool KeyValid() => InternalKey.Validate(Request, _config);
 
     [HttpGet("search")]
     public async Task<IActionResult> Search([FromQuery] string q, [FromQuery] int limit = 5)

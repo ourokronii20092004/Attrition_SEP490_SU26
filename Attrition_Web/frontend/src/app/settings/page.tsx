@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/providers";
 import { accountApi } from "@/lib/api/account";
@@ -16,11 +16,11 @@ export default function SettingsPage() {
   const { user, loading, refreshUser, logout, setUser } = useAuth();
   const router = useRouter();
 
-  if (loading) return <PageLoader />;
-  if (!user) {
-    router.push("/login");
-    return null;
-  }
+  useEffect(() => {
+    if (!loading && !user) router.push("/login");
+  }, [loading, user, router]);
+
+  if (loading || !user) return <PageLoader />;
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
@@ -43,13 +43,17 @@ function ProfileSection({ user, refreshUser, setUser }: any) {
   const [notifyOnReply, setNotifyOnReply] = useState(user.notifyOnReply ?? true);
   const [notifyOnMention, setNotifyOnMention] = useState(user.notifyOnMention ?? true);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   const save = async () => {
     setSaving(true);
+    setError("");
     try {
       const res = await accountApi.updateProfile({ bio, notifyOnReply, notifyOnMention });
       if (res.success && res.data) setUser(res.data);
-    } catch {}
+    } catch {
+      setError("Failed to save profile. Please try again.");
+    }
     setSaving(false);
   };
 
@@ -87,6 +91,7 @@ function ProfileSection({ user, refreshUser, setUser }: any) {
           </label>
         </div>
         <Button onClick={save} loading={saving}>Save Profile</Button>
+        {error && <p className="text-sm text-danger">{error}</p>}
       </div>
     </section>
   );
@@ -94,21 +99,30 @@ function ProfileSection({ user, refreshUser, setUser }: any) {
 
 function AvatarSection({ user, refreshUser }: any) {
   const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
+    setError("");
     try {
       await accountApi.uploadAvatar(file);
       await refreshUser();
-    } catch {}
+    } catch {
+      setError("Failed to upload avatar. Please try again.");
+    }
     setUploading(false);
   };
 
   const handleDelete = async () => {
-    await accountApi.deleteAvatar();
-    await refreshUser();
+    setError("");
+    try {
+      await accountApi.deleteAvatar();
+      await refreshUser();
+    } catch {
+      setError("Failed to remove avatar. Please try again.");
+    }
   };
 
   return (
@@ -130,6 +144,7 @@ function AvatarSection({ user, refreshUser }: any) {
           )}
         </div>
       </div>
+      {error && <p className="mt-2 text-sm text-danger">{error}</p>}
     </section>
   );
 }
@@ -138,13 +153,17 @@ function ThemeSection({ user, refreshUser }: any) {
   const [mode, setMode] = useState(user.themeMode ?? "dark");
   const [accent, setAccent] = useState(user.themeAccent ?? "crimson");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   const save = async () => {
     setSaving(true);
+    setError("");
     try {
       await accountApi.updateTheme({ themeMode: mode, themeAccent: accent });
       await refreshUser();
-    } catch {}
+    } catch {
+      setError("Failed to save theme. Please try again.");
+    }
     setSaving(false);
   };
 
@@ -178,6 +197,7 @@ function ThemeSection({ user, refreshUser }: any) {
           ))}
         </div>
         <Button onClick={save} loading={saving}>Save Theme</Button>
+        {error && <p className="text-sm text-danger">{error}</p>}
       </div>
     </section>
   );
@@ -252,14 +272,18 @@ function EmailSection({ user, refreshUser }: any) {
 function DangerSection({ logout }: { logout: () => void }) {
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState("");
 
   const handleDelete = async () => {
     setDeleting(true);
+    setError("");
     try {
       await accountApi.deleteAccount();
       logout();
-    } catch {}
-    setDeleting(false);
+    } catch {
+      setError("Failed to delete account. Please try again.");
+      setDeleting(false);
+    }
   };
 
   return (
@@ -274,6 +298,7 @@ function DangerSection({ logout }: { logout: () => void }) {
             <Button variant="danger" onClick={handleDelete} loading={deleting}>Yes, Delete</Button>
             <Button variant="secondary" onClick={() => setConfirming(false)}>Cancel</Button>
           </div>
+          {error && <p className="text-sm text-danger">{error}</p>}
         </div>
       )}
     </section>

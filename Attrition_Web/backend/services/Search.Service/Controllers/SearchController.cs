@@ -20,7 +20,8 @@ public class SearchController : ControllerBase
                 new GlobalSearchResponse(new List<SearchWikiResultDto>(), new List<SearchUserResultDto>(),
                     new List<SearchPostResultDto>(), new List<SearchEnemyResultDto>(), new List<string>())));
 
-        var result = await _search.GlobalSearchAsync(q.Trim(), limit, ct);
+        var includeUsers = User.Identity?.IsAuthenticated ?? false;
+        var result = await _search.GlobalSearchAsync(q.Trim(), limit, includeUsers, ct);
         return Ok(ApiResponse<GlobalSearchResponse>.Ok(result));
     }
 }

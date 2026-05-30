@@ -7,8 +7,8 @@ public interface IAlbumService
 {
     Task<IEnumerable<MusicAlbumDto>> GetAlbumsAsync();
     Task<AlbumDetailDto?> GetAlbumAsync(int id);
-    Task<MusicAlbum> CreateAlbumAsync(CreateAlbumRequest req);
-    Task<MusicAlbum?> UpdateAlbumAsync(int id, CreateAlbumRequest req);
+    Task<MusicAlbumDto> CreateAlbumAsync(CreateAlbumRequest req);
+    Task<MusicAlbumDto?> UpdateAlbumAsync(int id, CreateAlbumRequest req);
     Task<bool> DeleteAlbumAsync(int id);
     Task<(bool success, string? error, string? coverPath)> UploadAlbumCoverAsync(int id, Microsoft.AspNetCore.Http.IFormFile file);
     Task<int> CountAsync();
@@ -34,13 +34,15 @@ public interface IFavoriteService
     Task<(bool success, bool isFavorited, string? error)> ToggleFavoriteAsync(Guid userId, int trackId);
 }
 
+public enum PlaylistOpResult { Ok, NotFound, Forbidden }
+
 public interface IPlaylistService
 {
-    Task<IEnumerable<MusicPlaylist>> GetPlaylistsAsync(Guid userId);
+    Task<IEnumerable<PlaylistDto>> GetPlaylistsAsync(Guid userId);
     Task<MusicPlaylist?> GetPlaylistAsync(Guid id);
-    Task<MusicPlaylist> CreatePlaylistAsync(Guid userId, string name, string? description);
-    Task<bool> AddTrackToPlaylistAsync(Guid playlistId, int trackId);
-    Task<bool> RemoveTrackFromPlaylistAsync(Guid playlistId, int trackId);
+    Task<PlaylistDto> CreatePlaylistAsync(Guid userId, string name, string? description);
+    Task<PlaylistOpResult> AddTrackToPlaylistAsync(Guid userId, Guid playlistId, int trackId);
+    Task<PlaylistOpResult> RemoveTrackFromPlaylistAsync(Guid userId, Guid playlistId, int trackId);
 }
 
 /// <summary>Shared helpers for music services.</summary>

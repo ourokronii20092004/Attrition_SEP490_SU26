@@ -23,27 +23,18 @@ public class AccountService : IAccountService
         _logger = logger;
     }
 
-    public async Task<ApiResponse<UserDto>> GetProfileByUsernameAsync(string username)
+    public async Task<ApiResponse<PublicProfileDto>> GetProfileByUsernameAsync(string username)
     {
         var user = await _userRepo.GetByUsernameAsync(username);
         return user == null
-            ? ApiResponse<UserDto>.Fail("User not found.")
-            : ApiResponse<UserDto>.Ok(TokenService.MapToDto(user));
+            ? ApiResponse<PublicProfileDto>.Fail("User not found.")
+            : ApiResponse<PublicProfileDto>.Ok(TokenService.MapToPublicProfile(user));
     }
 
     public async Task<ApiResponse<UserDto>> UpdateProfileAsync(Guid userId, UpdateProfileRequest request)
     {
         var user = await _userRepo.GetByIdAsync(userId);
         if (user == null) return ApiResponse<UserDto>.Fail("User not found.");
-
-        if (!string.IsNullOrEmpty(request.Email) && request.Email != user.Email)
-        {
-            var existing = await _userRepo.GetByEmailAsync(request.Email);
-            if (existing != null && existing.Id != userId)
-                return ApiResponse<UserDto>.Fail("Email is already in use by another account.");
-            user.Email = request.Email;
-            user.IsEmailVerified = false;
-        }
 
         user.Bio = request.Bio;
         if (request.NotifyOnReply.HasValue) user.NotifyOnReply = request.NotifyOnReply.Value;
@@ -138,7 +129,8 @@ public class AccountService : IAccountService
 
         var verifyToken = TokenService.NewRawToken();
         user.PendingEmail = request.NewEmail;
-        user.EmailVerificationToken = verifyToken;
+        user.EmailVerificationToken = TokenService.HashToken(verifyToken);
+        user.EmailVerificationTokenExpiry = DateTime.UtcNow.AddHours(24);
         await _userRepo.UpdateAsync(user);
 
         try

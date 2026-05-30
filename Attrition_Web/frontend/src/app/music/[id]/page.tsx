@@ -18,11 +18,14 @@ export default function AlbumPage() {
 
   useEffect(() => {
     if (!params.id) return;
+    let ignore = false;
+    setLoading(true);
     musicApi.getAlbum(Number(params.id))
       .then((res) => {
-        if (res.success) setAlbum(res.data);
+        if (!ignore && res.success) setAlbum(res.data);
       })
-      .finally(() => setLoading(false));
+      .finally(() => { if (!ignore) setLoading(false); });
+    return () => { ignore = true; };
   }, [params.id]);
 
   if (loading) return <PageLoader />;

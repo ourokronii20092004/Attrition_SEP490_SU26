@@ -70,34 +70,46 @@ public class PlaylistService : IPlaylistService
         _playlistTrackRepo = playlistTrackRepo;
     }
 
-    public async Task<IEnumerable<MusicPlaylist>> GetPlaylistsAsync(Guid userId)
+    public async Task<IEnumerable<PlaylistDto>> GetPlaylistsAsync(Guid userId)
     {
         var (playlists, _) = await _playlistRepo.GetPagedAsync(1, int.MaxValue, p => p.UserId == userId);
-        return playlists;
+        return playlists.Select(ToDto);
     }
 
     public Task<MusicPlaylist?> GetPlaylistAsync(Guid id) => _playlistRepo.GetByIdAsync(id);
 
-    public async Task<MusicPlaylist> CreatePlaylistAsync(Guid userId, string name, string? description)
+    public async Task<PlaylistDto> CreatePlaylistAsync(Guid userId, string name, string? description)
     {
         var playlist = new MusicPlaylist { UserId = userId, Title = name, Description = description ?? string.Empty };
-        return await _playlistRepo.AddAsync(playlist);
+        var created = await _playlistRepo.AddAsync(playlist);
+        return ToDto(created);
     }
 
-    public async Task<bool> AddTrackToPlaylistAsync(Guid playlistId, int trackId)
+    private static PlaylistDto ToDto(MusicPlaylist p) =>
+        new(p.PlaylistId, p.Title, p.Description, p.IsPublic, p.TrackCount, p.CreatedAt, p.UpdatedAt);
+
+    public async Task<PlaylistOpResult> AddTrackToPlaylistAsync(Guid userId, Guid playlistId, int trackId)
     {
+        var playlist = await _playlistRepo.GetByIdAsync(playlistId);
+        if (playlist == null) return PlaylistOpResult.NotFound;
+        if (playlist.UserId != userId) return PlaylistOpResult.Forbidden;
+
         var (existing, _) = await _playlistTrackRepo.GetPagedAsync(1, 1, pt => pt.PlaylistId == playlistId && pt.TrackId == trackId);
-        if (existing.Count > 0) return true;
+        if (existing.Count > 0) return PlaylistOpResult.Ok;
         await _playlistTrackRepo.AddAsync(new PlaylistTrack { PlaylistId = playlistId, TrackId = trackId });
-        return true;
+        return PlaylistOpResult.Ok;
     }
 
-    public async Task<bool> RemoveTrackFromPlaylistAsync(Guid playlistId, int trackId)
+    public async Task<PlaylistOpResult> RemoveTrackFromPlaylistAsync(Guid userId, Guid playlistId, int trackId)
     {
+        var playlist = await _playlistRepo.GetByIdAsync(playlistId);
+        if (playlist == null) return PlaylistOpResult.NotFound;
+        if (playlist.UserId != userId) return PlaylistOpResult.Forbidden;
+
         var (existing, _) = await _playlistTrackRepo.GetPagedAsync(1, 1, pt => pt.PlaylistId == playlistId && pt.TrackId == trackId);
         var pt = existing.FirstOrDefault();
-        if (pt == null) return false;
+        if (pt == null) return PlaylistOpResult.NotFound;
         await _playlistTrackRepo.DeleteAsync(pt);
-        return true;
+        return PlaylistOpResult.Ok;
     }
 }

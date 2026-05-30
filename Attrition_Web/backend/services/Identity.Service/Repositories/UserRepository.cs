@@ -29,8 +29,8 @@ public class UserRepository : Repository<User>, IUserRepository
     public async Task<User?> GetByPasswordResetTokenAsync(string hashedToken) =>
         await _context.Users.FirstOrDefaultAsync(u => u.PasswordResetToken == hashedToken);
 
-    public async Task<User?> GetByEmailVerificationTokenAsync(string token) =>
-        await _context.Users.FirstOrDefaultAsync(u => u.EmailVerificationToken == token);
+    public async Task<User?> GetByEmailVerificationTokenAsync(string hashedToken) =>
+        await _context.Users.FirstOrDefaultAsync(u => u.EmailVerificationToken == hashedToken);
 
     public async Task<List<User>> SearchByUsernameAsync(string query, int limit) =>
         await _context.Users

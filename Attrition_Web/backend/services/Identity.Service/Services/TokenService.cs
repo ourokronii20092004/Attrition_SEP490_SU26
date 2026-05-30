@@ -56,4 +56,9 @@ public sealed class TokenService
         u.ThemeMode, u.ThemeAccent, u.Bio, u.AuthProvider, u.JoinedAt,
         u.PostCount, u.ContributionCount, u.MustChangePassword,
         u.IsEmailVerified, u.PendingEmail, u.NotifyOnReply, u.NotifyOnMention);
+
+    public static PublicProfileDto MapToPublicProfile(User u) => new(
+        u.Id, u.Username, u.DisplayName, u.Role,
+        u.AvatarPath ?? u.GoogleAvatarUrl, u.BackgroundUrl,
+        u.Bio, u.JoinedAt, u.PostCount, u.ContributionCount);
 }

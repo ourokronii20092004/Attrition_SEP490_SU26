@@ -2,7 +2,8 @@
 
 import { createContext, useContext, useCallback, useEffect, useState, type ReactNode } from "react";
 import { authApi } from "@/lib/api/auth";
-import { loadTokens, setTokens, clearTokens } from "@/lib/api/client";
+import { charactersApi } from "@/lib/api/characters";
+import { loadTokens, setTokens, clearTokens, getAccessToken, ApiError } from "@/lib/api/client";
 import type { UserDto, LoginRequest, RegisterRequest } from "@/lib/types";
 
 interface AuthState {
@@ -26,6 +27,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     loadTokens();
+    // Skip the guaranteed-401 /me call when there's no token (logged out).
+    if (!getAccessToken()) {
+      setState({ user: null, loading: false });
+      return;
+    }
     authApi
       .me()
       .then((res) => {
@@ -39,6 +45,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setState({ user: null, loading: false });
       });
   }, []);
+
+  // Drop the user to a clean logged-out state when a token refresh fails mid-session.
+  useEffect(() => {
+    const onExpired = () => {
+      clearTokens();
+      setState({ user: null, loading: false });
+    };
+    window.addEventListener("attrition:session-expired", onExpired);
+    return () => window.removeEventListener("attrition:session-expired", onExpired);
+  }, []);
+
+  // Enforce bans mid-session: poll the session-check endpoint; a banned account (403) is logged out.
+  useEffect(() => {
+    if (!state.user) return;
+    let cancelled = false;
+    const check = async () => {
+      try {
+        const res = await charactersApi.sessionCheck();
+        if (!cancelled && res.success && res.data?.isBanned) {
+          clearTokens();
+          setState({ user: null, loading: false });
+        }
+      } catch (err) {
+        // Only force logout on an auth failure (banned/unauthorized); ignore transient errors.
+        const status = err instanceof ApiError ? err.status : 0;
+        if (!cancelled && (status === 401 || status === 403)) {
+          clearTokens();
+          setState({ user: null, loading: false });
+        }
+      }
+    };
+    const interval = setInterval(check, 60_000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [state.user]);
 
   const login = useCallback(async (data: LoginRequest) => {
     const res = await authApi.login(data);

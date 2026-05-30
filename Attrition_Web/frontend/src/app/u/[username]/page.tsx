@@ -14,12 +14,15 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!params.username) return;
+    let ignore = false;
+    setLoading(true);
     accountApi
       .getProfile(params.username)
       .then((res) => {
-        if (res.success) setProfile(res.data);
+        if (!ignore && res.success) setProfile(res.data);
       })
-      .finally(() => setLoading(false));
+      .finally(() => { if (!ignore) setLoading(false); });
+    return () => { ignore = true; };
   }, [params.username]);
 
   if (loading) return <PageLoader />;

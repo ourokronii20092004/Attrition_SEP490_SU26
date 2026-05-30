@@ -44,7 +44,7 @@ public class AlbumService : IAlbumService
                 t.Artists, t.Duration, t.Genre, t.CoverPath, t.PlayCount, t.IsFeatured, t.FileSize ?? 0)));
     }
 
-    public async Task<MusicAlbum> CreateAlbumAsync(CreateAlbumRequest req)
+    public async Task<MusicAlbumDto> CreateAlbumAsync(CreateAlbumRequest req)
     {
         var parsed = MusicHelpers.ParseArtists(req.Artists);
         var album = new MusicAlbum
@@ -58,10 +58,11 @@ public class AlbumService : IAlbumService
             ReleaseDate = req.ReleaseDate,
             SortOrder = req.SortOrder
         };
-        return await _albumRepo.AddAsync(album);
+        await _albumRepo.AddAsync(album);
+        return ToDto(album);
     }
 
-    public async Task<MusicAlbum?> UpdateAlbumAsync(int id, CreateAlbumRequest req)
+    public async Task<MusicAlbumDto?> UpdateAlbumAsync(int id, CreateAlbumRequest req)
     {
         var album = await _albumRepo.GetByIdAsync(id);
         if (album == null) return null;
@@ -80,8 +81,12 @@ public class AlbumService : IAlbumService
         album.SortOrder = req.SortOrder;
 
         await _albumRepo.UpdateAsync(album);
-        return album;
+        return ToDto(album);
     }
+
+    private static MusicAlbumDto ToDto(MusicAlbum a) => new(
+        a.AlbumId, a.Title, a.Slug, a.Artists, a.Description, a.CoverPath, a.IsCoverUserDefined,
+        a.ReleaseDate, a.AlbumType, a.Genre, a.TrackCount, a.TotalDuration, a.CreatedAt);
 
     public async Task<bool> DeleteAlbumAsync(int id)
     {

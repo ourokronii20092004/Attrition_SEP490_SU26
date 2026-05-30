@@ -18,13 +18,15 @@ export default function WikiArticlePage() {
 
   useEffect(() => {
     if (!params.slug) return;
+    let ignore = false;
     setLoading(true);
     wikiApi
       .getArticle(params.slug)
       .then((res) => {
-        if (res.success) setArticle(res.data);
+        if (!ignore && res.success) setArticle(res.data);
       })
-      .finally(() => setLoading(false));
+      .finally(() => { if (!ignore) setLoading(false); });
+    return () => { ignore = true; };
   }, [params.slug]);
 
   if (loading) return <PageLoader />;

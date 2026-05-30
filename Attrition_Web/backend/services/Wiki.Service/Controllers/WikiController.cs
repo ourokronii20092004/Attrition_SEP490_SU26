@@ -34,16 +34,18 @@ public class WikiController : ControllerBase
     [HttpGet("articles/{slug}")]
     public async Task<IActionResult> GetArticle(string slug)
     {
-        var article = await _wiki.GetArticleBySlugAsync(slug);
+        var article = await _wiki.GetArticleBySlugAsync(slug, _currentUser.IsAdmin);
         return article == null
             ? NotFound(ApiResponse.Fail("Article not found."))
             : Ok(ApiResponse<WikiArticleDto>.Ok(article));
     }
 
+    [Authorize(Roles = Roles.Admin)]
     [HttpGet("articles/{id:guid}/revisions")]
     public async Task<IActionResult> GetRevisions(Guid id)
         => Ok(ApiResponse<List<WikiRevisionDto>>.Ok(await _wiki.GetRevisionsAsync(id)));
 
+    [Authorize(Roles = Roles.Admin)]
     [HttpGet("articles/{id:guid}/revisions/{revisionId:guid}")]
     public async Task<IActionResult> GetRevision(Guid id, Guid revisionId)
     {

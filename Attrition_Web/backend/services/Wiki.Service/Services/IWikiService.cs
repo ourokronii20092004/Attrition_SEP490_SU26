@@ -8,7 +8,7 @@ public interface IWikiService
 {
     Task<List<WikiCategoryDto>> GetCategoriesAsync();
     Task<PaginatedResponse<WikiArticleListDto>> GetArticlesAsync(string? categorySlug, string? search, int page, int pageSize);
-    Task<WikiArticleDto?> GetArticleBySlugAsync(string slug);
+    Task<WikiArticleDto?> GetArticleBySlugAsync(string slug, bool includeUnpublished = false);
     Task<List<WikiRevisionDto>> GetRevisionsAsync(Guid articleId);
     Task<WikiRevisionDto?> GetRevisionByIdAsync(Guid articleId, Guid revisionId);
     Task<ApiResponse<string>> CreateArticleAsync(CreateArticleRequest request, Guid userId, string userName);

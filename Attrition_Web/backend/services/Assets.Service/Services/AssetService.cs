@@ -20,7 +20,8 @@ public class AssetService : IAssetService
     {
         _repo = repo;
         _storage = storage;
-        _maxSize = long.Parse(config["FileUpload:MaxImageSizeMB"] ?? "20") * 1024 * 1024;
+        var mb = long.TryParse(config["FileUpload:MaxImageSizeMB"], out var v) && v > 0 ? v : 20;
+        _maxSize = mb * 1024 * 1024;
     }
 
     public async Task<AssetDto?> GetAssetAsync(Guid assetId)
@@ -74,14 +75,19 @@ public class AssetService : IAssetService
         var fileName = $"{Guid.NewGuid()}{ext}";
         string storedPath;
         await using (var stream = file.OpenReadStream())
+        {
+            if (!await ContentMatchesExtensionAsync(stream, ext))
+                return ApiResponse<AssetDto>.Fail("File content does not match its extension.");
+            stream.Position = 0;
             storedPath = await _storage.SaveAsync(subfolder, fileName, stream);
+        }
 
         var asset = new Asset
         {
             FileName = file.FileName,
             FilePath = storedPath,
             AssetType = assetType,
-            MimeType = file.ContentType,
+            MimeType = ResolveMime(ext),
             FileSize = file.Length,
             Title = title,
             Description = description,
@@ -120,6 +126,47 @@ public class AssetService : IAssetService
     }
 
     public Task<int> CountAsync() => _repo.CountAsync();
+
+    // Validate the file's leading bytes against its claimed extension. Text formats (.txt/.md) have no
+    // reliable signature, so they pass; binary formats must match a known magic-byte signature.
+    private static async Task<bool> ContentMatchesExtensionAsync(Stream stream, string ext)
+    {
+        if (ext is ".txt" or ".md") return true;
+
+        var header = new byte[12];
+        stream.Position = 0;
+        var read = await stream.ReadAsync(header.AsMemory(0, header.Length));
+        if (read < 4) return false;
+
+        bool StartsWith(params byte[] sig) => header.Take(sig.Length).SequenceEqual(sig);
+
+        return ext switch
+        {
+            ".jpg" or ".jpeg" => StartsWith(0xFF, 0xD8, 0xFF),
+            ".png" => StartsWith(0x89, 0x50, 0x4E, 0x47),
+            ".gif" => StartsWith(0x47, 0x49, 0x46, 0x38),
+            ".webp" => header[0] == 0x52 && header[1] == 0x49 && header[2] == 0x46 && header[3] == 0x46
+                       && header[8] == 0x57 && header[9] == 0x45 && header[10] == 0x42 && header[11] == 0x50,
+            ".pdf" => StartsWith(0x25, 0x50, 0x44, 0x46),
+            ".doc" => StartsWith(0xD0, 0xCF, 0x11, 0xE0),
+            ".docx" => StartsWith(0x50, 0x4B, 0x03, 0x04),
+            _ => false
+        };
+    }
+
+    private static string ResolveMime(string ext) => ext switch
+    {
+        ".jpg" or ".jpeg" => "image/jpeg",
+        ".png" => "image/png",
+        ".gif" => "image/gif",
+        ".webp" => "image/webp",
+        ".pdf" => "application/pdf",
+        ".doc" => "application/msword",
+        ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ".txt" => "text/plain",
+        ".md" => "text/markdown",
+        _ => "application/octet-stream"
+    };
 
     private static AssetDto ToDto(Asset a) => new(
         a.Id, a.FileName, a.FilePath, a.AssetType, a.MimeType, a.FileSize,
