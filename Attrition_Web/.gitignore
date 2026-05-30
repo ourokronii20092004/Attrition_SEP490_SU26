@@ -5,9 +5,9 @@ client_secret*.json
 cloudflared/credentials.json
 
 # Frontend
-web/node_modules/
-web/.next/
-web/out/
+frontend/node_modules/
+frontend/.next/
+frontend/out/
 
 # .NET build artifacts
 [Bb]in/
