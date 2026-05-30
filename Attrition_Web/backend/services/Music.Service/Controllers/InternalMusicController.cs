@@ -26,7 +26,7 @@ public class InternalMusicController : ControllerBase
     [HttpGet("count")]
     public async Task<IActionResult> Count()
     {
-        if (!KeyValid()) return Unauthorized();
+        if (!KeyValid()) return Unauthorized(ApiResponse.Fail("Valid service authentication is required."));
         var albums = await _albums.CountAsync();
         var tracks = await _tracks.CountAsync();
         return Ok(ApiResponse<object>.Ok(new { albums, tracks }));

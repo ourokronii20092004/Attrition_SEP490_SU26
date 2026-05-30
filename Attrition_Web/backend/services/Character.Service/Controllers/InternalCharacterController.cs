@@ -29,7 +29,7 @@ public class InternalCharacterController : ControllerBase
     [HttpPost("snapshot")]
     public async Task<IActionResult> Snapshot([FromBody] SnapshotIngestRequest request)
     {
-        if (!KeyValid()) return Unauthorized();
+        if (!KeyValid()) return Unauthorized(ApiResponse.Fail("Valid service authentication is required."));
         var result = await _service.IngestSnapshotAsync(request);
         return result.Success ? Ok(result) : BadRequest(result);
     }
@@ -37,7 +37,7 @@ public class InternalCharacterController : ControllerBase
     [HttpGet("count")]
     public async Task<IActionResult> Count()
     {
-        if (!KeyValid()) return Unauthorized();
+        if (!KeyValid()) return Unauthorized(ApiResponse.Fail("Valid service authentication is required."));
         return Ok(ApiResponse<int>.Ok(await _service.CountAsync()));
     }
 }

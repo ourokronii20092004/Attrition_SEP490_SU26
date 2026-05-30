@@ -27,6 +27,26 @@ public class Repository<T> : IRepository<T> where T : class
         return entity;
     }
 
+    /// <summary>
+    /// Inserts an entity, returning false when a unique-constraint violation occurs instead of
+    /// letting DbUpdateException bubble up as a 500. The failed entity is detached so the context
+    /// isn't left poisoned for subsequent operations.
+    /// </summary>
+    public virtual async Task<bool> TryAddAsync(T entity)
+    {
+        try
+        {
+            await _dbSet.AddAsync(entity);
+            await _db.SaveChangesAsync();
+            return true;
+        }
+        catch (DbUpdateException)
+        {
+            _db.Entry(entity).State = EntityState.Detached;
+            return false;
+        }
+    }
+
     public virtual async Task UpdateAsync(T entity)
     {
         var entry = _db.Entry(entity);

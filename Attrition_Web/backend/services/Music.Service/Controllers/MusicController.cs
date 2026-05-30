@@ -28,8 +28,6 @@ public class MusicController : ControllerBase
         _user = user;
     }
 
-    private Guid UserId => _user.UserId!.Value;
-
     // ─── Albums (public) ───
     [HttpGet("albums")]
     public async Task<IActionResult> GetAlbums([FromQuery] int? page, [FromQuery] int pageSize = 24)
@@ -88,42 +86,56 @@ public class MusicController : ControllerBase
     [Authorize]
     [HttpGet("favorites")]
     public async Task<IActionResult> GetFavorites()
-        => Ok(ApiResponse<IEnumerable<FavoriteTrackDto>>.Ok(await _favorites.GetFavoritesAsync(UserId)));
+    {
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        return Ok(ApiResponse<IEnumerable<FavoriteTrackDto>>.Ok(await _favorites.GetFavoritesAsync(userId)));
+    }
 
     [Authorize]
     [HttpGet("favorites/ids")]
     public async Task<IActionResult> GetFavoriteIds()
-        => Ok(ApiResponse<IEnumerable<int>>.Ok(await _favorites.GetFavoriteIdsAsync(UserId)));
+    {
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        return Ok(ApiResponse<IEnumerable<int>>.Ok(await _favorites.GetFavoriteIdsAsync(userId)));
+    }
 
     [Authorize]
     [HttpPost("favorites/{trackId:int}")]
     public async Task<IActionResult> ToggleFavorite(int trackId)
     {
-        var (success, isFavorited, error) = await _favorites.ToggleFavoriteAsync(UserId, trackId);
-        return success ? Ok(ApiResponse<object>.Ok(new { isFavorited })) : NotFound(ApiResponse.Fail(error!));
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        var (success, isFavorited, err) = await _favorites.ToggleFavoriteAsync(userId, trackId);
+        return success ? Ok(ApiResponse<object>.Ok(new { isFavorited })) : NotFound(ApiResponse.Fail(err!));
     }
 
     // ─── Playlists (authenticated) ───
     [Authorize]
     [HttpGet("playlists")]
     public async Task<IActionResult> GetPlaylists()
-        => Ok(ApiResponse<IEnumerable<PlaylistDto>>.Ok(await _playlists.GetPlaylistsAsync(UserId)));
+    {
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        return Ok(ApiResponse<IEnumerable<PlaylistDto>>.Ok(await _playlists.GetPlaylistsAsync(userId)));
+    }
 
     [Authorize]
     [HttpPost("playlists")]
     public async Task<IActionResult> CreatePlaylist([FromBody] CreatePlaylistReq req)
-        => Ok(ApiResponse<PlaylistDto>.Ok(await _playlists.CreatePlaylistAsync(UserId, req.Name, req.Description)));
+    {
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        return Ok(ApiResponse<PlaylistDto>.Ok(await _playlists.CreatePlaylistAsync(userId, req.Name, req.Description)));
+    }
 
     [Authorize]
     [HttpPost("playlists/{id:guid}/tracks")]
     public async Task<IActionResult> AddTrack(Guid id, [FromBody] AddTrackToPlaylistReq req)
     {
-        var result = await _playlists.AddTrackToPlaylistAsync(UserId, id, req.TrackId);
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        var result = await _playlists.AddTrackToPlaylistAsync(userId, id, req.TrackId);
         return result switch
         {
             PlaylistOpResult.Ok => Ok(ApiResponse.Ok()),
             PlaylistOpResult.NotFound => NotFound(ApiResponse.Fail("Playlist not found.")),
-            _ => Forbid()
+            _ => StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Fail("You do not own this playlist."))
         };
     }
 
@@ -131,12 +143,13 @@ public class MusicController : ControllerBase
     [HttpDelete("playlists/{id:guid}/tracks/{trackId:int}")]
     public async Task<IActionResult> RemoveTrack(Guid id, int trackId)
     {
-        var result = await _playlists.RemoveTrackFromPlaylistAsync(UserId, id, trackId);
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        var result = await _playlists.RemoveTrackFromPlaylistAsync(userId, id, trackId);
         return result switch
         {
             PlaylistOpResult.Ok => Ok(ApiResponse.Ok()),
             PlaylistOpResult.NotFound => NotFound(ApiResponse.Fail("Playlist or track not found.")),
-            _ => Forbid()
+            _ => StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Fail("You do not own this playlist."))
         };
     }
 
@@ -164,8 +177,9 @@ public class MusicController : ControllerBase
 
     [Authorize(Roles = Roles.Admin)]
     [HttpPost("albums/{id:int}/cover")]
-    public async Task<IActionResult> UploadCover(int id, IFormFile file)
+    public async Task<IActionResult> UploadCover(int id, IFormFile? file)
     {
+        if (file is null) return BadRequest(ApiResponse.Fail("No cover image file was provided."));
         var (success, error, coverPath) = await _albums.UploadAlbumCoverAsync(id, file);
         if (!success) return error == "Album not found" ? NotFound(ApiResponse.Fail(error)) : BadRequest(ApiResponse.Fail(error!));
         return Ok(ApiResponse<object>.Ok(new { coverPath }));
@@ -174,8 +188,9 @@ public class MusicController : ControllerBase
     // ─── Admin: tracks ───
     [Authorize(Roles = Roles.Admin)]
     [HttpPost("tracks/scan")]
-    public async Task<IActionResult> ScanTrack(IFormFile file)
+    public async Task<IActionResult> ScanTrack(IFormFile? file)
     {
+        if (file is null) return BadRequest(ApiResponse.Fail("No audio file was provided."));
         var (success, error, data) = await _tracks.ScanTrackAsync(file);
         return success ? Ok(ApiResponse<ScanTrackResponse>.Ok(data!)) : BadRequest(ApiResponse.Fail(error!));
     }

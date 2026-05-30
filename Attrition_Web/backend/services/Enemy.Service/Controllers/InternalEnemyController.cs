@@ -25,15 +25,15 @@ public class InternalEnemyController : ControllerBase
     [HttpGet("search")]
     public async Task<IActionResult> Search([FromQuery] string q, [FromQuery] int limit = 5)
     {
-        if (!KeyValid()) return Unauthorized();
+        if (!KeyValid()) return Unauthorized(ApiResponse.Fail("Valid service authentication is required."));
         if (string.IsNullOrWhiteSpace(q)) return Ok(ApiResponse<List<EnemySummaryDto>>.Ok(new()));
-        return Ok(ApiResponse<List<EnemySummaryDto>>.Ok(await _service.SearchAsync(q, limit)));
+        return Ok(ApiResponse<List<EnemySummaryDto>>.Ok(await _service.SearchAsync(q, Math.Clamp(limit, 1, 50))));
     }
 
     [HttpGet("count")]
     public async Task<IActionResult> Count()
     {
-        if (!KeyValid()) return Unauthorized();
+        if (!KeyValid()) return Unauthorized(ApiResponse.Fail("Valid service authentication is required."));
         return Ok(ApiResponse<int>.Ok(await _service.CountAsync()));
     }
 }

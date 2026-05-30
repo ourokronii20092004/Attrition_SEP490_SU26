@@ -21,7 +21,7 @@ public class ForumModerationController : ControllerBase
         _user = user;
     }
 
-    private Author Moderator => new(_user.UserId!.Value, _user.Username ?? "Admin", null, "Admin");
+    private Author ModeratorFrom(Guid userId) => new(userId, _user.Username ?? "Admin", null, "Admin");
 
     [HttpGet("threads")]
     public async Task<IActionResult> ListThreads()
@@ -34,7 +34,8 @@ public class ForumModerationController : ControllerBase
     [HttpPost("posts/{id:guid}/remove")]
     public async Task<IActionResult> RemovePost(Guid id, [FromBody] RemovePostRequest req)
     {
-        var result = await _forum.RemovePostAsync(id, Moderator, req.Reason);
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        var result = await _forum.RemovePostAsync(id, ModeratorFrom(userId), req.Reason);
         return result.Success ? Ok(result) : NotFound(result);
     }
 

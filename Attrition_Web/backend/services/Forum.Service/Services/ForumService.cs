@@ -140,12 +140,13 @@ public class ForumService : IForumService
             AuthorName = author.Name,
             AuthorAvatar = author.Avatar,
             AuthorRole = author.Role,
-            Content = request.Content
+            Content = ContentSanitizer.Sanitize(request.Content)
         };
 
         var subscription = new ThreadSubscription { ThreadId = thread.Id, UserId = author.Id };
 
         await _threadRepo.CreateThreadWithFirstPostAsync(thread, firstPost, subscription);
+        await InvalidateCategoriesAsync();
         return ApiResponse<Guid>.Ok(thread.Id);
     }
 
@@ -162,7 +163,7 @@ public class ForumService : IForumService
             AuthorName = author.Name,
             AuthorAvatar = author.Avatar,
             AuthorRole = author.Role,
-            Content = request.Content
+            Content = ContentSanitizer.Sanitize(request.Content)
         });
 
         await _threadRepo.IncrementReplyCountAsync(threadId, DateTime.UtcNow);
@@ -174,6 +175,7 @@ public class ForumService : IForumService
 
         // NOTE: reply-notification emails dropped — Forum no longer has access to subscriber emails
         // (lives in Identity now). Subscriptions are kept as data for a future notification service.
+        await InvalidateCategoriesAsync();
         return ApiResponse.Ok();
     }
 
@@ -183,7 +185,7 @@ public class ForumService : IForumService
         if (post == null) return ApiResponse.Fail("Post not found.");
         if (post.AuthorId != userId) return ApiResponse.Fail("Unauthorized.");
 
-        post.Content = request.Content;
+        post.Content = ContentSanitizer.Sanitize(request.Content);
         post.UpdatedAt = DateTime.UtcNow;
         await _postRepo.UpdateAsync(post);
         return ApiResponse.Ok();
@@ -201,6 +203,10 @@ public class ForumService : IForumService
 
     public async Task<ApiResponse> ToggleReactionAsync(Guid postId, Guid userId, ReactRequest request)
     {
+        // Without this, a reaction to a non-existent post is silently stored (no FK on the column).
+        if (await _postRepo.GetByIdAsync(postId) is null)
+            return ApiResponse.Fail("Post not found.");
+
         var (existingList, _) = await _reactionRepo.GetPagedAsync(1, 1, r => r.PostId == postId && r.UserId == userId);
         var existing = existingList.FirstOrDefault();
 
@@ -216,7 +222,9 @@ public class ForumService : IForumService
         }
         else
         {
-            await _reactionRepo.AddAsync(new ForumReaction { PostId = postId, UserId = userId, ReactionType = request.ReactionType });
+            // Race-safe: a concurrent identical reaction hits the unique (PostId,UserId,ReactionType)
+            // index; treat the duplicate as idempotent success rather than a 500.
+            await _reactionRepo.TryAddAsync(new ForumReaction { PostId = postId, UserId = userId, ReactionType = request.ReactionType });
         }
         return ApiResponse.Ok();
     }
@@ -234,6 +242,9 @@ public class ForumService : IForumService
 
     public async Task<ApiResponse> ToggleThreadSubscriptionAsync(Guid threadId, Guid userId)
     {
+        if (await _threadRepo.GetByIdAsync(threadId) is null)
+            return ApiResponse.Fail("Thread not found.");
+
         var (existing, _) = await _subRepo.GetPagedAsync(1, 1, ts => ts.ThreadId == threadId && ts.UserId == userId);
         var sub = existing.FirstOrDefault();
 
@@ -242,7 +253,8 @@ public class ForumService : IForumService
             await _subRepo.DeleteAsync(sub);
             return new ApiResponse(true, "Unsubscribed successfully.");
         }
-        await _subRepo.AddAsync(new ThreadSubscription { ThreadId = threadId, UserId = userId });
+        // Race-safe against the unique (ThreadId,UserId) index; a duplicate is idempotent success.
+        await _subRepo.TryAddAsync(new ThreadSubscription { ThreadId = threadId, UserId = userId });
         return new ApiResponse(true, "Subscribed successfully.");
     }
 
@@ -378,7 +390,9 @@ public class ForumService : IForumService
             Slug = slug,
             Description = request.Description ?? string.Empty
         };
-        await _categoryRepo.AddAsync(category);
+        // Optimistic check above for the message; TryAddAsync makes the unique-slug insert race-safe.
+        if (!await _categoryRepo.TryAddAsync(category))
+            return ApiResponse<int>.Fail("A category with a similar name already exists.");
         await InvalidateCategoriesAsync();
         return ApiResponse<int>.Ok(category.Id);
     }
@@ -396,7 +410,15 @@ public class ForumService : IForumService
         category.Name = request.Name;
         category.Slug = slug;
         category.Description = request.Description ?? string.Empty;
-        await _categoryRepo.UpdateAsync(category);
+        try
+        {
+            await _categoryRepo.UpdateAsync(category);
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        {
+            // Lost the slug race between the check above and save.
+            return ApiResponse.Fail("A category with a similar name already exists.");
+        }
         await InvalidateCategoriesAsync();
         return ApiResponse.Ok();
     }

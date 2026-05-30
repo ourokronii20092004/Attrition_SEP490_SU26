@@ -1,6 +1,8 @@
 using BuildingBlocks.Contracts;
 using BuildingBlocks.Persistence;
+using BuildingBlocks.Web;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Music.Service.DTOs;
 using Music.Service.Models;
 
@@ -10,13 +12,16 @@ public class AlbumService : IAlbumService
 {
     private readonly IRepository<MusicAlbum> _albumRepo;
     private readonly IRepository<MusicTrack> _trackRepo;
+    private readonly ILogger<AlbumService> _logger;
     private readonly string _uploadPath;
     private readonly string _publicPrefix;
 
-    public AlbumService(IRepository<MusicAlbum> albumRepo, IRepository<MusicTrack> trackRepo, IConfiguration config)
+    public AlbumService(IRepository<MusicAlbum> albumRepo, IRepository<MusicTrack> trackRepo,
+        IConfiguration config, ILogger<AlbumService> logger)
     {
         _albumRepo = albumRepo;
         _trackRepo = trackRepo;
+        _logger = logger;
         _uploadPath = config["FileUpload:UploadPath"] ?? "/app/uploads";
         _publicPrefix = config["FileUpload:PublicPrefix"] ?? "/api/music/media";
     }
@@ -106,11 +111,12 @@ public class AlbumService : IAlbumService
         foreach (var track in tracks)
         {
             var filePath = Path.Combine(_uploadPath, "music", track.FilePath);
-            if (File.Exists(filePath)) File.Delete(filePath);
+            // Continue on individual failures so one locked file doesn't strand the rest mid-loop.
+            await SafeFileOperations.SafeDeleteAsync(filePath, _logger);
         }
 
         if (!string.IsNullOrEmpty(album.CoverPath))
-            DeletePublicFile(album.CoverPath);
+            await DeletePublicFileAsync(album.CoverPath);
 
         await _albumRepo.DeleteAsync(album);
         return true;
@@ -147,13 +153,13 @@ public class AlbumService : IAlbumService
 
     public Task<int> CountAsync() => _albumRepo.CountAsync();
 
-    private void DeletePublicFile(string publicUrl)
+    private async Task DeletePublicFileAsync(string publicUrl)
     {
         var prefix = _publicPrefix + "/";
         var rel = publicUrl.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
             ? publicUrl[prefix.Length..]
             : publicUrl.TrimStart('/');
         var full = Path.Combine(_uploadPath, rel.Replace('/', Path.DirectorySeparatorChar));
-        if (File.Exists(full)) File.Delete(full);
+        await SafeFileOperations.SafeDeleteAsync(full, _logger);
     }
 }

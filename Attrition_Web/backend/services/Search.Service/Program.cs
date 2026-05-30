@@ -28,7 +28,7 @@ builder.Services.AddAttritionCache(builder.Configuration, "search");
 
 builder.Services.AddAttritionJwtAuth(builder.Configuration);
 
-builder.Services.AddControllers();
+builder.Services.AddAttritionControllers();
 builder.Services.AddAttritionSwagger("Search.Service");
 
 var app = builder.Build();

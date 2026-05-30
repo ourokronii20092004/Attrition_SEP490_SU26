@@ -20,6 +20,9 @@ public class CharacterDbContext : DbContext
             e.Property(x => x.Name).HasMaxLength(100);
             e.Property(x => x.Archetype).HasMaxLength(50);
             e.HasIndex(x => x.OwnerId);
+            // One character per (owner, name): the snapshot-ingest resolve-or-create races without
+            // this, silently creating duplicates. Service handles the resulting unique violation.
+            e.HasIndex(x => new { x.OwnerId, x.Name }).IsUnique();
 
             // Owned timeline → character.character_snapshots, shadow FK to character only.
             e.OwnsMany(x => x.Snapshots, b =>
