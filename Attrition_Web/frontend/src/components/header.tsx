@@ -9,6 +9,7 @@ import { SITE_NAME } from "@/lib/config";
 import { Avatar } from "@/components/ui/avatar";
 import { IconButton } from "@/components/ui/icon-button";
 import { SearchModal } from "./search-modal";
+import { ThemeSwitcher } from "./theme-switcher";
 
 const NAV_LINKS = [
   { href: "/wiki", label: "Wiki" },
@@ -16,6 +17,7 @@ const NAV_LINKS = [
   { href: "/forum", label: "Forum" },
   { href: "/music", label: "Music" },
   { href: "/gallery", label: "Gallery" },
+  { href: "/about", label: "About" },
 ];
 
 export function Header() {
@@ -63,6 +65,8 @@ export function Header() {
             <IconButton label="Search" onClick={() => setSearchOpen(true)}>
               <Search size={20} />
             </IconButton>
+
+            <ThemeSwitcher />
 
             {!loading && !user && (
               <Link

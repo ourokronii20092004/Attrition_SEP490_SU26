@@ -27,9 +27,10 @@ public class WikiController : ControllerBase
 
     [HttpGet("articles")]
     public async Task<IActionResult> GetArticles([FromQuery] string? category = null,
-        [FromQuery] string? search = null, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        [FromQuery] string? search = null, [FromQuery] Guid? authorId = null,
+        [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         => Ok(ApiResponse<PaginatedResponse<WikiArticleListDto>>.Ok(
-            await _wiki.GetArticlesAsync(category, search, page, pageSize)));
+            await _wiki.GetArticlesAsync(category, search, page, pageSize, authorId)));
 
     [HttpGet("articles/{slug}")]
     public async Task<IActionResult> GetArticle(string slug)
@@ -60,6 +61,9 @@ public class WikiController : ControllerBase
     [HttpPost("articles/{id:guid}/suggest")]
     public async Task<IActionResult> Suggest(Guid id, SuggestEditRequest request)
     {
+        // Soft email-verification gate: unverified users may browse but not contribute.
+        if (!_currentUser.IsEmailVerified)
+            return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Fail("Please verify your email address before contributing."));
         var result = await _wiki.SubmitContributionAsync(id, request, _currentUser.UserId!.Value, _currentUser.Username ?? "Unknown");
         return result.Success ? Ok(result) : BadRequest(result);
     }

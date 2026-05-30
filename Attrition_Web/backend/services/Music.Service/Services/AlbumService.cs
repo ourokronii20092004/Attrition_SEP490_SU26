@@ -24,9 +24,14 @@ public class AlbumService : IAlbumService
     public async Task<IEnumerable<MusicAlbumDto>> GetAlbumsAsync()
     {
         var albums = await _albumRepo.GetAllAsync();
-        return albums.OrderByDescending(a => a.CreatedAt).Select(a => new MusicAlbumDto(
-            a.AlbumId, a.Title, a.Slug, a.Artists, a.Description, a.CoverPath, a.IsCoverUserDefined,
-            a.ReleaseDate, a.AlbumType, a.Genre, a.TrackCount, a.TotalDuration, a.CreatedAt));
+        return albums.OrderByDescending(a => a.CreatedAt).Select(ToDto);
+    }
+
+    public async Task<PaginatedResponse<MusicAlbumDto>> GetAlbumsPagedAsync(int page, int pageSize)
+    {
+        var (items, total) = await _albumRepo.GetPagedAsync(page, pageSize, null,
+            q => q.OrderByDescending(a => a.CreatedAt));
+        return new PaginatedResponse<MusicAlbumDto>(items.Select(ToDto).ToList(), total, page, pageSize);
     }
 
     public async Task<AlbumDetailDto?> GetAlbumAsync(int id)

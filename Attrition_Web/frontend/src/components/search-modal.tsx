@@ -83,6 +83,12 @@ export function SearchModal({ onClose }: { onClose: () => void }) {
         <div className="mt-3 max-h-80 overflow-y-auto">
           {loading && <p className="py-4 text-center text-sm text-fg-muted">Searching...</p>}
 
+          {!loading && query.trim().length < 2 && (
+            <p className="px-1 py-3 text-xs text-fg-subtle">
+              Tip: prefix to narrow your search — <span className="text-fg-muted">wiki:</span>, <span className="text-fg-muted">enemy:</span>, <span className="text-fg-muted">forum:</span>, <span className="text-fg-muted">user:</span>
+            </p>
+          )}
+
           {!loading && query.trim().length >= 2 && !hasResults && (
             <p className="py-4 text-center text-sm text-fg-muted">No results found.</p>
           )}

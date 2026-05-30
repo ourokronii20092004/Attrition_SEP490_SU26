@@ -1,4 +1,5 @@
 using BuildingBlocks.Authentication;
+using BuildingBlocks.Caching;
 using BuildingBlocks.Persistence;
 using BuildingBlocks.Web;
 using FluentValidation;
@@ -26,6 +27,7 @@ builder.Services.AddScoped<ITrackService, TrackService>();
 builder.Services.AddScoped<IFavoriteService, FavoriteService>();
 builder.Services.AddScoped<IPlaylistService, PlaylistService>();
 builder.Services.AddHostedService<TempFileCleanupService>();
+builder.Services.AddAttritionCache(builder.Configuration, "music");
 
 builder.Services.AddAttritionJwtAuth(builder.Configuration);
 

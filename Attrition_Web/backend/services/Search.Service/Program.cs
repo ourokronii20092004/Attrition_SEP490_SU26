@@ -1,4 +1,5 @@
 using BuildingBlocks.Authentication;
+using BuildingBlocks.Caching;
 using BuildingBlocks.Web;
 using Search.Service.Clients;
 using Search.Service.Services;
@@ -23,6 +24,7 @@ AddInternalClient<IdentitySearchClient>("Identity");
 AddInternalClient<EnemySearchClient>("Enemy");
 
 builder.Services.AddScoped<ISearchService, SearchService>();
+builder.Services.AddAttritionCache(builder.Configuration, "search");
 
 builder.Services.AddAttritionJwtAuth(builder.Configuration);
 

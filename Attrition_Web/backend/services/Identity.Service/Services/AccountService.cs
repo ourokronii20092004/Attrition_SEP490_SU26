@@ -37,6 +37,11 @@ public class AccountService : IAccountService
         if (user == null) return ApiResponse<UserDto>.Fail("User not found.");
 
         user.Bio = request.Bio;
+        if (request.DisplayName != null)
+        {
+            var trimmed = request.DisplayName.Trim();
+            user.DisplayName = string.IsNullOrEmpty(trimmed) ? null : trimmed;
+        }
         if (request.NotifyOnReply.HasValue) user.NotifyOnReply = request.NotifyOnReply.Value;
         if (request.NotifyOnMention.HasValue) user.NotifyOnMention = request.NotifyOnMention.Value;
         await _userRepo.UpdateAsync(user);
@@ -62,8 +67,10 @@ public class AccountService : IAccountService
         var (success, path, error) = await _files.UploadAvatarAsync(userId, file);
         if (!success) return ApiResponse<string>.Fail(error ?? "Upload failed.");
 
+        var previous = user.AvatarPath;
         user.AvatarPath = path;
         await _userRepo.UpdateAsync(user);
+        await _files.DeleteAsync(previous);   // remove the replaced file so it can't be served stale
         return ApiResponse<string>.Ok(path!);
     }
 
@@ -72,8 +79,10 @@ public class AccountService : IAccountService
         var user = await _userRepo.GetByIdAsync(userId);
         if (user != null)
         {
+            var previous = user.AvatarPath;
             user.AvatarPath = null;
             await _userRepo.UpdateAsync(user);
+            await _files.DeleteAsync(previous);
         }
         return ApiResponse.Ok();
     }
@@ -86,8 +95,10 @@ public class AccountService : IAccountService
         var (success, path, error) = await _files.UploadBackgroundAsync(userId, file);
         if (!success) return ApiResponse<string>.Fail(error ?? "Upload failed.");
 
+        var previous = user.BackgroundUrl;
         user.BackgroundUrl = path;
         await _userRepo.UpdateAsync(user);
+        await _files.DeleteAsync(previous);
         return ApiResponse<string>.Ok(path!);
     }
 
@@ -96,8 +107,10 @@ public class AccountService : IAccountService
         var user = await _userRepo.GetByIdAsync(userId);
         if (user != null)
         {
+            var previous = user.BackgroundUrl;
             user.BackgroundUrl = null;
             await _userRepo.UpdateAsync(user);
+            await _files.DeleteAsync(previous);
         }
         return ApiResponse.Ok();
     }

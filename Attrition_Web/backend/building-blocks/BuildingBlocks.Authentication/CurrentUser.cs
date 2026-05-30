@@ -10,6 +10,7 @@ public interface ICurrentUser
     string? Username { get; }
     bool IsAdmin { get; }
     bool IsAuthenticated { get; }
+    bool IsEmailVerified { get; }
 }
 
 public sealed class CurrentUser : ICurrentUser
@@ -29,4 +30,9 @@ public sealed class CurrentUser : ICurrentUser
     public bool IsAdmin => _principal?.IsInRole(Roles.Admin) ?? false;
 
     public bool IsAuthenticated => _principal?.Identity?.IsAuthenticated ?? false;
+
+    // Email-verification gate. Admins are always treated as verified so seeded/promoted
+    // admin accounts are never blocked from acting.
+    public bool IsEmailVerified =>
+        IsAdmin || string.Equals(_principal?.FindFirstValue("email_verified"), "true", StringComparison.OrdinalIgnoreCase);
 }

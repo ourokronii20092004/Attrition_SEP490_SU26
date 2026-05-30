@@ -2,15 +2,19 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { adminApi } from "@/lib/api/admin";
 import { Card } from "@/components/ui/card";
 import { PageTitle } from "@/components/ui/page-title";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getLastAdminPage } from "./admin-top-bar";
+import { adminLabelFor } from "./admin-routes";
 import type { AdminStatsDto } from "@/lib/types";
 
 export default function AdminPage() {
   const [stats, setStats] = useState<AdminStatsDto | null>(null);
   const [loading, setLoading] = useState(true);
+  const [resume, setResume] = useState<string | null>(null);
 
   useEffect(() => {
     adminApi
@@ -19,6 +23,9 @@ export default function AdminPage() {
         if (res.success) setStats(res.data);
       })
       .finally(() => setLoading(false));
+    // Offer to jump back to the last non-dashboard admin page visited.
+    const last = getLastAdminPage();
+    if (last && last !== "/admin") setResume(last);
   }, []);
 
   const cards = [
@@ -37,6 +44,16 @@ export default function AdminPage() {
   return (
     <div className="mx-auto max-w-6xl">
       <PageTitle description="Overview of the Attrition platform.">Dashboard</PageTitle>
+
+      {resume && (
+        <Link
+          href={resume}
+          className="mb-6 flex items-center justify-between gap-3 rounded-lg border border-accent/30 bg-accent-soft px-4 py-3 text-sm transition-colors hover:border-accent/60"
+        >
+          <span className="text-fg">Resume where you left off — <span className="font-medium text-accent">{adminLabelFor(resume)}</span></span>
+          <ArrowRight size={16} className="shrink-0 text-accent" />
+        </Link>
+      )}
 
       {stats?.unavailableSources && stats.unavailableSources.length > 0 && (
         <div className="mb-6 rounded-lg border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning">

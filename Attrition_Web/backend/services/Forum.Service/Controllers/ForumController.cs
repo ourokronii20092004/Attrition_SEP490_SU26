@@ -22,15 +22,20 @@ public class ForumController : ControllerBase
 
     private Author CurrentAuthor => new(_user.UserId!.Value, _user.Username ?? "Unknown", null, _user.IsAdmin ? "Admin" : "User");
 
+    // Soft email-verification gate: unverified users may browse but not contribute.
+    private const string VerifyMessage = "Please verify your email address before posting.";
+    private IActionResult? RequireVerified() =>
+        _user.IsEmailVerified ? null : StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Fail(VerifyMessage));
+
     [HttpGet("categories")]
     public async Task<IActionResult> GetCategories()
         => Ok(ApiResponse<List<ForumCategoryDto>>.Ok(await _forum.GetCategoriesAsync()));
 
     [HttpGet("threads")]
     public async Task<IActionResult> GetThreads([FromQuery] string? category, [FromQuery] string? search,
-        [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        [FromQuery] Guid? authorId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         => Ok(ApiResponse<PaginatedResponse<ForumThreadListDto>>.Ok(
-            await _forum.GetThreadsAsync(category, search, page, pageSize)));
+            await _forum.GetThreadsAsync(category, search, page, pageSize, authorId)));
 
     [HttpGet("threads/{id:guid}")]
     public async Task<IActionResult> GetThread(Guid id)
@@ -52,6 +57,7 @@ public class ForumController : ControllerBase
     [HttpPost("threads")]
     public async Task<IActionResult> CreateThread(CreateThreadRequest request)
     {
+        if (RequireVerified() is { } block) return block;
         var result = await _forum.CreateThreadAsync(request, CurrentAuthor);
         return result.Success
             ? CreatedAtAction(nameof(GetThread), new { id = result.Data }, result)
@@ -62,6 +68,7 @@ public class ForumController : ControllerBase
     [HttpPost("threads/{id:guid}/posts")]
     public async Task<IActionResult> CreatePost(Guid id, CreatePostRequest request)
     {
+        if (RequireVerified() is { } block) return block;
         var result = await _forum.CreatePostAsync(id, request, CurrentAuthor);
         return result.Success ? Ok(result) : BadRequest(result);
     }

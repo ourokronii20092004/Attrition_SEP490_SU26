@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using BuildingBlocks.Caching;
 using BuildingBlocks.Contracts;
 using BuildingBlocks.Persistence;
 using Forum.Service.DTOs;
@@ -15,6 +16,7 @@ public class ForumService : IForumService
     private readonly IRepository<ForumReaction> _reactionRepo;
     private readonly IRepository<ThreadSubscription> _subRepo;
     private readonly IRepository<PostReport> _reportRepo;
+    private readonly ICacheService _cache;
 
     public ForumService(
         IForumRepository threadRepo,
@@ -22,7 +24,8 @@ public class ForumService : IForumService
         IRepository<ForumPost> postRepo,
         IRepository<ForumReaction> reactionRepo,
         IRepository<ThreadSubscription> subRepo,
-        IRepository<PostReport> reportRepo)
+        IRepository<PostReport> reportRepo,
+        ICacheService cache)
     {
         _threadRepo = threadRepo;
         _categoryRepo = categoryRepo;
@@ -30,24 +33,31 @@ public class ForumService : IForumService
         _reactionRepo = reactionRepo;
         _subRepo = subRepo;
         _reportRepo = reportRepo;
+        _cache = cache;
     }
 
     public async Task<List<ForumCategoryDto>> GetCategoriesAsync()
     {
-        var categories = await _threadRepo.GetCategoriesAsync();
-        var dtos = new List<ForumCategoryDto>();
-        foreach (var c in categories)
+        // Category list + per-category thread counts: shown on the forum landing, rarely changes.
+        return await _cache.GetOrSetAsync("categories", async () =>
         {
-            var threadCount = await _threadRepo.CountAsync(t => t.CategoryId == c.Id);
-            var (threads, _) = await _threadRepo.GetPagedAsync(1, 1, t => t.CategoryId == c.Id,
-                q => q.OrderByDescending(t => t.LastReplyAt));
-            dtos.Add(new ForumCategoryDto(c.Id, c.Name, c.Slug, c.Description, threadCount,
-                threads.FirstOrDefault()?.LastReplyAt));
-        }
-        return dtos;
+            var categories = await _threadRepo.GetCategoriesAsync();
+            var dtos = new List<ForumCategoryDto>();
+            foreach (var c in categories)
+            {
+                var threadCount = await _threadRepo.CountAsync(t => t.CategoryId == c.Id);
+                var (threads, _) = await _threadRepo.GetPagedAsync(1, 1, t => t.CategoryId == c.Id,
+                    q => q.OrderByDescending(t => t.LastReplyAt));
+                dtos.Add(new ForumCategoryDto(c.Id, c.Name, c.Slug, c.Description, threadCount,
+                    threads.FirstOrDefault()?.LastReplyAt));
+            }
+            return dtos;
+        }, TimeSpan.FromMinutes(5));
     }
 
-    public async Task<PaginatedResponse<ForumThreadListDto>> GetThreadsAsync(string? categorySlug, string? search, int page, int pageSize)
+    private Task InvalidateCategoriesAsync() => _cache.RemoveAsync("categories");
+
+    public async Task<PaginatedResponse<ForumThreadListDto>> GetThreadsAsync(string? categorySlug, string? search, int page, int pageSize, Guid? authorId = null)
     {
         Expression<Func<ForumThread, bool>>? filter = null;
         int? categoryId = null;
@@ -61,13 +71,11 @@ public class ForumService : IForumService
         }
 
         var s = search?.ToLower();
-        filter = (categoryId, s) switch
-        {
-            (int cid, string q) => t => t.CategoryId == cid && t.Title.ToLower().Contains(q),
-            (int cid, null) => t => t.CategoryId == cid,
-            (null, string q) => t => t.Title.ToLower().Contains(q),
-            _ => null
-        };
+        // Compose the optional filters (category, search, author) into one predicate.
+        filter = t =>
+            (categoryId == null || t.CategoryId == categoryId.Value) &&
+            (s == null || t.Title.ToLower().Contains(s)) &&
+            (authorId == null || t.AuthorId == authorId.Value);
 
         var (items, total) = await _threadRepo.GetPagedAsync(page, pageSize, filter,
             q => q.OrderByDescending(t => t.IsPinned).ThenByDescending(t => t.LastReplyAt));
@@ -371,6 +379,7 @@ public class ForumService : IForumService
             Description = request.Description ?? string.Empty
         };
         await _categoryRepo.AddAsync(category);
+        await InvalidateCategoriesAsync();
         return ApiResponse<int>.Ok(category.Id);
     }
 
@@ -388,6 +397,7 @@ public class ForumService : IForumService
         category.Slug = slug;
         category.Description = request.Description ?? string.Empty;
         await _categoryRepo.UpdateAsync(category);
+        await InvalidateCategoriesAsync();
         return ApiResponse.Ok();
     }
 

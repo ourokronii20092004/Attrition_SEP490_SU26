@@ -2,6 +2,7 @@ import { apiFetch } from "./client";
 import { API_BASE } from "../config";
 import type {
   ApiResponse,
+  PaginatedResponse,
   MusicAlbumDto,
   MusicTrackDto,
   AlbumDetailDto,
@@ -19,9 +20,16 @@ export function getStreamUrl(trackId: number): string {
   return `${API_BASE}/api/music/tracks/${trackId}/stream`;
 }
 
+export function getDownloadUrl(trackId: number): string {
+  return `${API_BASE}/api/music/tracks/${trackId}/download`;
+}
+
 export const musicApi = {
   getAlbums: () =>
     apiFetch<ApiResponse<MusicAlbumDto[]>>("/api/music/albums", { auth: false }),
+
+  getAlbumsPaged: (page: number, pageSize = 24) =>
+    apiFetch<ApiResponse<PaginatedResponse<MusicAlbumDto>>>(`/api/music/albums?page=${page}&pageSize=${pageSize}`, { auth: false }),
 
   getAlbum: (id: number) =>
     apiFetch<ApiResponse<AlbumDetailDto>>(`/api/music/albums/${id}`, { auth: false }),

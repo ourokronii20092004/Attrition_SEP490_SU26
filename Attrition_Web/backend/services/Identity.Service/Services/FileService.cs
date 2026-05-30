@@ -18,13 +18,15 @@ public class FileService : IFileService
     public Task<(bool, string?, string?)> UploadAvatarAsync(Guid userId, IFormFile file)
     {
         var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-        return SaveImageAsync(file, "avatars", $"{userId}{ext}", _maxAvatarSize);
+        // Unique filename per upload so a replacement gets a fresh URL — a deterministic
+        // "{userId}{ext}" name made the browser serve the cached old image on replace.
+        return SaveImageAsync(file, "avatars", $"{userId}-{Guid.NewGuid():N}{ext}", _maxAvatarSize);
     }
 
     public Task<(bool, string?, string?)> UploadBackgroundAsync(Guid userId, IFormFile file)
     {
         var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-        return SaveImageAsync(file, "backgrounds", $"{userId}{ext}", MaxBackgroundSize);
+        return SaveImageAsync(file, "backgrounds", $"{userId}-{Guid.NewGuid():N}{ext}", MaxBackgroundSize);
     }
 
     private async Task<(bool, string?, string?)> SaveImageAsync(IFormFile file, string subfolder, string fileName, long maxBytes)
@@ -38,5 +40,12 @@ public class FileService : IFileService
         await using var stream = file.OpenReadStream();
         var url = await _storage.SaveAsync(subfolder, fileName, stream);
         return (true, url, null);
+    }
+
+    // Best-effort delete of a previously stored file (the public URL stored on the user).
+    public async Task DeleteAsync(string? path)
+    {
+        if (string.IsNullOrEmpty(path)) return;
+        try { await _storage.DeleteAsync(path); } catch { /* best-effort cleanup */ }
     }
 }
