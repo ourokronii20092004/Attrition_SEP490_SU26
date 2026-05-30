@@ -7,11 +7,13 @@ public class EnemyAnimation : NetworkBehaviour
     [Tooltip("Bật lên nếu gốc của quái vật quay mặt sang trái thay vì sang phải")]
     public bool defaultFacingLeft = false;
     private Vector3 originalScale;
+    private float lastAppliedFacing;
 
     public override void Spawned()
     {
         if (anim == null) anim = GetComponentInChildren<Animator>();
         originalScale = transform.localScale;
+        lastAppliedFacing = 0f;
     }
 
     public void UpdateSpeed(float speed)
@@ -22,8 +24,12 @@ public class EnemyAnimation : NetworkBehaviour
     public void FaceDirection(float dirX)
     {
         if (dirX == 0) return;
+        // Cache: không set localScale nếu hướng không thay đổi
+        float snapped = dirX > 0 ? 1f : -1f;
+        if (snapped == lastAppliedFacing) return;
+        lastAppliedFacing = snapped;
         float facingMultiplier = defaultFacingLeft ? -1f : 1f;
-        transform.localScale = new Vector3(Mathf.Abs(originalScale.x) * dirX * facingMultiplier, originalScale.y, originalScale.z);
+        transform.localScale = new Vector3(Mathf.Abs(originalScale.x) * snapped * facingMultiplier, originalScale.y, originalScale.z);
     }
 
     public void PlayAttack(int attackIndex, float attackSpeed = 1f)
@@ -102,6 +108,28 @@ public class EnemyAnimation : NetworkBehaviour
             anim.SetBool("IsSleeping", false);
             anim.SetTrigger("WakeUp");
         }
+    }
+
+    // ─── SKILL (Elite — Undead) ───
+    public void PlaySkill(int skillIndex)
+    {
+        if (anim != null)
+        {
+            try { anim.SetInteger("SkillIndex", skillIndex); } catch { }
+            anim.SetTrigger("Skill");
+        }
+    }
+
+    // ─── SUMMON (Elite — Undead) ───
+    public void PlaySummon()
+    {
+        if (anim != null) anim.SetTrigger("Summon");
+    }
+
+    // ─── APPEAR (Summon Of Undead) ───
+    public void PlayAppear()
+    {
+        if (anim != null) anim.SetTrigger("Appear");
     }
 
     // ─── HEALING (Elite only) ───

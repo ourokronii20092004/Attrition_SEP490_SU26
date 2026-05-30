@@ -100,36 +100,16 @@ public class PlayerController : NetworkBehaviour, IDamageable
         CheckGround();
         NetworkVelocityY = rb.linearVelocity.y;
 
-        // ─── Đồng bộ vị trí/velocity ───
+        // ─── Đồng bộ vị trí/velocity cho proxy ───
         if (HasStateAuthority)
         {
-            // Host: ghi vị trí chuẩn cho client nhận
             NetworkPosition = rb.position;
             NetworkVelocity = rb.linearVelocity;
             NetworkGravityScale = rb.gravityScale;
         }
-        else if (HasInputAuthority)
+        else if (!HasInputAuthority)
         {
-            // Client player: sửa lệch vị trí so với server (chống chìm đất, trôi drift)
-            Vector2 serverPos = NetworkPosition;
-            Vector2 localPos = rb.position;
-            float dist = Vector2.Distance(serverPos, localPos);
-
-            if (dist > 1.5f)
-            {
-                // Lệch lớn → snap ngay về server
-                rb.position = serverPos;
-                rb.linearVelocity = NetworkVelocity;
-            }
-            else if (dist > 0.05f)
-            {
-                // Lệch nhỏ → lerp mượt về server
-                rb.position = Vector2.Lerp(localPos, serverPos, 0.3f);
-            }
-        }
-        else
-        {
-            // Proxy (người chơi khác trên màn hình): ép hoàn toàn từ server
+            // Proxy: ép vị trí và velocity từ server, bỏ qua toàn bộ physics logic
             rb.position = NetworkPosition;
             rb.linearVelocity = NetworkVelocity;
             rb.gravityScale = NetworkGravityScale;
@@ -140,13 +120,9 @@ public class PlayerController : NetworkBehaviour, IDamageable
         {
             JumpCount = 0;
 
-            // Chống bật lên bởi góc cạnh địa hình
+            // SỬA LỖI GÓC ĐẤT: Nếu đang đứng trên mặt đất mà velocity Y > 0 (bị đẩy lên bởi góc cạnh)
+            // → ép velocity Y = 0 để không bị bật nhảy bất ngờ
             if (rb.linearVelocity.y > 0.1f && !IsDashing)
-            {
-                rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
-            }
-            // Chống chìm xuống dưới mặt đất
-            if (rb.linearVelocity.y < -0.1f && !IsDashing)
             {
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
             }
