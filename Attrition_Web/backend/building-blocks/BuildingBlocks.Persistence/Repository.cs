@@ -18,7 +18,7 @@ public class Repository<T> : IRepository<T> where T : class
     public virtual async Task<T?> GetByIdAsync(int id) => await _dbSet.FindAsync(id);
     public virtual async Task<T?> GetByIdAsync(string id) => await _dbSet.FindAsync(id);
 
-    public virtual async Task<IEnumerable<T>> GetAllAsync() => await _dbSet.ToListAsync();
+    public virtual async Task<IEnumerable<T>> GetAllAsync() => await _dbSet.AsNoTracking().ToListAsync();
 
     public virtual async Task<T> AddAsync(T entity)
     {
@@ -55,7 +55,7 @@ public class Repository<T> : IRepository<T> where T : class
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 100);
 
-        IQueryable<T> query = _dbSet;
+        IQueryable<T> query = _dbSet.AsNoTracking();
 
         if (filter != null)
             query = query.Where(filter);
@@ -74,5 +74,24 @@ public class Repository<T> : IRepository<T> where T : class
             .ToListAsync();
 
         return (items, totalCount);
+    }
+
+    public virtual async Task<List<T>> ListAsync(
+        Expression<Func<T, bool>>? filter = null,
+        Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
+        params Expression<Func<T, object>>[] includes)
+    {
+        IQueryable<T> query = _dbSet.AsNoTracking();
+
+        if (filter != null)
+            query = query.Where(filter);
+
+        foreach (var include in includes)
+            query = query.Include(include);
+
+        if (orderBy != null)
+            query = orderBy(query);
+
+        return await query.ToListAsync();
     }
 }

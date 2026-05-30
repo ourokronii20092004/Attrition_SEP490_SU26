@@ -25,6 +25,7 @@ builder.Services.AddScoped<IAlbumService, AlbumService>();
 builder.Services.AddScoped<ITrackService, TrackService>();
 builder.Services.AddScoped<IFavoriteService, FavoriteService>();
 builder.Services.AddScoped<IPlaylistService, PlaylistService>();
+builder.Services.AddHostedService<TempFileCleanupService>();
 
 builder.Services.AddAttritionJwtAuth(builder.Configuration);
 
@@ -46,7 +47,8 @@ var mediaPrefix = builder.Configuration["FileUpload:PublicPrefix"] ?? "/api/musi
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(Path.GetFullPath(uploadPath)),
-    RequestPath = mediaPrefix
+    RequestPath = mediaPrefix,
+    OnPrepareResponse = ctx => ctx.Context.Response.Headers["X-Content-Type-Options"] = "nosniff"
 });
 
 app.UseAttritionPipeline();

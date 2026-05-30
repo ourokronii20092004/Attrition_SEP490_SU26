@@ -40,7 +40,17 @@ public class LocalFileStorage : IFileStorage
         relativePath = relativePath.Replace("/", Path.DirectorySeparatorChar.ToString())
                                    .Replace("\\", Path.DirectorySeparatorChar.ToString());
 
-        var fullPath = Path.Combine(_uploadPath, relativePath);
+        var baseFull = Path.GetFullPath(_uploadPath);
+        var fullPath = Path.GetFullPath(Path.Combine(baseFull, relativePath));
+
+        // Containment guard: never delete outside the upload root, even if relativePath
+        // contains "../" segments (defense-in-depth against a poisoned stored path).
+        var baseWithSep = baseFull.EndsWith(Path.DirectorySeparatorChar)
+            ? baseFull
+            : baseFull + Path.DirectorySeparatorChar;
+        if (!fullPath.StartsWith(baseWithSep, StringComparison.Ordinal))
+            return Task.FromResult(false);
+
         if (File.Exists(fullPath))
         {
             File.Delete(fullPath);

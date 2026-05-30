@@ -83,13 +83,9 @@ public class AdminUserService : IAdminUserService
     public async Task<List<UserSummaryDto>> GetByIdsAsync(IEnumerable<Guid> ids)
     {
         var idList = ids.Distinct().ToList();
-        var result = new List<UserSummaryDto>();
-        foreach (var id in idList)
-        {
-            var u = await _userRepo.GetByIdAsync(id);
-            if (u != null) result.Add(ToSummary(u));
-        }
-        return result;
+        if (idList.Count == 0) return new List<UserSummaryDto>();
+        var users = await _userRepo.ListAsync(u => idList.Contains(u.Id));
+        return users.Select(ToSummary).ToList();
     }
 
     public Task<int> CountAsync() => _userRepo.CountAsync();

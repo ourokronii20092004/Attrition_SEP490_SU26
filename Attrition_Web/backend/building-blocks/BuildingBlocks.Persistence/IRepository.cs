@@ -17,4 +17,10 @@ public interface IRepository<T> where T : class
         Expression<Func<T, bool>>? filter = null,
         Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
         params Expression<Func<T, object>>[] includes);
+
+    // Unbounded read for "get all matching" / aggregate use. No paging clamp; not change-tracked.
+    Task<List<T>> ListAsync(
+        Expression<Func<T, bool>>? filter = null,
+        Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
+        params Expression<Func<T, object>>[] includes);
 }

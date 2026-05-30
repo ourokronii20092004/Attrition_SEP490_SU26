@@ -1,4 +1,5 @@
 using BuildingBlocks.Contracts;
+using Identity.Service.DTOs;
 using Identity.Service.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -22,9 +23,9 @@ public class AdminUsersController : ControllerBase
     }
 
     [HttpPut("{id:guid}/role")]
-    public async Task<IActionResult> ChangeRole(Guid id, [FromBody] string role)
+    public async Task<IActionResult> ChangeRole(Guid id, [FromBody] ChangeRoleRequest req)
     {
-        var result = await _admin.ChangeRoleAsync(id, role);
+        var result = await _admin.ChangeRoleAsync(id, req.Role);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
@@ -36,9 +37,9 @@ public class AdminUsersController : ControllerBase
     }
 
     [HttpPut("{id:guid}/reset-password")]
-    public async Task<IActionResult> ResetPassword(Guid id, [FromBody] string newPassword)
+    public async Task<IActionResult> ResetPassword(Guid id, [FromBody] AdminResetPasswordRequest req)
     {
-        var result = await _admin.AdminResetPasswordAsync(id, newPassword);
+        var result = await _admin.AdminResetPasswordAsync(id, req.NewPassword);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 

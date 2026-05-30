@@ -4,6 +4,8 @@ using Assets.Service.Services;
 using BuildingBlocks.Authentication;
 using BuildingBlocks.Persistence;
 using BuildingBlocks.Web;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
@@ -26,6 +28,9 @@ builder.Services.AddScoped<IAssetService, AssetService>();
 
 builder.Services.AddAttritionJwtAuth(builder.Configuration);
 
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+builder.Services.AddFluentValidationAutoValidation();
+
 builder.Services.AddControllers();
 builder.Services.AddAttritionSwagger("Assets.Service");
 
@@ -40,7 +45,8 @@ var mediaPrefix = builder.Configuration["FileUpload:PublicPrefix"] ?? "/api/asse
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(Path.GetFullPath(uploadPath)),
-    RequestPath = mediaPrefix
+    RequestPath = mediaPrefix,
+    OnPrepareResponse = ctx => ctx.Context.Response.Headers["X-Content-Type-Options"] = "nosniff"
 });
 
 app.UseAttritionPipeline();

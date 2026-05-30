@@ -79,7 +79,10 @@ public class EnemyService : IEnemyService
             enemy.LootTable.AddRange(MapLoot(request.LootTable));
         }
 
-        await _repo.UpdateAsync(enemy);
+        // Save the tracked graph so EF emits the owned-loot deletes/inserts itself.
+        // (Routing through the generic UpdateAsync would re-mark the root Modified and
+        // not reliably diff the owned collection.)
+        await _repo.SaveTrackedAsync();
         return ApiResponse<EnemyResponse>.Ok(ToResponse(enemy));
     }
 

@@ -31,7 +31,7 @@ public class InternalUsersController : ControllerBase
     {
         if (!KeyValid()) return Unauthorized();
         if (string.IsNullOrWhiteSpace(q)) return Ok(ApiResponse<List<UserSummaryDto>>.Ok(new()));
-        var users = await _admin.SearchAsync(q, limit);
+        var users = await _admin.SearchAsync(q, Math.Clamp(limit, 1, 50));
         return Ok(ApiResponse<List<UserSummaryDto>>.Ok(users));
     }
 
@@ -39,6 +39,8 @@ public class InternalUsersController : ControllerBase
     public async Task<IActionResult> Batch([FromBody] List<Guid> ids)
     {
         if (!KeyValid()) return Unauthorized();
+        if (ids.Count > 200)
+            return BadRequest(ApiResponse.Fail("Too many ids requested (max 200)."));
         var users = await _admin.GetByIdsAsync(ids);
         return Ok(ApiResponse<List<UserSummaryDto>>.Ok(users));
     }
