@@ -44,7 +44,12 @@ builder.Services.AddAttritionSwagger("Identity.Service");
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
-    await scope.ServiceProvider.GetRequiredService<IdentityDbContext>().Database.MigrateAsync();
+{
+    var db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
+    await db.Database.MigrateAsync();
+    await AdminSeeder.SeedAdminAsync(db, app.Configuration,
+        scope.ServiceProvider.GetRequiredService<ILogger<Program>>());
+}
 
 // Serve uploaded avatars/backgrounds under the public prefix the storage layer returns.
 var uploadPath = builder.Configuration["FileUpload:UploadPath"] ?? "/app/uploads";
