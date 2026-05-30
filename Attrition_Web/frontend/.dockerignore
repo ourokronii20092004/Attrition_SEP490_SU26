@@ -1,0 +1,11 @@
+node_modules
+.next
+out
+build
+.git
+.gitignore
+.env*.local
+npm-debug.log*
+README.md
+.DS_Store
+*.pem

@@ -44,3 +44,6 @@ public record UserListItem(Guid Id, string Username, string Role, bool IsBanned,
 
 // ─── Internal lookup (used by Search/Admin aggregators) ───
 public record UserSummaryDto(Guid Id, string Username, string? DisplayName, string? AvatarUrl, string Role);
+
+// ─── Session check (polled by the game client to enforce bans mid-session) ───
+public record SessionStatusDto(Guid UserId, string Username, string Role, bool IsBanned);

@@ -68,6 +68,21 @@ public class AuthController : ControllerBase
         return result.Success ? Ok(result) : NotFound(result);
     }
 
+    /// <summary>
+    /// Lightweight liveness/ban check the game client polls (~every 10s). Returns 403 when the
+    /// account is banned so the client can kick the player out of the running game session.
+    /// </summary>
+    [Authorize]
+    [HttpGet("session-check")]
+    public async Task<IActionResult> SessionCheck()
+    {
+        var result = await _auth.CheckSessionAsync(CurrentUserId);
+        if (!result.Success) return NotFound(result);
+        if (result.Data!.IsBanned)
+            return StatusCode(StatusCodes.Status403Forbidden, ApiResponse<SessionStatusDto>.Fail("Account is banned."));
+        return Ok(result);
+    }
+
     [Authorize]
     [HttpPost("change-password")]
     public async Task<IActionResult> ChangePassword(ChangePasswordRequest request)
