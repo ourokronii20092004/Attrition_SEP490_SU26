@@ -38,7 +38,7 @@ public class MimicSleepTrigger : MonoBehaviour
         // Chỉ hoạt động khi enable sleep
         if (aiComp == null || !aiComp.enableSleep) return;
 
-        // Chỉ thức dậy khi đang ngủ
+        // Chỉ thức dậy khi đang ngủ (IsSleeping = computed property từ CurrentState)
         if (!aiComp.IsSleeping) return;
 
         // CHỈ Host (StateAuthority) mới được thay đổi Networked state
