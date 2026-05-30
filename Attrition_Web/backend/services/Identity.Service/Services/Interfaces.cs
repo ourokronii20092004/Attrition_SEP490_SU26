@@ -23,7 +23,7 @@ public interface IAuthService
 
 public interface IAccountService
 {
-    Task<ApiResponse<UserDto>> GetProfileByUsernameAsync(string username);
+    Task<ApiResponse<PublicProfileDto>> GetProfileByUsernameAsync(string username);
     Task<ApiResponse<UserDto>> UpdateProfileAsync(Guid userId, UpdateProfileRequest request);
     Task<ApiResponse> UpdateThemeAsync(Guid userId, string themeMode, string themeAccent);
     Task<ApiResponse<string>> UpdateAvatarAsync(Guid userId, Microsoft.AspNetCore.Http.IFormFile file);

@@ -6,7 +6,7 @@ namespace Search.Service.Services;
 
 public interface ISearchService
 {
-    Task<GlobalSearchResponse> GlobalSearchAsync(string query, int limit, CancellationToken ct);
+    Task<GlobalSearchResponse> GlobalSearchAsync(string query, int limit, bool includeUsers, CancellationToken ct);
 }
 
 public class SearchService : ISearchService
@@ -27,12 +27,15 @@ public class SearchService : ISearchService
         _logger = logger;
     }
 
-    public async Task<GlobalSearchResponse> GlobalSearchAsync(string query, int limit, CancellationToken ct)
+    public async Task<GlobalSearchResponse> GlobalSearchAsync(string query, int limit, bool includeUsers, CancellationToken ct)
     {
         var degraded = new ConcurrentBag<string>();
 
         var wikiTask = Safe("wiki", () => _wiki.SearchAsync(query, limit, ct), degraded);
-        var userTask = Safe("identity", () => _identity.SearchAsync(query, limit, ct), degraded);
+        // User directory results are only returned to authenticated callers (avoids an anonymous open directory).
+        var userTask = includeUsers
+            ? Safe("identity", () => _identity.SearchAsync(query, limit, ct), degraded)
+            : Task.FromResult(new List<SearchUserResultDto>());
         var postTask = Safe("forum", () => _forum.SearchAsync(query, limit, ct), degraded);
         var enemyTask = Safe("enemy", () => _enemy.SearchAsync(query, limit, ct), degraded);
 

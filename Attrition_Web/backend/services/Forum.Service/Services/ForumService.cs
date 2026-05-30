@@ -113,6 +113,9 @@ public class ForumService : IForumService
 
     public async Task<ApiResponse<Guid>> CreateThreadAsync(CreateThreadRequest request, Author author)
     {
+        var category = await _threadRepo.GetCategoryByIdAsync(request.CategoryId);
+        if (category == null) return ApiResponse<Guid>.Fail("Category not found.");
+
         var thread = new ForumThread
         {
             CategoryId = request.CategoryId,
@@ -121,9 +124,8 @@ public class ForumService : IForumService
             AuthorName = author.Name,
             AuthorAvatar = author.Avatar
         };
-        await _threadRepo.AddAsync(thread);
 
-        await _postRepo.AddAsync(new ForumPost
+        var firstPost = new ForumPost
         {
             ThreadId = thread.Id,
             AuthorId = author.Id,
@@ -131,9 +133,11 @@ public class ForumService : IForumService
             AuthorAvatar = author.Avatar,
             AuthorRole = author.Role,
             Content = request.Content
-        });
+        };
 
-        await _subRepo.AddAsync(new ThreadSubscription { ThreadId = thread.Id, UserId = author.Id });
+        var subscription = new ThreadSubscription { ThreadId = thread.Id, UserId = author.Id };
+
+        await _threadRepo.CreateThreadWithFirstPostAsync(thread, firstPost, subscription);
         return ApiResponse<Guid>.Ok(thread.Id);
     }
 
@@ -153,9 +157,7 @@ public class ForumService : IForumService
             Content = request.Content
         });
 
-        thread.ReplyCount++;
-        thread.LastReplyAt = DateTime.UtcNow;
-        await _threadRepo.UpdateAsync(thread);
+        await _threadRepo.IncrementReplyCountAsync(threadId, DateTime.UtcNow);
 
         // Auto-subscribe the replier if not already subscribed.
         var (existing, _) = await _subRepo.GetPagedAsync(1, 1, sub => sub.ThreadId == threadId && sub.UserId == author.Id);
@@ -185,14 +187,7 @@ public class ForumService : IForumService
         if (post == null) return ApiResponse.Fail("Post not found.");
         if (post.AuthorId != userId && !isAdmin) return ApiResponse.Fail("Unauthorized.");
 
-        await _postRepo.DeleteAsync(post);
-
-        var thread = await _threadRepo.GetByIdAsync(post.ThreadId);
-        if (thread != null)
-        {
-            thread.ReplyCount = Math.Max(0, thread.ReplyCount - 1);
-            await _threadRepo.UpdateAsync(thread);
-        }
+        await _threadRepo.DeletePostCascadeAsync(post);
         return ApiResponse.Ok();
     }
 
@@ -282,7 +277,7 @@ public class ForumService : IForumService
     {
         var thread = await _threadRepo.GetByIdAsync(threadId);
         if (thread == null) return ApiResponse.Fail("Thread not found.");
-        await _threadRepo.DeleteAsync(thread);
+        await _threadRepo.DeleteThreadCascadeAsync(threadId);
         return ApiResponse.Ok();
     }
 
@@ -380,8 +375,14 @@ public class ForumService : IForumService
     {
         var category = await _threadRepo.GetCategoryByIdAsync(id);
         if (category == null) return ApiResponse.Fail("Category not found.");
+
+        var slug = SlugHelper.GenerateSlug(request.Name);
+        var clash = await _threadRepo.GetCategoryBySlugAsync(slug);
+        if (clash != null && clash.Id != id)
+            return ApiResponse.Fail("A category with a similar name already exists.");
+
         category.Name = request.Name;
-        category.Slug = SlugHelper.GenerateSlug(request.Name);
+        category.Slug = slug;
         category.Description = request.Description ?? string.Empty;
         await _categoryRepo.UpdateAsync(category);
         return ApiResponse.Ok();
@@ -391,8 +392,14 @@ public class ForumService : IForumService
     public async Task<List<ForumPostSearchDto>> SearchAsync(string query, int limit)
     {
         var threads = await _threadRepo.SearchThreadsAsync(query, limit);
-        return threads.Select(t => new ForumPostSearchDto(t.Id, t.Id, t.Title,
-            t.Title.Length > 120 ? t.Title[..120] : t.Title)).ToList();
+        var results = new List<ForumPostSearchDto>();
+        foreach (var t in threads)
+        {
+            var body = await _threadRepo.GetFirstPostSnippetAsync(t.Id) ?? t.Title;
+            var snippet = body.Length > 120 ? body[..120] : body;
+            results.Add(new ForumPostSearchDto(t.Id, t.Id, t.Title, snippet));
+        }
+        return results;
     }
 
     public async Task<(int Threads, int Posts, int RemovedPosts)> GetStatsAsync()

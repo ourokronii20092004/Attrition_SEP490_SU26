@@ -29,7 +29,8 @@ public class EnemyRepository : Repository<EnemyEntity>, IEnemyRepository
             query = query.Where(e => e.Name.ToLower().Contains(s) || e.EnemyId.ToLower().Contains(s));
         }
 
-        return await query.OrderBy(e => e.Name).ToListAsync();
+        // Bound the public, unauthenticated result set to avoid a large materialization DoS.
+        return await query.OrderBy(e => e.Name).Take(500).ToListAsync();
     }
 
     public async Task<List<EnemyEntity>> SearchAsync(string query, int limit)

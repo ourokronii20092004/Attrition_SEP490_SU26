@@ -23,6 +23,8 @@ public class ErrorHandlingMiddleware
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unhandled exception");
+            if (context.Response.HasStarted)
+                throw;
             context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             context.Response.ContentType = "application/json";
             var response = new ApiResponse(false, "An unexpected error occurred");

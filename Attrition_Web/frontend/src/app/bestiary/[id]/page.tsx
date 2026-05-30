@@ -14,12 +14,15 @@ export default function EnemyDetailPage() {
 
   useEffect(() => {
     if (!params.id) return;
+    let ignore = false;
+    setLoading(true);
     enemiesApi
       .get(params.id)
       .then((res) => {
-        if (res.success) setEnemy(res.data);
+        if (!ignore && res.success) setEnemy(res.data);
       })
-      .finally(() => setLoading(false));
+      .finally(() => { if (!ignore) setLoading(false); });
+    return () => { ignore = true; };
   }, [params.id]);
 
   if (loading) return <PageLoader />;

@@ -1,6 +1,8 @@
 using BuildingBlocks.Authentication;
 using BuildingBlocks.Persistence;
 using BuildingBlocks.Web;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
@@ -25,6 +27,9 @@ builder.Services.AddScoped<IFavoriteService, FavoriteService>();
 builder.Services.AddScoped<IPlaylistService, PlaylistService>();
 
 builder.Services.AddAttritionJwtAuth(builder.Configuration);
+
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+builder.Services.AddFluentValidationAutoValidation();
 
 builder.Services.AddControllers();
 builder.Services.AddAttritionSwagger("Music.Service");

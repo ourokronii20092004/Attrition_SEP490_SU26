@@ -42,6 +42,20 @@ public record UserDto(
 
 public record UserListItem(Guid Id, string Username, string Role, bool IsBanned, DateTime JoinedAt);
 
+// ─── Public profile (anonymous, no PII) ───
+public record PublicProfileDto(
+    Guid Id,
+    string Username,
+    string? DisplayName,
+    string Role,
+    string? AvatarUrl,
+    string? BackgroundUrl,
+    string? Bio,
+    DateTime JoinedAt,
+    int PostCount,
+    int ContributionCount
+);
+
 // ─── Internal lookup (used by Search/Admin aggregators) ───
 public record UserSummaryDto(Guid Id, string Username, string? DisplayName, string? AvatarUrl, string Role);
 

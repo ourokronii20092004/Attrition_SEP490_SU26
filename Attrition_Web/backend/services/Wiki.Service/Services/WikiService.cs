@@ -73,9 +73,10 @@ public class WikiService : IWikiService
         return new PaginatedResponse<WikiArticleListDto>(dtos, total, page, pageSize);
     }
 
-    public async Task<WikiArticleDto?> GetArticleBySlugAsync(string slug)
+    public async Task<WikiArticleDto?> GetArticleBySlugAsync(string slug, bool includeUnpublished = false)
     {
-        var (articles, _) = await _wikiRepo.GetPagedAsync(1, 1, a => a.Slug == slug);
+        var (articles, _) = await _wikiRepo.GetPagedAsync(1, 1,
+            a => a.Slug == slug && (includeUnpublished || a.Status == "Published"));
         var article = articles.FirstOrDefault();
         if (article == null) return null;
 
@@ -149,8 +150,14 @@ public class WikiService : IWikiService
 
         if (request.Title != null)
         {
+            var newSlug = SlugHelper.GenerateSlug(request.Title);
+            if (newSlug != article.Slug)
+            {
+                var (clash, _) = await _wikiRepo.GetPagedAsync(1, 1, a => a.Slug == newSlug && a.Id != id);
+                if (clash.Count > 0) return ApiResponse.Fail("An article with a similar title already exists.");
+            }
             article.Title = request.Title;
-            article.Slug = SlugHelper.GenerateSlug(request.Title);
+            article.Slug = newSlug;
         }
         if (request.Content != null) article.Content = request.Content;
         if (request.Status != null) article.Status = request.Status;

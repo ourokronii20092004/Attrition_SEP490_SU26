@@ -60,6 +60,7 @@ public class MusicController : ControllerBase
         return PhysicalFile(filePath, "audio/mpeg", enableRangeProcessing: true);
     }
 
+    [Authorize]
     [HttpPost("tracks/{id:int}/play")]
     public async Task<IActionResult> IncrementPlay(int id)
     {
@@ -90,41 +91,51 @@ public class MusicController : ControllerBase
     [Authorize]
     [HttpGet("playlists")]
     public async Task<IActionResult> GetPlaylists()
-        => Ok(ApiResponse<IEnumerable<MusicPlaylist>>.Ok(await _playlists.GetPlaylistsAsync(UserId)));
+        => Ok(ApiResponse<IEnumerable<PlaylistDto>>.Ok(await _playlists.GetPlaylistsAsync(UserId)));
 
     [Authorize]
     [HttpPost("playlists")]
     public async Task<IActionResult> CreatePlaylist([FromBody] CreatePlaylistReq req)
-        => Ok(ApiResponse<MusicPlaylist>.Ok(await _playlists.CreatePlaylistAsync(UserId, req.Name, req.Description)));
+        => Ok(ApiResponse<PlaylistDto>.Ok(await _playlists.CreatePlaylistAsync(UserId, req.Name, req.Description)));
 
     [Authorize]
     [HttpPost("playlists/{id:guid}/tracks")]
     public async Task<IActionResult> AddTrack(Guid id, [FromBody] AddTrackToPlaylistReq req)
     {
-        var ok = await _playlists.AddTrackToPlaylistAsync(id, req.TrackId);
-        return ok ? Ok(ApiResponse.Ok()) : BadRequest(ApiResponse.Fail("Failed to add track."));
+        var result = await _playlists.AddTrackToPlaylistAsync(UserId, id, req.TrackId);
+        return result switch
+        {
+            PlaylistOpResult.Ok => Ok(ApiResponse.Ok()),
+            PlaylistOpResult.NotFound => NotFound(ApiResponse.Fail("Playlist not found.")),
+            _ => Forbid()
+        };
     }
 
     [Authorize]
     [HttpDelete("playlists/{id:guid}/tracks/{trackId:int}")]
     public async Task<IActionResult> RemoveTrack(Guid id, int trackId)
     {
-        var ok = await _playlists.RemoveTrackFromPlaylistAsync(id, trackId);
-        return ok ? Ok(ApiResponse.Ok()) : BadRequest(ApiResponse.Fail("Failed to remove track."));
+        var result = await _playlists.RemoveTrackFromPlaylistAsync(UserId, id, trackId);
+        return result switch
+        {
+            PlaylistOpResult.Ok => Ok(ApiResponse.Ok()),
+            PlaylistOpResult.NotFound => NotFound(ApiResponse.Fail("Playlist or track not found.")),
+            _ => Forbid()
+        };
     }
 
     // ─── Admin: albums ───
     [Authorize(Roles = Roles.Admin)]
     [HttpPost("albums")]
     public async Task<IActionResult> CreateAlbum([FromBody] CreateAlbumRequest req)
-        => Ok(ApiResponse<MusicAlbum>.Ok(await _albums.CreateAlbumAsync(req)));
+        => Ok(ApiResponse<MusicAlbumDto>.Ok(await _albums.CreateAlbumAsync(req)));
 
     [Authorize(Roles = Roles.Admin)]
     [HttpPut("albums/{id:int}")]
     public async Task<IActionResult> UpdateAlbum(int id, [FromBody] CreateAlbumRequest req)
     {
         var result = await _albums.UpdateAlbumAsync(id, req);
-        return result != null ? Ok(ApiResponse<MusicAlbum>.Ok(result)) : NotFound(ApiResponse.Fail("Album not found"));
+        return result != null ? Ok(ApiResponse<MusicAlbumDto>.Ok(result)) : NotFound(ApiResponse.Fail("Album not found"));
     }
 
     [Authorize(Roles = Roles.Admin)]

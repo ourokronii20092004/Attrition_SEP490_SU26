@@ -36,3 +36,22 @@ public class ForumCategoryRequestValidator : AbstractValidator<ForumCategoryRequ
         RuleFor(x => x.Name).NotEmpty().Length(2, 50);
     }
 }
+
+public class ReactRequestValidator : AbstractValidator<ReactRequest>
+{
+    public ReactRequestValidator()
+    {
+        RuleFor(x => x.ReactionType)
+            .NotEmpty()
+            .Must(t => t is "like" or "dislike")
+            .WithMessage("Reaction type must be 'like' or 'dislike'.");
+    }
+}
+
+public class ReportPostReqValidator : AbstractValidator<ReportPostReq>
+{
+    public ReportPostReqValidator()
+    {
+        RuleFor(x => x.Reason).NotEmpty().MaximumLength(500);
+    }
+}

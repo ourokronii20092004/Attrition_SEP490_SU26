@@ -29,7 +29,11 @@ public class Repository<T> : IRepository<T> where T : class
 
     public virtual async Task UpdateAsync(T entity)
     {
-        _db.Entry(entity).State = EntityState.Modified;
+        var entry = _db.Entry(entity);
+        if (entry.State == EntityState.Detached)
+            _dbSet.Attach(entity);
+        if (entry.State == EntityState.Unchanged || entry.State == EntityState.Detached)
+            entry.State = EntityState.Modified;
         await _db.SaveChangesAsync();
     }
 
@@ -48,6 +52,9 @@ public class Repository<T> : IRepository<T> where T : class
         Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
         params Expression<Func<T, object>>[] includes)
     {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
         IQueryable<T> query = _dbSet;
 
         if (filter != null)

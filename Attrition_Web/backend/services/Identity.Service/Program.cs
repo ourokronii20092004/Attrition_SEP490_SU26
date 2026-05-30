@@ -27,7 +27,11 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IAdminUserService, AdminUserService>();
 builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
 builder.Services.AddScoped<IFileService, FileService>();
-builder.Services.AddSingleton<IEmailService, ConsoleEmailService>();
+// Use real SMTP when configured (Smtp:Host/Username/Password); otherwise log to console in dev.
+if (SmtpEmailService.IsConfigured(builder.Configuration))
+    builder.Services.AddSingleton<IEmailService, SmtpEmailService>();
+else
+    builder.Services.AddSingleton<IEmailService, ConsoleEmailService>();
 
 builder.Services.AddAttritionJwtAuth(builder.Configuration);
 

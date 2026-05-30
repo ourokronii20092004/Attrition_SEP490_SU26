@@ -39,7 +39,8 @@ public class AuthService : IAuthService
             Email = request.Email,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
             IsEmailVerified = false,
-            EmailVerificationToken = verifyToken
+            EmailVerificationToken = TokenService.HashToken(verifyToken),
+            EmailVerificationTokenExpiry = DateTime.UtcNow.AddHours(24)
         };
 
         var (accessToken, refreshToken) = _tokens.GenerateTokens(user);
@@ -52,14 +53,21 @@ public class AuthService : IAuthService
         return ApiResponse<AuthResponse>.Ok(new AuthResponse(accessToken, refreshToken, TokenService.MapToDto(user)));
     }
 
+    // A precomputed BCrypt hash of a random value, used to equalize timing when the user does not exist.
+    private static readonly string DummyHash = BCrypt.Net.BCrypt.HashPassword("timing-equalizer-not-a-real-password");
+
     public async Task<ApiResponse<AuthResponse>> LoginAsync(LoginRequest request, string? ip)
     {
         var user = await _userRepo.GetByUsernameAsync(request.Username);
         if (user == null)
+        {
+            // Equalize response time so a missing username can't be distinguished from a wrong password.
+            BCrypt.Net.BCrypt.Verify(request.Password, DummyHash);
             return ApiResponse<AuthResponse>.Fail("Invalid username or password.");
+        }
 
         if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTime.UtcNow)
-            return ApiResponse<AuthResponse>.Fail($"Account locked. Try again after {user.LockoutEnd.Value}.");
+            return ApiResponse<AuthResponse>.Fail("Account temporarily locked due to failed login attempts. Try again later.");
 
         if (user.PasswordHash == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
         {
@@ -117,10 +125,13 @@ public class AuthService : IAuthService
                 user = await _userRepo.GetByEmailAsync(payload.Email);
                 if (user != null)
                 {
+                    if (!payload.EmailVerified)
+                        return ApiResponse<AuthResponse>.Fail(
+                            "This email is already registered. Sign in with your password, then link Google from settings.");
                     user.GoogleId = payload.Subject;
                     user.GoogleAvatarUrl = payload.Picture;
                     user.AuthProvider = "linked";
-                    if (!user.IsEmailVerified && payload.EmailVerified) user.IsEmailVerified = true;
+                    if (!user.IsEmailVerified) user.IsEmailVerified = true;
                     await _userRepo.UpdateAsync(user);
                 }
                 else
@@ -189,6 +200,8 @@ public class AuthService : IAuthService
 
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
         user.MustChangePassword = false;
+        user.RefreshToken = null;
+        user.RefreshTokenExpiresAt = null;
         await _userRepo.UpdateAsync(user);
         return ApiResponse.Ok();
     }
@@ -208,8 +221,10 @@ public class AuthService : IAuthService
     {
         if (string.IsNullOrEmpty(request.Email)) return ApiResponse.Fail("Email is required.");
 
+        var generic = ApiResponse.Ok();
+
         var user = await _userRepo.GetByEmailAsync(request.Email);
-        if (user == null) return ApiResponse.Fail("User not found.");
+        if (user == null) return generic;
 
         var resetToken = TokenService.NewRawToken();
         user.PasswordResetToken = TokenService.HashToken(resetToken);
@@ -220,7 +235,7 @@ public class AuthService : IAuthService
         var resetUrl = $"{clientUrl}/reset-password?token={Uri.EscapeDataString(resetToken)}";
         await TrySend(user.Email!, "Reset Your Attrition Password",
             $"Hi {user.Username},\n\nYou requested a password reset. Reset it here: {resetUrl}");
-        return ApiResponse.Ok();
+        return generic;
     }
 
     public async Task<ApiResponse> ResetPasswordAsync(ResetPasswordRequest request)
@@ -236,6 +251,8 @@ public class AuthService : IAuthService
         user.PasswordResetToken = null;
         user.PasswordResetTokenExpiry = null;
         user.MustChangePassword = false;
+        user.RefreshToken = null;
+        user.RefreshTokenExpiresAt = null;
         await _userRepo.UpdateAsync(user);
         return ApiResponse.Ok();
     }
@@ -244,8 +261,10 @@ public class AuthService : IAuthService
     {
         if (string.IsNullOrEmpty(request.Token)) return ApiResponse.Fail("Verification token is required.");
 
-        var user = await _userRepo.GetByEmailVerificationTokenAsync(request.Token);
+        var user = await _userRepo.GetByEmailVerificationTokenAsync(TokenService.HashToken(request.Token));
         if (user == null) return ApiResponse.Fail("Invalid verification token.");
+        if (user.EmailVerificationTokenExpiry.HasValue && user.EmailVerificationTokenExpiry.Value <= DateTime.UtcNow)
+            return ApiResponse.Fail("Verification token has expired. Please request a new one.");
 
         if (!string.IsNullOrEmpty(user.PendingEmail))
         {
@@ -254,6 +273,7 @@ public class AuthService : IAuthService
         }
         user.IsEmailVerified = true;
         user.EmailVerificationToken = null;
+        user.EmailVerificationTokenExpiry = null;
         await _userRepo.UpdateAsync(user);
         return ApiResponse.Ok();
     }
@@ -266,7 +286,8 @@ public class AuthService : IAuthService
         if (user.IsEmailVerified) return ApiResponse.Fail("Email is already verified.");
 
         var verifyToken = TokenService.NewRawToken();
-        user.EmailVerificationToken = verifyToken;
+        user.EmailVerificationToken = TokenService.HashToken(verifyToken);
+        user.EmailVerificationTokenExpiry = DateTime.UtcNow.AddHours(24);
         await _userRepo.UpdateAsync(user);
 
         await SendVerifyEmail(user, verifyToken);

@@ -2,6 +2,8 @@ using System.Linq.Expressions;
 using BuildingBlocks.Contracts;
 using BuildingBlocks.Persistence;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using Music.Service.Data;
 using Music.Service.DTOs;
 using Music.Service.Models;
 
@@ -11,13 +13,15 @@ public class TrackService : ITrackService
 {
     private readonly IRepository<MusicAlbum> _albumRepo;
     private readonly IRepository<MusicTrack> _trackRepo;
+    private readonly MusicDbContext _db;
     private readonly string _uploadPath;
     private readonly string _publicPrefix;
 
-    public TrackService(IRepository<MusicAlbum> albumRepo, IRepository<MusicTrack> trackRepo, IConfiguration config)
+    public TrackService(IRepository<MusicAlbum> albumRepo, IRepository<MusicTrack> trackRepo, MusicDbContext db, IConfiguration config)
     {
         _albumRepo = albumRepo;
         _trackRepo = trackRepo;
+        _db = db;
         _uploadPath = config["FileUpload:UploadPath"] ?? "/app/uploads";
         _publicPrefix = config["FileUpload:PublicPrefix"] ?? "/api/music/media";
     }
@@ -110,11 +114,10 @@ public class TrackService : ITrackService
 
     public async Task<bool> IncrementPlayCountAsync(int id)
     {
-        var track = await _trackRepo.GetByIdAsync(id);
-        if (track == null) return false;
-        track.PlayCount++;
-        await _trackRepo.UpdateAsync(track);
-        return true;
+        var rows = await _db.MusicTracks
+            .Where(t => t.TrackId == id)
+            .ExecuteUpdateAsync(s => s.SetProperty(t => t.PlayCount, t => t.PlayCount + 1));
+        return rows > 0;
     }
 
     public async Task<(bool success, string? error, ScanTrackResponse? data)> ScanTrackAsync(IFormFile file)

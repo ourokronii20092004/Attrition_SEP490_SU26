@@ -109,6 +109,13 @@ export async function apiFetch<T>(
     if (refreshed) {
       headers["Authorization"] = `Bearer ${accessToken}`;
       res = await fetch(url, { ...init, headers });
+    } else {
+      // Refresh failed (expired/invalid). Clear stale tokens and signal a session reset
+      // so AuthProvider can drop the user instead of looping failed refreshes forever.
+      clearTokens();
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("attrition:session-expired"));
+      }
     }
   }
 

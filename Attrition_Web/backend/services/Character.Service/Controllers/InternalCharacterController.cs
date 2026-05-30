@@ -1,3 +1,4 @@
+using BuildingBlocks.Authentication;
 using BuildingBlocks.Contracts;
 using Character.Service.DTOs;
 using Character.Service.Services;
@@ -23,13 +24,7 @@ public class InternalCharacterController : ControllerBase
         _config = config;
     }
 
-    private bool KeyValid()
-    {
-        var expected = _config["Internal:ApiKey"];
-        return !string.IsNullOrEmpty(expected)
-            && Request.Headers.TryGetValue("X-Internal-Key", out var got)
-            && got == expected;
-    }
+    private bool KeyValid() => InternalKey.Validate(Request, _config);
 
     [HttpPost("snapshot")]
     public async Task<IActionResult> Snapshot([FromBody] SnapshotIngestRequest request)

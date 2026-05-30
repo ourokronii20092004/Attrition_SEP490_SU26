@@ -9,7 +9,8 @@ public class ConsoleEmailService : IEmailService
 
     public Task SendAsync(string to, string subject, string body)
     {
-        _logger.LogInformation("EMAIL → {To}\nSubject: {Subject}\n{Body}", to, subject, body);
+        // Body may contain reset/verify URLs with raw tokens — never log it at Information.
+        _logger.LogInformation("EMAIL → {To}\nSubject: {Subject}", to, subject);
         return Task.CompletedTask;
     }
 }

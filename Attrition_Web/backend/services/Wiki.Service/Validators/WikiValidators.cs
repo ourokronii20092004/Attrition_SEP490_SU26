@@ -15,6 +15,18 @@ public class CreateArticleRequestValidator : AbstractValidator<CreateArticleRequ
     }
 }
 
+public class UpdateArticleRequestValidator : AbstractValidator<UpdateArticleRequest>
+{
+    public UpdateArticleRequestValidator()
+    {
+        RuleFor(x => x.Title).Length(3, 100).When(x => x.Title != null);
+        RuleFor(x => x.Content).MinimumLength(20).When(x => x.Content != null);
+        RuleFor(x => x.Status).Must(s => s is "Published" or "Draft")
+            .WithMessage("Status must be 'Published' or 'Draft'.")
+            .When(x => x.Status != null);
+    }
+}
+
 public class SuggestEditRequestValidator : AbstractValidator<SuggestEditRequest>
 {
     public SuggestEditRequestValidator()

@@ -69,3 +69,20 @@ public class SetPasswordRequestValidator : AbstractValidator<SetPasswordRequest>
             .Matches("[A-Z]").Matches("[a-z]").Matches("[0-9]").Matches("[^a-zA-Z0-9]");
     }
 }
+
+public class UpdateEmailRequestValidator : AbstractValidator<UpdateEmailRequest>
+{
+    public UpdateEmailRequestValidator()
+    {
+        RuleFor(x => x.NewEmail).NotEmpty().EmailAddress();
+        RuleFor(x => x.CurrentPassword).NotEmpty();
+    }
+}
+
+public class VerifyEmailRequestValidator : AbstractValidator<VerifyEmailRequest>
+{
+    public VerifyEmailRequestValidator()
+    {
+        RuleFor(x => x.Token).NotEmpty();
+    }
+}
