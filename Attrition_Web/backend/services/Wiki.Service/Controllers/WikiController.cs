@@ -61,10 +61,11 @@ public class WikiController : ControllerBase
     [HttpPost("articles/{id:guid}/suggest")]
     public async Task<IActionResult> Suggest(Guid id, SuggestEditRequest request)
     {
+        if (this.RequireUserId(_currentUser, out var userId) is { } error) return error;
         // Soft email-verification gate: unverified users may browse but not contribute.
         if (!_currentUser.IsEmailVerified)
             return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Fail("Please verify your email address before contributing."));
-        var result = await _wiki.SubmitContributionAsync(id, request, _currentUser.UserId!.Value, _currentUser.Username ?? "Unknown");
+        var result = await _wiki.SubmitContributionAsync(id, request, userId, _currentUser.Username ?? "Unknown");
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
@@ -73,7 +74,8 @@ public class WikiController : ControllerBase
     [HttpPost("articles")]
     public async Task<IActionResult> Create(CreateArticleRequest request)
     {
-        var result = await _wiki.CreateArticleAsync(request, _currentUser.UserId!.Value, _currentUser.Username ?? "Unknown");
+        if (this.RequireUserId(_currentUser, out var userId) is { } error) return error;
+        var result = await _wiki.CreateArticleAsync(request, userId, _currentUser.Username ?? "Unknown");
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
@@ -81,7 +83,8 @@ public class WikiController : ControllerBase
     [HttpPut("articles/{id:guid}")]
     public async Task<IActionResult> Update(Guid id, UpdateArticleRequest request)
     {
-        var result = await _wiki.UpdateArticleAsync(id, request, _currentUser.UserId!.Value, _currentUser.Username ?? "Unknown");
+        if (this.RequireUserId(_currentUser, out var userId) is { } error) return error;
+        var result = await _wiki.UpdateArticleAsync(id, request, userId, _currentUser.Username ?? "Unknown");
         return result.Success ? Ok(result) : NotFound(result);
     }
 
@@ -102,7 +105,8 @@ public class WikiController : ControllerBase
     [HttpPost("contributions/{id:guid}/review")]
     public async Task<IActionResult> ReviewContribution(Guid id, ReviewContributionRequest request)
     {
-        var result = await _wiki.ReviewContributionAsync(id, request, _currentUser.UserId!.Value);
+        if (this.RequireUserId(_currentUser, out var userId) is { } error) return error;
+        var result = await _wiki.ReviewContributionAsync(id, request, userId);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 

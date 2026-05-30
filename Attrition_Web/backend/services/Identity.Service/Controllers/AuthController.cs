@@ -1,3 +1,4 @@
+using BuildingBlocks.Authentication;
 using BuildingBlocks.Contracts;
 using Identity.Service.DTOs;
 using Identity.Service.Services;
@@ -11,9 +12,12 @@ namespace Identity.Service.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _auth;
-    public AuthController(IAuthService auth) => _auth = auth;
-
-    private Guid CurrentUserId => Guid.Parse(User.FindFirst("sub")!.Value);
+    private readonly ICurrentUser _user;
+    public AuthController(IAuthService auth, ICurrentUser user)
+    {
+        _auth = auth;
+        _user = user;
+    }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterRequest request)
@@ -41,7 +45,8 @@ public class AuthController : ControllerBase
     [HttpPost("google/link")]
     public async Task<IActionResult> LinkGoogle(GoogleAuthRequest request)
     {
-        var result = await _auth.LinkGoogleAsync(CurrentUserId, request);
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        var result = await _auth.LinkGoogleAsync(userId, request);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
@@ -49,7 +54,8 @@ public class AuthController : ControllerBase
     [HttpPost("google/unlink")]
     public async Task<IActionResult> UnlinkGoogle()
     {
-        var result = await _auth.UnlinkGoogleAsync(CurrentUserId);
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        var result = await _auth.UnlinkGoogleAsync(userId);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
@@ -64,7 +70,8 @@ public class AuthController : ControllerBase
     [HttpGet("me")]
     public async Task<IActionResult> Me()
     {
-        var result = await _auth.GetCurrentUserAsync(CurrentUserId);
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        var result = await _auth.GetCurrentUserAsync(userId);
         return result.Success ? Ok(result) : NotFound(result);
     }
 
@@ -76,7 +83,8 @@ public class AuthController : ControllerBase
     [HttpGet("session-check")]
     public async Task<IActionResult> SessionCheck()
     {
-        var result = await _auth.CheckSessionAsync(CurrentUserId);
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        var result = await _auth.CheckSessionAsync(userId);
         if (!result.Success) return NotFound(result);
         if (result.Data!.IsBanned)
             return StatusCode(StatusCodes.Status403Forbidden, ApiResponse<SessionStatusDto>.Fail("Account is banned."));
@@ -87,7 +95,8 @@ public class AuthController : ControllerBase
     [HttpPost("change-password")]
     public async Task<IActionResult> ChangePassword(ChangePasswordRequest request)
     {
-        var result = await _auth.ChangePasswordAsync(CurrentUserId, request);
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        var result = await _auth.ChangePasswordAsync(userId, request);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
@@ -95,7 +104,8 @@ public class AuthController : ControllerBase
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()
     {
-        var result = await _auth.LogoutAsync(CurrentUserId);
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        var result = await _auth.LogoutAsync(userId);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
@@ -124,7 +134,8 @@ public class AuthController : ControllerBase
     [HttpPost("verify-email/resend")]
     public async Task<IActionResult> ResendVerification()
     {
-        var result = await _auth.SendVerificationEmailAsync(CurrentUserId);
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        var result = await _auth.SendVerificationEmailAsync(userId);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 }

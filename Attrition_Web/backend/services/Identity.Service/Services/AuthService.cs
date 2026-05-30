@@ -173,7 +173,15 @@ public class AuthService : IAuthService
                         AuthProvider = "google",
                         PasswordHash = null
                     };
-                    await _userRepo.AddAsync(user);
+                    if (!await _userRepo.TryAddAsync(user))
+                    {
+                        // Race: a concurrent first-time Google login already created this account.
+                        // Fall back to the existing row instead of surfacing a 500.
+                        user = await _userRepo.GetByGoogleIdAsync(payload.Subject)
+                            ?? await _userRepo.GetByEmailAsync(payload.Email);
+                        if (user == null)
+                            return ApiResponse<AuthResponse>.Fail("Could not complete Google sign-in. Please try again.");
+                    }
                 }
             }
 

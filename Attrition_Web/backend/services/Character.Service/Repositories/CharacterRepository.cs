@@ -29,6 +29,9 @@ public class CharacterRepository : Repository<CharacterEntity>, ICharacterReposi
             .OrderByDescending(c => c.UpdatedAt)
             .ToListAsync();
 
+    // Case-sensitive match, kept deliberately consistent with the case-sensitive unique index on
+    // (OwnerId, Name). If these two ever disagree on what counts as a duplicate, the race-catch in
+    // IngestSnapshotAsync can misfire. Change both together (e.g. to a functional lower(Name) index).
     public async Task<CharacterEntity?> FindByOwnerAndNameAsync(Guid ownerId, string name) =>
         await _context.Characters
             .Include(c => c.Snapshots)

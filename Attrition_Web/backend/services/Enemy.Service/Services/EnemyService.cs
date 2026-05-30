@@ -61,7 +61,10 @@ public class EnemyService : IEnemyService
             LootTable = MapLoot(request.LootTable)
         };
 
-        await _repo.AddAsync(enemy);
+        // Optimistic check above for a friendly message; TryAddAsync makes the insert race-safe so a
+        // concurrent duplicate hits the PK constraint and returns the same message instead of a 500.
+        if (!await _repo.TryAddAsync(enemy))
+            return ApiResponse<EnemyResponse>.Fail($"Enemy '{request.EnemyId}' already exists.");
         await InvalidateAsync();
         return ApiResponse<EnemyResponse>.Ok(ToResponse(enemy));
     }

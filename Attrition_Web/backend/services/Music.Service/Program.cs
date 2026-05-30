@@ -34,7 +34,7 @@ builder.Services.AddAttritionJwtAuth(builder.Configuration);
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddFluentValidationAutoValidation();
 
-builder.Services.AddControllers();
+builder.Services.AddAttritionControllers();
 builder.Services.AddAttritionSwagger("Music.Service");
 
 var app = builder.Build();
@@ -50,7 +50,20 @@ app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(Path.GetFullPath(uploadPath)),
     RequestPath = mediaPrefix,
-    OnPrepareResponse = ctx => ctx.Context.Response.Headers["X-Content-Type-Options"] = "nosniff"
+    OnPrepareResponse = ctx =>
+    {
+        // Never serve the in-progress upload staging dir — a guessed temp filename could otherwise
+        // be downloaded before the cleanup sweep runs.
+        var path = ctx.File.PhysicalPath;
+        if (path != null && path.Contains(Path.Combine("music", "temp"), StringComparison.OrdinalIgnoreCase))
+        {
+            ctx.Context.Response.StatusCode = StatusCodes.Status404NotFound;
+            ctx.Context.Response.ContentLength = 0;
+            ctx.Context.Response.Body = Stream.Null;
+            return;
+        }
+        ctx.Context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    }
 });
 
 app.UseAttritionPipeline();

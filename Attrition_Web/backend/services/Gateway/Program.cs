@@ -1,4 +1,6 @@
 using System.Threading.RateLimiting;
+using Gateway;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,6 +13,16 @@ builder.WebHost.ConfigureKestrel(o => o.Limits.MaxRequestBodySize = maxBodyMb * 
 
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+
+// Honor X-Forwarded-For from the nginx/cloudflared edge so the rate limiter partitions by the real
+// client IP (ClientIp reads Connection.RemoteIpAddress, which UseForwardedHeaders rewrites) instead
+// of lumping every request behind the proxy into a single bucket.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 // Centralized CORS — only the gateway sets CORS headers; downstream services do not.
 // Origins come from the root .env via CORS_ORIGINS (comma-separated), surfaced as Cors:Origins.
@@ -58,6 +70,8 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
+app.UseForwardedHeaders();
+app.UseMiddleware<GatewayErrorMiddleware>();
 app.UseCors();
 app.UseRateLimiter();
 app.MapReverseProxy();

@@ -41,12 +41,27 @@ public class SearchService : ISearchService
         // Repeated identical queries (autocomplete typing the same term) are common; cache briefly.
         // Skip caching when any source degraded so a transient failure isn't cached as "no results".
         var cacheKey = $"{scope ?? "all"}:{includeUsers}:{limit}:{term.ToLowerInvariant()}";
-        var cached = await _cache.GetAsync<GlobalSearchResponse>(cacheKey, ct);
-        if (cached != null) return cached;
+        try
+        {
+            var cached = await _cache.GetAsync<GlobalSearchResponse>(cacheKey, ct);
+            if (cached != null) return cached;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // Cache is an optimization, not a dependency: a Redis outage must not 500 a search that
+            // the healthy downstreams can still serve. Fall through to a live query.
+            _logger.LogWarning(ex, "Search cache read failed; serving uncached");
+        }
 
         var result = await RunSearchAsync(scope, term, limit, includeUsers, ct);
         if (result.DegradedSources.Count == 0)
-            await _cache.SetAsync(cacheKey, result, TimeSpan.FromSeconds(60), ct);
+        {
+            try { await _cache.SetAsync(cacheKey, result, TimeSpan.FromSeconds(60), ct); }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _logger.LogWarning(ex, "Search cache write failed; result served but not cached");
+            }
+        }
         return result;
     }
 
@@ -98,6 +113,12 @@ public class SearchService : ISearchService
         try
         {
             return await call();
+        }
+        catch (OperationCanceledException)
+        {
+            // Caller disconnected/cancelled — propagate instead of mislabeling every source as
+            // "degraded" and returning a misleading 200 with empty results.
+            throw;
         }
         catch (Exception ex)
         {

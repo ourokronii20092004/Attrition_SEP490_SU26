@@ -29,7 +29,7 @@ public class InternalUsersController : ControllerBase
     [HttpGet("search")]
     public async Task<IActionResult> Search([FromQuery] string q, [FromQuery] int limit = 5)
     {
-        if (!KeyValid()) return Unauthorized();
+        if (!KeyValid()) return Unauthorized(ApiResponse.Fail("Valid service authentication is required."));
         if (string.IsNullOrWhiteSpace(q)) return Ok(ApiResponse<List<UserSummaryDto>>.Ok(new()));
         var users = await _admin.SearchAsync(q, Math.Clamp(limit, 1, 50));
         return Ok(ApiResponse<List<UserSummaryDto>>.Ok(users));
@@ -38,7 +38,9 @@ public class InternalUsersController : ControllerBase
     [HttpPost("batch")]
     public async Task<IActionResult> Batch([FromBody] List<Guid> ids)
     {
-        if (!KeyValid()) return Unauthorized();
+        if (!KeyValid()) return Unauthorized(ApiResponse.Fail("Valid service authentication is required."));
+        if (ids is null || ids.Count == 0)
+            return BadRequest(ApiResponse.Fail("A non-empty list of user ids is required."));
         if (ids.Count > 200)
             return BadRequest(ApiResponse.Fail("Too many ids requested (max 200)."));
         var users = await _admin.GetByIdsAsync(ids);
@@ -48,7 +50,7 @@ public class InternalUsersController : ControllerBase
     [HttpGet("count")]
     public async Task<IActionResult> Count()
     {
-        if (!KeyValid()) return Unauthorized();
+        if (!KeyValid()) return Unauthorized(ApiResponse.Fail("Valid service authentication is required."));
         var count = await _admin.CountAsync();
         return Ok(ApiResponse<int>.Ok(count));
     }

@@ -33,3 +33,6 @@ deploy.py
 *.txt
 .claude
 test-data/
+
+# Test projects (local-only)
+backend/tests/

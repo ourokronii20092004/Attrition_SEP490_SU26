@@ -28,6 +28,8 @@ public class EnemyCreateRequestValidator : AbstractValidator<EnemyCreateRequest>
         RuleFor(x => x.AttackSpeed).GreaterThan(0);
         RuleFor(x => x.ExpReward).GreaterThanOrEqualTo(0);
         RuleFor(x => x.GoldReward).GreaterThanOrEqualTo(0);
+        RuleFor(x => x.LootTable).Must(l => l == null || l.Count <= 100)
+            .WithMessage("Loot table cannot exceed 100 entries.");
         RuleForEach(x => x.LootTable).SetValidator(new LootEntryDtoValidator());
     }
 }
@@ -47,6 +49,8 @@ public class EnemyUpdateRequestValidator : AbstractValidator<EnemyUpdateRequest>
         RuleFor(x => x.AttackSpeed).GreaterThan(0);
         RuleFor(x => x.ExpReward).GreaterThanOrEqualTo(0);
         RuleFor(x => x.GoldReward).GreaterThanOrEqualTo(0);
+        RuleFor(x => x.LootTable).Must(l => l == null || l.Count <= 100)
+            .WithMessage("Loot table cannot exceed 100 entries.");
         RuleForEach(x => x.LootTable).SetValidator(new LootEntryDtoValidator());
     }
 }

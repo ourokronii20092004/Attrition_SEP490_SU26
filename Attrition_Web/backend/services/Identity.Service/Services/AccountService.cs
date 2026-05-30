@@ -144,7 +144,15 @@ public class AccountService : IAccountService
         user.PendingEmail = request.NewEmail;
         user.EmailVerificationToken = TokenService.HashToken(verifyToken);
         user.EmailVerificationTokenExpiry = DateTime.UtcNow.AddHours(24);
-        await _userRepo.UpdateAsync(user);
+        try
+        {
+            await _userRepo.UpdateAsync(user);
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        {
+            // Lost the race to a concurrent claim on the same address.
+            return ApiResponse.Fail("Email address is already in use by another account.");
+        }
 
         try
         {

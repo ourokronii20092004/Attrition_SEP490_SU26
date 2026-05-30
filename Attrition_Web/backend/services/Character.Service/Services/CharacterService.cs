@@ -33,6 +33,13 @@ public class CharacterService : ICharacterService
 
     public async Task<ApiResponse<CharacterDetailDto>> IngestSnapshotAsync(SnapshotIngestRequest request)
     {
+        // Guard inputs so a malformed body (or one that bypassed validation) fails as a clean 400
+        // rather than throwing deeper in. Makes the controller's BadRequest branch reachable (CH-3).
+        if (request.OwnerId == Guid.Empty)
+            return ApiResponse<CharacterDetailDto>.Fail("OwnerId is required.");
+        if (string.IsNullOrWhiteSpace(request.Name))
+            return ApiResponse<CharacterDetailDto>.Fail("Character name is required.");
+
         // Resolve the target character: by id if given, else by (owner, name), else create.
         CharacterEntity? character = null;
         if (request.CharacterId.HasValue)
@@ -61,16 +68,39 @@ public class CharacterService : ICharacterService
                 Archetype = request.Archetype,
                 Snapshots = new List<CharacterSnapshot> { snapshot }
             };
-            await _repo.AddAsync(character);
+            // Race-safe insert: a concurrent snapshot for the same new (owner, name) hits the unique
+            // index. On a lost race, fall back to updating the row the winner created (CH-1).
+            if (!await _repo.TryAddAsync(character))
+            {
+                character = await _repo.FindByOwnerAndNameAsync(request.OwnerId, request.Name);
+                if (character == null)
+                    return ApiResponse<CharacterDetailDto>.Fail("Could not persist the character snapshot. Please retry.");
+                return await ApplySnapshotUpdateAsync(character, request, snapshot);
+            }
         }
         else
         {
-            character.Archetype = request.Archetype;
-            character.UpdatedAt = DateTime.UtcNow;
-            character.Snapshots.Add(snapshot);
-            await _repo.UpdateAsync(character);
+            return await ApplySnapshotUpdateAsync(character, request, snapshot);
         }
 
+        return ApiResponse<CharacterDetailDto>.Ok(ToDetail(character));
+    }
+
+    private async Task<ApiResponse<CharacterDetailDto>> ApplySnapshotUpdateAsync(
+        CharacterEntity character, SnapshotIngestRequest request, CharacterSnapshot snapshot)
+    {
+        character.Archetype = request.Archetype;
+        character.UpdatedAt = DateTime.UtcNow;
+        character.Snapshots.Add(snapshot);
+        try
+        {
+            await _repo.UpdateAsync(character);
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException)
+        {
+            // The character was deleted between fetch and save.
+            return ApiResponse<CharacterDetailDto>.Fail("The character was modified or removed by another request. Please retry.");
+        }
         return ApiResponse<CharacterDetailDto>.Ok(ToDetail(character));
     }
 

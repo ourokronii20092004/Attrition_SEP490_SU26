@@ -111,3 +111,30 @@ public class AdminResetPasswordRequestValidator : AbstractValidator<AdminResetPa
             .Matches("[^a-zA-Z0-9]").WithMessage("Password must contain a special character.");
     }
 }
+
+public class RefreshRequestValidator : AbstractValidator<RefreshRequest>
+{
+    public RefreshRequestValidator()
+        => RuleFor(x => x.RefreshToken).NotEmpty().WithMessage("Refresh token is required.");
+}
+
+public class GoogleAuthRequestValidator : AbstractValidator<GoogleAuthRequest>
+{
+    public GoogleAuthRequestValidator()
+        => RuleFor(x => x.Code).NotEmpty().WithMessage("Google authorization code is required.");
+}
+
+public class ForgotPasswordRequestValidator : AbstractValidator<ForgotPasswordRequest>
+{
+    public ForgotPasswordRequestValidator()
+        => RuleFor(x => x.Email).NotEmpty().EmailAddress().WithMessage("A valid email address is required.");
+}
+
+public class UpdateThemeRequestValidator : AbstractValidator<UpdateThemeRequest>
+{
+    public UpdateThemeRequestValidator()
+    {
+        RuleFor(x => x.ThemeMode).NotEmpty().MaximumLength(50);
+        RuleFor(x => x.ThemeAccent).NotEmpty().MaximumLength(50);
+    }
+}

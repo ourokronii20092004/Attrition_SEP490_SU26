@@ -34,7 +34,7 @@ builder.Services.AddAttritionJwtAuth(builder.Configuration);
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddFluentValidationAutoValidation();
 
-builder.Services.AddControllers();
+builder.Services.AddAttritionControllers();
 builder.Services.AddAttritionSwagger("Assets.Service");
 
 var app = builder.Build();
