@@ -53,7 +53,8 @@ var mediaPrefix = builder.Configuration["FileUpload:PublicPrefix"] ?? "/api/acco
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(Path.GetFullPath(uploadPath)),
-    RequestPath = mediaPrefix
+    RequestPath = mediaPrefix,
+    OnPrepareResponse = ctx => ctx.Context.Response.Headers["X-Content-Type-Options"] = "nosniff"
 });
 
 app.UseAttritionPipeline();

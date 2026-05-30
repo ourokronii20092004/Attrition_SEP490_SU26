@@ -161,7 +161,7 @@ services:
     <<: [ *service-defaults, *svc-healthcheck ]
     build: { context: ./backend, dockerfile: services/Gateway/Dockerfile }
     container_name: attrition-gateway
-    ports: [ "${GATEWAY_HOST_PORT:-8080}:8080" ]   # exposed for local dev; nginx reaches it over the network in prod
+    ports: [ "${GATEWAY_HOST_BIND:-127.0.0.1}:${GATEWAY_HOST_PORT:-8080}:8080" ]   # loopback by default; nginx reaches it over the docker network in prod
     environment:
       Cors__Origins: ${CORS_ORIGINS:-http://localhost:3000,https://attrition.io.vn}
     depends_on:
@@ -195,7 +195,7 @@ services:
   nginx:
     image: nginx:alpine
     container_name: attrition-nginx
-    ports: [ "${WEB_HOST_PORT:-3000}:80" ]
+    ports: [ "${WEB_HOST_BIND:-127.0.0.1}:${WEB_HOST_PORT:-3000}:80" ]
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:

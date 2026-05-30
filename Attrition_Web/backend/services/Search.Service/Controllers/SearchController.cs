@@ -21,7 +21,8 @@ public class SearchController : ControllerBase
                     new List<SearchPostResultDto>(), new List<SearchEnemyResultDto>(), new List<string>())));
 
         var includeUsers = User.Identity?.IsAuthenticated ?? false;
-        var result = await _search.GlobalSearchAsync(q.Trim(), limit, includeUsers, ct);
+        var safeLimit = Math.Clamp(limit, 1, 20);
+        var result = await _search.GlobalSearchAsync(q.Trim(), safeLimit, includeUsers, ct);
         return Ok(ApiResponse<GlobalSearchResponse>.Ok(result));
     }
 }

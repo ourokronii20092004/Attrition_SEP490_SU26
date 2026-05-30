@@ -17,7 +17,7 @@ export const adminApi = {
   setUserRole: (userId: string, role: string) =>
     apiFetch<ApiResponse<void>>(`/api/admin/users/${userId}/role`, {
       method: "PUT",
-      body: role,
+      body: { role },
     }),
 
   toggleBan: (userId: string) =>
@@ -26,7 +26,7 @@ export const adminApi = {
   resetUserPassword: (userId: string, newPassword: string) =>
     apiFetch<ApiResponse<void>>(`/api/admin/users/${userId}/reset-password`, {
       method: "PUT",
-      body: newPassword,
+      body: { newPassword },
     }),
 
   deleteUser: (userId: string) =>

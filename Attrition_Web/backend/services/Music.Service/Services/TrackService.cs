@@ -33,7 +33,7 @@ public class TrackService : ITrackService
         var album = await _albumRepo.GetByIdAsync(albumId);
         if (album == null) return;
 
-        var (tracks, _) = await _trackRepo.GetPagedAsync(1, int.MaxValue, t => t.AlbumId == albumId,
+        var tracks = await _trackRepo.ListAsync(t => t.AlbumId == albumId,
             q => q.OrderBy(t => t.TrackNumber));
 
         album.TrackCount = tracks.Count;
@@ -54,17 +54,24 @@ public class TrackService : ITrackService
     public async Task<IEnumerable<MusicTrackDto>> GetTracksAsync(int? albumId)
     {
         Expression<Func<MusicTrack, bool>>? filter = albumId.HasValue ? t => t.AlbumId == albumId.Value : null;
-        var (tracks, _) = await _trackRepo.GetPagedAsync(1, int.MaxValue, filter,
+        var tracks = await _trackRepo.ListAsync(filter,
             q => q.OrderBy(t => t.AlbumId).ThenBy(t => t.TrackNumber));
 
-        var dtos = new List<MusicTrackDto>();
-        foreach (var t in tracks)
+        var albumMap = await LoadAlbumsAsync(tracks.Select(t => t.AlbumId));
+        return tracks.Select(t =>
         {
-            var album = await _albumRepo.GetByIdAsync(t.AlbumId);
-            dtos.Add(new MusicTrackDto(t.TrackId, t.AlbumId, t.Title, t.Slug, t.TrackNumber, t.Artists,
-                t.Duration, t.Genre, t.CoverPath, t.PlayCount, t.IsFeatured, t.FileSize ?? 0, album?.Title, album?.CoverPath));
-        }
-        return dtos;
+            albumMap.TryGetValue(t.AlbumId, out var album);
+            return new MusicTrackDto(t.TrackId, t.AlbumId, t.Title, t.Slug, t.TrackNumber, t.Artists,
+                t.Duration, t.Genre, t.CoverPath, t.PlayCount, t.IsFeatured, t.FileSize ?? 0, album?.Title, album?.CoverPath);
+        }).ToList();
+    }
+
+    private async Task<Dictionary<int, MusicAlbum>> LoadAlbumsAsync(IEnumerable<int> albumIds)
+    {
+        var ids = albumIds.Distinct().ToList();
+        if (ids.Count == 0) return new Dictionary<int, MusicAlbum>();
+        var albums = await _albumRepo.ListAsync(a => ids.Contains(a.AlbumId));
+        return albums.ToDictionary(a => a.AlbumId);
     }
 
     public async Task<FeaturedTracksResponse> GetFeaturedTracksAsync()
@@ -82,20 +89,22 @@ public class TrackService : ITrackService
         }
 
         var sorted = featured.OrderByDescending(t => t.PlayCount).ToList();
-        var featuredDtos = new List<MusicTrackDto>();
-        foreach (var t in sorted)
+        var albumMap = await LoadAlbumsAsync(sorted.Select(t => t.AlbumId));
+        var featuredDtos = sorted.Select(t =>
         {
-            var album = await _albumRepo.GetByIdAsync(t.AlbumId);
-            featuredDtos.Add(new MusicTrackDto(t.TrackId, t.AlbumId, t.Title, t.Slug, t.TrackNumber, t.Artists,
-                t.Duration, t.Genre, t.CoverPath, t.PlayCount, t.IsFeatured, t.FileSize ?? 0, album?.Title, album?.CoverPath));
-        }
+            albumMap.TryGetValue(t.AlbumId, out var album);
+            return new MusicTrackDto(t.TrackId, t.AlbumId, t.Title, t.Slug, t.TrackNumber, t.Artists,
+                t.Duration, t.Genre, t.CoverPath, t.PlayCount, t.IsFeatured, t.FileSize ?? 0, album?.Title, album?.CoverPath);
+        }).ToList();
 
         var albums = await _albumRepo.GetAllAsync();
+        var tracksByAlbum = (await _trackRepo.ListAsync())
+            .GroupBy(t => t.AlbumId)
+            .ToDictionary(g => g.Key, g => g.ToList());
         var newestAlbums = new List<NewestAlbumDto>();
         foreach (var a in albums)
         {
-            var (tracks, _) = await _trackRepo.GetPagedAsync(1, int.MaxValue, t => t.AlbumId == a.AlbumId);
-            if (tracks.Count > 0)
+            if (tracksByAlbum.TryGetValue(a.AlbumId, out var tracks) && tracks.Count > 0)
                 newestAlbums.Add(new NewestAlbumDto(a.AlbumId, a.Title, a.CoverPath, a.Artists, tracks.Count, tracks.Max(t => t.CreatedAt)));
         }
 
@@ -124,6 +133,8 @@ public class TrackService : ITrackService
     {
         if (file == null || file.Length == 0) return (false, "Audio file is required", null);
         if (file.Length > 100 * 1024 * 1024) return (false, "File must be under 100MB", null);
+        if (!MusicHelpers.IsAllowedAudioExtension(file.FileName))
+            return (false, "File must be an audio file (.mp3, .flac, .ogg, .m4a, .wav)", null);
 
         var tempDir = Path.Combine(MusicDir, "temp");
         Directory.CreateDirectory(tempDir);
@@ -175,7 +186,8 @@ public class TrackService : ITrackService
 
         if (!string.IsNullOrEmpty(req.TempFileKey))
         {
-            tempAudioPath = Path.Combine(tempDir, req.TempFileKey);
+            tempAudioPath = MusicHelpers.ResolveContainedPath(tempDir, req.TempFileKey);
+            if (tempAudioPath == null) return (false, "Invalid temporary file reference", null);
             if (!File.Exists(tempAudioPath)) return (false, "Temporary audio file not found or expired", null);
             fileSize = new FileInfo(tempAudioPath).Length;
         }
@@ -183,6 +195,8 @@ public class TrackService : ITrackService
         {
             if (req.File == null || req.File.Length == 0) return (false, "Audio file or TempFileKey is required", null);
             if (req.File.Length > 100 * 1024 * 1024) return (false, "File must be under 100MB", null);
+            if (!MusicHelpers.IsAllowedAudioExtension(req.File.FileName))
+                return (false, "File must be an audio file (.mp3, .flac, .ogg, .m4a, .wav)", null);
 
             Directory.CreateDirectory(tempDir);
             var ext = Path.GetExtension(req.File.FileName);
@@ -250,7 +264,7 @@ public class TrackService : ITrackService
 
         // Duplicate detection: same title + same artists + duration within 10s.
         var normTitle = title.Trim().ToLower();
-        var (candidates, _) = await _trackRepo.GetPagedAsync(1, int.MaxValue,
+        var candidates = await _trackRepo.ListAsync(
             t => t.AlbumId == album.AlbumId && t.Title.Trim().ToLower() == normTitle);
         foreach (var t in candidates)
         {
@@ -272,6 +286,19 @@ public class TrackService : ITrackService
 
         if (req.CoverFile is { Length: > 0 })
         {
+            if (!MusicHelpers.IsAllowedImageExtension(req.CoverFile.FileName))
+            {
+                if (string.IsNullOrEmpty(req.TempFileKey) && File.Exists(tempAudioPath)) File.Delete(tempAudioPath);
+                return (false, "Cover must be an image (.jpg, .png, .webp)", null);
+            }
+            await using (var check = req.CoverFile.OpenReadStream())
+            {
+                if (!await MusicHelpers.LooksLikeImageAsync(check))
+                {
+                    if (string.IsNullOrEmpty(req.TempFileKey) && File.Exists(tempAudioPath)) File.Delete(tempAudioPath);
+                    return (false, "Cover file is not a valid image", null);
+                }
+            }
             var ext = Path.GetExtension(req.CoverFile.FileName);
             var coverFileName = $"track-{Guid.NewGuid()}{ext}";
             await using var stream = new FileStream(Path.Combine(coverDir, coverFileName), FileMode.Create);
@@ -280,11 +307,10 @@ public class TrackService : ITrackService
         }
         else if (!string.IsNullOrEmpty(req.TempCoverPath))
         {
-            var tempCoverFileName = Path.GetFileName(req.TempCoverPath);
-            var src = Path.Combine(tempDir, tempCoverFileName);
-            if (File.Exists(src))
+            var src = MusicHelpers.ResolveContainedPath(tempDir, req.TempCoverPath);
+            if (src != null && MusicHelpers.IsAllowedImageExtension(src) && File.Exists(src))
             {
-                var ext = Path.GetExtension(tempCoverFileName);
+                var ext = Path.GetExtension(src);
                 var coverFileName = $"track-{Guid.NewGuid()}{ext}";
                 File.Move(src, Path.Combine(coverDir, coverFileName), true);
                 coverPath = $"{_publicPrefix}/music/covers/{coverFileName}";
@@ -300,7 +326,8 @@ public class TrackService : ITrackService
         // Move audio into place.
         var trackDir = Path.Combine(MusicDir, "tracks");
         Directory.CreateDirectory(trackDir);
-        var slug = SlugHelper.GenerateSlug(title);
+        var slug = await SlugHelper.GenerateUniqueSlugAsync(title, async s =>
+            await _trackRepo.CountAsync(t => t.Slug == s) > 0);
         var audioExt = Path.GetExtension(tempAudioPath);
         var fileName = $"{trackNumber:D2}-{Guid.NewGuid().ToString()[..8]}-{slug}{audioExt}";
         File.Move(tempAudioPath, Path.Combine(trackDir, fileName), true);

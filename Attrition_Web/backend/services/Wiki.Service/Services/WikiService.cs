@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using BuildingBlocks.Contracts;
 using BuildingBlocks.Persistence;
+using Microsoft.EntityFrameworkCore;
 using Wiki.Service.DTOs;
 using Wiki.Service.Models;
 using Wiki.Service.Repositories;
@@ -13,17 +14,20 @@ public class WikiService : IWikiService
     private readonly IRepository<WikiCategory> _categoryRepo;
     private readonly IRepository<WikiRevision> _revisionRepo;
     private readonly IRepository<WikiContribution> _contributionRepo;
+    private readonly DbContext _db;
 
     public WikiService(
         IWikiRepository wikiRepo,
         IRepository<WikiCategory> categoryRepo,
         IRepository<WikiRevision> revisionRepo,
-        IRepository<WikiContribution> contributionRepo)
+        IRepository<WikiContribution> contributionRepo,
+        DbContext db)
     {
         _wikiRepo = wikiRepo;
         _categoryRepo = categoryRepo;
         _revisionRepo = revisionRepo;
         _contributionRepo = contributionRepo;
+        _db = db;
     }
 
     public async Task<List<WikiCategoryDto>> GetCategoriesAsync()
@@ -89,7 +93,7 @@ public class WikiService : IWikiService
 
     public async Task<List<WikiRevisionDto>> GetRevisionsAsync(Guid articleId)
     {
-        var (revisions, _) = await _revisionRepo.GetPagedAsync(1, int.MaxValue,
+        var revisions = await _revisionRepo.ListAsync(
             r => r.ArticleId == articleId, q => q.OrderByDescending(r => r.EditedAt));
         return revisions.Select(ToRevisionDto).ToList();
     }
@@ -120,16 +124,27 @@ public class WikiService : IWikiService
             LastEditedByName = userName,
             Status = request.Status
         };
-        await _wikiRepo.AddAsync(article);
-
-        await _revisionRepo.AddAsync(new WikiRevision
+        await using var tx = await _db.Database.BeginTransactionAsync();
+        try
         {
-            ArticleId = article.Id,
-            Content = article.Content,
-            EditedById = userId,
-            EditedByName = userName,
-            ChangeNote = "Initial creation"
-        });
+            await _wikiRepo.AddAsync(article);
+
+            await _revisionRepo.AddAsync(new WikiRevision
+            {
+                ArticleId = article.Id,
+                Content = article.Content,
+                EditedById = userId,
+                EditedByName = userName,
+                ChangeNote = "Initial creation"
+            });
+
+            await tx.CommitAsync();
+        }
+        catch
+        {
+            await tx.RollbackAsync();
+            throw;
+        }
 
         return ApiResponse<string>.Ok(slug);
     }
@@ -195,13 +210,17 @@ public class WikiService : IWikiService
 
     public async Task<List<WikiContributionDto>> GetContributionsAsync(string status)
     {
-        var (contributions, _) = await _contributionRepo.GetPagedAsync(1, int.MaxValue,
+        var contributions = await _contributionRepo.ListAsync(
             c => c.Status == status, q => q.OrderByDescending(c => c.SubmittedAt));
+
+        var articleIds = contributions.Select(c => c.ArticleId).Distinct().ToList();
+        var articles = (await _wikiRepo.ListAsync(a => articleIds.Contains(a.Id)))
+            .ToDictionary(a => a.Id);
 
         var dtos = new List<WikiContributionDto>();
         foreach (var c in contributions)
         {
-            var article = await _wikiRepo.GetByIdAsync(c.ArticleId);
+            articles.TryGetValue(c.ArticleId, out var article);
             dtos.Add(new WikiContributionDto(c.Id, c.ArticleId, article?.Title ?? string.Empty,
                 c.ContributorName ?? string.Empty, c.SuggestedContent, c.ChangeNote, c.Status, c.SubmittedAt));
         }
@@ -220,27 +239,39 @@ public class WikiService : IWikiService
         contribution.Status = request.Status;
         contribution.ReviewedById = reviewerId;
         contribution.ReviewedAt = DateTime.UtcNow;
-        await _contributionRepo.UpdateAsync(contribution);
 
-        if (request.Status == "Approved")
+        await using var tx = await _db.Database.BeginTransactionAsync();
+        try
         {
-            var article = await _wikiRepo.GetByIdAsync(contribution.ArticleId);
-            if (article != null)
+            await _contributionRepo.UpdateAsync(contribution);
+
+            if (request.Status == "Approved")
             {
-                await _revisionRepo.AddAsync(new WikiRevision
+                var article = await _wikiRepo.GetByIdAsync(contribution.ArticleId);
+                if (article != null)
                 {
-                    ArticleId = article.Id,
-                    Content = article.Content,
-                    EditedById = contribution.ContributorId,
-                    EditedByName = contribution.ContributorName,
-                    ChangeNote = contribution.ChangeNote ?? "Approved contribution"
-                });
-                article.Content = contribution.SuggestedContent;
-                article.LastEditedById = contribution.ContributorId;
-                article.LastEditedByName = contribution.ContributorName;
-                article.UpdatedAt = DateTime.UtcNow;
-                await _wikiRepo.UpdateAsync(article);
+                    await _revisionRepo.AddAsync(new WikiRevision
+                    {
+                        ArticleId = article.Id,
+                        Content = article.Content,
+                        EditedById = contribution.ContributorId,
+                        EditedByName = contribution.ContributorName,
+                        ChangeNote = contribution.ChangeNote ?? "Approved contribution"
+                    });
+                    article.Content = contribution.SuggestedContent;
+                    article.LastEditedById = contribution.ContributorId;
+                    article.LastEditedByName = contribution.ContributorName;
+                    article.UpdatedAt = DateTime.UtcNow;
+                    await _wikiRepo.UpdateAsync(article);
+                }
             }
+
+            await tx.CommitAsync();
+        }
+        catch
+        {
+            await tx.RollbackAsync();
+            throw;
         }
 
         return ApiResponse.Ok();
@@ -269,7 +300,14 @@ public class WikiService : IWikiService
         if (category == null) return ApiResponse.Fail("Category not found.");
 
         category.Name = request.Name;
-        category.Slug = SlugHelper.GenerateSlug(request.Name);
+        var newSlug = SlugHelper.GenerateSlug(request.Name);
+        if (newSlug != category.Slug)
+        {
+            var clash = await _wikiRepo.GetCategoryBySlugAsync(newSlug);
+            if (clash != null && clash.Id != id)
+                return ApiResponse.Fail("A category with a similar name already exists.");
+        }
+        category.Slug = newSlug;
         category.Description = request.Description ?? string.Empty;
         category.IconUrl = request.IconUrl;
         await _categoryRepo.UpdateAsync(category);

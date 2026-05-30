@@ -34,7 +34,7 @@ public class AlbumService : IAlbumService
         var album = await _albumRepo.GetByIdAsync(id);
         if (album == null) return null;
 
-        var (tracks, _) = await _trackRepo.GetPagedAsync(1, int.MaxValue, t => t.AlbumId == id,
+        var tracks = await _trackRepo.ListAsync(t => t.AlbumId == id,
             q => q.OrderBy(t => t.TrackNumber));
 
         return new AlbumDetailDto(album.AlbumId, album.Title, album.Slug, album.Artists, album.Description,
@@ -50,7 +50,7 @@ public class AlbumService : IAlbumService
         var album = new MusicAlbum
         {
             Title = req.Title,
-            Slug = SlugHelper.GenerateSlug(req.Title),
+            Slug = await UniqueAlbumSlugAsync(req.Title, null),
             Artists = parsed.Count > 0 ? parsed : new List<string> { "Attrition OST" },
             Description = req.Description,
             Genre = req.Genre,
@@ -62,13 +62,17 @@ public class AlbumService : IAlbumService
         return ToDto(album);
     }
 
+    private async Task<string> UniqueAlbumSlugAsync(string title, int? selfId) =>
+        await SlugHelper.GenerateUniqueSlugAsync(title, async slug =>
+            await _albumRepo.CountAsync(a => a.Slug == slug && (selfId == null || a.AlbumId != selfId)) > 0);
+
     public async Task<MusicAlbumDto?> UpdateAlbumAsync(int id, CreateAlbumRequest req)
     {
         var album = await _albumRepo.GetByIdAsync(id);
         if (album == null) return null;
 
         album.Title = req.Title;
-        album.Slug = SlugHelper.GenerateSlug(req.Title);
+        album.Slug = await UniqueAlbumSlugAsync(req.Title, id);
         if (req.Artists != null)
         {
             var parsed = MusicHelpers.ParseArtists(req.Artists);
@@ -93,7 +97,7 @@ public class AlbumService : IAlbumService
         var album = await _albumRepo.GetByIdAsync(id);
         if (album == null) return false;
 
-        var (tracks, _) = await _trackRepo.GetPagedAsync(1, int.MaxValue, t => t.AlbumId == id);
+        var tracks = await _trackRepo.ListAsync(t => t.AlbumId == id);
         foreach (var track in tracks)
         {
             var filePath = Path.Combine(_uploadPath, "music", track.FilePath);
@@ -112,6 +116,13 @@ public class AlbumService : IAlbumService
         var album = await _albumRepo.GetByIdAsync(id);
         if (album == null) return (false, "Album not found", null);
         if (file.Length > 10 * 1024 * 1024) return (false, "Cover image must be under 10MB", null);
+        if (!MusicHelpers.IsAllowedImageExtension(file.FileName))
+            return (false, "Cover must be an image (.jpg, .png, .webp)", null);
+        await using (var check = file.OpenReadStream())
+        {
+            if (!await MusicHelpers.LooksLikeImageAsync(check))
+                return (false, "Cover file is not a valid image", null);
+        }
 
         var coverDir = Path.Combine(_uploadPath, "music", "covers");
         Directory.CreateDirectory(coverDir);

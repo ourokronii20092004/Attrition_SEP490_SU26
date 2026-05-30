@@ -96,7 +96,7 @@ public class ForumService : IForumService
             p => p.ThreadId == threadId && !p.IsRemoved, q => q.OrderBy(p => p.CreatedAt));
 
         var postIds = posts.Select(p => p.Id).ToList();
-        var (reactions, _) = await _reactionRepo.GetPagedAsync(1, int.MaxValue, r => postIds.Contains(r.PostId));
+        var reactions = await _reactionRepo.ListAsync(r => postIds.Contains(r.PostId));
 
         var items = posts.Select(p =>
         {
@@ -311,7 +311,7 @@ public class ForumService : IForumService
 
     public async Task<List<AdminForumThreadDto>> ListThreadsForModerationAsync()
     {
-        var (threads, _) = await _threadRepo.GetPagedAsync(1, int.MaxValue, null,
+        var threads = await _threadRepo.ListAsync(null,
             q => q.OrderByDescending(t => t.LastReplyAt));
         return threads.Select(t => new AdminForumThreadDto(t.Id, t.Title, t.IsPinned, t.IsLocked,
             t.ReplyCount, t.CreatedAt, t.LastReplyAt, t.AuthorName)).ToList();
@@ -326,19 +326,22 @@ public class ForumService : IForumService
             (false, string s) => p => p.Content.ToLower().Contains(s),
             _ => null
         };
-        var (posts, _) = await _postRepo.GetPagedAsync(1, 200, filter, q => q.OrderByDescending(p => p.CreatedAt));
+        var posts = await _postRepo.ListAsync(filter, q => q.OrderByDescending(p => p.CreatedAt));
         return posts.Select(p => new AdminForumPostDto(p.Id, p.ThreadId, p.Content, p.CreatedAt, p.UpdatedAt,
             p.IsRemoved, p.RemovedReason, p.RemovedAt, p.AuthorName, p.RemovedByName)).ToList();
     }
 
     public async Task<List<AdminPostReportDto>> ListReportsAsync(string status)
     {
-        var (reports, _) = await _reportRepo.GetPagedAsync(1, int.MaxValue, r => r.Status == status,
+        var reports = await _reportRepo.ListAsync(r => r.Status == status,
             q => q.OrderByDescending(r => r.CreatedAt));
+        var reportPostIds = reports.Select(r => r.PostId).Distinct().ToList();
+        var reportPosts = (await _postRepo.ListAsync(p => reportPostIds.Contains(p.Id)))
+            .ToDictionary(p => p.Id);
         var dtos = new List<AdminPostReportDto>();
         foreach (var r in reports)
         {
-            var post = await _postRepo.GetByIdAsync(r.PostId);
+            reportPosts.TryGetValue(r.PostId, out var post);
             dtos.Add(new AdminPostReportDto(r.Id, r.PostId, post?.Content ?? "(deleted)",
                 post?.AuthorName ?? "Unknown", r.ReporterName ?? "Unknown", r.Reason, r.Status, r.CreatedAt));
         }

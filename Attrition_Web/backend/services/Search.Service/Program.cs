@@ -14,7 +14,7 @@ void AddInternalClient<TClient>(string serviceKey) where TClient : class
         c.BaseAddress = new Uri(builder.Configuration[$"Services:{serviceKey}"]
             ?? throw new InvalidOperationException($"Services:{serviceKey} not configured"));
         c.Timeout = TimeSpan.FromSeconds(3);
-    });
+    }).AddTransientRetry();
 }
 
 AddInternalClient<WikiSearchClient>("Wiki");

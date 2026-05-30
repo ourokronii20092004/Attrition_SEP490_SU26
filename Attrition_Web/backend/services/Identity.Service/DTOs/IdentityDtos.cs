@@ -42,6 +42,10 @@ public record UserDto(
 
 public record UserListItem(Guid Id, string Username, string Role, bool IsBanned, DateTime JoinedAt);
 
+// ─── Admin actions ───
+public record ChangeRoleRequest(string Role);
+public record AdminResetPasswordRequest(string NewPassword);
+
 // ─── Public profile (anonymous, no PII) ───
 public record PublicProfileDto(
     Guid Id,

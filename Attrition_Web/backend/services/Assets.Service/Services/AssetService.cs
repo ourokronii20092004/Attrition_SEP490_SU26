@@ -55,6 +55,15 @@ public class AssetService : IAssetService
         if (file.Length > _maxSize)
             return ApiResponse<AssetDto>.Fail($"File exceeds the maximum allowed size of {_maxSize / (1024 * 1024)}MB.");
 
+        if (string.IsNullOrWhiteSpace(assetType) || assetType.Length > 50)
+            return ApiResponse<AssetDto>.Fail("Asset type is required and must be at most 50 characters.");
+        if (title is { Length: > 200 })
+            return ApiResponse<AssetDto>.Fail("Title must be at most 200 characters.");
+        if (description is { Length: > 2000 })
+            return ApiResponse<AssetDto>.Fail("Description must be at most 2000 characters.");
+        if (tags is { Length: > 500 })
+            return ApiResponse<AssetDto>.Fail("Tags must be at most 500 characters.");
+
         var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
 
         // Document/lore types may be docs OR images; everything else is treated as an image.

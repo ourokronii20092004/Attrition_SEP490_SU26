@@ -1,5 +1,6 @@
 using FluentValidation;
 using Identity.Service.DTOs;
+using BuildingBlocks.Contracts;
 
 namespace Identity.Service.Validators;
 
@@ -84,5 +85,29 @@ public class VerifyEmailRequestValidator : AbstractValidator<VerifyEmailRequest>
     public VerifyEmailRequestValidator()
     {
         RuleFor(x => x.Token).NotEmpty();
+    }
+}
+
+public class ChangeRoleRequestValidator : AbstractValidator<ChangeRoleRequest>
+{
+    public ChangeRoleRequestValidator()
+    {
+        RuleFor(x => x.Role)
+            .NotEmpty()
+            .Must(r => r == Roles.User || r == Roles.Admin)
+            .WithMessage($"Role must be '{Roles.User}' or '{Roles.Admin}'.");
+    }
+}
+
+public class AdminResetPasswordRequestValidator : AbstractValidator<AdminResetPasswordRequest>
+{
+    public AdminResetPasswordRequestValidator()
+    {
+        RuleFor(x => x.NewPassword)
+            .NotEmpty().MinimumLength(8)
+            .Matches("[A-Z]").WithMessage("Password must contain an uppercase letter.")
+            .Matches("[a-z]").WithMessage("Password must contain a lowercase letter.")
+            .Matches("[0-9]").WithMessage("Password must contain a digit.")
+            .Matches("[^a-zA-Z0-9]").WithMessage("Password must contain a special character.");
     }
 }

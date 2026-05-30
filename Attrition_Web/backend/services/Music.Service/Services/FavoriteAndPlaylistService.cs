@@ -19,15 +19,21 @@ public class FavoriteService : IFavoriteService
 
     public async Task<IEnumerable<FavoriteTrackDto>> GetFavoritesAsync(Guid userId)
     {
-        var (favorites, _) = await _favoriteRepo.GetPagedAsync(1, int.MaxValue, f => f.UserId == userId,
+        var favorites = await _favoriteRepo.ListAsync(f => f.UserId == userId,
             q => q.OrderByDescending(f => f.AddedAt));
+
+        var trackIds = favorites.Select(f => f.TrackId).Distinct().ToList();
+        var tracks = (await _trackRepo.ListAsync(t => trackIds.Contains(t.TrackId)))
+            .ToDictionary(t => t.TrackId);
+        var albumIds = tracks.Values.Select(t => t.AlbumId).Distinct().ToList();
+        var albums = (await _albumRepo.ListAsync(a => albumIds.Contains(a.AlbumId)))
+            .ToDictionary(a => a.AlbumId);
 
         var dtos = new List<FavoriteTrackDto>();
         foreach (var f in favorites)
         {
-            var track = await _trackRepo.GetByIdAsync(f.TrackId);
-            if (track == null) continue;
-            var album = await _albumRepo.GetByIdAsync(track.AlbumId);
+            if (!tracks.TryGetValue(f.TrackId, out var track)) continue;
+            albums.TryGetValue(track.AlbumId, out var album);
             dtos.Add(new FavoriteTrackDto(track.TrackId, track.AlbumId, track.Title, track.Slug, track.Artists,
                 track.TrackNumber, track.Duration, track.Genre, track.CoverPath, track.PlayCount,
                 album?.Title ?? string.Empty, album?.CoverPath ?? string.Empty, f.AddedAt));
@@ -37,7 +43,7 @@ public class FavoriteService : IFavoriteService
 
     public async Task<IEnumerable<int>> GetFavoriteIdsAsync(Guid userId)
     {
-        var (favorites, _) = await _favoriteRepo.GetPagedAsync(1, int.MaxValue, f => f.UserId == userId);
+        var favorites = await _favoriteRepo.ListAsync(f => f.UserId == userId);
         return favorites.Select(f => f.TrackId);
     }
 
@@ -72,7 +78,7 @@ public class PlaylistService : IPlaylistService
 
     public async Task<IEnumerable<PlaylistDto>> GetPlaylistsAsync(Guid userId)
     {
-        var (playlists, _) = await _playlistRepo.GetPagedAsync(1, int.MaxValue, p => p.UserId == userId);
+        var playlists = await _playlistRepo.ListAsync(p => p.UserId == userId);
         return playlists.Select(ToDto);
     }
 
@@ -97,7 +103,15 @@ public class PlaylistService : IPlaylistService
         var (existing, _) = await _playlistTrackRepo.GetPagedAsync(1, 1, pt => pt.PlaylistId == playlistId && pt.TrackId == trackId);
         if (existing.Count > 0) return PlaylistOpResult.Ok;
         await _playlistTrackRepo.AddAsync(new PlaylistTrack { PlaylistId = playlistId, TrackId = trackId });
+        await SyncTrackCountAsync(playlist, playlistId);
         return PlaylistOpResult.Ok;
+    }
+
+    private async Task SyncTrackCountAsync(MusicPlaylist playlist, Guid playlistId)
+    {
+        playlist.TrackCount = await _playlistTrackRepo.CountAsync(pt => pt.PlaylistId == playlistId);
+        playlist.UpdatedAt = DateTime.UtcNow;
+        await _playlistRepo.UpdateAsync(playlist);
     }
 
     public async Task<PlaylistOpResult> RemoveTrackFromPlaylistAsync(Guid userId, Guid playlistId, int trackId)
@@ -110,6 +124,7 @@ public class PlaylistService : IPlaylistService
         var pt = existing.FirstOrDefault();
         if (pt == null) return PlaylistOpResult.NotFound;
         await _playlistTrackRepo.DeleteAsync(pt);
+        await SyncTrackCountAsync(playlist, playlistId);
         return PlaylistOpResult.Ok;
     }
 }

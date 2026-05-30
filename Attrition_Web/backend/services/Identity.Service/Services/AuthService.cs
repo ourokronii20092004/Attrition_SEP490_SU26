@@ -3,6 +3,7 @@ using Google.Apis.Auth;
 using Identity.Service.DTOs;
 using Identity.Service.Models;
 using Identity.Service.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace Identity.Service.Services;
 
@@ -26,11 +27,15 @@ public class AuthService : IAuthService
 
     public async Task<ApiResponse<AuthResponse>> RegisterAsync(RegisterRequest request)
     {
+        // Single generic message for both username and email clashes so registration can't be
+        // used to enumerate which usernames/emails already exist.
+        const string takenMessage = "That username or email is already in use.";
+
         if (!await _userRepo.IsUsernameAvailableAsync(request.Username))
-            return ApiResponse<AuthResponse>.Fail("Username is already taken.");
+            return ApiResponse<AuthResponse>.Fail(takenMessage);
 
         if (!string.IsNullOrEmpty(request.Email) && await _userRepo.GetByEmailAsync(request.Email) != null)
-            return ApiResponse<AuthResponse>.Fail("Email is already taken.");
+            return ApiResponse<AuthResponse>.Fail(takenMessage);
 
         var verifyToken = TokenService.NewRawToken();
         var user = new User
@@ -47,7 +52,15 @@ public class AuthService : IAuthService
         user.RefreshToken = TokenService.HashToken(refreshToken);
         user.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(_tokens.RefreshExpiryDays);
 
-        await _userRepo.AddAsync(user);
+        try
+        {
+            await _userRepo.AddAsync(user);
+        }
+        catch (DbUpdateException)
+        {
+            // Concurrent registration won the unique-index race between the checks above and here.
+            return ApiResponse<AuthResponse>.Fail(takenMessage);
+        }
         await SendVerifyEmail(user, verifyToken);
 
         return ApiResponse<AuthResponse>.Ok(new AuthResponse(accessToken, refreshToken, TokenService.MapToDto(user)));
@@ -66,10 +79,17 @@ public class AuthService : IAuthService
             return ApiResponse<AuthResponse>.Fail("Invalid username or password.");
         }
 
-        if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTime.UtcNow)
-            return ApiResponse<AuthResponse>.Fail("Account temporarily locked due to failed login attempts. Try again later.");
+        var passwordValid = user.PasswordHash != null && BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
 
-        if (user.PasswordHash == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+        // Account-state messages (locked/suspended) are only revealed to a caller who supplied the
+        // correct password — i.e. the real owner. Anyone else always gets the generic failure, so
+        // login can't be used to enumerate which accounts exist or are locked/banned.
+        if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTime.UtcNow)
+            return passwordValid
+                ? ApiResponse<AuthResponse>.Fail("Account temporarily locked due to failed login attempts. Try again later.")
+                : ApiResponse<AuthResponse>.Fail("Invalid username or password.");
+
+        if (!passwordValid)
         {
             user.FailedLoginAttempts++;
             if (user.FailedLoginAttempts >= 5)

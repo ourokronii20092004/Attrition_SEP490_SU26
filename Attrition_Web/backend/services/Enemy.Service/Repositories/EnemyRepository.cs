@@ -42,4 +42,6 @@ public class EnemyRepository : Repository<EnemyEntity>, IEnemyRepository
             .Take(limit)
             .ToListAsync();
     }
+
+    public Task SaveTrackedAsync() => _context.SaveChangesAsync();
 }
