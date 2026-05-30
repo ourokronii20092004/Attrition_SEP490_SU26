@@ -1,0 +1,5 @@
+**/bin/
+**/obj/
+**/.vs/
+**/Migrations/*.Designer.cs.bak
+*.user

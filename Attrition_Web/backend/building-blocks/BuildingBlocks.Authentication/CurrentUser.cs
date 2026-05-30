@@ -1,0 +1,32 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
+using BuildingBlocks.Contracts;
+
+namespace BuildingBlocks.Authentication;
+
+public interface ICurrentUser
+{
+    Guid? UserId { get; }
+    string? Username { get; }
+    bool IsAdmin { get; }
+    bool IsAuthenticated { get; }
+}
+
+public sealed class CurrentUser : ICurrentUser
+{
+    private readonly ClaimsPrincipal? _principal;
+
+    public CurrentUser(IHttpContextAccessor accessor)
+    {
+        _principal = accessor.HttpContext?.User;
+    }
+
+    public Guid? UserId =>
+        Guid.TryParse(_principal?.FindFirstValue("sub"), out var id) ? id : null;
+
+    public string? Username => _principal?.FindFirstValue("username");
+
+    public bool IsAdmin => _principal?.IsInRole(Roles.Admin) ?? false;
+
+    public bool IsAuthenticated => _principal?.Identity?.IsAuthenticated ?? false;
+}
