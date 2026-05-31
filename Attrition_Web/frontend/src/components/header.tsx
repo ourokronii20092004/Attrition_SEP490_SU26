@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/providers";
 import { SITE_NAME } from "@/lib/config";
 import { Avatar } from "@/components/ui/avatar";
 import { IconButton } from "@/components/ui/icon-button";
+import { NotificationBell } from "./notification-bell";
 import dynamic from "next/dynamic";
 import { ThemeSwitcher } from "./theme-switcher";
 
@@ -70,6 +71,8 @@ export function Header() {
             </IconButton>
 
             <ThemeSwitcher />
+
+            <NotificationBell />
 
             {!loading && !user && (
               <Link

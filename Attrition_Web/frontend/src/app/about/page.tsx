@@ -28,7 +28,7 @@ export default function AboutPage() {
           Attrition is a dark-fantasy 2D souls-like built from the ground up for two-player
           co-op. Awaken as Ren, an amnesiac soul bound to the mysterious Iris, and cleanse a
           world consumed by a parasitic magic called Corruption. Explore interconnected maps,
-          solve environmental puzzles, and dismantle formidable bosses, alone or with a partner.
+          delve into intricate missions, and dismantle formidable bosses, alone or with a partner.
         </p>
         <p>
           This companion portal is the official record of that world: a structured wiki, a

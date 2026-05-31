@@ -20,14 +20,23 @@ builder.Services.AddDbContext<ForumDbContext>(opt =>
             // Survive transient Postgres blips (restart, brief network drop) by retrying instead
             // of surfacing an error to the user. Manual transactions are wrapped in an execution
             // strategy so they stay retry-safe (see ForumRepository).
-            npgsql.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(5), errorCodesToAdd: null);
+            npgsql.EnableRetryOnFailure(maxRetryCount: 3, maxRetryDelay: TimeSpan.FromSeconds(2), errorCodesToAdd: null);
         }));
 
 builder.Services.AddScoped<DbContext>(sp => sp.GetRequiredService<ForumDbContext>());
+builder.Services.AddDbWarmup();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IForumRepository, ForumRepository>();
 builder.Services.AddScoped<IForumService, ForumService>();
 builder.Services.AddAttritionCache(builder.Configuration, "forum");
+
+// Internal client to dispatch reply/mention notifications to Identity (3s timeout, retry, internal key).
+builder.Services.AddHttpClient<Forum.Service.Clients.NotificationClient>(c =>
+{
+    c.BaseAddress = new Uri(builder.Configuration["Services:Identity"]
+        ?? throw new InvalidOperationException("Services:Identity not configured"));
+    c.Timeout = TimeSpan.FromSeconds(3);
+}).AddTransientRetry();
 
 builder.Services.AddAttritionJwtAuth(builder.Configuration);
 

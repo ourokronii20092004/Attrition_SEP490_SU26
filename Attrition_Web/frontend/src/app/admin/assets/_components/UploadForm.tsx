@@ -77,7 +77,7 @@ export function UploadForm({ onDone, onCancel }: { onDone: () => void; onCancel:
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mt-4 card p-4 space-y-3">
+    <form onSubmit={handleSubmit} className="space-y-3">
       <div className="space-y-1">
         <label className="block text-sm font-medium text-fg-muted">File</label>
         <input type="file" onChange={(e) => onPickFile(e.target.files?.[0] ?? null)} className="text-sm text-fg" />

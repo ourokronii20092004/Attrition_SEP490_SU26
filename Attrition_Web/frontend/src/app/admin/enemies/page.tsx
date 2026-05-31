@@ -11,6 +11,7 @@ import { parseApiError } from "@/lib/api/parse-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { Modal } from "@/components/ui/modal";
 import { PageLoader } from "@/components/ui/spinner";
 import { ENEMY_TIERS } from "@/lib/enemy-tiers";
 import { qk } from "@/lib/query-keys";
@@ -54,13 +55,13 @@ export default function AdminEnemiesPage() {
         <Button onClick={() => { setEditing(null); setShowForm(true); }}>Add Enemy</Button>
       </div>
 
-      {showForm && (
+      <Modal open={showForm} onClose={() => setShowForm(false)} title={editing ? "Edit Enemy" : "Add Enemy"} size="lg">
         <EnemyForm
           initial={editing}
           onDone={() => { setShowForm(false); invalidate(); }}
           onCancel={() => setShowForm(false)}
         />
-      )}
+      </Modal>
 
       <div className="mt-6 space-y-2">
         {enemies.map((e) => (
@@ -157,7 +158,7 @@ function EnemyForm({ initial, onDone, onCancel }: { initial: EnemyResponse | nul
   });
 
   return (
-    <form onSubmit={onSubmit} className="mt-4 card p-4 space-y-4">
+    <form onSubmit={onSubmit} className="space-y-4">
       {error && <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>}
       <div className="grid gap-3 sm:grid-cols-2">
         {!initial && <Input label="Enemy ID" error={errors.enemyId?.message} {...register("enemyId")} />}

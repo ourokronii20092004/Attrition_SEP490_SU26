@@ -124,6 +124,27 @@ public class AssetService : IAssetService
         return ApiResponse<AssetDto>.Ok(ToDto(asset));
     }
 
+    public async Task<ApiResponse<string>> UploadInlineImageAsync(IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+            return ApiResponse<string>.Fail("File is empty.");
+        if (file.Length > _maxSize)
+            return ApiResponse<string>.Fail($"Image exceeds the maximum allowed size of {_maxSize / (1024 * 1024)}MB.");
+
+        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (!ImageExts.Contains(ext))
+            return ApiResponse<string>.Fail("Only image files are allowed.");
+
+        var fileName = $"{Guid.NewGuid()}{ext}";
+        await using var stream = file.OpenReadStream();
+        if (!await ContentMatchesExtensionAsync(stream, ext))
+            return ApiResponse<string>.Fail("File content does not match its extension.");
+        stream.Position = 0;
+        // Stored under inline/ (not the gallery) — no Asset row, just the public URL.
+        var url = await _storage.SaveAsync("inline", fileName, stream);
+        return ApiResponse<string>.Ok(url);
+    }
+
     public async Task<ApiResponse> UpdateAssetAsync(Guid assetId, UpdateAssetReq req)
     {
         var asset = await _repo.GetByIdAsync(assetId);

@@ -106,8 +106,7 @@ export function ArticleEditor({ article, categories, onDone, onCancel }: {
   });
 
   return (
-    <div className="card mb-6 space-y-3 p-4">
-      <h3 className="font-medium text-fg">{article ? "Edit Article" : "New Article"}</h3>
+    <div className="space-y-3">
       <Input label="Title" error={errors.title?.message} {...register("title")} />
       {!article && (
         <Select label="Category" {...register("categoryId")}>

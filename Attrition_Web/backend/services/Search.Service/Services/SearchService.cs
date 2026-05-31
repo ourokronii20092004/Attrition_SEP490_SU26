@@ -8,6 +8,7 @@ namespace Search.Service.Services;
 public interface ISearchService
 {
     Task<GlobalSearchResponse> GlobalSearchAsync(string query, int limit, bool includeUsers, CancellationToken ct);
+    Task<List<SearchSuggestionDto>> SuggestAsync(string query, int limit, bool includeUsers, CancellationToken ct);
 }
 
 public class SearchService : ISearchService
@@ -63,6 +64,19 @@ public class SearchService : ISearchService
             }
         }
         return result;
+    }
+
+    /// <summary>Suggestions reuse the cached global search and flatten it to labels + nav targets,
+    /// so autocomplete adds no new downstream calls (and rides the same 60s cache).</summary>
+    public async Task<List<SearchSuggestionDto>> SuggestAsync(string query, int limit, bool includeUsers, CancellationToken ct)
+    {
+        var result = await GlobalSearchAsync(query, limit, includeUsers, ct);
+        var s = new List<SearchSuggestionDto>();
+        foreach (var w in result.Wiki) s.Add(new SearchSuggestionDto(w.Title, "wiki", $"/wiki/{w.Slug}"));
+        foreach (var e in result.Enemies) s.Add(new SearchSuggestionDto(e.Name, "enemy", $"/bestiary/{e.EnemyId}"));
+        foreach (var p in result.Posts) s.Add(new SearchSuggestionDto(p.ThreadTitle, "thread", $"/forum/{p.ThreadId}"));
+        foreach (var u in result.Users) s.Add(new SearchSuggestionDto(u.DisplayName ?? u.Username, "user", $"/u/{u.Username}"));
+        return s;
     }
 
     private async Task<GlobalSearchResponse> RunSearchAsync(string? scope, string term, int limit, bool includeUsers, CancellationToken ct)

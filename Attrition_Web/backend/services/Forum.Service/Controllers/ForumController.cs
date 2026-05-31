@@ -193,4 +193,18 @@ public class ForumController : ControllerBase
         var result = await _forum.UpdateCategoryAsync(id, request);
         return result.Success ? Ok(result) : NotFound(result);
     }
+
+    [Authorize(Roles = Roles.Admin)]
+    [HttpDelete("categories/{id:int}")]
+    public async Task<IActionResult> DeleteCategory(int id)
+    {
+        var result = await _forum.DeleteCategoryAsync(id);
+        if (result.Success) return Ok(result);
+        // "not found" -> 404; "still has threads" (a conflict) -> 409; else 400.
+        var err = result.Error ?? "";
+        if (err.Contains("not found", StringComparison.OrdinalIgnoreCase)) return NotFound(result);
+        if (err.Contains("threads", StringComparison.OrdinalIgnoreCase))
+            return Conflict(result);
+        return BadRequest(result);
+    }
 }

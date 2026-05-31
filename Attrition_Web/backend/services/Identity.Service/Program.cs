@@ -1,4 +1,5 @@
 using BuildingBlocks.Authentication;
+using BuildingBlocks.Persistence;
 using BuildingBlocks.Web;
 using FluentValidation;
 using FluentValidation.AspNetCore;
@@ -31,16 +32,18 @@ builder.Services.AddDbContext<IdentityDbContext>(opt =>
         {
             npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "identity");
             // Survive transient Postgres blips by retrying instead of erroring the user.
-            npgsql.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(5), errorCodesToAdd: null);
+            npgsql.EnableRetryOnFailure(maxRetryCount: 3, maxRetryDelay: TimeSpan.FromSeconds(2), errorCodesToAdd: null);
         }));
 
 builder.Services.AddScoped<DbContext>(sp => sp.GetRequiredService<IdentityDbContext>());
+builder.Services.AddDbWarmup();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 builder.Services.AddSingleton<TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IAdminUserService, AdminUserService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
 builder.Services.AddScoped<IFileService, FileService>();
 // Use real SMTP when configured (Smtp:Host/Username/Password); otherwise log to console in dev.

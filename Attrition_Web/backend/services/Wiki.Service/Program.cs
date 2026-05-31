@@ -19,10 +19,11 @@ builder.Services.AddDbContext<WikiDbContext>(opt =>
             npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "wiki");
             // Survive transient Postgres blips by retrying. Manual transactions are wrapped in an
             // execution strategy so they stay retry-safe (see WikiService).
-            npgsql.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(5), errorCodesToAdd: null);
+            npgsql.EnableRetryOnFailure(maxRetryCount: 3, maxRetryDelay: TimeSpan.FromSeconds(2), errorCodesToAdd: null);
         }));
 
 builder.Services.AddScoped<DbContext>(sp => sp.GetRequiredService<WikiDbContext>());
+builder.Services.AddDbWarmup();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IWikiRepository, WikiRepository>();
 builder.Services.AddScoped<IWikiService, WikiService>();

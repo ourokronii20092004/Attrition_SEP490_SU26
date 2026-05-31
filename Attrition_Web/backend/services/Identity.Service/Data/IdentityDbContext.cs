@@ -8,6 +8,7 @@ public class IdentityDbContext : DbContext
     public IdentityDbContext(DbContextOptions<IdentityDbContext> options) : base(options) { }
 
     public DbSet<User> Users => Set<User>();
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -29,6 +30,14 @@ public class IdentityDbContext : DbContext
             e.Property(u => u.NotifyOnMention).HasDefaultValue(true);
             e.HasIndex(u => u.PasswordResetToken).HasFilter("\"PasswordResetToken\" IS NOT NULL");
             e.HasIndex(u => u.EmailVerificationToken).HasFilter("\"EmailVerificationToken\" IS NOT NULL");
+        });
+
+        modelBuilder.Entity<Notification>(e =>
+        {
+            e.HasKey(n => n.Id);
+            // Drives the hot query: a user's notifications newest-first, and the unread count.
+            e.HasIndex(n => new { n.UserId, n.CreatedAt });
+            e.HasIndex(n => new { n.UserId, n.IsRead });
         });
     }
 }
