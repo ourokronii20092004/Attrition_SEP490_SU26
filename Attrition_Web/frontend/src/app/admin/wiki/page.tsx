@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { wikiApi } from "@/lib/api/wiki";
 import { assetsApi } from "@/lib/api/assets";
 import { resolveMediaUrl } from "@/lib/api/media";
@@ -10,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { PageLoader } from "@/components/ui/spinner";
 import { formatDate } from "@/lib/format-date";
-import type { WikiArticleListDto, WikiCategoryDto, WikiContributionDto } from "@/lib/types";
+import type { WikiArticleListDto, WikiCategoryDto } from "@/lib/types";
 
 type Tab = "articles" | "queue" | "categories";
 
@@ -41,29 +42,38 @@ export default function AdminWikiPage() {
 }
 
 function ArticlesAdmin() {
-  const [articles, setArticles] = useState<WikiArticleListDto[]>([]);
-  const [categories, setCategories] = useState<WikiCategoryDto[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [editing, setEditing] = useState<WikiArticleListDto | "new" | null>(null);
 
-  const load = () => {
-    setLoading(true);
-    Promise.all([wikiApi.getArticles({ pageSize: 100 }), wikiApi.getCategories()])
-      .then(([a, c]) => {
-        if (a.success) setArticles(a.data.items);
-        if (c.success) setCategories(c.data);
-      })
-      .finally(() => setLoading(false));
-  };
-  useEffect(load, []);
+  const { data: articles = [], isPending: articlesLoading } = useQuery({
+    queryKey: ["admin", "wiki", "articles"],
+    queryFn: async () => {
+      const res = await wikiApi.getArticles({ pageSize: 100 });
+      return res.success ? res.data.items : [];
+    },
+  });
 
-  const remove = async (id: string) => {
+  const { data: categories = [], isPending: categoriesLoading } = useQuery({
+    queryKey: ["wiki", "categories"],
+    queryFn: async () => {
+      const res = await wikiApi.getCategories();
+      return res.success ? res.data : [];
+    },
+  });
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["admin", "wiki", "articles"] });
+
+  const removeMutation = useMutation({
+    mutationFn: async (id: string) => { await wikiApi.deleteArticle(id); },
+    onSuccess: invalidate,
+  });
+
+  const remove = (id: string) => {
     if (!confirm("Delete this article?")) return;
-    await wikiApi.deleteArticle(id);
-    load();
+    removeMutation.mutate(id);
   };
 
-  if (loading) return <PageLoader />;
+  if (articlesLoading || categoriesLoading) return <PageLoader />;
 
   return (
     <div>
@@ -74,7 +84,7 @@ function ArticlesAdmin() {
         <ArticleEditor
           article={editing === "new" ? null : editing}
           categories={categories}
-          onDone={() => { setEditing(null); load(); }}
+          onDone={() => { setEditing(null); invalidate(); }}
           onCancel={() => setEditing(null)}
         />
       )}
@@ -98,26 +108,37 @@ function ArticlesAdmin() {
 }
 
 function CategoriesAdmin() {
-  const [categories, setCategories] = useState<WikiCategoryDto[]>([]);
+  const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [loading, setLoading] = useState(true);
 
-  const load = () => {
-    setLoading(true);
-    wikiApi.getCategories().then((r) => { if (r.success) setCategories(r.data); }).finally(() => setLoading(false));
-  };
-  useEffect(load, []);
+  const { data: categories = [], isPending: loading } = useQuery({
+    queryKey: ["wiki", "categories"],
+    queryFn: async () => {
+      const res = await wikiApi.getCategories();
+      return res.success ? res.data : [];
+    },
+  });
 
-  const create = async () => {
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["wiki", "categories"] });
+
+  const createMutation = useMutation({
+    mutationFn: async () => { await wikiApi.createCategory({ name, description }); },
+    onSuccess: () => { setName(""); setDescription(""); invalidate(); },
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: async (id: number) => { await wikiApi.deleteCategory(id); },
+    onSuccess: invalidate,
+  });
+
+  const create = () => {
     if (!name.trim()) return;
-    await wikiApi.createCategory({ name, description });
-    setName(""); setDescription(""); load();
+    createMutation.mutate();
   };
-  const remove = async (id: number) => {
+  const remove = (id: number) => {
     if (!confirm("Delete this category?")) return;
-    await wikiApi.deleteCategory(id);
-    load();
+    removeMutation.mutate(id);
   };
 
   if (loading) return <PageLoader />;
@@ -145,18 +166,27 @@ function CategoriesAdmin() {
 }
 
 function ContributionQueue() {
-  const [items, setItems] = useState<WikiContributionDto[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  const load = () => {
-    setLoading(true);
-    wikiApi.getContributions().then((r) => { if (r.success) setItems(r.data); }).finally(() => setLoading(false));
-  };
-  useEffect(load, []);
+  const { data: items = [], isPending: loading } = useQuery({
+    queryKey: ["admin", "wiki", "contributions"],
+    queryFn: async () => {
+      const res = await wikiApi.getContributions();
+      return res.success ? res.data : [];
+    },
+  });
 
-  const review = async (id: string, status: "Approved" | "Rejected") => {
-    await wikiApi.reviewContribution(id, { status });
-    load();
+  const reviewMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: "Approved" | "Rejected" }) => {
+      await wikiApi.reviewContribution(id, { status });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "wiki", "contributions"] });
+    },
+  });
+
+  const review = (id: string, status: "Approved" | "Rejected") => {
+    reviewMutation.mutate({ id, status });
   };
 
   if (loading) return <PageLoader />;
@@ -194,26 +224,27 @@ function ArticleEditor({ article, categories, onDone, onCancel }: {
   const [categoryId, setCategoryId] = useState<number>(categories[0]?.id ?? 0);
   const [content, setContent] = useState("");
   const [status, setStatus] = useState("Published");
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [imgUploading, setImgUploading] = useState(false);
   const contentRef = useRef<HTMLTextAreaElement>(null);
 
   // For an existing article, pull current content (list DTO doesn't carry it).
+  const { data: existing } = useQuery({
+    queryKey: ["wiki", "article", article?.slug],
+    enabled: !!article,
+    queryFn: async () => {
+      const res = await wikiApi.getArticle(article!.slug);
+      return res.success ? res.data : null;
+    },
+  });
+
   useEffect(() => {
-    if (article) {
-      wikiApi.getArticle(article.slug).then((r) => {
-        if (r.success) { setContent(r.data.content); setStatus(r.data.status); }
-      });
-    }
-  }, [article]);
+    if (existing) { setContent(existing.content); setStatus(existing.status); }
+  }, [existing]);
 
   // Upload an image as an asset, then insert a markdown image tag at the cursor.
-  const insertImage = async (file: File) => {
-    setImgUploading(true);
-    setError("");
-    try {
-      const res = await assetsApi.create(file, { assetType: "image", title: file.name });
+  const insertImageMutation = useMutation({
+    mutationFn: async (file: File) => assetsApi.create(file, { assetType: "image", title: file.name }),
+    onSuccess: (res) => {
       if (res.success && res.data) {
         const url = resolveMediaUrl(res.data.filePath) ?? res.data.filePath;
         const md = `\n![${res.data.title ?? "image"}](${url})\n`;
@@ -223,14 +254,35 @@ function ArticleEditor({ article, categories, onDone, onCancel }: {
       } else {
         setError(res.error || "Image upload failed.");
       }
-    } catch (e) {
+    },
+    onError: (e) => {
       setError(parseApiError(e, "Image upload failed."));
-    } finally {
-      setImgUploading(false);
-    }
-  };
+    },
+  });
 
-  const save = async () => {
+  const insertImage = (file: File) => {
+    setError("");
+    insertImageMutation.mutate(file);
+  };
+  const imgUploading = insertImageMutation.isPending;
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      if (article) {
+        await wikiApi.updateArticle(article.id, { title, content, status });
+      } else {
+        await wikiApi.createArticle({ title, categoryId, content, status });
+      }
+    },
+    onSuccess: () => {
+      onDone();
+    },
+    onError: (e) => {
+      setError(parseApiError(e, "Failed to save article."));
+    },
+  });
+
+  const save = () => {
     // Mirror the server rules so the user sees the problem before a round-trip.
     if (title.trim().length < 3 || title.trim().length > 100) {
       setError("Title must be between 3 and 100 characters."); return;
@@ -238,18 +290,8 @@ function ArticleEditor({ article, categories, onDone, onCancel }: {
     if (content.trim().length < 20) {
       setError("Content must be at least 20 characters."); return;
     }
-    setSaving(true); setError("");
-    try {
-      if (article) {
-        await wikiApi.updateArticle(article.id, { title, content, status });
-      } else {
-        await wikiApi.createArticle({ title, categoryId, content, status });
-      }
-      onDone();
-    } catch (e) {
-      setError(parseApiError(e, "Failed to save article."));
-      setSaving(false);
-    }
+    setError("");
+    saveMutation.mutate();
   };
 
   return (
@@ -285,7 +327,7 @@ function ArticleEditor({ article, categories, onDone, onCancel }: {
       </Select>
       {error && <p className="text-sm text-danger">{error}</p>}
       <div className="flex gap-2">
-        <Button onClick={save} loading={saving} disabled={!title.trim()}>{article ? "Update" : "Create"}</Button>
+        <Button onClick={save} loading={saveMutation.isPending} disabled={!title.trim()}>{article ? "Update" : "Create"}</Button>
         <Button variant="secondary" onClick={onCancel}>Cancel</Button>
       </div>
     </div>

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams } from "next/navigation";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { ArrowLeft, ThumbsUp, ThumbsDown, Flag, Lock } from "lucide-react";
 import { forumApi } from "@/lib/api/forum";
@@ -13,84 +14,96 @@ import { Button } from "@/components/ui/button";
 import { SkeletonList, Skeleton } from "@/components/ui/skeleton";
 import { Pagination } from "@/components/ui/pagination";
 import { RelativeTime } from "@/components/ui/relative-time";
-import type { ForumThreadDto, ForumPostDto, PaginatedResponse } from "@/lib/types";
 
 export default function ThreadPage() {
   const params = useParams<{ id: string }>();
   const { user } = useAuth();
-  const [thread, setThread] = useState<ForumThreadDto | null>(null);
-  const [posts, setPosts] = useState<PaginatedResponse<ForumPostDto> | null>(null);
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
   const [replyContent, setReplyContent] = useState("");
-  const [replying, setReplying] = useState(false);
   const [actionError, setActionError] = useState("");
   const [reportingId, setReportingId] = useState<string | null>(null);
+
+  const { data: thread } = useQuery({
+    queryKey: ["forum", "thread", params.id],
+    enabled: !!params.id,
+    queryFn: async () => {
+      const res = await forumApi.getThread(params.id);
+      return res.success ? res.data : null;
+    },
+  });
+
+  const { data: posts, isPending } = useQuery({
+    queryKey: ["forum", "posts", params.id, page],
+    enabled: !!params.id,
+    queryFn: async () => {
+      const res = await forumApi.getPosts(params.id, { page, pageSize: 20 });
+      return res.success ? res.data : null;
+    },
+  });
+
   const totalPages = posts ? Math.ceil(posts.totalCount / posts.pageSize) : 0;
 
-  useEffect(() => {
-    if (!params.id) return;
-    let ignore = false;
-    forumApi.getThread(params.id).then((res) => {
-      if (!ignore && res.success) setThread(res.data);
-    });
-    return () => { ignore = true; };
-  }, [params.id]);
-
-  useEffect(() => {
-    if (!params.id) return;
-    let ignore = false;
-    setLoading(true);
-    forumApi
-      .getPosts(params.id, { page, pageSize: 20 })
-      .then((res) => {
-        if (!ignore && res.success) setPosts(res.data);
-      })
-      .finally(() => { if (!ignore) setLoading(false); });
-    return () => { ignore = true; };
-  }, [params.id, page]);
-
-  const handleReply = async () => {
-    if (!replyContent.trim() || !params.id) return;
-    setReplying(true);
-    setActionError("");
-    try {
+  const replyMutation = useMutation({
+    mutationFn: async () => {
       await forumApi.createPost(params.id, { content: replyContent });
+    },
+    onSuccess: () => {
       setReplyContent("");
-      const res = await forumApi.getPosts(params.id, { page, pageSize: 20 });
-      if (res.success) setPosts(res.data);
-    } catch {
+      queryClient.invalidateQueries({ queryKey: ["forum", "posts", params.id] });
+    },
+    onError: () => {
       setActionError("Failed to post reply. Please try again.");
-    }
-    setReplying(false);
-  };
+    },
+  });
 
-  const handleReact = async (postId: string, type: "like" | "dislike") => {
-    setActionError("");
-    try {
+  const reactMutation = useMutation({
+    mutationFn: async ({ postId, type }: { postId: string; type: "like" | "dislike" }) => {
       await forumApi.react(postId, { reactionType: type });
-      const res = await forumApi.getPosts(params.id, { page, pageSize: 20 });
-      if (res.success) setPosts(res.data);
-    } catch {
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["forum", "posts", params.id] });
+    },
+    onError: () => {
       setActionError("Failed to register your reaction. Please try again.");
-    }
+    },
+  });
+
+  const reportMutation = useMutation({
+    mutationFn: async ({ postId, reason }: { postId: string; reason: string }) => {
+      await forumApi.report(postId, { reason });
+    },
+    onSuccess: () => {
+      window.alert("Report submitted. Thank you.");
+    },
+    onError: () => {
+      setActionError("Failed to submit report. Please try again.");
+    },
+    onSettled: () => {
+      setReportingId(null);
+    },
+  });
+
+  const handleReply = () => {
+    if (!replyContent.trim() || !params.id) return;
+    setActionError("");
+    replyMutation.mutate();
   };
 
-  const handleReport = async (postId: string) => {
+  const handleReact = (postId: string, type: "like" | "dislike") => {
+    setActionError("");
+    reactMutation.mutate({ postId, type });
+  };
+
+  const handleReport = (postId: string) => {
     const reason = window.prompt("Why are you reporting this post?");
     if (!reason?.trim()) return;
     setReportingId(postId);
     setActionError("");
-    try {
-      await forumApi.report(postId, { reason: reason.trim() });
-      window.alert("Report submitted. Thank you.");
-    } catch {
-      setActionError("Failed to submit report. Please try again.");
-    }
-    setReportingId(null);
+    reportMutation.mutate({ postId, reason: reason.trim() });
   };
 
-  if (loading && !thread) {
+  if (isPending && !thread) {
     return (
       <PageShell size="lg">
         <Skeleton className="h-4 w-16" />
@@ -127,7 +140,7 @@ export default function ThreadPage() {
         </div>
       )}
 
-      {loading ? (
+      {isPending ? (
         <SkeletonList rows={4} className="mt-6" />
       ) : (
         <div className="mt-6 space-y-3">
@@ -193,7 +206,7 @@ export default function ThreadPage() {
             className="mt-2 w-full resize-y rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-fg outline-none transition-colors placeholder:text-fg-subtle focus:border-accent focus:ring-1 focus:ring-accent"
           />
           <div className="mt-2 flex justify-end">
-            <Button onClick={handleReply} loading={replying} disabled={!replyContent.trim()}>
+            <Button onClick={handleReply} loading={replyMutation.isPending} disabled={!replyContent.trim()}>
               Post Reply
             </Button>
           </div>

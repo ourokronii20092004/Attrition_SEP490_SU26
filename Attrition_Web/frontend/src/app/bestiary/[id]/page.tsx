@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Crosshair } from "lucide-react";
@@ -11,27 +11,20 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { TIER_COLOR } from "@/lib/enemy-tiers";
-import type { EnemyResponse } from "@/lib/types";
 
 export default function EnemyDetailPage() {
   const params = useParams<{ id: string }>();
-  const [enemy, setEnemy] = useState<EnemyResponse | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!params.id) return;
-    let ignore = false;
-    setLoading(true);
-    enemiesApi
-      .get(params.id)
-      .then((res) => {
-        if (!ignore && res.success) setEnemy(res.data);
-      })
-      .finally(() => { if (!ignore) setLoading(false); });
-    return () => { ignore = true; };
-  }, [params.id]);
+  const { data: enemy, isPending } = useQuery({
+    queryKey: ["enemy", params.id],
+    enabled: !!params.id,
+    queryFn: async () => {
+      const res = await enemiesApi.get(params.id);
+      return res.success ? res.data : null;
+    },
+  });
 
-  if (loading) {
+  if (isPending) {
     return (
       <PageShell size="md">
         <Skeleton className="h-4 w-20" />

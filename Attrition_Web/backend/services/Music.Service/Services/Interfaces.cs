@@ -18,6 +18,7 @@ public interface IAlbumService
 public interface ITrackService
 {
     Task<IEnumerable<MusicTrackDto>> GetTracksAsync(int? albumId);
+    Task<BuildingBlocks.Contracts.PaginatedResponse<MusicTrackDto>> GetTracksPagedAsync(int? albumId, int page, int pageSize);
     Task<FeaturedTracksResponse> GetFeaturedTracksAsync();
     Task<(string? filePath, bool trackExists)> GetTrackStreamInfoAsync(int id);
     Task<(string? filePath, string fileName, bool trackExists)> GetTrackDownloadInfoAsync(int id);
@@ -108,6 +109,50 @@ public static class MusicHelpers
         if (string.IsNullOrWhiteSpace(fileName)) return false;
         var ext = Path.GetExtension(fileName).ToLowerInvariant();
         return allowed.Contains(ext);
+    }
+
+    /// <summary>Maps an audio file's extension to its MIME type for streaming/serving.</summary>
+    public static string GetAudioContentType(string? fileName) =>
+        Path.GetExtension(fileName ?? string.Empty).ToLowerInvariant() switch
+        {
+            ".mp3" => "audio/mpeg",
+            ".flac" => "audio/flac",
+            ".ogg" => "audio/ogg",
+            ".m4a" => "audio/mp4",
+            ".aac" => "audio/aac",
+            ".wav" => "audio/wav",
+            _ => "application/octet-stream",
+        };
+
+    /// <summary>
+    /// Sniffs the leading bytes of an audio stream to confirm it matches one of the allowed
+    /// container formats, so a renamed non-audio file (e.g. an .exe with a .mp3 extension)
+    /// can't be stored and served. Leaves the stream position reset to 0.
+    /// </summary>
+    public static async Task<bool> LooksLikeAudioAsync(Stream stream)
+    {
+        if (stream == null || !stream.CanRead) return false;
+        var header = new byte[12];
+        if (stream.CanSeek) stream.Position = 0;
+        int read = await stream.ReadAsync(header.AsMemory(0, header.Length));
+        if (stream.CanSeek) stream.Position = 0;
+        if (read < 4) return false;
+
+        // MP3: "ID3" tag, or an MPEG audio frame sync (FF Ex/Fx).
+        if (header[0] == 0x49 && header[1] == 0x44 && header[2] == 0x33) return true;
+        if (header[0] == 0xFF && (header[1] & 0xE0) == 0xE0) return true;
+        // FLAC: "fLaC"
+        if (header[0] == 0x66 && header[1] == 0x4C && header[2] == 0x61 && header[3] == 0x43) return true;
+        // OGG: "OggS"
+        if (header[0] == 0x4F && header[1] == 0x67 && header[2] == 0x67 && header[3] == 0x53) return true;
+        // WAV: "RIFF"...."WAVE"
+        if (read >= 12 && header[0] == 0x52 && header[1] == 0x49 && header[2] == 0x46 && header[3] == 0x46 &&
+            header[8] == 0x57 && header[9] == 0x41 && header[10] == 0x56 && header[11] == 0x45) return true;
+        // MP4/M4A/AAC (ISO-BMFF): "ftyp" at offset 4.
+        if (read >= 8 && header[4] == 0x66 && header[5] == 0x74 && header[6] == 0x79 && header[7] == 0x70) return true;
+        // ADTS AAC: sync word FF F1 / FF F9
+        if (header[0] == 0xFF && (header[1] == 0xF1 || header[1] == 0xF9)) return true;
+        return false;
     }
 
     /// <summary>

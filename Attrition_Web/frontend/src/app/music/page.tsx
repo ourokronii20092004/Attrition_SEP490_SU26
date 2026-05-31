@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { Music as MusicIcon } from "lucide-react";
 import { musicApi } from "@/lib/api/music";
@@ -11,32 +12,29 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SkeletonGrid } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
-import type { MusicAlbumDto } from "@/lib/types";
 
 const PAGE_SIZE = 24;
 
 export default function MusicPage() {
-  const [albums, setAlbums] = useState<MusicAlbumDto[]>([]);
-  const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    let ignore = false;
-    setLoading(true);
-    musicApi.getAlbumsPaged(page, PAGE_SIZE)
-      .then((res) => { if (!ignore && res.success) { setAlbums(res.data.items); setTotal(res.data.totalCount); } })
-      .finally(() => { if (!ignore) setLoading(false); });
-    return () => { ignore = true; };
-  }, [page]);
+  const { data, isPending } = useQuery({
+    queryKey: ["music", "albums", page],
+    queryFn: async () => {
+      const res = await musicApi.getAlbumsPaged(page, PAGE_SIZE);
+      return res.success ? res.data : null;
+    },
+  });
 
+  const albums = data?.items ?? [];
+  const total = data?.totalCount ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <PageShell>
       <PageTitle description="Original soundtrack of the Attrition universe.">Music</PageTitle>
 
-      {loading ? (
+      {isPending ? (
         <SkeletonGrid count={8} className="lg:grid-cols-4" />
       ) : albums.length === 0 ? (
         <EmptyState

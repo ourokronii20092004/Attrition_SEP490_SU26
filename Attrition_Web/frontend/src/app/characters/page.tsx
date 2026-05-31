@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { Heart, Coins, MapPin, Clock, ChevronDown, Gamepad2 } from "lucide-react";
 import { charactersApi } from "@/lib/api/characters";
 import { useAuth } from "@/lib/providers";
@@ -12,27 +13,25 @@ import { SkeletonList } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SnapshotTimeline } from "@/components/snapshot-timeline";
 import { RelativeTime } from "@/components/ui/relative-time";
-import type { CharacterSummaryDto, CharacterDetailDto, SnapshotDto } from "@/lib/types";
+import type { CharacterSummaryDto, SnapshotDto } from "@/lib/types";
 
 export default function CharactersPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const [characters, setCharacters] = useState<CharacterSummaryDto[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user) {
-      router.push("/login");
-      return;
-    }
-    charactersApi
-      .getMine()
-      .then((res) => {
-        if (res.success) setCharacters(res.data ?? []);
-      })
-      .finally(() => setLoading(false));
+    if (!user) router.push("/login");
   }, [user, authLoading, router]);
+
+  const { data: characters = [], isPending } = useQuery({
+    queryKey: ["characters", "mine"],
+    enabled: !!user && !authLoading,
+    queryFn: async () => {
+      const res = await charactersApi.getMine();
+      return res.success ? res.data ?? [] : [];
+    },
+  });
 
   if (!user && !authLoading) return null;
 
@@ -40,7 +39,7 @@ export default function CharactersPage() {
     <PageShell size="lg">
       <PageTitle description="Your characters and their progression across runs.">Character Status</PageTitle>
 
-      {authLoading || loading ? (
+      {authLoading || isPending ? (
         <SkeletonList rows={4} />
       ) : characters.length === 0 ? (
         <EmptyState
@@ -63,23 +62,18 @@ export default function CharactersPage() {
 
 function CharacterCard({ character }: { character: CharacterSummaryDto }) {
   const [expanded, setExpanded] = useState(false);
-  const [detail, setDetail] = useState<CharacterDetailDto | null>(null);
-  const [loadingDetail, setLoadingDetail] = useState(false);
   const snap = character.latestSnapshot;
 
-  const toggle = async () => {
-    const next = !expanded;
-    setExpanded(next);
-    if (next && !detail) {
-      setLoadingDetail(true);
-      try {
-        const res = await charactersApi.get(character.id);
-        if (res.success) setDetail(res.data);
-      } finally {
-        setLoadingDetail(false);
-      }
-    }
-  };
+  const { data: detail, isFetching: loadingDetail } = useQuery({
+    queryKey: ["character", character.id],
+    enabled: expanded,
+    queryFn: async () => {
+      const res = await charactersApi.get(character.id);
+      return res.success ? res.data : null;
+    },
+  });
+
+  const toggle = () => setExpanded((v) => !v);
 
   return (
     <Card className="overflow-hidden p-0">

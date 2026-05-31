@@ -27,7 +27,12 @@ builder.Services.Configure<FormOptions>(o => o.MultipartBodyLengthLimit = 20 * 1
 builder.Services.AddDbContext<IdentityDbContext>(opt =>
     opt.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "identity")));
+        npgsql =>
+        {
+            npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "identity");
+            // Survive transient Postgres blips by retrying instead of erroring the user.
+            npgsql.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(5), errorCodesToAdd: null);
+        }));
 
 builder.Services.AddScoped<DbContext>(sp => sp.GetRequiredService<IdentityDbContext>());
 builder.Services.AddScoped<IUserRepository, UserRepository>();

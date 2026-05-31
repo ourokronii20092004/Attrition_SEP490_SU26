@@ -7,6 +7,6 @@ public interface ICharacterRepository : IRepository<CharacterEntity>
 {
     Task<CharacterEntity?> GetWithSnapshotsAsync(Guid id);
     Task<List<CharacterEntity>> GetByOwnerWithSnapshotsAsync(Guid ownerId);
-    Task<List<CharacterEntity>> GetAllWithSnapshotsAsync();
+    Task<(List<CharacterEntity> Items, int TotalCount)> GetPagedWithSnapshotsAsync(int page, int pageSize);
     Task<CharacterEntity?> FindByOwnerAndNameAsync(Guid ownerId, string name);
 }

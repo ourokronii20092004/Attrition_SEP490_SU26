@@ -1,5 +1,18 @@
 namespace Forum.Service.Models;
 
+public static class ReportStatus
+{
+    public const string Pending = "Pending";
+    public const string Resolved = "Resolved";
+    public const string Dismissed = "Dismissed";
+}
+
+public static class ReactionType
+{
+    public const string Like = "like";
+    public const string Dislike = "dislike";
+}
+
 public class ForumCategory
 {
     public int Id { get; set; }
@@ -55,7 +68,7 @@ public class ForumReaction
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid PostId { get; set; }
     public Guid UserId { get; set; }
-    public string ReactionType { get; set; } = "like";        // like | dislike
+    public string ReactionType { get; set; } = Models.ReactionType.Like;        // like | dislike
 }
 
 public class ThreadSubscription
@@ -73,6 +86,6 @@ public class PostReport
     public Guid ReporterId { get; set; }
     public string? ReporterName { get; set; }
     public string Reason { get; set; } = string.Empty;
-    public string Status { get; set; } = "Pending";           // Pending | Resolved | Dismissed
+    public string Status { get; set; } = ReportStatus.Pending;           // Pending | Resolved | Dismissed
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

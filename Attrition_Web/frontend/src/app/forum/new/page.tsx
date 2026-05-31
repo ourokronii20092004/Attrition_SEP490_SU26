@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -15,7 +16,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { EmptyState } from "@/components/ui/empty-state";
-import type { ForumCategoryDto } from "@/lib/types";
 
 const schema = z.object({
   title: z.string().min(3, "Title too short").max(200),
@@ -28,19 +28,34 @@ type FormData = z.infer<typeof schema>;
 export default function NewThreadPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const [categories, setCategories] = useState<ForumCategoryDto[]>([]);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
 
-  useEffect(() => {
-    forumApi.getCategories().then((res) => {
-      if (res.success) setCategories(res.data);
-    });
-  }, []);
+  const { data: categories = [] } = useQuery({
+    queryKey: ["forum", "categories"],
+    queryFn: async () => {
+      const res = await forumApi.getCategories();
+      return res.success ? res.data ?? [] : [];
+    },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (data: FormData) => {
+      const res = await forumApi.createThread({ title: data.title, categoryId: Number(data.categoryId), content: data.content });
+      return res;
+    },
+    onSuccess: (res) => {
+      if (res.success && res.data) {
+        router.push(`/forum/${res.data.id}`);
+      }
+    },
+    onError: () => {
+      setError("Failed to create thread");
+    },
+  });
 
   if (!user) {
     return (
@@ -54,19 +69,9 @@ export default function NewThreadPage() {
     );
   }
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = (data: FormData) => {
     setError("");
-    setLoading(true);
-    try {
-      const res = await forumApi.createThread({ title: data.title, categoryId: Number(data.categoryId), content: data.content });
-      if (res.success && res.data) {
-        router.push(`/forum/${res.data.id}`);
-      }
-    } catch {
-      setError("Failed to create thread");
-    } finally {
-      setLoading(false);
-    }
+    createMutation.mutate(data);
   };
 
   return (
@@ -100,7 +105,7 @@ export default function NewThreadPage() {
             />
             {errors.content && <p className="text-xs text-danger">{errors.content.message}</p>}
           </div>
-          <Button type="submit" loading={loading}>Create Thread</Button>
+          <Button type="submit" loading={createMutation.isPending}>Create Thread</Button>
         </form>
       </Card>
     </PageShell>

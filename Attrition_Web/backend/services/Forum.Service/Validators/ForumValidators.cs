@@ -1,5 +1,6 @@
 using FluentValidation;
 using Forum.Service.DTOs;
+using Forum.Service.Models;
 
 namespace Forum.Service.Validators;
 
@@ -43,7 +44,7 @@ public class ReactRequestValidator : AbstractValidator<ReactRequest>
     {
         RuleFor(x => x.ReactionType)
             .NotEmpty()
-            .Must(t => t is "like" or "dislike")
+            .Must(t => t is ReactionType.Like or ReactionType.Dislike)
             .WithMessage("Reaction type must be 'like' or 'dislike'.");
     }
 }

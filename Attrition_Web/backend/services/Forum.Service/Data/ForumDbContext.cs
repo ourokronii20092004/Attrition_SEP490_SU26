@@ -41,7 +41,8 @@ public class ForumDbContext : DbContext
         modelBuilder.Entity<ForumReaction>(e =>
         {
             e.HasKey(r => r.Id);
-            e.HasIndex(r => new { r.PostId, r.UserId, r.ReactionType }).IsUnique();
+            // One reaction per user per post (like OR dislike, never both).
+            e.HasIndex(r => new { r.PostId, r.UserId }).IsUnique();
         });
 
         modelBuilder.Entity<ThreadSubscription>(e =>
@@ -54,7 +55,7 @@ public class ForumDbContext : DbContext
         {
             e.HasKey(pr => pr.Id);
             e.HasIndex(pr => pr.Status);
-            e.Property(pr => pr.Status).HasDefaultValue("Pending");
+            e.Property(pr => pr.Status).HasDefaultValue(ReportStatus.Pending);
         });
     }
 }

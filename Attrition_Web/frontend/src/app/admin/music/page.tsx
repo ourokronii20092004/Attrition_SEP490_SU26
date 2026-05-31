@@ -1,52 +1,67 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/providers";
 import { musicApi } from "@/lib/api/music";
 import { resolveMediaUrl } from "@/lib/api/media";
+import { parseApiError } from "@/lib/api/parse-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLoader } from "@/components/ui/spinner";
-import type { MusicAlbumDto, MusicTrackDto } from "@/lib/types";
 import { TrackUploadFlow } from "./track-upload-flow";
 
 export default function AdminMusicPage() {
   const { user } = useAuth();
-  const [albums, setAlbums] = useState<MusicAlbumDto[]>([]);
-  const [tracks, setTracks] = useState<MusicTrackDto[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [showAlbumForm, setShowAlbumForm] = useState(false);
   const [showTrackUpload, setShowTrackUpload] = useState(false);
 
-  const fetchData = () => {
-    setLoading(true);
-    Promise.all([musicApi.getAlbums(), musicApi.getTracks()])
-      .then(([albumsRes, tracksRes]) => {
-        if (albumsRes.success) setAlbums(albumsRes.data);
-        if (tracksRes.success) setTracks(tracksRes.data);
-      })
-      .finally(() => setLoading(false));
+  const { data: albums = [], isPending: albumsLoading } = useQuery({
+    queryKey: ["admin", "music", "albums"],
+    enabled: user?.role === "Admin",
+    queryFn: async () => {
+      const res = await musicApi.getAlbums();
+      return res.success ? res.data : [];
+    },
+  });
+
+  const { data: tracks = [], isPending: tracksLoading } = useQuery({
+    queryKey: ["admin", "music", "tracks"],
+    enabled: user?.role === "Admin",
+    queryFn: async () => {
+      const res = await musicApi.getTracks();
+      return res.success ? res.data : [];
+    },
+  });
+
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ["admin", "music", "albums"] });
+    queryClient.invalidateQueries({ queryKey: ["admin", "music", "tracks"] });
   };
 
-  useEffect(() => {
-    if (user?.role !== "Admin") return;
-    fetchData();
-  }, [user]);
+  const deleteAlbumMutation = useMutation({
+    mutationFn: async (id: number) => { await musicApi.deleteAlbum(id); },
+    onSuccess: invalidate,
+  });
 
-  const handleDeleteAlbum = async (id: number) => {
+  const deleteTrackMutation = useMutation({
+    mutationFn: async (id: number) => { await musicApi.deleteTrack(id); },
+    onSuccess: invalidate,
+  });
+
+  const handleDeleteAlbum = (id: number) => {
     if (!confirm("Delete this album?")) return;
-    await musicApi.deleteAlbum(id);
-    fetchData();
+    deleteAlbumMutation.mutate(id);
   };
 
-  const handleDeleteTrack = async (id: number) => {
+  const handleDeleteTrack = (id: number) => {
     if (!confirm("Delete this track?")) return;
-    await musicApi.deleteTrack(id);
-    fetchData();
+    deleteTrackMutation.mutate(id);
   };
 
   if (!user || user.role !== "Admin") return null;
-  if (loading) return <PageLoader />;
+  if (albumsLoading || tracksLoading) return <PageLoader />;
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -62,7 +77,7 @@ export default function AdminMusicPage() {
           <Button size="sm" onClick={() => setShowAlbumForm(true)}>New Album</Button>
         </div>
         {showAlbumForm && (
-          <AlbumForm onDone={() => { setShowAlbumForm(false); fetchData(); }} onCancel={() => setShowAlbumForm(false)} />
+          <AlbumForm onDone={() => { setShowAlbumForm(false); invalidate(); }} onCancel={() => setShowAlbumForm(false)} />
         )}
         <div className="mt-4 space-y-2">
           {albums.map((album) => (
@@ -86,7 +101,7 @@ export default function AdminMusicPage() {
           <Button size="sm" onClick={() => setShowTrackUpload(true)}>Upload Track</Button>
         </div>
         {showTrackUpload && (
-          <TrackUploadFlow albums={albums} onDone={() => { setShowTrackUpload(false); fetchData(); }} onCancel={() => setShowTrackUpload(false)} />
+          <TrackUploadFlow albums={albums} onDone={() => { setShowTrackUpload(false); invalidate(); }} onCancel={() => setShowTrackUpload(false)} />
         )}
         <div className="mt-4 space-y-2">
           {tracks.map((track) => (
@@ -107,22 +122,34 @@ export default function AdminMusicPage() {
 function AlbumForm({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      await musicApi.createAlbum({ title, description: description || undefined });
+    },
+    onSuccess: () => {
+      onDone();
+    },
+    onError: (err) => {
+      setError(parseApiError(err, "Failed to create the album. Please try again."));
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title) return;
-    setSaving(true);
-    try { await musicApi.createAlbum({ title, description: description || undefined }); onDone(); }
-    catch {} finally { setSaving(false); }
+    setError(null);
+    createMutation.mutate();
   };
 
   return (
     <form onSubmit={handleSubmit} className="card mt-4 space-y-3 p-4">
+      {error && <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>}
       <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
       <Input label="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
       <div className="flex gap-2">
-        <Button type="submit" loading={saving} disabled={!title}>Create Album</Button>
+        <Button type="submit" loading={createMutation.isPending} disabled={!title}>Create Album</Button>
         <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
       </div>
     </form>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { X, Images, ChevronLeft, ChevronRight } from "lucide-react";
 import { assetsApi } from "@/lib/api/assets";
 import { resolveMediaUrl } from "@/lib/api/media";
@@ -10,27 +11,23 @@ import { Card } from "@/components/ui/card";
 import { SkeletonGrid } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Pagination } from "@/components/ui/pagination";
-import type { AssetDto, PaginatedResponse } from "@/lib/types";
 
 export default function GalleryPage() {
-  const [assets, setAssets] = useState<PaginatedResponse<AssetDto> | null>(null);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
   // Lightbox tracks an index into the current page's items so prev/next can navigate.
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+
+  const { data: assets, isPending } = useQuery({
+    queryKey: ["assets", page],
+    queryFn: async () => {
+      const res = await assetsApi.list({ page, pageSize: 18 });
+      return res.success ? res.data : null;
+    },
+  });
+
   const totalPages = assets ? Math.ceil(assets.totalCount / assets.pageSize) : 0;
   const items = assets?.items ?? [];
   const lightbox = lightboxIdx != null ? items[lightboxIdx] ?? null : null;
-
-  useEffect(() => {
-    setLoading(true);
-    assetsApi
-      .list({ page, pageSize: 18 })
-      .then((res) => {
-        if (res.success) setAssets(res.data);
-      })
-      .finally(() => setLoading(false));
-  }, [page]);
 
   const showPrev = () => setLightboxIdx((i) => (i == null ? i : (i - 1 + items.length) % items.length));
   const showNext = () => setLightboxIdx((i) => (i == null ? i : (i + 1) % items.length));
@@ -55,7 +52,7 @@ export default function GalleryPage() {
     <PageShell>
       <PageTitle description="Concept art, sprites, and assets from the Attrition world.">Gallery</PageTitle>
 
-      {loading ? (
+      {isPending ? (
         <SkeletonGrid count={12} />
       ) : !assets?.items.length ? (
         <EmptyState icon={Images} title="Nothing here yet" description="Artwork and assets will appear here once uploaded." />

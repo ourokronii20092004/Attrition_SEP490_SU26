@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/providers";
 import { enemiesApi } from "@/lib/api/enemies";
 import { Button } from "@/components/ui/button";
@@ -12,28 +13,29 @@ import type { EnemyResponse, EnemyCreateRequest, EnemyUpdateRequest, LootEntryDt
 
 export default function AdminEnemiesPage() {
   const { user } = useAuth();
-  const [enemies, setEnemies] = useState<EnemyResponse[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<EnemyResponse | null>(null);
 
-  const fetchEnemies = () => {
-    setLoading(true);
-    enemiesApi.list().then((res) => {
-      if (res.success) setEnemies(res.data);
-      setLoading(false);
-    });
-  };
+  const { data: enemies = [], isPending: loading } = useQuery({
+    queryKey: ["admin", "enemies"],
+    enabled: user?.role === "Admin",
+    queryFn: async () => {
+      const res = await enemiesApi.list();
+      return res.success ? res.data : [];
+    },
+  });
 
-  useEffect(() => {
-    if (user?.role !== "Admin") return;
-    fetchEnemies();
-  }, [user]);
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["admin", "enemies"] });
 
-  const handleDelete = async (id: string) => {
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => { await enemiesApi.delete(id); },
+    onSuccess: invalidate,
+  });
+
+  const handleDelete = (id: string) => {
     if (!confirm("Delete this enemy?")) return;
-    await enemiesApi.delete(id);
-    fetchEnemies();
+    deleteMutation.mutate(id);
   };
 
   if (!user || user.role !== "Admin") return null;
@@ -49,7 +51,7 @@ export default function AdminEnemiesPage() {
       {showForm && (
         <EnemyForm
           initial={editing}
-          onDone={() => { setShowForm(false); fetchEnemies(); }}
+          onDone={() => { setShowForm(false); invalidate(); }}
           onCancel={() => setShowForm(false)}
         />
       )}
@@ -75,7 +77,7 @@ export default function AdminEnemiesPage() {
 const EMPTY_LOOT: LootEntryDto = { itemName: "", rarity: "Common", iconKey: null, dropChance: 0.1, minQty: 1, maxQty: 1 };
 
 function EnemyForm({ initial, onDone, onCancel }: { initial: EnemyResponse | null; onDone: () => void; onCancel: () => void }) {
-  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [enemyId, setEnemyId] = useState(initial?.enemyId ?? "");
   const [name, setName] = useState(initial?.name ?? "");
   const [tier, setTier] = useState(initial?.tier ?? "Normal");
@@ -100,23 +102,32 @@ function EnemyForm({ initial, onDone, onCancel }: { initial: EnemyResponse | nul
     setLootTable((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    try {
+  const saveMutation = useMutation({
+    mutationFn: async () => {
       const base = { name, tier, spawnBiome: spawnBiome || undefined, hp, ad, ap, def, res, attackSpeed, isRanged, expReward, goldReward, lore: lore || undefined, lootTable };
       if (initial) {
         await enemiesApi.update(initial.enemyId, base as EnemyUpdateRequest);
       } else {
         await enemiesApi.create({ enemyId, ...base } as EnemyCreateRequest);
       }
+    },
+    onSuccess: () => {
       onDone();
-    } catch {}
-    setSaving(false);
+    },
+    onError: (err) => {
+      setError(err instanceof Error ? err.message : "Failed to save the enemy. Please try again.");
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    saveMutation.mutate();
   };
 
   return (
     <form onSubmit={handleSubmit} className="mt-4 card p-4 space-y-4">
+      {error && <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>}
       <div className="grid gap-3 sm:grid-cols-2">
         {!initial && <Input label="Enemy ID" value={enemyId} onChange={(e) => setEnemyId(e.target.value)} />}
         <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} />
@@ -167,7 +178,7 @@ function EnemyForm({ initial, onDone, onCancel }: { initial: EnemyResponse | nul
       </div>
 
       <div className="flex gap-2">
-        <Button type="submit" loading={saving}>{initial ? "Update" : "Create"}</Button>
+        <Button type="submit" loading={saveMutation.isPending}>{initial ? "Update" : "Create"}</Button>
         <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
       </div>
     </form>

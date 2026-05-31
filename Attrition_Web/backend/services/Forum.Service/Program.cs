@@ -14,7 +14,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ForumDbContext>(opt =>
     opt.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "forum")));
+        npgsql =>
+        {
+            npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "forum");
+            // Survive transient Postgres blips (restart, brief network drop) by retrying instead
+            // of surfacing an error to the user. Manual transactions are wrapped in an execution
+            // strategy so they stay retry-safe (see ForumRepository).
+            npgsql.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(5), errorCodesToAdd: null);
+        }));
 
 builder.Services.AddScoped<DbContext>(sp => sp.GetRequiredService<ForumDbContext>());
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));

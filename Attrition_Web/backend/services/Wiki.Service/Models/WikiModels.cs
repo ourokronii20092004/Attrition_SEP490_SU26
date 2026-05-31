@@ -1,5 +1,18 @@
 namespace Wiki.Service.Models;
 
+public static class ArticleStatus
+{
+    public const string Draft = "Draft";
+    public const string Published = "Published";
+}
+
+public static class ContributionStatus
+{
+    public const string Pending = "Pending";
+    public const string Approved = "Approved";
+    public const string Rejected = "Rejected";
+}
+
 public class WikiCategory
 {
     public int Id { get; set; }
@@ -24,7 +37,7 @@ public class WikiArticle
     public Guid? LastEditedById { get; set; }
     public string? LastEditedByName { get; set; }
 
-    public string Status { get; set; } = "Published";     // "Draft" | "Published"
+    public string Status { get; set; } = ArticleStatus.Published;     // "Draft" | "Published"
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }
@@ -48,7 +61,7 @@ public class WikiContribution
     public string? ContributorName { get; set; }
     public string SuggestedContent { get; set; } = string.Empty;
     public string? ChangeNote { get; set; }
-    public string Status { get; set; } = "Pending";       // Pending | Approved | Rejected
+    public string Status { get; set; } = ContributionStatus.Pending;       // Pending | Approved | Rejected
     public DateTime SubmittedAt { get; set; } = DateTime.UtcNow;
     public DateTime? ReviewedAt { get; set; }
     public Guid? ReviewedById { get; set; }

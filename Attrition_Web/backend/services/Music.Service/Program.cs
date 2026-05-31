@@ -18,7 +18,12 @@ builder.Services.Configure<FormOptions>(o => o.MultipartBodyLengthLimit = 100 * 
 builder.Services.AddDbContext<MusicDbContext>(opt =>
     opt.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "music")));
+        npgsql =>
+        {
+            npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "music");
+            // Survive transient Postgres blips by retrying instead of erroring the user.
+            npgsql.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(5), errorCodesToAdd: null);
+        }));
 
 builder.Services.AddScoped<DbContext>(sp => sp.GetRequiredService<MusicDbContext>());
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
