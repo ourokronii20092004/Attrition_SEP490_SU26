@@ -13,6 +13,7 @@ import { Card } from "@/components/ui/card";
 import { SkeletonGrid } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Pagination } from "@/components/ui/pagination";
+import { qk } from "@/lib/query-keys";
 
 export default function WikiPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
@@ -20,7 +21,7 @@ export default function WikiPage() {
   const [page, setPage] = useState(1);
 
   const { data: categories = [] } = useQuery({
-    queryKey: ["wiki", "categories"],
+    queryKey: qk.wiki.categories(),
     queryFn: async () => {
       const res = await wikiApi.getCategories();
       return res.success ? res.data ?? [] : [];
@@ -28,7 +29,7 @@ export default function WikiPage() {
   });
 
   const { data: articles, isPending } = useQuery({
-    queryKey: ["wiki", "articles", { selectedCategory, search, page }],
+    queryKey: qk.wiki.articles({ selectedCategory, search, page }),
     queryFn: async () => {
       const res = await wikiApi.getArticles({ category: selectedCategory || undefined, search: search || undefined, page, pageSize: 12 });
       return res.success ? res.data : null;

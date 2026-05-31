@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { EmptyState } from "@/components/ui/empty-state";
+import { qk } from "@/lib/query-keys";
 
 const schema = z.object({
   title: z.string().min(3, "Title too short").max(200),
@@ -35,7 +36,7 @@ export default function NewThreadPage() {
   });
 
   const { data: categories = [] } = useQuery({
-    queryKey: ["forum", "categories"],
+    queryKey: qk.forum.categories(),
     queryFn: async () => {
       const res = await forumApi.getCategories();
       return res.success ? res.data ?? [] : [];

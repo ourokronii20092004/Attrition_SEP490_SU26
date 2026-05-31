@@ -11,6 +11,7 @@ import { PageShell } from "@/components/ui/page-shell";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { qk } from "@/lib/query-keys";
 import type { MusicTrackDto } from "@/lib/types";
 
 export default function AlbumPage() {
@@ -18,7 +19,7 @@ export default function AlbumPage() {
   const { play, pause, resume, currentTrack, isPlaying } = useAudioStore();
 
   const { data: album, isPending } = useQuery({
-    queryKey: ["album", params.id],
+    queryKey: qk.music.album(params.id),
     enabled: !!params.id,
     queryFn: async () => {
       const res = await musicApi.getAlbum(Number(params.id));

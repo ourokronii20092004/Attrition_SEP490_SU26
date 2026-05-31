@@ -1,24 +1,29 @@
 "use client";
 
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@/lib/providers";
+import { useAuth, useConfirm } from "@/lib/providers";
 import { musicApi } from "@/lib/api/music";
 import { resolveMediaUrl } from "@/lib/api/media";
 import { parseApiError } from "@/lib/api/parse-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLoader } from "@/components/ui/spinner";
+import { qk } from "@/lib/query-keys";
 import { TrackUploadFlow } from "./track-upload-flow";
 
 export default function AdminMusicPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const confirm = useConfirm();
   const [showAlbumForm, setShowAlbumForm] = useState(false);
   const [showTrackUpload, setShowTrackUpload] = useState(false);
 
   const { data: albums = [], isPending: albumsLoading } = useQuery({
-    queryKey: ["admin", "music", "albums"],
+    queryKey: qk.admin.music.albums(),
     enabled: user?.role === "Admin",
     queryFn: async () => {
       const res = await musicApi.getAlbums();
@@ -27,7 +32,7 @@ export default function AdminMusicPage() {
   });
 
   const { data: tracks = [], isPending: tracksLoading } = useQuery({
-    queryKey: ["admin", "music", "tracks"],
+    queryKey: qk.admin.music.tracks(),
     enabled: user?.role === "Admin",
     queryFn: async () => {
       const res = await musicApi.getTracks();
@@ -36,8 +41,8 @@ export default function AdminMusicPage() {
   });
 
   const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ["admin", "music", "albums"] });
-    queryClient.invalidateQueries({ queryKey: ["admin", "music", "tracks"] });
+    queryClient.invalidateQueries({ queryKey: qk.admin.music.albums() });
+    queryClient.invalidateQueries({ queryKey: qk.admin.music.tracks() });
   };
 
   const deleteAlbumMutation = useMutation({
@@ -50,13 +55,13 @@ export default function AdminMusicPage() {
     onSuccess: invalidate,
   });
 
-  const handleDeleteAlbum = (id: number) => {
-    if (!confirm("Delete this album?")) return;
+  const handleDeleteAlbum = async (id: number) => {
+    if (!(await confirm({ message: "Delete this album?", danger: true, confirmLabel: "Delete" }))) return;
     deleteAlbumMutation.mutate(id);
   };
 
-  const handleDeleteTrack = (id: number) => {
-    if (!confirm("Delete this track?")) return;
+  const handleDeleteTrack = async (id: number) => {
+    if (!(await confirm({ message: "Delete this track?", danger: true, confirmLabel: "Delete" }))) return;
     deleteTrackMutation.mutate(id);
   };
 
@@ -119,37 +124,41 @@ export default function AdminMusicPage() {
   );
 }
 
+const albumSchema = z.object({
+  title: z.string().min(1, "Title is required."),
+  description: z.string(),
+});
+
+type AlbumFormValues = z.infer<typeof albumSchema>;
+
 function AlbumForm({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const createMutation = useMutation({
-    mutationFn: async () => {
-      await musicApi.createAlbum({ title, description: description || undefined });
-    },
-    onSuccess: () => {
-      onDone();
-    },
-    onError: (err) => {
-      setError(parseApiError(err, "Failed to create the album. Please try again."));
-    },
+  const {
+    register, handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<AlbumFormValues>({
+    resolver: zodResolver(albumSchema),
+    defaultValues: { title: "", description: "" },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title) return;
+  const onSubmit = handleSubmit(async (values) => {
     setError(null);
-    createMutation.mutate();
-  };
+    try {
+      await musicApi.createAlbum({ title: values.title, description: values.description || undefined });
+      onDone();
+    } catch (err) {
+      setError(parseApiError(err, "Failed to create the album. Please try again."));
+    }
+  });
 
   return (
-    <form onSubmit={handleSubmit} className="card mt-4 space-y-3 p-4">
+    <form onSubmit={onSubmit} className="card mt-4 space-y-3 p-4">
       {error && <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>}
-      <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
-      <Input label="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
+      <Input label="Title" error={errors.title?.message} {...register("title")} />
+      <Input label="Description" {...register("description")} />
       <div className="flex gap-2">
-        <Button type="submit" loading={createMutation.isPending} disabled={!title}>Create Album</Button>
+        <Button type="submit" loading={isSubmitting}>Create Album</Button>
         <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
       </div>
     </form>

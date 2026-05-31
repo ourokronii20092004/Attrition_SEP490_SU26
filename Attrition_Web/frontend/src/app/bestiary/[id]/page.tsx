@@ -11,12 +11,13 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { TIER_COLOR } from "@/lib/enemy-tiers";
+import { qk } from "@/lib/query-keys";
 
 export default function EnemyDetailPage() {
   const params = useParams<{ id: string }>();
 
   const { data: enemy, isPending } = useQuery({
-    queryKey: ["enemy", params.id],
+    queryKey: qk.enemies.detail(params.id),
     enabled: !!params.id,
     queryFn: async () => {
       const res = await enemiesApi.get(params.id);

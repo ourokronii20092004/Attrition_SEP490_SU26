@@ -11,6 +11,7 @@ import { PageTitle, SectionTitle } from "@/components/ui/page-title";
 import { SkeletonList } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageLoader } from "@/components/ui/spinner";
+import { qk } from "@/lib/query-keys";
 
 export default function SearchPage() {
   return (
@@ -25,7 +26,7 @@ function SearchContent() {
   const q = searchParams.get("q") ?? "";
 
   const { data: results, isFetching: loading } = useQuery({
-    queryKey: ["search", q],
+    queryKey: qk.search(q),
     enabled: !!q.trim(),
     queryFn: async () => {
       const res = await searchApi.search(q, 20);

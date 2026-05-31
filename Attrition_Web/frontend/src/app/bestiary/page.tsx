@@ -13,6 +13,7 @@ import { FilterPills } from "@/components/ui/filter-pills";
 import { SkeletonGrid } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ENEMY_TIERS, TIER_COLOR } from "@/lib/enemy-tiers";
+import { qk } from "@/lib/query-keys";
 
 const TIERS = ENEMY_TIERS;
 
@@ -21,7 +22,7 @@ export default function BestiaryPage() {
   const [search, setSearch] = useState("");
 
   const { data: enemies = [], isPending } = useQuery({
-    queryKey: ["enemies", { tier, search }],
+    queryKey: qk.enemies.list({ tier, search }),
     queryFn: async () => {
       const res = await enemiesApi.list({ tier: tier || undefined, search: search || undefined });
       return res.success ? res.data ?? [] : [];

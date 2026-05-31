@@ -1,0 +1,380 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Enemy.Service",
+    "version": "v1"
+  },
+  "paths": {
+    "/api/enemies": {
+      "get": {
+        "tags": [
+          "Enemy"
+        ],
+        "parameters": [
+          {
+            "name": "tier",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Enemy"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnemyCreateRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnemyCreateRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnemyCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/enemies/{id}": {
+      "get": {
+        "tags": [
+          "Enemy"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Enemy"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnemyUpdateRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnemyUpdateRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnemyUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Enemy"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "Enemy.Service, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/internal/enemies/search": {
+      "get": {
+        "tags": [
+          "InternalEnemy"
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 5
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/internal/enemies/count": {
+      "get": {
+        "tags": [
+          "InternalEnemy"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "EnemyCreateRequest": {
+        "type": "object",
+        "properties": {
+          "enemyId": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "tier": {
+            "type": "string",
+            "nullable": true
+          },
+          "spawnBiome": {
+            "type": "string",
+            "nullable": true
+          },
+          "hp": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ad": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ap": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "def": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "res": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "attackSpeed": {
+            "type": "number",
+            "format": "float"
+          },
+          "isRanged": {
+            "type": "boolean"
+          },
+          "expReward": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "goldReward": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lore": {
+            "type": "string",
+            "nullable": true
+          },
+          "lootTable": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LootEntryDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnemyUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "tier": {
+            "type": "string",
+            "nullable": true
+          },
+          "spawnBiome": {
+            "type": "string",
+            "nullable": true
+          },
+          "hp": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ad": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ap": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "def": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "res": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "attackSpeed": {
+            "type": "number",
+            "format": "float"
+          },
+          "isRanged": {
+            "type": "boolean"
+          },
+          "expReward": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "goldReward": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lore": {
+            "type": "string",
+            "nullable": true
+          },
+          "lootTable": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LootEntryDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "LootEntryDto": {
+        "type": "object",
+        "properties": {
+          "itemName": {
+            "type": "string",
+            "nullable": true
+          },
+          "rarity": {
+            "type": "string",
+            "nullable": true
+          },
+          "iconKey": {
+            "type": "string",
+            "nullable": true
+          },
+          "dropChance": {
+            "type": "number",
+            "format": "float"
+          },
+          "minQty": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxQty": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "Bearer": {
+        "type": "http",
+        "description": "JWT bearer token issued by Identity.Service",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "Bearer": [ ]
+    }
+  ]
+}

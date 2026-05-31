@@ -8,8 +8,11 @@ import { useAuth } from "@/lib/providers";
 import { SITE_NAME } from "@/lib/config";
 import { Avatar } from "@/components/ui/avatar";
 import { IconButton } from "@/components/ui/icon-button";
-import { SearchModal } from "./search-modal";
+import dynamic from "next/dynamic";
 import { ThemeSwitcher } from "./theme-switcher";
+
+// Search modal only mounts when opened — lazy-load so its code stays out of the initial bundle.
+const SearchModal = dynamic(() => import("./search-modal").then((m) => m.SearchModal), { ssr: false });
 
 const NAV_LINKS = [
   { href: "/wiki", label: "Wiki" },

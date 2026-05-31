@@ -6,12 +6,13 @@ import Link from "next/link";
 import { wikiApi } from "@/lib/api/wiki";
 import { PageLoader } from "@/components/ui/spinner";
 import { formatDateTime } from "@/lib/format-date";
+import { qk } from "@/lib/query-keys";
 
 export default function RevisionsPage() {
   const params = useParams<{ slug: string }>();
 
   const { data: revisions = [], isPending, isError, error } = useQuery({
-    queryKey: ["wiki", "revisions", params.slug],
+    queryKey: qk.wiki.revisions(params.slug),
     enabled: !!params.slug,
     queryFn: async () => {
       const res = await wikiApi.getArticle(params.slug);

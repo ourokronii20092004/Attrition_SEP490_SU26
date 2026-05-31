@@ -12,6 +12,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SkeletonGrid } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { qk } from "@/lib/query-keys";
 
 const PAGE_SIZE = 24;
 
@@ -19,7 +20,7 @@ export default function MusicPage() {
   const [page, setPage] = useState(1);
 
   const { data, isPending } = useQuery({
-    queryKey: ["music", "albums", page],
+    queryKey: qk.music.albums(page),
     queryFn: async () => {
       const res = await musicApi.getAlbumsPaged(page, PAGE_SIZE);
       return res.success ? res.data : null;
