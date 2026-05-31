@@ -12,3 +12,6 @@ public record GlobalSearchResponse(
     IReadOnlyList<SearchEnemyResultDto> Enemies,
     IReadOnlyList<string> DegradedSources   // names of services that failed this query
 );
+
+/// <summary>Lightweight autocomplete suggestion: a label, its kind, and where selecting it goes.</summary>
+public record SearchSuggestionDto(string Label, string Type, string Url);

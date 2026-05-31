@@ -309,11 +309,14 @@ export interface ForumThreadDto {
 export interface ForumPostDto {
   id: string;
   threadId: string;
+  parentPostId: string | null;
+  depth: number;
   authorId: string;
   authorName: string;
   authorAvatar: string | null;
   authorRole: "Admin" | "User";
   content: string;
+  attachments: string[];
   createdAt: string;
   updatedAt: string | null;
   likeCount: number;
@@ -329,6 +332,8 @@ export interface CreateThreadRequest {
 
 export interface CreatePostRequest {
   content: string;
+  parentPostId?: string | null;
+  attachments?: string[];
 }
 
 export interface UpdatePostRequest {
@@ -341,6 +346,16 @@ export interface ReactRequest {
 
 export interface ReportPostReq {
   reason: string;
+}
+
+export interface NotificationDto {
+  id: string;
+  type: string;
+  message: string;
+  link: string | null;
+  actorName: string | null;
+  isRead: boolean;
+  createdAt: string;
 }
 
 export interface ForumCategoryRequest {
@@ -590,6 +605,12 @@ export interface GlobalSearchResponse {
   posts: SearchPostResultDto[];
   enemies: SearchEnemyResultDto[];
   degradedSources: string[];
+}
+
+export interface SearchSuggestionDto {
+  label: string;
+  type: string;
+  url: string;
 }
 
 // ─── Admin Service ────────────────────────────────────────────────────────────

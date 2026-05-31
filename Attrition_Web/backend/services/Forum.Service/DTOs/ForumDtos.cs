@@ -8,12 +8,12 @@ public record ForumThreadListDto(Guid Id, string Title, Guid AuthorId, string Au
 public record ForumThreadDto(Guid Id, string Title, string CategorySlug, Guid AuthorId, string AuthorName,
     bool IsPinned, bool IsLocked, int ReplyCount, DateTime CreatedAt);
 
-public record ForumPostDto(Guid Id, Guid ThreadId, Guid AuthorId, string AuthorName, string? AuthorAvatar,
-    string AuthorRole, string Content, DateTime CreatedAt, DateTime? UpdatedAt,
+public record ForumPostDto(Guid Id, Guid ThreadId, Guid? ParentPostId, int Depth, Guid AuthorId, string AuthorName, string? AuthorAvatar,
+    string AuthorRole, string Content, IReadOnlyList<string> Attachments, DateTime CreatedAt, DateTime? UpdatedAt,
     int LikeCount, int DislikeCount, string? CurrentUserReaction);
 
 public record CreateThreadRequest(int CategoryId, string Title, string Content);
-public record CreatePostRequest(string Content);
+public record CreatePostRequest(string Content, Guid? ParentPostId = null, List<string>? Attachments = null);
 public record UpdatePostRequest(string Content);
 public record ReactRequest(string ReactionType);       // like | dislike
 public record ReportPostReq(string Reason);

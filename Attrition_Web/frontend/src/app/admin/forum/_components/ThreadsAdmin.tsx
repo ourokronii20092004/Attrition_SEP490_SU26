@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useConfirm } from "@/lib/providers";
 import { forumApi } from "@/lib/api/forum";
@@ -53,11 +54,11 @@ export function ThreadsAdmin() {
       {threads.map((t) => (
         <div key={t.id} className="card flex items-center justify-between gap-3 p-4">
           <div className="min-w-0">
-            <p className="truncate font-medium text-fg">
+            <Link href={`/admin/forum/threads/${t.id}`} className="block truncate font-medium text-fg transition-colors hover:text-accent">
               {t.isPinned && <span className="mr-1 text-accent">[Pinned]</span>}
               {t.isLocked && <span className="mr-1 text-warning">[Locked]</span>}
               {t.title}
-            </p>
+            </Link>
             <p className="text-xs text-fg-muted">{t.authorName ?? "Unknown"} · {t.replyCount} replies · {formatDate(t.lastReplyAt)}</p>
           </div>
           <div className="flex shrink-0 gap-2">

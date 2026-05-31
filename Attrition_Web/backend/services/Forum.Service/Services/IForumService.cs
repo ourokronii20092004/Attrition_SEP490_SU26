@@ -37,6 +37,7 @@ public interface IForumService
     // Category management (admin)
     Task<ApiResponse<int>> CreateCategoryAsync(ForumCategoryRequest request);
     Task<ApiResponse> UpdateCategoryAsync(int id, ForumCategoryRequest request);
+    Task<ApiResponse> DeleteCategoryAsync(int id);
 
     // Aggregator support
     Task<List<ForumPostSearchDto>> SearchAsync(string query, int limit);

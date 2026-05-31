@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useConfirm } from "@/lib/providers";
 import { wikiApi } from "@/lib/api/wiki";
 import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/ui/modal";
 import { PageLoader } from "@/components/ui/spinner";
 import { formatDate } from "@/lib/format-date";
 import { qk } from "@/lib/query-keys";
@@ -51,14 +52,21 @@ export function ArticlesAdmin() {
       <div className="mb-4 flex justify-end">
         <Button onClick={() => setEditing("new")}>New Article</Button>
       </div>
-      {editing && (
-        <ArticleEditor
-          article={editing === "new" ? null : editing}
-          categories={categories}
-          onDone={() => { setEditing(null); invalidate(); }}
-          onCancel={() => setEditing(null)}
-        />
-      )}
+      <Modal
+        open={editing != null}
+        onClose={() => setEditing(null)}
+        title={editing === "new" ? "New Article" : "Edit Article"}
+        size="lg"
+      >
+        {editing && (
+          <ArticleEditor
+            article={editing === "new" ? null : editing}
+            categories={categories}
+            onDone={() => { setEditing(null); invalidate(); }}
+            onCancel={() => setEditing(null)}
+          />
+        )}
+      </Modal>
       <div className="space-y-2">
         {articles.map((a) => (
           <div key={a.id} className="card flex items-center justify-between p-4">

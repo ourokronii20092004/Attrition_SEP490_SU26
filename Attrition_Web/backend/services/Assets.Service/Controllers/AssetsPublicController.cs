@@ -1,6 +1,7 @@
 using Assets.Service.DTOs;
 using Assets.Service.Services;
 using BuildingBlocks.Contracts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Assets.Service.Controllers;
@@ -25,5 +26,15 @@ public class AssetsPublicController : ControllerBase
         return asset == null
             ? NotFound(ApiResponse.Fail("Asset not found."))
             : Ok(ApiResponse<AssetDto>.Ok(asset));
+    }
+
+    /// <summary>Inline image upload for any logged-in user (e.g. forum post images). Returns the
+    /// public URL; no gallery/Asset row is created.</summary>
+    [Authorize]
+    [HttpPost("inline-image")]
+    public async Task<IActionResult> UploadInlineImage([FromForm] IFormFile file)
+    {
+        var result = await _assets.UploadInlineImageAsync(file);
+        return result.Success ? Ok(result) : BadRequest(result);
     }
 }

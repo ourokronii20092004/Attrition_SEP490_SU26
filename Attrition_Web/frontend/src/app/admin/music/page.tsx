@@ -11,6 +11,7 @@ import { resolveMediaUrl } from "@/lib/api/media";
 import { parseApiError } from "@/lib/api/parse-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Modal } from "@/components/ui/modal";
 import { PageLoader } from "@/components/ui/spinner";
 import { qk } from "@/lib/query-keys";
 import { TrackUploadFlow } from "./track-upload-flow";
@@ -82,7 +83,9 @@ export default function AdminMusicPage() {
           <Button size="sm" onClick={() => setShowAlbumForm(true)}>New Album</Button>
         </div>
         {showAlbumForm && (
-          <AlbumForm onDone={() => { setShowAlbumForm(false); invalidate(); }} onCancel={() => setShowAlbumForm(false)} />
+          <Modal open={showAlbumForm} onClose={() => setShowAlbumForm(false)} title="New Album">
+            <AlbumForm onDone={() => { setShowAlbumForm(false); invalidate(); }} onCancel={() => setShowAlbumForm(false)} />
+          </Modal>
         )}
         <div className="mt-4 space-y-2">
           {albums.map((album) => (
@@ -106,7 +109,9 @@ export default function AdminMusicPage() {
           <Button size="sm" onClick={() => setShowTrackUpload(true)}>Upload Track</Button>
         </div>
         {showTrackUpload && (
-          <TrackUploadFlow albums={albums} onDone={() => { setShowTrackUpload(false); invalidate(); }} onCancel={() => setShowTrackUpload(false)} />
+          <Modal open={showTrackUpload} onClose={() => setShowTrackUpload(false)} title="Upload Track" size="lg">
+            <TrackUploadFlow albums={albums} onDone={() => { setShowTrackUpload(false); invalidate(); }} onCancel={() => setShowTrackUpload(false)} />
+          </Modal>
         )}
         <div className="mt-4 space-y-2">
           {tracks.map((track) => (
@@ -153,7 +158,7 @@ function AlbumForm({ onDone, onCancel }: { onDone: () => void; onCancel: () => v
   });
 
   return (
-    <form onSubmit={onSubmit} className="card mt-4 space-y-3 p-4">
+    <form onSubmit={onSubmit} className="space-y-3">
       {error && <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>}
       <Input label="Title" error={errors.title?.message} {...register("title")} />
       <Input label="Description" {...register("description")} />

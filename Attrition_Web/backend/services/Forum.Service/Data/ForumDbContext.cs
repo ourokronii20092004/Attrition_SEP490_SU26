@@ -36,6 +36,7 @@ public class ForumDbContext : DbContext
         {
             e.HasKey(p => p.Id);
             e.HasIndex(p => p.ThreadId);
+            e.HasIndex(p => p.ParentPostId);
         });
 
         modelBuilder.Entity<ForumReaction>(e =>

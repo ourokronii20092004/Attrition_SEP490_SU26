@@ -136,6 +136,7 @@ services:
     environment:
       <<: [ *jwt-env, *redis-env ]
       ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=${POSTGRES_DB:-attrition};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
+      Services__Identity: "http://identity-service:8080/"
     depends_on:
       postgres: { condition: service_healthy }
 

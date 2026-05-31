@@ -54,7 +54,7 @@ export function EditForm({ asset, onDone, onCancel }: { asset: AssetDto; onDone:
   });
 
   return (
-    <form onSubmit={onSubmit} className="mt-4 card p-4 space-y-3">
+    <form onSubmit={onSubmit} className="space-y-3">
       <h3 className="text-sm font-medium text-fg">Edit: {asset.fileName}</h3>
       {error && <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>}
       <Input label="Title" error={errors.title?.message} {...register("title")} />

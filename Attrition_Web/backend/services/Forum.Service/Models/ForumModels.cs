@@ -45,6 +45,11 @@ public class ForumPost
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid ThreadId { get; set; }
 
+    // Reddit-style nesting: a reply points at its parent post (null = top-level reply to the
+    // thread). Depth is denormalized for cheap indent rendering and to cap nesting.
+    public Guid? ParentPostId { get; set; }
+    public int Depth { get; set; }
+
     public Guid AuthorId { get; set; }
     public string? AuthorName { get; set; }
     public string? AuthorAvatar { get; set; }

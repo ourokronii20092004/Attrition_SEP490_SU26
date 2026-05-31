@@ -2,17 +2,19 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Search, X } from "lucide-react";
+import { Search, X, CornerDownLeft } from "lucide-react";
 import { searchApi } from "@/lib/api/search";
-import type { GlobalSearchResponse, SearchWikiResultDto, SearchUserResultDto, SearchPostResultDto, SearchEnemyResultDto } from "@/lib/types";
+import type { GlobalSearchResponse, SearchWikiResultDto, SearchUserResultDto, SearchPostResultDto, SearchEnemyResultDto, SearchSuggestionDto } from "@/lib/types";
 
 export function SearchModal({ onClose }: { onClose: () => void }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<GlobalSearchResponse | null>(null);
+  const [suggestions, setSuggestions] = useState<SearchSuggestionDto[]>([]);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const suggestRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -38,9 +40,19 @@ export function SearchModal({ onClose }: { onClose: () => void }) {
       .finally(() => setLoading(false));
   }, []);
 
+  const doSuggest = useCallback((q: string) => {
+    if (q.trim().length < 2) { setSuggestions([]); return; }
+    searchApi.suggest(q.trim())
+      .then((res) => { if (res.success) setSuggestions(res.data); })
+      .catch(() => {});
+  }, []);
+
   const handleChange = (val: string) => {
     setQuery(val);
     if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (suggestRef.current) clearTimeout(suggestRef.current);
+    // Suggestions feel instant (150ms); the heavier full result set follows (300ms).
+    suggestRef.current = setTimeout(() => doSuggest(val), 150);
     debounceRef.current = setTimeout(() => doSearch(val), 300);
   };
 
@@ -81,7 +93,24 @@ export function SearchModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="mt-3 max-h-80 overflow-y-auto">
-          {loading && <p className="py-4 text-center text-sm text-fg-muted">Searching...</p>}
+          {loading && suggestions.length === 0 && <p className="py-4 text-center text-sm text-fg-muted">Searching...</p>}
+
+          {/* Quick suggestions: appear fast (150ms) while the full result set loads. */}
+          {suggestions.length > 0 && !hasResults && (
+            <div className="space-y-0.5">
+              {suggestions.map((s, i) => (
+                <button
+                  key={`${s.url}-${i}`}
+                  onClick={() => navigate(s.url)}
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm transition-colors hover:bg-surface-2"
+                >
+                  <CornerDownLeft size={13} className="shrink-0 text-fg-subtle" />
+                  <span className="flex-1 truncate text-fg">{s.label}</span>
+                  <span className="shrink-0 text-[10px] uppercase tracking-wider text-fg-subtle">{s.type}</span>
+                </button>
+              ))}
+            </div>
+          )}
 
           {!loading && query.trim().length < 2 && (
             <p className="px-1 py-3 text-xs text-fg-subtle">

@@ -1,8 +1,10 @@
 using System.Linq.Expressions;
+using System.Text.RegularExpressions;
 using BuildingBlocks.Caching;
 using BuildingBlocks.Contracts;
 using BuildingBlocks.Persistence;
 using BuildingBlocks.Web;
+using Forum.Service.Clients;
 using Forum.Service.DTOs;
 using Forum.Service.Models;
 using Forum.Service.Repositories;
@@ -18,6 +20,7 @@ public class ForumService : IForumService
     private readonly IRepository<ThreadSubscription> _subRepo;
     private readonly IRepository<PostReport> _reportRepo;
     private readonly ICacheService _cache;
+    private readonly NotificationClient _notify;
 
     public ForumService(
         IForumRepository threadRepo,
@@ -26,7 +29,8 @@ public class ForumService : IForumService
         IRepository<ForumReaction> reactionRepo,
         IRepository<ThreadSubscription> subRepo,
         IRepository<PostReport> reportRepo,
-        ICacheService cache)
+        ICacheService cache,
+        NotificationClient notify)
     {
         _threadRepo = threadRepo;
         _categoryRepo = categoryRepo;
@@ -35,7 +39,11 @@ public class ForumService : IForumService
         _subRepo = subRepo;
         _reportRepo = reportRepo;
         _cache = cache;
+        _notify = notify;
     }
+
+    // @username tokens to notify (letters/digits/underscore — matching the username rule).
+    private static readonly Regex MentionPattern = new(@"@([a-zA-Z0-9_]+)", RegexOptions.Compiled);
 
     public async Task<List<ForumCategoryDto>> GetCategoriesAsync()
     {
@@ -56,6 +64,29 @@ public class ForumService : IForumService
     }
 
     private Task InvalidateCategoriesAsync() => _cache.RemoveAsync("categories");
+
+    // Attachments are stored as a JSON array of public image URLs. Cap count + only accept the
+    // app's own media URLs (inline-image upload) so a post can't embed arbitrary external content.
+    private static IReadOnlyList<string> ParseAttachments(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return System.Array.Empty<string>();
+        try
+        {
+            var list = System.Text.Json.JsonSerializer.Deserialize<List<string>>(raw);
+            return list ?? (IReadOnlyList<string>)System.Array.Empty<string>();
+        }
+        catch { return System.Array.Empty<string>(); }
+    }
+
+    private static string? SerializeAttachments(List<string>? urls)
+    {
+        if (urls == null || urls.Count == 0) return null;
+        var clean = urls
+            .Where(u => u.StartsWith("/api/", System.StringComparison.Ordinal))  // app-relative media only
+            .Take(10)
+            .ToList();
+        return clean.Count == 0 ? null : System.Text.Json.JsonSerializer.Serialize(clean);
+    }
 
     public async Task<PaginatedResponse<ForumThreadListDto>> GetThreadsAsync(string? categorySlug, string? search, int page, int pageSize, Guid? authorId = null)
     {
@@ -109,8 +140,8 @@ public class ForumService : IForumService
         var items = posts.Select(p =>
         {
             var postReactions = reactions.Where(r => r.PostId == p.Id).ToList();
-            return new ForumPostDto(p.Id, p.ThreadId, p.AuthorId, p.AuthorName ?? "Unknown",
-                p.AuthorAvatar, p.AuthorRole, p.Content, p.CreatedAt, p.UpdatedAt,
+            return new ForumPostDto(p.Id, p.ThreadId, p.ParentPostId, p.Depth, p.AuthorId, p.AuthorName ?? "Unknown",
+                p.AuthorAvatar, p.AuthorRole, p.Content, ParseAttachments(p.Attachments), p.CreatedAt, p.UpdatedAt,
                 postReactions.Count(r => r.ReactionType == ReactionType.Like),
                 postReactions.Count(r => r.ReactionType == ReactionType.Dislike),
                 currentUserId.HasValue ? postReactions.FirstOrDefault(r => r.UserId == currentUserId.Value)?.ReactionType : null);
@@ -156,14 +187,33 @@ public class ForumService : IForumService
         if (thread == null) return ApiResponse.Fail("Thread not found.");
         if (thread.IsLocked) return ApiResponse.Fail("Thread is locked.");
 
+        // Resolve nesting: a reply to a parent post inherits depth+1 (capped so the UI indent
+        // stays sane — deeper replies still thread, just stop indenting). Parent must be in this thread.
+        const int MaxDepth = 8;
+        Guid? parentPostId = null;
+        var depth = 0;
+        Guid? parentAuthorId = null;
+        if (request.ParentPostId is { } pid)
+        {
+            var parent = await _postRepo.GetByIdAsync(pid);
+            if (parent == null || parent.ThreadId != threadId)
+                return ApiResponse.Fail("The post you're replying to no longer exists.");
+            parentPostId = pid;
+            depth = Math.Min(parent.Depth + 1, MaxDepth);
+            parentAuthorId = parent.AuthorId;
+        }
+
         await _postRepo.AddAsync(new ForumPost
         {
             ThreadId = threadId,
+            ParentPostId = parentPostId,
+            Depth = depth,
             AuthorId = author.Id,
             AuthorName = author.Name,
             AuthorAvatar = author.Avatar,
             AuthorRole = author.Role,
-            Content = ContentSanitizer.Sanitize(request.Content)
+            Content = ContentSanitizer.Sanitize(request.Content),
+            Attachments = SerializeAttachments(request.Attachments)
         });
 
         await _threadRepo.IncrementReplyCountAsync(threadId, DateTime.UtcNow);
@@ -176,6 +226,23 @@ public class ForumService : IForumService
         // NOTE: reply-notification emails dropped — Forum no longer has access to subscriber emails
         // (lives in Identity now). Subscriptions are kept as data for a future notification service.
         await InvalidateCategoriesAsync();
+
+        // Dispatch notifications (fire-and-forget; never blocks/fails the post).
+        var link = $"/forum/{threadId}";
+        // Reply: notify the parent post's author, unless replying to oneself.
+        if (parentAuthorId is { } pa && pa != author.Id)
+            await _notify.NotifyUserAsync(pa, "reply",
+                $"{author.Name} replied to your post", link, author.Name, default);
+
+        // @mentions: notify each distinct mentioned username (skip self-mention).
+        var mentioned = MentionPattern.Matches(request.Content)
+            .Select(m => m.Groups[1].Value)
+            .Where(u => !string.Equals(u, author.Name, StringComparison.OrdinalIgnoreCase))
+            .Distinct(StringComparer.OrdinalIgnoreCase);
+        foreach (var username in mentioned)
+            await _notify.NotifyUsernameAsync(username, "mention",
+                $"{author.Name} mentioned you in a post", link, author.Name, default);
+
         return ApiResponse.Ok();
     }
 
@@ -442,6 +509,21 @@ public class ForumService : IForumService
             // Lost the slug race between the check above and save.
             return ApiResponse.Fail("A category with a similar name already exists.");
         }
+        await InvalidateCategoriesAsync();
+        return ApiResponse.Ok();
+    }
+
+    public async Task<ApiResponse> DeleteCategoryAsync(int id)
+    {
+        var category = await _threadRepo.GetCategoryByIdAsync(id);
+        if (category == null) return ApiResponse.Fail("Category not found.");
+
+        // Refuse to delete a category that still has threads — deleting it would orphan them.
+        var threadCount = await _threadRepo.CountAsync(t => t.CategoryId == id);
+        if (threadCount > 0)
+            return ApiResponse.Fail("This category still has threads. Move or delete them first.");
+
+        await _categoryRepo.DeleteAsync(category);
         await InvalidateCategoriesAsync();
         return ApiResponse.Ok();
     }

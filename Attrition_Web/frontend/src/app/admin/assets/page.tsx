@@ -6,6 +6,7 @@ import { useAuth, useConfirm } from "@/lib/providers";
 import { assetsApi } from "@/lib/api/assets";
 import { resolveMediaUrl } from "@/lib/api/media";
 import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/ui/modal";
 import { PageLoader } from "@/components/ui/spinner";
 import { qk } from "@/lib/query-keys";
 import type { AssetDto } from "@/lib/types";
@@ -52,8 +53,12 @@ export default function AdminAssetsPage() {
         <Button onClick={() => setShowUpload(true)}>Upload Asset</Button>
       </div>
 
-      {showUpload && <UploadForm onDone={() => { setShowUpload(false); invalidate(); }} onCancel={() => setShowUpload(false)} />}
-      {editing && <EditForm asset={editing} onDone={() => { setEditing(null); invalidate(); }} onCancel={() => setEditing(null)} />}
+      <Modal open={showUpload} onClose={() => setShowUpload(false)} title="Upload Asset">
+        <UploadForm onDone={() => { setShowUpload(false); invalidate(); }} onCancel={() => setShowUpload(false)} />
+      </Modal>
+      <Modal open={editing != null} onClose={() => setEditing(null)} title="Edit Asset">
+        {editing && <EditForm asset={editing} onDone={() => { setEditing(null); invalidate(); }} onCancel={() => setEditing(null)} />}
+      </Modal>
 
       {loading ? (
         <PageLoader />

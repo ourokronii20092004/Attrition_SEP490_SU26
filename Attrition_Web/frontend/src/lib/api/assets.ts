@@ -39,4 +39,11 @@ export const assetsApi = {
 
   delete: (id: string) =>
     apiFetch<ApiResponse<void>>(`/api/admin/assets/${id}`, { method: "DELETE" }),
+
+  // Inline image upload for any logged-in user (e.g. forum post images). Returns the public URL.
+  uploadInlineImage: (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return apiFetch<ApiResponse<string>>("/api/assets/inline-image", { method: "POST", body: form });
+  },
 };

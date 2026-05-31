@@ -92,7 +92,7 @@ export function TrackUploadFlow({ albums, onDone, onCancel }: Props) {
 
   if (step === "pick") {
     return (
-      <div className="card mt-4 space-y-3 p-4">
+      <div className="space-y-3">
         <label className="block text-sm font-medium text-fg-muted">Audio file</label>
         <input
           type="file"
@@ -109,7 +109,7 @@ export function TrackUploadFlow({ albums, onDone, onCancel }: Props) {
   }
 
   return (
-    <div className="card mt-4 space-y-3 p-4">
+    <div className="space-y-3">
       <div className="flex items-center gap-3">
         {scan?.tempCoverPath
           ? <img src={resolveMediaUrl(scan.tempCoverPath) ?? ""} alt="" className="h-16 w-16 rounded-lg object-cover" />

@@ -40,7 +40,7 @@ export const forumApi = {
     if (params?.page) sp.set("page", String(params.page));
     if (params?.pageSize) sp.set("pageSize", String(params.pageSize));
     const qs = sp.toString();
-    return apiFetch<ApiResponse<PaginatedResponse<ForumPostDto>>>(`/api/forum/threads/${threadId}/posts${qs ? `?${qs}` : ""}`, { auth: false });
+    return apiFetch<ApiResponse<PaginatedResponse<ForumPostDto>>>(`/api/forum/threads/${threadId}/posts${qs ? `?${qs}` : ""}`);
   },
 
   createThread: (data: CreateThreadRequest) =>
@@ -76,6 +76,9 @@ export const forumApi = {
 
   updateCategory: (id: number, data: ForumCategoryRequest) =>
     apiFetch<ApiResponse<ForumCategoryDto>>(`/api/forum/categories/${id}`, { method: "PUT", body: data }),
+
+  deleteCategory: (id: number) =>
+    apiFetch<ApiResponse<void>>(`/api/forum/categories/${id}`, { method: "DELETE" }),
 
   // Admin moderation (paginated)
   getAdminThreads: (params?: { page?: number; pageSize?: number }) => {

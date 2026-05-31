@@ -22,10 +22,11 @@ builder.Services.AddDbContext<MusicDbContext>(opt =>
         {
             npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "music");
             // Survive transient Postgres blips by retrying instead of erroring the user.
-            npgsql.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(5), errorCodesToAdd: null);
+            npgsql.EnableRetryOnFailure(maxRetryCount: 3, maxRetryDelay: TimeSpan.FromSeconds(2), errorCodesToAdd: null);
         }));
 
 builder.Services.AddScoped<DbContext>(sp => sp.GetRequiredService<MusicDbContext>());
+builder.Services.AddDbWarmup();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IAlbumService, AlbumService>();
 builder.Services.AddScoped<ITrackService, TrackService>();
