@@ -8,6 +8,7 @@ import { adminApi } from "@/lib/api/admin";
 import { Card } from "@/components/ui/card";
 import { PageTitle } from "@/components/ui/page-title";
 import { Skeleton } from "@/components/ui/skeleton";
+import { qk } from "@/lib/query-keys";
 import { getLastAdminPage } from "./admin-top-bar";
 import { adminLabelFor } from "./admin-routes";
 
@@ -15,7 +16,7 @@ export default function AdminPage() {
   const [resume, setResume] = useState<string | null>(null);
 
   const { data: stats, isPending: loading } = useQuery({
-    queryKey: ["admin", "stats"],
+    queryKey: qk.admin.stats(),
     queryFn: async () => {
       const res = await adminApi.getStats();
       return res.success ? res.data : null;

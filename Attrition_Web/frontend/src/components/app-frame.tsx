@@ -2,12 +2,18 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
+import dynamic from "next/dynamic";
 import { useAuth } from "@/lib/providers";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import { AudioPlayer } from "@/components/audio-player";
 import { VerifyEmailBanner } from "@/components/verify-email-banner";
 import { PageLoader } from "@/components/ui/spinner";
+
+// The audio player is a heavy, client-only island (zustand state, range streaming, no SSR
+// value). Lazy-load it so it doesn't ship in the initial bundle / first paint.
+const AudioPlayer = dynamic(() => import("@/components/audio-player").then((m) => m.AudioPlayer), {
+  ssr: false,
+});
 
 /**
  * Renders the public site chrome (header, footer, music player) for all routes

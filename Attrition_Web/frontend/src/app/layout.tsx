@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { Inter, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+// Self-hosted fonts via @fontsource (woff2 bundled in node_modules) — no build-time fetch to
+// fonts.gstatic.com, which is blocked on the deploy network and warned on every build.
+import "@fontsource-variable/inter";
+import "@fontsource-variable/plus-jakarta-sans";
+import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { AppFrame } from "@/components/app-frame";
 import { SITE_NAME, SITE_TAGLINE } from "@/lib/config";
-
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
-const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-jakarta", display: "swap", weight: ["500", "600", "700", "800"] });
-const jetbrains = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains", display: "swap" });
 
 export const metadata: Metadata = {
   title: { default: SITE_NAME, template: `%s | ${SITE_NAME}` },
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" data-theme="dark" data-accent="corruption" suppressHydrationWarning>
-      <body className={`${inter.variable} ${jakarta.variable} ${jetbrains.variable} font-sans antialiased`}>
+      <body className="font-sans antialiased">
         <Providers>
           <a
             href="#main-content"

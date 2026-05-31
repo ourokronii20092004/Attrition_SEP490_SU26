@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { qk } from "@/lib/query-keys";
 
 const schema = z.object({
   suggestedContent: z.string().min(10, "Content too short"),
@@ -35,7 +36,7 @@ export default function SuggestEditPage() {
   });
 
   const { data: article, isPending } = useQuery({
-    queryKey: ["wiki", "article", params.slug],
+    queryKey: qk.wiki.article(params.slug),
     enabled: !!params.slug,
     queryFn: async () => {
       const res = await wikiApi.getArticle(params.slug);

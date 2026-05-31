@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/providers";
 import { Button } from "@/components/ui/button";
 import { PageLoader } from "@/components/ui/spinner";
 import { formatDate } from "@/lib/format-date";
+import { qk } from "@/lib/query-keys";
 
 export default function AdminUsersPage() {
   const { user: me } = useAuth();
@@ -14,7 +15,7 @@ export default function AdminUsersPage() {
   const [page, setPage] = useState(1);
 
   const { data: users, isPending: loading } = useQuery({
-    queryKey: ["admin", "users", page],
+    queryKey: qk.admin.users(page),
     enabled: me?.role === "Admin",
     queryFn: async () => {
       const res = await adminApi.getUsers({ page, pageSize: 20 });
@@ -29,7 +30,7 @@ export default function AdminUsersPage() {
       await adminApi.toggleBan(userId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+      queryClient.invalidateQueries({ queryKey: qk.admin.users() });
     },
   });
 
@@ -38,7 +39,7 @@ export default function AdminUsersPage() {
       await adminApi.setUserRole(userId, role);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+      queryClient.invalidateQueries({ queryKey: qk.admin.users() });
     },
   });
 

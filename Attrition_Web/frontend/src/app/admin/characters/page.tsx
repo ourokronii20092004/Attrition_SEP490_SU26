@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/providers";
 import { PageLoader } from "@/components/ui/spinner";
 import { SnapshotTimeline } from "@/components/snapshot-timeline";
 import { formatDateTime } from "@/lib/format-date";
+import { qk } from "@/lib/query-keys";
 import type { AdminCharacterDto, SnapshotDto } from "@/lib/types";
 
 export default function AdminCharactersPage() {
@@ -16,7 +17,7 @@ export default function AdminCharactersPage() {
   const [search, setSearch] = useState("");
 
   const { data, isPending: loading } = useQuery({
-    queryKey: ["admin", "characters", page],
+    queryKey: qk.admin.characters(page),
     enabled: user?.role === "Admin",
     queryFn: async () => {
       const res = await charactersApi.getAll({ page, pageSize: 30 });
@@ -85,7 +86,7 @@ function AdminCharacterRow({ character }: { character: AdminCharacterDto }) {
   const snap = character.latestSnapshot;
 
   const { data: detail, isFetching: loadingDetail } = useQuery({
-    queryKey: ["admin", "character", character.id],
+    queryKey: qk.admin.character(character.id),
     enabled: expanded,
     queryFn: async () => {
       const res = await charactersApi.getAdmin(character.id);

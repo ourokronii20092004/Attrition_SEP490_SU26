@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatDate } from "@/lib/format-date";
+import { qk } from "@/lib/query-keys";
 import { ProfileActivity } from "./profile-activity";
 import { ProfileBanner, ProfileAvatar, ProfileName } from "./profile-edit";
 
@@ -17,7 +18,7 @@ export default function ProfilePage() {
   const { user, refreshUser } = useAuth();
 
   const { data: profile, isPending, refetch } = useQuery({
-    queryKey: ["profile", params.username],
+    queryKey: qk.profile(params.username),
     enabled: !!params.username,
     queryFn: async () => {
       const res = await accountApi.getProfile(params.username);

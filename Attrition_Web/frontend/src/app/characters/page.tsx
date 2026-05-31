@@ -13,6 +13,7 @@ import { SkeletonList } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SnapshotTimeline } from "@/components/snapshot-timeline";
 import { RelativeTime } from "@/components/ui/relative-time";
+import { qk } from "@/lib/query-keys";
 import type { CharacterSummaryDto, SnapshotDto } from "@/lib/types";
 
 export default function CharactersPage() {
@@ -25,7 +26,7 @@ export default function CharactersPage() {
   }, [user, authLoading, router]);
 
   const { data: characters = [], isPending } = useQuery({
-    queryKey: ["characters", "mine"],
+    queryKey: qk.characters.mine(),
     enabled: !!user && !authLoading,
     queryFn: async () => {
       const res = await charactersApi.getMine();
@@ -65,7 +66,7 @@ function CharacterCard({ character }: { character: CharacterSummaryDto }) {
   const snap = character.latestSnapshot;
 
   const { data: detail, isFetching: loadingDetail } = useQuery({
-    queryKey: ["character", character.id],
+    queryKey: qk.characters.detail(character.id),
     enabled: expanded,
     queryFn: async () => {
       const res = await charactersApi.get(character.id);

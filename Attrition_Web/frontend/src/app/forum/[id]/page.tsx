@@ -7,6 +7,7 @@ import Link from "next/link";
 import { ArrowLeft, ThumbsUp, ThumbsDown, Flag, Lock } from "lucide-react";
 import { forumApi } from "@/lib/api/forum";
 import { useAuth } from "@/lib/providers";
+import { useToast } from "@/lib/providers";
 import { PageShell } from "@/components/ui/page-shell";
 import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
@@ -14,10 +15,12 @@ import { Button } from "@/components/ui/button";
 import { SkeletonList, Skeleton } from "@/components/ui/skeleton";
 import { Pagination } from "@/components/ui/pagination";
 import { RelativeTime } from "@/components/ui/relative-time";
+import { qk } from "@/lib/query-keys";
 
 export default function ThreadPage() {
   const params = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [replyContent, setReplyContent] = useState("");
@@ -25,7 +28,7 @@ export default function ThreadPage() {
   const [reportingId, setReportingId] = useState<string | null>(null);
 
   const { data: thread } = useQuery({
-    queryKey: ["forum", "thread", params.id],
+    queryKey: qk.forum.thread(params.id),
     enabled: !!params.id,
     queryFn: async () => {
       const res = await forumApi.getThread(params.id);
@@ -34,7 +37,7 @@ export default function ThreadPage() {
   });
 
   const { data: posts, isPending } = useQuery({
-    queryKey: ["forum", "posts", params.id, page],
+    queryKey: qk.forum.postsPage(params.id, page),
     enabled: !!params.id,
     queryFn: async () => {
       const res = await forumApi.getPosts(params.id, { page, pageSize: 20 });
@@ -50,7 +53,7 @@ export default function ThreadPage() {
     },
     onSuccess: () => {
       setReplyContent("");
-      queryClient.invalidateQueries({ queryKey: ["forum", "posts", params.id] });
+      queryClient.invalidateQueries({ queryKey: qk.forum.posts(params.id) });
     },
     onError: () => {
       setActionError("Failed to post reply. Please try again.");
@@ -62,7 +65,7 @@ export default function ThreadPage() {
       await forumApi.react(postId, { reactionType: type });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["forum", "posts", params.id] });
+      queryClient.invalidateQueries({ queryKey: qk.forum.posts(params.id) });
     },
     onError: () => {
       setActionError("Failed to register your reaction. Please try again.");
@@ -74,10 +77,10 @@ export default function ThreadPage() {
       await forumApi.report(postId, { reason });
     },
     onSuccess: () => {
-      window.alert("Report submitted. Thank you.");
+      toast("Report submitted. Thank you.", "success");
     },
     onError: () => {
-      setActionError("Failed to submit report. Please try again.");
+      toast("Failed to submit report. Please try again.", "error");
     },
     onSettled: () => {
       setReportingId(null);

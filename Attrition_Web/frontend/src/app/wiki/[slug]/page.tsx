@@ -13,13 +13,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatDate } from "@/lib/format-date";
 import { useAuth } from "@/lib/providers";
+import { qk } from "@/lib/query-keys";
 
 export default function WikiArticlePage() {
   const params = useParams<{ slug: string }>();
   const { user } = useAuth();
 
   const { data: article, isPending } = useQuery({
-    queryKey: ["wiki", "article", params.slug],
+    queryKey: qk.wiki.article(params.slug),
     enabled: !!params.slug,
     queryFn: async () => {
       const res = await wikiApi.getArticle(params.slug);

@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { SkeletonGrid } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Pagination } from "@/components/ui/pagination";
+import { qk } from "@/lib/query-keys";
 
 export default function GalleryPage() {
   const [page, setPage] = useState(1);
@@ -18,7 +19,7 @@ export default function GalleryPage() {
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
   const { data: assets, isPending } = useQuery({
-    queryKey: ["assets", page],
+    queryKey: qk.assets.list(page),
     queryFn: async () => {
       const res = await assetsApi.list({ page, pageSize: 18 });
       return res.success ? res.data : null;

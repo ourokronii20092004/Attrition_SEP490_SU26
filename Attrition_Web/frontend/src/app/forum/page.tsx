@@ -15,6 +15,7 @@ import { Pagination } from "@/components/ui/pagination";
 import { FilterPills } from "@/components/ui/filter-pills";
 import { RelativeTime } from "@/components/ui/relative-time";
 import { useAuth } from "@/lib/providers";
+import { qk } from "@/lib/query-keys";
 
 export default function ForumPage() {
   const { user } = useAuth();
@@ -22,7 +23,7 @@ export default function ForumPage() {
   const [page, setPage] = useState(1);
 
   const { data: categories = [] } = useQuery({
-    queryKey: ["forum", "categories"],
+    queryKey: qk.forum.categories(),
     queryFn: async () => {
       const res = await forumApi.getCategories();
       return res.success ? res.data ?? [] : [];
@@ -30,7 +31,7 @@ export default function ForumPage() {
   });
 
   const { data: threads, isPending } = useQuery({
-    queryKey: ["forum", "threads", { selectedCategory, page }],
+    queryKey: qk.forum.threads({ selectedCategory, page }),
     queryFn: async () => {
       const res = await forumApi.getThreads({ categoryId: selectedCategory ?? undefined, page, pageSize: 15 });
       return res.success ? res.data : null;
