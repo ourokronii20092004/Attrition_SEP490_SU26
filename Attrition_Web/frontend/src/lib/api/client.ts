@@ -25,10 +25,18 @@ async function ensureCsrf(): Promise<void> {
 
 async function attemptRefresh(): Promise<boolean> {
   try {
+    // /refresh is a cookie-authenticated POST, so it must carry the double-submit CSRF header
+    // when the access cookie is still present (e.g. clock skew: server says 401 but the access
+    // cookie hasn't expired client-side yet). Without this the refresh is blocked with 403.
+    await ensureCsrf();
+    const csrf = readCookie(CSRF_COOKIE);
     const res = await fetch(`${API_BASE}/api/auth/refresh`, {
       method: "POST",
       credentials: "include",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(csrf ? { "X-CSRF": csrf } : {}),
+      },
       body: "{}",
     });
     return res.ok;
