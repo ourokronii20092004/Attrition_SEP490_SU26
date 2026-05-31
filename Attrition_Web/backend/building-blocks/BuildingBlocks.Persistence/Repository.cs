@@ -85,6 +85,15 @@ public class Repository<T> : IRepository<T> where T : class
 
         int totalCount = await query.CountAsync();
 
+        // Clamp the requested page to the last real page so a hostile/absurd page number
+        // (e.g. ?page=500000) can't make Postgres scan-and-discard tens of millions of rows
+        // via a huge OFFSET. Past the end → an empty page with no deep skip.
+        if (totalCount == 0)
+            return (new List<T>(), 0);
+        var lastPage = (totalCount + pageSize - 1) / pageSize;
+        if (page > lastPage)
+            return (new List<T>(), totalCount);
+
         if (orderBy != null)
             query = orderBy(query);
 
