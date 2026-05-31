@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { ArrowLeft, Play, Pause, Download, Music as MusicIcon } from "lucide-react";
 import { musicApi, getDownloadUrl } from "@/lib/api/music";
@@ -11,27 +11,22 @@ import { PageShell } from "@/components/ui/page-shell";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
-import type { AlbumDetailDto, MusicTrackDto } from "@/lib/types";
+import type { MusicTrackDto } from "@/lib/types";
 
 export default function AlbumPage() {
   const params = useParams<{ id: string }>();
-  const [album, setAlbum] = useState<AlbumDetailDto | null>(null);
-  const [loading, setLoading] = useState(true);
   const { play, pause, resume, currentTrack, isPlaying } = useAudioStore();
 
-  useEffect(() => {
-    if (!params.id) return;
-    let ignore = false;
-    setLoading(true);
-    musicApi.getAlbum(Number(params.id))
-      .then((res) => {
-        if (!ignore && res.success) setAlbum(res.data);
-      })
-      .finally(() => { if (!ignore) setLoading(false); });
-    return () => { ignore = true; };
-  }, [params.id]);
+  const { data: album, isPending } = useQuery({
+    queryKey: ["album", params.id],
+    enabled: !!params.id,
+    queryFn: async () => {
+      const res = await musicApi.getAlbum(Number(params.id));
+      return res.success ? res.data : null;
+    },
+  });
 
-  if (loading) {
+  if (isPending) {
     return (
       <PageShell size="md">
         <Skeleton className="h-4 w-16" />

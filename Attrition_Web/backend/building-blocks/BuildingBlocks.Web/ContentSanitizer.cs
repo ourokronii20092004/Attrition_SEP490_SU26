@@ -1,11 +1,12 @@
 using Ganss.Xss;
 
-namespace Forum.Service.Services;
+namespace BuildingBlocks.Web;
 
 /// <summary>
-/// Server-side HTML sanitization for user-authored content (post/thread bodies). Defense-in-depth:
-/// even if the frontend renders markdown/HTML, stored content can never carry script/event-handler
-/// payloads. Strips dangerous tags/attributes while keeping basic formatting.
+/// Server-side HTML sanitization for user-authored content (forum/wiki bodies, enemy lore, etc.).
+/// Defense-in-depth: even if the frontend renders markdown/HTML, stored content can never carry
+/// script/event-handler payloads. Strips dangerous tags/attributes while keeping basic formatting.
+/// Shared so every service sanitizes identically instead of copy-pasting the allowlist.
 /// </summary>
 public static class ContentSanitizer
 {

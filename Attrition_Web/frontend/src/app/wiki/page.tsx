@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { Search, BookOpen } from "lucide-react";
 import { wikiApi } from "@/lib/api/wiki";
@@ -12,32 +13,29 @@ import { Card } from "@/components/ui/card";
 import { SkeletonGrid } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Pagination } from "@/components/ui/pagination";
-import type { WikiCategoryDto, WikiArticleListDto, PaginatedResponse } from "@/lib/types";
 
 export default function WikiPage() {
-  const [categories, setCategories] = useState<WikiCategoryDto[]>([]);
-  const [articles, setArticles] = useState<PaginatedResponse<WikiArticleListDto> | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["wiki", "categories"],
+    queryFn: async () => {
+      const res = await wikiApi.getCategories();
+      return res.success ? res.data ?? [] : [];
+    },
+  });
+
+  const { data: articles, isPending } = useQuery({
+    queryKey: ["wiki", "articles", { selectedCategory, search, page }],
+    queryFn: async () => {
+      const res = await wikiApi.getArticles({ category: selectedCategory || undefined, search: search || undefined, page, pageSize: 12 });
+      return res.success ? res.data : null;
+    },
+  });
+
   const totalPages = articles ? Math.ceil(articles.totalCount / articles.pageSize) : 0;
-
-  useEffect(() => {
-    wikiApi.getCategories().then((res) => {
-      if (res.success) setCategories(res.data ?? []);
-    });
-  }, []);
-
-  useEffect(() => {
-    setLoading(true);
-    wikiApi
-      .getArticles({ category: selectedCategory || undefined, search: search || undefined, page, pageSize: 12 })
-      .then((res) => {
-        if (res.success) setArticles(res.data);
-      })
-      .finally(() => setLoading(false));
-  }, [selectedCategory, search, page]);
 
   return (
     <PageShell>
@@ -70,7 +68,7 @@ export default function WikiPage() {
         </div>
       </div>
 
-      {loading ? (
+      {isPending ? (
         <SkeletonGrid count={6} className="mt-6 lg:grid-cols-3" />
       ) : !articles?.items.length ? (
         <EmptyState

@@ -115,6 +115,8 @@ public class AuthService : IAuthService
 
     public async Task<ApiResponse<AuthResponse>> RefreshAsync(RefreshRequest request)
     {
+        if (string.IsNullOrEmpty(request.RefreshToken))
+            return ApiResponse<AuthResponse>.Fail("Invalid or expired refresh token.");
         var hashed = TokenService.HashToken(request.RefreshToken);
         var user = await _userRepo.GetByRefreshTokenAsync(hashed);
 

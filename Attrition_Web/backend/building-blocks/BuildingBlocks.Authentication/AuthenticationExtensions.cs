@@ -49,6 +49,22 @@ public static class AuthenticationExtensions
                     RoleClaimType = ClaimTypes.Role,
                     NameClaimType = "username"
                 };
+                options.Events = new JwtBearerEvents
+                {
+                    // Web clients authenticate via an HttpOnly cookie; non-browser clients (the Unity
+                    // game client) keep using the Authorization bearer header. The header always wins;
+                    // we only fall back to the cookie when no bearer token was supplied.
+                    OnMessageReceived = context =>
+                    {
+                        if (string.IsNullOrEmpty(context.Token))
+                        {
+                            var cookieToken = context.Request.Cookies[AuthCookies.AccessToken];
+                            if (!string.IsNullOrEmpty(cookieToken))
+                                context.Token = cookieToken;
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
             });
 
         services.AddAuthorization();

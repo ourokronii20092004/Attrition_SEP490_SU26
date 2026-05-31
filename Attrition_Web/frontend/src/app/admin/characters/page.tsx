@@ -1,33 +1,37 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Heart, Coins, MapPin, ChevronDown, ChevronRight } from "lucide-react";
 import { charactersApi } from "@/lib/api/characters";
 import { useAuth } from "@/lib/providers";
 import { PageLoader } from "@/components/ui/spinner";
 import { SnapshotTimeline } from "@/components/snapshot-timeline";
 import { formatDateTime } from "@/lib/format-date";
-import type { AdminCharacterDto, CharacterDetailDto, SnapshotDto } from "@/lib/types";
+import type { AdminCharacterDto, SnapshotDto } from "@/lib/types";
 
 export default function AdminCharactersPage() {
   const { user } = useAuth();
-  const [characters, setCharacters] = useState<AdminCharacterDto[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    if (user?.role !== "Admin") return;
-    charactersApi
-      .getAll()
-      .then((res) => {
-        if (res.success) setCharacters(res.data);
-      })
-      .finally(() => setLoading(false));
-  }, [user]);
+  const { data, isPending: loading } = useQuery({
+    queryKey: ["admin", "characters", page],
+    enabled: user?.role === "Admin",
+    queryFn: async () => {
+      const res = await charactersApi.getAll({ page, pageSize: 30 });
+      return res.success ? res.data : null;
+    },
+  });
+
+  const characters = data?.items ?? [];
+  const totalPages = data?.totalPages ?? 1;
+  const totalCount = data?.totalCount ?? 0;
 
   if (!user || user.role !== "Admin") return null;
   if (loading) return <PageLoader />;
 
+  // Client-side search filters the current page only (the backend has no character search yet).
   const filtered = search.trim()
     ? characters.filter((c) =>
         c.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -37,12 +41,12 @@ export default function AdminCharactersPage() {
   return (
     <div className="mx-auto max-w-5xl">
       <h1 className="font-display text-3xl font-bold text-fg">Character Status</h1>
-      <p className="mt-2 text-fg-muted">All players&apos; characters across the game ({characters.length})</p>
+      <p className="mt-2 text-fg-muted">All players&apos; characters across the game ({totalCount})</p>
 
       <input
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search by character or owner..."
+        placeholder="Search this page by character or owner..."
         className="mt-6 w-full max-w-sm rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-fg outline-none placeholder:text-fg-subtle focus:border-accent"
       />
 
@@ -52,29 +56,44 @@ export default function AdminCharactersPage() {
         ))}
         {filtered.length === 0 && <p className="py-8 text-center text-fg-muted">No characters found.</p>}
       </div>
+
+      {totalPages > 1 && (
+        <div className="mt-6 flex items-center justify-center gap-3">
+          <button
+            disabled={page <= 1}
+            onClick={() => setPage(page - 1)}
+            className="rounded-md border border-border bg-surface-2 px-3 py-1.5 text-sm text-fg disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <span className="text-sm text-fg-muted">Page {page} of {totalPages}</span>
+          <button
+            disabled={page >= totalPages}
+            onClick={() => setPage(page + 1)}
+            className="rounded-md border border-border bg-surface-2 px-3 py-1.5 text-sm text-fg disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
 function AdminCharacterRow({ character }: { character: AdminCharacterDto }) {
   const [expanded, setExpanded] = useState(false);
-  const [detail, setDetail] = useState<CharacterDetailDto | null>(null);
-  const [loadingDetail, setLoadingDetail] = useState(false);
   const snap = character.latestSnapshot;
 
-  const toggle = async () => {
-    const next = !expanded;
-    setExpanded(next);
-    if (next && !detail) {
-      setLoadingDetail(true);
-      try {
-        const res = await charactersApi.getAdmin(character.id);
-        if (res.success) setDetail(res.data);
-      } finally {
-        setLoadingDetail(false);
-      }
-    }
-  };
+  const { data: detail, isFetching: loadingDetail } = useQuery({
+    queryKey: ["admin", "character", character.id],
+    enabled: expanded,
+    queryFn: async () => {
+      const res = await charactersApi.getAdmin(character.id);
+      return res.success ? res.data : null;
+    },
+  });
+
+  const toggle = () => setExpanded((v) => !v);
 
   return (
     <div className="card overflow-hidden">

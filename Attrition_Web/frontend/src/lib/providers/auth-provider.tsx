@@ -3,7 +3,7 @@
 import { createContext, useContext, useCallback, useEffect, useState, type ReactNode } from "react";
 import { authApi } from "@/lib/api/auth";
 import { charactersApi } from "@/lib/api/characters";
-import { loadTokens, setTokens, clearTokens, getAccessToken, ApiError } from "@/lib/api/client";
+import { ApiError } from "@/lib/api/client";
 import type { UserDto, LoginRequest, RegisterRequest } from "@/lib/types";
 
 interface AuthState {
@@ -26,20 +26,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({ user: null, loading: true });
 
   useEffect(() => {
-    loadTokens();
-    // Skip the guaranteed-401 /me call when there's no token (logged out).
-    if (!getAccessToken()) {
-      setState({ user: null, loading: false });
-      return;
-    }
+    // Auth lives in HttpOnly cookies now — we can't read them, so ask the server who we are.
+    // A 401 (no/expired cookie) simply resolves to logged-out.
     authApi
       .me()
       .then((res) => {
-        if (res.success && res.data) {
-          setState({ user: res.data, loading: false });
-        } else {
-          setState({ user: null, loading: false });
-        }
+        setState({ user: res.success && res.data ? res.data : null, loading: false });
       })
       .catch(() => {
         setState({ user: null, loading: false });
@@ -48,10 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Drop the user to a clean logged-out state when a token refresh fails mid-session.
   useEffect(() => {
-    const onExpired = () => {
-      clearTokens();
-      setState({ user: null, loading: false });
-    };
+    const onExpired = () => setState({ user: null, loading: false });
     window.addEventListener("attrition:session-expired", onExpired);
     return () => window.removeEventListener("attrition:session-expired", onExpired);
   }, []);
@@ -64,14 +53,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const res = await charactersApi.sessionCheck();
         if (!cancelled && res.success && res.data?.isBanned) {
-          clearTokens();
           setState({ user: null, loading: false });
         }
       } catch (err) {
         // Only force logout on an auth failure (banned/unauthorized); ignore transient errors.
         const status = err instanceof ApiError ? err.status : 0;
         if (!cancelled && (status === 401 || status === 403)) {
-          clearTokens();
           setState({ user: null, loading: false });
         }
       }
@@ -83,7 +70,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (data: LoginRequest) => {
     const res = await authApi.login(data);
     if (res.success && res.data) {
-      setTokens(res.data.accessToken, res.data.refreshToken);
       setState({ user: res.data.user, loading: false });
       return res.data.user;
     }
@@ -93,7 +79,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = useCallback(async (data: RegisterRequest) => {
     const res = await authApi.register(data);
     if (res.success && res.data) {
-      setTokens(res.data.accessToken, res.data.refreshToken);
       setState({ user: res.data.user, loading: false });
       return res.data.user;
     }
@@ -103,7 +88,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginWithGoogle = useCallback(async (idToken: string) => {
     const res = await authApi.google({ code: idToken, redirectUri: window.location.origin });
     if (res.success && res.data) {
-      setTokens(res.data.accessToken, res.data.refreshToken);
       setState({ user: res.data.user, loading: false });
       return res.data.user;
     }
@@ -112,7 +96,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     authApi.logout().catch(() => {});
-    clearTokens();
     setState({ user: null, loading: false });
   }, []);
 

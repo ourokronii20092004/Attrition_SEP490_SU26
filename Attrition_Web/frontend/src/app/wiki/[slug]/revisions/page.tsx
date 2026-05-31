@@ -1,53 +1,41 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { wikiApi } from "@/lib/api/wiki";
 import { PageLoader } from "@/components/ui/spinner";
 import { formatDateTime } from "@/lib/format-date";
-import type { WikiRevisionDto } from "@/lib/types";
 
 export default function RevisionsPage() {
   const params = useParams<{ slug: string }>();
-  const [revisions, setRevisions] = useState<WikiRevisionDto[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [articleId, setArticleId] = useState<string>("");
 
-  useEffect(() => {
-    if (!params.slug) return;
-    let ignore = false;
-    setLoading(true);
-    setError("");
-    (async () => {
-      try {
-        const res = await wikiApi.getArticle(params.slug);
-        if (!res.success || !res.data) {
-          if (!ignore) setError("Article not found.");
-          return;
-        }
-        if (!ignore) setArticleId(res.data.id);
-        const r = await wikiApi.getRevisions(res.data.id);
-        if (!ignore && r.success) setRevisions(r.data);
-      } catch {
-        if (!ignore) setError("Failed to load revision history.");
-      } finally {
-        if (!ignore) setLoading(false);
-      }
-    })();
-    return () => { ignore = true; };
-  }, [params.slug]);
+  const { data: revisions = [], isPending, isError, error } = useQuery({
+    queryKey: ["wiki", "revisions", params.slug],
+    enabled: !!params.slug,
+    queryFn: async () => {
+      const res = await wikiApi.getArticle(params.slug);
+      if (!res.success || !res.data) throw new Error("Article not found.");
+      const r = await wikiApi.getRevisions(res.data.id);
+      return r.success ? r.data : [];
+    },
+  });
 
-  if (loading) return <PageLoader />;
+  const errorMessage = isError
+    ? error instanceof Error && error.message === "Article not found."
+      ? "Article not found."
+      : "Failed to load revision history."
+    : "";
+
+  if (isPending) return <PageLoader />;
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
       <Link href={`/wiki/${params.slug}`} className="text-sm text-accent hover:underline">&larr; Back to article</Link>
       <h1 className="mt-4 font-display text-3xl font-bold text-fg">Revision History</h1>
 
-      {error ? (
-        <p className="mt-6 text-danger">{error}</p>
+      {errorMessage ? (
+        <p className="mt-6 text-danger">{errorMessage}</p>
       ) : (
         <div className="mt-6 space-y-3">
           {revisions.map((rev) => (

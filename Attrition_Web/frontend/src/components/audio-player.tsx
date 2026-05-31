@@ -11,11 +11,7 @@ import { resolveMediaUrl } from "@/lib/api/media";
 import { useFavorites } from "./player/use-favorites";
 import { NowPlaying } from "./player/now-playing";
 import { QueuePanel } from "./player/queue-panel";
-
-function fmt(s: number) {
-  if (!Number.isFinite(s)) return "0:00";
-  return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
-}
+import { formatDuration as fmt } from "@/lib/format-duration";
 
 export function AudioPlayer() {
   const {

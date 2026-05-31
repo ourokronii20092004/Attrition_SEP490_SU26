@@ -15,12 +15,21 @@ export function VerifyEmailBanner() {
   const [dismissed, setDismissed] = useState(false);
   const [resending, setResending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState(false);
 
   if (!user || user.isEmailVerified || user.role === "Admin" || !user.email || dismissed) return null;
 
   const resend = async () => {
     setResending(true);
-    try { await authApi.resendVerification(); setSent(true); } catch {} finally { setResending(false); }
+    setError(false);
+    try {
+      await authApi.resendVerification();
+      setSent(true);
+    } catch {
+      setError(true);
+    } finally {
+      setResending(false);
+    }
   };
 
   return (
@@ -30,6 +39,8 @@ export function VerifyEmailBanner() {
         <p className="min-w-0 flex-1 text-fg">
           {sent
             ? "Verification email sent — check your inbox."
+            : error
+            ? "Couldn't send the verification email. Please try again."
             : "Verify your email to post and contribute. Browsing stays open."}
         </p>
         {!sent && (

@@ -1,11 +1,9 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using BuildingBlocks.Contracts;
 using Search.Service.DTOs;
 
 namespace Search.Service.Clients;
-
-/// <summary>Mirror of BuildingBlocks ApiResponse&lt;T&gt; for deserializing downstream internal responses.</summary>
-public record InternalEnvelope<T>(bool Success, T? Data, string? Error);
 
 public abstract class InternalClientBase
 {

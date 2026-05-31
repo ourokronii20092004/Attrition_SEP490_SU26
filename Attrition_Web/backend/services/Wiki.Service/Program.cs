@@ -14,7 +14,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<WikiDbContext>(opt =>
     opt.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "wiki")));
+        npgsql =>
+        {
+            npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "wiki");
+            // Survive transient Postgres blips by retrying. Manual transactions are wrapped in an
+            // execution strategy so they stay retry-safe (see WikiService).
+            npgsql.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(5), errorCodesToAdd: null);
+        }));
 
 builder.Services.AddScoped<DbContext>(sp => sp.GetRequiredService<WikiDbContext>());
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));

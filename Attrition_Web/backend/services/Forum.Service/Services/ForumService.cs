@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using BuildingBlocks.Caching;
 using BuildingBlocks.Contracts;
 using BuildingBlocks.Persistence;
+using BuildingBlocks.Web;
 using Forum.Service.DTOs;
 using Forum.Service.Models;
 using Forum.Service.Repositories;
@@ -42,14 +43,13 @@ public class ForumService : IForumService
         return await _cache.GetOrSetAsync("categories", async () =>
         {
             var categories = await _threadRepo.GetCategoriesAsync();
+            var stats = await _threadRepo.GetCategoryStatsAsync();
             var dtos = new List<ForumCategoryDto>();
             foreach (var c in categories)
             {
-                var threadCount = await _threadRepo.CountAsync(t => t.CategoryId == c.Id);
-                var (threads, _) = await _threadRepo.GetPagedAsync(1, 1, t => t.CategoryId == c.Id,
-                    q => q.OrderByDescending(t => t.LastReplyAt));
-                dtos.Add(new ForumCategoryDto(c.Id, c.Name, c.Slug, c.Description, threadCount,
-                    threads.FirstOrDefault()?.LastReplyAt));
+                var stat = stats.GetValueOrDefault(c.Id);
+                dtos.Add(new ForumCategoryDto(c.Id, c.Name, c.Slug, c.Description, stat.ThreadCount,
+                    stat.LatestActivity));
             }
             return dtos;
         }, TimeSpan.FromMinutes(5));
@@ -111,8 +111,8 @@ public class ForumService : IForumService
             var postReactions = reactions.Where(r => r.PostId == p.Id).ToList();
             return new ForumPostDto(p.Id, p.ThreadId, p.AuthorId, p.AuthorName ?? "Unknown",
                 p.AuthorAvatar, p.AuthorRole, p.Content, p.CreatedAt, p.UpdatedAt,
-                postReactions.Count(r => r.ReactionType == "like"),
-                postReactions.Count(r => r.ReactionType == "dislike"),
+                postReactions.Count(r => r.ReactionType == ReactionType.Like),
+                postReactions.Count(r => r.ReactionType == ReactionType.Dislike),
                 currentUserId.HasValue ? postReactions.FirstOrDefault(r => r.UserId == currentUserId.Value)?.ReactionType : null);
         }).ToList();
 
@@ -188,6 +188,7 @@ public class ForumService : IForumService
         post.Content = ContentSanitizer.Sanitize(request.Content);
         post.UpdatedAt = DateTime.UtcNow;
         await _postRepo.UpdateAsync(post);
+        await InvalidateCategoriesAsync();
         return ApiResponse.Ok();
     }
 
@@ -198,6 +199,7 @@ public class ForumService : IForumService
         if (post.AuthorId != userId && !isAdmin) return ApiResponse.Fail("Unauthorized.");
 
         await _threadRepo.DeletePostCascadeAsync(post);
+        await InvalidateCategoriesAsync();
         return ApiResponse.Ok();
     }
 
@@ -222,7 +224,7 @@ public class ForumService : IForumService
         }
         else
         {
-            // Race-safe: a concurrent identical reaction hits the unique (PostId,UserId,ReactionType)
+            // Race-safe: a concurrent reaction from the same user hits the unique (PostId,UserId)
             // index; treat the duplicate as idempotent success rather than a 500.
             await _reactionRepo.TryAddAsync(new ForumReaction { PostId = postId, UserId = userId, ReactionType = request.ReactionType });
         }
@@ -269,7 +271,7 @@ public class ForumService : IForumService
             ReporterId = reporter.Id,
             ReporterName = reporter.Name,
             Reason = reason,
-            Status = "Pending"
+            Status = ReportStatus.Pending
         });
         return new ApiResponse(true, "Post reported successfully.");
     }
@@ -312,6 +314,15 @@ public class ForumService : IForumService
         post.RemovedByName = moderator.Name;
         post.RemovedAt = DateTime.UtcNow;
         await _postRepo.UpdateAsync(post);
+
+        // Resolved-after-action: pending reports on this post are now actioned.
+        var pending = await _reportRepo.ListAsync(r => r.PostId == postId && r.Status == ReportStatus.Pending);
+        foreach (var report in pending)
+        {
+            report.Status = ReportStatus.Resolved;
+            await _reportRepo.UpdateAsync(report);
+        }
+        await InvalidateCategoriesAsync();
         return ApiResponse.Ok();
     }
 
@@ -329,15 +340,16 @@ public class ForumService : IForumService
         return ApiResponse.Ok();
     }
 
-    public async Task<List<AdminForumThreadDto>> ListThreadsForModerationAsync()
+    public async Task<PaginatedResponse<AdminForumThreadDto>> ListThreadsForModerationAsync(int page, int pageSize)
     {
-        var threads = await _threadRepo.ListAsync(null,
+        var (threads, total) = await _threadRepo.GetPagedAsync(page, pageSize, null,
             q => q.OrderByDescending(t => t.LastReplyAt));
-        return threads.Select(t => new AdminForumThreadDto(t.Id, t.Title, t.IsPinned, t.IsLocked,
+        var items = threads.Select(t => new AdminForumThreadDto(t.Id, t.Title, t.IsPinned, t.IsLocked,
             t.ReplyCount, t.CreatedAt, t.LastReplyAt, t.AuthorName)).ToList();
+        return new PaginatedResponse<AdminForumThreadDto>(items, total, page, pageSize);
     }
 
-    public async Task<List<AdminForumPostDto>> ListPostsForModerationAsync(bool removedOnly, string? search)
+    public async Task<PaginatedResponse<AdminForumPostDto>> ListPostsForModerationAsync(bool removedOnly, string? search, int page, int pageSize)
     {
         Expression<Func<ForumPost, bool>>? filter = (removedOnly, search?.ToLower()) switch
         {
@@ -346,33 +358,44 @@ public class ForumService : IForumService
             (false, string s) => p => p.Content.ToLower().Contains(s),
             _ => null
         };
-        var posts = await _postRepo.ListAsync(filter, q => q.OrderByDescending(p => p.CreatedAt));
-        return posts.Select(p => new AdminForumPostDto(p.Id, p.ThreadId, p.Content, p.CreatedAt, p.UpdatedAt,
+        var (posts, total) = await _postRepo.GetPagedAsync(page, pageSize, filter,
+            q => q.OrderByDescending(p => p.CreatedAt));
+        var items = posts.Select(p => new AdminForumPostDto(p.Id, p.ThreadId, p.Content, p.CreatedAt, p.UpdatedAt,
             p.IsRemoved, p.RemovedReason, p.RemovedAt, p.AuthorName, p.RemovedByName)).ToList();
+        return new PaginatedResponse<AdminForumPostDto>(items, total, page, pageSize);
     }
 
-    public async Task<List<AdminPostReportDto>> ListReportsAsync(string status)
+    public async Task<PaginatedResponse<AdminPostReportDto>> ListReportsAsync(string status, int page, int pageSize)
     {
-        var reports = await _reportRepo.ListAsync(r => r.Status == status,
+        var (reports, total) = await _reportRepo.GetPagedAsync(page, pageSize, r => r.Status == status,
             q => q.OrderByDescending(r => r.CreatedAt));
         var reportPostIds = reports.Select(r => r.PostId).Distinct().ToList();
         var reportPosts = (await _postRepo.ListAsync(p => reportPostIds.Contains(p.Id)))
             .ToDictionary(p => p.Id);
-        var dtos = new List<AdminPostReportDto>();
+        var items = new List<AdminPostReportDto>();
         foreach (var r in reports)
         {
             reportPosts.TryGetValue(r.PostId, out var post);
-            dtos.Add(new AdminPostReportDto(r.Id, r.PostId, post?.Content ?? "(deleted)",
+            items.Add(new AdminPostReportDto(r.Id, r.PostId, post?.Content ?? "(deleted)",
                 post?.AuthorName ?? "Unknown", r.ReporterName ?? "Unknown", r.Reason, r.Status, r.CreatedAt));
         }
-        return dtos;
+        return new PaginatedResponse<AdminPostReportDto>(items, total, page, pageSize);
     }
 
     public async Task<ApiResponse> DismissReportAsync(Guid reportId)
     {
         var report = await _reportRepo.GetByIdAsync(reportId);
         if (report == null) return ApiResponse.Fail("Report not found.");
-        report.Status = "Dismissed";
+        report.Status = ReportStatus.Dismissed;
+        await _reportRepo.UpdateAsync(report);
+        return ApiResponse.Ok();
+    }
+
+    public async Task<ApiResponse> ResolveReportAsync(Guid reportId)
+    {
+        var report = await _reportRepo.GetByIdAsync(reportId);
+        if (report == null) return ApiResponse.Fail("Report not found.");
+        report.Status = ReportStatus.Resolved;
         await _reportRepo.UpdateAsync(report);
         return ApiResponse.Ok();
     }
@@ -430,9 +453,11 @@ public class ForumService : IForumService
         var results = new List<ForumPostSearchDto>();
         foreach (var t in threads)
         {
-            var body = await _threadRepo.GetFirstPostSnippetAsync(t.Id) ?? t.Title;
+            var firstPost = await _threadRepo.GetFirstPostAsync(t.Id);
+            var postId = firstPost?.PostId ?? t.Id;
+            var body = firstPost?.Content ?? t.Title;
             var snippet = body.Length > 120 ? body[..120] : body;
-            results.Add(new ForumPostSearchDto(t.Id, t.Id, t.Title, snippet));
+            results.Add(new ForumPostSearchDto(postId, t.Id, t.Title, snippet));
         }
         return results;
     }

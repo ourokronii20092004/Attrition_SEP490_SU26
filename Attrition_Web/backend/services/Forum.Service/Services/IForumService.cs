@@ -28,10 +28,11 @@ public interface IForumService
     Task<ApiResponse> DeleteThreadAsync(Guid threadId);
     Task<ApiResponse> RemovePostAsync(Guid postId, Author moderator, string reason);
     Task<ApiResponse> RestorePostAsync(Guid postId);
-    Task<List<AdminForumThreadDto>> ListThreadsForModerationAsync();
-    Task<List<AdminForumPostDto>> ListPostsForModerationAsync(bool removedOnly, string? search);
-    Task<List<AdminPostReportDto>> ListReportsAsync(string status);
+    Task<PaginatedResponse<AdminForumThreadDto>> ListThreadsForModerationAsync(int page, int pageSize);
+    Task<PaginatedResponse<AdminForumPostDto>> ListPostsForModerationAsync(bool removedOnly, string? search, int page, int pageSize);
+    Task<PaginatedResponse<AdminPostReportDto>> ListReportsAsync(string status, int page, int pageSize);
     Task<ApiResponse> DismissReportAsync(Guid reportId);
+    Task<ApiResponse> ResolveReportAsync(Guid reportId);
 
     // Category management (admin)
     Task<ApiResponse<int>> CreateCategoryAsync(ForumCategoryRequest request);

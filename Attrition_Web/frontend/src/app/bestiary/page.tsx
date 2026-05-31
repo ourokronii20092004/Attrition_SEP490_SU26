@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { Search, Skull } from "lucide-react";
 import { enemiesApi } from "@/lib/api/enemies";
@@ -12,25 +13,20 @@ import { FilterPills } from "@/components/ui/filter-pills";
 import { SkeletonGrid } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ENEMY_TIERS, TIER_COLOR } from "@/lib/enemy-tiers";
-import type { EnemyResponse } from "@/lib/types";
 
 const TIERS = ENEMY_TIERS;
 
 export default function BestiaryPage() {
-  const [enemies, setEnemies] = useState<EnemyResponse[]>([]);
   const [tier, setTier] = useState("");
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    setLoading(true);
-    enemiesApi
-      .list({ tier: tier || undefined, search: search || undefined })
-      .then((res) => {
-        if (res.success) setEnemies(res.data ?? []);
-      })
-      .finally(() => setLoading(false));
-  }, [tier, search]);
+  const { data: enemies = [], isPending } = useQuery({
+    queryKey: ["enemies", { tier, search }],
+    queryFn: async () => {
+      const res = await enemiesApi.list({ tier: tier || undefined, search: search || undefined });
+      return res.success ? res.data ?? [] : [];
+    },
+  });
 
   const tierOptions = [
     { value: "", label: "All Tiers" },
@@ -55,7 +51,7 @@ export default function BestiaryPage() {
         <FilterPills options={tierOptions} value={tier} onChange={setTier} />
       </div>
 
-      {loading ? (
+      {isPending ? (
         <SkeletonGrid count={6} className="mt-6 lg:grid-cols-3" />
       ) : !enemies.length ? (
         <EmptyState

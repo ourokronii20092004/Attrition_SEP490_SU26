@@ -1,43 +1,53 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminApi } from "@/lib/api/admin";
 import { useAuth } from "@/lib/providers";
 import { Button } from "@/components/ui/button";
 import { PageLoader } from "@/components/ui/spinner";
 import { formatDate } from "@/lib/format-date";
-import type { UserListItem, PaginatedResponse } from "@/lib/types";
 
 export default function AdminUsersPage() {
   const { user: me } = useAuth();
-  const [users, setUsers] = useState<PaginatedResponse<UserListItem> | null>(null);
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
+
+  const { data: users, isPending: loading } = useQuery({
+    queryKey: ["admin", "users", page],
+    enabled: me?.role === "Admin",
+    queryFn: async () => {
+      const res = await adminApi.getUsers({ page, pageSize: 20 });
+      return res.success ? res.data : null;
+    },
+  });
+
   const totalPages = users ? Math.ceil(users.totalCount / users.pageSize) : 0;
 
-  const fetchUsers = () => {
-    setLoading(true);
-    adminApi
-      .getUsers({ page, pageSize: 20 })
-      .then((res) => {
-        if (res.success) setUsers(res.data);
-      })
-      .finally(() => setLoading(false));
+  const toggleBanMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      await adminApi.toggleBan(userId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+    },
+  });
+
+  const roleMutation = useMutation({
+    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+      await adminApi.setUserRole(userId, role);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+    },
+  });
+
+  const handleToggleBan = (userId: string) => {
+    toggleBanMutation.mutate(userId);
   };
 
-  useEffect(() => {
-    if (me?.role !== "Admin") return;
-    fetchUsers();
-  }, [me, page]);
-
-  const handleToggleBan = async (userId: string) => {
-    await adminApi.toggleBan(userId);
-    fetchUsers();
-  };
-
-  const handleRoleChange = async (userId: string, role: string) => {
-    await adminApi.setUserRole(userId, role);
-    fetchUsers();
+  const handleRoleChange = (userId: string, role: string) => {
+    roleMutation.mutate({ userId, role });
   };
 
   if (!me || me.role !== "Admin") return null;

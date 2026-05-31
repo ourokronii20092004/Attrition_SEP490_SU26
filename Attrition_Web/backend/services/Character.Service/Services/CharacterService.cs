@@ -1,4 +1,5 @@
 using BuildingBlocks.Contracts;
+using Character.Service.Clients;
 using Character.Service.DTOs;
 using Character.Service.Models;
 using Character.Service.Repositories;
@@ -8,8 +9,13 @@ namespace Character.Service.Services;
 public class CharacterService : ICharacterService
 {
     private readonly ICharacterRepository _repo;
+    private readonly IdentityClient _identity;
 
-    public CharacterService(ICharacterRepository repo) => _repo = repo;
+    public CharacterService(ICharacterRepository repo, IdentityClient identity)
+    {
+        _repo = repo;
+        _identity = identity;
+    }
 
     public async Task<List<CharacterSummaryDto>> GetByOwnerAsync(Guid ownerId)
     {
@@ -23,12 +29,16 @@ public class CharacterService : ICharacterService
         return character == null ? null : ToDetail(character);
     }
 
-    public async Task<List<AdminCharacterDto>> GetAllAsync()
+    public async Task<PaginatedResponse<AdminCharacterDto>> GetAllAsync(int page, int pageSize, CancellationToken ct = default)
     {
-        var characters = await _repo.GetAllWithSnapshotsAsync();
-        // OwnerUsername resolved from Identity is left null in the stub; the frame displays the GUID.
-        return characters.Select(c => new AdminCharacterDto(
-            c.Id, c.OwnerId, null, c.Name, c.Archetype, c.UpdatedAt, LatestSnapshot(c))).ToList();
+        var (characters, total) = await _repo.GetPagedWithSnapshotsAsync(page, pageSize);
+        var usernames = await _identity.ResolveUsernamesAsync(
+            characters.Select(c => c.OwnerId).ToList(), ct);
+        var items = characters.Select(c => new AdminCharacterDto(
+            c.Id, c.OwnerId,
+            usernames.GetValueOrDefault(c.OwnerId),
+            c.Name, c.Archetype, c.UpdatedAt, LatestSnapshot(c))).ToList();
+        return new PaginatedResponse<AdminCharacterDto>(items, total, page, pageSize);
     }
 
     public async Task<ApiResponse<CharacterDetailDto>> IngestSnapshotAsync(SnapshotIngestRequest request)

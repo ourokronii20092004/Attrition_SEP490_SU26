@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { Plus, Pin, Lock, MessageSquarePlus, MessagesSquare } from "lucide-react";
 import { forumApi } from "@/lib/api/forum";
@@ -14,32 +15,29 @@ import { Pagination } from "@/components/ui/pagination";
 import { FilterPills } from "@/components/ui/filter-pills";
 import { RelativeTime } from "@/components/ui/relative-time";
 import { useAuth } from "@/lib/providers";
-import type { ForumCategoryDto, ForumThreadListDto, PaginatedResponse } from "@/lib/types";
 
 export default function ForumPage() {
   const { user } = useAuth();
-  const [categories, setCategories] = useState<ForumCategoryDto[]>([]);
-  const [threads, setThreads] = useState<PaginatedResponse<ForumThreadListDto> | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["forum", "categories"],
+    queryFn: async () => {
+      const res = await forumApi.getCategories();
+      return res.success ? res.data ?? [] : [];
+    },
+  });
+
+  const { data: threads, isPending } = useQuery({
+    queryKey: ["forum", "threads", { selectedCategory, page }],
+    queryFn: async () => {
+      const res = await forumApi.getThreads({ categoryId: selectedCategory ?? undefined, page, pageSize: 15 });
+      return res.success ? res.data : null;
+    },
+  });
+
   const totalPages = threads ? Math.ceil(threads.totalCount / threads.pageSize) : 0;
-
-  useEffect(() => {
-    forumApi.getCategories().then((res) => {
-      if (res.success) setCategories(res.data ?? []);
-    });
-  }, []);
-
-  useEffect(() => {
-    setLoading(true);
-    forumApi
-      .getThreads({ categoryId: selectedCategory ?? undefined, page, pageSize: 15 })
-      .then((res) => {
-        if (res.success) setThreads(res.data);
-      })
-      .finally(() => setLoading(false));
-  }, [selectedCategory, page]);
 
   const pillOptions = [
     { value: null as number | null, label: "All" },
@@ -67,7 +65,7 @@ export default function ForumPage() {
         onChange={(v) => { setSelectedCategory(v); setPage(1); }}
       />
 
-      {loading ? (
+      {isPending ? (
         <SkeletonList rows={6} className="mt-6" />
       ) : !threads?.items.length ? (
         <EmptyState

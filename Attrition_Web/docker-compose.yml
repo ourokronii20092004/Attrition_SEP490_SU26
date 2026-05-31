@@ -59,7 +59,30 @@ services:
     restart: unless-stopped
     networks: [ attrition-net ]
 
-  # ─────────────── Data services ───────────────
+  # ─────────────── Backups ───────────────
+  # Periodic pg_dump of the whole database. Backups land in a HOST path OUTSIDE the project
+  # dir (BACKUP_HOST_DIR, default /opt/attrition-backups) so deploy.py's project-dir wipe can
+  # never delete them. Optionally shipped off-host via rclone. See docs/backups.md.
+  db-backup:
+    image: postgres:16-alpine   # same major as the server → pg_dump is compatible
+    container_name: attrition-db-backup
+    entrypoint: ["/bin/sh", "/db-backup.sh"]
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-attrition}
+      BACKUP_INTERVAL_HOURS: ${BACKUP_INTERVAL_HOURS:-24}
+      BACKUP_KEEP: ${BACKUP_KEEP:-7}
+      BACKUP_RCLONE_REMOTE: ${BACKUP_RCLONE_REMOTE:-}
+    volumes:
+      - ./scripts/db-backup.sh:/db-backup.sh:ro
+      - ${BACKUP_HOST_DIR:-/opt/attrition-backups}:/backups
+    depends_on:
+      postgres: { condition: service_healthy }
+    restart: unless-stopped
+    networks: [ attrition-net ]
+
   identity-service:
     <<: [ *service-defaults, *svc-healthcheck ]
     build: { context: ./backend, dockerfile: services/Identity.Service/Dockerfile }
@@ -148,6 +171,7 @@ services:
     environment:
       <<: *jwt-env
       ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=${POSTGRES_DB:-attrition};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
+      Services__Identity: "http://identity-service:8080/"
     depends_on:
       postgres: { condition: service_healthy }
 

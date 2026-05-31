@@ -1,5 +1,6 @@
 using BuildingBlocks.Caching;
 using BuildingBlocks.Contracts;
+using BuildingBlocks.Web;
 using Enemy.Service.DTOs;
 using Enemy.Service.Models;
 using Enemy.Service.Repositories;
@@ -57,7 +58,7 @@ public class EnemyService : IEnemyService
             IsRanged = request.IsRanged,
             ExpReward = request.ExpReward,
             GoldReward = request.GoldReward,
-            Lore = request.Lore,
+            Lore = request.Lore is null ? null : ContentSanitizer.Sanitize(request.Lore),
             LootTable = MapLoot(request.LootTable)
         };
 
@@ -86,7 +87,7 @@ public class EnemyService : IEnemyService
         enemy.IsRanged = request.IsRanged;
         enemy.ExpReward = request.ExpReward;
         enemy.GoldReward = request.GoldReward;
-        enemy.Lore = request.Lore;
+        enemy.Lore = request.Lore is null ? null : ContentSanitizer.Sanitize(request.Lore);
         enemy.UpdatedAt = DateTime.UtcNow;
 
         // Replace loot wholesale — owned collection, so clearing + re-adding is the clean path.

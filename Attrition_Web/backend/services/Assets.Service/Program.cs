@@ -21,7 +21,12 @@ builder.Services.Configure<FormOptions>(o => o.MultipartBodyLengthLimit = maxByt
 builder.Services.AddDbContext<AssetsDbContext>(opt =>
     opt.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "assets")));
+        npgsql =>
+        {
+            npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "assets");
+            // Survive transient Postgres blips by retrying instead of erroring the user.
+            npgsql.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(5), errorCodesToAdd: null);
+        }));
 
 builder.Services.AddScoped<DbContext>(sp => sp.GetRequiredService<AssetsDbContext>());
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));

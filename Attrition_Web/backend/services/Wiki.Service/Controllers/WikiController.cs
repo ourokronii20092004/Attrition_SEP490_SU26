@@ -3,6 +3,7 @@ using BuildingBlocks.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Wiki.Service.DTOs;
+using Wiki.Service.Models;
 using Wiki.Service.Services;
 
 namespace Wiki.Service.Controllers;
@@ -98,7 +99,7 @@ public class WikiController : ControllerBase
 
     [Authorize(Roles = Roles.Admin)]
     [HttpGet("contributions")]
-    public async Task<IActionResult> GetContributions([FromQuery] string status = "Pending")
+    public async Task<IActionResult> GetContributions([FromQuery] string status = ContributionStatus.Pending)
         => Ok(ApiResponse<List<WikiContributionDto>>.Ok(await _wiki.GetContributionsAsync(status)));
 
     [Authorize(Roles = Roles.Admin)]

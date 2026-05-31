@@ -4,6 +4,7 @@ using Identity.Service.DTOs;
 using Identity.Service.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Cryptography;
 
 namespace Identity.Service.Controllers;
 
@@ -13,16 +14,31 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthService _auth;
     private readonly ICurrentUser _user;
-    public AuthController(IAuthService auth, ICurrentUser user)
+    private readonly IConfiguration _config;
+    public AuthController(IAuthService auth, ICurrentUser user, IConfiguration config)
     {
         _auth = auth;
         _user = user;
+        _config = config;
+    }
+
+    private TimeSpan AccessTtl =>
+        TimeSpan.FromMinutes(double.TryParse(_config["Jwt:AccessTokenExpiryMinutes"], out var m) ? m : 15);
+    private TimeSpan RefreshTtl =>
+        TimeSpan.FromDays(double.TryParse(_config["Jwt:RefreshTokenExpiryDays"], out var d) ? d : 7);
+
+    /// <summary>Sets the auth + CSRF cookies for a web client after a successful auth.</summary>
+    private void SetAuthCookies(AuthResponse data)
+    {
+        var csrf = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+        AuthCookies.SetAuth(Response, data.AccessToken, data.RefreshToken, AccessTtl, RefreshTtl, csrf);
     }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterRequest request)
     {
         var result = await _auth.RegisterAsync(request);
+        if (result.Success && result.Data is not null) SetAuthCookies(result.Data);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
@@ -31,6 +47,7 @@ public class AuthController : ControllerBase
     {
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
         var result = await _auth.LoginAsync(request, ip);
+        if (result.Success && result.Data is not null) SetAuthCookies(result.Data);
         return result.Success ? Ok(result) : Unauthorized(result);
     }
 
@@ -38,6 +55,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> GoogleLogin(GoogleAuthRequest request)
     {
         var result = await _auth.GoogleLoginAsync(request);
+        if (result.Success && result.Data is not null) SetAuthCookies(result.Data);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
@@ -62,8 +80,30 @@ public class AuthController : ControllerBase
     [HttpPost("refresh")]
     public async Task<IActionResult> Refresh(RefreshRequest request)
     {
-        var result = await _auth.RefreshAsync(request);
+        // Web clients send the refresh token via the HttpOnly cookie (body empty); the game
+        // client / API consumers may still post it in the body. Cookie is preferred when present.
+        var cookieToken = Request.Cookies[AuthCookies.RefreshToken];
+        var effective = !string.IsNullOrEmpty(cookieToken) ? new RefreshRequest(cookieToken) : request;
+        var result = await _auth.RefreshAsync(effective);
+        if (result.Success && result.Data is not null) SetAuthCookies(result.Data);
+        else if (!string.IsNullOrEmpty(cookieToken)) AuthCookies.Clear(Response);
         return result.Success ? Ok(result) : Unauthorized(result);
+    }
+
+    /// <summary>Issues a fresh CSRF cookie for the SPA to echo via the X-CSRF header.</summary>
+    [HttpGet("csrf")]
+    public IActionResult Csrf()
+    {
+        var csrf = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+        Response.Cookies.Append(AuthCookies.Csrf, csrf, new CookieOptions
+        {
+            HttpOnly = false,
+            Secure = !string.Equals(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"), "Development", StringComparison.OrdinalIgnoreCase),
+            SameSite = SameSiteMode.Lax,
+            Path = "/",
+            MaxAge = RefreshTtl,
+        });
+        return Ok(ApiResponse<object>.Ok(new { csrf }));
     }
 
     [Authorize]
@@ -106,6 +146,7 @@ public class AuthController : ControllerBase
     {
         if (this.RequireUserId(_user, out var userId) is { } error) return error;
         var result = await _auth.LogoutAsync(userId);
+        AuthCookies.Clear(Response);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
