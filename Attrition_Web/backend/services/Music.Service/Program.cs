@@ -67,7 +67,7 @@ app.UseStaticFiles(new StaticFileOptions
             ctx.Context.Response.Body = Stream.Null;
             return;
         }
-        ctx.Context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+        BuildingBlocks.Web.MediaSecurityHeaders.OnPrepareStaticResponse(ctx);
     }
 });
 

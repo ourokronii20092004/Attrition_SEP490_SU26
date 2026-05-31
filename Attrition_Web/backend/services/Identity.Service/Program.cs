@@ -75,7 +75,7 @@ app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(Path.GetFullPath(uploadPath)),
     RequestPath = mediaPrefix,
-    OnPrepareResponse = ctx => ctx.Context.Response.Headers["X-Content-Type-Options"] = "nosniff"
+    OnPrepareResponse = BuildingBlocks.Web.MediaSecurityHeaders.OnPrepareStaticResponse
 });
 
 app.UseAttritionPipeline();

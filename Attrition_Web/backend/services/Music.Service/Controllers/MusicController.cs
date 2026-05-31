@@ -68,6 +68,7 @@ public class MusicController : ControllerBase
         var (filePath, trackExists) = await _tracks.GetTrackStreamInfoAsync(id);
         if (!trackExists) return NotFound(ApiResponse.Fail("Track not found"));
         if (filePath == null) return NotFound(ApiResponse.Fail("Track audio file not found on disk"));
+        BuildingBlocks.Web.MediaSecurityHeaders.Apply(Response);
         return PhysicalFile(filePath, MusicHelpers.GetAudioContentType(filePath), enableRangeProcessing: true);
     }
 
@@ -78,6 +79,7 @@ public class MusicController : ControllerBase
         if (!trackExists) return NotFound(ApiResponse.Fail("Track not found"));
         if (filePath == null) return NotFound(ApiResponse.Fail("Track audio file not found on disk"));
         // fileDownloadName sets Content-Disposition: attachment so the browser saves it.
+        BuildingBlocks.Web.MediaSecurityHeaders.Apply(Response);
         return PhysicalFile(filePath, "application/octet-stream", fileName);
     }
 
