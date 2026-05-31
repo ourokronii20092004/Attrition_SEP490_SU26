@@ -112,11 +112,10 @@ public class AdminResetPasswordRequestValidator : AbstractValidator<AdminResetPa
     }
 }
 
-public class RefreshRequestValidator : AbstractValidator<RefreshRequest>
-{
-    public RefreshRequestValidator()
-        => RuleFor(x => x.RefreshToken).NotEmpty().WithMessage("Refresh token is required.");
-}
+// No RefreshRequestValidator: the refresh token normally arrives via the HttpOnly cookie, so the
+// request body is intentionally empty for web clients. The controller reads the cookie (falling
+// back to the body for API/game clients) and AuthService.RefreshAsync returns a clean 401 when
+// neither supplies a token. A NotEmpty rule here would 400 the cookie-based flow before it runs.
 
 public class GoogleAuthRequestValidator : AbstractValidator<GoogleAuthRequest>
 {
