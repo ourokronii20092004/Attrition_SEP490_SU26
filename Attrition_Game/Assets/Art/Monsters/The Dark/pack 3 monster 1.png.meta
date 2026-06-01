@@ -1,0 +1,2067 @@
+fileFormatVersion: 2
+guid: 9026803e53e14d94b9d189aa3744adc8
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -1963603097434476661
+    second: pack 3 monster 1_0
+  - first:
+      213: -7506057136360572743
+    second: pack 3 monster 1_1
+  - first:
+      213: -7793802636429716908
+    second: pack 3 monster 1_2
+  - first:
+      213: 5861242332255229442
+    second: pack 3 monster 1_3
+  - first:
+      213: -7410728389071272935
+    second: pack 3 monster 1_4
+  - first:
+      213: 4643745208308496485
+    second: pack 3 monster 1_5
+  - first:
+      213: 6254885140102675447
+    second: pack 3 monster 1_6
+  - first:
+      213: 4036204691849321548
+    second: pack 3 monster 1_7
+  - first:
+      213: -8251732450487460546
+    second: pack 3 monster 1_8
+  - first:
+      213: 8821076596781362631
+    second: pack 3 monster 1_9
+  - first:
+      213: 2203460668060454376
+    second: pack 3 monster 1_10
+  - first:
+      213: -6991761730915397535
+    second: pack 3 monster 1_11
+  - first:
+      213: 2677483701803868545
+    second: pack 3 monster 1_12
+  - first:
+      213: -367372879572756873
+    second: pack 3 monster 1_13
+  - first:
+      213: 7120400565404605800
+    second: pack 3 monster 1_14
+  - first:
+      213: -6400238622318578877
+    second: pack 3 monster 1_15
+  - first:
+      213: 740185659669472355
+    second: pack 3 monster 1_16
+  - first:
+      213: -6450391221673439038
+    second: pack 3 monster 1_17
+  - first:
+      213: -472910157934301379
+    second: pack 3 monster 1_18
+  - first:
+      213: 6231470647206756205
+    second: pack 3 monster 1_19
+  - first:
+      213: -1613512119162690134
+    second: pack 3 monster 1_20
+  - first:
+      213: -6416343779131473827
+    second: pack 3 monster 1_21
+  - first:
+      213: 1009846986639253770
+    second: pack 3 monster 1_22
+  - first:
+      213: -7234840365778283810
+    second: pack 3 monster 1_23
+  - first:
+      213: -4918528526902952783
+    second: pack 3 monster 1_24
+  - first:
+      213: -2540220220319427636
+    second: pack 3 monster 1_25
+  - first:
+      213: -1854892679827270965
+    second: pack 3 monster 1_26
+  - first:
+      213: 6336225953512769719
+    second: pack 3 monster 1_27
+  - first:
+      213: 3834657423423869401
+    second: pack 3 monster 1_28
+  - first:
+      213: 3559796487767227477
+    second: pack 3 monster 1_29
+  - first:
+      213: -1837830754053793804
+    second: pack 3 monster 1_30
+  - first:
+      213: 8271399303566011811
+    second: pack 3 monster 1_31
+  - first:
+      213: -8630620567193724759
+    second: pack 3 monster 1_32
+  - first:
+      213: 4820143448502920044
+    second: pack 3 monster 1_33
+  - first:
+      213: 6985574659946823194
+    second: pack 3 monster 1_34
+  - first:
+      213: -1066638413058177048
+    second: pack 3 monster 1_35
+  - first:
+      213: -9138817002794860191
+    second: pack 3 monster 1_36
+  - first:
+      213: 5632317280908023198
+    second: pack 3 monster 1_37
+  - first:
+      213: -2768730401072094025
+    second: pack 3 monster 1_38
+  - first:
+      213: -3284753703869183993
+    second: pack 3 monster 1_39
+  - first:
+      213: -4959146208275833913
+    second: pack 3 monster 1_40
+  - first:
+      213: 705586820634384081
+    second: pack 3 monster 1_41
+  - first:
+      213: -781238722032073773
+    second: pack 3 monster 1_42
+  - first:
+      213: 7374558095913685729
+    second: pack 3 monster 1_43
+  - first:
+      213: -3130293623749682137
+    second: pack 3 monster 1_44
+  - first:
+      213: 5284335362575680177
+    second: pack 3 monster 1_45
+  - first:
+      213: -5422216746931528473
+    second: pack 3 monster 1_46
+  - first:
+      213: -5631255835409476448
+    second: pack 3 monster 1_47
+  - first:
+      213: 4978166745780132865
+    second: pack 3 monster 1_48
+  - first:
+      213: 3377242712373548259
+    second: pack 3 monster 1_49
+  - first:
+      213: 8057895945753707262
+    second: pack 3 monster 1_50
+  - first:
+      213: 2841235959454361329
+    second: pack 3 monster 1_51
+  - first:
+      213: 8551847313929365766
+    second: pack 3 monster 1_52
+  - first:
+      213: -2532622401773382474
+    second: pack 3 monster 1_53
+  - first:
+      213: 9154791575785490440
+    second: pack 3 monster 1_54
+  - first:
+      213: 4602717705495674903
+    second: pack 3 monster 1_55
+  - first:
+      213: 3950463268403919168
+    second: pack 3 monster 1_56
+  - first:
+      213: -6925278189577700647
+    second: pack 3 monster 1_57
+  - first:
+      213: 5249879347246875158
+    second: pack 3 monster 1_58
+  - first:
+      213: -8596922134099535842
+    second: pack 3 monster 1_59
+  - first:
+      213: 696869970357515655
+    second: pack 3 monster 1_60
+  - first:
+      213: -7954140678398876743
+    second: pack 3 monster 1_61
+  - first:
+      213: -4743669181132918934
+    second: pack 3 monster 1_62
+  - first:
+      213: -7987295144969858880
+    second: pack 3 monster 1_63
+  - first:
+      213: 1122402929938642598
+    second: pack 3 monster 1_64
+  - first:
+      213: 5476636535305338875
+    second: pack 3 monster 1_65
+  - first:
+      213: 4534258081790058064
+    second: pack 3 monster 1_66
+  - first:
+      213: -727641722064318928
+    second: pack 3 monster 1_67
+  - first:
+      213: -7886028117232176253
+    second: pack 3 monster 1_68
+  - first:
+      213: 5010388716002350734
+    second: pack 3 monster 1_69
+  - first:
+      213: -8131110728789158574
+    second: pack 3 monster 1_70
+  - first:
+      213: -6341765790378608082
+    second: pack 3 monster 1_71
+  - first:
+      213: 7200883901075779388
+    second: pack 3 monster 1_72
+  - first:
+      213: 1325662862069646246
+    second: pack 3 monster 1_73
+  - first:
+      213: 3251887090123866841
+    second: pack 3 monster 1_74
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: pack 3 monster 1_0
+      rect:
+        serializedVersion: 2
+        x: 24
+        y: 399
+        width: 15
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b8faf81f261efb4e0800000000000000
+      internalID: -1963603097434476661
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_1
+      rect:
+        serializedVersion: 2
+        x: 88
+        y: 399
+        width: 15
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9b83173adc025d790800000000000000
+      internalID: -7506057136360572743
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_2
+      rect:
+        serializedVersion: 2
+        x: 152
+        y: 399
+        width: 15
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4529a16abc9d6d390800000000000000
+      internalID: -7793802636429716908
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_3
+      rect:
+        serializedVersion: 2
+        x: 216
+        y: 399
+        width: 15
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2061e84d8d0575150800000000000000
+      internalID: 5861242332255229442
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_4
+      rect:
+        serializedVersion: 2
+        x: 280
+        y: 399
+        width: 15
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 914018a3bcdc72990800000000000000
+      internalID: -7410728389071272935
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_5
+      rect:
+        serializedVersion: 2
+        x: 344
+        y: 399
+        width: 15
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 56876a0d9a5e17040800000000000000
+      internalID: 4643745208308496485
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_6
+      rect:
+        serializedVersion: 2
+        x: 408
+        y: 399
+        width: 15
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7fb70b625e0ddc650800000000000000
+      internalID: 6254885140102675447
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_7
+      rect:
+        serializedVersion: 2
+        x: 472
+        y: 399
+        width: 15
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c4c917258ca730830800000000000000
+      internalID: 4036204691849321548
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_8
+      rect:
+        serializedVersion: 2
+        x: 24
+        y: 335
+        width: 15
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e3d912b4e05fb7d80800000000000000
+      internalID: -8251732450487460546
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_9
+      rect:
+        serializedVersion: 2
+        x: 89
+        y: 335
+        width: 14
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7cd2aafbd62ca6a70800000000000000
+      internalID: 8821076596781362631
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_10
+      rect:
+        serializedVersion: 2
+        x: 153
+        y: 335
+        width: 14
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8edc94c9dc3449e10800000000000000
+      internalID: 2203460668060454376
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_11
+      rect:
+        serializedVersion: 2
+        x: 217
+        y: 335
+        width: 14
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1601e9aefb548fe90800000000000000
+      internalID: -6991761730915397535
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_12
+      rect:
+        serializedVersion: 2
+        x: 280
+        y: 335
+        width: 15
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 181eae9ad35582520800000000000000
+      internalID: 2677483701803868545
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_13
+      rect:
+        serializedVersion: 2
+        x: 343
+        y: 335
+        width: 17
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 77614fcff44d6eaf0800000000000000
+      internalID: -367372879572756873
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_14
+      rect:
+        serializedVersion: 2
+        x: 407
+        y: 335
+        width: 17
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 86d9e67b69eb0d260800000000000000
+      internalID: 7120400565404605800
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_15
+      rect:
+        serializedVersion: 2
+        x: 471
+        y: 335
+        width: 17
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 34337f602e8cd27a0800000000000000
+      internalID: -6400238622318578877
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_16
+      rect:
+        serializedVersion: 2
+        x: 24
+        y: 271
+        width: 15
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 364ef609feaa54a00800000000000000
+      internalID: 740185659669472355
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_17
+      rect:
+        serializedVersion: 2
+        x: 86
+        y: 271
+        width: 17
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2c05bd90c5b9b76a0800000000000000
+      internalID: -6450391221673439038
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_18
+      rect:
+        serializedVersion: 2
+        x: 149
+        y: 271
+        width: 17
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d3fe6a987b2ef69f0800000000000000
+      internalID: -472910157934301379
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_19
+      rect:
+        serializedVersion: 2
+        x: 217
+        y: 271
+        width: 23
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d6f3803b981aa7650800000000000000
+      internalID: 6231470647206756205
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_20
+      rect:
+        serializedVersion: 2
+        x: 281
+        y: 271
+        width: 24
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aa52580c647ab99e0800000000000000
+      internalID: -1613512119162690134
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_21
+      rect:
+        serializedVersion: 2
+        x: 346
+        y: 271
+        width: 15
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d50c410045194f6a0800000000000000
+      internalID: -6416343779131473827
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_22
+      rect:
+        serializedVersion: 2
+        x: 409
+        y: 271
+        width: 15
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a01a124eb72b30e00800000000000000
+      internalID: 1009846986639253770
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_23
+      rect:
+        serializedVersion: 2
+        x: 472
+        y: 271
+        width: 15
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ed2d027e40fa89b90800000000000000
+      internalID: -7234840365778283810
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_24
+      rect:
+        serializedVersion: 2
+        x: 536
+        y: 271
+        width: 15
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1bcf2504d50edbbb0800000000000000
+      internalID: -4918528526902952783
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_25
+      rect:
+        serializedVersion: 2
+        x: 600
+        y: 271
+        width: 15
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cc398941b235fbcd0800000000000000
+      internalID: -2540220220319427636
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_26
+      rect:
+        serializedVersion: 2
+        x: 24
+        y: 207
+        width: 15
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bc25c627fe81246e0800000000000000
+      internalID: -1854892679827270965
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_27
+      rect:
+        serializedVersion: 2
+        x: 87
+        y: 207
+        width: 16
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7b84db71febcee750800000000000000
+      internalID: 6336225953512769719
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_28
+      rect:
+        serializedVersion: 2
+        x: 150
+        y: 207
+        width: 18
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9d19e761c90773530800000000000000
+      internalID: 3834657423423869401
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_29
+      rect:
+        serializedVersion: 2
+        x: 213
+        y: 207
+        width: 20
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 55c7c068b00f66130800000000000000
+      internalID: 3559796487767227477
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_30
+      rect:
+        serializedVersion: 2
+        x: 277
+        y: 207
+        width: 20
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4f7d55b9aa6be76e0800000000000000
+      internalID: -1837830754053793804
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_31
+      rect:
+        serializedVersion: 2
+        x: 341
+        y: 207
+        width: 20
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3ad2774c7d9e9c270800000000000000
+      internalID: 8271399303566011811
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_32
+      rect:
+        serializedVersion: 2
+        x: 407
+        y: 207
+        width: 20
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9a8dc353250e93880800000000000000
+      internalID: -8630620567193724759
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_33
+      rect:
+        serializedVersion: 2
+        x: 474
+        y: 207
+        width: 27
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c63617e9de694e240800000000000000
+      internalID: 4820143448502920044
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_34
+      rect:
+        serializedVersion: 2
+        x: 538
+        y: 207
+        width: 38
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a1eb91e542fb1f060800000000000000
+      internalID: 6985574659946823194
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_35
+      rect:
+        serializedVersion: 2
+        x: 602
+        y: 207
+        width: 38
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8e781edb30a8231f0800000000000000
+      internalID: -1066638413058177048
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_36
+      rect:
+        serializedVersion: 2
+        x: 666
+        y: 207
+        width: 38
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 161cc110b566c2180800000000000000
+      internalID: -9138817002794860191
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_37
+      rect:
+        serializedVersion: 2
+        x: 729
+        y: 207
+        width: 27
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e9511d6c9b20a2e40800000000000000
+      internalID: 5632317280908023198
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_38
+      rect:
+        serializedVersion: 2
+        x: 793
+        y: 207
+        width: 19
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7b4e54d9e5e7399d0800000000000000
+      internalID: -2768730401072094025
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_39
+      rect:
+        serializedVersion: 2
+        x: 856
+        y: 207
+        width: 15
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7088a32e8e53a62d0800000000000000
+      internalID: -3284753703869183993
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_40
+      rect:
+        serializedVersion: 2
+        x: 24
+        y: 143
+        width: 15
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7cb5e7a5cc29d2bb0800000000000000
+      internalID: -4959146208275833913
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_41
+      rect:
+        serializedVersion: 2
+        x: 88
+        y: 143
+        width: 14
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1d61c1a997fbac900800000000000000
+      internalID: 705586820634384081
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_42
+      rect:
+        serializedVersion: 2
+        x: 152
+        y: 143
+        width: 15
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3d38f70858b7825f0800000000000000
+      internalID: -781238722032073773
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_43
+      rect:
+        serializedVersion: 2
+        x: 24
+        y: 79
+        width: 15
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1e29a622481b75660800000000000000
+      internalID: 7374558095913685729
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_44
+      rect:
+        serializedVersion: 2
+        x: 88
+        y: 79
+        width: 15
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 72cdab1c886fe84d0800000000000000
+      internalID: -3130293623749682137
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_45
+      rect:
+        serializedVersion: 2
+        x: 152
+        y: 79
+        width: 15
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1b2cb50c30bb55940800000000000000
+      internalID: 5284335362575680177
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_46
+      rect:
+        serializedVersion: 2
+        x: 217
+        y: 79
+        width: 14
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7ecd8f7c89a60c4b0800000000000000
+      internalID: -5422216746931528473
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_47
+      rect:
+        serializedVersion: 2
+        x: 281
+        y: 79
+        width: 14
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0a4921347a2c9d1b0800000000000000
+      internalID: -5631255835409476448
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_48
+      rect:
+        serializedVersion: 2
+        x: 345
+        y: 79
+        width: 14
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 10c13e2a740061540800000000000000
+      internalID: 4978166745780132865
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_49
+      rect:
+        serializedVersion: 2
+        x: 409
+        y: 79
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e45d4f7a506ede20800000000000000
+      internalID: 3377242712373548259
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_50
+      rect:
+        serializedVersion: 2
+        x: 473
+        y: 79
+        width: 14
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ef2c5bb8ba563df60800000000000000
+      internalID: 8057895945753707262
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_51
+      rect:
+        serializedVersion: 2
+        x: 537
+        y: 79
+        width: 18
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1f6e7563d091e6720800000000000000
+      internalID: 2841235959454361329
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_52
+      rect:
+        serializedVersion: 2
+        x: 601
+        y: 79
+        width: 19
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 609632882d34ea670800000000000000
+      internalID: 8551847313929365766
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_53
+      rect:
+        serializedVersion: 2
+        x: 665
+        y: 79
+        width: 22
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6b4d91018515adcd0800000000000000
+      internalID: -2532622401773382474
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_54
+      rect:
+        serializedVersion: 2
+        x: 729
+        y: 79
+        width: 22
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 808ce6b1f6a5c0f70800000000000000
+      internalID: 9154791575785490440
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_55
+      rect:
+        serializedVersion: 2
+        x: 793
+        y: 79
+        width: 22
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 710887ded5320ef30800000000000000
+      internalID: 4602717705495674903
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_56
+      rect:
+        serializedVersion: 2
+        x: 857
+        y: 79
+        width: 22
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 049b173896dd2d630800000000000000
+      internalID: 3950463268403919168
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_57
+      rect:
+        serializedVersion: 2
+        x: 25
+        y: 15
+        width: 22
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9daf573ad2874ef90800000000000000
+      internalID: -6925278189577700647
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_58
+      rect:
+        serializedVersion: 2
+        x: 89
+        y: 15
+        width: 21
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6124f4683715bd840800000000000000
+      internalID: 5249879347246875158
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_59
+      rect:
+        serializedVersion: 2
+        x: 153
+        y: 15
+        width: 20
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e18dd431ed891b880800000000000000
+      internalID: -8596922134099535842
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_60
+      rect:
+        serializedVersion: 2
+        x: 217
+        y: 15
+        width: 19
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 785fbcdbb87cba900800000000000000
+      internalID: 696869970357515655
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_61
+      rect:
+        serializedVersion: 2
+        x: 281
+        y: 15
+        width: 18
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9b3ec8222373d9190800000000000000
+      internalID: -7954140678398876743
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_62
+      rect:
+        serializedVersion: 2
+        x: 345
+        y: 15
+        width: 16
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a6faa96430a1b2eb0800000000000000
+      internalID: -4743669181132918934
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_63
+      rect:
+        serializedVersion: 2
+        x: 409
+        y: 15
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0c09ed7526d672190800000000000000
+      internalID: -7987295144969858880
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_64
+      rect:
+        serializedVersion: 2
+        x: 473
+        y: 15
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6a6b9dd9483939f00800000000000000
+      internalID: 1122402929938642598
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_65
+      rect:
+        serializedVersion: 2
+        x: 537
+        y: 15
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bfffcc299ebe00c40800000000000000
+      internalID: 5476636535305338875
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_66
+      rect:
+        serializedVersion: 2
+        x: 601
+        y: 15
+        width: 15
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 05e5a0da3bbecee30800000000000000
+      internalID: 4534258081790058064
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_67
+      rect:
+        serializedVersion: 2
+        x: 665
+        y: 15
+        width: 14
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 03e4a9085b5e6e5f0800000000000000
+      internalID: -727641722064318928
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_68
+      rect:
+        serializedVersion: 2
+        x: 728
+        y: 15
+        width: 15
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 38332a795333f8290800000000000000
+      internalID: -7886028117232176253
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_69
+      rect:
+        serializedVersion: 2
+        x: 792
+        y: 15
+        width: 15
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e8612f3bdf9788540800000000000000
+      internalID: 5010388716002350734
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_70
+      rect:
+        serializedVersion: 2
+        x: 856
+        y: 15
+        width: 16
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 25597256fdd782f80800000000000000
+      internalID: -8131110728789158574
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_71
+      rect:
+        serializedVersion: 2
+        x: 920
+        y: 15
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e2a32cf1d958df7a0800000000000000
+      internalID: -6341765790378608082
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_72
+      rect:
+        serializedVersion: 2
+        x: 984
+        y: 15
+        width: 15
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c3f637091cdaee360800000000000000
+      internalID: 7200883901075779388
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_73
+      rect:
+        serializedVersion: 2
+        x: 1049
+        y: 15
+        width: 14
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6a3c6917953b56210800000000000000
+      internalID: 1325662862069646246
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pack 3 monster 1_74
+      rect:
+        serializedVersion: 2
+        x: 1112
+        y: 15
+        width: 15
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9d203884416012d20800000000000000
+      internalID: 3251887090123866841
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      pack 3 monster 1_0: -1963603097434476661
+      pack 3 monster 1_1: -7506057136360572743
+      pack 3 monster 1_10: 2203460668060454376
+      pack 3 monster 1_11: -6991761730915397535
+      pack 3 monster 1_12: 2677483701803868545
+      pack 3 monster 1_13: -367372879572756873
+      pack 3 monster 1_14: 7120400565404605800
+      pack 3 monster 1_15: -6400238622318578877
+      pack 3 monster 1_16: 740185659669472355
+      pack 3 monster 1_17: -6450391221673439038
+      pack 3 monster 1_18: -472910157934301379
+      pack 3 monster 1_19: 6231470647206756205
+      pack 3 monster 1_2: -7793802636429716908
+      pack 3 monster 1_20: -1613512119162690134
+      pack 3 monster 1_21: -6416343779131473827
+      pack 3 monster 1_22: 1009846986639253770
+      pack 3 monster 1_23: -7234840365778283810
+      pack 3 monster 1_24: -4918528526902952783
+      pack 3 monster 1_25: -2540220220319427636
+      pack 3 monster 1_26: -1854892679827270965
+      pack 3 monster 1_27: 6336225953512769719
+      pack 3 monster 1_28: 3834657423423869401
+      pack 3 monster 1_29: 3559796487767227477
+      pack 3 monster 1_3: 5861242332255229442
+      pack 3 monster 1_30: -1837830754053793804
+      pack 3 monster 1_31: 8271399303566011811
+      pack 3 monster 1_32: -8630620567193724759
+      pack 3 monster 1_33: 4820143448502920044
+      pack 3 monster 1_34: 6985574659946823194
+      pack 3 monster 1_35: -1066638413058177048
+      pack 3 monster 1_36: -9138817002794860191
+      pack 3 monster 1_37: 5632317280908023198
+      pack 3 monster 1_38: -2768730401072094025
+      pack 3 monster 1_39: -3284753703869183993
+      pack 3 monster 1_4: -7410728389071272935
+      pack 3 monster 1_40: -4959146208275833913
+      pack 3 monster 1_41: 705586820634384081
+      pack 3 monster 1_42: -781238722032073773
+      pack 3 monster 1_43: 7374558095913685729
+      pack 3 monster 1_44: -3130293623749682137
+      pack 3 monster 1_45: 5284335362575680177
+      pack 3 monster 1_46: -5422216746931528473
+      pack 3 monster 1_47: -5631255835409476448
+      pack 3 monster 1_48: 4978166745780132865
+      pack 3 monster 1_49: 3377242712373548259
+      pack 3 monster 1_5: 4643745208308496485
+      pack 3 monster 1_50: 8057895945753707262
+      pack 3 monster 1_51: 2841235959454361329
+      pack 3 monster 1_52: 8551847313929365766
+      pack 3 monster 1_53: -2532622401773382474
+      pack 3 monster 1_54: 9154791575785490440
+      pack 3 monster 1_55: 4602717705495674903
+      pack 3 monster 1_56: 3950463268403919168
+      pack 3 monster 1_57: -6925278189577700647
+      pack 3 monster 1_58: 5249879347246875158
+      pack 3 monster 1_59: -8596922134099535842
+      pack 3 monster 1_6: 6254885140102675447
+      pack 3 monster 1_60: 696869970357515655
+      pack 3 monster 1_61: -7954140678398876743
+      pack 3 monster 1_62: -4743669181132918934
+      pack 3 monster 1_63: -7987295144969858880
+      pack 3 monster 1_64: 1122402929938642598
+      pack 3 monster 1_65: 5476636535305338875
+      pack 3 monster 1_66: 4534258081790058064
+      pack 3 monster 1_67: -727641722064318928
+      pack 3 monster 1_68: -7886028117232176253
+      pack 3 monster 1_69: 5010388716002350734
+      pack 3 monster 1_7: 4036204691849321548
+      pack 3 monster 1_70: -8131110728789158574
+      pack 3 monster 1_71: -6341765790378608082
+      pack 3 monster 1_72: 7200883901075779388
+      pack 3 monster 1_73: 1325662862069646246
+      pack 3 monster 1_74: 3251887090123866841
+      pack 3 monster 1_8: -8251732450487460546
+      pack 3 monster 1_9: 8821076596781362631
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
