@@ -1,42 +1,53 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { Music as MusicIcon } from "lucide-react";
+import { Music as MusicIcon, Heart } from "lucide-react";
 import { musicApi } from "@/lib/api/music";
 import { resolveMediaUrl } from "@/lib/api/media";
+import { useAuth } from "@/lib/providers";
 import { PageShell } from "@/components/ui/page-shell";
 import { PageTitle } from "@/components/ui/page-title";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SkeletonGrid } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
-import type { MusicAlbumDto } from "@/lib/types";
+import { qk } from "@/lib/query-keys";
 
 const PAGE_SIZE = 24;
 
 export default function MusicPage() {
-  const [albums, setAlbums] = useState<MusicAlbumDto[]>([]);
-  const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
-  useEffect(() => {
-    let ignore = false;
-    setLoading(true);
-    musicApi.getAlbumsPaged(page, PAGE_SIZE)
-      .then((res) => { if (!ignore && res.success) { setAlbums(res.data.items); setTotal(res.data.totalCount); } })
-      .finally(() => { if (!ignore) setLoading(false); });
-    return () => { ignore = true; };
-  }, [page]);
+  const { data, isPending } = useQuery({
+    queryKey: qk.music.albums(page),
+    queryFn: async () => {
+      const res = await musicApi.getAlbumsPaged(page, PAGE_SIZE);
+      return res.success ? res.data : null;
+    },
+  });
 
+  const albums = data?.items ?? [];
+  const total = data?.totalCount ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <PageShell>
-      <PageTitle description="Original soundtrack of the Attrition universe.">Music</PageTitle>
+      <div className="flex items-start justify-between gap-4">
+        <PageTitle description="Original soundtrack of the Attrition universe.">Music</PageTitle>
+        {user && (
+          <Link
+            href="/music/favorites"
+            className="mt-1 inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border-strong px-3 py-1.5 text-sm text-fg-muted transition-colors hover:border-accent/60 hover:text-fg"
+          >
+            <Heart size={15} /> Favorites
+          </Link>
+        )}
+      </div>
 
-      {loading ? (
+      {isPending ? (
         <SkeletonGrid count={8} className="lg:grid-cols-4" />
       ) : albums.length === 0 ? (
         <EmptyState

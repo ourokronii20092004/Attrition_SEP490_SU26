@@ -90,6 +90,23 @@ public class TrackService : ITrackService
         return albums.ToDictionary(a => a.AlbumId);
     }
 
+    public async Task<PaginatedResponse<MusicTrackDto>> GetTracksPagedAsync(int? albumId, int page, int pageSize)
+    {
+        if (page < 1) page = 1;
+        Expression<Func<MusicTrack, bool>>? filter = albumId.HasValue ? t => t.AlbumId == albumId.Value : null;
+        var (tracks, total) = await _trackRepo.GetPagedAsync(page, pageSize, filter,
+            q => q.OrderBy(t => t.AlbumId).ThenBy(t => t.TrackNumber));
+
+        var albumMap = await LoadAlbumsAsync(tracks.Select(t => t.AlbumId));
+        var items = tracks.Select(t =>
+        {
+            albumMap.TryGetValue(t.AlbumId, out var album);
+            return new MusicTrackDto(t.TrackId, t.AlbumId, t.Title, t.Slug, t.TrackNumber, t.Artists,
+                t.Duration, t.Genre, t.CoverPath, t.PlayCount, t.IsFeatured, t.FileSize ?? 0, album?.Title, album?.CoverPath);
+        }).ToList();
+        return new PaginatedResponse<MusicTrackDto>(items, total, page, pageSize);
+    }
+
     public async Task<FeaturedTracksResponse> GetFeaturedTracksAsync()
     {
         var lastMonth = DateTime.UtcNow.AddDays(-30);
@@ -113,19 +130,24 @@ public class TrackService : ITrackService
                 t.Duration, t.Genre, t.CoverPath, t.PlayCount, t.IsFeatured, t.FileSize ?? 0, album?.Title, album?.CoverPath);
         }).ToList();
 
-        var albums = await _albumRepo.GetAllAsync();
-        var tracksByAlbum = (await _trackRepo.ListAsync())
+        // Newest albums: compute per-album track count + most-recent track date in the database,
+        // take the top 5, then load only those albums. Avoids pulling every track/album into memory.
+        var topAlbumStats = await _db.MusicTracks
             .GroupBy(t => t.AlbumId)
-            .ToDictionary(g => g.Key, g => g.ToList());
+            .Select(g => new { AlbumId = g.Key, TrackCount = g.Count(), NewestTrackAddedAt = g.Max(t => t.CreatedAt) })
+            .OrderByDescending(x => x.NewestTrackAddedAt)
+            .Take(5)
+            .ToListAsync();
+
+        var newestAlbumMap = await LoadAlbumsAsync(topAlbumStats.Select(x => x.AlbumId));
         var newestAlbums = new List<NewestAlbumDto>();
-        foreach (var a in albums)
+        foreach (var stat in topAlbumStats)
         {
-            if (tracksByAlbum.TryGetValue(a.AlbumId, out var tracks) && tracks.Count > 0)
-                newestAlbums.Add(new NewestAlbumDto(a.AlbumId, a.Title, a.CoverPath, a.Artists, tracks.Count, tracks.Max(t => t.CreatedAt)));
+            if (newestAlbumMap.TryGetValue(stat.AlbumId, out var a))
+                newestAlbums.Add(new NewestAlbumDto(a.AlbumId, a.Title, a.CoverPath, a.Artists, stat.TrackCount, stat.NewestTrackAddedAt));
         }
 
-        return new FeaturedTracksResponse(featuredDtos,
-            newestAlbums.OrderByDescending(na => na.NewestTrackAddedAt).Take(5).ToList());
+        return new FeaturedTracksResponse(featuredDtos, newestAlbums);
     }
 
     public async Task<(string? filePath, bool trackExists)> GetTrackStreamInfoAsync(int id)
@@ -185,6 +207,9 @@ public class TrackService : ITrackService
         if (file.Length > 100 * 1024 * 1024) return (false, "File must be under 100MB", null);
         if (!MusicHelpers.IsAllowedAudioExtension(file.FileName))
             return (false, "File must be an audio file (.mp3, .flac, .ogg, .m4a, .wav)", null);
+        await using (var sniff = file.OpenReadStream())
+            if (!await MusicHelpers.LooksLikeAudioAsync(sniff))
+                return (false, "File content is not a recognized audio format", null);
 
         var tempDir = Path.Combine(MusicDir, "temp");
         Directory.CreateDirectory(tempDir);
@@ -251,6 +276,9 @@ public class TrackService : ITrackService
             if (req.File.Length > 100 * 1024 * 1024) return (false, "File must be under 100MB", null);
             if (!MusicHelpers.IsAllowedAudioExtension(req.File.FileName))
                 return (false, "File must be an audio file (.mp3, .flac, .ogg, .m4a, .wav)", null);
+            await using (var sniff = req.File.OpenReadStream())
+                if (!await MusicHelpers.LooksLikeAudioAsync(sniff))
+                    return (false, "File content is not a recognized audio format", null);
 
             Directory.CreateDirectory(tempDir);
             var ext = Path.GetExtension(req.File.FileName);

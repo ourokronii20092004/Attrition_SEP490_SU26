@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { ArrowLeft, History, PencilLine } from "lucide-react";
 import ReactMarkdown from "react-markdown";
@@ -13,28 +13,23 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatDate } from "@/lib/format-date";
 import { useAuth } from "@/lib/providers";
-import type { WikiArticleDto } from "@/lib/types";
+import { qk } from "@/lib/query-keys";
+import { WikiComments } from "./wiki-comments";
 
 export default function WikiArticlePage() {
   const params = useParams<{ slug: string }>();
   const { user } = useAuth();
-  const [article, setArticle] = useState<WikiArticleDto | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!params.slug) return;
-    let ignore = false;
-    setLoading(true);
-    wikiApi
-      .getArticle(params.slug)
-      .then((res) => {
-        if (!ignore && res.success) setArticle(res.data);
-      })
-      .finally(() => { if (!ignore) setLoading(false); });
-    return () => { ignore = true; };
-  }, [params.slug]);
+  const { data: article, isPending } = useQuery({
+    queryKey: qk.wiki.article(params.slug),
+    enabled: !!params.slug,
+    queryFn: async () => {
+      const res = await wikiApi.getArticle(params.slug);
+      return res.success ? res.data : null;
+    },
+  });
 
-  if (loading) {
+  if (isPending) {
     return (
       <PageShell size="md">
         <Skeleton className="h-4 w-16" />
@@ -105,6 +100,8 @@ export default function WikiArticlePage() {
           <History size={16} /> View revision history
         </Link>
       </div>
+
+      <WikiComments articleId={article.id} articleTitle={article.title} />
     </PageShell>
   );
 }

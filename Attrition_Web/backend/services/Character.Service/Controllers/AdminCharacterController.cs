@@ -16,8 +16,9 @@ public class AdminCharacterController : ControllerBase
     public AdminCharacterController(ICharacterService service) => _service = service;
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
-        => Ok(ApiResponse<List<AdminCharacterDto>>.Ok(await _service.GetAllAsync()));
+    public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 50, CancellationToken ct = default)
+        => Ok(ApiResponse<PaginatedResponse<AdminCharacterDto>>.Ok(
+            await _service.GetAllAsync(page < 1 ? 1 : page, pageSize, ct)));
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> Get(Guid id)

@@ -48,8 +48,14 @@ public class MusicController : ControllerBase
 
     // ─── Tracks (public) ───
     [HttpGet("tracks")]
-    public async Task<IActionResult> GetTracks([FromQuery] int? albumId)
-        => Ok(ApiResponse<IEnumerable<MusicTrackDto>>.Ok(await _tracks.GetTracksAsync(albumId)));
+    public async Task<IActionResult> GetTracks([FromQuery] int? albumId, [FromQuery] int? page, [FromQuery] int pageSize = 50)
+    {
+        // Paged when ?page is supplied; otherwise the full list (back-compat for album track lists).
+        if (page is { } p)
+            return Ok(ApiResponse<PaginatedResponse<MusicTrackDto>>.Ok(
+                await _tracks.GetTracksPagedAsync(albumId, p < 1 ? 1 : p, pageSize)));
+        return Ok(ApiResponse<IEnumerable<MusicTrackDto>>.Ok(await _tracks.GetTracksAsync(albumId)));
+    }
 
     [HttpGet("tracks/featured")]
     public async Task<IActionResult> GetFeatured()
@@ -58,10 +64,12 @@ public class MusicController : ControllerBase
     [HttpGet("tracks/{id:int}/stream")]
     public async Task<IActionResult> Stream(int id)
     {
+        // Intentionally public — see docs/design-choices/README.md (DC-01).
         var (filePath, trackExists) = await _tracks.GetTrackStreamInfoAsync(id);
         if (!trackExists) return NotFound(ApiResponse.Fail("Track not found"));
         if (filePath == null) return NotFound(ApiResponse.Fail("Track audio file not found on disk"));
-        return PhysicalFile(filePath, "audio/mpeg", enableRangeProcessing: true);
+        BuildingBlocks.Web.MediaSecurityHeaders.Apply(Response);
+        return PhysicalFile(filePath, MusicHelpers.GetAudioContentType(filePath), enableRangeProcessing: true);
     }
 
     [HttpGet("tracks/{id:int}/download")]
@@ -71,6 +79,7 @@ public class MusicController : ControllerBase
         if (!trackExists) return NotFound(ApiResponse.Fail("Track not found"));
         if (filePath == null) return NotFound(ApiResponse.Fail("Track audio file not found on disk"));
         // fileDownloadName sets Content-Disposition: attachment so the browser saves it.
+        BuildingBlocks.Web.MediaSecurityHeaders.Apply(Response);
         return PhysicalFile(filePath, "application/octet-stream", fileName);
     }
 

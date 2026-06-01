@@ -25,3 +25,6 @@ public record SnapshotIngestRequest(
     Guid OwnerId, Guid? CharacterId, string Name, string Archetype,
     int Level, int Hp, int MaxHp, int Gold, bool IsAlive,
     string? RoomCode, string EventType, int PlaytimeSeconds);
+
+// Local mirror of Identity's UserSummaryDto, for deserializing the internal batch lookup.
+public record UserSummaryDto(Guid Id, string Username, string? DisplayName, string? AvatarUrl, string Role);

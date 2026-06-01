@@ -1,6 +1,5 @@
 using System.Threading.RateLimiting;
 using Gateway;
-using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,15 +13,11 @@ builder.WebHost.ConfigureKestrel(o => o.Limits.MaxRequestBodySize = maxBodyMb * 
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 
-// Honor X-Forwarded-For from the nginx/cloudflared edge so the rate limiter partitions by the real
-// client IP (ClientIp reads Connection.RemoteIpAddress, which UseForwardedHeaders rewrites) instead
-// of lumping every request behind the proxy into a single bucket.
-builder.Services.Configure<ForwardedHeadersOptions>(options =>
-{
-    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    options.KnownNetworks.Clear();
-    options.KnownProxies.Clear();
-});
+// NOTE: we intentionally do NOT use UseForwardedHeaders / trust X-Forwarded-For. With
+// KnownProxies/KnownNetworks cleared it would rewrite Connection.RemoteIpAddress from a
+// client-settable XFF header, letting an attacker cycle fake IPs to evade the rate limiter.
+// The rate-limit key comes from CF-Connecting-IP (set by Cloudflare, the only public ingress,
+// and unforgeable through the tunnel); see ClientIp below.
 
 // Centralized CORS — only the gateway sets CORS headers; downstream services do not.
 // Origins come from the root .env via CORS_ORIGINS (comma-separated), surfaced as Cors:Origins.
@@ -39,8 +34,21 @@ builder.Services.AddCors(o => o.AddDefaultPolicy(p => p
     .AllowAnyMethod()
     .AllowCredentials()));
 
-static string ClientIp(HttpContext ctx) =>
-    ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+static string ClientIp(HttpContext ctx)
+{
+    // The ONLY public ingress is the Cloudflare tunnel → nginx → gateway. Cloudflare sets
+    // CF-Connecting-IP to the real client IP and overwrites any client-supplied value, so it
+    // can't be forged through the tunnel — it's the trustworthy rate-limit key.
+    //
+    // We deliberately do NOT trust X-Forwarded-For or X-Real-IP for keying: both are
+    // client-settable headers that survive a request made directly to nginx/gateway (bypassing
+    // Cloudflare), so an attacker could cycle them to evade per-IP limits. When CF-Connecting-IP
+    // is absent (non-Cloudflare/dev/LAN path) we fall back to the raw connection IP, which a
+    // client cannot spoof. Worst case off-Cloudflare is over-aggressive limiting, never bypass.
+    var cf = ctx.Request.Headers["CF-Connecting-IP"].ToString();
+    if (!string.IsNullOrWhiteSpace(cf)) return cf;
+    return ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+}
 
 builder.Services.AddRateLimiter(options =>
 {
@@ -70,7 +78,6 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
-app.UseForwardedHeaders();
 app.UseMiddleware<GatewayErrorMiddleware>();
 app.UseCors();
 app.UseRateLimiter();

@@ -28,6 +28,16 @@ public class AdminUsersController : ControllerBase
         return Ok(ApiResponse<PaginatedResponse<DTOs.UserListItem>>.Ok(result));
     }
 
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> Detail(Guid id)
+    {
+        var result = await _admin.GetUserDetailAsync(id);
+        if (result.Success) return Ok(result);
+        return result.Error?.Contains("not found", StringComparison.OrdinalIgnoreCase) == true
+            ? NotFound(result)
+            : BadRequest(result);
+    }
+
     [HttpPut("{id:guid}/role")]
     public async Task<IActionResult> ChangeRole(Guid id, [FromBody] ChangeRoleRequest req)
     {

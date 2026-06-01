@@ -37,9 +37,9 @@
   --glass-border: oklch(100% 0 0 / 0.07);
   --glass-blur: 18px;
 
-  --font-display: var(--font-jakarta), "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: var(--font-jetbrains), "Fira Code", ui-monospace, monospace;
+  --font-display: "Plus Jakarta Sans Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono Variable", "Fira Code", ui-monospace, monospace;
 
   --radius-card: 0.5rem;
 

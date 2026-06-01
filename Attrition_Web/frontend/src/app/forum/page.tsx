@@ -1,50 +1,48 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { Plus, Pin, Lock, MessageSquarePlus, MessagesSquare } from "lucide-react";
+import { Plus, Pin, Lock, MessageSquarePlus, MessagesSquare, Search } from "lucide-react";
 import { forumApi } from "@/lib/api/forum";
 import { PageShell } from "@/components/ui/page-shell";
 import { PageTitle } from "@/components/ui/page-title";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { SkeletonList } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Pagination } from "@/components/ui/pagination";
-import { FilterPills } from "@/components/ui/filter-pills";
 import { RelativeTime } from "@/components/ui/relative-time";
+import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { useAuth } from "@/lib/providers";
-import type { ForumCategoryDto, ForumThreadListDto, PaginatedResponse } from "@/lib/types";
+import { qk } from "@/lib/query-keys";
 
 export default function ForumPage() {
   const { user } = useAuth();
-  const [categories, setCategories] = useState<ForumCategoryDto[]>([]);
-  const [threads, setThreads] = useState<PaginatedResponse<ForumThreadListDto> | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [searchInput, setSearchInput] = useState("");
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const search = useDebouncedValue(searchInput.trim(), 300);
+
+  const { data: categories = [] } = useQuery({
+    queryKey: qk.forum.categories(),
+    queryFn: async () => {
+      const res = await forumApi.getCategories();
+      return res.success ? res.data ?? [] : [];
+    },
+  });
+
+  const { data: threads, isPending } = useQuery({
+    queryKey: qk.forum.threads({ selectedCategory, search, page }),
+    queryFn: async () => {
+      const res = await forumApi.getThreads({ category: selectedCategory || undefined, search: search || undefined, page, pageSize: 15 });
+      return res.success ? res.data : null;
+    },
+  });
+
   const totalPages = threads ? Math.ceil(threads.totalCount / threads.pageSize) : 0;
-
-  useEffect(() => {
-    forumApi.getCategories().then((res) => {
-      if (res.success) setCategories(res.data ?? []);
-    });
-  }, []);
-
-  useEffect(() => {
-    setLoading(true);
-    forumApi
-      .getThreads({ categoryId: selectedCategory ?? undefined, page, pageSize: 15 })
-      .then((res) => {
-        if (res.success) setThreads(res.data);
-      })
-      .finally(() => setLoading(false));
-  }, [selectedCategory, page]);
-
-  const pillOptions = [
-    { value: null as number | null, label: "All" },
-    ...categories.map((c) => ({ value: c.id as number | null, label: c.name })),
-  ];
 
   return (
     <PageShell>
@@ -61,13 +59,35 @@ export default function ForumPage() {
         Forum
       </PageTitle>
 
-      <FilterPills
-        options={pillOptions}
-        value={selectedCategory}
-        onChange={(v) => { setSelectedCategory(v); setPage(1); }}
-      />
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="relative min-w-56 flex-1">
+          <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-fg-subtle" />
+          <Input
+            value={searchInput}
+            onChange={(e) => { setSearchInput(e.target.value); setPage(1); }}
+            placeholder="Search threads..."
+            className="pl-9"
+            aria-label="Search threads"
+          />
+        </div>
+        <div className="w-48">
+          <Select
+            value={selectedCategory}
+            onChange={(e) => {
+              setSelectedCategory(e.target.value);
+              setPage(1);
+            }}
+            aria-label="Filter by category"
+          >
+            <option value="">All categories</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.slug}>{c.name}</option>
+            ))}
+          </Select>
+        </div>
+      </div>
 
-      {loading ? (
+      {isPending ? (
         <SkeletonList rows={6} className="mt-6" />
       ) : !threads?.items.length ? (
         <EmptyState

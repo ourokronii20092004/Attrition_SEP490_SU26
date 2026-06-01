@@ -1,5 +1,18 @@
 namespace Forum.Service.Models;
 
+public static class ReportStatus
+{
+    public const string Pending = "Pending";
+    public const string Resolved = "Resolved";
+    public const string Dismissed = "Dismissed";
+}
+
+public static class ReactionType
+{
+    public const string Like = "like";
+    public const string Dislike = "dislike";
+}
+
 public class ForumCategory
 {
     public int Id { get; set; }
@@ -20,6 +33,10 @@ public class ForumThread
     public string? AuthorName { get; set; }
     public string? AuthorAvatar { get; set; }
 
+    // QOLF-3b: when set, this thread is the comment thread for a wiki article (not a normal forum
+    // thread). Such threads are hidden from the forum listing/search and reached via the article.
+    public Guid? WikiArticleId { get; set; }
+
     public bool IsPinned { get; set; }
     public bool IsLocked { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -31,6 +48,11 @@ public class ForumPost
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid ThreadId { get; set; }
+
+    // Reddit-style nesting: a reply points at its parent post (null = top-level reply to the
+    // thread). Depth is denormalized for cheap indent rendering and to cap nesting.
+    public Guid? ParentPostId { get; set; }
+    public int Depth { get; set; }
 
     public Guid AuthorId { get; set; }
     public string? AuthorName { get; set; }
@@ -55,7 +77,7 @@ public class ForumReaction
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid PostId { get; set; }
     public Guid UserId { get; set; }
-    public string ReactionType { get; set; } = "like";        // like | dislike
+    public string ReactionType { get; set; } = Models.ReactionType.Like;        // like | dislike
 }
 
 public class ThreadSubscription
@@ -73,6 +95,6 @@ public class PostReport
     public Guid ReporterId { get; set; }
     public string? ReporterName { get; set; }
     public string Reason { get; set; } = string.Empty;
-    public string Status { get; set; } = "Pending";           // Pending | Resolved | Dismissed
+    public string Status { get; set; } = ReportStatus.Pending;           // Pending | Resolved | Dismissed
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

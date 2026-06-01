@@ -31,6 +31,14 @@ public class User
 
     // Account Status
     public bool IsBanned { get; set; } = false;
+    // Deletion is distinct from ban: a deleted account is anonymized/tombstoned, not punished.
+    public bool IsDeleted { get; set; } = false;
+    public DateTime? DeletedAt { get; set; }
+    // Pending email-confirmed deletion (PROB-4): set when the user requests deletion; cleared on
+    // confirm (→ IsDeleted) or if they change their mind. The soft-deleted account keeps its PII
+    // for a 90-day recovery window, after which a purge job tombstones it.
+    public string? DeletionConfirmToken { get; set; }
+    public DateTime? DeletionConfirmTokenExpiry { get; set; }
     public bool MustChangePassword { get; set; } = false;
     public DateTime? LastLoginAt { get; set; }
     public string? LastLoginIp { get; set; }

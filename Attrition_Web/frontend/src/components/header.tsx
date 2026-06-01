@@ -8,8 +8,12 @@ import { useAuth } from "@/lib/providers";
 import { SITE_NAME } from "@/lib/config";
 import { Avatar } from "@/components/ui/avatar";
 import { IconButton } from "@/components/ui/icon-button";
-import { SearchModal } from "./search-modal";
+import { NotificationBell } from "./notification-bell";
+import dynamic from "next/dynamic";
 import { ThemeSwitcher } from "./theme-switcher";
+
+// Search modal only mounts when opened — lazy-load so its code stays out of the initial bundle.
+const SearchModal = dynamic(() => import("./search-modal").then((m) => m.SearchModal), { ssr: false });
 
 const NAV_LINKS = [
   { href: "/wiki", label: "Wiki" },
@@ -68,6 +72,8 @@ export function Header() {
 
             <ThemeSwitcher />
 
+            <NotificationBell />
+
             {!loading && !user && (
               <Link
                 href="/login"
@@ -91,7 +97,7 @@ export function Header() {
                 {userMenuOpen && (
                   <>
                     <div className="fixed inset-0 z-[90]" onClick={() => setUserMenuOpen(false)} aria-hidden />
-                    <div className="glass absolute right-0 top-full z-[100] mt-2 w-56 origin-top-right animate-fade-in rounded-xl p-1.5 shadow-[var(--shadow-lg)]">
+                    <div className="absolute right-0 top-full z-[100] mt-2 w-56 origin-top-right animate-fade-in rounded-xl border border-border bg-surface p-1.5 shadow-[var(--shadow-lg)]">
                       <div className="flex items-center gap-3 border-b border-border px-3 py-2.5">
                         <Avatar src={user.avatarUrl} name={user.displayName} size="md" />
                         <div className="min-w-0">

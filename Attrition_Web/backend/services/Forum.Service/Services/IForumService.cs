@@ -11,6 +11,8 @@ public interface IForumService
     Task<List<ForumCategoryDto>> GetCategoriesAsync();
     Task<PaginatedResponse<ForumThreadListDto>> GetThreadsAsync(string? categorySlug, string? search, int page, int pageSize, Guid? authorId = null);
     Task<ForumThreadDto?> GetThreadAsync(Guid threadId);
+    // QOLF-3b: resolve (creating if needed) the comment thread for a wiki article.
+    Task<ApiResponse<ForumThreadDto>> GetOrCreateWikiThreadAsync(Guid articleId, string articleTitle);
     Task<PaginatedResponse<ForumPostDto>> GetPostsAsync(Guid threadId, int page, int pageSize, Guid? currentUserId);
 
     Task<ApiResponse<Guid>> CreateThreadAsync(CreateThreadRequest request, Author author);
@@ -28,14 +30,16 @@ public interface IForumService
     Task<ApiResponse> DeleteThreadAsync(Guid threadId);
     Task<ApiResponse> RemovePostAsync(Guid postId, Author moderator, string reason);
     Task<ApiResponse> RestorePostAsync(Guid postId);
-    Task<List<AdminForumThreadDto>> ListThreadsForModerationAsync();
-    Task<List<AdminForumPostDto>> ListPostsForModerationAsync(bool removedOnly, string? search);
-    Task<List<AdminPostReportDto>> ListReportsAsync(string status);
+    Task<PaginatedResponse<AdminForumThreadDto>> ListThreadsForModerationAsync(int page, int pageSize);
+    Task<PaginatedResponse<AdminForumPostDto>> ListPostsForModerationAsync(bool removedOnly, string? search, int page, int pageSize);
+    Task<PaginatedResponse<AdminPostReportDto>> ListReportsAsync(string status, int page, int pageSize);
     Task<ApiResponse> DismissReportAsync(Guid reportId);
+    Task<ApiResponse> ResolveReportAsync(Guid reportId);
 
     // Category management (admin)
     Task<ApiResponse<int>> CreateCategoryAsync(ForumCategoryRequest request);
     Task<ApiResponse> UpdateCategoryAsync(int id, ForumCategoryRequest request);
+    Task<ApiResponse> DeleteCategoryAsync(int id);
 
     // Aggregator support
     Task<List<ForumPostSearchDto>> SearchAsync(string query, int limit);

@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useMutation } from "@tanstack/react-query";
 import Link from "next/link";
 import { CheckCircle2, XCircle, Mail } from "lucide-react";
 import { authApi } from "@/lib/api/auth";
@@ -32,23 +33,28 @@ function VerifyEmailContent() {
   const token = searchParams.get("token");
   const { user } = useAuth();
   const [status, setStatus] = useState<"verifying" | "success" | "error" | "idle">(token ? "verifying" : "idle");
-  const [resending, setResending] = useState(false);
+
+  const verifyMutation = useMutation({
+    mutationFn: async (t: string) => authApi.verifyEmail({ token: t }),
+    onSuccess: () => setStatus("success"),
+    onError: () => setStatus("error"),
+  });
+
+  const resendMutation = useMutation({
+    mutationFn: async () => { await authApi.resendVerification(); },
+  });
 
   useEffect(() => {
     if (!token) return;
-    authApi
-      .verifyEmail({ token })
-      .then(() => setStatus("success"))
-      .catch(() => setStatus("error"));
+    verifyMutation.mutate(token);
+    // Fire the verify exactly once for this token.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  const handleResend = async () => {
-    setResending(true);
-    try {
-      await authApi.resendVerification();
-    } catch {}
-    setResending(false);
+  const handleResend = () => {
+    resendMutation.mutate();
   };
+  const resending = resendMutation.isPending;
 
   if (status === "verifying") {
     return (

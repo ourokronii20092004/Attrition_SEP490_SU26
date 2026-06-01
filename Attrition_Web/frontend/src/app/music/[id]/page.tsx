@@ -1,39 +1,41 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { ArrowLeft, Play, Pause, Download, Music as MusicIcon } from "lucide-react";
+import { ArrowLeft, Play, Pause, Download, Music as MusicIcon, Heart, Headphones } from "lucide-react";
 import { musicApi, getDownloadUrl } from "@/lib/api/music";
 import { resolveMediaUrl } from "@/lib/api/media";
 import { useAudioStore } from "@/lib/stores/audio-store";
+import { useFavorites } from "@/components/player/use-favorites";
 import { PageShell } from "@/components/ui/page-shell";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
-import type { AlbumDetailDto, MusicTrackDto } from "@/lib/types";
+import { qk } from "@/lib/query-keys";
+import type { MusicTrackDto } from "@/lib/types";
+
+const formatPlays = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
 
 export default function AlbumPage() {
   const params = useParams<{ id: string }>();
-  const [album, setAlbum] = useState<AlbumDetailDto | null>(null);
-  const [loading, setLoading] = useState(true);
   const { play, pause, resume, currentTrack, isPlaying } = useAudioStore();
+  const { isFavorite, toggle, canFavorite } = useFavorites();
+  const [sortByPlays, setSortByPlays] = useState(false);
 
-  useEffect(() => {
-    if (!params.id) return;
-    let ignore = false;
-    setLoading(true);
-    musicApi.getAlbum(Number(params.id))
-      .then((res) => {
-        if (!ignore && res.success) setAlbum(res.data);
-      })
-      .finally(() => { if (!ignore) setLoading(false); });
-    return () => { ignore = true; };
-  }, [params.id]);
+  const { data: album, isPending } = useQuery({
+    queryKey: qk.music.album(params.id),
+    enabled: !!params.id,
+    queryFn: async () => {
+      const res = await musicApi.getAlbum(Number(params.id));
+      return res.success ? res.data : null;
+    },
+  });
 
-  if (loading) {
+  if (isPending) {
     return (
-      <PageShell size="md">
+      <PageShell>
         <Skeleton className="h-4 w-16" />
         <div className="mt-4 flex gap-6">
           <Skeleton className="h-40 w-40 rounded-xl" />
@@ -49,7 +51,7 @@ export default function AlbumPage() {
 
   if (!album) {
     return (
-      <PageShell size="md">
+      <PageShell>
         <EmptyState
           title="Album not found"
           description="This album may have been removed."
@@ -85,8 +87,13 @@ export default function AlbumPage() {
     }
   };
 
+  // Default order is track number; "Most played" sorts by playCount desc (QOLF-2).
+  const orderedTracks = sortByPlays
+    ? [...album.tracks].sort((a, b) => b.playCount - a.playCount)
+    : album.tracks;
+
   return (
-    <PageShell size="md">
+    <PageShell>
       <Link href="/music" className="inline-flex items-center gap-1.5 text-sm text-fg-muted transition-colors hover:text-fg">
         <ArrowLeft size={16} /> Music
       </Link>
@@ -117,9 +124,21 @@ export default function AlbumPage() {
         </div>
       </div>
 
-      <div className="mt-8 space-y-0.5">
-        {album.tracks.map((track) => {
+      <div className="mt-8">
+        {album.tracks.length > 1 && (
+          <div className="mb-2 flex items-center justify-end">
+            <button
+              onClick={() => setSortByPlays((v) => !v)}
+              className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs transition-colors ${sortByPlays ? "bg-accent-soft text-accent" : "text-fg-subtle hover:bg-surface-2 hover:text-fg"}`}
+            >
+              <Headphones size={13} /> {sortByPlays ? "Most played" : "Track order"}
+            </button>
+          </div>
+        )}
+        <div className="space-y-0.5">
+        {orderedTracks.map((track) => {
           const active = currentTrack?.trackId === track.trackId;
+          const fav = isFavorite(track.trackId);
           return (
             <div
               key={track.trackId}
@@ -142,6 +161,19 @@ export default function AlbumPage() {
                 </span>
                 <span className={`truncate text-sm ${active ? "font-medium text-accent" : "text-fg"}`}>{track.title}</span>
               </button>
+              <span className="hidden shrink-0 items-center gap-1 text-xs tabular-nums text-fg-subtle sm:inline-flex" title={`${track.playCount} plays`}>
+                <Headphones size={12} /> {formatPlays(track.playCount)}
+              </span>
+              {canFavorite && (
+                <button
+                  onClick={() => toggle(track.trackId)}
+                  className={`shrink-0 rounded-md p-1.5 transition-all hover:bg-surface-3 ${fav ? "text-accent" : "text-fg-subtle opacity-0 hover:text-fg group-hover:opacity-100"}`}
+                  aria-label={fav ? `Unfavorite ${track.title}` : `Favorite ${track.title}`}
+                  aria-pressed={fav}
+                >
+                  <Heart size={15} className={fav ? "fill-current" : ""} />
+                </button>
+              )}
               <span className="shrink-0 text-xs tabular-nums text-fg-subtle">{formatDuration(track.duration)}</span>
               <a
                 href={getDownloadUrl(track.trackId)}
@@ -156,6 +188,7 @@ export default function AlbumPage() {
         {album.tracks.length === 0 && (
           <p className="py-8 text-center text-sm text-fg-muted">No tracks in this album.</p>
         )}
+        </div>
       </div>
     </PageShell>
   );

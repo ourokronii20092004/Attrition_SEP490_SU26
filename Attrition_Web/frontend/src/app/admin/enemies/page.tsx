@@ -1,147 +1,225 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useAuth } from "@/lib/providers";
+import { useState, useEffect } from "react";
+import { useForm, useFieldArray } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth, useConfirm } from "@/lib/providers";
 import { enemiesApi } from "@/lib/api/enemies";
+import { parseApiError } from "@/lib/api/parse-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { Modal } from "@/components/ui/modal";
 import { PageLoader } from "@/components/ui/spinner";
+import { AdminPageHeader, AdminFilterBar, AdminTable, AdminRow } from "@/components/admin/admin-table";
+import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { ENEMY_TIERS } from "@/lib/enemy-tiers";
-import type { EnemyResponse, EnemyCreateRequest, EnemyUpdateRequest, LootEntryDto } from "@/lib/types";
+import { qk } from "@/lib/query-keys";
+import type { EnemyResponse, EnemyCreateRequest, EnemyUpdateRequest } from "@/lib/types";
 
 export default function AdminEnemiesPage() {
   const { user } = useAuth();
-  const [enemies, setEnemies] = useState<EnemyResponse[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const confirm = useConfirm();
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<EnemyResponse | null>(null);
+  const [formDirty, setFormDirty] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
+  const [tierFilter, setTierFilter] = useState("all");
+  const search = useDebouncedValue(searchInput.trim().toLowerCase(), 200);
 
-  const fetchEnemies = () => {
-    setLoading(true);
-    enemiesApi.list().then((res) => {
-      if (res.success) setEnemies(res.data);
-      setLoading(false);
-    });
-  };
+  const { data: enemies = [], isPending: loading } = useQuery({
+    queryKey: qk.admin.enemies(),
+    enabled: user?.role === "Admin",
+    queryFn: async () => {
+      const res = await enemiesApi.list();
+      return res.success ? res.data : [];
+    },
+  });
 
-  useEffect(() => {
-    if (user?.role !== "Admin") return;
-    fetchEnemies();
-  }, [user]);
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: qk.admin.enemies() });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => { await enemiesApi.delete(id); },
+    onSuccess: invalidate,
+  });
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this enemy?")) return;
-    await enemiesApi.delete(id);
-    fetchEnemies();
+    if (!(await confirm({ message: "Delete this enemy?", danger: true, confirmLabel: "Delete" }))) return;
+    deleteMutation.mutate(id);
   };
 
   if (!user || user.role !== "Admin") return null;
   if (loading) return <PageLoader />;
 
-  return (
-    <div className="mx-auto max-w-6xl">
-      <div className="flex items-center justify-between">
-        <h1 className="font-display text-3xl font-bold text-fg">Enemies Management</h1>
-        <Button onClick={() => { setEditing(null); setShowForm(true); }}>Add Enemy</Button>
-      </div>
+  const filtered = enemies.filter((e) => {
+    if (tierFilter !== "all" && e.tier !== tierFilter) return false;
+    if (search && !e.name.toLowerCase().includes(search) && !(e.spawnBiome ?? "").toLowerCase().includes(search)) return false;
+    return true;
+  });
 
-      {showForm && (
+  return (
+    <div>
+      <AdminPageHeader title="Enemies" addLabel="Add Enemy" onAdd={() => { setEditing(null); setShowForm(true); }} />
+      <AdminFilterBar
+        search={searchInput}
+        onSearch={setSearchInput}
+        searchPlaceholder="Search enemies or biome…"
+        filters={[
+          {
+            value: tierFilter, onChange: setTierFilter, ariaLabel: "Filter by tier",
+            options: [{ value: "all", label: "All tiers" }, ...ENEMY_TIERS.map((t) => ({ value: t, label: t }))],
+          },
+        ]}
+      />
+
+      <Modal open={showForm} onClose={() => setShowForm(false)} title={editing ? "Edit Enemy" : "Add Enemy"} size="lg" dirty={formDirty}>
         <EnemyForm
           initial={editing}
-          onDone={() => { setShowForm(false); fetchEnemies(); }}
-          onCancel={() => setShowForm(false)}
+          onDirtyChange={setFormDirty}
+          onDone={() => { setFormDirty(false); setShowForm(false); invalidate(); }}
+          onCancel={() => { setFormDirty(false); setShowForm(false); }}
         />
-      )}
+      </Modal>
 
-      <div className="mt-6 space-y-2">
-        {enemies.map((e) => (
-          <div key={e.enemyId} className="card flex items-center justify-between p-4">
-            <div>
-              <p className="font-medium text-fg">{e.name}</p>
-              <p className="text-xs text-fg-muted">{e.tier} &middot; {e.spawnBiome} &middot; {e.lootTable.length} drops</p>
-            </div>
-            <div className="flex gap-2">
-              <Button size="sm" variant="secondary" onClick={() => { setEditing(e); setShowForm(true); }}>Edit</Button>
-              <Button size="sm" variant="danger" onClick={() => handleDelete(e.enemyId)}>Delete</Button>
-            </div>
-          </div>
+      <AdminTable
+        columns={[
+          { key: "name", label: "Name" },
+          { key: "tier", label: "Tier" },
+          { key: "biome", label: "Biome" },
+          { key: "drops", label: "Drops" },
+          { key: "actions", label: "Actions", align: "right" },
+        ]}
+        empty={filtered.length === 0}
+      >
+        {filtered.map((e) => (
+          <AdminRow key={e.enemyId} onClick={() => { setEditing(e); setShowForm(true); }}>
+            <td className="px-3 py-2 font-medium text-fg">{e.name}</td>
+            <td className="px-3 py-2 text-fg-muted">{e.tier}</td>
+            <td className="px-3 py-2 text-fg-muted">{e.spawnBiome || "—"}</td>
+            <td className="px-3 py-2 tabular-nums text-fg-muted">{e.lootTable.length}</td>
+            <td className="px-3 py-2 text-right">
+              <div className="flex justify-end gap-2">
+                <Button size="sm" variant="secondary" onClick={(ev) => { ev.stopPropagation(); setEditing(e); setShowForm(true); }}>Edit</Button>
+                <Button size="sm" variant="danger" onClick={(ev) => { ev.stopPropagation(); handleDelete(e.enemyId); }}>Delete</Button>
+              </div>
+            </td>
+          </AdminRow>
         ))}
-      </div>
+      </AdminTable>
     </div>
   );
 }
 
-const EMPTY_LOOT: LootEntryDto = { itemName: "", rarity: "Common", iconKey: null, dropChance: 0.1, minQty: 1, maxQty: 1 };
+const EMPTY_LOOT = { itemName: "", rarity: "Common", iconKey: null, dropChance: 0.1, minQty: 1, maxQty: 1 };
 
-function EnemyForm({ initial, onDone, onCancel }: { initial: EnemyResponse | null; onDone: () => void; onCancel: () => void }) {
-  const [saving, setSaving] = useState(false);
-  const [enemyId, setEnemyId] = useState(initial?.enemyId ?? "");
-  const [name, setName] = useState(initial?.name ?? "");
-  const [tier, setTier] = useState(initial?.tier ?? "Normal");
-  const [spawnBiome, setSpawnBiome] = useState(initial?.spawnBiome ?? "");
-  const [hp, setHp] = useState(initial?.hp ?? 100);
-  const [ad, setAd] = useState(initial?.ad ?? 10);
-  const [ap, setAp] = useState(initial?.ap ?? 0);
-  const [def, setDef] = useState(initial?.def ?? 5);
-  const [res, setRes] = useState(initial?.res ?? 5);
-  const [attackSpeed, setAttackSpeed] = useState(initial?.attackSpeed ?? 1);
-  const [isRanged, setIsRanged] = useState(initial?.isRanged ?? false);
-  const [expReward, setExpReward] = useState(initial?.expReward ?? 10);
-  const [goldReward, setGoldReward] = useState(initial?.goldReward ?? 5);
-  const [lore, setLore] = useState(initial?.lore ?? "");
-  const [lootTable, setLootTable] = useState<LootEntryDto[]>(initial?.lootTable ?? []);
+const lootSchema = z.object({
+  itemName: z.string().min(1, "Required"),
+  rarity: z.string().min(1, "Required"),
+  iconKey: z.string().nullable(),
+  dropChance: z.coerce.number().min(0).max(1),
+  minQty: z.coerce.number().int().min(1),
+  maxQty: z.coerce.number().int().min(1),
+});
 
-  const updateLoot = (index: number, field: keyof LootEntryDto, value: any) => {
-    setLootTable((prev) => prev.map((entry, i) => i === index ? { ...entry, [field]: value } : entry));
-  };
+const enemySchema = z.object({
+  enemyId: z.string().min(1, "Enemy ID is required."),
+  name: z.string().min(1, "Name is required."),
+  tier: z.string().min(1),
+  spawnBiome: z.string(),
+  hp: z.coerce.number().int().min(1),
+  ad: z.coerce.number().int().min(0),
+  ap: z.coerce.number().int().min(0),
+  def: z.coerce.number().int().min(0),
+  res: z.coerce.number().int().min(0),
+  attackSpeed: z.coerce.number().min(0),
+  isRanged: z.boolean(),
+  expReward: z.coerce.number().int().min(0),
+  goldReward: z.coerce.number().int().min(0),
+  lore: z.string(),
+  lootTable: z.array(lootSchema),
+});
 
-  const removeLoot = (index: number) => {
-    setLootTable((prev) => prev.filter((_, i) => i !== index));
-  };
+type EnemyFormValues = z.infer<typeof enemySchema>;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
+function EnemyForm({ initial, onDone, onCancel, onDirtyChange }: { initial: EnemyResponse | null; onDone: () => void; onCancel: () => void; onDirtyChange?: (dirty: boolean) => void }) {
+  const [error, setError] = useState<string | null>(null);
+
+  const {
+    register, handleSubmit, control,
+    formState: { errors, isSubmitting, isDirty },
+  } = useForm<EnemyFormValues>({
+    resolver: zodResolver(enemySchema),
+    defaultValues: {
+      enemyId: initial?.enemyId ?? "",
+      name: initial?.name ?? "",
+      tier: initial?.tier ?? "Normal",
+      spawnBiome: initial?.spawnBiome ?? "",
+      hp: initial?.hp ?? 100,
+      ad: initial?.ad ?? 10,
+      ap: initial?.ap ?? 0,
+      def: initial?.def ?? 5,
+      res: initial?.res ?? 5,
+      attackSpeed: initial?.attackSpeed ?? 1,
+      isRanged: initial?.isRanged ?? false,
+      expReward: initial?.expReward ?? 10,
+      goldReward: initial?.goldReward ?? 5,
+      lore: initial?.lore ?? "",
+      lootTable: initial?.lootTable ?? [],
+    },
+  });
+
+  const { fields, append, remove } = useFieldArray({ control, name: "lootTable" });
+
+  // Surface dirty state to the Modal so a stray backdrop click prompts before discarding (QOLF-6).
+  useEffect(() => { onDirtyChange?.(isDirty); }, [isDirty, onDirtyChange]);
+
+  const onSubmit = handleSubmit(async (values) => {
+    setError(null);
+    const { enemyId, ...rest } = values;
+    const base = { ...rest, spawnBiome: rest.spawnBiome || undefined, lore: rest.lore || undefined };
     try {
-      const base = { name, tier, spawnBiome: spawnBiome || undefined, hp, ad, ap, def, res, attackSpeed, isRanged, expReward, goldReward, lore: lore || undefined, lootTable };
       if (initial) {
         await enemiesApi.update(initial.enemyId, base as EnemyUpdateRequest);
       } else {
         await enemiesApi.create({ enemyId, ...base } as EnemyCreateRequest);
       }
       onDone();
-    } catch {}
-    setSaving(false);
-  };
+    } catch (err) {
+      setError(parseApiError(err, "Failed to save the enemy. Please try again."));
+    }
+  });
 
   return (
-    <form onSubmit={handleSubmit} className="mt-4 card p-4 space-y-4">
+    <form onSubmit={onSubmit} className="space-y-4">
+      {error && <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>}
       <div className="grid gap-3 sm:grid-cols-2">
-        {!initial && <Input label="Enemy ID" value={enemyId} onChange={(e) => setEnemyId(e.target.value)} />}
-        <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} />
-        <Select label="Tier" value={tier} onChange={(e) => setTier(e.target.value)}>
+        {!initial && <Input label="Enemy ID" error={errors.enemyId?.message} {...register("enemyId")} />}
+        <Input label="Name" error={errors.name?.message} {...register("name")} />
+        <Select label="Tier" {...register("tier")}>
           {ENEMY_TIERS.map((t) => <option key={t} value={t}>{t}</option>)}
         </Select>
-        <Input label="Biome" value={spawnBiome} onChange={(e) => setSpawnBiome(e.target.value)} />
-        <Input label="HP" type="number" value={hp} onChange={(e) => setHp(+e.target.value)} />
-        <Input label="AD" type="number" value={ad} onChange={(e) => setAd(+e.target.value)} />
-        <Input label="AP" type="number" value={ap} onChange={(e) => setAp(+e.target.value)} />
-        <Input label="DEF" type="number" value={def} onChange={(e) => setDef(+e.target.value)} />
-        <Input label="RES" type="number" value={res} onChange={(e) => setRes(+e.target.value)} />
-        <Input label="ATK Speed" type="number" value={attackSpeed} onChange={(e) => setAttackSpeed(+e.target.value)} />
-        <Input label="EXP" type="number" value={expReward} onChange={(e) => setExpReward(+e.target.value)} />
-        <Input label="Gold" type="number" value={goldReward} onChange={(e) => setGoldReward(+e.target.value)} />
+        <Input label="Biome" {...register("spawnBiome")} />
+        <Input label="HP" type="number" error={errors.hp?.message} {...register("hp")} />
+        <Input label="AD" type="number" {...register("ad")} />
+        <Input label="AP" type="number" {...register("ap")} />
+        <Input label="DEF" type="number" {...register("def")} />
+        <Input label="RES" type="number" {...register("res")} />
+        <Input label="ATK Speed" type="number" step="0.01" {...register("attackSpeed")} />
+        <Input label="EXP" type="number" {...register("expReward")} />
+        <Input label="Gold" type="number" {...register("goldReward")} />
       </div>
       <label className="flex items-center gap-2 text-sm text-fg-muted">
-        <input type="checkbox" checked={isRanged} onChange={(e) => setIsRanged(e.target.checked)} className="rounded border-border" />
+        <input type="checkbox" {...register("isRanged")} className="rounded border-border" />
         Ranged
       </label>
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-fg-muted">Lore</label>
+        <label htmlFor="enemy-lore" className="block text-sm font-medium text-fg-muted">Lore</label>
         <textarea
-          value={lore}
-          onChange={(e) => setLore(e.target.value)}
+          id="enemy-lore"
+          {...register("lore")}
           rows={3}
           className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-fg outline-none focus:border-accent"
         />
@@ -150,24 +228,24 @@ function EnemyForm({ initial, onDone, onCancel }: { initial: EnemyResponse | nul
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-medium text-fg">Loot Table</h3>
-          <Button type="button" size="sm" variant="secondary" onClick={() => setLootTable((prev) => [...prev, { ...EMPTY_LOOT }])}>
+          <Button type="button" size="sm" variant="secondary" onClick={() => append({ ...EMPTY_LOOT })}>
             Add Drop
           </Button>
         </div>
-        {lootTable.map((loot, i) => (
-          <div key={i} className="grid grid-cols-6 gap-2 items-end">
-            <Input label="Item" value={loot.itemName} onChange={(e) => updateLoot(i, "itemName", e.target.value)} />
-            <Input label="Rarity" value={loot.rarity} onChange={(e) => updateLoot(i, "rarity", e.target.value)} />
-            <Input label="Drop %" type="number" step="0.01" value={loot.dropChance} onChange={(e) => updateLoot(i, "dropChance", +e.target.value)} />
-            <Input label="Min" type="number" value={loot.minQty} onChange={(e) => updateLoot(i, "minQty", +e.target.value)} />
-            <Input label="Max" type="number" value={loot.maxQty} onChange={(e) => updateLoot(i, "maxQty", +e.target.value)} />
-            <Button type="button" size="sm" variant="danger" onClick={() => removeLoot(i)}>X</Button>
+        {fields.map((field, i) => (
+          <div key={field.id} className="grid grid-cols-6 gap-2 items-end">
+            <Input label="Item" error={errors.lootTable?.[i]?.itemName?.message} {...register(`lootTable.${i}.itemName`)} />
+            <Input label="Rarity" {...register(`lootTable.${i}.rarity`)} />
+            <Input label="Drop %" type="number" step="0.01" {...register(`lootTable.${i}.dropChance`)} />
+            <Input label="Min" type="number" {...register(`lootTable.${i}.minQty`)} />
+            <Input label="Max" type="number" {...register(`lootTable.${i}.maxQty`)} />
+            <Button type="button" size="sm" variant="danger" onClick={() => remove(i)}>X</Button>
           </div>
         ))}
       </div>
 
       <div className="flex gap-2">
-        <Button type="submit" loading={saving}>{initial ? "Update" : "Create"}</Button>
+        <Button type="submit" loading={isSubmitting}>{initial ? "Update" : "Create"}</Button>
         <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
       </div>
     </form>

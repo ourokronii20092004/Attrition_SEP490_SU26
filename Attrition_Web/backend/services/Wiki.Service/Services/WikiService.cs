@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using BuildingBlocks.Caching;
 using BuildingBlocks.Contracts;
 using BuildingBlocks.Persistence;
+using BuildingBlocks.Web;
 using Microsoft.EntityFrameworkCore;
 using Wiki.Service.DTOs;
 using Wiki.Service.Models;
@@ -40,10 +41,11 @@ public class WikiService : IWikiService
         return await _cache.GetOrSetAsync("categories", async () =>
         {
             var categories = await _wikiRepo.GetCategoriesAsync();
+            var counts = await _wikiRepo.CountPublishedArticlesByCategoryAsync();
             var dtos = new List<WikiCategoryDto>();
             foreach (var c in categories)
             {
-                var count = await _wikiRepo.CountArticlesInCategoryAsync(c.Id);
+                var count = counts.GetValueOrDefault(c.Id);
                 dtos.Add(new WikiCategoryDto(c.Id, c.Name, c.Slug, c.Description, c.IconUrl, count));
             }
             return dtos;
@@ -70,7 +72,7 @@ public class WikiService : IWikiService
         var search_ = search?.ToLower();
         // Published only; layer on the optional category, search, and author filters.
         Expression<Func<WikiArticle, bool>> filter = a =>
-            a.Status == "Published" &&
+            a.Status == ArticleStatus.Published &&
             (categoryId == null || a.CategoryId == categoryId.Value) &&
             (search_ == null || a.Title.ToLower().Contains(search_)) &&
             (authorId == null || a.CreatedById == authorId.Value);
@@ -91,7 +93,7 @@ public class WikiService : IWikiService
     public async Task<WikiArticleDto?> GetArticleBySlugAsync(string slug, bool includeUnpublished = false)
     {
         var (articles, _) = await _wikiRepo.GetPagedAsync(1, 1,
-            a => a.Slug == slug && (includeUnpublished || a.Status == "Published"));
+            a => a.Slug == slug && (includeUnpublished || a.Status == ArticleStatus.Published));
         var article = articles.FirstOrDefault();
         if (article == null) return null;
 
@@ -139,36 +141,37 @@ public class WikiService : IWikiService
             LastEditedByName = userName,
             Status = request.Status
         };
-        await using var tx = await _db.Database.BeginTransactionAsync();
-        try
+        // Execution strategy so the transaction is retried as one unit under retry-on-failure.
+        var strategy = _db.Database.CreateExecutionStrategy();
+        var result = await strategy.ExecuteAsync(async () =>
         {
-            await _wikiRepo.AddAsync(article);
-
-            await _revisionRepo.AddAsync(new WikiRevision
+            await using var tx = await _db.Database.BeginTransactionAsync();
+            try
             {
-                ArticleId = article.Id,
-                Content = article.Content,
-                EditedById = userId,
-                EditedByName = userName,
-                ChangeNote = "Initial creation"
-            });
+                await _wikiRepo.AddAsync(article);
 
-            await tx.CommitAsync();
-        }
-        catch (DbUpdateException)
-        {
-            // Lost the slug race between the check above and commit.
-            await tx.RollbackAsync();
-            return ApiResponse<string>.Fail("An article with a similar title already exists.");
-        }
-        catch
-        {
-            await tx.RollbackAsync();
-            throw;
-        }
+                await _revisionRepo.AddAsync(new WikiRevision
+                {
+                    ArticleId = article.Id,
+                    Content = article.Content,
+                    EditedById = userId,
+                    EditedByName = userName,
+                    ChangeNote = "Initial creation"
+                });
 
-        await InvalidateAsync();
-        return ApiResponse<string>.Ok(slug);
+                await tx.CommitAsync();
+                return ApiResponse<string>.Ok(slug);
+            }
+            catch (DbUpdateException)
+            {
+                // Lost the slug race between the check above and commit. (await using rolls back.)
+                await tx.RollbackAsync();
+                return ApiResponse<string>.Fail("An article with a similar title already exists.");
+            }
+        });
+
+        if (result.Success) await InvalidateAsync();
+        return result;
     }
 
     public async Task<ApiResponse> UpdateArticleAsync(Guid id, UpdateArticleRequest request, Guid userId, string userName)
@@ -189,45 +192,45 @@ public class WikiService : IWikiService
             }
         }
 
-        await using var tx = await _db.Database.BeginTransactionAsync();
-        try
+        var strategy = _db.Database.CreateExecutionStrategy();
+        var result = await strategy.ExecuteAsync(async () =>
         {
-            await _revisionRepo.AddAsync(new WikiRevision
+            await using var tx = await _db.Database.BeginTransactionAsync();
+            try
             {
-                ArticleId = article.Id,
-                Content = article.Content,
-                EditedById = userId,
-                EditedByName = userName,
-                ChangeNote = request.ChangeNote ?? "Update"
-            });
+                await _revisionRepo.AddAsync(new WikiRevision
+                {
+                    ArticleId = article.Id,
+                    Content = article.Content,
+                    EditedById = userId,
+                    EditedByName = userName,
+                    ChangeNote = request.ChangeNote ?? "Update"
+                });
 
-            if (request.Title != null)
-            {
-                article.Title = request.Title;
-                article.Slug = newSlug!;
+                if (request.Title != null)
+                {
+                    article.Title = request.Title;
+                    article.Slug = newSlug!;
+                }
+                if (request.Content != null) article.Content = ContentSanitizer.Sanitize(request.Content);
+                if (request.Status != null) article.Status = request.Status;
+                article.LastEditedById = userId;
+                article.LastEditedByName = userName;
+                article.UpdatedAt = DateTime.UtcNow;
+
+                await _wikiRepo.UpdateAsync(article);
+                await tx.CommitAsync();
+                return ApiResponse.Ok();
             }
-            if (request.Content != null) article.Content = ContentSanitizer.Sanitize(request.Content);
-            if (request.Status != null) article.Status = request.Status;
-            article.LastEditedById = userId;
-            article.LastEditedByName = userName;
-            article.UpdatedAt = DateTime.UtcNow;
+            catch (DbUpdateException)
+            {
+                await tx.RollbackAsync();
+                return ApiResponse.Fail("An article with a similar title already exists.");
+            }
+        });
 
-            await _wikiRepo.UpdateAsync(article);
-            await tx.CommitAsync();
-        }
-        catch (DbUpdateException)
-        {
-            await tx.RollbackAsync();
-            return ApiResponse.Fail("An article with a similar title already exists.");
-        }
-        catch
-        {
-            await tx.RollbackAsync();
-            throw;
-        }
-
-        await InvalidateAsync();
-        return ApiResponse.Ok();
+        if (result.Success) await InvalidateAsync();
+        return result;
     }
 
     public async Task<ApiResponse> DeleteArticleAsync(Guid articleId)
@@ -269,35 +272,37 @@ public class WikiService : IWikiService
         {
             articles.TryGetValue(c.ArticleId, out var article);
             dtos.Add(new WikiContributionDto(c.Id, c.ArticleId, article?.Title ?? string.Empty,
-                c.ContributorName ?? string.Empty, c.SuggestedContent, c.ChangeNote, c.Status, c.SubmittedAt));
+                article?.Slug ?? string.Empty, c.ContributorName ?? string.Empty, c.SuggestedContent,
+                article?.Content ?? string.Empty, c.ChangeNote, c.Status, c.SubmittedAt));
         }
         return dtos;
     }
 
     public async Task<ApiResponse> ReviewContributionAsync(Guid contributionId, ReviewContributionRequest request, Guid reviewerId)
     {
-        if (request.Status != "Approved" && request.Status != "Rejected")
+        if (request.Status != ContributionStatus.Approved && request.Status != ContributionStatus.Rejected)
             return ApiResponse.Fail("Invalid status.");
 
         var contribution = await _contributionRepo.GetByIdAsync(contributionId);
-        if (contribution == null || contribution.Status != "Pending")
+        if (contribution == null || contribution.Status != ContributionStatus.Pending)
             return ApiResponse.Fail("Contribution not found or already reviewed.");
 
         // If approving, make sure the target article still exists — otherwise we'd mark the
         // contribution Approved while silently applying nothing (W-4).
-        if (request.Status == "Approved" && await _wikiRepo.GetByIdAsync(contribution.ArticleId) is null)
+        if (request.Status == ContributionStatus.Approved && await _wikiRepo.GetByIdAsync(contribution.ArticleId) is null)
             return ApiResponse.Fail("The target article has been deleted; this contribution can no longer be applied.");
 
         contribution.Status = request.Status;
         contribution.ReviewedById = reviewerId;
         contribution.ReviewedAt = DateTime.UtcNow;
 
-        await using var tx = await _db.Database.BeginTransactionAsync();
-        try
+        var strategy = _db.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(async () =>
         {
+            await using var tx = await _db.Database.BeginTransactionAsync();
             await _contributionRepo.UpdateAsync(contribution);
 
-            if (request.Status == "Approved")
+            if (request.Status == ContributionStatus.Approved)
             {
                 var article = await _wikiRepo.GetByIdAsync(contribution.ArticleId);
                 if (article != null)
@@ -319,12 +324,7 @@ public class WikiService : IWikiService
             }
 
             await tx.CommitAsync();
-        }
-        catch
-        {
-            await tx.RollbackAsync();
-            throw;
-        }
+        });
 
         return ApiResponse.Ok();
     }
@@ -402,8 +402,8 @@ public class WikiService : IWikiService
         return results;
     }
 
-    public Task<int> CountArticlesAsync() => _wikiRepo.CountAsync(a => a.Status == "Published");
-    public Task<int> CountPendingContributionsAsync() => _contributionRepo.CountAsync(c => c.Status == "Pending");
+    public Task<int> CountArticlesAsync() => _wikiRepo.CountAsync(a => a.Status == ArticleStatus.Published);
+    public Task<int> CountPendingContributionsAsync() => _contributionRepo.CountAsync(c => c.Status == ContributionStatus.Pending);
 
     private static WikiRevisionDto ToRevisionDto(WikiRevision r) =>
         new(r.Id, r.ArticleId, r.Content, r.EditedByName, r.EditedAt, r.ChangeNote);

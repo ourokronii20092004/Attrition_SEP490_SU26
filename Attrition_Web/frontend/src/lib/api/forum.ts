@@ -22,9 +22,10 @@ export const forumApi = {
   getCategories: () =>
     apiFetch<ApiResponse<ForumCategoryDto[]>>("/api/forum/categories", { auth: false }),
 
-  getThreads: (params?: { categoryId?: number; authorId?: string; page?: number; pageSize?: number }) => {
+  getThreads: (params?: { category?: string; search?: string; authorId?: string; page?: number; pageSize?: number }) => {
     const sp = new URLSearchParams();
-    if (params?.categoryId != null) sp.set("categoryId", String(params.categoryId));
+    if (params?.category) sp.set("category", params.category);
+    if (params?.search) sp.set("search", params.search);
     if (params?.authorId) sp.set("authorId", params.authorId);
     if (params?.page) sp.set("page", String(params.page));
     if (params?.pageSize) sp.set("pageSize", String(params.pageSize));
@@ -35,12 +36,16 @@ export const forumApi = {
   getThread: (id: string) =>
     apiFetch<ApiResponse<ForumThreadDto>>(`/api/forum/threads/${id}`, { auth: false }),
 
+  // QOLF-3b: resolve (creating on first view) the comment thread for a wiki article.
+  getWikiThread: (articleId: string, title: string) =>
+    apiFetch<ApiResponse<ForumThreadDto>>(`/api/forum/wiki-thread/${articleId}?title=${encodeURIComponent(title)}`, { auth: false }),
+
   getPosts: (threadId: string, params?: { page?: number; pageSize?: number }) => {
     const sp = new URLSearchParams();
     if (params?.page) sp.set("page", String(params.page));
     if (params?.pageSize) sp.set("pageSize", String(params.pageSize));
     const qs = sp.toString();
-    return apiFetch<ApiResponse<PaginatedResponse<ForumPostDto>>>(`/api/forum/threads/${threadId}/posts${qs ? `?${qs}` : ""}`, { auth: false });
+    return apiFetch<ApiResponse<PaginatedResponse<ForumPostDto>>>(`/api/forum/threads/${threadId}/posts${qs ? `?${qs}` : ""}`);
   },
 
   createThread: (data: CreateThreadRequest) =>
@@ -77,12 +82,27 @@ export const forumApi = {
   updateCategory: (id: number, data: ForumCategoryRequest) =>
     apiFetch<ApiResponse<ForumCategoryDto>>(`/api/forum/categories/${id}`, { method: "PUT", body: data }),
 
-  // Admin moderation (lists are NOT paginated)
-  getAdminThreads: () =>
-    apiFetch<ApiResponse<AdminForumThreadDto[]>>("/api/admin/forum/threads"),
+  deleteCategory: (id: number) =>
+    apiFetch<ApiResponse<void>>(`/api/forum/categories/${id}`, { method: "DELETE" }),
 
-  getAdminPosts: () =>
-    apiFetch<ApiResponse<AdminForumPostDto[]>>("/api/admin/forum/posts"),
+  // Admin moderation (paginated)
+  getAdminThreads: (params?: { page?: number; pageSize?: number }) => {
+    const sp = new URLSearchParams();
+    if (params?.page) sp.set("page", String(params.page));
+    if (params?.pageSize) sp.set("pageSize", String(params.pageSize));
+    const qs = sp.toString();
+    return apiFetch<ApiResponse<PaginatedResponse<AdminForumThreadDto>>>(`/api/admin/forum/threads${qs ? `?${qs}` : ""}`);
+  },
+
+  getAdminPosts: (params?: { removedOnly?: boolean; search?: string; page?: number; pageSize?: number }) => {
+    const sp = new URLSearchParams();
+    if (params?.removedOnly) sp.set("removedOnly", "true");
+    if (params?.search) sp.set("search", params.search);
+    if (params?.page) sp.set("page", String(params.page));
+    if (params?.pageSize) sp.set("pageSize", String(params.pageSize));
+    const qs = sp.toString();
+    return apiFetch<ApiResponse<PaginatedResponse<AdminForumPostDto>>>(`/api/admin/forum/posts${qs ? `?${qs}` : ""}`);
+  },
 
   removePost: (postId: string, data: RemovePostRequest) =>
     apiFetch<ApiResponse<void>>(`/api/admin/forum/posts/${postId}/remove`, { method: "POST", body: data }),
@@ -90,9 +110,18 @@ export const forumApi = {
   restorePost: (postId: string) =>
     apiFetch<ApiResponse<void>>(`/api/admin/forum/posts/${postId}/restore`, { method: "POST" }),
 
-  getReports: () =>
-    apiFetch<ApiResponse<AdminPostReportDto[]>>("/api/admin/forum/reports"),
+  getReports: (params?: { status?: string; page?: number; pageSize?: number }) => {
+    const sp = new URLSearchParams();
+    if (params?.status) sp.set("status", params.status);
+    if (params?.page) sp.set("page", String(params.page));
+    if (params?.pageSize) sp.set("pageSize", String(params.pageSize));
+    const qs = sp.toString();
+    return apiFetch<ApiResponse<PaginatedResponse<AdminPostReportDto>>>(`/api/admin/forum/reports${qs ? `?${qs}` : ""}`);
+  },
 
   dismissReport: (reportId: string) =>
     apiFetch<ApiResponse<void>>(`/api/admin/forum/reports/${reportId}/dismiss`, { method: "PUT" }),
+
+  resolveReport: (reportId: string) =>
+    apiFetch<ApiResponse<void>>(`/api/admin/forum/reports/${reportId}/resolve`, { method: "PUT" }),
 };

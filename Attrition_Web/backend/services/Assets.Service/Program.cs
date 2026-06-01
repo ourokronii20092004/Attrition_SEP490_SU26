@@ -21,9 +21,15 @@ builder.Services.Configure<FormOptions>(o => o.MultipartBodyLengthLimit = maxByt
 builder.Services.AddDbContext<AssetsDbContext>(opt =>
     opt.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "assets")));
+        npgsql =>
+        {
+            npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "assets");
+            // Survive transient Postgres blips by retrying instead of erroring the user.
+            npgsql.EnableRetryOnFailure(maxRetryCount: 3, maxRetryDelay: TimeSpan.FromSeconds(2), errorCodesToAdd: null);
+        }));
 
 builder.Services.AddScoped<DbContext>(sp => sp.GetRequiredService<AssetsDbContext>());
+builder.Services.AddDbWarmup();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IAssetRepository, AssetRepository>();
 builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
@@ -49,7 +55,7 @@ app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(Path.GetFullPath(uploadPath)),
     RequestPath = mediaPrefix,
-    OnPrepareResponse = ctx => ctx.Context.Response.Headers["X-Content-Type-Options"] = "nosniff"
+    OnPrepareResponse = BuildingBlocks.Web.MediaSecurityHeaders.OnPrepareStaticResponse
 });
 
 app.UseAttritionPipeline();
