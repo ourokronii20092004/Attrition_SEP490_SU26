@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { accountApi } from "@/lib/api/account";
+import { useToast } from "@/lib/providers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { UserDto } from "@/lib/types";
 import { SettingsCard } from "./SettingsCard";
 
 export function EmailSection({ user, refreshUser }: { user: UserDto; refreshUser: () => Promise<void> }) {
+  const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [saving, setSaving] = useState(false);
@@ -20,8 +22,10 @@ export function EmailSection({ user, refreshUser }: { user: UserDto; refreshUser
       await accountApi.updateEmail({ newEmail: email, currentPassword });
       setMsg("Verification email sent to new address");
       await refreshUser();
+      toast("Verification email sent to new address.", "success");
     } catch {
       setMsg("Failed to update email");
+      toast("Failed to update email.", "error");
     }
     setSaving(false);
   };

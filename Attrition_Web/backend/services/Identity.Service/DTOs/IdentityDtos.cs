@@ -16,6 +16,8 @@ public record UpdateProfileRequest(string? Bio, string? Email, bool? NotifyOnRep
 public record UpdateThemeRequest(string ThemeMode, string ThemeAccent);
 public record SetPasswordRequest(string NewPassword);
 public record UpdateEmailRequest(string NewEmail, string CurrentPassword);
+// Account deletion (PROB-4): a confirmed, 90-day-recoverable flow rather than an instant wipe.
+public record ConfirmDeletionRequest(string Token);
 
 // ─── User views ───
 public record UserDto(
@@ -40,11 +42,43 @@ public record UserDto(
     bool NotifyOnMention
 );
 
-public record UserListItem(Guid Id, string Username, string Role, bool IsBanned, DateTime JoinedAt);
+public record UserListItem(Guid Id, string Username, string Role, bool IsBanned, bool IsDeleted, DateTime JoinedAt);
+
+// Rich per-user view for the admin dashboard (moderation context the sparse list omits).
+public record AdminUserDetailDto(
+    Guid Id,
+    string Username,
+    string? Email,
+    string? DisplayName,
+    string Role,
+    string? AvatarUrl,
+    string? BackgroundUrl,
+    string? Bio,
+    string AuthProvider,
+    DateTime JoinedAt,
+    int PostCount,
+    int ContributionCount,
+    bool IsBanned,
+    bool IsDeleted,
+    DateTime? DeletedAt,
+    bool IsEmailVerified,
+    string? PendingEmail,
+    bool MustChangePassword,
+    DateTime? LastLoginAt,
+    string? LastLoginIp,
+    int FailedLoginAttempts,
+    DateTime? LockoutEnd
+);
 
 // ─── Admin actions ───
 public record ChangeRoleRequest(string Role);
 public record AdminResetPasswordRequest(string NewPassword);
+
+// ─── User reports (QOLF-9) ───
+public record ReportUserRequest(string Reason);
+public record AdminUserReportDto(
+    Guid Id, Guid ReportedUserId, string ReportedUserName, string ReporterName,
+    string Reason, string Status, DateTime CreatedAt);
 
 // ─── Public profile (anonymous, no PII) ───
 public record PublicProfileDto(

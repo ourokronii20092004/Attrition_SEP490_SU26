@@ -11,6 +11,8 @@ public interface IForumService
     Task<List<ForumCategoryDto>> GetCategoriesAsync();
     Task<PaginatedResponse<ForumThreadListDto>> GetThreadsAsync(string? categorySlug, string? search, int page, int pageSize, Guid? authorId = null);
     Task<ForumThreadDto?> GetThreadAsync(Guid threadId);
+    // QOLF-3b: resolve (creating if needed) the comment thread for a wiki article.
+    Task<ApiResponse<ForumThreadDto>> GetOrCreateWikiThreadAsync(Guid articleId, string articleTitle);
     Task<PaginatedResponse<ForumPostDto>> GetPostsAsync(Guid threadId, int page, int pageSize, Guid? currentUserId);
 
     Task<ApiResponse<Guid>> CreateThreadAsync(CreateThreadRequest request, Author author);

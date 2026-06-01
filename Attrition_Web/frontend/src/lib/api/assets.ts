@@ -15,11 +15,12 @@ export const assetsApi = {
     apiFetch<ApiResponse<AssetDto>>(`/api/assets/${id}`, { auth: false }),
 
   // Admin
-  adminList: (params?: { page?: number; pageSize?: number; assetType?: string }) => {
+  adminList: (params?: { page?: number; pageSize?: number; assetType?: string; search?: string }) => {
     const sp = new URLSearchParams();
     if (params?.page) sp.set("page", String(params.page));
     if (params?.pageSize) sp.set("pageSize", String(params.pageSize));
     if (params?.assetType) sp.set("assetType", params.assetType);
+    if (params?.search) sp.set("search", params.search);
     const qs = sp.toString();
     return apiFetch<ApiResponse<PaginatedResponse<AssetDto>>>(`/api/admin/assets${qs ? `?${qs}` : ""}`);
   },

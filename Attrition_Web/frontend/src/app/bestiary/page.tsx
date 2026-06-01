@@ -9,7 +9,7 @@ import { PageShell } from "@/components/ui/page-shell";
 import { PageTitle } from "@/components/ui/page-title";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { FilterPills } from "@/components/ui/filter-pills";
+import { Select } from "@/components/ui/select";
 import { SkeletonGrid } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ENEMY_TIERS, TIER_COLOR } from "@/lib/enemy-tiers";
@@ -38,8 +38,8 @@ export default function BestiaryPage() {
     <PageShell>
       <PageTitle description="Every creature that stalks the Attrition world.">Bestiary</PageTitle>
 
-      <div className="flex flex-col gap-3">
-        <div className="relative max-w-sm">
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="relative min-w-56 flex-1">
           <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-fg-subtle" />
           <Input
             value={search}
@@ -49,7 +49,17 @@ export default function BestiaryPage() {
             aria-label="Search enemies"
           />
         </div>
-        <FilterPills options={tierOptions} value={tier} onChange={setTier} />
+        <div className="w-48">
+          <Select
+            value={tier}
+            onChange={(e) => setTier(e.target.value)}
+            aria-label="Filter by tier"
+          >
+            {tierOptions.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </Select>
+        </div>
       </div>
 
       {isPending ? (

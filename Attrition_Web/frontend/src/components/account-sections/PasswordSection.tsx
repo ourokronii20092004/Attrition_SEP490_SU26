@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { authApi } from "@/lib/api/auth";
+import { useToast } from "@/lib/providers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SettingsCard } from "./SettingsCard";
 
 export function PasswordSection() {
+  const { toast } = useToast();
   const [current, setCurrent] = useState("");
   const [newPw, setNewPw] = useState("");
   const [saving, setSaving] = useState(false);
@@ -20,8 +22,10 @@ export function PasswordSection() {
       setMsg("Password updated");
       setCurrent("");
       setNewPw("");
+      toast("Password updated.", "success");
     } catch {
       setMsg("Failed to update password");
+      toast("Failed to update password.", "error");
     }
     setSaving(false);
   };

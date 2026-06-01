@@ -59,6 +59,15 @@ public class ForumController : ControllerBase
             : NotFound(ApiResponse.Fail("Thread not found."));
     }
 
+    // QOLF-3b: resolve (creating on first view) the comment thread for a wiki article. Anonymous
+    // reads are fine; posting still goes through the authorized post endpoints + verify gate.
+    [HttpGet("wiki-thread/{articleId:guid}")]
+    public async Task<IActionResult> GetWikiThread(Guid articleId, [FromQuery] string? title)
+    {
+        var result = await _forum.GetOrCreateWikiThreadAsync(articleId, title ?? "Article comments");
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
     [HttpGet("threads/{id:guid}/posts")]
     public async Task<IActionResult> GetPosts(Guid id, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {

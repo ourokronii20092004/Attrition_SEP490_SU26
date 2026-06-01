@@ -22,9 +22,10 @@ export const forumApi = {
   getCategories: () =>
     apiFetch<ApiResponse<ForumCategoryDto[]>>("/api/forum/categories", { auth: false }),
 
-  getThreads: (params?: { categoryId?: number; authorId?: string; page?: number; pageSize?: number }) => {
+  getThreads: (params?: { category?: string; search?: string; authorId?: string; page?: number; pageSize?: number }) => {
     const sp = new URLSearchParams();
-    if (params?.categoryId != null) sp.set("categoryId", String(params.categoryId));
+    if (params?.category) sp.set("category", params.category);
+    if (params?.search) sp.set("search", params.search);
     if (params?.authorId) sp.set("authorId", params.authorId);
     if (params?.page) sp.set("page", String(params.page));
     if (params?.pageSize) sp.set("pageSize", String(params.pageSize));
@@ -34,6 +35,10 @@ export const forumApi = {
 
   getThread: (id: string) =>
     apiFetch<ApiResponse<ForumThreadDto>>(`/api/forum/threads/${id}`, { auth: false }),
+
+  // QOLF-3b: resolve (creating on first view) the comment thread for a wiki article.
+  getWikiThread: (articleId: string, title: string) =>
+    apiFetch<ApiResponse<ForumThreadDto>>(`/api/forum/wiki-thread/${articleId}?title=${encodeURIComponent(title)}`, { auth: false }),
 
   getPosts: (threadId: string, params?: { page?: number; pageSize?: number }) => {
     const sp = new URLSearchParams();

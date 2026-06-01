@@ -38,12 +38,16 @@ builder.Services.AddDbContext<IdentityDbContext>(opt =>
 builder.Services.AddScoped<DbContext>(sp => sp.GetRequiredService<IdentityDbContext>());
 builder.Services.AddDbWarmup();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped(typeof(BuildingBlocks.Persistence.IRepository<>), typeof(BuildingBlocks.Persistence.Repository<>));
 
 builder.Services.AddSingleton<TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IAdminUserService, AdminUserService>();
+builder.Services.AddScoped<IUserReportService, UserReportService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+// PROB-4: daily sweep that tombstones soft-deleted accounts past their 90-day recovery window.
+builder.Services.AddHostedService<AccountPurgeService>();
 builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
 builder.Services.AddScoped<IFileService, FileService>();
 // Use real SMTP when configured (Smtp:Host/Username/Password); otherwise log to console in dev.

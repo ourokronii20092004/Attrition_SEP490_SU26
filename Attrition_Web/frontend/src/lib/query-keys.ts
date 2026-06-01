@@ -19,6 +19,7 @@ export const qk = {
       filter ? (["wiki", "articles", filter] as const) : (["wiki", "articles"] as const),
     article: (slug: string | undefined) => ["wiki", "article", slug] as const,
     revisions: (slug: string) => ["wiki", "revisions", slug] as const,
+    commentThread: (articleId: string) => ["wiki", "comment-thread", articleId] as const,
   },
 
   forum: {
@@ -34,6 +35,7 @@ export const qk = {
     albums: (page?: number) =>
       page === undefined ? (["music", "albums"] as const) : (["music", "albums", page] as const),
     album: (id: string) => ["album", id] as const,
+    favorites: () => ["music", "favorites"] as const,
   },
 
   assets: {
@@ -51,21 +53,23 @@ export const qk = {
 
   admin: {
     stats: () => ["admin", "stats"] as const,
-    users: (page?: number) =>
-      page === undefined ? (["admin", "users"] as const) : (["admin", "users", page] as const),
+    users: (filter?: unknown) =>
+      filter === undefined ? (["admin", "users"] as const) : (["admin", "users", filter] as const),
+    userDetail: (id: string) => ["admin", "user", id] as const,
     enemies: () => ["admin", "enemies"] as const,
-    assets: (page?: number) =>
-      page === undefined ? (["admin", "assets"] as const) : (["admin", "assets", page] as const),
+    assets: (filter?: unknown) =>
+      filter === undefined ? (["admin", "assets"] as const) : (["admin", "assets", filter] as const),
     characters: (page?: number) =>
       page === undefined ? (["admin", "characters"] as const) : (["admin", "characters", page] as const),
     character: (id: string) => ["admin", "character", id] as const,
     music: {
       albums: () => ["admin", "music", "albums"] as const,
+      album: (id: string) => ["admin", "music", "album", id] as const,
       tracks: () => ["admin", "music", "tracks"] as const,
     },
     forum: {
-      reports: (page?: number) =>
-        page === undefined ? (["admin", "forum", "reports"] as const) : (["admin", "forum", "reports", page] as const),
+      reports: (filter?: unknown) =>
+        filter === undefined ? (["admin", "forum", "reports"] as const) : (["admin", "forum", "reports", filter] as const),
       threads: (page?: number) =>
         page === undefined ? (["admin", "forum", "threads"] as const) : (["admin", "forum", "threads", page] as const),
     },

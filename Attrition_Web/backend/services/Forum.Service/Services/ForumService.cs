@@ -102,8 +102,10 @@ public class ForumService : IForumService
         }
 
         var s = search?.ToLower();
-        // Compose the optional filters (category, search, author) into one predicate.
+        // Compose the optional filters (category, search, author) into one predicate. Wiki-comment
+        // threads (WikiArticleId != null) are excluded — they're reached via the article (QOLF-3b).
         filter = t =>
+            t.WikiArticleId == null &&
             (categoryId == null || t.CategoryId == categoryId.Value) &&
             (s == null || t.Title.ToLower().Contains(s)) &&
             (authorId == null || t.AuthorId == authorId.Value);
@@ -127,6 +129,34 @@ public class ForumService : IForumService
         return new ForumThreadDto(thread.Id, thread.Title, category?.Slug ?? string.Empty,
             thread.AuthorId, thread.AuthorName ?? "Unknown", thread.IsPinned, thread.IsLocked,
             thread.ReplyCount, thread.CreatedAt);
+    }
+
+    public async Task<ApiResponse<ForumThreadDto>> GetOrCreateWikiThreadAsync(Guid articleId, string articleTitle)
+    {
+        // QOLF-3b: one comment thread per article, created lazily on first view. Unlike a forum
+        // thread it has no "first post" (the article is the content) and no category.
+        var existing = await _threadRepo.GetByWikiArticleIdAsync(articleId);
+        if (existing == null)
+        {
+            var thread = new ForumThread
+            {
+                CategoryId = 0,
+                Title = articleTitle,
+                AuthorId = Guid.Empty,
+                AuthorName = "Wiki",
+                WikiArticleId = articleId
+            };
+            // Race-safe against the filtered unique index; if a concurrent request won, re-fetch it.
+            if (!await _threadRepo.TryAddAsync(thread))
+                existing = await _threadRepo.GetByWikiArticleIdAsync(articleId);
+            else
+                existing = thread;
+        }
+        if (existing == null) return ApiResponse<ForumThreadDto>.Fail("Could not open the comment thread.");
+
+        return ApiResponse<ForumThreadDto>.Ok(new ForumThreadDto(existing.Id, existing.Title, string.Empty,
+            existing.AuthorId, existing.AuthorName ?? "Wiki", existing.IsPinned, existing.IsLocked,
+            existing.ReplyCount, existing.CreatedAt));
     }
 
     public async Task<PaginatedResponse<ForumPostDto>> GetPostsAsync(Guid threadId, int page, int pageSize, Guid? currentUserId)
@@ -203,7 +233,7 @@ public class ForumService : IForumService
             parentAuthorId = parent.AuthorId;
         }
 
-        await _postRepo.AddAsync(new ForumPost
+        var newPost = new ForumPost
         {
             ThreadId = threadId,
             ParentPostId = parentPostId,
@@ -214,7 +244,8 @@ public class ForumService : IForumService
             AuthorRole = author.Role,
             Content = ContentSanitizer.Sanitize(request.Content),
             Attachments = SerializeAttachments(request.Attachments)
-        });
+        };
+        await _postRepo.AddAsync(newPost);
 
         await _threadRepo.IncrementReplyCountAsync(threadId, DateTime.UtcNow);
 
@@ -228,7 +259,8 @@ public class ForumService : IForumService
         await InvalidateCategoriesAsync();
 
         // Dispatch notifications (fire-and-forget; never blocks/fails the post).
-        var link = $"/forum/{threadId}";
+        // Deep-link to the exact post that triggered it (QOLF-4), not just the thread.
+        var link = $"/forum/{threadId}#post-{newPost.Id}";
         // Reply: notify the parent post's author, unless replying to oneself.
         if (parentAuthorId is { } pa && pa != author.Id)
             await _notify.NotifyUserAsync(pa, "reply",

@@ -12,6 +12,7 @@ import { formatDate } from "@/lib/format-date";
 import { qk } from "@/lib/query-keys";
 import { ProfileActivity } from "./profile-activity";
 import { ProfileBanner, ProfileAvatar, ProfileName } from "./profile-edit";
+import { ReportUserButton } from "./report-user-button";
 
 export default function ProfilePage() {
   const params = useParams<{ username: string }>();
@@ -65,6 +66,7 @@ export default function ProfilePage() {
             <span>Joined {formatDate(display.joinedAt)}</span>
           </div>
         </div>
+        {!isOwner && user && <ReportUserButton userId={display.id} username={display.username} />}
       </div>
 
       {display.bio && <p className="mt-6 leading-relaxed text-fg-muted">{display.bio}</p>}

@@ -42,6 +42,11 @@ export const accountApi = {
   updateEmail: (data: UpdateEmailRequest) =>
     apiFetch<ApiResponse<void>>("/api/account/email", { method: "PUT", body: data }),
 
-  deleteAccount: () =>
-    apiFetch<ApiResponse<void>>("/api/account/me", { method: "DELETE" }),
+  // Account deletion (PROB-4): request emails a confirmation link; confirm soft-deletes with a
+  // 90-day recovery window (sign back in within 90 days to restore).
+  requestDeletion: () =>
+    apiFetch<ApiResponse<void>>("/api/account/request-deletion", { method: "POST" }),
+
+  confirmDeletion: (token: string) =>
+    apiFetch<ApiResponse<void>>("/api/account/confirm-deletion", { method: "POST", body: { token } }),
 };

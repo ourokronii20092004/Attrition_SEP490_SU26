@@ -4,7 +4,9 @@ import { useRef, useState } from "react";
 import { Camera, Pencil, Check, X, ImagePlus, Trash2 } from "lucide-react";
 import { accountApi } from "@/lib/api/account";
 import { resolveMediaUrl } from "@/lib/api/media";
+import { useToast } from "@/lib/providers";
 import { Avatar } from "@/components/ui/avatar";
+import { ImageCropper } from "@/components/image-cropper";
 import type { UserDto } from "@/lib/types";
 
 interface EditProps {
@@ -17,24 +19,35 @@ interface EditProps {
 export function ProfileBanner({ profile, isOwner, onEdited }: EditProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  const { toast } = useToast();
   const bg = resolveMediaUrl(profile.backgroundUrl);
 
-  const upload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const pick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    e.target.value = "";
+    if (file) setCropFile(file);
+  };
+
+  const upload = async (file: File) => {
+    setCropFile(null);
     setBusy(true);
-    try { await accountApi.uploadBackground(file); await onEdited(); } finally { setBusy(false); }
+    try { await accountApi.uploadBackground(file); await onEdited(); toast("Cover updated.", "success"); }
+    catch { toast("Failed to upload cover. Please try again.", "error"); }
+    finally { setBusy(false); }
   };
 
   const remove = async () => {
     setBusy(true);
-    try { await accountApi.deleteBackground(); await onEdited(); } finally { setBusy(false); }
+    try { await accountApi.deleteBackground(); await onEdited(); toast("Cover removed.", "success"); }
+    catch { toast("Failed to remove cover. Please try again.", "error"); }
+    finally { setBusy(false); }
   };
 
   if (!bg && !isOwner) return null;
 
   return (
-    <div className="relative -mx-4 -mt-8 mb-6 h-48 overflow-hidden bg-surface-2 sm:rounded-b-2xl">
+    <div className="relative -mx-4 -mt-8 mb-6 h-48 overflow-hidden bg-surface-2 sm:rounded-2xl">
       {bg && <img src={bg} alt="" className="h-full w-full object-cover" />}
       <div className="absolute inset-0 bg-gradient-to-t from-bg to-transparent" />
       {isOwner && (
@@ -56,8 +69,11 @@ export function ProfileBanner({ profile, isOwner, onEdited }: EditProps) {
               <Trash2 size={14} />
             </button>
           )}
-          <input ref={inputRef} type="file" accept="image/*" onChange={upload} className="hidden" />
+          <input ref={inputRef} type="file" accept="image/*" onChange={pick} className="hidden" />
         </div>
+      )}
+      {cropFile && (
+        <ImageCropper file={cropFile} aspect={16 / 6} onCancel={() => setCropFile(null)} onCropped={upload} />
       )}
     </div>
   );
@@ -67,12 +83,21 @@ export function ProfileBanner({ profile, isOwner, onEdited }: EditProps) {
 export function ProfileAvatar({ profile, isOwner, onEdited }: EditProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  const { toast } = useToast();
 
-  const upload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const pick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    e.target.value = "";
+    if (file) setCropFile(file);
+  };
+
+  const upload = async (file: File) => {
+    setCropFile(null);
     setBusy(true);
-    try { await accountApi.uploadAvatar(file); await onEdited(); } finally { setBusy(false); }
+    try { await accountApi.uploadAvatar(file); await onEdited(); toast("Avatar updated.", "success"); }
+    catch { toast("Failed to upload avatar. Please try again.", "error"); }
+    finally { setBusy(false); }
   };
 
   return (
@@ -88,8 +113,11 @@ export function ProfileAvatar({ profile, isOwner, onEdited }: EditProps) {
           >
             <Camera size={15} />
           </button>
-          <input ref={inputRef} type="file" accept="image/*" onChange={upload} className="hidden" />
+          <input ref={inputRef} type="file" accept="image/*" onChange={pick} className="hidden" />
         </>
+      )}
+      {cropFile && (
+        <ImageCropper file={cropFile} aspect={1} round onCancel={() => setCropFile(null)} onCropped={upload} />
       )}
     </span>
   );
@@ -100,6 +128,7 @@ export function ProfileName({ profile, isOwner, onEdited }: EditProps) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(profile.displayName ?? "");
   const [busy, setBusy] = useState(false);
+  const { toast } = useToast();
 
   const save = async () => {
     setBusy(true);
@@ -107,6 +136,9 @@ export function ProfileName({ profile, isOwner, onEdited }: EditProps) {
       await accountApi.updateProfile({ displayName: value.trim() });
       setEditing(false);
       await onEdited();
+      toast("Name updated.", "success");
+    } catch {
+      toast("Failed to update name. Please try again.", "error");
     } finally { setBusy(false); }
   };
 
