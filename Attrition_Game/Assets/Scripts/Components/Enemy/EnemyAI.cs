@@ -475,9 +475,12 @@ public class EnemyAI : NetworkBehaviour
         float dist = Vector2.Distance(transform.position, currentTarget);
         float xDiff = currentTarget.x - transform.position.x;
 
-        if (dist <= combatComp.MaxAttackRange)
+        // Kiểm tra tầm nhìn tới Player (không bị tường che)
+        bool hasLineOfSight = !Physics2D.Linecast(transform.position, playerTarget.position, obstacleLayer);
+
+        if (dist <= combatComp.MaxAttackRange && hasLineOfSight)
         {
-            // ═══ TRONG TẦM ĐÁNH → dừng lại ═══
+            // ═══ TRONG TẦM ĐÁNH VÀ CÓ TẦM NHÌN → dừng lại ═══
             rb.linearVelocity = isFlying ? Vector2.zero : new Vector2(0f, rb.linearVelocity.y);
             UpdateFacing(xDiff);
             NetSpeed = 0f;
@@ -527,12 +530,12 @@ public class EnemyAI : NetworkBehaviour
         }
 
         // Elite: roll heal và summon ngẫu nhiên khi đang chase nhưng ngoài tầm đánh
-        if (eliteSkills != null && !combatComp.IsAttacking && dist > combatComp.MaxAttackRange)
+        if (eliteSkills != null && !combatComp.IsAttacking && (dist > combatComp.MaxAttackRange || !hasLineOfSight))
         {
             eliteSkills.TryRandomHeal(controller.CurrentHealth, controller.maxHealth);
 
-            // Roll summon
-            if (eliteSkills.TryUseSummon())
+            // Roll summon (yêu cầu có tầm nhìn)
+            if (hasLineOfSight && eliteSkills.TryUseSummon())
             {
                 float facingDir2 = playerTarget != null ? (playerTarget.position.x - transform.position.x > 0 ? 1f : -1f) : NetFacingDir;
                 AttackLockedFacingDir = facingDir2;
