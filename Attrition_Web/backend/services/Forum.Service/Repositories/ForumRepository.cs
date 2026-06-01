@@ -33,11 +33,14 @@ public class ForumRepository : Repository<ForumThread>, IForumRepository
     {
         var s = query.ToLower();
         return await _context.ForumThreads
-            .Where(t => t.Title.ToLower().Contains(s))
+            .Where(t => t.WikiArticleId == null && t.Title.ToLower().Contains(s))
             .OrderByDescending(t => t.LastReplyAt)
             .Take(limit)
             .ToListAsync();
     }
+
+    public async Task<ForumThread?> GetByWikiArticleIdAsync(Guid articleId) =>
+        await _context.ForumThreads.FirstOrDefaultAsync(t => t.WikiArticleId == articleId);
 
     public async Task CreateThreadWithFirstPostAsync(ForumThread thread, ForumPost firstPost, ThreadSubscription subscription)
     {

@@ -272,7 +272,8 @@ public class WikiService : IWikiService
         {
             articles.TryGetValue(c.ArticleId, out var article);
             dtos.Add(new WikiContributionDto(c.Id, c.ArticleId, article?.Title ?? string.Empty,
-                c.ContributorName ?? string.Empty, c.SuggestedContent, c.ChangeNote, c.Status, c.SubmittedAt));
+                article?.Slug ?? string.Empty, c.ContributorName ?? string.Empty, c.SuggestedContent,
+                article?.Content ?? string.Empty, c.ChangeNote, c.Status, c.SubmittedAt));
         }
         return dtos;
     }

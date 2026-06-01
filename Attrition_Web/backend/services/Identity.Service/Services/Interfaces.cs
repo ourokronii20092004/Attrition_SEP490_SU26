@@ -32,12 +32,16 @@ public interface IAccountService
     Task<ApiResponse> DeleteBackgroundAsync(Guid userId);
     Task<ApiResponse> SetPasswordAsync(Guid userId, SetPasswordRequest request);
     Task<ApiResponse> UpdateEmailAsync(Guid userId, UpdateEmailRequest request);
-    Task<ApiResponse> DeleteAccountAsync(Guid userId);
+    // Account deletion (PROB-4): request sends an email confirmation; confirm soft-deletes with a
+    // 90-day recovery window; a purge job tombstones accounts past the window.
+    Task<ApiResponse> RequestDeletionAsync(Guid userId);
+    Task<ApiResponse> ConfirmDeletionAsync(Guid userId, string token);
 }
 
 public interface IAdminUserService
 {
     Task<PaginatedResponse<UserListItem>> ListUsersAsync(int page, int pageSize, string? search, string? sort);
+    Task<ApiResponse<AdminUserDetailDto>> GetUserDetailAsync(Guid userId);
     Task<ApiResponse> ChangeRoleAsync(Guid userId, string role);
     Task<ApiResponse> ToggleBanAsync(Guid userId);
     Task<ApiResponse> AdminResetPasswordAsync(Guid userId, string newPassword);

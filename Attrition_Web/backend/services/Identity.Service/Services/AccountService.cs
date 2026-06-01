@@ -166,20 +166,52 @@ public class AccountService : IAccountService
         return ApiResponse.Ok();
     }
 
-    public async Task<ApiResponse> DeleteAccountAsync(Guid userId)
+    public async Task<ApiResponse> RequestDeletionAsync(Guid userId)
     {
         var user = await _userRepo.GetByIdAsync(userId);
         if (user == null) return ApiResponse.Fail("User not found.");
+        if (user.IsDeleted) return ApiResponse.Fail("This account is already scheduled for deletion.");
+        if (string.IsNullOrEmpty(user.Email))
+            return ApiResponse.Fail("Add and verify an email address before deleting your account, so deletion can be confirmed.");
 
-        user.IsBanned = true;
-        user.Username = $"deleted_user_{user.Id.ToString()[..8]}";
-        user.DisplayName = "Deleted User";
-        user.Email = null;
-        user.PasswordHash = null;
-        user.Bio = null;
-        user.AvatarPath = null;
-        user.GoogleId = null;
-        user.GoogleAvatarUrl = null;
+        // Email-confirmed deletion: store a hashed token + expiry and mail the confirm link.
+        var rawToken = TokenService.NewRawToken();
+        user.DeletionConfirmToken = TokenService.HashToken(rawToken);
+        user.DeletionConfirmTokenExpiry = DateTime.UtcNow.AddHours(24);
+        await _userRepo.UpdateAsync(user);
+
+        try
+        {
+            var clientUrl = _config["App:ClientUrl"] ?? "http://localhost:3000";
+            var confirmUrl = $"{clientUrl}/settings/confirm-deletion?token={Uri.EscapeDataString(rawToken)}";
+            await _email.SendAsync(user.Email,
+                "Confirm Your Account Deletion",
+                $"Hi {user.Username},\n\nWe received a request to delete your Attrition account. " +
+                $"If this was you, confirm here (link valid 24 hours):\n\n{confirmUrl}\n\n" +
+                "After confirming, your account is deactivated and permanently deleted 90 days later. " +
+                "Sign back in any time within those 90 days to cancel and restore your account.\n\n" +
+                "If you didn't request this, you can ignore this email — nothing will change.");
+        }
+        catch (Exception ex) { _logger.LogWarning(ex, "Failed to send deletion-confirmation email"); }
+
+        return ApiResponse.Ok();
+    }
+
+    public async Task<ApiResponse> ConfirmDeletionAsync(Guid userId, string token)
+    {
+        var user = await _userRepo.GetByIdAsync(userId);
+        if (user == null) return ApiResponse.Fail("User not found.");
+        if (string.IsNullOrEmpty(token) || user.DeletionConfirmToken == null
+            || user.DeletionConfirmTokenExpiry == null || user.DeletionConfirmTokenExpiry < DateTime.UtcNow
+            || user.DeletionConfirmToken != TokenService.HashToken(token))
+            return ApiResponse.Fail("This confirmation link is invalid or has expired.");
+
+        // Soft-delete: mark deleted and revoke sessions, but KEEP PII so the user can recover within
+        // 90 days by signing back in. A purge job tombstones (anonymizes) accounts past 90 days.
+        user.IsDeleted = true;
+        user.DeletedAt = DateTime.UtcNow;
+        user.DeletionConfirmToken = null;
+        user.DeletionConfirmTokenExpiry = null;
         user.RefreshToken = null;
         user.RefreshTokenExpiresAt = null;
         await _userRepo.UpdateAsync(user);

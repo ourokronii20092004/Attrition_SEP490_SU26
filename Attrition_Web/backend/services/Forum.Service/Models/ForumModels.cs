@@ -33,6 +33,10 @@ public class ForumThread
     public string? AuthorName { get; set; }
     public string? AuthorAvatar { get; set; }
 
+    // QOLF-3b: when set, this thread is the comment thread for a wiki article (not a normal forum
+    // thread). Such threads are hidden from the forum listing/search and reached via the article.
+    public Guid? WikiArticleId { get; set; }
+
     public bool IsPinned { get; set; }
     public bool IsLocked { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

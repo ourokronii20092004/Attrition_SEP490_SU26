@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { accountApi } from "@/lib/api/account";
+import { useToast } from "@/lib/providers";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
 import type { UserDto } from "@/lib/types";
 import { SettingsCard } from "./SettingsCard";
 
 export function ProfileSection({ user, setUser }: { user: UserDto; setUser: (u: UserDto) => void }) {
+  const { toast } = useToast();
   const [bio, setBio] = useState(user.bio ?? "");
   const [notifyOnReply, setNotifyOnReply] = useState(user.notifyOnReply ?? true);
   const [notifyOnMention, setNotifyOnMention] = useState(user.notifyOnMention ?? true);
@@ -20,8 +22,10 @@ export function ProfileSection({ user, setUser }: { user: UserDto; setUser: (u: 
     try {
       const res = await accountApi.updateProfile({ bio, notifyOnReply, notifyOnMention });
       if (res.success && res.data) setUser(res.data);
+      toast("Profile saved.", "success");
     } catch {
       setError("Failed to save profile. Please try again.");
+      toast("Failed to save profile. Please try again.", "error");
     }
     setSaving(false);
   };

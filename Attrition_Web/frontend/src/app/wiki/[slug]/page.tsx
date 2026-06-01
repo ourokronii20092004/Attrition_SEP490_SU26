@@ -14,6 +14,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { formatDate } from "@/lib/format-date";
 import { useAuth } from "@/lib/providers";
 import { qk } from "@/lib/query-keys";
+import { WikiComments } from "./wiki-comments";
 
 export default function WikiArticlePage() {
   const params = useParams<{ slug: string }>();
@@ -99,6 +100,8 @@ export default function WikiArticlePage() {
           <History size={16} /> View revision history
         </Link>
       </div>
+
+      <WikiComments articleId={article.id} articleTitle={article.title} />
     </PageShell>
   );
 }

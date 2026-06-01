@@ -26,18 +26,19 @@ const articleSchema = z.object({
 
 type ArticleFormValues = z.infer<typeof articleSchema>;
 
-export function ArticleEditor({ article, categories, onDone, onCancel }: {
+export function ArticleEditor({ article, categories, onDone, onCancel, onDirtyChange }: {
   article: WikiArticleListDto | null;
   categories: WikiCategoryDto[];
   onDone: () => void;
   onCancel: () => void;
+  onDirtyChange?: (dirty: boolean) => void;
 }) {
   const [error, setError] = useState("");
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
 
   const {
     register, handleSubmit, setValue, getValues, watch,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = useForm<ArticleFormValues>({
     resolver: zodResolver(articleSchema),
     defaultValues: {
@@ -65,13 +66,18 @@ export function ArticleEditor({ article, categories, onDone, onCancel }: {
     if (existing) { setValue("content", existing.content); setValue("status", existing.status); }
   }, [existing, setValue]);
 
-  // Upload an image as an asset, then insert a markdown image tag at the cursor.
+  // Surface dirty state so the Modal guards against an accidental backdrop-click discard (QOLF-6).
+  useEffect(() => { onDirtyChange?.(isDirty); }, [isDirty, onDirtyChange]);
+
+  // Upload an inline image (no gallery Asset row — same as forum), then insert a markdown image
+  // tag at the cursor. Using uploadInlineImage (not assetsApi.create) keeps editor images out of
+  // the public gallery, which otherwise accumulated a duplicate per edit (PROB-3).
   const insertImageMutation = useMutation({
-    mutationFn: async (file: File) => assetsApi.create(file, { assetType: "image", title: file.name }),
+    mutationFn: async (file: File) => assetsApi.uploadInlineImage(file),
     onSuccess: (res) => {
       if (res.success && res.data) {
-        const url = resolveMediaUrl(res.data.filePath) ?? res.data.filePath;
-        const md = `\n![${res.data.title ?? "image"}](${url})\n`;
+        const url = resolveMediaUrl(res.data) ?? res.data;
+        const md = `\n![image](${url})\n`;
         const ta = contentRef.current;
         const current = getValues("content");
         const at = ta ? ta.selectionStart : current.length;

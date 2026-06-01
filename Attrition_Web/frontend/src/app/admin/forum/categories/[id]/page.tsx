@@ -22,11 +22,21 @@ export default function AdminCategoryThreadsPage() {
   const { toast } = useToast();
   const [page, setPage] = useState(1);
 
+  const { data: categories = [] } = useQuery({
+    queryKey: qk.forum.categories(),
+    enabled: user?.role === "Admin",
+    queryFn: async () => {
+      const res = await forumApi.getCategories();
+      return res.success ? res.data ?? [] : [];
+    },
+  });
+  const categorySlug = categories.find((c) => c.id === categoryId)?.slug;
+
   const { data, isPending: loading } = useQuery({
     queryKey: qk.forum.threads({ categoryId, page }),
-    enabled: user?.role === "Admin" && Number.isFinite(categoryId),
+    enabled: user?.role === "Admin" && Number.isFinite(categoryId) && !!categorySlug,
     queryFn: async () => {
-      const res = await forumApi.getThreads({ categoryId, page, pageSize: 20 });
+      const res = await forumApi.getThreads({ category: categorySlug, page, pageSize: 20 });
       return res.success ? res.data : null;
     },
   });

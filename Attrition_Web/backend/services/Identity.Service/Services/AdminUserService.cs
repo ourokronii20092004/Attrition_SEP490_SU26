@@ -26,8 +26,21 @@ public class AdminUserService : IAdminUserService
                 : u => u.Username.ToLower().Contains(search.ToLower()),
             orderBy: orderBy);
 
-        var dtos = items.Select(u => new UserListItem(u.Id, u.Username, u.Role, u.IsBanned, u.JoinedAt)).ToList();
+        var dtos = items.Select(u => new UserListItem(u.Id, u.Username, u.Role, u.IsBanned, u.IsDeleted, u.JoinedAt)).ToList();
         return new PaginatedResponse<UserListItem>(dtos, total, page, pageSize);
+    }
+
+    public async Task<ApiResponse<AdminUserDetailDto>> GetUserDetailAsync(Guid userId)
+    {
+        var u = await _userRepo.GetByIdAsync(userId);
+        if (u == null) return ApiResponse<AdminUserDetailDto>.Fail("User not found.");
+        var dto = new AdminUserDetailDto(
+            u.Id, u.Username, u.Email, u.DisplayName, u.Role,
+            u.AvatarPath ?? u.GoogleAvatarUrl, u.BackgroundUrl, u.Bio, u.AuthProvider, u.JoinedAt,
+            u.PostCount, u.ContributionCount, u.IsBanned, u.IsDeleted, u.DeletedAt,
+            u.IsEmailVerified, u.PendingEmail, u.MustChangePassword,
+            u.LastLoginAt, u.LastLoginIp, u.FailedLoginAttempts, u.LockoutEnd);
+        return ApiResponse<AdminUserDetailDto>.Ok(dto);
     }
 
     public async Task<ApiResponse> ChangeRoleAsync(Guid userId, string role)

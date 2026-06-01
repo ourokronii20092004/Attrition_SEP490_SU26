@@ -28,6 +28,9 @@ public class ForumDbContext : DbContext
         {
             e.HasKey(t => t.Id);
             e.HasIndex(t => t.CategoryId);
+            // One comment thread per wiki article (QOLF-3b); the filtered unique index lets all
+            // normal (non-wiki) threads keep WikiArticleId null without colliding.
+            e.HasIndex(t => t.WikiArticleId).IsUnique().HasFilter("\"WikiArticleId\" IS NOT NULL");
             e.Property(t => t.IsPinned).HasDefaultValue(false);
             e.Property(t => t.IsLocked).HasDefaultValue(false);
         });

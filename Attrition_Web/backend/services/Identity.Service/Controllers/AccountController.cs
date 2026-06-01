@@ -101,11 +101,20 @@ public class AccountController : ControllerBase
     }
 
     [Authorize]
-    [HttpDelete("me")]
-    public async Task<IActionResult> DeleteAccount()
+    [HttpPost("request-deletion")]
+    public async Task<IActionResult> RequestDeletion()
     {
         if (this.RequireUserId(_user, out var userId) is { } error) return error;
-        var result = await _account.DeleteAccountAsync(userId);
+        var result = await _account.RequestDeletionAsync(userId);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    [Authorize]
+    [HttpPost("confirm-deletion")]
+    public async Task<IActionResult> ConfirmDeletion(ConfirmDeletionRequest request)
+    {
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        var result = await _account.ConfirmDeletionAsync(userId, request.Token);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 }

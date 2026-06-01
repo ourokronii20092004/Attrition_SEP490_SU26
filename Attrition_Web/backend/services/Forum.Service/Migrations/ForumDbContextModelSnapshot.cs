@@ -184,9 +184,16 @@ namespace Forum.Service.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("WikiArticleId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
+
+                    b.HasIndex("WikiArticleId")
+                        .IsUnique()
+                        .HasFilter("\"WikiArticleId\" IS NOT NULL");
 
                     b.ToTable("ForumThreads", "forum");
                 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -13,6 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Modal } from "@/components/ui/modal";
 import { PageLoader } from "@/components/ui/spinner";
+import { AdminPageHeader, AdminFilterBar, AdminTable, AdminRow } from "@/components/admin/admin-table";
+import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { ENEMY_TIERS } from "@/lib/enemy-tiers";
 import { qk } from "@/lib/query-keys";
 import type { EnemyResponse, EnemyCreateRequest, EnemyUpdateRequest } from "@/lib/types";
@@ -23,6 +25,10 @@ export default function AdminEnemiesPage() {
   const confirm = useConfirm();
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<EnemyResponse | null>(null);
+  const [formDirty, setFormDirty] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
+  const [tierFilter, setTierFilter] = useState("all");
+  const search = useDebouncedValue(searchInput.trim().toLowerCase(), 200);
 
   const { data: enemies = [], isPending: loading } = useQuery({
     queryKey: qk.admin.enemies(),
@@ -48,35 +54,61 @@ export default function AdminEnemiesPage() {
   if (!user || user.role !== "Admin") return null;
   if (loading) return <PageLoader />;
 
-  return (
-    <div className="mx-auto max-w-6xl">
-      <div className="flex items-center justify-between">
-        <h1 className="font-display text-3xl font-bold text-fg">Enemies Management</h1>
-        <Button onClick={() => { setEditing(null); setShowForm(true); }}>Add Enemy</Button>
-      </div>
+  const filtered = enemies.filter((e) => {
+    if (tierFilter !== "all" && e.tier !== tierFilter) return false;
+    if (search && !e.name.toLowerCase().includes(search) && !(e.spawnBiome ?? "").toLowerCase().includes(search)) return false;
+    return true;
+  });
 
-      <Modal open={showForm} onClose={() => setShowForm(false)} title={editing ? "Edit Enemy" : "Add Enemy"} size="lg">
+  return (
+    <div>
+      <AdminPageHeader title="Enemies" addLabel="Add Enemy" onAdd={() => { setEditing(null); setShowForm(true); }} />
+      <AdminFilterBar
+        search={searchInput}
+        onSearch={setSearchInput}
+        searchPlaceholder="Search enemies or biome…"
+        filters={[
+          {
+            value: tierFilter, onChange: setTierFilter, ariaLabel: "Filter by tier",
+            options: [{ value: "all", label: "All tiers" }, ...ENEMY_TIERS.map((t) => ({ value: t, label: t }))],
+          },
+        ]}
+      />
+
+      <Modal open={showForm} onClose={() => setShowForm(false)} title={editing ? "Edit Enemy" : "Add Enemy"} size="lg" dirty={formDirty}>
         <EnemyForm
           initial={editing}
-          onDone={() => { setShowForm(false); invalidate(); }}
-          onCancel={() => setShowForm(false)}
+          onDirtyChange={setFormDirty}
+          onDone={() => { setFormDirty(false); setShowForm(false); invalidate(); }}
+          onCancel={() => { setFormDirty(false); setShowForm(false); }}
         />
       </Modal>
 
-      <div className="mt-6 space-y-2">
-        {enemies.map((e) => (
-          <div key={e.enemyId} className="card flex items-center justify-between p-4">
-            <div>
-              <p className="font-medium text-fg">{e.name}</p>
-              <p className="text-xs text-fg-muted">{e.tier} &middot; {e.spawnBiome} &middot; {e.lootTable.length} drops</p>
-            </div>
-            <div className="flex gap-2">
-              <Button size="sm" variant="secondary" onClick={() => { setEditing(e); setShowForm(true); }}>Edit</Button>
-              <Button size="sm" variant="danger" onClick={() => handleDelete(e.enemyId)}>Delete</Button>
-            </div>
-          </div>
+      <AdminTable
+        columns={[
+          { key: "name", label: "Name" },
+          { key: "tier", label: "Tier" },
+          { key: "biome", label: "Biome" },
+          { key: "drops", label: "Drops" },
+          { key: "actions", label: "Actions", align: "right" },
+        ]}
+        empty={filtered.length === 0}
+      >
+        {filtered.map((e) => (
+          <AdminRow key={e.enemyId} onClick={() => { setEditing(e); setShowForm(true); }}>
+            <td className="px-3 py-2 font-medium text-fg">{e.name}</td>
+            <td className="px-3 py-2 text-fg-muted">{e.tier}</td>
+            <td className="px-3 py-2 text-fg-muted">{e.spawnBiome || "—"}</td>
+            <td className="px-3 py-2 tabular-nums text-fg-muted">{e.lootTable.length}</td>
+            <td className="px-3 py-2 text-right">
+              <div className="flex justify-end gap-2">
+                <Button size="sm" variant="secondary" onClick={(ev) => { ev.stopPropagation(); setEditing(e); setShowForm(true); }}>Edit</Button>
+                <Button size="sm" variant="danger" onClick={(ev) => { ev.stopPropagation(); handleDelete(e.enemyId); }}>Delete</Button>
+              </div>
+            </td>
+          </AdminRow>
         ))}
-      </div>
+      </AdminTable>
     </div>
   );
 }
@@ -112,12 +144,12 @@ const enemySchema = z.object({
 
 type EnemyFormValues = z.infer<typeof enemySchema>;
 
-function EnemyForm({ initial, onDone, onCancel }: { initial: EnemyResponse | null; onDone: () => void; onCancel: () => void }) {
+function EnemyForm({ initial, onDone, onCancel, onDirtyChange }: { initial: EnemyResponse | null; onDone: () => void; onCancel: () => void; onDirtyChange?: (dirty: boolean) => void }) {
   const [error, setError] = useState<string | null>(null);
 
   const {
     register, handleSubmit, control,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = useForm<EnemyFormValues>({
     resolver: zodResolver(enemySchema),
     defaultValues: {
@@ -140,6 +172,9 @@ function EnemyForm({ initial, onDone, onCancel }: { initial: EnemyResponse | nul
   });
 
   const { fields, append, remove } = useFieldArray({ control, name: "lootTable" });
+
+  // Surface dirty state to the Modal so a stray backdrop click prompts before discarding (QOLF-6).
+  useEffect(() => { onDirtyChange?.(isDirty); }, [isDirty, onDirtyChange]);
 
   const onSubmit = handleSubmit(async (values) => {
     setError(null);

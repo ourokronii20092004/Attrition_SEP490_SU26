@@ -16,8 +16,8 @@ public record UpdateArticleRequest(string? Title, string? Content, string? Statu
 public record SuggestEditRequest(string SuggestedContent, string? ChangeNote);
 
 public record WikiContributionDto(
-    Guid Id, Guid ArticleId, string ArticleTitle, string ContributorName,
-    string SuggestedContent, string? ChangeNote, string Status, DateTime SubmittedAt);
+    Guid Id, Guid ArticleId, string ArticleTitle, string ArticleSlug, string ContributorName,
+    string SuggestedContent, string CurrentContent, string? ChangeNote, string Status, DateTime SubmittedAt);
 
 public record ReviewContributionRequest(string Status); // Approved | Rejected
 

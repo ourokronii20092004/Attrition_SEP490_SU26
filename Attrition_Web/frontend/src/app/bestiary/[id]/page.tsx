@@ -27,7 +27,7 @@ export default function EnemyDetailPage() {
 
   if (isPending) {
     return (
-      <PageShell size="md">
+      <PageShell>
         <Skeleton className="h-4 w-20" />
         <Skeleton className="mt-4 h-10 w-1/2" />
         <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -39,7 +39,7 @@ export default function EnemyDetailPage() {
 
   if (!enemy) {
     return (
-      <PageShell size="md">
+      <PageShell>
         <EmptyState
           title="Enemy not found"
           description="This creature may have been removed from the bestiary."
@@ -50,7 +50,7 @@ export default function EnemyDetailPage() {
   }
 
   return (
-    <PageShell size="md">
+    <PageShell>
       <Link href="/bestiary" className="inline-flex items-center gap-1.5 text-sm text-fg-muted transition-colors hover:text-fg">
         <ArrowLeft size={16} /> Bestiary
       </Link>

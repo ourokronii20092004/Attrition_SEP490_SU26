@@ -9,6 +9,7 @@ public class IdentityDbContext : DbContext
 
     public DbSet<User> Users => Set<User>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<UserReport> UserReports => Set<UserReport>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -38,6 +39,14 @@ public class IdentityDbContext : DbContext
             // Drives the hot query: a user's notifications newest-first, and the unread count.
             e.HasIndex(n => new { n.UserId, n.CreatedAt });
             e.HasIndex(n => new { n.UserId, n.IsRead });
+        });
+
+        modelBuilder.Entity<UserReport>(e =>
+        {
+            e.HasKey(r => r.Id);
+            // Admin queue filters by status, newest-first.
+            e.HasIndex(r => new { r.Status, r.CreatedAt });
+            e.HasIndex(r => r.ReportedUserId);
         });
     }
 }

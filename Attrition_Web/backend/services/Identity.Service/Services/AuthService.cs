@@ -101,6 +101,16 @@ public class AuthService : IAuthService
         if (user.IsBanned)
             return ApiResponse<AuthResponse>.Fail("Account is suspended.");
 
+        // Soft-deleted accounts (PROB-4): signing in within the 90-day window cancels the pending
+        // deletion and restores the account. Past the window the purge job has tombstoned it.
+        if (user.IsDeleted)
+        {
+            user.IsDeleted = false;
+            user.DeletedAt = null;
+            user.DeletionConfirmToken = null;
+            user.DeletionConfirmTokenExpiry = null;
+        }
+
         var (accessToken, refreshToken) = _tokens.GenerateTokens(user);
         user.RefreshToken = TokenService.HashToken(refreshToken);
         user.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(_tokens.RefreshExpiryDays);
