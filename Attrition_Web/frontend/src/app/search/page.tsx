@@ -1,7 +1,8 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { SearchX } from "lucide-react";
 import { searchApi } from "@/lib/api/search";
@@ -10,7 +11,7 @@ import { PageTitle, SectionTitle } from "@/components/ui/page-title";
 import { SkeletonList } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageLoader } from "@/components/ui/spinner";
-import type { GlobalSearchResponse } from "@/lib/types";
+import { qk } from "@/lib/query-keys";
 
 export default function SearchPage() {
   return (
@@ -23,19 +24,15 @@ export default function SearchPage() {
 function SearchContent() {
   const searchParams = useSearchParams();
   const q = searchParams.get("q") ?? "";
-  const [results, setResults] = useState<GlobalSearchResponse | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (!q.trim()) return;
-    setLoading(true);
-    searchApi
-      .search(q, 20)
-      .then((res) => {
-        if (res.success) setResults(res.data);
-      })
-      .finally(() => setLoading(false));
-  }, [q]);
+  const { data: results, isFetching: loading } = useQuery({
+    queryKey: qk.search(q),
+    enabled: !!q.trim(),
+    queryFn: async () => {
+      const res = await searchApi.search(q, 20);
+      return res.success ? res.data : null;
+    },
+  });
 
   const hasResults = results && (results.wiki.length || results.users.length || results.posts.length || results.enemies.length);
 

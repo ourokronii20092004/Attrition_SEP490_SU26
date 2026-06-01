@@ -4,11 +4,7 @@ import { ChevronDown, Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repea
 import { resolveMediaUrl } from "@/lib/api/media";
 import type { MusicTrackDto } from "@/lib/types";
 import type { RepeatMode } from "@/lib/stores/audio-store";
-
-function fmt(s: number) {
-  if (!Number.isFinite(s)) return "0:00";
-  return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
-}
+import { formatDuration as fmt } from "@/lib/format-duration";
 
 export interface NowPlayingProps {
   track: MusicTrackDto;

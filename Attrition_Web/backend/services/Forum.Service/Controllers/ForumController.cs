@@ -59,6 +59,15 @@ public class ForumController : ControllerBase
             : NotFound(ApiResponse.Fail("Thread not found."));
     }
 
+    // QOLF-3b: resolve (creating on first view) the comment thread for a wiki article. Anonymous
+    // reads are fine; posting still goes through the authorized post endpoints + verify gate.
+    [HttpGet("wiki-thread/{articleId:guid}")]
+    public async Task<IActionResult> GetWikiThread(Guid articleId, [FromQuery] string? title)
+    {
+        var result = await _forum.GetOrCreateWikiThreadAsync(articleId, title ?? "Article comments");
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
     [HttpGet("threads/{id:guid}/posts")]
     public async Task<IActionResult> GetPosts(Guid id, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
@@ -192,5 +201,19 @@ public class ForumController : ControllerBase
     {
         var result = await _forum.UpdateCategoryAsync(id, request);
         return result.Success ? Ok(result) : NotFound(result);
+    }
+
+    [Authorize(Roles = Roles.Admin)]
+    [HttpDelete("categories/{id:int}")]
+    public async Task<IActionResult> DeleteCategory(int id)
+    {
+        var result = await _forum.DeleteCategoryAsync(id);
+        if (result.Success) return Ok(result);
+        // "not found" -> 404; "still has threads" (a conflict) -> 409; else 400.
+        var err = result.Error ?? "";
+        if (err.Contains("not found", StringComparison.OrdinalIgnoreCase)) return NotFound(result);
+        if (err.Contains("threads", StringComparison.OrdinalIgnoreCase))
+            return Conflict(result);
+        return BadRequest(result);
     }
 }

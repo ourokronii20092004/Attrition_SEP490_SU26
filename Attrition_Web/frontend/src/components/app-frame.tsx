@@ -1,46 +1,55 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { useAuth } from "@/lib/providers";
+import { usePathname, useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import { AudioPlayer } from "@/components/audio-player";
 import { VerifyEmailBanner } from "@/components/verify-email-banner";
 import { PageLoader } from "@/components/ui/spinner";
+import { useAuth } from "@/lib/providers";
+
+// The audio player is a heavy, client-only island (zustand state, range streaming, no SSR
+// value). Lazy-load it so it doesn't ship in the initial bundle / first paint.
+const AudioPlayer = dynamic(() => import("@/components/audio-player").then((m) => m.AudioPlayer), {
+  ssr: false,
+});
 
 /**
- * Renders the public site chrome (header, footer, music player) for all routes
- * except /admin, which provides its own workspace shell via app/admin/layout.tsx.
- * Keeping this decision in one client component lets admin and the public site
- * diverge completely without moving every public page into a route group.
+ * Renders the public site chrome (header, footer, music player) for all routes except /admin,
+ * which provides its own workspace shell via app/admin/layout.tsx.
+ *
+ * PROB-6: admins do NOT browse the user side. An authenticated admin who lands on any public
+ * (non-admin) route is redirected into the dashboard. They keep full reply/comment/post ability,
+ * but they do it from dashboard surfaces (e.g. the admin thread view's "Reply as admin"), never
+ * from the user-facing site. Logged-out visitors and normal users are unaffected.
  */
-
-// Routes an Admin may still visit on the public side: their account, their own
-// profile, and the auth/transactional pages. Everything else redirects to /admin.
-const ADMIN_ALLOWED_PREFIXES = [
-  "/settings", "/u/", "/login", "/register", "/logout",
-  "/forgot-password", "/reset-password", "/verify-email", "/privacy", "/terms",
-];
 
 export function AppFrame({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, loading } = useAuth();
-  const isAdmin = pathname === "/admin" || pathname.startsWith("/admin/");
+  const { user } = useAuth();
 
-  const adminOnUserSide =
-    !isAdmin && !loading && user?.role === "Admin" &&
-    !ADMIN_ALLOWED_PREFIXES.some((p) => pathname === p || pathname.startsWith(p));
+  const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/");
+  // Auth routes must stay reachable so an admin can actually sign in / out / verify.
+  const isAuthRoute =
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/register") ||
+    pathname.startsWith("/verify-email") ||
+    pathname.startsWith("/forgot-password") ||
+    pathname.startsWith("/reset-password") ||
+    pathname.startsWith("/auth");
+
+  const shouldRedirectAdmin = !!user && user.role === "Admin" && !isAdminRoute && !isAuthRoute;
 
   useEffect(() => {
-    if (adminOnUserSide) router.replace("/admin");
-  }, [adminOnUserSide, router]);
+    if (shouldRedirectAdmin) router.replace("/admin");
+  }, [shouldRedirectAdmin, router]);
 
-  if (isAdmin) return <>{children}</>;
+  if (isAdminRoute) return <>{children}</>;
 
-  // Hold the public page from flashing while we bounce an admin to their panel.
-  if (adminOnUserSide) return <PageLoader />;
+  // While redirecting an admin off the user side, don't flash the public page underneath.
+  if (shouldRedirectAdmin) return <PageLoader />;
 
   return (
     <>

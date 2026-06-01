@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -15,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
-import type { WikiArticleDto } from "@/lib/types";
+import { qk } from "@/lib/query-keys";
 
 const schema = z.object({
   suggestedContent: z.string().min(10, "Content too short"),
@@ -28,25 +29,37 @@ export default function SuggestEditPage() {
   const params = useParams<{ slug: string }>();
   const { user } = useAuth();
   const router = useRouter();
-  const [article, setArticle] = useState<WikiArticleDto | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
   const { register, handleSubmit, setValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
 
+  const { data: article, isPending } = useQuery({
+    queryKey: qk.wiki.article(params.slug),
+    enabled: !!params.slug,
+    queryFn: async () => {
+      const res = await wikiApi.getArticle(params.slug);
+      return res.success ? res.data : null;
+    },
+  });
+
   useEffect(() => {
-    if (!params.slug) return;
-    wikiApi.getArticle(params.slug).then((res) => {
-      if (res.success && res.data) {
-        setArticle(res.data);
-        setValue("suggestedContent", res.data.content);
-      }
-      setLoading(false);
-    });
-  }, [params.slug, setValue]);
+    if (article) setValue("suggestedContent", article.content);
+  }, [article, setValue]);
+
+  const submitMutation = useMutation({
+    mutationFn: async (data: FormData) => {
+      if (!article) throw new Error("Article not loaded");
+      await wikiApi.suggestEdit(article.id, data);
+    },
+    onSuccess: () => {
+      router.push(`/wiki/${params.slug}`);
+    },
+    onError: () => {
+      setError("Failed to submit suggestion");
+    },
+  });
 
   if (!user) {
     return (
@@ -60,7 +73,7 @@ export default function SuggestEditPage() {
     );
   }
 
-  if (loading) {
+  if (isPending) {
     return (
       <PageShell size="md">
         <Skeleton className="h-4 w-28" />
@@ -71,17 +84,9 @@ export default function SuggestEditPage() {
   }
   if (!article) return null;
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = (data: FormData) => {
     setError("");
-    setSubmitting(true);
-    try {
-      await wikiApi.suggestEdit(article.id, data);
-      router.push(`/wiki/${params.slug}`);
-    } catch {
-      setError("Failed to submit suggestion");
-    } finally {
-      setSubmitting(false);
-    }
+    submitMutation.mutate(data);
   };
 
   return (
@@ -110,7 +115,7 @@ export default function SuggestEditPage() {
             {errors.suggestedContent && <p className="text-xs text-danger">{errors.suggestedContent.message}</p>}
           </div>
           <Input label="Change Note" {...register("changeNote")} error={errors.changeNote?.message} placeholder="Briefly describe your changes" />
-          <Button type="submit" loading={submitting}>Submit Suggestion</Button>
+          <Button type="submit" loading={submitMutation.isPending}>Submit Suggestion</Button>
         </form>
       </Card>
     </PageShell>

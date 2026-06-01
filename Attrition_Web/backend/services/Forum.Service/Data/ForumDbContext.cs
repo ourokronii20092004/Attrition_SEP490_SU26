@@ -28,6 +28,9 @@ public class ForumDbContext : DbContext
         {
             e.HasKey(t => t.Id);
             e.HasIndex(t => t.CategoryId);
+            // One comment thread per wiki article (QOLF-3b); the filtered unique index lets all
+            // normal (non-wiki) threads keep WikiArticleId null without colliding.
+            e.HasIndex(t => t.WikiArticleId).IsUnique().HasFilter("\"WikiArticleId\" IS NOT NULL");
             e.Property(t => t.IsPinned).HasDefaultValue(false);
             e.Property(t => t.IsLocked).HasDefaultValue(false);
         });
@@ -36,12 +39,14 @@ public class ForumDbContext : DbContext
         {
             e.HasKey(p => p.Id);
             e.HasIndex(p => p.ThreadId);
+            e.HasIndex(p => p.ParentPostId);
         });
 
         modelBuilder.Entity<ForumReaction>(e =>
         {
             e.HasKey(r => r.Id);
-            e.HasIndex(r => new { r.PostId, r.UserId, r.ReactionType }).IsUnique();
+            // One reaction per user per post (like OR dislike, never both).
+            e.HasIndex(r => new { r.PostId, r.UserId }).IsUnique();
         });
 
         modelBuilder.Entity<ThreadSubscription>(e =>
@@ -54,7 +59,7 @@ public class ForumDbContext : DbContext
         {
             e.HasKey(pr => pr.Id);
             e.HasIndex(pr => pr.Status);
-            e.Property(pr => pr.Status).HasDefaultValue("Pending");
+            e.Property(pr => pr.Status).HasDefaultValue(ReportStatus.Pending);
         });
     }
 }

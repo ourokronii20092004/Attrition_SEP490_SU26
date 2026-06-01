@@ -18,9 +18,15 @@ builder.Services.Configure<FormOptions>(o => o.MultipartBodyLengthLimit = 100 * 
 builder.Services.AddDbContext<MusicDbContext>(opt =>
     opt.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "music")));
+        npgsql =>
+        {
+            npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "music");
+            // Survive transient Postgres blips by retrying instead of erroring the user.
+            npgsql.EnableRetryOnFailure(maxRetryCount: 3, maxRetryDelay: TimeSpan.FromSeconds(2), errorCodesToAdd: null);
+        }));
 
 builder.Services.AddScoped<DbContext>(sp => sp.GetRequiredService<MusicDbContext>());
+builder.Services.AddDbWarmup();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IAlbumService, AlbumService>();
 builder.Services.AddScoped<ITrackService, TrackService>();
@@ -62,7 +68,7 @@ app.UseStaticFiles(new StaticFileOptions
             ctx.Context.Response.Body = Stream.Null;
             return;
         }
-        ctx.Context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+        BuildingBlocks.Web.MediaSecurityHeaders.OnPrepareStaticResponse(ctx);
     }
 });
 

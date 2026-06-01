@@ -11,6 +11,7 @@ export interface PaginatedResponse<T> {
   totalCount: number;
   page: number;
   pageSize: number;
+  totalPages: number;
 }
 
 // ─── Identity Service ─────────────────────────────────────────────────────────
@@ -108,7 +109,33 @@ export interface UserListItem {
   username: string;
   role: "Admin" | "User";
   isBanned: boolean;
+  isDeleted: boolean;
   joinedAt: string;
+}
+
+export interface AdminUserDetailDto {
+  id: string;
+  username: string;
+  email: string | null;
+  displayName: string | null;
+  role: "Admin" | "User";
+  avatarUrl: string | null;
+  backgroundUrl: string | null;
+  bio: string | null;
+  authProvider: string;
+  joinedAt: string;
+  postCount: number;
+  contributionCount: number;
+  isBanned: boolean;
+  isDeleted: boolean;
+  deletedAt: string | null;
+  isEmailVerified: boolean;
+  pendingEmail: string | null;
+  mustChangePassword: boolean;
+  lastLoginAt: string | null;
+  lastLoginIp: string | null;
+  failedLoginAttempts: number;
+  lockoutEnd: string | null;
 }
 
 export interface UserSummaryDto {
@@ -233,8 +260,10 @@ export interface WikiContributionDto {
   id: string;
   articleId: string;
   articleTitle: string;
+  articleSlug: string;
   contributorName: string;
   suggestedContent: string;
+  currentContent: string;
   changeNote: string | null;
   status: "Pending" | "Approved" | "Rejected";
   submittedAt: string;
@@ -308,11 +337,14 @@ export interface ForumThreadDto {
 export interface ForumPostDto {
   id: string;
   threadId: string;
+  parentPostId: string | null;
+  depth: number;
   authorId: string;
   authorName: string;
   authorAvatar: string | null;
   authorRole: "Admin" | "User";
   content: string;
+  attachments: string[];
   createdAt: string;
   updatedAt: string | null;
   likeCount: number;
@@ -328,6 +360,8 @@ export interface CreateThreadRequest {
 
 export interface CreatePostRequest {
   content: string;
+  parentPostId?: string | null;
+  attachments?: string[];
 }
 
 export interface UpdatePostRequest {
@@ -340,6 +374,16 @@ export interface ReactRequest {
 
 export interface ReportPostReq {
   reason: string;
+}
+
+export interface NotificationDto {
+  id: string;
+  type: string;
+  message: string;
+  link: string | null;
+  actorName: string | null;
+  isRead: boolean;
+  createdAt: string;
 }
 
 export interface ForumCategoryRequest {
@@ -376,6 +420,16 @@ export interface AdminPostReportDto {
   postId: string;
   postContent: string;
   authorName: string;
+  reporterName: string;
+  reason: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface AdminUserReportDto {
+  id: string;
+  reportedUserId: string;
+  reportedUserName: string;
   reporterName: string;
   reason: string;
   status: string;
@@ -589,6 +643,12 @@ export interface GlobalSearchResponse {
   posts: SearchPostResultDto[];
   enemies: SearchEnemyResultDto[];
   degradedSources: string[];
+}
+
+export interface SearchSuggestionDto {
+  label: string;
+  type: string;
+  url: string;
 }
 
 // ─── Admin Service ────────────────────────────────────────────────────────────

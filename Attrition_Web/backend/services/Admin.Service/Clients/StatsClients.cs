@@ -1,9 +1,8 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using BuildingBlocks.Contracts;
 
 namespace Admin.Service.Clients;
-
-public record InternalEnvelope<T>(bool Success, T? Data, string? Error);
 
 /// <summary>
 /// Calls downstream internal stats/count endpoints with the shared internal key.

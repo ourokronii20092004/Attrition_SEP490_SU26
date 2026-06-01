@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/providers";
 import { accountApi } from "@/lib/api/account";
 import { PageShell } from "@/components/ui/page-shell";
@@ -9,32 +9,29 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatDate } from "@/lib/format-date";
-import type { UserDto } from "@/lib/types";
+import { qk } from "@/lib/query-keys";
 import { ProfileActivity } from "./profile-activity";
 import { ProfileBanner, ProfileAvatar, ProfileName } from "./profile-edit";
+import { ReportUserButton } from "./report-user-button";
 
 export default function ProfilePage() {
   const params = useParams<{ username: string }>();
   const { user, refreshUser } = useAuth();
-  const [profile, setProfile] = useState<UserDto | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  const load = useCallback(() => {
-    if (!params.username) return;
-    setLoading(true);
-    accountApi
-      .getProfile(params.username)
-      .then((res) => { if (res.success) setProfile(res.data); })
-      .finally(() => setLoading(false));
-  }, [params.username]);
-
-  useEffect(() => { load(); }, [load]);
+  const { data: profile, isPending, refetch } = useQuery({
+    queryKey: qk.profile(params.username),
+    enabled: !!params.username,
+    queryFn: async () => {
+      const res = await accountApi.getProfile(params.username);
+      return res.success ? res.data : null;
+    },
+  });
 
   const isOwner = !!user && !!profile && user.username === profile.username;
   // Owner edits hit account endpoints, then we refresh both the auth user and this view.
-  const onEdited = async () => { await refreshUser(); load(); };
+  const onEdited = async () => { await refreshUser(); refetch(); };
 
-  if (loading) {
+  if (isPending) {
     return (
       <PageShell size="md">
         <div className="flex items-center gap-4">
@@ -69,6 +66,7 @@ export default function ProfilePage() {
             <span>Joined {formatDate(display.joinedAt)}</span>
           </div>
         </div>
+        {!isOwner && user && <ReportUserButton userId={display.id} username={display.username} />}
       </div>
 
       {display.bio && <p className="mt-6 leading-relaxed text-fg-muted">{display.bio}</p>}

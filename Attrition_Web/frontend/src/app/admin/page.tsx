@@ -1,28 +1,29 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { adminApi } from "@/lib/api/admin";
 import { Card } from "@/components/ui/card";
 import { PageTitle } from "@/components/ui/page-title";
 import { Skeleton } from "@/components/ui/skeleton";
+import { qk } from "@/lib/query-keys";
 import { getLastAdminPage } from "./admin-top-bar";
 import { adminLabelFor } from "./admin-routes";
-import type { AdminStatsDto } from "@/lib/types";
 
 export default function AdminPage() {
-  const [stats, setStats] = useState<AdminStatsDto | null>(null);
-  const [loading, setLoading] = useState(true);
   const [resume, setResume] = useState<string | null>(null);
 
+  const { data: stats, isPending: loading } = useQuery({
+    queryKey: qk.admin.stats(),
+    queryFn: async () => {
+      const res = await adminApi.getStats();
+      return res.success ? res.data : null;
+    },
+  });
+
   useEffect(() => {
-    adminApi
-      .getStats()
-      .then((res) => {
-        if (res.success) setStats(res.data);
-      })
-      .finally(() => setLoading(false));
     // Offer to jump back to the last non-dashboard admin page visited.
     const last = getLastAdminPage();
     if (last && last !== "/admin") setResume(last);

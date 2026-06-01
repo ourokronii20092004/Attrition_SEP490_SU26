@@ -3,11 +3,7 @@
 import { X, Music as MusicIcon, GripVertical } from "lucide-react";
 import { useAudioStore } from "@/lib/stores/audio-store";
 import { resolveMediaUrl } from "@/lib/api/media";
-
-function fmt(s: number) {
-  if (!Number.isFinite(s)) return "0:00";
-  return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
-}
+import { formatDuration as fmt } from "@/lib/format-duration";
 
 /** Spotify-style queue panel: now-playing + the rest of the queue, click to jump. */
 export function QueuePanel({ open, onClose }: { open: boolean; onClose: () => void }) {

@@ -83,8 +83,14 @@ namespace Forum.Service.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("Depth")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("IsRemoved")
                         .HasColumnType("boolean");
+
+                    b.Property<Guid?>("ParentPostId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime?>("RemovedAt")
                         .HasColumnType("timestamp with time zone");
@@ -105,6 +111,8 @@ namespace Forum.Service.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ParentPostId");
 
                     b.HasIndex("ThreadId");
 
@@ -129,7 +137,7 @@ namespace Forum.Service.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PostId", "UserId", "ReactionType")
+                    b.HasIndex("PostId", "UserId")
                         .IsUnique();
 
                     b.ToTable("ForumReactions", "forum");
@@ -176,9 +184,16 @@ namespace Forum.Service.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("WikiArticleId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
+
+                    b.HasIndex("WikiArticleId")
+                        .IsUnique()
+                        .HasFilter("\"WikiArticleId\" IS NOT NULL");
 
                     b.ToTable("ForumThreads", "forum");
                 });

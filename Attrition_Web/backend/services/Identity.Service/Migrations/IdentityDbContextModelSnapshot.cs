@@ -23,6 +23,44 @@ namespace Identity.Service.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Identity.Service.Models.Notification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ActorName")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Link")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "CreatedAt");
+
+                    b.HasIndex("UserId", "IsRead");
+
+                    b.ToTable("Notifications", "identity");
+                });
+
             modelBuilder.Entity("Identity.Service.Models.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -44,6 +82,15 @@ namespace Identity.Service.Migrations
 
                     b.Property<int>("ContributionCount")
                         .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletionConfirmToken")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletionConfirmTokenExpiry")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("DisplayName")
                         .HasColumnType("text");
@@ -72,6 +119,9 @@ namespace Identity.Service.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsEmailVerified")
                         .ValueGeneratedOnAdd()
@@ -167,6 +217,44 @@ namespace Identity.Service.Migrations
                         .IsUnique();
 
                     b.ToTable("Users", "identity");
+                });
+
+            modelBuilder.Entity("Identity.Service.Models.UserReport", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("ReportedUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ReportedUserName")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("ReporterId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ReporterName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReportedUserId");
+
+                    b.HasIndex("Status", "CreatedAt");
+
+                    b.ToTable("UserReports", "identity");
                 });
 #pragma warning restore 612, 618
         }

@@ -10,4 +10,5 @@ public interface IWikiRepository : IRepository<WikiArticle>
     Task<WikiCategory?> GetCategoryBySlugAsync(string slug);
     Task<WikiCategory?> GetCategoryByIdAsync(int id);
     Task<int> CountArticlesInCategoryAsync(int categoryId);
+    Task<Dictionary<int, int>> CountPublishedArticlesByCategoryAsync();
 }

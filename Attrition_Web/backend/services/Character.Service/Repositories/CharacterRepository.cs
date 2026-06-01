@@ -23,11 +23,19 @@ public class CharacterRepository : Repository<CharacterEntity>, ICharacterReposi
             .OrderByDescending(c => c.UpdatedAt)
             .ToListAsync();
 
-    public async Task<List<CharacterEntity>> GetAllWithSnapshotsAsync() =>
-        await _context.Characters
+    public async Task<(List<CharacterEntity> Items, int TotalCount)> GetPagedWithSnapshotsAsync(int page, int pageSize)
+    {
+        if (page < 1) page = 1;
+        pageSize = Math.Clamp(pageSize, 1, 100);
+        var total = await _context.Characters.CountAsync();
+        var items = await _context.Characters
             .Include(c => c.Snapshots)
             .OrderByDescending(c => c.UpdatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
+        return (items, total);
+    }
 
     // Case-sensitive match, kept deliberately consistent with the case-sensitive unique index on
     // (OwnerId, Name). If these two ever disagree on what counts as a duplicate, the race-catch in

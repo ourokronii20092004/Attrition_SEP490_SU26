@@ -1,21 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Link from "next/link";
 import { forumApi } from "@/lib/api/forum";
-import { useAuth } from "@/lib/providers";
-import { ArrowLeft } from "lucide-react";
+import { assetsApi } from "@/lib/api/assets";
+import { useAuth, useToast } from "@/lib/providers";
+import { ArrowLeft, ImagePlus, Eye, Pencil } from "lucide-react";
 import { PageShell } from "@/components/ui/page-shell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { EmptyState } from "@/components/ui/empty-state";
-import type { ForumCategoryDto } from "@/lib/types";
+import { MarkdownContent } from "@/components/post-content";
+import { qk } from "@/lib/query-keys";
 
 const schema = z.object({
   title: z.string().min(3, "Title too short").max(200),
@@ -27,20 +30,66 @@ type FormData = z.infer<typeof schema>;
 
 export default function NewThreadPage() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const router = useRouter();
-  const [categories, setCategories] = useState<ForumCategoryDto[]>([]);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const contentRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, setValue, getValues, watch, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
 
-  useEffect(() => {
-    forumApi.getCategories().then((res) => {
-      if (res.success) setCategories(res.data);
-    });
-  }, []);
+  const { ref: contentFieldRef, ...contentField } = register("content");
+  const content = watch("content") ?? "";
+
+  // Upload an image as an asset, then insert a markdown image tag at the cursor.
+  const insertImage = async (file: File | undefined) => {
+    if (!file) return;
+    setUploading(true);
+    setError("");
+    try {
+      const res = await assetsApi.uploadInlineImage(file);
+      if (res.success && res.data) {
+        const url = res.data;
+        const md = `\n![${file.name}](${url})\n`;
+        const ta = contentRef.current;
+        const current = getValues("content") ?? "";
+        const at = ta ? ta.selectionStart : current.length;
+        setValue("content", current.slice(0, at) + md + current.slice(at), { shouldValidate: true });
+      } else {
+        toast("Image upload failed.", "error");
+      }
+    } catch {
+      toast("Image upload failed.", "error");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const { data: categories = [] } = useQuery({
+    queryKey: qk.forum.categories(),
+    queryFn: async () => {
+      const res = await forumApi.getCategories();
+      return res.success ? res.data ?? [] : [];
+    },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (data: FormData) => {
+      const res = await forumApi.createThread({ title: data.title, categoryId: Number(data.categoryId), content: data.content });
+      return res;
+    },
+    onSuccess: (res) => {
+      if (res.success && res.data) {
+        router.push(`/forum/${res.data.id}`);
+      }
+    },
+    onError: () => {
+      setError("Failed to create thread");
+    },
+  });
 
   if (!user) {
     return (
@@ -54,19 +103,9 @@ export default function NewThreadPage() {
     );
   }
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = (data: FormData) => {
     setError("");
-    setLoading(true);
-    try {
-      const res = await forumApi.createThread({ title: data.title, categoryId: Number(data.categoryId), content: data.content });
-      if (res.success && res.data) {
-        router.push(`/forum/${res.data.id}`);
-      }
-    } catch {
-      setError("Failed to create thread");
-    } finally {
-      setLoading(false);
-    }
+    createMutation.mutate(data);
   };
 
   return (
@@ -92,15 +131,38 @@ export default function NewThreadPage() {
             ))}
           </Select>
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-fg-muted">Content</label>
-            <textarea
-              {...register("content")}
-              rows={10}
-              className="w-full resize-y rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-fg outline-none transition-colors placeholder:text-fg-subtle focus:border-accent focus:ring-1 focus:ring-accent"
-            />
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-medium text-fg-muted">Content (Markdown)</label>
+              <div className="flex items-center gap-2">
+                <label className={`inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-border-strong px-2.5 py-1 text-xs text-fg-muted transition-colors hover:border-accent/60 hover:text-fg ${uploading ? "pointer-events-none opacity-60" : ""}`}>
+                  <ImagePlus size={14} /> {uploading ? "Uploading…" : "Insert image"}
+                  <input type="file" accept="image/*" className="hidden" disabled={uploading}
+                    onChange={(e) => { insertImage(e.target.files?.[0]); e.target.value = ""; }} />
+                </label>
+                <button type="button" onClick={() => setShowPreview((v) => !v)}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-border-strong px-2.5 py-1 text-xs text-fg-muted transition-colors hover:border-accent/60 hover:text-fg">
+                  {showPreview ? <><Pencil size={14} /> Edit</> : <><Eye size={14} /> Preview</>}
+                </button>
+              </div>
+            </div>
+            {showPreview ? (
+              <div className="min-h-[14rem] rounded-lg border border-border bg-surface-2 px-3 py-2">
+                {content.trim()
+                  ? <MarkdownContent content={content} />
+                  : <p className="text-sm text-fg-subtle">Nothing to preview yet.</p>}
+              </div>
+            ) : (
+              <textarea
+                {...contentField}
+                ref={(el) => { contentFieldRef(el); contentRef.current = el; }}
+                rows={10}
+                placeholder="Write in Markdown. Use Insert image to upload and embed images."
+                className="w-full resize-y rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-fg outline-none transition-colors placeholder:text-fg-subtle focus:border-accent focus:ring-1 focus:ring-accent"
+              />
+            )}
             {errors.content && <p className="text-xs text-danger">{errors.content.message}</p>}
           </div>
-          <Button type="submit" loading={loading}>Create Thread</Button>
+          <Button type="submit" loading={createMutation.isPending}>Create Thread</Button>
         </form>
       </Card>
     </PageShell>

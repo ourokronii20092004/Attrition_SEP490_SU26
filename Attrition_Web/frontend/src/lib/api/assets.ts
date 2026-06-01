@@ -15,11 +15,12 @@ export const assetsApi = {
     apiFetch<ApiResponse<AssetDto>>(`/api/assets/${id}`, { auth: false }),
 
   // Admin
-  adminList: (params?: { page?: number; pageSize?: number; assetType?: string }) => {
+  adminList: (params?: { page?: number; pageSize?: number; assetType?: string; search?: string }) => {
     const sp = new URLSearchParams();
     if (params?.page) sp.set("page", String(params.page));
     if (params?.pageSize) sp.set("pageSize", String(params.pageSize));
     if (params?.assetType) sp.set("assetType", params.assetType);
+    if (params?.search) sp.set("search", params.search);
     const qs = sp.toString();
     return apiFetch<ApiResponse<PaginatedResponse<AssetDto>>>(`/api/admin/assets${qs ? `?${qs}` : ""}`);
   },
@@ -39,4 +40,11 @@ export const assetsApi = {
 
   delete: (id: string) =>
     apiFetch<ApiResponse<void>>(`/api/admin/assets/${id}`, { method: "DELETE" }),
+
+  // Inline image upload for any logged-in user (e.g. forum post images). Returns the public URL.
+  uploadInlineImage: (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return apiFetch<ApiResponse<string>>("/api/assets/inline-image", { method: "POST", body: form });
+  },
 };

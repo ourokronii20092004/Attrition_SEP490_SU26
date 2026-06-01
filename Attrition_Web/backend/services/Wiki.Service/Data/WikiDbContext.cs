@@ -41,7 +41,7 @@ public class WikiDbContext : DbContext
             e.HasKey(c => c.Id);
             e.HasIndex(c => c.ArticleId);
             e.HasIndex(c => c.Status);
-            e.Property(c => c.Status).HasDefaultValue("Pending");
+            e.Property(c => c.Status).HasDefaultValue(ContributionStatus.Pending);
         });
     }
 }
