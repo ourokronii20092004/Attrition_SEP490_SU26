@@ -516,7 +516,7 @@ MonoBehaviour:
     RawGuidValue: a44a6ce36df740d42a1dd7995c23f055
   summonCount: 3
   summonRadius: 4
-  summonChance: 0.5
+  summonChance: 0.15
   summonCooldown: 10
   summonDuration: 1
   maxActiveSummons: 6
@@ -538,7 +538,7 @@ Animator:
   m_GameObject: {fileID: 7541668006046052967}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 82eba37918465a7428e0c4a4768cd420, type: 2}
+  m_Controller: {fileID: 9100000, guid: e7b68d2047af79b4db365b736bb94630, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0

@@ -177,16 +177,8 @@ public class SummonOfUndeadAI : NetworkBehaviour, IDamageable
     {
         if (!HasStateAuthority) return;
 
-        // Đã chết → chờ despawn
-        if (IsDeadNetworked)
-        {
-            if (despawnTimer.Expired(Runner))
-            {
-                despawnTimer = TickTimer.None;
-                Runner.Despawn(Object);
-            }
-            return;
-        }
+        // Đã chết → object đang chuẩn bị despawn
+        if (IsDeadNetworked) return;
 
         // Kiểm tra owner Undead còn sống không
         if (IsOwnerDead())
@@ -262,9 +254,13 @@ public class SummonOfUndeadAI : NetworkBehaviour, IDamageable
     private void Die()
     {
         IsDeadNetworked = true;
-        rb.linearVelocity = Vector2.zero;
-        despawnTimer = TickTimer.CreateFromSeconds(Runner, 1.0f);
-        RPC_PlayDeath();
+        if (rb != null) rb.linearVelocity = Vector2.zero;
+
+        // Xoá xác ngay lập tức theo yêu cầu
+        if (HasStateAuthority)
+        {
+            Runner.Despawn(Object);
+        }
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
