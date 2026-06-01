@@ -16,18 +16,18 @@ public class EnemyContactDamage : MonoBehaviour
     [Tooltip("Thời gian hồi (giây) giữa 2 lần gây sát thương chạm")]
     public float contactCooldown = 0.5f;
 
-    private EnemyController enemyController;
+    private IDamageable parentDamageable;
     private float lastContactTime = -999f;
 
     private void Awake()
     {
-        enemyController = GetComponentInParent<EnemyController>();
+        parentDamageable = GetComponentInParent<IDamageable>();
     }
 
     private void OnTriggerStay2D(Collider2D other)
     {
         if (Time.time - lastContactTime < contactCooldown) return;
-        if (enemyController != null && enemyController.IsDead) return;
+        if (parentDamageable != null && parentDamageable.IsDead) return;
 
         PlayerController player = other.GetComponentInParent<PlayerController>();
         if (player == null || player.IsDead) return;
