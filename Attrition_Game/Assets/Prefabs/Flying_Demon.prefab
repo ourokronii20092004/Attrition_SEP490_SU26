@@ -20,6 +20,7 @@ GameObject:
   - component: {fileID: 5328899925062977967}
   - component: {fileID: 4911119748226872292}
   - component: {fileID: -2449157290097528782}
+  - component: {fileID: -7903650235885434261}
   m_Layer: 8
   m_Name: Flying_Demon
   m_TagString: Enemy
@@ -195,6 +196,7 @@ MonoBehaviour:
   _IsAwaitingRevive:
     _value: 0
   maxHealth: 3
+  statsComp: {fileID: 0}
 --- !u!114 &6212655201303181169
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -220,7 +222,7 @@ MonoBehaviour:
   flyMeleeRetreatAltitude: 3
   flyMeleeRetreatSpeed: 8
   enableSleep: 0
-  sleepWakeOnTouch: 0
+  wakeUpRadius: 0
   sleepReturnDelay: 3
   returnToSleepSpeed: 6
   sleepOnCeiling: 1
@@ -232,14 +234,18 @@ MonoBehaviour:
     m_Bits: 64
   wallCheckDistance: 0.8
   wallCheckHeightOffset: 0.5
-  _IsSleeping:
-    _value: 0
-  _IsReturningToSleep:
-    _value: 0
-  _IsRetreatingUp:
-    _value: 0
+  canEvadeJump: 0
+  evadeTriggerDistance: 2
+  jumpForce: 12
+  evadeBackwardSpeed: 8
+  jumpCooldown: 3
+  facingDeadZone: 0.3
+  _CurrentState: 0
   _NetSpeed: 0
   _NetFacingDir: 1
+  _IsJumping:
+    _value: 0
+  _AttackLockedFacingDir: 1
 --- !u!114 &8981913773620505188
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -274,6 +280,7 @@ MonoBehaviour:
     damage: 1
     duration: 0.5
     cooldown: 1.5
+    recoveryDuration: 0.25
   enableDashSlash: 0
   dashSlashAttacks: 01
   dashSpeed: 10
@@ -283,6 +290,7 @@ MonoBehaviour:
   leapHeight: 3
   leapDuration: 0.6
   animationComp: {fileID: 8981913773620505188}
+  statsComp: {fileID: 0}
   attackPoint: {fileID: 5218382753634733620}
   playerLayer:
     serializedVersion: 2
@@ -326,6 +334,7 @@ MonoBehaviour:
   - {fileID: 8981913773620505188}
   - {fileID: 4324008339978122593}
   - {fileID: 5328899925062977967}
+  - {fileID: -7903650235885434261}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &5328899925062977967
 MonoBehaviour:
@@ -388,6 +397,25 @@ Animation:
   m_AnimatePhysics: 0
   m_UpdateMode: 0
   m_CullingType: 0
+--- !u!114 &-7903650235885434261
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2368997048418387079}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bde3acf5f2a5191498de3b6e774d849c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Enemy.EnemyStats
+  statsSO: {fileID: 11400000, guid: 57569372f25537e40b335aefb4788c68, type: 2}
+  _MaxHP: 0
+  _AD: 0
+  _AP: 0
+  _DEF: 0
+  _RES: 0
+  _Poise: 0
 --- !u!1 &6239148214477598644
 GameObject:
   m_ObjectHideFlags: 0

@@ -52,6 +52,7 @@ GameObject:
   - component: {fileID: 6970653684899995114}
   - component: {fileID: 3231601818936640140}
   - component: {fileID: 5132593007529148729}
+  - component: {fileID: 7735282766794250641}
   m_Layer: 8
   m_Name: Gollux
   m_TagString: Enemy
@@ -190,6 +191,7 @@ MonoBehaviour:
   _IsAwaitingRevive:
     _value: 0
   maxHealth: 10
+  statsComp: {fileID: 0}
 --- !u!114 &2188909734104438995
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -215,7 +217,7 @@ MonoBehaviour:
   flyMeleeRetreatAltitude: 3
   flyMeleeRetreatSpeed: 8
   enableSleep: 0
-  sleepWakeOnTouch: 0
+  wakeUpRadius: 0
   sleepReturnDelay: 3
   returnToSleepSpeed: 6
   sleepOnCeiling: 1
@@ -227,14 +229,18 @@ MonoBehaviour:
     m_Bits: 64
   wallCheckDistance: 0.8
   wallCheckHeightOffset: 0.5
-  _IsSleeping:
-    _value: 0
-  _IsReturningToSleep:
-    _value: 0
-  _IsRetreatingUp:
-    _value: 0
+  canEvadeJump: 0
+  evadeTriggerDistance: 2
+  jumpForce: 12
+  evadeBackwardSpeed: 8
+  jumpCooldown: 3
+  facingDeadZone: 0.3
+  _CurrentState: 0
   _NetSpeed: 0
   _NetFacingDir: 1
+  _IsJumping:
+    _value: 0
+  _AttackLockedFacingDir: 1
 --- !u!114 &1165490181894134186
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -269,6 +275,7 @@ MonoBehaviour:
     damage: 1
     duration: 0.5
     cooldown: 1.5
+    recoveryDuration: 0.25
   - hitboxShape: 0
     range: 4
     angle: 103
@@ -276,6 +283,7 @@ MonoBehaviour:
     damage: 1
     duration: 1
     cooldown: 1.5
+    recoveryDuration: 0.25
   enableDashSlash: 0
   dashSlashAttacks: 
   dashSpeed: 10
@@ -285,6 +293,7 @@ MonoBehaviour:
   leapHeight: 3
   leapDuration: 1.5
   animationComp: {fileID: 1165490181894134186}
+  statsComp: {fileID: 0}
   attackPoint: {fileID: 1862415374355557567}
   playerLayer:
     serializedVersion: 2
@@ -329,6 +338,7 @@ MonoBehaviour:
   - {fileID: 2555038134556242712}
   - {fileID: 2496091554065826996}
   - {fileID: 3231601818936640140}
+  - {fileID: 7735282766794250641}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &2496091554065826996
 MonoBehaviour:
@@ -415,9 +425,25 @@ MonoBehaviour:
   healDuration: 2
   healThreshold: 0.7
   healChancePerSecond: 0.15
+  canUseSkills: 0
+  skills: []
+  skillChance: 0.3
+  canSummon: 0
+  summonPrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  summonCount: 3
+  summonRadius: 2
+  summonChance: 0.15
+  summonCooldown: 10
+  summonDuration: 1.2
+  maxActiveSummons: 6
   _IsTeleporting:
     _value: 0
   _IsHealing:
+    _value: 0
+  _IsUsingSkill:
+    _value: 0
+  _IsSummoning:
     _value: 0
 --- !u!61 &5132593007529148729
 BoxCollider2D:
@@ -465,6 +491,25 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 3.4858105, y: 3.701905}
   m_EdgeRadius: 0
+--- !u!114 &7735282766794250641
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 955679001856809933}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bde3acf5f2a5191498de3b6e774d849c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Enemy.EnemyStats
+  statsSO: {fileID: 11400000, guid: 7244a15f205123d4899cb8981445057d, type: 2}
+  _MaxHP: 0
+  _AD: 0
+  _AP: 0
+  _DEF: 0
+  _RES: 0
+  _Poise: 0
 --- !u!1 &8487023232547127402
 GameObject:
   m_ObjectHideFlags: 0

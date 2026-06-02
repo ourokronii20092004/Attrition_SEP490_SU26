@@ -20,6 +20,7 @@ GameObject:
   - component: {fileID: 5724298383710575180}
   - component: {fileID: 1435250767429606396}
   - component: {fileID: 2670745557426037405}
+  - component: {fileID: -6614608333760545511}
   m_Layer: 8
   m_Name: Huntress
   m_TagString: Enemy
@@ -196,6 +197,7 @@ MonoBehaviour:
   _IsAwaitingRevive:
     _value: 0
   maxHealth: 15
+  statsComp: {fileID: 0}
 --- !u!114 &6681318323975736594
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -297,6 +299,7 @@ MonoBehaviour:
   leapHeight: 3
   leapDuration: 0.6
   animationComp: {fileID: 1533046931283509098}
+  statsComp: {fileID: 0}
   attackPoint: {fileID: 5062692254725872023}
   playerLayer:
     serializedVersion: 2
@@ -341,6 +344,7 @@ MonoBehaviour:
   - {fileID: 6447189514915797972}
   - {fileID: 5724298383710575180}
   - {fileID: 2670745557426037405}
+  - {fileID: -6614608333760545511}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &5724298383710575180
 MonoBehaviour:
@@ -445,6 +449,25 @@ MonoBehaviour:
     _value: 0
   _IsSummoning:
     _value: 0
+--- !u!114 &-6614608333760545511
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2572476078597275735}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bde3acf5f2a5191498de3b6e774d849c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Enemy.EnemyStats
+  statsSO: {fileID: 11400000, guid: 5b82c89496cb9724e9a00c323e3d8216, type: 2}
+  _MaxHP: 0
+  _AD: 0
+  _AP: 0
+  _DEF: 0
+  _RES: 0
+  _Poise: 0
 --- !u!1 &3827784312759404011
 GameObject:
   m_ObjectHideFlags: 0

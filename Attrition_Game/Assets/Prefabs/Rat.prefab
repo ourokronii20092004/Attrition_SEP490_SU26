@@ -145,6 +145,7 @@ GameObject:
   - component: {fileID: 6539520693437673066}
   - component: {fileID: 6551121047076930455}
   - component: {fileID: 6436756449764794077}
+  - component: {fileID: 2888821202790972593}
   m_Layer: 8
   m_Name: Rat
   m_TagString: Enemy
@@ -283,6 +284,7 @@ MonoBehaviour:
   _IsAwaitingRevive:
     _value: 0
   maxHealth: 10
+  statsComp: {fileID: 0}
 --- !u!114 &3592010304838888155
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -308,7 +310,7 @@ MonoBehaviour:
   flyMeleeRetreatAltitude: 3
   flyMeleeRetreatSpeed: 8
   enableSleep: 0
-  sleepWakeOnTouch: 0
+  wakeUpRadius: 0
   sleepReturnDelay: 3
   returnToSleepSpeed: 6
   sleepOnCeiling: 1
@@ -320,14 +322,18 @@ MonoBehaviour:
     m_Bits: 64
   wallCheckDistance: 0.8
   wallCheckHeightOffset: 0.5
-  _IsSleeping:
-    _value: 0
-  _IsReturningToSleep:
-    _value: 0
-  _IsRetreatingUp:
-    _value: 0
+  canEvadeJump: 0
+  evadeTriggerDistance: 2
+  jumpForce: 12
+  evadeBackwardSpeed: 8
+  jumpCooldown: 3
+  facingDeadZone: 0.3
+  _CurrentState: 0
   _NetSpeed: 0
   _NetFacingDir: 1
+  _IsJumping:
+    _value: 0
+  _AttackLockedFacingDir: 1
 --- !u!114 &1126571237231357228
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -362,6 +368,7 @@ MonoBehaviour:
     damage: 1
     duration: 0.5
     cooldown: 1.5
+    recoveryDuration: 0.25
   enableDashSlash: 0
   dashSlashAttacks: 
   dashSpeed: 10
@@ -371,6 +378,7 @@ MonoBehaviour:
   leapHeight: 3
   leapDuration: 0.6
   animationComp: {fileID: 1126571237231357228}
+  statsComp: {fileID: 0}
   attackPoint: {fileID: 2368027667028137965}
   playerLayer:
     serializedVersion: 2
@@ -414,6 +422,7 @@ MonoBehaviour:
   - {fileID: 1126571237231357228}
   - {fileID: 3704762142847136014}
   - {fileID: 2565769215094475645}
+  - {fileID: 2888821202790972593}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &2565769215094475645
 MonoBehaviour:
@@ -522,3 +531,22 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 2.5241668, y: 1.3106728}
   m_EdgeRadius: 0
+--- !u!114 &2888821202790972593
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5328535131049128245}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bde3acf5f2a5191498de3b6e774d849c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Enemy.EnemyStats
+  statsSO: {fileID: 11400000, guid: 36b1280eb3ba5084ea0219e38dac3035, type: 2}
+  _MaxHP: 0
+  _AD: 0
+  _AP: 0
+  _DEF: 0
+  _RES: 0
+  _Poise: 0

@@ -19,6 +19,10 @@ GameObject:
   - component: {fileID: 8805790379459285585}
   - component: {fileID: 7965685129494306560}
   - component: {fileID: -9211217073537501404}
+  - component: {fileID: 5327757002411394394}
+  - component: {fileID: 7759888339924423815}
+  - component: {fileID: 522152246384499169}
+  - component: {fileID: 7946587274463856822}
   m_Layer: 7
   m_Name: Player 1
   m_TagString: Player
@@ -217,6 +221,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   combatComp: {fileID: 8687308238461515992}
   animationComp: {fileID: 8805790379459285585}
+  statsComp: {fileID: 5327757002411394394}
+  potionComp: {fileID: 7759888339924423815}
   moveSpeed: 10
   jumpForce: 15
   doubleJumpForce: 8
@@ -226,6 +232,7 @@ MonoBehaviour:
     m_Bits: 64
   dashSpeed: 20
   dashDuration: 0.2
+  dashCooldownTime: 0.8
   crouchSpeedMultiplier: 0.4
   variableJumpCutMultiplier: 0.5
   maxJumps: 2
@@ -277,6 +284,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCombat
   animationComp: {fileID: 8805790379459285585}
+  statsComp: {fileID: 5327757002411394394}
   attackPoint: {fileID: 7035351457917283103}
   attackRange: 3
   attackAngle: 75
@@ -328,6 +336,10 @@ MonoBehaviour:
   - {fileID: 8687308238461515992}
   - {fileID: 8805790379459285585}
   - {fileID: -9211217073537501404}
+  - {fileID: 5327757002411394394}
+  - {fileID: 7759888339924423815}
+  - {fileID: 522152246384499169}
+  - {fileID: 7946587274463856822}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &-9211217073537501404
 MonoBehaviour:
@@ -352,6 +364,82 @@ MonoBehaviour:
     Position: 0.01
     Rotation: 0.01
     Scale: 0.01
+--- !u!114 &5327757002411394394
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6831727267532873526}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc7e2cde1b70c0845938b7d50215b7eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Player.PlayerStats
+  baseStats: {fileID: 0}
+  _CurrentHP: 0
+  _CurrentMana: 0
+  _CurrentStamina: 0
+  _Level: 0
+  dashStaminaCost: 20
+  staminaRegenPerSecond: 10
+--- !u!114 &7759888339924423815
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6831727267532873526}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d96ea3fb12f0367408c523d831813a40, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Player.PotionSystem
+  healthPotion: {fileID: 0}
+  manaPotion: {fileID: 0}
+  startingHealthCharges: 3
+  startingManaCharges: 3
+  hardMaxHealthCharges: 8
+  hardMaxManaCharges: 8
+  _MaxHealthCharges: 0
+  _MaxManaCharges: 0
+  _HealthCharges: 0
+  _ManaCharges: 0
+--- !u!114 &522152246384499169
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6831727267532873526}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc7e2cde1b70c0845938b7d50215b7eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Player.PlayerStats
+  baseStats: {fileID: 0}
+  _CurrentHP: 0
+  _CurrentMana: 0
+  _CurrentStamina: 0
+  _Level: 0
+  dashStaminaCost: 20
+  staminaRegenPerSecond: 10
+--- !u!114 &7946587274463856822
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6831727267532873526}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f596a13e5a40d64c9ec58fbe993bd5b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Player.PlayerProgression
+  baseExp: 100
+  perLevelExp: 50
+  _Level: 0
+  _CurrentExp: 0
 --- !u!1 &7643912872851063712
 GameObject:
   m_ObjectHideFlags: 0

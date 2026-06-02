@@ -67,7 +67,9 @@
         "Assembly-CSharp",
         "Assembly-CSharp-firstpass",
         "Fusion.Addons.Physics",
-        "Fusion.Addons.FSM"
+        "Fusion.Addons.FSM",
+        "Attrition.Networking",
+        "Attrition.Gameplay"
     ],
     "UseSerializableDictionary": true,
     "NullChecksForNetworkedProperties": true,
