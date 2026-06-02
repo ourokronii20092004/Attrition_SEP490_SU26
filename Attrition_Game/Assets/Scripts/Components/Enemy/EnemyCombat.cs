@@ -516,8 +516,13 @@ public class EnemyCombat : NetworkBehaviour
             int dmg = cfg.damage;
             Runner.Spawn(projectilePrefab, projectileSpawnPoint.position, Quaternion.identity, null, (runner, obj) =>
             {
+                // Hỗ trợ đạn thường
                 EnemyProjectile proj = obj.GetComponent<EnemyProjectile>();
                 if (proj != null) proj.Init(shootDir, dmg, 8f);
+                
+                // Hỗ trợ lao của Huntress
+                SpearProjectile spear = obj.GetComponent<SpearProjectile>();
+                if (spear != null) spear.Init(shootDir, dmg, 8f);
             });
             return;
         }

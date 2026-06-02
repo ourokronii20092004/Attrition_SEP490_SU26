@@ -151,17 +151,17 @@ namespace Attrition.Controllers
             }
             else
             {
-                // Ngắt heal, skill, summon nếu đang thực hiện (Elite)
-                if (eliteSkills != null)
-                {
-                    eliteSkills.InterruptHealing();
-                    eliteSkills.InterruptSkill();
-                    eliteSkills.InterruptSummon();
-                }
-
                 // Chỉ áp dụng Knockback và ngắt đòn đánh (Stun) nếu quái cho phép
                 if (canBeKnockedBack)
                 {
+                    // Ngắt heal, skill, summon nếu đang thực hiện (Elite)
+                    if (eliteSkills != null)
+                    {
+                        eliteSkills.InterruptHealing();
+                        eliteSkills.InterruptSkill();
+                        eliteSkills.InterruptSummon();
+                    }
+
                     IsKnockbackActive = true;
                     knockbackTimer = TickTimer.CreateFromSeconds(Runner, stunDuration);
                     combatComp.CancelAllActions(); // Ngắt TOÀN BỘ hành động (attack, dash, leap, freeze anim)

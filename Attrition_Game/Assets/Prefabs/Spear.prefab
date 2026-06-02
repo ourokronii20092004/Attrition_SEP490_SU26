@@ -11,8 +11,8 @@ GameObject:
   - component: {fileID: 4344224262764468168}
   - component: {fileID: 2255576652153438562}
   - component: {fileID: 5312286760143216001}
-  - component: {fileID: 6321276631279647326}
   - component: {fileID: 5123722515277576140}
+  - component: {fileID: 6969155955928885500}
   m_Layer: 0
   m_Name: Spear
   m_TagString: Untagged
@@ -29,7 +29,7 @@ Transform:
   m_GameObject: {fileID: 2706546587898805661}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -23, y: 48.4, z: 0}
+  m_LocalPosition: {x: -23.004, y: 48.373, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -111,28 +111,9 @@ MonoBehaviour:
   Flags: 262145
   NestedObjects: []
   NetworkedBehaviours:
-  - {fileID: 6321276631279647326}
   - {fileID: 5123722515277576140}
+  - {fileID: 6969155955928885500}
   ForceRemoteRenderTimeframe: 0
---- !u!114 &6321276631279647326
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2706546587898805661}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8e9a8e912ca0577438e34a241ac792be, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyProjectile
-  speed: 8
-  lifetime: 3
-  hitLayer:
-    serializedVersion: 2
-    m_Bits: 192
-  hitboxRadius: 0.8
-  rotationOffset: 180
 --- !u!114 &5123722515277576140
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -150,3 +131,27 @@ MonoBehaviour:
   SyncParent: 0
   _autoAOIOverride: 1
   DisableSharedModeInterpolation: 0
+--- !u!114 &6969155955928885500
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2706546587898805661}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0993c524466fd04fba384ffa21d3752, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpearProjectile
+  speed: 15
+  gravity: -2
+  lifetimeAfterStuck: 3
+  maxLifetime: 5
+  hitLayer:
+    serializedVersion: 2
+    m_Bits: 192
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  hitboxSize: {x: 2.6, y: 0.3}
+  rotationOffset: 0

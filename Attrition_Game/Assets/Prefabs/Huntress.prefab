@@ -36,10 +36,11 @@ Transform:
   m_GameObject: {fileID: 2572476078597275735}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -24.36, y: 47.19, z: 0}
+  m_LocalPosition: {x: -21.26, y: 41.08, z: 0}
   m_LocalScale: {x: 0.9186659, y: 0.8, z: 0.25934255}
   m_ConstrainProportionsScale: 1
   m_Children:
+  - {fileID: 6271740051621234593}
   - {fileID: 5062692254725872023}
   - {fileID: 1882042791993977607}
   m_Father: {fileID: 0}
@@ -164,8 +165,8 @@ CapsuleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: -0.18379827, y: -0.11871149}
-  m_Size: {x: 1.2281399, y: 2.4477274}
+  m_Offset: {x: -0.18379824, y: -0.10542102}
+  m_Size: {x: 1.2281402, y: 2.4211464}
   m_Direction: 0
 --- !u!114 &7153023172457060605
 MonoBehaviour:
@@ -186,7 +187,7 @@ MonoBehaviour:
   extraLivesAfterHpZero: 0
   reviveDelaySeconds: 5
   canBeKnockedBack: 0
-  stunDuration: 0.4
+  stunDuration: 0.2
   _Health: 0
   _isDeadNetworked:
     _value: 0
@@ -213,7 +214,7 @@ MonoBehaviour:
   eliteSkills: {fileID: 2670745557426037405}
   patrolSpeed: 2
   chaseSpeed: 5
-  viewRadius: 10
+  viewRadius: 15
   patrolRadius: 3
   isFlying: 0
   flyMeleeRetreat: 0
@@ -223,7 +224,7 @@ MonoBehaviour:
   wakeUpRadius: 0
   sleepReturnDelay: 3
   returnToSleepSpeed: 6
-  sleepOnCeiling: 1
+  sleepOnCeiling: 0
   sleepSurfaceLayer:
     serializedVersion: 2
     m_Bits: 0
@@ -232,10 +233,17 @@ MonoBehaviour:
     m_Bits: 64
   wallCheckDistance: 0.8
   wallCheckHeightOffset: 0.5
+  canEvadeJump: 1
+  evadeTriggerDistance: 3
+  jumpForce: 3
+  evadeBackwardSpeed: 10
+  jumpCooldown: 10
   facingDeadZone: 0.3
   _CurrentState: 0
   _NetSpeed: 0
   _NetFacingDir: 1
+  _IsJumping:
+    _value: 0
   _AttackLockedFacingDir: 1
 --- !u!114 &1533046931283509098
 MonoBehaviour:
@@ -269,7 +277,7 @@ MonoBehaviour:
     angle: 326
     rectSize: {x: 1, y: 1}
     damage: 1
-    duration: 2
+    duration: 0.5
     cooldown: 1.5
     recoveryDuration: 0.25
   - hitboxShape: 0
@@ -277,7 +285,7 @@ MonoBehaviour:
     angle: 117
     rectSize: {x: 3, y: 4.5}
     damage: 2
-    duration: 1
+    duration: 0
     cooldown: 1.5
     recoveryDuration: 0.25
   enableDashSlash: 0
@@ -296,8 +304,8 @@ MonoBehaviour:
   currentAttackSpeed: 1
   isRanged: 0
   projectilePrefab:
-    RawGuidValue: 00000000000000000000000000000000
-  projectileSpawnPoint: {fileID: 0}
+    RawGuidValue: ff45600064efb6548b4df92532a1251f
+  projectileSpawnPoint: {fileID: 6271740051621234593}
   _IsAttacking:
     _value: 0
   _IsDashAttacking:
@@ -407,15 +415,19 @@ MonoBehaviour:
   skills:
   - skillName: "n\xE9m lao"
     damage: 2
-    range: 10
+    range: 15
     hitboxShape: 0
-    angle: 117
+    angle: 360
     rectSize: {x: 0, y: 0}
-    duration: 0
-    cooldown: 0
+    duration: 1
+    recoveryDuration: 0.5
+    cooldown: 1.5
     useCustomOffset: 1
     hitboxOffset: {x: 0, y: 0}
-  skillChance: 0.3
+    isRanged: 1
+    projectilePrefab:
+      RawGuidValue: ff45600064efb6548b4df92532a1251f
+  skillChance: 0.8
   canSummon: 0
   summonPrefab:
     RawGuidValue: 00000000000000000000000000000000
@@ -527,6 +539,37 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 5.833435, y: 21.530073}
   m_EdgeRadius: 0
+--- !u!1 &6492068485285905961
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6271740051621234593}
+  m_Layer: 8
+  m_Name: SpearSpawnPoint
+  m_TagString: Enemy
+  m_Icon: {fileID: -964228994112308473, guid: 0000000000000000d000000000000000, type: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6271740051621234593
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6492068485285905961}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.381, y: 1.14, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 847817795856177794}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6968189716849196081
 GameObject:
   m_ObjectHideFlags: 0

@@ -35,7 +35,7 @@ Transform:
   m_GameObject: {fileID: 6831727267532873526}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -41.5257, y: 47.069, z: 0}
+  m_LocalPosition: {x: -26.57, y: 47.1, z: 0}
   m_LocalScale: {x: 0.8105186, y: 0.78099453, z: 6}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -103,8 +103,8 @@ CapsuleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: -0.01633882, y: 0.000108007895}
-  m_Size: {x: 1.2591336, y: 2.3940566}
+  m_Offset: {x: -0.0163388, y: -0.0013644292}
+  m_Size: {x: 1.2591336, y: 2.397001}
   m_Direction: 0
 --- !u!212 &6644002639049578078
 SpriteRenderer:
@@ -156,7 +156,7 @@ SpriteRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 3204480812468917802, guid: 0a1f8a85df257174e8103af5a44c099e, type: 3}
-  m_Color: {r: 0.9926711, g: 1, b: 0.54901963, a: 1}
+  m_Color: {r: 0.86910725, g: 1, b: 0, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -229,6 +229,14 @@ MonoBehaviour:
   crouchSpeedMultiplier: 0.4
   variableJumpCutMultiplier: 0.5
   maxJumps: 2
+  slideSpeed: 15
+  slideDuration: 0.2
+  slideCooldownTime: 1
+  playerCollider: {fileID: 7161810634740937689}
+  standSize: {x: 1, y: 2}
+  standOffset: {x: 0, y: -0.1}
+  crouchSize: {x: 1.5, y: 1.2}
+  crouchOffset: {x: 0, y: -0.32}
   normalGravity: 2
   fallGravity: 4.5
   maxFallSpeed: -25
@@ -248,6 +256,8 @@ MonoBehaviour:
   _IsCrouching:
     _value: 0
   _IsDashing:
+    _value: 0
+  _IsSliding:
     _value: 0
   _JumpCount: 0
   _NetworkPosition: {x: 0, y: 0}
@@ -309,7 +319,7 @@ MonoBehaviour:
   m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
-  SortKey: 3887127902
+  SortKey: 763698960
   ObjectInterest: 1
   Flags: 262145
   NestedObjects: []
