@@ -1,0 +1,20 @@
+{
+    "name": "Attrition.UI",
+    "rootNamespace": "Attrition.UI",
+    "references": [
+        "Attrition.Core",
+        "Attrition.Systems",
+        "Attrition.Persistence",
+        "Unity.TextMeshPro",
+        "UnityEngine.UI"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
