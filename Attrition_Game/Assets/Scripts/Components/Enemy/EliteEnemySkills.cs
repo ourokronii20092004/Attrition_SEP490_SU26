@@ -59,15 +59,25 @@ public class EliteEnemySkills : NetworkBehaviour
         [Tooltip("Hình dạng hitbox")] public EnemyCombat.HitboxShape hitboxShape = EnemyCombat.HitboxShape.Circle;
         [Tooltip("Góc đánh (chỉ dùng cho Cone)")] [Range(0, 360)] public float angle = 180f;
         [Tooltip("Kích thước hình chữ nhật (chỉ dùng khi Rectangle)")] public Vector2 rectSize = new Vector2(2f, 1.5f);
-        [Tooltip("Thời gian animation skill (giây)")] public float duration = 1.0f;
-        [Tooltip("Cooldown riêng cho skill này (giây)")] public float cooldown = 5f;
+        [Tooltip("Thời gian animation skill (giây) - CẦN CHỈNH BẰNG ĐÚNG ĐỘ DÀI CLIP ANIMATION")] 
+        public float duration = 1.0f;
+        [Tooltip("Thời gian khựng lại (nghỉ mệt) sau khi dùng xong skill này")] 
+        public float recoveryDuration = 0.5f;
+        [Tooltip("Cooldown riêng cho skill này (giây)")] 
+        public float cooldown = 5f;
 
-        [Header("── Vị trí Hitbox ──")]
+        [Header("── Vị trí Hitbox / Spawn ──")]
         [Tooltip("Bật để dùng offset tùy chỉnh thay vì attackPoint mặc định")]
         public bool useCustomOffset = false;
-        [Tooltip("Offset vị trí hitbox so với quái (X tự lật theo hướng nhìn, Y giữ nguyên).\n" +
+        [Tooltip("Offset vị trí hitbox (hoặc vị trí tay ném) so với quái (X tự lật theo hướng nhìn).\n" +
                  "Ví dụ: (0, 2) = phía trên, (2, 0) = phía trước, (-1, 1) = phía sau+trên")]
         public Vector2 hitboxOffset = Vector2.zero;
+
+        [Header("── Bắn xa / Ném (Ranged) ──")]
+        [Tooltip("Bật lên nếu skill này dùng để ném lao hoặc bắn đạn thay vì đánh cận chiến")]
+        public bool isRanged = false;
+        [Tooltip("Prefab của cây lao/đạn (Kéo HuntressSpear vào đây)")]
+        public NetworkPrefabRef projectilePrefab;
     }
 
     [Header("---- SKILL (Undead) ----")]
@@ -310,17 +320,29 @@ public class EliteEnemySkills : NetworkBehaviour
     /// AI gọi khi trong tầm đánh — roll xem có dùng Skill thay vì Attack thường không.
     /// Trả về true nếu bắt đầu dùng skill (AI sẽ chuyển sang UsingSkill state).
     /// </summary>
-    public bool TryUseSkill()
+    public bool TryUseSkill(float distToPlayer)
     {
         if (!canUseSkills || IsUsingSkill || IsSummoning || IsHealing || IsTeleporting) return false;
         if (skills == null || skills.Length == 0) return false;
         if (!skillCooldownTimer.ExpiredOrNotRunning(Runner)) return false;
 
+        // Lọc các skill đang TRONG TẦM
+        List<int> validSkills = new List<int>();
+        for (int i = 0; i < skills.Length; i++)
+        {
+            if (skills[i] != null && distToPlayer <= skills[i].range)
+            {
+                validSkills.Add(i);
+            }
+        }
+
+        if (validSkills.Count == 0) return false; // Không có skill nào đủ tầm
+
         // Roll tỉ lệ
         if (Random.value > skillChance) return false;
 
-        // Random chọn 1 skill
-        int idx = Random.Range(0, skills.Length);
+        // Random chọn 1 skill hợp lệ
+        int idx = validSkills[Random.Range(0, validSkills.Count)];
         currentSkillIndex = idx;
 
         SkillConfig cfg = skills[idx];
@@ -360,12 +382,39 @@ public class EliteEnemySkills : NetworkBehaviour
 
         SkillConfig cfg = GetSkillConfig(currentSkillIndex);
 
-        // Tính vị trí gốc của hitbox
+        // Tính vị trí gốc của hitbox (hoặc vị trí tay ném đạn)
         Vector2 skillOrigin = GetSkillOrigin(cfg);
 
         // Lấy hướng nhìn
         Vector2 facingDir = GetFacingDir();
 
+        // NẾU LÀ ĐÁNH XA (NÉM LAO)
+        if (cfg.isRanged)
+        {
+            // Tự động lấy vị trí SpearSpawnPoint từ EnemyCombat (nếu bạn đã gắn bên đó)
+            EnemyCombat combatComp = GetComponent<EnemyCombat>();
+            if (combatComp != null && combatComp.projectileSpawnPoint != null && !cfg.useCustomOffset)
+            {
+                skillOrigin = combatComp.projectileSpawnPoint.position;
+            }
+
+            if (cfg.projectilePrefab.IsValid)
+            {
+                Runner.Spawn(cfg.projectilePrefab, skillOrigin, Quaternion.identity, null, (runner, obj) =>
+                {
+                    // Hỗ trợ đạn thường
+                    EnemyProjectile proj = obj.GetComponent<EnemyProjectile>();
+                    if (proj != null) proj.Init(facingDir, cfg.damage, 8f);
+                    
+                    // Hỗ trợ lao của Huntress
+                    SpearProjectile spear = obj.GetComponent<SpearProjectile>();
+                    if (spear != null) spear.Init(facingDir, cfg.damage, 8f);
+                });
+            }
+            return; // Xong phần ném, thoát hàm để không gây sát thương cận chiến nữa
+        }
+
+        // NẾU LÀ ĐÁNH CẬN CHIẾN
         Collider2D[] results = new Collider2D[10];
         ContactFilter2D filter = new ContactFilter2D();
         filter.useLayerMask = true;
@@ -428,6 +477,22 @@ public class EliteEnemySkills : NetworkBehaviour
         if (skills != null && index >= 0 && index < skills.Length && skills[index] != null)
             return skills[index];
         return new SkillConfig();
+    }
+
+    public float GetMaxSkillRange()
+    {
+        if (!canUseSkills || skills == null) return 0f;
+        float max = 0f;
+        foreach (var s in skills)
+        {
+            if (s != null && s.range > max) max = s.range;
+        }
+        return max;
+    }
+
+    public float GetCurrentSkillRecovery()
+    {
+        return GetSkillConfig(currentSkillIndex).recoveryDuration;
     }
 
     /// <summary>

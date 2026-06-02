@@ -27,7 +27,7 @@ public class PlayerAnimation : NetworkBehaviour
     public void UpdateAnimations(
         bool isMoving, bool isGrounded, bool isDead, float yVelocity, bool isFacingRight,
         bool isCrouching, bool isDashing, bool isChargingAttack,
-        bool isAttacking)
+        bool isAttacking, bool isSliding = false)
     {
         if (anim != null)
         {
@@ -37,6 +37,7 @@ public class PlayerAnimation : NetworkBehaviour
             anim.SetBool("IsDead", isDead);
             anim.SetBool("IsCrouching", isCrouching);
             anim.SetBool("IsDashing", isDashing);
+            anim.SetBool("IsSliding", isSliding);
             anim.SetBool("IsChargingAttack", isChargingAttack);
 
             // Kiểm tra animator đang ở attack state không (đáng tin hơn Networked state trên Client)
