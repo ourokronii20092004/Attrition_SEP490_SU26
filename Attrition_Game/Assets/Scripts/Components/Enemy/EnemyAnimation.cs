@@ -21,6 +21,15 @@ public class EnemyAnimation : NetworkBehaviour
         if (anim != null) anim.SetFloat("Speed", speed);
     }
 
+    public void UpdateAirState(float velocityY, bool isGrounded)
+    {
+        if (anim != null)
+        {
+            try { anim.SetFloat("VelocityY", velocityY); } catch { }
+            try { anim.SetBool("IsGrounded", isGrounded); } catch { }
+        }
+    }
+
     public void FaceDirection(float dirX)
     {
         if (dirX == 0) return;
@@ -108,6 +117,12 @@ public class EnemyAnimation : NetworkBehaviour
             anim.SetBool("IsSleeping", false);
             anim.SetTrigger("WakeUp");
         }
+    }
+
+    // ─── JUMP / EVADE ───
+    public void PlayJump()
+    {
+        if (anim != null) anim.SetTrigger("Jump");
     }
 
     // ─── SKILL (Elite — Undead) ───

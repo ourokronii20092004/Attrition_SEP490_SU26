@@ -29,6 +29,18 @@ public class PlayerController : NetworkBehaviour, IDamageable
     [SerializeField] private float variableJumpCutMultiplier = 0.5f;
     [SerializeField] private int maxJumps = 2;
 
+    [Header("---- SLIDE ----")]
+    [SerializeField] private float slideSpeed = 20f;
+    [SerializeField] private float slideDuration = 0.5f;
+    [SerializeField] private float slideCooldownTime = 1f;
+
+    [Header("---- HITBOX RESIZING (CROUCH/SLIDE) ----")]
+    [SerializeField] private Collider2D playerCollider;
+    [SerializeField] private Vector2 standSize = new Vector2(1f, 2f);
+    [SerializeField] private Vector2 standOffset = new Vector2(0f, 0f);
+    [SerializeField] private Vector2 crouchSize = new Vector2(1f, 1f);
+    [SerializeField] private Vector2 crouchOffset = new Vector2(0f, -0.5f);
+
     [Header("---- HOLLOW KNIGHT GRAVITY ----")]
     [Tooltip("Trọng lực mặc định khi đi trên mặt đất hoặc bay lên")]
     [SerializeField] private float normalGravity = 2f;
@@ -55,11 +67,15 @@ public class PlayerController : NetworkBehaviour, IDamageable
 
     [Networked] public NetworkBool IsCrouching { get; set; }
     [Networked] public NetworkBool IsDashing { get; set; }
+    [Networked] public NetworkBool IsSliding { get; set; }
     [Networked] public int JumpCount { get; set; }
 
     [Networked] private NetworkButtons _buttonsPrev { get; set; }
     [Networked] private TickTimer _dashTimer { get; set; }
     [Networked] private TickTimer _dashCooldown { get; set; }
+    [Networked] private TickTimer _slideTimer { get; set; }
+    [Networked] private TickTimer _slideCooldown { get; set; }
+    [Networked] private float _slideDirection { get; set; }
     [Networked] private TickTimer _knockbackTimer { get; set; }
 
     // ─── Đồng bộ vị trí cho proxy ───
@@ -79,6 +95,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
         if (combatComp == null) combatComp = GetComponent<PlayerCombat>();
         if (animationComp == null) animationComp = GetComponent<PlayerAnimation>();
         if (rb == null) rb = GetComponent<Rigidbody2D>();
+        if (playerCollider == null) playerCollider = GetComponent<Collider2D>();
 
         // Tắt va chạm vật lý giữa Player và Enemy để Player đi xuyên qua được
         // CHỈ dùng Collider-based (không dùng IgnoreLayerCollision vì nó chặn cả trigger → ContactDamage không hoạt động)
@@ -198,68 +215,127 @@ public class PlayerController : NetworkBehaviour, IDamageable
             }
         }
 
-
-        if (GetInput(out NetworkInputData data))
+        // --- SLIDE EXECUTION LOGIC ---
+        if (IsSliding)
         {
-            IsCrouching = data.buttons.IsSet(MyButtons.Crouch) && IsGrounded;
-
-            // --- MOVEMENT ---
-            // SỬA: Chỉ khóa di chuyển ngang khi đang đứng trên mặt đất. Trên không vẫn cho phép di chuyển
-            if ((combatComp.IsHoldingAttack || combatComp.IsAttacking) && IsGrounded)
+            if (_slideTimer.Expired(Runner))
             {
-                rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
-                IsMoving = false;
+                IsSliding = false;
             }
             else
             {
-                float speed = IsCrouching ? moveSpeed * crouchSpeedMultiplier : moveSpeed;
-                rb.linearVelocity = new Vector2(data.horizontalInput * speed, rb.linearVelocity.y);
-                IsMoving = Mathf.Abs(data.horizontalInput) > 0.1f;
+                // Ép hướng mặt theo hướng slide
+                IsFacingRight = _slideDirection > 0;
+                rb.linearVelocity = new Vector2(_slideDirection * slideSpeed, rb.linearVelocity.y);
+                
+                // Khóa input di chuyển bình thường, nhảy vào đoạn cuối của hàm để lấy update
+                // Nhưng cần phải check hitbox size liên tục!
+            }
+        }
+
+        if (GetInput(out NetworkInputData data))
+        {
+            bool inputCrouch = data.buttons.IsSet(MyButtons.Crouch) && IsGrounded;
+            bool wantToCrouch = inputCrouch;
+
+            // --- CEILING CHECK ---
+            // Nếu nhả phím ngồi nhưng đang vướng trần nhà thì ÉP phải ngồi tiếp
+            if (!wantToCrouch && (IsCrouching || IsSliding))
+            {
+                if (CheckCeiling())
+                {
+                    wantToCrouch = true;
+                }
+            }
+
+            IsCrouching = wantToCrouch;
+
+            // --- HITBOX RESIZING ---
+            if (IsCrouching || IsSliding)
+            {
+                SetColliderSize(crouchSize, crouchOffset);
+            }
+            else
+            {
+                SetColliderSize(standSize, standOffset);
             }
 
             var pressed = data.buttons.GetPressed(_buttonsPrev);
             var released = _buttonsPrev.GetPressed(data.buttons);
 
-            // --- JUMP LOGIC ---
-            // SỬA: Khóa nhảy khi đang giữ nút J
-            if (pressed.IsSet(MyButtons.Jump) && !IsCrouching && !combatComp.IsHoldingAttack)
+            // Bỏ qua MOVEMENT bình thường nếu đang Slide
+            if (!IsSliding)
             {
-                if (IsGrounded || JumpCount < maxJumps)
+                // --- MOVEMENT ---
+                if ((combatComp.IsHoldingAttack || combatComp.IsAttacking) && IsGrounded)
                 {
-                    // SỬA LỖI GÓC ĐẤT: Reset velocity Y về 0 trước khi nhảy
-                    // Tránh trường hợp velocity Y đang dương (do trượt góc đất) cộng dồn với jumpForce gây nhảy quá cao
-                    rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
-                    rb.position = new Vector2(rb.position.x, rb.position.y + 0.05f);
-                    float currentJumpForce = (JumpCount > 0) ? doubleJumpForce : jumpForce;
-                    rb.linearVelocity = new Vector2(rb.linearVelocity.x, currentJumpForce);
-                    JumpCount++;
+                    rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
+                    IsMoving = false;
+                }
+                else
+                {
+                    float speed = IsCrouching ? moveSpeed * crouchSpeedMultiplier : moveSpeed;
+                    rb.linearVelocity = new Vector2(data.horizontalInput * speed, rb.linearVelocity.y);
+                    IsMoving = Mathf.Abs(data.horizontalInput) > 0.1f;
+                }
+
+                // --- JUMP LOGIC ---
+                if (pressed.IsSet(MyButtons.Jump) && !IsCrouching && !combatComp.IsHoldingAttack)
+                {
+                    if (IsGrounded || JumpCount < maxJumps)
+                    {
+                        rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
+                        rb.position = new Vector2(rb.position.x, rb.position.y + 0.05f);
+                        float currentJumpForce = (JumpCount > 0) ? doubleJumpForce : jumpForce;
+                        rb.linearVelocity = new Vector2(rb.linearVelocity.x, currentJumpForce);
+                        JumpCount++;
+                    }
+                }
+
+                bool wasHoldingJump = _buttonsPrev.IsSet(MyButtons.JumpHeld);
+                bool isHoldingJump = data.buttons.IsSet(MyButtons.JumpHeld);
+                if (wasHoldingJump && !isHoldingJump && rb.linearVelocity.y > 0 && !IsGrounded && JumpCount <= 1)
+                {
+                    rb.linearVelocity = new Vector2(rb.linearVelocity.x, rb.linearVelocity.y * variableJumpCutMultiplier);
+                }
+
+                // --- FACING ---
+                if (!combatComp.IsAttacking && !combatComp.IsHoldingAttack)
+                {
+                    if (data.horizontalInput > 0) IsFacingRight = true;
+                    else if (data.horizontalInput < 0) IsFacingRight = false;
                 }
             }
 
-            bool wasHoldingJump = _buttonsPrev.IsSet(MyButtons.JumpHeld);
-            bool isHoldingJump = data.buttons.IsSet(MyButtons.JumpHeld);
-            // SỬA: Chỉ cho phép ngắt độ cao nhảy ở lần nhảy đầu tiên (JumpCount <= 1). Jump lần 2 có độ cao cố định.
-            if (wasHoldingJump && !isHoldingJump && rb.linearVelocity.y > 0 && !IsGrounded && JumpCount <= 1)
+            // --- DASH / SLIDE LOGIC ---
+            if (pressed.IsSet(MyButtons.Dash) && !combatComp.IsHoldingAttack)
             {
-                rb.linearVelocity = new Vector2(rb.linearVelocity.x, rb.linearVelocity.y * variableJumpCutMultiplier);
-            }
-
-            // --- DASH LOGIC ---
-            // SỬA: XÓA ĐIỀU KIỆN `IsGrounded` ĐỂ CÓ THỂ LƯỚT TRÊN KHÔNG
-            if (pressed.IsSet(MyButtons.Dash) && !IsCrouching && !combatComp.IsHoldingAttack && _dashCooldown.ExpiredOrNotRunning(Runner))
-            {
-                IsDashing = true;
-                _dashTimer = TickTimer.CreateFromSeconds(Runner, dashDuration);
-                _dashCooldown = TickTimer.CreateFromSeconds(Runner, 0.8f);
-                rb.gravityScale = 0; // Tắt trọng lực để nhân vật lướt thẳng băng trên không
-            }
-
-            // --- FACING ---
-            // SỬA: Không cho quay mặt khi đang tấn công hoặc giữ nút đánh
-            if (!combatComp.IsAttacking && !combatComp.IsHoldingAttack)
-            {
-                if (data.horizontalInput > 0) IsFacingRight = true;
-                else if (data.horizontalInput < 0) IsFacingRight = false;
+                if (wantToCrouch)
+                {
+                    // Đang ngồi + phím Dash → SLIDE
+                    if (_slideCooldown.ExpiredOrNotRunning(Runner))
+                    {
+                        IsSliding = true;
+                        // Xác định hướng Slide: Ưu tiên A/D đang bấm, nếu không thì dùng hướng nhìn
+                        _slideDirection = data.horizontalInput != 0 ? Mathf.Sign(data.horizontalInput) : (IsFacingRight ? 1f : -1f);
+                        _slideTimer = TickTimer.CreateFromSeconds(Runner, slideDuration);
+                        _slideCooldown = TickTimer.CreateFromSeconds(Runner, slideCooldownTime);
+                        
+                        // Nếu đang bấm Slide thì hủy Crouching animation để chạy Slide animation
+                        IsCrouching = false;
+                    }
+                }
+                else
+                {
+                    // Đang đứng + phím Dash → DASH
+                    if (!IsCrouching && _dashCooldown.ExpiredOrNotRunning(Runner))
+                    {
+                        IsDashing = true;
+                        _dashTimer = TickTimer.CreateFromSeconds(Runner, dashDuration);
+                        _dashCooldown = TickTimer.CreateFromSeconds(Runner, 0.8f);
+                        rb.gravityScale = 0;
+                    }
+                }
             }
 
             _buttonsPrev = data.buttons;
@@ -274,7 +350,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
         animationComp.UpdateAnimations(
             IsMoving, IsGrounded, isDeadNetworked, NetworkVelocityY, IsFacingRight,
             IsCrouching, IsDashing, combatComp.IsChargingAttack,
-            combatComp.IsAttacking
+            combatComp.IsAttacking, IsSliding
         );
     }
 
@@ -283,6 +359,40 @@ public class PlayerController : NetworkBehaviour, IDamageable
         // Dùng rb.Cast vì nó tự động dùng đúng physics scene của Fusion
         // Fix góc đất được xử lý bằng cách clamp velocity Y ở trên
         IsGrounded = rb.Cast(Vector2.down, new ContactFilter2D { layerMask = groundLayer, useLayerMask = true }, new RaycastHit2D[1], 0.05f) > 0;
+    }
+
+    private bool CheckCeiling()
+    {
+        // Tính toán vùng không gian mà đầu nhân vật sẽ chiếm chỗ khi Đứng Lên
+        float crouchTop = rb.position.y + crouchOffset.y + (crouchSize.y / 2f);
+        float standTop = rb.position.y + standOffset.y + (standSize.y / 2f);
+        
+        float diff = standTop - crouchTop;
+        if (diff <= 0) return false; // Không có sự thay đổi chiều cao hoặc ngồi cao hơn đứng
+
+        // Tạo một cái hộp kiểm tra đúng bằng phần bù đắp giữa Ngồi và Đứng
+        Vector2 checkSize = new Vector2(standSize.x * 0.9f, diff); // bóp chiều ngang lại 10% để không bị vướng tường 2 bên
+        Vector2 checkCenter = new Vector2(rb.position.x + standOffset.x, crouchTop + (diff / 2f));
+
+        // BẮT BUỘC dùng Runner.GetPhysicsScene2D() thay vì Physics2D tĩnh để tương thích với mạng của Photon Fusion
+        Collider2D hit = Runner.GetPhysicsScene2D().OverlapBox(checkCenter, checkSize, 0f, groundLayer);
+        return hit != null;
+    }
+
+    private void SetColliderSize(Vector2 size, Vector2 offset)
+    {
+        if (playerCollider == null) return;
+        
+        if (playerCollider is BoxCollider2D box)
+        {
+            box.size = size;
+            box.offset = offset;
+        }
+        else if (playerCollider is CapsuleCollider2D cap)
+        {
+            cap.size = size;
+            cap.offset = offset;
+        }
     }
 
     public void TakeDamage(int damage, Vector2 knockbackDir, float knockbackForce)
@@ -389,6 +499,43 @@ public class PlayerController : NetworkBehaviour, IDamageable
             {
                 Physics2D.IgnoreCollision(myCol, col, true);
             }
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // GIZMOS — Debug Visualization
+    // ═══════════════════════════════════════════════════════════════
+
+    void OnDrawGizmosSelected()
+    {
+        // 1. Vẽ Stand Size (Màu Xanh Lá) - Biểu diễn kích thước lúc Đứng
+        Gizmos.color = new Color(0f, 1f, 0f, 0.5f); // Xanh lá mờ
+        Vector3 standCenter = transform.position + (Vector3)standOffset;
+        Gizmos.DrawWireCube(standCenter, standSize);
+        // Tô mờ ở trong
+        Gizmos.color = new Color(0f, 1f, 0f, 0.1f);
+        Gizmos.DrawCube(standCenter, standSize);
+
+        // 2. Vẽ Crouch Size (Màu Vàng) - Biểu diễn kích thước lúc Ngồi/Trượt
+        Gizmos.color = new Color(1f, 0.9f, 0f, 0.8f); // Vàng đậm
+        Vector3 crouchCenter = transform.position + (Vector3)crouchOffset;
+        Gizmos.DrawWireCube(crouchCenter, crouchSize);
+        // Tô mờ ở trong
+        Gizmos.color = new Color(1f, 0.9f, 0f, 0.15f);
+        Gizmos.DrawCube(crouchCenter, crouchSize);
+
+        // 3. Vẽ Ceiling Check (Màu Đỏ) - Khu vực kiểm tra trần nhà chống kẹt
+        Gizmos.color = new Color(1f, 0f, 0f, 0.6f);
+        float crouchTop = transform.position.y + crouchOffset.y + (crouchSize.y / 2f);
+        float standTop = transform.position.y + standOffset.y + (standSize.y / 2f);
+        float diff = standTop - crouchTop;
+        if (diff > 0)
+        {
+            Vector2 checkSize = new Vector2(standSize.x * 0.9f, diff);
+            Vector2 checkCenter = new Vector2(transform.position.x + standOffset.x, crouchTop + (diff / 2f));
+            Gizmos.DrawWireCube(checkCenter, checkSize);
+            Gizmos.color = new Color(1f, 0f, 0f, 0.2f);
+            Gizmos.DrawCube(checkCenter, checkSize);
         }
     }
 }

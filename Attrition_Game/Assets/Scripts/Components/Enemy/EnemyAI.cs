@@ -18,7 +18,8 @@ public enum EnemyState : byte
     ReturningToSleep,   // Bay/đi về vị trí ngủ
     RetreatingUp,       // Bay lên cao sau khi đánh (Fly Melee)
     UsingSkill,         // Đang dùng skill đặc biệt (facing LOCKED)
-    Summoning           // Đang triệu hồi quái phụ (facing LOCKED)
+    Summoning,          // Đang triệu hồi quái phụ (facing LOCKED)
+    Jumping             // Đang nhảy (tránh né / di chuyển)
 }
 
 public class EnemyAI : NetworkBehaviour
@@ -73,6 +74,18 @@ public class EnemyAI : NetworkBehaviour
     [Tooltip("Độ cao của tia laser so với mặt đất (dời lên để không quét trúng sàn nhà)")]
     public float wallCheckHeightOffset = 0.5f;
 
+    [Header("---- JUMP / EVADE (Elite) ----")]
+    [Tooltip("Bật để quái có thể nhảy lùi né đòn (Backstep) khi player tới quá gần")]
+    public bool canEvadeJump = false;
+    [Tooltip("Khoảng cách kích hoạt nhảy lùi")]
+    public float evadeTriggerDistance = 2f;
+    [Tooltip("Lực nhảy (Y)")]
+    public float jumpForce = 12f;
+    [Tooltip("Lực lùi (X)")]
+    public float evadeBackwardSpeed = 8f;
+    [Tooltip("Cooldown giữa 2 lần nhảy")]
+    public float jumpCooldown = 3f;
+
     [Header("---- FACING ----")]
     [Tooltip("Dead zone: không đổi hướng nhìn khi khoảng cách X với mục tiêu nhỏ hơn giá trị này (tránh giật/nhấp nháy)")]
     public float facingDeadZone = 0.3f;
@@ -84,6 +97,7 @@ public class EnemyAI : NetworkBehaviour
     [HideInInspector][Networked] public EnemyState CurrentState { get; set; }
     [HideInInspector][Networked] public float NetSpeed { get; set; }
     [HideInInspector][Networked] public float NetFacingDir { get; set; } = 1f;
+    [HideInInspector][Networked] public NetworkBool IsJumping { get; set; }
 
     /// <summary>
     /// Hướng nhìn đã KHÓA khi bắt đầu tấn công.
@@ -92,6 +106,7 @@ public class EnemyAI : NetworkBehaviour
     [HideInInspector][Networked] public float AttackLockedFacingDir { get; set; } = 1f;
 
     [Networked] private TickTimer recoveryTimer { get; set; }
+    [Networked] private TickTimer jumpCooldownTimer { get; set; }
 
     // ═══════════════════════════════════════════════════════════════
     // BACKWARD COMPATIBILITY — Cho MimicSleepTrigger và các script cũ
@@ -197,6 +212,11 @@ public class EnemyAI : NetworkBehaviour
         }
 
         animationComp.UpdateSpeed(NetSpeed);
+        
+        if (rb != null)
+        {
+            animationComp.UpdateAirState(rb.linearVelocity.y, IsGrounded());
+        }
 
         // ─── Facing direction ───
         // State-based lock: Attacking, Recovery, WakingUp, UsingSkill, Summoning → dùng AttackLockedFacingDir
@@ -248,8 +268,10 @@ public class EnemyAI : NetworkBehaviour
             eliteSkills.UpdateSkill();
             if (!eliteSkills.IsUsingSkill)
             {
-                // Skill xong → quay lại chase
-                CurrentState = EnemyState.Chase;
+                // Skill xong → Bắt đầu trạng thái Recovery để đợi một lúc rồi mới đánh tiếp (tránh cancel lẫn nhau)
+                float recov = eliteSkills.GetCurrentSkillRecovery();
+                recoveryTimer = TickTimer.CreateFromSeconds(Runner, recov);
+                CurrentState = EnemyState.Recovery;
             }
             return;
         }
@@ -264,6 +286,12 @@ public class EnemyAI : NetworkBehaviour
                 // Summon xong → quay lại chase
                 CurrentState = EnemyState.Chase;
             }
+            return;
+        }
+
+        if (IsJumping)
+        {
+            StateJumping();
             return;
         }
 
@@ -303,7 +331,9 @@ public class EnemyAI : NetworkBehaviour
             case EnemyState.Attacking:
             case EnemyState.Recovery:
             case EnemyState.RetreatingUp:
-                // Bị đánh khi đang tấn công/hồi phục/bay lên → hủy, chuyển chase
+            case EnemyState.UsingSkill:
+            case EnemyState.Summoning:
+                // Bị đánh khi đang tấn công/hồi phục/bay lên/dùng skill → hủy, chuyển chase
                 CurrentState = EnemyState.Chase;
                 break;
 
@@ -478,55 +508,64 @@ public class EnemyAI : NetworkBehaviour
         // Kiểm tra tầm nhìn tới Player (không bị tường che)
         bool hasLineOfSight = !Physics2D.Linecast(transform.position, playerTarget.position, obstacleLayer);
 
-        if (dist <= combatComp.MaxAttackRange && hasLineOfSight)
+        if (hasLineOfSight)
         {
-            // ═══ TRONG TẦM ĐÁNH VÀ CÓ TẦM NHÌN → dừng lại ═══
-            rb.linearVelocity = isFlying ? Vector2.zero : new Vector2(0f, rb.linearVelocity.y);
-            UpdateFacing(xDiff);
-            NetSpeed = 0f;
-
-            if (combatComp.CanAttack())
+            // 1. KIỂM TRA NHẢY LÙI (EVADE)
+            if (canEvadeJump && !isFlying && dist <= evadeTriggerDistance && jumpCooldownTimer.ExpiredOrNotRunning(Runner))
             {
-                // Thử dùng Skill trước (nếu có Elite Skill)
-                if (eliteSkills != null && eliteSkills.TryUseSkill())
+                ExecuteEvadeJump(xDiff);
+                return;
+            }
+
+            // 2. KIỂM TRA DÙNG SKILL TẦM XA (NÉM LAO)
+            if (eliteSkills != null && eliteSkills.TryUseSkill(dist))
+            {
+                rb.linearVelocity = isFlying ? Vector2.zero : new Vector2(0f, rb.linearVelocity.y);
+                UpdateFacing(xDiff);
+                NetSpeed = 0f;
+                float facingDir = Mathf.Abs(xDiff) < facingDeadZone ? (NetFacingDir > 0 ? 1f : -1f) : (xDiff > 0 ? 1f : -1f);
+                AttackLockedFacingDir = facingDir;
+                NetFacingDir = facingDir;
+                CurrentState = EnemyState.UsingSkill;
+                return;
+            }
+
+            // 3. KIỂM TRA ĐÁNH CẬN CHIẾN
+            if (dist <= combatComp.MaxAttackRange)
+            {
+                // TRONG TẦM ĐÁNH VÀ CÓ TẦM NHÌN → dừng lại
+                rb.linearVelocity = isFlying ? Vector2.zero : new Vector2(0f, rb.linearVelocity.y);
+                UpdateFacing(xDiff);
+                NetSpeed = 0f;
+
+                if (combatComp.CanAttack())
                 {
-                    // Khoá hướng nhìn về phía player khi dùng skill
-                    float facingDir = Mathf.Abs(xDiff) < facingDeadZone ? (NetFacingDir > 0 ? 1f : -1f) : (xDiff > 0 ? 1f : -1f);
-                    AttackLockedFacingDir = facingDir;
-                    NetFacingDir = facingDir;
-                    CurrentState = EnemyState.UsingSkill;
-                }
-                else
-                {
-                    // Không dùng Skill → Attack thường
                     TransitionToAttacking(xDiff);
                 }
+                else if (eliteSkills != null)
+                {
+                    eliteSkills.TryTeleport(dist, playerTarget);
+                }
+                return;
             }
-            else if (eliteSkills != null)
-            {
-                // Chờ cooldown → thử teleport
-                eliteSkills.TryTeleport(dist, playerTarget);
-            }
+        }
+
+        // 4. NGOÀI TẦM ĐÁNH VÀ KHÔNG DÙNG SKILL → đuổi theo
+        if (eliteSkills != null && eliteSkills.TryTeleport(dist, playerTarget))
+        {
+            // Đã bắt đầu teleport → RunAILogic sẽ xử lý ở elite override
+        }
+        else if (!isFlying && IsPathBlocked(xDiff > 0 ? 1f : -1f))
+        {
+            // Bị chặn bởi tường
+            rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+            UpdateFacing(xDiff);
+            NetSpeed = 0f;
         }
         else
         {
-            // ═══ NGOÀI TẦM ĐÁNH → đuổi theo ═══
-            if (eliteSkills != null && eliteSkills.TryTeleport(dist, playerTarget))
-            {
-                // Đã bắt đầu teleport → RunAILogic sẽ xử lý ở elite override
-            }
-            else if (!isFlying && IsPathBlocked(xDiff > 0 ? 1f : -1f))
-            {
-                // Bị chặn bởi tường
-                rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
-                UpdateFacing(xDiff);
-                NetSpeed = 0f;
-            }
-            else
-            {
-                MoveTowards(currentTarget, chaseSpeed);
-                NetSpeed = Mathf.Abs(rb.linearVelocity.x);
-            }
+            MoveTowards(currentTarget, chaseSpeed);
+            NetSpeed = Mathf.Abs(rb.linearVelocity.x);
         }
 
         // Elite: roll heal và summon ngẫu nhiên khi đang chase nhưng ngoài tầm đánh
@@ -662,6 +701,61 @@ public class EnemyAI : NetworkBehaviour
             UpdateFacing(playerTarget.position.x - transform.position.x);
 
         NetSpeed = flyMeleeRetreatSpeed;
+    }
+
+    // ─────────────────────── JUMPING / EVADE ───────────────────────
+
+    private void ExecuteEvadeJump(float xDiff)
+    {
+        CurrentState = EnemyState.Jumping;
+        IsJumping = true;
+        jumpCooldownTimer = TickTimer.CreateFromSeconds(Runner, jumpCooldown);
+        
+        // Nhảy lùi (ngược hướng xDiff)
+        float jumpDirX = xDiff > 0 ? -1f : 1f;
+        
+        // Khóa hướng nhìn về phía player khi nhảy lùi
+        float facingDir = xDiff > 0 ? 1f : -1f;
+        NetFacingDir = facingDir;
+        AttackLockedFacingDir = facingDir;
+        
+        rb.linearVelocity = new Vector2(jumpDirX * evadeBackwardSpeed, jumpForce);
+        
+        RPC_PlayJumpAnim();
+    }
+
+    private void StateJumping()
+    {
+        // Khóa hướng nhìn
+        animationComp.FaceDirection(AttackLockedFacingDir);
+        NetSpeed = 0f;
+
+        // An toàn: Phải nhảy được ít nhất 0.2 giây thì mới bắt đầu check rớt xuống chạm đất
+        // Để tránh việc Frame 1 Physics chưa kịp đẩy lên đã bị coi là đang ở mặt đất
+        bool hasJumpedLongEnough = !jumpCooldownTimer.IsRunning || jumpCooldownTimer.RemainingTime(Runner) < (jumpCooldown - 0.2f);
+
+        // Nếu rớt xuống (vận tốc Y <= 0.1) và chạm đất -> kết thúc nhảy
+        if (hasJumpedLongEnough && rb.linearVelocity.y <= 0.1f && IsGrounded())
+        {
+            rb.linearVelocity = new Vector2(0f, 0f);
+            CurrentState = EnemyState.Chase;
+            IsJumping = false;
+            noPlayerTimer = 0f;
+        }
+    }
+
+    private bool IsGrounded()
+    {
+        if (rb == null) return true;
+        // Sử dụng rb.Cast giống hệt như PlayerController để quét nguyên hình dáng Collider xuống đất
+        // Khắc phục hoàn toàn lỗi sai pivot hoặc lệch tâm
+        return rb.Cast(Vector2.down, new ContactFilter2D { layerMask = obstacleLayer, useLayerMask = true }, new RaycastHit2D[1], 0.1f) > 0;
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_PlayJumpAnim()
+    {
+        if (animationComp != null) animationComp.PlayJump();
     }
 
     // ═══════════════════════════════════════════════════════════════
