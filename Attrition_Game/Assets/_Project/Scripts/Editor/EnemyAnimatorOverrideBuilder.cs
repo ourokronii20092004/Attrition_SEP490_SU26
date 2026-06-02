@@ -36,7 +36,7 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
     // Fields
     // ═══════════════════════════════════════════════════════════════
     private string prefix = "MonsterName";
-    private string targetFolder = "Assets/Animations/Enemies";
+    private string targetFolder = "Assets/_Project/Animations/Enemies";
     private float runSpeedThreshold = 3f;
     private List<ClipEntry> detectedClips = new List<ClipEntry>();
     private Vector2 scrollPos;
