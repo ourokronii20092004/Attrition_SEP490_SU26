@@ -9,17 +9,17 @@ TagManager:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Background
   - Water
   - UI
   - Ground
   - Player
   - Enemy
   - Boss
-  - Background
   - Foreground
   - Hazard
-  - 
+  - HiddenGround
+  - Breakable
   - 
   - 
   - 
