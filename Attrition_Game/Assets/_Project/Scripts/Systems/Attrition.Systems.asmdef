@@ -1,0 +1,17 @@
+{
+    "name": "Attrition.Systems",
+    "rootNamespace": "Attrition.Systems",
+    "references": [
+        "Attrition.Core",
+        "Attrition.Data"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
