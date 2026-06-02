@@ -1,0 +1,23 @@
+{
+    "name": "Attrition.Gameplay",
+    "rootNamespace": "Attrition.Gameplay",
+    "references": [
+        "Attrition.Core",
+        "Attrition.Data",
+        "Attrition.Systems",
+        "Attrition.Persistence",
+        "Attrition.Networking",
+        "Fusion.Unity",
+        "Fusion.Addons.Physics",
+        "Unity.Cinemachine"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

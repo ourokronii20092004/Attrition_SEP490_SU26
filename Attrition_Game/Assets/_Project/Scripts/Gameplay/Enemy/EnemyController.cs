@@ -1,0 +1,332 @@
+using Fusion;
+using UnityEngine;
+using Attrition.Gameplay.Enemy;
+
+namespace Attrition.Controllers
+{
+    public class EnemyController : NetworkBehaviour, IDamageable
+    {
+        [Header("---- INJECT COMPONENTS ----")]
+        [SerializeField] private EnemyAI aiComp;
+        [SerializeField] private EnemyAnimation animationComp;
+        [SerializeField] private EnemyCombat combatComp;
+        [Tooltip("Gắn EliteEnemySkills nếu đây là quái tinh anh. Bỏ trống nếu quái thường.")]
+        [SerializeField] private EliteEnemySkills eliteSkills;
+
+        [Header("---- DEATH / REVIVE ----")]
+        [Tooltip("Số lần HP về 0 nhưng hồi sinh sau reviveDelaySeconds (0 = chết hẳn ngay như Axe_Demon).")]
+        [SerializeField] private int extraLivesAfterHpZero;
+        [SerializeField] private float reviveDelaySeconds = 2.5f;
+
+        [Header("---- HIT / STUN ----")]
+        [Tooltip("Bật nếu quái có thể bị đẩy lùi và choáng. Tắt đi đối với Boss hoặc Quái to.")]
+        public bool canBeKnockedBack = true;
+        [Tooltip("Thời gian bị choáng hoặc bật lùi khi nhận sát thương.")]
+        public float stunDuration = 0.4f;
+
+        // Đã ẩn toàn bộ các biến chạy ngầm khỏi Inspector để tránh tick nhầm
+        [HideInInspector][Networked] public int Health { get; set; }
+        [HideInInspector][Networked] public NetworkBool isDeadNetworked { get; set; }
+        [HideInInspector][Networked] public NetworkBool IsKnockbackActive { get; set; }
+        [HideInInspector][Networked] public NetworkBool IsAwaitingRevive { get; set; }
+
+        [Networked] private TickTimer knockbackTimer { get; set; }
+        [Networked] private TickTimer reviveTimer { get; set; }
+        [Networked] private TickTimer despawnTimer { get; set; }
+        [Networked] private int RevivesRemaining { get; set; }
+
+        public int maxHealth = 3;
+        [Tooltip("Tùy chọn: nguồn chỉ số point-based. Bỏ trống = dùng maxHealth (hit-based) như cũ.")]
+        [SerializeField] private EnemyStats statsComp;
+        private Rigidbody2D rb;
+        private bool _localDeathHandled;
+        private bool _localDownedHandled;
+
+        public bool IsDead => isDeadNetworked || IsAwaitingRevive;
+        public int CurrentHealth => Health;
+
+        public override void Spawned()
+        {
+            if (statsComp == null) statsComp = GetComponent<EnemyStats>();
+
+            if (HasStateAuthority)
+            {
+                // statsComp có MaxHP point-based (vd 30) → HP theo điểm; nếu không, giữ hit-based cũ.
+                if (statsComp != null && statsComp.MaxHP > 0) maxHealth = statsComp.MaxHP;
+                Health = maxHealth;
+                RevivesRemaining = extraLivesAfterHpZero;
+            }
+
+            rb = GetComponent<Rigidbody2D>();
+            if (aiComp == null) aiComp = GetComponent<EnemyAI>();
+            if (animationComp == null) animationComp = GetComponent<EnemyAnimation>();
+            if (combatComp == null) combatComp = GetComponent<EnemyCombat>();
+
+            _localDeathHandled = false;
+            _localDownedHandled = false;
+
+            // Khởi tạo EliteEnemySkills (nếu có)
+            if (eliteSkills != null)
+            {
+                eliteSkills.Init(
+                    amount => Heal(amount),
+                    aiComp != null && aiComp.isFlying,
+                    combatComp != null ? combatComp.attackPoint : null,
+                    combatComp != null ? combatComp.playerLayer : default
+                );
+            }
+
+            // Tắt va chạm vật lý giữa Enemy và Player để Player đi xuyên qua được
+            // CHỈ dùng Collider-based (không dùng IgnoreLayerCollision vì nó chặn cả trigger → ContactDamage không hoạt động)
+            IgnoreAllPlayerColliders();
+        }
+
+        public override void FixedUpdateNetwork()
+        {
+            if (!HasStateAuthority) return;
+
+            if (isDeadNetworked)
+            {
+                if (despawnTimer.Expired(Runner))
+                {
+                    despawnTimer = TickTimer.None;
+                    Runner.Despawn(Object);
+                }
+                return;
+            }
+
+            if (IsAwaitingRevive)
+            {
+                if (reviveTimer.Expired(Runner)) CompleteRevive();
+                return;
+            }
+
+            if (IsKnockbackActive && knockbackTimer.ExpiredOrNotRunning(Runner))
+            {
+                IsKnockbackActive = false;
+            }
+
+            aiComp.RunAILogic();
+        }
+
+        public override void Render()
+        {
+            if (isDeadNetworked && !_localDeathHandled)
+            {
+                HandleDeathVisuals();
+                _localDeathHandled = true;
+                return;
+            }
+
+            if (IsAwaitingRevive && !_localDownedHandled)
+            {
+                HandleDownedVisuals();
+                _localDownedHandled = true;
+            }
+            else if (!IsAwaitingRevive && _localDownedHandled)
+            {
+                HandleReviveVisuals();
+                _localDownedHandled = false;
+            }
+        }
+
+        public void TakeDamage(int damage, Vector2 knockbackDir, float knockbackForce, Attrition.Core.DamageType type = Attrition.Core.DamageType.Physical)
+        {
+            if (isDeadNetworked || IsAwaitingRevive) return;
+            RPC_TakeDamage(damage, knockbackDir, knockbackForce, (int)type);
+        }
+
+        [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+        private void RPC_TakeDamage(int damage, Vector2 knockbackDir, float knockbackForce, int type)
+        {
+            if (isDeadNetworked || IsAwaitingRevive) return;
+
+            // damage = chỉ số tấn công GỐC; quái tự áp DEF (Physical) hoặc RES (Magic).
+            int def = statsComp != null ? statsComp.DEF : 0;
+            int res = statsComp != null ? statsComp.RES : 0;
+            int taken = Attrition.Core.DamageCalculator.Compute((Attrition.Core.DamageType)type, damage, def, res);
+            Health -= taken;
+            aiComp.ForceFacePlayer();
+
+            if (Health <= 0)
+            {
+                if (RevivesRemaining > 0)
+                {
+                    RevivesRemaining--;
+                    BeginDownedPhase();
+                }
+                else
+                {
+                    DieFinal();
+                }
+            }
+            else
+            {
+                // Chỉ áp dụng Knockback và ngắt đòn đánh (Stun) nếu quái cho phép
+                if (canBeKnockedBack)
+                {
+                    // Ngắt heal, skill, summon nếu đang thực hiện (Elite)
+                    if (eliteSkills != null)
+                    {
+                        eliteSkills.InterruptHealing();
+                        eliteSkills.InterruptSkill();
+                        eliteSkills.InterruptSummon();
+                    }
+
+                    IsKnockbackActive = true;
+                    knockbackTimer = TickTimer.CreateFromSeconds(Runner, stunDuration);
+                    combatComp.CancelAllActions(); // Ngắt TOÀN BỘ hành động (attack, dash, leap, freeze anim)
+
+                    // SỬA: Nếu quái không có trọng lực (quái bay), loại bỏ lực đẩy thẳng đứng để không bị bay tuốt lên trời
+                    if (rb != null && rb.gravityScale == 0)
+                    {
+                        knockbackDir.y = 0;
+                        knockbackDir = knockbackDir.normalized;
+                    }
+
+                    rb.linearVelocity = knockbackDir * knockbackForce; // Bị văng đi
+                }
+
+                // Dù có bị knockback hay không, quái vẫn chớp sáng báo hiệu đã nhận sát thương
+                RPC_PlayHitAnimation();
+            }
+        }
+
+        [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+        private void RPC_PlayHitAnimation()
+        {
+            if (animationComp != null) animationComp.PlayHit();
+        }
+
+        private void BeginDownedPhase()
+        {
+            IsAwaitingRevive = true;
+            combatComp.IsAttacking = false;
+            IsKnockbackActive = false;
+            reviveTimer = TickTimer.CreateFromSeconds(Runner, reviveDelaySeconds);
+
+            if (aiComp != null) aiComp.enabled = false;
+            if (combatComp != null) combatComp.enabled = false;
+        }
+
+        private void CompleteRevive()
+        {
+            IsAwaitingRevive = false;
+            Health = maxHealth;
+
+            if (aiComp != null) aiComp.enabled = true;
+            if (combatComp != null) combatComp.enabled = true;
+
+            if (HasStateAuthority) aiComp.NotifyRevived();
+        }
+
+        private void DieFinal()
+        {
+            isDeadNetworked = true;
+            combatComp.IsAttacking = false;
+            IsKnockbackActive = false;
+
+            // Coop: cộng EXP NHƯ NHAU cho mọi player (không qua orb nhặt — concept "exp như nhau").
+            if (statsComp != null && statsComp.ExpReward > 0)
+            {
+                var players = FindObjectsByType<Attrition.Gameplay.Player.PlayerProgression>(FindObjectsSortMode.None);
+                foreach (var p in players)
+                    if (p != null) p.GainExp(statsComp.ExpReward);
+            }
+
+            if (aiComp != null) aiComp.enabled = false;
+            if (combatComp != null) combatComp.enabled = false;
+
+            // Despawn tất cả summon khi Undead chết
+            if (eliteSkills != null) eliteSkills.DespawnAllSummons();
+
+            despawnTimer = TickTimer.CreateFromSeconds(Runner, 1.5f);
+        }
+
+        private void HandleDownedVisuals()
+        {
+            rb.linearVelocity = Vector2.zero;
+            rb.bodyType = RigidbodyType2D.Kinematic;
+
+            Collider2D col = GetComponent<Collider2D>();
+            if (col != null) col.enabled = false;
+
+            animationComp.PlayDeath();
+        }
+
+        private void HandleReviveVisuals()
+        {
+            rb.bodyType = RigidbodyType2D.Dynamic;
+
+            Collider2D col = GetComponent<Collider2D>();
+            if (col != null) col.enabled = true;
+
+            animationComp.ResetAlive();
+        }
+
+        private void HandleDeathVisuals()
+        {
+            rb.linearVelocity = Vector2.zero;
+            rb.bodyType = RigidbodyType2D.Kinematic;
+
+            Collider2D col = GetComponent<Collider2D>();
+            if (col != null) col.enabled = false;
+
+            animationComp.PlayDeath();
+        }
+
+        /// <summary>
+        /// Hồi máu cho quái. Gọi bởi EliteEnemySkills khi heal xong.
+        /// </summary>
+        public void Heal(int amount)
+        {
+            if (!HasStateAuthority) return;
+            if (isDeadNetworked || IsAwaitingRevive) return;
+            Health = Mathf.Min(Health + amount, maxHealth);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // IGNORE PLAYER COLLIDERS — Đảm bảo Player đi xuyên qua quái
+        // ═══════════════════════════════════════════════════════════════
+
+        private void IgnoreAllPlayerColliders()
+        {
+            Collider2D[] myCols = GetComponentsInChildren<Collider2D>();
+
+            PlayerController[] players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+            foreach (var player in players)
+            {
+                Collider2D playerCol = player.GetComponent<Collider2D>();
+                if (playerCol == null) continue;
+
+                foreach (var myCol in myCols)
+                {
+                    if (!myCol.isTrigger && !playerCol.isTrigger)
+                    {
+                        Physics2D.IgnoreCollision(myCol, playerCol, true);
+                    }
+                }
+            }
+        }
+
+        private void OnCollisionEnter2D(Collision2D collision)
+        {
+            PlayerController player = collision.gameObject.GetComponentInParent<PlayerController>();
+            if (player == null) player = collision.gameObject.GetComponent<PlayerController>();
+            if (player != null)
+            {
+                Collider2D playerCol = player.GetComponent<Collider2D>();
+                if (playerCol == null) return;
+
+                Collider2D[] myCols = GetComponentsInChildren<Collider2D>();
+                foreach (var myCol in myCols)
+                {
+                    if (!myCol.isTrigger)
+                    {
+                        Physics2D.IgnoreCollision(myCol, playerCol, true);
+                    }
+                }
+            }
+        }
+    }
+}

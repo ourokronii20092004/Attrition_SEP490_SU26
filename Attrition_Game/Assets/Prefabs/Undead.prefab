@@ -145,6 +145,7 @@ GameObject:
   - component: {fileID: 8143406843242807650}
   - component: {fileID: 4288886679587839089}
   - component: {fileID: 4671611811823875342}
+  - component: {fileID: 1846206421408265971}
   m_Layer: 8
   m_Name: Undead
   m_TagString: Enemy
@@ -320,6 +321,7 @@ MonoBehaviour:
   _IsAwaitingRevive:
     _value: 0
   maxHealth: 10
+  statsComp: {fileID: 0}
 --- !u!114 &2479212242569608968
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -357,10 +359,17 @@ MonoBehaviour:
     m_Bits: 64
   wallCheckDistance: 0.8
   wallCheckHeightOffset: 0.5
+  canEvadeJump: 0
+  evadeTriggerDistance: 2
+  jumpForce: 12
+  evadeBackwardSpeed: 8
+  jumpCooldown: 3
   facingDeadZone: 0.3
   _CurrentState: 0
   _NetSpeed: 0
   _NetFacingDir: 1
+  _IsJumping:
+    _value: 0
   _AttackLockedFacingDir: 1
 --- !u!114 &1295428210323452449
 MonoBehaviour:
@@ -406,6 +415,7 @@ MonoBehaviour:
   leapHeight: 3
   leapDuration: 0.6
   animationComp: {fileID: 1295428210323452449}
+  statsComp: {fileID: 0}
   attackPoint: {fileID: 7816554615891401734}
   playerLayer:
     serializedVersion: 2
@@ -450,6 +460,7 @@ MonoBehaviour:
   - {fileID: 1824160238177686863}
   - {fileID: 8143406843242807650}
   - {fileID: 4288886679587839089}
+  - {fileID: 1846206421408265971}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &8143406843242807650
 MonoBehaviour:
@@ -507,9 +518,13 @@ MonoBehaviour:
     angle: 0
     rectSize: {x: 6, y: 3}
     duration: 0
+    recoveryDuration: 0.5
     cooldown: 0
     useCustomOffset: 1
     hitboxOffset: {x: -4, y: -0.5}
+    isRanged: 0
+    projectilePrefab:
+      RawGuidValue: 00000000000000000000000000000000
   skillChance: 0.3
   canSummon: 1
   summonPrefab:
@@ -550,3 +565,22 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &1846206421408265971
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7541668006046052967}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bde3acf5f2a5191498de3b6e774d849c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Enemy.EnemyStats
+  statsSO: {fileID: 11400000, guid: 4beedfdd985263c4895d2aae7ce3dc45, type: 2}
+  _MaxHP: 0
+  _AD: 0
+  _AP: 0
+  _DEF: 0
+  _RES: 0
+  _Poise: 0

@@ -1,0 +1,20 @@
+{
+    "name": "Attrition.Editor",
+    "rootNamespace": "Attrition.Editor",
+    "references": [
+        "Attrition.Core",
+        "Attrition.Data",
+        "Attrition.Gameplay"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

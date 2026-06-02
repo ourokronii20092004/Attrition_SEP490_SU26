@@ -50,6 +50,7 @@ GameObject:
   - component: {fileID: 8697422888546581802}
   - component: {fileID: 5072984233664641859}
   - component: {fileID: 4253668396260837450}
+  - component: {fileID: -4888312920019877177}
   m_Layer: 8
   m_Name: SummonOfUndead
   m_TagString: Enemy
@@ -225,6 +226,7 @@ MonoBehaviour:
   _IsAwaitingRevive:
     _value: 0
   maxHealth: 3
+  statsComp: {fileID: 0}
 --- !u!114 &31291481347445045
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -262,10 +264,17 @@ MonoBehaviour:
     m_Bits: 64
   wallCheckDistance: 0.8
   wallCheckHeightOffset: 0.5
+  canEvadeJump: 0
+  evadeTriggerDistance: 2
+  jumpForce: 12
+  evadeBackwardSpeed: 8
+  jumpCooldown: 3
   facingDeadZone: 0.3
   _CurrentState: 0
   _NetSpeed: 0
   _NetFacingDir: 1
+  _IsJumping:
+    _value: 0
   _AttackLockedFacingDir: 1
 --- !u!114 &1956349986922724879
 MonoBehaviour:
@@ -303,6 +312,7 @@ MonoBehaviour:
   - {fileID: 1956349986922724879}
   - {fileID: 8697422888546581802}
   - {fileID: 4253668396260837450}
+  - {fileID: -4888312920019877177}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &8697422888546581802
 MonoBehaviour:
@@ -375,6 +385,25 @@ MonoBehaviour:
   _IsDeadNetworked:
     _value: 0
   _NetFacingDir: 1
+--- !u!114 &-4888312920019877177
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8157000368859917613}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bde3acf5f2a5191498de3b6e774d849c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Enemy.EnemyStats
+  statsSO: {fileID: 11400000, guid: edf099c83e1d3ef458210b22dd748480, type: 2}
+  _MaxHP: 0
+  _AD: 0
+  _AP: 0
+  _DEF: 0
+  _RES: 0
+  _Poise: 0
 --- !u!1 &8408951857227022556
 GameObject:
   m_ObjectHideFlags: 0

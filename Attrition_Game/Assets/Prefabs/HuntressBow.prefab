@@ -114,6 +114,7 @@ GameObject:
   - component: {fileID: 2855507434203416565}
   - component: {fileID: 5015065705529886319}
   - component: {fileID: 3039323279089834623}
+  - component: {fileID: -7316075506874178509}
   m_Layer: 8
   m_Name: HuntressBow
   m_TagString: Enemy
@@ -290,6 +291,7 @@ MonoBehaviour:
   _IsAwaitingRevive:
     _value: 0
   maxHealth: 15
+  statsComp: {fileID: 0}
 --- !u!114 &5227444292405164535
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -383,6 +385,7 @@ MonoBehaviour:
   leapHeight: 3
   leapDuration: 0.6
   animationComp: {fileID: 4429462093505655813}
+  statsComp: {fileID: 0}
   attackPoint: {fileID: 3135835206876600995}
   playerLayer:
     serializedVersion: 2
@@ -427,6 +430,7 @@ MonoBehaviour:
   - {fileID: 5876798167884690251}
   - {fileID: 2855507434203416565}
   - {fileID: 5015065705529886319}
+  - {fileID: -7316075506874178509}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &2855507434203416565
 MonoBehaviour:
@@ -531,6 +535,25 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &-7316075506874178509
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3801880864032460172}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bde3acf5f2a5191498de3b6e774d849c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Enemy.EnemyStats
+  statsSO: {fileID: 11400000, guid: 8b44d454ed2ec9846a2fd768c71d5966, type: 2}
+  _MaxHP: 0
+  _AD: 0
+  _AP: 0
+  _DEF: 0
+  _RES: 0
+  _Poise: 0
 --- !u!1 &4318073950527655983
 GameObject:
   m_ObjectHideFlags: 0
