@@ -6,7 +6,7 @@ AnimationClip:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: huntress_hit
+  m_Name: huntressbow_hit
   serializedVersion: 7
   m_Legacy: 0
   m_Compressed: 0
@@ -21,11 +21,11 @@ AnimationClip:
   - serializedVersion: 2
     curve:
     - time: 0
-      value: {fileID: 5658602184316354200, guid: cfa6b6a1b2111aa43bca0ade75c790b2, type: 3}
-    - time: 0.18333334
-      value: {fileID: 5755147017564654305, guid: cfa6b6a1b2111aa43bca0ade75c790b2, type: 3}
+      value: {fileID: 4059951838069092975, guid: 27bb9b2c359946b4dadee9377a552187, type: 3}
+    - time: 0.16666667
+      value: {fileID: 4205832349090345166, guid: 27bb9b2c359946b4dadee9377a552187, type: 3}
     - time: 0.33333334
-      value: {fileID: 406982975876482558, guid: cfa6b6a1b2111aa43bca0ade75c790b2, type: 3}
+      value: {fileID: -5427525242102528555, guid: 27bb9b2c359946b4dadee9377a552187, type: 3}
     attribute: m_Sprite
     path: 
     classID: 212
@@ -48,9 +48,9 @@ AnimationClip:
       isIntCurve: 0
       isSerializeReferenceCurve: 0
     pptrCurveMapping:
-    - {fileID: 5658602184316354200, guid: cfa6b6a1b2111aa43bca0ade75c790b2, type: 3}
-    - {fileID: 5755147017564654305, guid: cfa6b6a1b2111aa43bca0ade75c790b2, type: 3}
-    - {fileID: 406982975876482558, guid: cfa6b6a1b2111aa43bca0ade75c790b2, type: 3}
+    - {fileID: 4059951838069092975, guid: 27bb9b2c359946b4dadee9377a552187, type: 3}
+    - {fileID: 4205832349090345166, guid: 27bb9b2c359946b4dadee9377a552187, type: 3}
+    - {fileID: -5427525242102528555, guid: 27bb9b2c359946b4dadee9377a552187, type: 3}
   m_AnimationClipSettings:
     serializedVersion: 2
     m_AdditiveReferencePoseClip: {fileID: 0}
