@@ -20,7 +20,7 @@ TagManager:
   - Hazard
   - HiddenGround
   - Breakable
-  - 
+  - Decor
   - 
   - 
   - 
@@ -41,6 +41,30 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: Background
+    uniqueID: 631042317
+    locked: 0
+  - name: Decor
+    uniqueID: 4235074171
+    locked: 0
+  - name: Ground
+    uniqueID: 2218717819
+    locked: 0
+  - name: Breakable
+    uniqueID: 1323554211
+    locked: 0
+  - name: Hazard
+    uniqueID: 2165543847
+    locked: 0
+  - name: Player
+    uniqueID: 3718451923
+    locked: 0
+  - name: HiddenGround
+    uniqueID: 3178519295
+    locked: 0
+  - name: Foreground
+    uniqueID: 401117289
     locked: 0
   m_RenderingLayers:
   - Default
