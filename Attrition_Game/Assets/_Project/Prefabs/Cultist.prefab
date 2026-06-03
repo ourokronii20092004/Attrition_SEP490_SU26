@@ -281,9 +281,6 @@ MonoBehaviour:
   extraLivesAfterHpZero: 0
   reviveDelaySeconds: 5
   canBeKnockedBack: 0
-  usePoise: 1
-  maxPoise: 100
-  poiseRecoveryTime: 3
   stunDuration: 1
   _Health: 0
   _CurrentPoise: 0
@@ -311,8 +308,6 @@ MonoBehaviour:
   combatComp: {fileID: 3048939340092040517}
   controller: {fileID: 7808732846637604145}
   eliteSkills: {fileID: 3908624317478850453}
-  patrolSpeed: 2
-  chaseSpeed: 5
   viewRadius: 20
   patrolRadius: 3
   isFlying: 0
@@ -376,6 +371,7 @@ MonoBehaviour:
     angle: 90
     rectSize: {x: 2, y: 5}
     damage: 1
+    damageType: 0
     duration: 0.5
     cooldown: 1.5
     recoveryDuration: 0.25
@@ -393,7 +389,6 @@ MonoBehaviour:
   playerLayer:
     serializedVersion: 2
     m_Bits: 128
-  currentAttackSpeed: 1
   isRanged: 0
   projectilePrefab:
     RawGuidValue: 00000000000000000000000000000000
@@ -543,6 +538,10 @@ MonoBehaviour:
   _DEF: 0
   _RES: 0
   _Poise: 0
+  _PoiseRecoveryTime: 0
+  _PatrolSpeed: 0
+  _ChaseSpeed: 0
+  _AttackSpeed: 0
 --- !u!1 &8808143850718501648
 GameObject:
   m_ObjectHideFlags: 0

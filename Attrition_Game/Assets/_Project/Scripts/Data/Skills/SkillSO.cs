@@ -11,13 +11,9 @@ namespace Attrition.Data
     /// Cast khựng (không di chuyển) trong castTime giây. Tạo asset: Create → Attrition → Skill.
     /// </summary>
     [CreateAssetMenu(menuName = "Attrition/Skill", fileName = "Skill")]
-    public class SkillSO : ScriptableObject
+    public class SkillSO : ItemSO
     {
-        [Header("---- IDENTITY ----")]
-        public string skillId = "fire_bolt";
-        public string displayName = "Fire Bolt";
-        [TextArea] public string description;
-        public Sprite icon;
+        [Header("---- SKILL ----")]
         public SkillElement element = SkillElement.Fire;
 
         [Header("---- COST & TIMING ----")]
@@ -32,5 +28,7 @@ namespace Attrition.Data
         public int baseDamage = 30;
         [Tooltip("Hệ số nhân theo AP của người chơi (baseDamage + AP*scale).")]
         public float apScaling = 1f;
+
+        public override ItemCategory Category => ItemCategory.Skill;
     }
 }

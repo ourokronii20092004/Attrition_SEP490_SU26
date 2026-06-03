@@ -12,6 +12,7 @@ public class NetworkInputHandler : MonoBehaviour, INetworkRunnerCallbacks
     private bool _healthPotionPressed;
     private bool _manaPotionPressed;
     private bool _restPressed;
+    private bool _inventoryToggled;
 
     private void Update()
     {
@@ -33,6 +34,9 @@ public class NetworkInputHandler : MonoBehaviour, INetworkRunnerCallbacks
 
         if (Input.GetKeyDown(KeyCode.R))
             _restPressed = true;
+
+        if (Input.GetKeyDown(KeyCode.Tab))
+            _inventoryToggled = true;
     }
 
     public void OnInput(NetworkRunner runner, NetworkInput input)
@@ -49,6 +53,7 @@ public class NetworkInputHandler : MonoBehaviour, INetworkRunnerCallbacks
         data.buttons.Set(MyButtons.HealthPotion, _healthPotionPressed);
         data.buttons.Set(MyButtons.ManaPotion, _manaPotionPressed);
         data.buttons.Set(MyButtons.Rest, _restPressed);
+        data.buttons.Set(MyButtons.ToggleInventory, _inventoryToggled);
 
         // Continuous buttons (giữ liên tục)
         data.buttons.Set(MyButtons.Crouch, Input.GetKey(KeyCode.S));
@@ -64,6 +69,7 @@ public class NetworkInputHandler : MonoBehaviour, INetworkRunnerCallbacks
         _healthPotionPressed = false;
         _manaPotionPressed = false;
         _restPressed = false;
+        _inventoryToggled = false;
     }
 
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player) { }
