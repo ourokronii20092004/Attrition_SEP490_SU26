@@ -55,6 +55,7 @@ public class EliteEnemySkills : NetworkBehaviour
     {
         [Tooltip("Tên skill (để debug)")] public string skillName = "Skill";
         [Tooltip("Sát thương gây ra")] public int damage = 2;
+        [Tooltip("Loại sát thương")] public Attrition.Core.DamageType damageType = Attrition.Core.DamageType.Magic;
         [Tooltip("Phạm vi skill (bán kính)")] public float range = 2f;
         [Tooltip("Hình dạng hitbox")] public EnemyCombat.HitboxShape hitboxShape = EnemyCombat.HitboxShape.Circle;
         [Tooltip("Góc đánh (chỉ dùng cho Cone)")] [Range(0, 360)] public float angle = 180f;
@@ -148,9 +149,9 @@ public class EliteEnemySkills : NetworkBehaviour
         if (statsComp == null) statsComp = GetComponent<Attrition.Gameplay.Enemy.EnemyStats>();
     }
 
-    // Skill = sát thương phép → cfg.damage là HỆ SỐ × AP khi có statsComp; player tự trừ RES.
-    private int RawSkillDamage(int configDamage)
-        => statsComp != null ? configDamage * statsComp.AP : configDamage;
+    // Skill damage tính theo AP hay AD tùy cấu hình.
+    private int RawSkillDamage(int configDamage, Attrition.Core.DamageType type)
+        => statsComp != null ? configDamage * (type == Attrition.Core.DamageType.Magic ? statsComp.AP : statsComp.AD) : configDamage;
 
     /// <summary>
     /// Gọi bởi EnemyController.Spawned() để truyền callback hồi máu, flag bay,
@@ -406,10 +407,10 @@ public class EliteEnemySkills : NetworkBehaviour
 
             if (cfg.projectilePrefab.IsValid)
             {
-                int skillDmg = RawSkillDamage(cfg.damage);
+                int skillDmg = RawSkillDamage(cfg.damage, cfg.damageType);
                 Runner.Spawn(cfg.projectilePrefab, skillOrigin, Quaternion.identity, null, (runner, obj) =>
                 {
-                    Attrition.Gameplay.Combat.ProjectileInitializer.Init(obj, facingDir, skillDmg);
+                    Attrition.Gameplay.Combat.ProjectileInitializer.Init(obj, facingDir, skillDmg, Attrition.Gameplay.Combat.ProjectileInitializer.DefaultSpeed, cfg.damageType);
                 });
             }
             return; // Xong phần ném, thoát hàm để không gây sát thương cận chiến nữa
@@ -428,17 +429,17 @@ public class EliteEnemySkills : NetworkBehaviour
             cfg.range, cfg.angle, cfg.rectSize, filter, results);
 
         for (int i = 0; i < count; i++)
-            DealSkillDamage(results[i], RawSkillDamage(cfg.damage));
+            DealSkillDamage(results[i], RawSkillDamage(cfg.damage, cfg.damageType), cfg.damageType);
     }
 
-    private void DealSkillDamage(Collider2D player, int damage)
+    private void DealSkillDamage(Collider2D player, int damage, Attrition.Core.DamageType type)
     {
         Vector2 dirToPlayer = (player.transform.position - transform.position).normalized;
         IDamageable dmg = player.GetComponentInParent<IDamageable>();
         if (dmg != null && !dmg.IsDead)
         {
             Vector2 pushDir = new Vector2(dirToPlayer.x, 0.5f).normalized;
-            dmg.TakeDamage(damage, pushDir, 0f, Attrition.Core.DamageType.Magic);
+            dmg.TakeDamage(damage, pushDir, 0f, type);
         }
     }
 

@@ -17,9 +17,13 @@ MonoBehaviour:
   maxHP: 40
   ad: 10
   ap: 0
-  def: 0
+  def: 4
   res: 0
   poise: 0
+  poiseRecoveryTime: 3
+  patrolSpeed: 2
+  chaseSpeed: 5
+  attackSpeed: 1
   expReward: 10
   coopHpMultiplier: 1.6
   coopDamageMultiplier: 1.2

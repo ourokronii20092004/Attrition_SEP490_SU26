@@ -187,8 +187,12 @@ MonoBehaviour:
   extraLivesAfterHpZero: 0
   reviveDelaySeconds: 5
   canBeKnockedBack: 0
-  stunDuration: 0.4
+  usePoise: 1
+  maxPoise: 100
+  poiseRecoveryTime: 3
+  stunDuration: 1
   _Health: 0
+  _CurrentPoise: 0
   _isDeadNetworked:
     _value: 0
   _IsKnockbackActive:

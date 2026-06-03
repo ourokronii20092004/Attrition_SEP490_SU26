@@ -27,6 +27,10 @@ namespace Attrition.Gameplay.Enemy
         [Networked] public int DEF { get; set; }
         [Networked] public int RES { get; set; }
         [Networked] public int Poise { get; set; }
+        [Networked] public float PoiseRecoveryTime { get; set; }
+        [Networked] public float PatrolSpeed { get; set; }
+        [Networked] public float ChaseSpeed { get; set; }
+        [Networked] public float AttackSpeed { get; set; }
 
         public EnemyTier Tier => statsSO != null ? statsSO.tier : EnemyTier.Normal;
         public string EnemyId => statsSO != null ? statsSO.enemyId : null;
@@ -57,6 +61,21 @@ namespace Attrition.Gameplay.Enemy
             DEF = sheet.DEF;
             RES = sheet.RES;
             Poise = sheet.Poise;
+
+            if (statsSO != null)
+            {
+                PoiseRecoveryTime = statsSO.poiseRecoveryTime;
+                PatrolSpeed = statsSO.patrolSpeed;
+                ChaseSpeed = statsSO.chaseSpeed;
+                AttackSpeed = statsSO.attackSpeed;
+            }
+            else
+            {
+                PoiseRecoveryTime = 3f;
+                PatrolSpeed = 2f;
+                ChaseSpeed = 5f;
+                AttackSpeed = 1f;
+            }
         }
 
         /// <summary>Sát thương quái gây lên player (phòng thủ-aware).</summary>

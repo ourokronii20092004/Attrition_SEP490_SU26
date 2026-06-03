@@ -20,25 +20,15 @@ namespace Attrition.Data
         public int baseDEF = 10;
         public int baseRES = 10;
 
-        [Header("---- LEVELING (Option 2 — tự phân bổ) ----")]
-        [Tooltip("Cấp tối đa.")]
-        public int maxLevel = 21;
-        [Tooltip("Số điểm chỉ số nhận mỗi lần lên cấp, người chơi tự cộng.")]
-        public int statPointsPerLevel = 5;
-
-        [Header("---- ĐỘ LỚN MỖI ĐIỂM CỘNG ----")]
-        [Tooltip("1 điểm vào HP = +bao nhiêu HP tối đa.")]
-        public int hpPerPoint = 20;
-        public int manaPerPoint = 10;
-        public int staminaPerPoint = 5;
-        public int adPerPoint = 2;
-        public int apPerPoint = 2;
-        public int defPerPoint = 1;
-        public int resPerPoint = 1;
-
-        [Header("---- POTION ----")]
-        public int startingPotions = 3;
-        public int maxPotionsCap = 8;
+        [Header("---- MOVEMENT & COMBAT ----")]
+        public float moveSpeed = 10f;
+        public float dashSpeed = 20f;
+        public float slideSpeed = 15f;
+        public float jumpForce = 15f;
+        public float doubleJumpForce = 8f;
+        public float attackSpeed = 1f;
+        [Tooltip("Hệ số nhân sát thương khi Charge Attack (ví dụ: 2.0 = gấp đôi sát thương cơ bản)")]
+        public float chargeDamageMultiplier = 2f;
 
         /// <summary>Giá trị gốc của 1 stat ở level 1 (chưa cộng điểm, chưa trang bị).</summary>
         public int GetBase(StatType stat)
@@ -54,13 +44,6 @@ namespace Attrition.Data
                 case StatType.RES: return baseRES;
                 default: return 0;
             }
-        }
-
-        /// <summary>Số điểm chỉ số tích lũy được tới level đã cho (level 1 = 0 điểm).</summary>
-        public int TotalStatPointsAtLevel(int level)
-        {
-            int clamped = Mathf.Clamp(level, 1, maxLevel);
-            return (clamped - 1) * statPointsPerLevel;
         }
     }
 }

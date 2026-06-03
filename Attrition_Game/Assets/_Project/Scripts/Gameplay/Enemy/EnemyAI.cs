@@ -1,6 +1,7 @@
 using Attrition.Controllers;
 using Fusion;
 using UnityEngine;
+using Attrition.Gameplay.Enemy;
 
 // ═══════════════════════════════════════════════════════════════
 // ENEMY STATE — Finite State Machine
@@ -37,8 +38,6 @@ public class EnemyAI : NetworkBehaviour
     private Rigidbody2D rb;
 
     [Header("---- SETTINGS ----")]
-    public float patrolSpeed = 2f;
-    public float chaseSpeed = 5f;
     public float viewRadius = 5f;
     [Tooltip("Tuần tra ngẫu nhiên theo trục X quanh điểm spawn.")]
     public float patrolRadius = 3f;
@@ -136,6 +135,7 @@ public class EnemyAI : NetworkBehaviour
     private Vector2 currentTarget;
     private Transform playerTarget;
     private PlayerRef cachedChasePlayer;
+    private EnemyStats statsComp;
 
     // Sleep timers
     private float noPlayerTimer;
@@ -155,6 +155,7 @@ public class EnemyAI : NetworkBehaviour
         if (combatComp == null) combatComp = GetComponent<EnemyCombat>();
         if (controller == null) controller = GetComponent<EnemyController>();
         if (animationComp == null) animationComp = GetComponent<EnemyAnimation>();
+        statsComp = GetComponent<EnemyStats>();
         startPosition = transform.position;
 
         // Tính vị trí ngủ
@@ -573,7 +574,8 @@ public class EnemyAI : NetworkBehaviour
         }
         else
         {
-            MoveTowards(currentTarget, chaseSpeed);
+            float cSpeed = statsComp != null ? statsComp.ChaseSpeed : 5f;
+            MoveTowards(currentTarget, cSpeed);
             NetSpeed = Mathf.Abs(rb.linearVelocity.x);
         }
 
@@ -832,9 +834,11 @@ public class EnemyAI : NetworkBehaviour
 
     private void DoPatrolMovement()
     {
+        float pSpeed = statsComp != null ? statsComp.PatrolSpeed : 2f;
+
         if (patrolRadius <= 0.05f)
         {
-            MoveTowards(startPosition, patrolSpeed);
+            MoveTowards(startPosition, pSpeed);
             return;
         }
 
@@ -852,7 +856,7 @@ public class EnemyAI : NetworkBehaviour
         if (Mathf.Abs(transform.position.x - currentTarget.x) < 0.25f)
             currentTarget = new Vector2(PickRandomPatrolX(), isFlying ? startPosition.y : transform.position.y);
 
-        MoveTowards(currentTarget, patrolSpeed);
+        MoveTowards(currentTarget, pSpeed);
     }
 
     private void MoveTowards(Vector2 target, float speed)
