@@ -19,16 +19,14 @@ namespace Attrition.Data
     /// tùy danh sách modifiers. Tạo asset: Create → Attrition → Equipment.
     /// </summary>
     [CreateAssetMenu(menuName = "Attrition/Equipment", fileName = "Equipment")]
-    public class EquipmentSO : ScriptableObject
+    public class EquipmentSO : ItemSO
     {
-        [Header("---- IDENTITY ----")]
-        public string itemId = "iron_helm";
-        public string displayName = "Iron Helm";
-        [TextArea] public string description;
-        public Sprite icon;
+        [Header("---- EQUIPMENT ----")]
         public EquipmentSlot slot = EquipmentSlot.Head;
 
         [Header("---- STAT BONUSES ----")]
         public StatModifier[] modifiers = Array.Empty<StatModifier>();
+
+        public override ItemCategory Category => ItemCategory.Equipment;
     }
 }
