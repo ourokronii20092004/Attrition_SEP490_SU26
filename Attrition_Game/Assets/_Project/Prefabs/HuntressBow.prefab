@@ -284,6 +284,7 @@ MonoBehaviour:
   canBeKnockedBack: 0
   stunDuration: 0.2
   _Health: 0
+  _CurrentPoise: 0
   _isDeadNetworked:
     _value: 0
   _IsKnockbackActive:
@@ -308,8 +309,6 @@ MonoBehaviour:
   combatComp: {fileID: 5876798167884690251}
   controller: {fileID: 5041604271485579645}
   eliteSkills: {fileID: 5015065705529886319}
-  patrolSpeed: 2
-  chaseSpeed: 5
   viewRadius: 15
   patrolRadius: 3
   isFlying: 0
@@ -373,6 +372,7 @@ MonoBehaviour:
     angle: 360
     rectSize: {x: 0, y: 0}
     damage: 0
+    damageType: 0
     duration: 0
     cooldown: 0
     recoveryDuration: 0
@@ -390,7 +390,6 @@ MonoBehaviour:
   playerLayer:
     serializedVersion: 2
     m_Bits: 128
-  currentAttackSpeed: 1
   isRanged: 0
   projectilePrefab:
     RawGuidValue: 36607f02eabd5a344b43134b099ec065
@@ -483,6 +482,7 @@ MonoBehaviour:
   skills:
   - skillName: "b\u1EAFn cung"
     damage: 2
+    damageType: 0
     range: 15
     hitboxShape: 0
     angle: 360
@@ -554,6 +554,10 @@ MonoBehaviour:
   _DEF: 0
   _RES: 0
   _Poise: 0
+  _PoiseRecoveryTime: 0
+  _PatrolSpeed: 0
+  _ChaseSpeed: 0
+  _AttackSpeed: 0
 --- !u!1 &4318073950527655983
 GameObject:
   m_ObjectHideFlags: 0

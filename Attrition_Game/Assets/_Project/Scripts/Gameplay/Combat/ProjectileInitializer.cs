@@ -12,15 +12,15 @@ namespace Attrition.Gameplay.Combat
     {
         public const float DefaultSpeed = 8f;
 
-        public static void Init(NetworkObject obj, Vector2 dir, int damage, float speed = DefaultSpeed)
+        public static void Init(NetworkObject obj, Vector2 dir, int damage, float speed = DefaultSpeed, Attrition.Core.DamageType type = Attrition.Core.DamageType.Physical)
         {
             if (obj == null) return;
 
             var proj = obj.GetComponent<EnemyProjectile>();
-            if (proj != null) proj.Init(dir, damage, speed);
+            if (proj != null) proj.Init(dir, damage, speed, type);
 
             var spear = obj.GetComponent<SpearProjectile>();
-            if (spear != null) spear.Init(dir, damage, speed);
+            if (spear != null) spear.Init(dir, damage, speed, type);
         }
     }
 }

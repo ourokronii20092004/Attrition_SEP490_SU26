@@ -15,10 +15,11 @@ public class PlayerCombat : NetworkBehaviour
     [SerializeField] private LayerMask targetLayers;
 
     [Header("---- DAMAGE & SPEED ----")]
-    public int attackDamage = 1;
-    public int chargeAttackDamage = 2;
+    public Attrition.Core.DamageType normalAttackType = Attrition.Core.DamageType.Physical;
+    public Attrition.Core.DamageType chargeAttackType = Attrition.Core.DamageType.Physical;
     [SerializeField] private float chargeThreshold = 0.25f;
-    public float currentAttackSpeed = 1f;
+    
+    private float CurrentAttackSpeed => statsComp != null ? statsComp.AttackSpeed : 1f;
 
     [Networked] public NetworkBool IsAttacking { get; set; }
     [Networked] public NetworkBool IsChargingAttack { get; set; }
@@ -57,9 +58,14 @@ public class PlayerCombat : NetworkBehaviour
         // --- J VỪA NHẤN ---
         if (attackJustPressed && attackCooldown.ExpiredOrNotRunning(Runner))
         {
-            IsHoldingAttack = true;
-            _holdTime = 0;
-            _chargeTriggered = false;
+            // Kiểm tra xem có đủ 10 Stamina để tung Light Attack không
+            bool canAffordLight = statsComp == null || statsComp.HasStamina(10f);
+            if (canAffordLight)
+            {
+                IsHoldingAttack = true;
+                _holdTime = 0;
+                _chargeTriggered = false;
+            }
         }
 
         // --- ĐANG GIỮ J ---
@@ -69,18 +75,31 @@ public class PlayerCombat : NetworkBehaviour
 
             if (_holdTime >= chargeThreshold && !_chargeTriggered)
             {
-                _chargeTriggered = true;
-                IsAttacking = true;
-                IsChargingAttack = true;
-
-                attackCooldown = TickTimer.CreateFromSeconds(Runner, 1.5f / currentAttackSpeed);
-
-                if (Runner.IsForward)
+                // Kiểm tra xem có đủ 20 Stamina để tung Heavy Attack không
+                bool canAffordHeavy = statsComp == null || statsComp.HasStamina(20f);
+                if (canAffordHeavy)
                 {
-                    if (isCrouching)
-                        RPC_PlayCrouchAttack(currentAttackSpeed);
-                    else
-                        RPC_PlayChargeAttack(currentAttackSpeed);
+                    if (statsComp != null) statsComp.TryConsumeStamina(20f);
+                    
+                    _chargeTriggered = true;
+                    IsAttacking = true;
+                    IsChargingAttack = true;
+
+                    attackCooldown = TickTimer.CreateFromSeconds(Runner, 1.5f / CurrentAttackSpeed);
+
+                    if (Runner.IsForward)
+                    {
+                        if (isCrouching)
+                            RPC_PlayCrouchAttack(CurrentAttackSpeed);
+                        else
+                            RPC_PlayChargeAttack(CurrentAttackSpeed);
+                    }
+                }
+                else
+                {
+                    // Hủy trạng thái giữ phím nếu không đủ Stamina (nhân vật không làm gì cả)
+                    IsHoldingAttack = false;
+                    _holdTime = 0;
                 }
             }
         }
@@ -90,6 +109,7 @@ public class PlayerCombat : NetworkBehaviour
         {
             if (_chargeTriggered)
             {
+                // Stamina đã được trừ lúc kích hoạt Charge
                 IsChargingAttack = false;
                 if (Runner.IsForward) RPC_ReleaseChargeAttack();
             }
@@ -97,16 +117,21 @@ public class PlayerCombat : NetworkBehaviour
             {
                 if (attackCooldown.ExpiredOrNotRunning(Runner))
                 {
-                    IsAttacking = true;
-
-                    attackCooldown = TickTimer.CreateFromSeconds(Runner, 0.5f / currentAttackSpeed);
-
-                    if (Runner.IsForward)
+                    // Trừ 10 Stamina cho Light Attack
+                    bool consumed = statsComp == null || statsComp.TryConsumeStamina(10f);
+                    if (consumed)
                     {
-                        if (isCrouching)
-                            RPC_PlayCrouchAttack(currentAttackSpeed);
-                        else
-                            RPC_PlayAttackAnimation(currentAttackSpeed);
+                        IsAttacking = true;
+
+                        attackCooldown = TickTimer.CreateFromSeconds(Runner, 0.5f / CurrentAttackSpeed);
+
+                        if (Runner.IsForward)
+                        {
+                            if (isCrouching)
+                                RPC_PlayCrouchAttack(CurrentAttackSpeed);
+                            else
+                                RPC_PlayAttackAnimation(CurrentAttackSpeed);
+                        }
                     }
                 }
             }
@@ -151,21 +176,21 @@ public class PlayerCombat : NetworkBehaviour
 
     public void TriggerAttackDamage()
     {
-        DealDamage(NormalAttackRaw);
+        DealDamage(NormalAttackRaw, normalAttackType);
     }
 
     public void TriggerChargeAttackDamage()
     {
-        DealDamage(ChargeAttackRaw);
+        DealDamage(ChargeAttackRaw, chargeAttackType);
     }
 
-    // Raw AD truyền cho defender (defender tự trừ DEF). statsComp có → point-based; không → số serialized cũ.
-    private int NormalAttackRaw => statsComp != null ? statsComp.AD : attackDamage;
+    // Raw AD/AP truyền cho defender (defender tự trừ DEF/RES).
+    private int NormalAttackRaw => statsComp != null ? (normalAttackType == Attrition.Core.DamageType.Magic ? statsComp.AP : statsComp.AD) : 1;
     private int ChargeAttackRaw => statsComp != null
-        ? Mathf.RoundToInt(statsComp.AD * ((float)chargeAttackDamage / Mathf.Max(1, attackDamage)))
-        : chargeAttackDamage;
+        ? Mathf.RoundToInt((chargeAttackType == Attrition.Core.DamageType.Magic ? statsComp.AP : statsComp.AD) * statsComp.ChargeDamageMultiplier)
+        : 2;
 
-    private void DealDamage(int damage)
+    private void DealDamage(int damage, Attrition.Core.DamageType type)
     {
         if (attackPoint == null) return;
 
@@ -194,7 +219,7 @@ public class PlayerCombat : NetworkBehaviour
             {
                 Vector2 pushDir = new Vector2(dirToTarget.x, 0.5f).normalized;
                 float force = damage >= ChargeAttackRaw ? 8f : 5f;
-                dmg.TakeDamage(damage, pushDir, force);
+                dmg.TakeDamage(damage, pushDir, force, type);
             }
         }
     }

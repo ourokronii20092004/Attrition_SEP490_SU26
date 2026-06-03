@@ -32,6 +32,8 @@ public class EnemyCombat : NetworkBehaviour
         [Header("── Sát thương ──")]
         [Tooltip("Sát thương gây ra")]
         public int damage = 1;
+        [Tooltip("Loại sát thương (Physical = dựa trên AD, Magic = dựa trên AP)")]
+        public Attrition.Core.DamageType damageType = Attrition.Core.DamageType.Physical;
 
         [Header("── Thời gian ──")]
         [Tooltip("Thời gian đứng yên khi đánh - nên bằng độ dài animation attack (giây)")]
@@ -77,8 +79,8 @@ public class EnemyCombat : NetworkBehaviour
     [SerializeField] private Attrition.Gameplay.Enemy.EnemyStats statsComp;
     public Transform attackPoint;
     public LayerMask playerLayer;
-    [Tooltip("Tốc độ phát Animation đánh (1 là mặc định, 2 là nhanh gấp đôi)")]
-    public float currentAttackSpeed = 1f;
+
+    private float CurrentAttackSpeed => statsComp != null ? statsComp.AttackSpeed : 1f;
 
     [Header("---- RANGED ATTACK ----")]
     public bool isRanged;
@@ -156,10 +158,9 @@ public class EnemyCombat : NetworkBehaviour
         if (statsComp == null) statsComp = GetComponent<Attrition.Gameplay.Enemy.EnemyStats>();
     }
 
-    // cfg.damage: có statsComp → coi là HỆ SỐ × AD (vd dmg 1 × AD 10 = 10 raw); không → giữ raw cũ.
-    // Trả về AD GỐC; player tự trừ DEF của mình (concept: ad thực = Max(1, ad-def)).
-    private int RawDamage(int configDamage)
-        => statsComp != null ? configDamage * statsComp.AD : configDamage;
+    // cfg.damage: có statsComp → coi là HỆ SỐ × AD/AP; không → giữ raw cũ.
+    private int RawDamage(int configDamage, Attrition.Core.DamageType type)
+        => statsComp != null ? configDamage * (type == Attrition.Core.DamageType.Magic ? statsComp.AP : statsComp.AD) : configDamage;
 
     public override void FixedUpdateNetwork()
     {
@@ -217,8 +218,8 @@ public class EnemyCombat : NetworkBehaviour
         CurrentAttackIndex = atkIdx;
 
         float duration = GetAttackDuration(atkIdx);
-        RPC_PlayAttackAnim(atkIdx, currentAttackSpeed);
-        attackTimer = TickTimer.CreateFromSeconds(Runner, duration / currentAttackSpeed);
+        RPC_PlayAttackAnim(atkIdx, CurrentAttackSpeed);
+        attackTimer = TickTimer.CreateFromSeconds(Runner, duration / CurrentAttackSpeed);
     }
 
     /// <summary>
@@ -234,9 +235,9 @@ public class EnemyCombat : NetworkBehaviour
         CurrentAttackIndex = atkIdx;
 
         float duration = GetAttackDuration(atkIdx);
-        RPC_PlayAttackAnim(atkIdx, currentAttackSpeed);
+        RPC_PlayAttackAnim(atkIdx, CurrentAttackSpeed);
         // Timer = thời gian lướt + thời gian animation đánh
-        attackTimer = TickTimer.CreateFromSeconds(Runner, dashDuration + duration / currentAttackSpeed);
+        attackTimer = TickTimer.CreateFromSeconds(Runner, dashDuration + duration / CurrentAttackSpeed);
 
         // Bật dash
         IsDashAttacking = true;
@@ -257,9 +258,9 @@ public class EnemyCombat : NetworkBehaviour
         CurrentAttackIndex = atkIdx;
 
         float duration = GetAttackDuration(atkIdx);
-        RPC_PlayAttackAnim(atkIdx, currentAttackSpeed);
+        RPC_PlayAttackAnim(atkIdx, CurrentAttackSpeed);
         // Timer = thời gian nhảy + thời gian animation đánh
-        attackTimer = TickTimer.CreateFromSeconds(Runner, leapDuration + duration / currentAttackSpeed);
+        attackTimer = TickTimer.CreateFromSeconds(Runner, leapDuration + duration / CurrentAttackSpeed);
 
         // Bật leap
         IsLeapAttacking = true;
@@ -521,10 +522,10 @@ public class EnemyCombat : NetworkBehaviour
                 shootDir = (targetPlayer.position - projectileSpawnPoint.position).normalized;
             }
 
-            int dmg = RawDamage(cfg.damage);
+            int dmg = RawDamage(cfg.damage, cfg.damageType);
             Runner.Spawn(projectilePrefab, projectileSpawnPoint.position, Quaternion.identity, null, (runner, obj) =>
             {
-                Attrition.Gameplay.Combat.ProjectileInitializer.Init(obj, shootDir, dmg);
+                Attrition.Gameplay.Combat.ProjectileInitializer.Init(obj, shootDir, dmg, Attrition.Gameplay.Combat.ProjectileInitializer.DefaultSpeed, cfg.damageType);
             });
             return;
         }
@@ -544,20 +545,20 @@ public class EnemyCombat : NetworkBehaviour
             cfg.range, cfg.angle, cfg.rectSize, filter, results);
 
         for (int i = 0; i < count; i++)
-            DealMeleeDamage(results[i], RawDamage(cfg.damage));
+            DealMeleeDamage(results[i], RawDamage(cfg.damage, cfg.damageType), cfg.damageType);
     }
 
     /// <summary>
     /// Gây sát thương cận chiến cho 1 target.
     /// </summary>
-    private void DealMeleeDamage(Collider2D player, int damage)
+    private void DealMeleeDamage(Collider2D player, int damage, Attrition.Core.DamageType type)
     {
         Vector2 directionToPlayer = (player.transform.position - transform.position).normalized;
         IDamageable dmg = player.GetComponentInParent<IDamageable>();
         if (dmg != null && !dmg.IsDead)
         {
             Vector2 pushDir = new Vector2(directionToPlayer.x, 0.5f).normalized;
-            dmg.TakeDamage(damage, pushDir, 0f); // force=0 → Player sẽ dùng knockbackForceOverride
+            dmg.TakeDamage(damage, pushDir, 0f, type); // force=0 → Player sẽ dùng knockbackForceOverride
         }
     }
 

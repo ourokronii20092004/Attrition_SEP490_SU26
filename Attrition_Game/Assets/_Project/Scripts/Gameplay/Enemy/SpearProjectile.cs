@@ -27,14 +27,16 @@ public class SpearProjectile : NetworkBehaviour
     
     [Networked] private int damage { get; set; }
     [Networked] private float knockbackForce { get; set; }
+    [Networked] private int damageTypeRaw { get; set; }
 
-    public void Init(Vector2 initialDirection, int dmg, float knockback)
+    public void Init(Vector2 initialDirection, int dmg, float knockback, Attrition.Core.DamageType type = Attrition.Core.DamageType.Physical)
     {
         // Vận tốc ban đầu (ví dụ: quái ném góc xéo lên)
         currentVelocity = initialDirection.normalized * speed;
         damage = dmg;
         knockbackForce = knockback;
         isStuck = false;
+        damageTypeRaw = (int)type;
     }
 
     public override void Spawned()
@@ -112,7 +114,7 @@ public class SpearProjectile : NetworkBehaviour
                 if (dmg != null && !dmg.IsDead)
                 {
                     Vector2 pushDir = new Vector2(Mathf.Sign(currentVelocity.x), 0.5f).normalized;
-                    dmg.TakeDamage(damage, pushDir, knockbackForce);
+                    dmg.TakeDamage(damage, pushDir, knockbackForce, (Attrition.Core.DamageType)damageTypeRaw);
                 }
                 
                 // Trúng người thì biến mất luôn (hoặc có thể xuyên qua tùy game design)
