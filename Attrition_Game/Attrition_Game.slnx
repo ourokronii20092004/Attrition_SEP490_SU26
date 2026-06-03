@@ -2,8 +2,15 @@
   <Project Path="Fusion.Unity.Editor.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
   <Project Path="Fusion.Addons.Physics.csproj" />
+  <Project Path="Attrition.Gameplay.csproj" />
+  <Project Path="Attrition.UI.csproj" />
+  <Project Path="Attrition.Persistence.csproj" />
   <Project Path="Fusion.Unity.csproj" />
-  <Project Path="Assembly-CSharp-Editor.csproj" />
+  <Project Path="Attrition.Systems.csproj" />
+  <Project Path="Attrition.Core.csproj" />
+  <Project Path="Attrition.Data.csproj" />
   <Project Path="Fusion.Addons.Physics.Editor.csproj" />
+  <Project Path="Attrition.Networking.csproj" />
   <Project Path="Unity.Fusion.CodeGen.csproj" />
+  <Project Path="Attrition.Editor.csproj" />
 </Solution>
