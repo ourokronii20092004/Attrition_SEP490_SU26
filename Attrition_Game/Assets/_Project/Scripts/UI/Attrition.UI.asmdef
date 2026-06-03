@@ -6,7 +6,9 @@
         "Attrition.Systems",
         "Attrition.Persistence",
         "Unity.TextMeshPro",
-        "UnityEngine.UI"
+        "UnityEngine.UI",
+        "Attrition.Data",
+        "Attrition.Gameplay"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

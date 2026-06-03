@@ -350,7 +350,7 @@ MonoBehaviour:
   extraLivesAfterHpZero: 0
   reviveDelaySeconds: 5
   canBeKnockedBack: 1
-  stunDuration: 1
+  stunDuration: 0.4
   _Health: 0
   _CurrentPoise: 0
   _isDeadNetworked:

@@ -2,6 +2,7 @@ using Fusion;
 using UnityEngine;
 using Attrition.Data;
 using Attrition.Gameplay.Player;
+using Attrition.Gameplay.Player.Inventory;
 
 namespace Attrition.Gameplay.World
 {
@@ -10,7 +11,8 @@ namespace Attrition.Gameplay.World
         RestoreHP,        // Hồi HP ngay
         RestoreMana,      // Hồi Mana ngay
         MaxHealthCharge,  // Tăng cap bình máu (+amount)
-        MaxManaCharge     // Tăng cap bình mana (+amount)
+        MaxManaCharge,    // Tăng cap bình mana (+amount)
+        InventoryItem     // Nhặt vật phẩm vào inventory
     }
 
     /// <summary>
@@ -28,8 +30,12 @@ namespace Attrition.Gameplay.World
         [Header("---- PICKUP ----")]
         [Tooltip("Loại hiệu ứng khi nhặt.")]
         [SerializeField] private PickupKind kind = PickupKind.RestoreHP;
-        [Tooltip("Lượng hồi (HP/Mana) hoặc số charge cộng thêm.")]
+        [Tooltip("Lượng hồi (HP/Mana) hoặc số charge cộng thêm, hoặc số lượng item nhặt.")]
         [SerializeField] private int amount = 50;
+
+        [Header("---- INVENTORY ITEM (kind = InventoryItem) ----")]
+        [Tooltip("SO vật phẩm sẽ được thêm vào inventory khi nhặt. Chỉ dùng khi kind = InventoryItem.")]
+        [SerializeField] private ItemSO itemData;
 
         [Header("---- FEEDBACK (tùy chọn) ----")]
         [Tooltip("Prefab hiệu ứng spawn khi nhặt (vd particle). Bỏ trống = không có.")]
@@ -45,35 +51,49 @@ namespace Attrition.Gameplay.World
             var stats = other.GetComponentInParent<PlayerStats>();
             if (stats == null) return;
 
-            ApplyTo(stats);
+            if (!ApplyTo(stats)) return;
+
             Consumed = true;
             RpcOnCollected(transform.position);
-
             Runner.Despawn(Object);
         }
 
-        private void ApplyTo(PlayerStats stats)
+        /// <summary>Áp hiệu ứng. Trả false nếu không áp được (vd inventory đầy).</summary>
+        private bool ApplyTo(PlayerStats stats)
         {
             switch (kind)
             {
                 case PickupKind.RestoreHP:
                     stats.RestoreHP(amount);
-                    break;
+                    return true;
                 case PickupKind.RestoreMana:
                     stats.RestoreMana(amount);
-                    break;
+                    return true;
                 case PickupKind.MaxHealthCharge:
                 {
                     var potions = stats.GetComponent<PotionSystem>();
                     if (potions != null) potions.IncreaseMaxHealthCharges(amount);
-                    break;
+                    return true;
                 }
                 case PickupKind.MaxManaCharge:
                 {
                     var potions = stats.GetComponent<PotionSystem>();
                     if (potions != null) potions.IncreaseMaxManaCharges(amount);
-                    break;
+                    return true;
                 }
+                case PickupKind.InventoryItem:
+                {
+                    if (itemData == null) return false;
+                    var inv = stats.GetComponent<PlayerInventory>();
+                    if (inv == null) return false;
+                    var db = ItemDatabaseSO.Instance;
+                    if (db == null) return false;
+                    int idx = db.GetIndex(itemData);
+                    if (idx < 0) return false;
+                    return inv.TryAddItem(idx, amount); // BR-40: trả false nếu đầy
+                }
+                default:
+                    return false;
             }
         }
 
