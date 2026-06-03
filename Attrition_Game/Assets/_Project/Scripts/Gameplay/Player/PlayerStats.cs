@@ -53,8 +53,11 @@ namespace Attrition.Gameplay.Player
 
         private void BuildSheet()
         {
+            var progression = GetComponent<PlayerProgression>();
+            var leveling = progression != null ? progression.GetLevelingConfig() : new LevelingConfig();
+            
             if (baseStats != null)
-                _sheet = new StatSheet(baseStats);
+                _sheet = new StatSheet(baseStats, leveling);
         }
 
         // ─── Chỉ số gộp (đọc từ sheet, fallback nếu chưa có SO) ───
@@ -66,8 +69,23 @@ namespace Attrition.Gameplay.Player
         public int DEF => _sheet?.DEF ?? 10;
         public int RES => _sheet?.RES ?? 10;
 
-        /// <summary>Cấp tối đa từ SO (fallback 21 nếu chưa gán).</summary>
-        public int MaxLevel => baseStats != null ? baseStats.maxLevel : 21;
+        public float MoveSpeed => baseStats != null ? baseStats.moveSpeed : 10f;
+        public float DashSpeed => baseStats != null ? baseStats.dashSpeed : 25f;
+        public float SlideSpeed => baseStats != null ? baseStats.slideSpeed : 15f;
+        public float JumpForce => baseStats != null ? baseStats.jumpForce : 15f;
+        public float DoubleJumpForce => baseStats != null ? baseStats.doubleJumpForce : 8f;
+        public float AttackSpeed => baseStats != null ? baseStats.attackSpeed : 1f;
+        public float ChargeDamageMultiplier => baseStats != null ? baseStats.chargeDamageMultiplier : 2f;
+
+        /// <summary>Cấp tối đa từ hệ thống (fallback 21 nếu chưa cấu hình).</summary>
+        public int MaxLevel 
+        {
+            get 
+            {
+                var progression = GetComponent<PlayerProgression>();
+                return progression != null ? progression.maxLevel : 21;
+            }
+        }
 
         /// <summary>
         /// Gọi bởi PlayerProgression khi lên cấp: áp level mới vào sheet (mở thêm điểm tự cộng),
@@ -108,12 +126,15 @@ namespace Attrition.Gameplay.Player
 
         public bool HasStamina(float amount) => CurrentStamina >= amount;
 
-        /// <summary>Trừ stamina nếu đủ. Trả về false (không trừ) nếu thiếu. Chỉ chạy trên state authority.</summary>
+        /// <summary>Trừ stamina nếu đủ. Trả về false (không trừ) nếu thiếu. Hỗ trợ Client Prediction.</summary>
         public bool TryConsumeStamina(float amount)
         {
-            if (!HasStateAuthority) return false;
             if (CurrentStamina < amount) return false;
-            CurrentStamina = Mathf.Max(0f, CurrentStamina - amount);
+            // Chỉ Host mới được ghi đè biến [Networked]
+            if (HasStateAuthority)
+            {
+                CurrentStamina = Mathf.Max(0f, CurrentStamina - amount);
+            }
             return true;
         }
 

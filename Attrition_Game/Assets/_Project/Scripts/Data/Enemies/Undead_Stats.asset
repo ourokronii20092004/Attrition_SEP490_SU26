@@ -19,7 +19,11 @@ MonoBehaviour:
   ap: 0
   def: 5
   res: 0
-  poise: 30
+  poise: 100
+  poiseRecoveryTime: 3
+  patrolSpeed: 2
+  chaseSpeed: 5
+  attackSpeed: 1
   expReward: 50
   coopHpMultiplier: 1.6
   coopDamageMultiplier: 1.2

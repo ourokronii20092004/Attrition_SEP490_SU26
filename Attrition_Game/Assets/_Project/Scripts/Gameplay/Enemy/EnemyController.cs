@@ -26,17 +26,19 @@ namespace Attrition.Controllers
 
         // Đã ẩn toàn bộ các biến chạy ngầm khỏi Inspector để tránh tick nhầm
         [HideInInspector][Networked] public int Health { get; set; }
+        [HideInInspector][Networked] public float CurrentPoise { get; set; }
         [HideInInspector][Networked] public NetworkBool isDeadNetworked { get; set; }
         [HideInInspector][Networked] public NetworkBool IsKnockbackActive { get; set; }
         [HideInInspector][Networked] public NetworkBool IsAwaitingRevive { get; set; }
 
         [Networked] private TickTimer knockbackTimer { get; set; }
+        [Networked] private TickTimer poiseRecoveryTimer { get; set; }
         [Networked] private TickTimer reviveTimer { get; set; }
         [Networked] private TickTimer despawnTimer { get; set; }
         [Networked] private int RevivesRemaining { get; set; }
 
-        public int maxHealth = 3;
-        [Tooltip("Tùy chọn: nguồn chỉ số point-based. Bỏ trống = dùng maxHealth (hit-based) như cũ.")]
+        [HideInInspector] public int maxHealth = 3;
+        [Tooltip("Nguồn chỉ số (point-based).")]
         [SerializeField] private EnemyStats statsComp;
         private Rigidbody2D rb;
         private bool _localDeathHandled;
@@ -55,6 +57,7 @@ namespace Attrition.Controllers
                 if (statsComp != null && statsComp.MaxHP > 0) maxHealth = statsComp.MaxHP;
                 Health = maxHealth;
                 RevivesRemaining = extraLivesAfterHpZero;
+                CurrentPoise = GetMaxPoise();
             }
 
             rb = GetComponent<Rigidbody2D>();
@@ -104,6 +107,13 @@ namespace Attrition.Controllers
             if (IsKnockbackActive && knockbackTimer.ExpiredOrNotRunning(Runner))
             {
                 IsKnockbackActive = false;
+            }
+
+            bool usePoise = statsComp != null && statsComp.Poise > 0;
+            if (usePoise && poiseRecoveryTimer.Expired(Runner))
+            {
+                CurrentPoise = GetMaxPoise();
+                poiseRecoveryTimer = TickTimer.None;
             }
 
             aiComp.RunAILogic();
@@ -162,8 +172,28 @@ namespace Attrition.Controllers
             }
             else
             {
-                // Chỉ áp dụng Knockback và ngắt đòn đánh (Stun) nếu quái cho phép
-                if (canBeKnockedBack)
+                bool shouldStun = false;
+                bool usePoise = statsComp != null && statsComp.Poise > 0;
+
+                if (usePoise)
+                {
+                    CurrentPoise -= damage; // Poise trừ trực tiếp theo lượng damage thô nhận vào
+                    float recoveryTime = statsComp != null ? statsComp.PoiseRecoveryTime : 3f;
+                    poiseRecoveryTimer = TickTimer.CreateFromSeconds(Runner, recoveryTime);
+
+                    if (CurrentPoise <= 0)
+                    {
+                        shouldStun = true;
+                        CurrentPoise = GetMaxPoise(); // Reset poise ngay lập tức sau khi bị vỡ
+                    }
+                }
+                else if (canBeKnockedBack)
+                {
+                    shouldStun = true;
+                }
+
+                // Chỉ áp dụng Knockback và ngắt đòn đánh (Stun) nếu thỏa điều kiện Poise hoặc canBeKnockedBack
+                if (shouldStun)
                 {
                     // Ngắt heal, skill, summon nếu đang thực hiện (Elite)
                     if (eliteSkills != null)
@@ -283,6 +313,14 @@ namespace Attrition.Controllers
             if (!HasStateAuthority) return;
             if (isDeadNetworked || IsAwaitingRevive) return;
             Health = Mathf.Min(Health + amount, maxHealth);
+        }
+
+        private float GetMaxPoise()
+        {
+            if (statsComp == null) return 0f;
+            // Kiểm tra số lượng người chơi để scale Poise (BR-22)
+            var players = FindObjectsByType<Attrition.Gameplay.Player.PlayerProgression>(FindObjectsSortMode.None);
+            return (players != null && players.Length > 1) ? statsComp.Poise * 1.5f : statsComp.Poise;
         }
 
         // ═══════════════════════════════════════════════════════════════

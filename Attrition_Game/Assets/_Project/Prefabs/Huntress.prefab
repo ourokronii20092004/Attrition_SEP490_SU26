@@ -190,6 +190,7 @@ MonoBehaviour:
   canBeKnockedBack: 0
   stunDuration: 0.2
   _Health: 0
+  _CurrentPoise: 0
   _isDeadNetworked:
     _value: 0
   _IsKnockbackActive:
@@ -214,8 +215,6 @@ MonoBehaviour:
   combatComp: {fileID: 6447189514915797972}
   controller: {fileID: 7153023172457060605}
   eliteSkills: {fileID: 2670745557426037405}
-  patrolSpeed: 2
-  chaseSpeed: 5
   viewRadius: 15
   patrolRadius: 3
   isFlying: 0
@@ -279,6 +278,7 @@ MonoBehaviour:
     angle: 326
     rectSize: {x: 1, y: 1}
     damage: 1
+    damageType: 0
     duration: 0.5
     cooldown: 1.5
     recoveryDuration: 0.25
@@ -287,6 +287,7 @@ MonoBehaviour:
     angle: 117
     rectSize: {x: 3, y: 4.5}
     damage: 2
+    damageType: 0
     duration: 0
     cooldown: 1.5
     recoveryDuration: 0.25
@@ -304,7 +305,6 @@ MonoBehaviour:
   playerLayer:
     serializedVersion: 2
     m_Bits: 128
-  currentAttackSpeed: 1
   isRanged: 0
   projectilePrefab:
     RawGuidValue: ff45600064efb6548b4df92532a1251f
@@ -419,6 +419,7 @@ MonoBehaviour:
   skills:
   - skillName: "n\xE9m lao"
     damage: 2
+    damageType: 0
     range: 15
     hitboxShape: 0
     angle: 360
@@ -468,6 +469,10 @@ MonoBehaviour:
   _DEF: 0
   _RES: 0
   _Poise: 0
+  _PoiseRecoveryTime: 0
+  _PatrolSpeed: 0
+  _ChaseSpeed: 0
+  _AttackSpeed: 0
 --- !u!1 &3827784312759404011
 GameObject:
   m_ObjectHideFlags: 0
