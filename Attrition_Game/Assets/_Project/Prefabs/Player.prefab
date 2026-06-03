@@ -222,20 +222,16 @@ MonoBehaviour:
   animationComp: {fileID: 8805790379459285585}
   statsComp: {fileID: 5532332673274492828}
   potionComp: {fileID: 2638378353840522064}
-  moveSpeed: 10
-  jumpForce: 15
-  doubleJumpForce: 8
   rb: {fileID: 8158020556837803344}
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
-  dashSpeed: 20
+  hasShadowDash: 0
   dashDuration: 0.2
   dashCooldownTime: 1
   crouchSpeedMultiplier: 0.4
   variableJumpCutMultiplier: 0.5
   maxJumps: 2
-  slideSpeed: 15
   slideDuration: 0.2
   slideCooldownTime: 1
   playerCollider: {fileID: 7161810634740937689}
@@ -290,10 +286,7 @@ MonoBehaviour:
   targetLayers:
     serializedVersion: 2
     m_Bits: 768
-  attackDamage: 2
-  chargeAttackDamage: 2
   chargeThreshold: 0.25
-  currentAttackSpeed: 1
   _IsAttacking:
     _value: 0
   _IsChargingAttack:
@@ -374,7 +367,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cc7e2cde1b70c0845938b7d50215b7eb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Player.PlayerStats
-  baseStats: {fileID: 0}
+  baseStats: {fileID: 11400000, guid: 04c1ef09101c1c443a935bb321e00751, type: 2}
   _CurrentHP: 0
   _CurrentMana: 0
   _CurrentStamina: 0

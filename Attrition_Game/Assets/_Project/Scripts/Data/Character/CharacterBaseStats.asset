@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abb75984f03739b4480f62f68899bee7, type: 3}
+  m_Name: CharacterBaseStats
+  m_EditorClassIdentifier: Attrition.Data::Attrition.Data.CharacterBaseStatsSO
+  baseHP: 100
+  baseMana: 100
+  baseStamina: 100
+  baseAD: 10
+  baseAP: 10
+  baseDEF: 10
+  baseRES: 10
+  moveSpeed: 10
+  dashSpeed: 20
+  slideSpeed: 15
+  jumpForce: 15
+  doubleJumpForce: 8
+  attackSpeed: 1
+  chargeDamageMultiplier: 2

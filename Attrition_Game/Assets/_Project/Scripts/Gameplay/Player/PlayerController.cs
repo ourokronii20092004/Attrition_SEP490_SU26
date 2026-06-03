@@ -24,14 +24,12 @@ public class PlayerController : NetworkBehaviour, IDamageable
     private Attrition.Gameplay.World.Checkpoint _currentCheckpoint;
 
     [Header("---- MOVEMENT & PHYSICS ----")]
-    [SerializeField] private float moveSpeed = 10f;
-    [SerializeField] private float jumpForce = 15f;
-    [SerializeField] private float doubleJumpForce = 12f;
     [SerializeField] private Rigidbody2D rb;
     [SerializeField] private LayerMask groundLayer;
 
     [Header("---- ADVANCED MOVEMENT ----")]
-    [SerializeField] private float dashSpeed = 25f;
+    [Tooltip("Bật để Dash có I-Frames (không nhận sát thương khi đang lướt)")]
+    public bool hasShadowDash = false;
     [SerializeField] private float dashDuration = 0.2f;
     [SerializeField] private float dashCooldownTime = 0.8f;
     [SerializeField] private float crouchSpeedMultiplier = 0.4f;
@@ -39,7 +37,6 @@ public class PlayerController : NetworkBehaviour, IDamageable
     [SerializeField] private int maxJumps = 2;
 
     [Header("---- SLIDE ----")]
-    [SerializeField] private float slideSpeed = 20f;
     [SerializeField] private float slideDuration = 0.5f;
     [SerializeField] private float slideCooldownTime = 1f;
 
@@ -234,7 +231,8 @@ public class PlayerController : NetworkBehaviour, IDamageable
             else
             {
                 float dashDir = IsFacingRight ? 1f : -1f;
-                rb.linearVelocity = new Vector2(dashDir * dashSpeed, 0);
+                float dSpeed = statsComp != null ? statsComp.DashSpeed : 25f;
+                rb.linearVelocity = new Vector2(dashDir * dSpeed, 0);
                 return;
             }
         }
@@ -250,7 +248,8 @@ public class PlayerController : NetworkBehaviour, IDamageable
             {
                 // Ép hướng mặt theo hướng slide
                 IsFacingRight = _slideDirection > 0;
-                rb.linearVelocity = new Vector2(_slideDirection * slideSpeed, rb.linearVelocity.y);
+                float sSpeed = statsComp != null ? statsComp.SlideSpeed : 20f;
+                rb.linearVelocity = new Vector2(_slideDirection * sSpeed, rb.linearVelocity.y);
                 
                 // Khóa input di chuyển bình thường, nhảy vào đoạn cuối của hàm để lấy update
                 // Nhưng cần phải check hitbox size liên tục!
@@ -298,7 +297,8 @@ public class PlayerController : NetworkBehaviour, IDamageable
                 }
                 else
                 {
-                    float speed = IsCrouching ? moveSpeed * crouchSpeedMultiplier : moveSpeed;
+                    float mSpeed = statsComp != null ? statsComp.MoveSpeed : 10f;
+                    float speed = IsCrouching ? mSpeed * crouchSpeedMultiplier : mSpeed;
                     rb.linearVelocity = new Vector2(data.horizontalInput * speed, rb.linearVelocity.y);
                     IsMoving = Mathf.Abs(data.horizontalInput) > 0.1f;
                 }
@@ -310,7 +310,9 @@ public class PlayerController : NetworkBehaviour, IDamageable
                     {
                         rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
                         rb.position = new Vector2(rb.position.x, rb.position.y + 0.05f);
-                        float currentJumpForce = (JumpCount > 0) ? doubleJumpForce : jumpForce;
+                        float jForce = statsComp != null ? statsComp.JumpForce : 15f;
+                        float djForce = statsComp != null ? statsComp.DoubleJumpForce : 12f;
+                        float currentJumpForce = (JumpCount > 0) ? djForce : jForce;
                         rb.linearVelocity = new Vector2(rb.linearVelocity.x, currentJumpForce);
                         JumpCount++;
                     }
@@ -442,14 +444,14 @@ public class PlayerController : NetworkBehaviour, IDamageable
 
     public void TakeDamage(int damage, Vector2 knockbackDir, float knockbackForce, Attrition.Core.DamageType type = Attrition.Core.DamageType.Physical)
     {
-        if (isInvincible || isDeadNetworked) return;
+        if (isInvincible || isDeadNetworked || (hasShadowDash && IsDashing)) return;
         RPC_TakeDamage(damage, knockbackDir, knockbackForce, (int)type);
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
     private void RPC_TakeDamage(int damage, Vector2 knockbackDir, float knockbackForce, int type)
     {
-        if (isDeadNetworked) return;
+        if (isDeadNetworked || (hasShadowDash && IsDashing)) return;
 
         // damage = chỉ số tấn công GỐC; defender tự áp DEF (Physical) hoặc RES (Magic).
         int def = statsComp != null ? statsComp.DEF : 0;

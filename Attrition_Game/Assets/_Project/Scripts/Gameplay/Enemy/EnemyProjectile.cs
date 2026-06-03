@@ -14,12 +14,14 @@ public class EnemyProjectile : NetworkBehaviour
     [Networked] private Vector2 moveDirection { get; set; }
     [Networked] private int damage { get; set; }
     [Networked] private float knockbackForce { get; set; }
+    [Networked] private int damageTypeRaw { get; set; }
 
-    public void Init(Vector2 direction, int dmg, float knockback)
+    public void Init(Vector2 direction, int dmg, float knockback, Attrition.Core.DamageType type = Attrition.Core.DamageType.Physical)
     {
         moveDirection = direction.normalized;
         damage = dmg;
         knockbackForce = knockback;
+        damageTypeRaw = (int)type;
     }
 
     public override void Spawned()
@@ -60,7 +62,7 @@ public class EnemyProjectile : NetworkBehaviour
             if (dmg != null && !dmg.IsDead)
             {
                 Vector2 pushDir = new Vector2(moveDirection.x, 0.5f).normalized;
-                dmg.TakeDamage(damage, pushDir, knockbackForce);
+                dmg.TakeDamage(damage, pushDir, knockbackForce, (Attrition.Core.DamageType)damageTypeRaw);
             }
             
             Runner.Despawn(Object);

@@ -13,9 +13,23 @@ namespace Attrition.Systems
     ///   4. accessory — modifiers từ damage-accessory đang trang bị
     /// Đây là nguồn chỉ số DUY NHẤT mà gameplay đọc — không hard-code ở Controller.
     /// </summary>
+    public struct LevelingConfig
+    {
+        public int maxLevel;
+        public int statPointsPerLevel;
+        public int hpPerPoint;
+        public int manaPerPoint;
+        public int staminaPerPoint;
+        public int adPerPoint;
+        public int apPerPoint;
+        public int defPerPoint;
+        public int resPerPoint;
+    }
+
     public class StatSheet
     {
         private readonly CharacterBaseStatsSO _baseStats;
+        private readonly LevelingConfig _leveling;
         private int _level = 1;
 
         // điểm tự cộng (Option 2): stat -> số điểm đã đầu tư
@@ -23,9 +37,10 @@ namespace Attrition.Systems
         // tổng modifier phẳng từ trang bị + accessory
         private readonly Dictionary<StatType, int> _gearFlat = new();
 
-        public StatSheet(CharacterBaseStatsSO baseStats)
+        public StatSheet(CharacterBaseStatsSO baseStats, LevelingConfig leveling)
         {
             _baseStats = baseStats;
+            _leveling = leveling;
         }
 
         public int Level => _level;
@@ -38,11 +53,13 @@ namespace Attrition.Systems
             {
                 int spent = 0;
                 foreach (var kv in _allocated) spent += kv.Value;
-                return _baseStats.TotalStatPointsAtLevel(_level) - spent;
+                int clamped = Mathf.Clamp(_level, 1, _leveling.maxLevel);
+                int totalPoints = (clamped - 1) * _leveling.statPointsPerLevel;
+                return totalPoints - spent;
             }
         }
 
-        public void SetLevel(int level) => _level = Mathf.Clamp(level, 1, _baseStats.maxLevel);
+        public void SetLevel(int level) => _level = Mathf.Clamp(level, 1, _leveling.maxLevel);
 
         /// <summary>Cộng 1 điểm tự phân bổ vào stat (Option 2). Trả false nếu hết điểm.</summary>
         public bool AllocatePoint(StatType stat)
@@ -104,13 +121,13 @@ namespace Attrition.Systems
         {
             switch (stat)
             {
-                case StatType.MaxHP: return _baseStats.hpPerPoint;
-                case StatType.MaxMana: return _baseStats.manaPerPoint;
-                case StatType.MaxStamina: return _baseStats.staminaPerPoint;
-                case StatType.AD: return _baseStats.adPerPoint;
-                case StatType.AP: return _baseStats.apPerPoint;
-                case StatType.DEF: return _baseStats.defPerPoint;
-                case StatType.RES: return _baseStats.resPerPoint;
+                case StatType.MaxHP: return _leveling.hpPerPoint;
+                case StatType.MaxMana: return _leveling.manaPerPoint;
+                case StatType.MaxStamina: return _leveling.staminaPerPoint;
+                case StatType.AD: return _leveling.adPerPoint;
+                case StatType.AP: return _leveling.apPerPoint;
+                case StatType.DEF: return _leveling.defPerPoint;
+                case StatType.RES: return _leveling.resPerPoint;
                 default: return 0;
             }
         }

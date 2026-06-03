@@ -20,6 +20,10 @@ MonoBehaviour:
   def: 0
   res: 0
   poise: 0
+  poiseRecoveryTime: 3
+  patrolSpeed: 2
+  chaseSpeed: 5
+  attackSpeed: 1
   expReward: 0
   coopHpMultiplier: 1.6
   coopDamageMultiplier: 1.2

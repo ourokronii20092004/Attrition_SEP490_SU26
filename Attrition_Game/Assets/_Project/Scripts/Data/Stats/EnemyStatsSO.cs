@@ -27,6 +27,12 @@ namespace Attrition.Data
         [Header("---- ELITE / BOSS ----")]
         [Tooltip("Poise: elite không có hit-stun thường; nhận sát thương trừ poise, =0 mới choáng. 0 = bỏ qua.")]
         public int poise = 0;
+        public float poiseRecoveryTime = 3f;
+
+        [Header("---- MOVEMENT & ATTACK ----")]
+        public float patrolSpeed = 2f;
+        public float chaseSpeed = 5f;
+        public float attackSpeed = 1f;
 
         [Header("---- REWARD ----")]
         [Tooltip("EXP cộng cho MỖI player khi quái này chết (coop: như nhau cho cả 2).")]
