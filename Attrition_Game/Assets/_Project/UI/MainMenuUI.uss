@@ -1,0 +1,1137 @@
+/* ============================================================
+   ATTRITION UI — SHARED GLOBAL STYLES
+   ============================================================ */
+
+#container {
+    width: 100%;
+    height: 100%;
+    flex-grow: 1;
+    overflow: hidden;
+    align-items: center;
+    justify-content: center;
+    background-color: #07080d;
+}
+
+#background {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('Textures/MainMenuBackground.png');
+    -unity-background-scale-mode: scale-and-crop;
+}
+
+#overlay-gradient {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(4, 3, 10, 0.75);
+}
+
+.screen {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ============================================================
+   MAIN MENU SCREEN
+   ============================================================ */
+
+#content {
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+#title-block {
+    align-items: center;
+    margin-bottom: 50px;
+}
+
+.ornament {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.ornament-line {
+    height: 1px;
+    width: 120px;
+    background-color: rgba(201, 168, 76, 0.8);
+}
+
+.ornament-line.short {
+    width: 80px;
+    background-color: rgba(201, 168, 76, 0.4);
+}
+
+.ornament-diamond {
+    width: 6px;
+    height: 6px;
+    background-color: #e8d8a8;
+    rotate: 45deg;
+    margin-left: 16px;
+    margin-right: 16px;
+}
+
+.ornament-diamond.short {
+    width: 2px;
+    height: 12px;
+    rotate: 0deg;
+    background-color: rgba(201, 168, 76, 0.5);
+}
+
+#title {
+    color: rgb(255, 255, 255);
+    font-size: 56px;
+    -unity-font-definition: initial;
+    -unity-font: url('Fonts/Cinzel/static/Cinzel-Bold.ttf');
+    letter-spacing: 12px;
+    margin-top: 20px;
+    margin-bottom: 8px;
+    -unity-text-align: middle-center;
+    text-shadow: 0px 8px 20px rgba(0, 0, 0, 0.9);
+    -unity-text-outline-width: 0.5px;
+    -unity-text-outline-color: rgba(255, 255, 255, 0.1);
+}
+
+#subtitle {
+    color: #e8d8a8;
+    font-size: 14px;
+    -unity-font-definition: initial;
+    -unity-font: url('Fonts/Cinzel/static/Cinzel-Regular.ttf');
+    letter-spacing: 6px;
+    margin-bottom: 24px;
+    -unity-text-align: middle-center;
+    text-shadow: 0px 4px 10px rgba(0, 0, 0, 0.9);
+}
+
+#nav {
+    width: 320px;
+    align-items: center;
+}
+
+.menu-button {
+    width: 100%;
+    height: 54px;
+    background-color: transparent;
+    border-width: 1px;
+    border-color: rgba(201, 168, 76, 0.0);
+    border-radius: 4px;
+    color: rgba(200, 196, 188, 0.75);
+    font-size: 16px;
+    -unity-font-definition: initial;
+    -unity-font: url('Fonts/Cinzel/static/Cinzel-Regular.ttf');
+    letter-spacing: 4px;
+    transition-property: color, background-color, scale, border-color;
+    transition-duration: 0.25s, 0.3s, 0.25s, 0.3s;
+    -unity-text-align: middle-center;
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+.menu-button:hover {
+    color: #ffffff;
+    background-color: rgba(201, 168, 76, 0.12);
+    border-color: rgba(201, 168, 76, 0.4);
+    -unity-font: url('Fonts/Cinzel/static/Cinzel-Bold.ttf');
+    scale: 1.08;
+}
+
+.menu-button-underline {
+    position: absolute;
+    bottom: -2px;
+    left: 20%;
+    right: 20%;
+    height: 2px;
+    background-color: #c9a84c;
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 0.3s;
+}
+
+.menu-button:hover > .menu-button-underline {
+    opacity: 1;
+}
+
+#footer {
+    position: absolute;
+    bottom: 24px;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 10px;
+    letter-spacing: 3px;
+    -unity-font-definition: initial;
+    -unity-font: url('Fonts/Cinzel/static/Cinzel-Regular.ttf');
+}
+
+.particle-container {
+    position: absolute;
+    right: -20px;
+    top: 50%;
+    translate: 0 -50%;
+    flex-direction: row;
+    opacity: 0;
+}
+
+.menu-button:hover > .particle-container {
+    opacity: 1;
+}
+
+.particle {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background-color: #ff9d00;
+    margin-left: 3px;
+    opacity: 0;
+}
+
+/* ============================================================
+   SAVE SELECTION SCREEN
+   ============================================================ */
+
+#save-content {
+    width: 580px;
+    align-items: center;
+    justify-content: center;
+}
+
+#save-title-area {
+    align-items: center;
+    margin-bottom: 28px;
+}
+
+#save-title {
+    color: #ffffff;
+    font-size: 22px;
+    -unity-font-definition: initial;
+    -unity-font: url('Fonts/Cinzel/static/Cinzel-Bold.ttf');
+    letter-spacing: 8px;
+    margin-bottom: 10px;
+    -unity-text-align: middle-center;
+    text-shadow: 0px 4px 12px rgba(0, 0, 0, 0.8);
+}
+
+#save-title-divider {
+    width: 200px;
+    height: 1px;
+    background-color: rgba(201, 168, 76, 0.5);
+}
+
+#save-slots-container {
+    width: 100%;
+    margin-bottom: 28px;
+}
+
+/* --- Save Slot Card --- */
+.save-slot {
+    width: 100%;
+    margin-bottom: 10px;
+    background-color: rgba(10, 12, 20, 0.85);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.07);
+    border-radius: 8px;
+    padding: 0;
+    transition-property: border-color, background-color, scale;
+    transition-duration: 0.2s, 0.2s, 0.15s;
+    overflow: hidden;
+}
+
+.save-slot:hover {
+    border-color: rgba(201, 168, 76, 0.45);
+    background-color: rgba(201, 168, 76, 0.08);
+    scale: 1.01;
+}
+
+.save-slot-active-indicator {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background-color: #c9a84c;
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 0.2s;
+}
+
+.save-slot:hover > .save-slot-active-indicator {
+    opacity: 1;
+}
+
+.save-slot-inner {
+    flex-direction: row;
+    align-items: center;
+    padding: 14px 18px;
+}
+
+/* Avatar */
+.save-avatar {
+    width: 58px;
+    height: 58px;
+    margin-right: 18px;
+    flex-shrink: 0;
+}
+
+.save-avatar-circle {
+    width: 58px;
+    height: 58px;
+    border-radius: 29px;
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.1);
+    transition-property: border-color;
+    transition-duration: 0.2s;
+}
+
+.save-avatar-circle.purple {
+    background-color: rgb(35, 25, 55);
+}
+
+.save-avatar-circle.blue {
+    background-color: rgb(20, 35, 55);
+}
+
+.save-slot:hover .save-avatar-circle {
+    border-color: rgba(201, 168, 76, 0.55);
+}
+
+/* Info */
+.save-info {
+    flex-grow: 1;
+    flex-shrink: 1;
+    overflow: hidden;
+}
+
+.save-info-top {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.save-name {
+    color: #ffffff;
+    font-size: 15px;
+    -unity-font-definition: initial;
+    -unity-font: url('Fonts/Cinzel/static/Cinzel-SemiBold.ttf');
+    letter-spacing: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.save-level {
+    color: #c9a84c;
+    font-size: 10px;
+    -unity-font-definition: initial;
+    -unity-font: url('Fonts/Cinzel/static/Cinzel-Regular.ttf');
+    letter-spacing: 3px;
+    flex-shrink: 0;
+    margin-left: 12px;
+}
+
+.save-location {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 11px;
+    margin-bottom: 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.save-stats-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.save-playtime {
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 10px;
+    margin-right: 16px;
+}
+
+.save-deaths {
+    color: rgba(255, 255, 255, 0.2);
+    font-size: 10px;
+}
+
+/* Right side */
+.save-slot-right {
+    flex-direction: column;
+    align-items: center;
+    margin-left: 18px;
+    flex-shrink: 0;
+}
+
+.save-slot-number {
+    color: rgba(255, 255, 255, 0.15);
+    font-size: 10px;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.save-delete-btn {
+    width: 28px;
+    height: 28px;
+    background-color: transparent;
+    border-width: 1px;
+    border-color: rgba(180, 40, 40, 0.2);
+    border-radius: 4px;
+    color: rgba(220, 80, 80, 0.5);
+    font-size: 12px;
+    -unity-text-align: middle-center;
+    transition-property: background-color, border-color;
+    transition-duration: 0.2s, 0.2s;
+}
+
+.save-delete-btn:hover {
+    background-color: rgba(180, 40, 40, 0.15);
+    border-color: rgba(180, 40, 40, 0.5);
+}
+
+/* Empty Slot */
+.save-slot-inner-empty {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 18px;
+    height: 70px;
+}
+
+.save-empty-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.08);
+    align-items: center;
+    justify-content: center;
+    margin-right: 14px;
+    border-style: dashed;
+}
+
+.save-empty-plus {
+    color: rgba(255, 255, 255, 0.2);
+    font-size: 18px;
+    -unity-text-align: middle-center;
+}
+
+.save-empty-text {
+    color: rgba(255, 255, 255, 0.25);
+    font-size: 11px;
+    -unity-font-definition: initial;
+    -unity-font: url('Fonts/Cinzel/static/Cinzel-Regular.ttf');
+    letter-spacing: 4px;
+}
+
+/* Action Buttons */
+#save-actions {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+.save-action-btn {
+    height: 40px;
+    border-radius: 4px;
+    -unity-font-definition: initial;
+    -unity-font: url('Fonts/Cinzel/static/Cinzel-Regular.ttf');
+    font-size: 11px;
+    letter-spacing: 3px;
+    -unity-text-align: middle-center;
+    padding-left: 24px;
+    padding-right: 24px;
+    margin-left: 6px;
+    margin-right: 6px;
+    transition-property: background-color, border-color, scale;
+    transition-duration: 0.2s, 0.2s, 0.15s;
+}
+
+.save-action-btn:hover {
+    scale: 1.03;
+}
+
+.save-action-btn.back {
+    background-color: rgba(0, 0, 0, 0.5);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.save-action-btn.back:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.save-action-btn.create {
+    background-color: rgba(201, 168, 76, 0.18);
+    border-width: 1px;
+    border-color: rgba(201, 168, 76, 0.5);
+    color: #e8d8a8;
+}
+
+.save-action-btn.create:hover {
+    background-color: rgba(201, 168, 76, 0.28);
+    border-color: rgba(201, 168, 76, 0.7);
+}
+
+.save-action-btn.continue {
+    background-color: rgba(201, 168, 76, 0.15);
+    border-width: 1px;
+    border-color: rgba(201, 168, 76, 0.35);
+    color: #c9a84c;
+}
+
+.save-action-btn.continue:hover {
+    background-color: rgba(201, 168, 76, 0.25);
+    border-color: rgba(201, 168, 76, 0.6);
+}
+
+/* ============================================================
+   SETTINGS SCREEN
+   ============================================================ */
+
+#settings-panel {
+    width: 780px;
+    height: 520px;
+    flex-direction: row;
+    background-color: rgba(8, 10, 16, 0.96);
+    border-width: 1px;
+    border-color: rgba(201, 168, 76, 0.22);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Sidebar */
+#settings-sidebar {
+    width: 180px;
+    padding-top: 24px;
+    background-color: rgba(0, 0, 0, 0.4);
+    border-right-width: 1px;
+    border-right-color: rgba(201, 168, 76, 0.12);
+}
+
+#settings-sidebar-title {
+    color: #ffffff;
+    font-size: 12px;
+    -unity-font-definition: initial;
+    -unity-font: url('Fonts/Cinzel/static/Cinzel-SemiBold.ttf');
+    letter-spacing: 5px;
+    padding-left: 24px;
+    margin-bottom: 24px;
+}
+
+.settings-tab {
+    height: 42px;
+    background-color: transparent;
+    border-width: 0;
+    border-right-width: 2px;
+    border-right-color: transparent;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 12px;
+    -unity-font-definition: initial;
+    -unity-font: url('Fonts/Cinzel/static/Cinzel-Regular.ttf');
+    letter-spacing: 3px;
+    -unity-text-align: middle-left;
+    padding-left: 24px;
+    transition-property: color, background-color, border-right-color;
+    transition-duration: 0.2s, 0.2s, 0.2s;
+}
+
+.settings-tab:hover {
+    background-color: rgba(201, 168, 76, 0.06);
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.settings-tab.active {
+    background-color: rgba(201, 168, 76, 0.1);
+    border-right-color: #c9a84c;
+    color: #e8d8a8;
+}
+
+/* Content area */
+#settings-content-area {
+    flex-grow: 1;
+    padding: 24px;
+    flex-direction: column;
+}
+
+#settings-content-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+#settings-content-title {
+    color: #ffffff;
+    font-size: 14px;
+    -unity-font-definition: initial;
+    -unity-font: url('Fonts/Cinzel/static/Cinzel-SemiBold.ttf');
+    letter-spacing: 5px;
+}
+
+#settings-content-subtitle {
+    color: rgba(255, 255, 255, 0.2);
+    font-size: 10px;
+    -unity-font-definition: initial;
+    -unity-font: url('Fonts/Cinzel/static/Cinzel-Regular.ttf');
+    letter-spacing: 3px;
+}
+
+#settings-divider {
+    height: 1px;
+    background-color: rgba(201, 168, 76, 0.3);
+    margin-bottom: 16px;
+}
+
+/* Settings rows */
+.settings-tab-content {
+    flex-grow: 1;
+}
+
+.settings-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(255, 255, 255, 0.04);
+}
+
+.settings-row:hover {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+.settings-label {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 12px;
+    letter-spacing: 2px;
+}
+
+/* Toggle */
+.settings-toggle {
+    width: 44px;
+    flex-shrink: 0;
+}
+
+.settings-toggle .unity-toggle__input {
+    background-color: rgba(60, 60, 80, 0.8);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+    border-radius: 11px;
+}
+
+.settings-toggle .unity-toggle__checkmark {
+    background-color: rgba(201, 168, 76, 0.6);
+    border-radius: 50%;
+}
+
+/* Dropdown */
+.settings-dropdown {
+    width: 200px;
+    flex-shrink: 0;
+}
+
+.settings-dropdown .unity-popup-field__input {
+    background-color: rgba(0, 0, 0, 0.45);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 11px;
+    padding: 4px 8px;
+}
+
+.settings-dropdown .unity-popup-field__input:hover {
+    border-color: rgba(201, 168, 76, 0.3);
+}
+
+/* Slider */
+.settings-slider-group {
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.settings-slider {
+    width: 140px;
+}
+
+.settings-slider .unity-base-slider__tracker {
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 3px;
+    height: 4px;
+}
+
+.settings-slider .unity-base-slider__dragger {
+    width: 14px;
+    height: 14px;
+    border-radius: 7px;
+    background-color: #c9a84c;
+    margin-top: -5px;
+}
+
+.settings-slider .unity-base-slider__fill {
+    background-color: rgba(201, 168, 76, 0.6);
+    border-radius: 3px;
+}
+
+.settings-slider-value {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 10px;
+    width: 38px;
+    -unity-text-align: middle-right;
+    margin-left: 8px;
+}
+
+/* Keybinding rows */
+.keybind-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(255, 255, 255, 0.04);
+}
+
+.keybind-row:hover {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+.keybind-btn {
+    min-width: 60px;
+    height: 28px;
+    background-color: rgba(0, 0, 0, 0.45);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 11px;
+    letter-spacing: 2px;
+    -unity-text-align: middle-center;
+    transition-property: border-color, background-color;
+    transition-duration: 0.2s, 0.2s;
+}
+
+.keybind-btn:hover {
+    border-color: rgba(201, 168, 76, 0.5);
+    background-color: rgba(201, 168, 76, 0.1);
+}
+
+/* Settings Bottom Bar */
+#settings-bottom-bar {
+    flex-direction: row;
+    justify-content: flex-end;
+    padding-top: 12px;
+    border-top-width: 1px;
+    border-top-color: rgba(255, 255, 255, 0.06);
+    margin-top: 8px;
+}
+
+/* ============================================================
+   LOGIN SCREEN
+   ============================================================ */
+
+#login-panel {
+    width: 380px;
+    background-color: rgba(10, 12, 20, 0.88);
+    border-width: 1px;
+    border-color: rgba(201, 168, 76, 0.22);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+#login-accent-top {
+    height: 1px;
+    background-color: rgba(201, 168, 76, 0.6);
+}
+
+#login-accent-bottom {
+    height: 1px;
+    background-color: rgba(201, 168, 76, 0.2);
+}
+
+#login-form {
+    padding: 32px;
+}
+
+#login-header {
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+#login-sigil {
+    width: 42px;
+    height: 42px;
+    border-radius: 21px;
+    background-color: rgba(201, 168, 76, 0.1);
+    border-width: 1px;
+    border-color: rgba(201, 168, 76, 0.3);
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+#login-sigil-icon {
+    color: #c9a84c;
+    font-size: 18px;
+    -unity-text-align: middle-center;
+}
+
+#login-title {
+    color: #ffffff;
+    font-size: 18px;
+    -unity-font-definition: initial;
+    -unity-font: url('Fonts/Cinzel/static/Cinzel-SemiBold.ttf');
+    letter-spacing: 6px;
+    margin-bottom: 6px;
+}
+
+#login-desc {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 11px;
+}
+
+/* Error */
+#login-error {
+    background-color: rgba(180, 30, 30, 0.12);
+    border-width: 1px;
+    border-color: rgba(180, 30, 30, 0.3);
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+}
+
+#login-error-text {
+    color: rgb(220, 100, 100);
+    font-size: 11px;
+}
+
+/* Fields */
+.login-field-group {
+    margin-bottom: 14px;
+}
+
+.login-field-label {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 9px;
+    letter-spacing: 3px;
+    -unity-font-definition: initial;
+    -unity-font: url('Fonts/Cinzel/static/Cinzel-Regular.ttf');
+    margin-bottom: 6px;
+}
+
+.login-input {
+    height: 40px;
+}
+
+.login-input .unity-text-field__input {
+    background-color: rgba(255, 255, 255, 0.04);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    color: #e8e4d8;
+    font-size: 13px;
+    padding-left: 14px;
+    padding-right: 14px;
+    transition-property: border-color;
+    transition-duration: 0.2s;
+}
+
+.login-input .unity-text-field__input:focus {
+    border-color: rgba(201, 168, 76, 0.45);
+}
+
+/* Login Button */
+.login-submit-btn {
+    width: 100%;
+    height: 44px;
+    background-color: rgba(201, 168, 76, 0.25);
+    border-width: 1px;
+    border-color: rgba(201, 168, 76, 0.55);
+    border-radius: 6px;
+    color: #e8d8a8;
+    font-size: 12px;
+    -unity-font-definition: initial;
+    -unity-font: url('Fonts/Cinzel/static/Cinzel-SemiBold.ttf');
+    letter-spacing: 5px;
+    -unity-text-align: middle-center;
+    margin-top: 6px;
+    margin-bottom: 14px;
+    transition-property: background-color, scale;
+    transition-duration: 0.2s, 0.15s;
+}
+
+.login-submit-btn:hover {
+    background-color: rgba(201, 168, 76, 0.38);
+    scale: 1.02;
+}
+
+/* Divider */
+#login-divider-row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.login-divider-line {
+    flex-grow: 1;
+    height: 1px;
+    background-color: rgba(255, 255, 255, 0.07);
+}
+
+#login-divider-text {
+    color: rgba(255, 255, 255, 0.25);
+    font-size: 9px;
+    letter-spacing: 3px;
+    margin-left: 12px;
+    margin-right: 12px;
+}
+
+/* Google button */
+.login-google-btn {
+    width: 100%;
+    height: 40px;
+    background-color: rgba(255, 255, 255, 0.04);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 12px;
+    -unity-text-align: middle-center;
+    margin-bottom: 14px;
+    transition-property: border-color, scale;
+    transition-duration: 0.2s, 0.15s;
+}
+
+.login-google-btn:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    scale: 1.02;
+}
+
+/* Create account text */
+#login-create-account {
+    color: rgba(255, 255, 255, 0.2);
+    font-size: 10px;
+    -unity-text-align: middle-center;
+}
+
+/* ============================================================
+   CO-OP LOBBY SCREEN
+   ============================================================ */
+
+#coop-content {
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: space-between;
+    padding: 40px;
+}
+
+#coop-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+#coop-title {
+    color: #ffffff;
+    font-size: 26px;
+    -unity-font-definition: initial;
+    -unity-font: url('Fonts/Cinzel/static/Cinzel-Bold.ttf');
+    letter-spacing: 8px;
+    margin-left: 16px;
+    margin-right: 16px;
+    text-shadow: 0px 4px 12px rgba(0, 0, 0, 0.8);
+}
+
+#coop-room-info {
+    align-items: center;
+    margin-top: 8px;
+}
+
+#coop-room-id {
+    color: rgba(34, 170, 68, 0.7);
+    font-size: 10px;
+    letter-spacing: 3px;
+}
+
+/* Player Cards Row */
+#coop-players-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 700px;
+}
+
+.coop-player-card {
+    flex-grow: 1;
+    background-color: rgba(10, 12, 18, 0.88);
+    border-width: 1px;
+    border-radius: 8px;
+    padding: 32px;
+    align-items: center;
+    overflow: hidden;
+}
+
+.coop-player-card.host {
+    border-color: rgba(201, 168, 76, 0.35);
+}
+
+.coop-player-card.client {
+    border-color: rgba(100, 120, 180, 0.25);
+}
+
+/* Card Badge */
+.coop-card-badge {
+    flex-direction: row;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 4px;
+    border-width: 1px;
+    margin-bottom: 20px;
+}
+
+.coop-card-badge.host-badge {
+    background-color: rgba(201, 168, 76, 0.15);
+    border-color: rgba(201, 168, 76, 0.3);
+}
+
+.coop-card-badge.client-badge {
+    background-color: rgba(80, 120, 200, 0.15);
+    border-color: rgba(80, 120, 200, 0.3);
+}
+
+.coop-badge-text {
+    font-size: 10px;
+    letter-spacing: 3px;
+    -unity-font-definition: initial;
+    -unity-font: url('Fonts/Cinzel/static/Cinzel-Regular.ttf');
+}
+
+.coop-badge-text.host {
+    color: #c9a84c;
+}
+
+.coop-badge-text.client {
+    color: #5588cc;
+}
+
+/* Avatar */
+.coop-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 60px;
+    border-width: 2px;
+    margin-bottom: 20px;
+}
+
+.coop-avatar.host-avatar {
+    background-color: rgb(30, 21, 48);
+    border-color: rgba(201, 168, 76, 0.55);
+}
+
+.coop-avatar.client-avatar {
+    background-color: rgb(20, 25, 45);
+    border-color: rgba(80, 120, 200, 0.45);
+}
+
+.coop-player-name {
+    color: #ffffff;
+    font-size: 18px;
+    -unity-font-definition: initial;
+    -unity-font: url('Fonts/Cinzel/static/Cinzel-SemiBold.ttf');
+    letter-spacing: 3px;
+    margin-bottom: 4px;
+}
+
+.coop-player-level {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 11px;
+    letter-spacing: 3px;
+    margin-bottom: 16px;
+}
+
+/* Status Badges */
+.coop-status-badge {
+    flex-direction: row;
+    align-items: center;
+    padding: 6px 16px;
+    border-radius: 4px;
+    border-width: 1px;
+}
+
+.coop-status-badge.connected {
+    background-color: rgba(34, 170, 68, 0.12);
+    border-color: rgba(34, 170, 68, 0.3);
+}
+
+.coop-status-text.connected {
+    color: rgb(34, 170, 68);
+    font-size: 10px;
+    letter-spacing: 3px;
+}
+
+/* Ready Button */
+.coop-ready-btn {
+    padding: 6px 20px;
+    border-radius: 4px;
+    border-width: 1px;
+    background-color: rgba(100, 100, 140, 0.15);
+    border-color: rgba(150, 150, 200, 0.2);
+    font-size: 10px;
+    letter-spacing: 3px;
+    -unity-text-align: middle-center;
+    transition-property: background-color, border-color, color;
+    transition-duration: 0.2s, 0.2s, 0.2s;
+}
+
+.coop-ready-btn.not-ready {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.coop-ready-btn.ready {
+    color: rgb(34, 170, 68);
+    background-color: rgba(34, 170, 68, 0.15);
+    border-color: rgba(34, 170, 68, 0.4);
+}
+
+/* VS text */
+#coop-vs-text {
+    color: rgba(201, 168, 76, 0.4);
+    font-size: 22px;
+    -unity-font-definition: initial;
+    -unity-font: url('Fonts/Cinzel/static/Cinzel-Regular.ttf');
+    margin-left: 24px;
+    margin-right: 24px;
+}
+
+/* Bottom bar */
+#coop-bottom-bar {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 700px;
+}
+
+#coop-ping {
+    color: rgba(34, 170, 68, 0.6);
+    font-size: 10px;
+}
+
+.coop-start-disabled {
+    opacity: 0.4;
+}
