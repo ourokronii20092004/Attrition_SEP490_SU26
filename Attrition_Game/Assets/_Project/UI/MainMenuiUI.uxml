@@ -1,0 +1,417 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="MainMenuUI.uss"/>
+    <ui:VisualElement name="container">
+        <ui:VisualElement name="background"/>
+        <ui:VisualElement name="overlay-gradient"/>
+
+        <!-- ==================== MAIN MENU SCREEN ==================== -->
+        <ui:VisualElement name="main-menu-screen" class="screen">
+            <ui:VisualElement name="content">
+                <ui:VisualElement name="title-block">
+                    <ui:VisualElement class="ornament">
+                        <ui:VisualElement class="ornament-line"/>
+                        <ui:VisualElement class="ornament-diamond"/>
+                        <ui:VisualElement class="ornament-line"/>
+                    </ui:VisualElement>
+                    <ui:Label text="ATTRITION" name="title"/>
+                    <ui:Label text="A SPARK IN THE ASHES" name="subtitle"/>
+                    <ui:VisualElement class="ornament">
+                        <ui:VisualElement class="ornament-line short"/>
+                        <ui:VisualElement class="ornament-diamond short"/>
+                        <ui:VisualElement class="ornament-line short"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="nav">
+                    <ui:Button text="SOLO MODE" name="btn-solo-mode" class="menu-button">
+                        <ui:VisualElement class="menu-button-underline"/>
+                        <ui:VisualElement name="particles-btn-solo-mode" class="particle-container"/>
+                    </ui:Button>
+                    <ui:Button text="CO-OP MODE" name="btn-coop-mode" class="menu-button">
+                        <ui:VisualElement class="menu-button-underline"/>
+                        <ui:VisualElement name="particles-btn-coop-mode" class="particle-container"/>
+                    </ui:Button>
+                    <ui:Button text="SETTINGS" name="btn-settings" class="menu-button">
+                        <ui:VisualElement class="menu-button-underline"/>
+                        <ui:VisualElement name="particles-btn-settings" class="particle-container"/>
+                    </ui:Button>
+                    <ui:Button text="QUIT" name="btn-quit" class="menu-button">
+                        <ui:VisualElement class="menu-button-underline"/>
+                        <ui:VisualElement name="particles-btn-quit" class="particle-container"/>
+                    </ui:Button>
+                </ui:VisualElement>
+                <ui:Label text="V1.0.0 · © 2026 PHRONETIC STUDIOS" name="footer"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- ==================== SAVE SELECTION SCREEN ==================== -->
+        <ui:VisualElement name="save-selection-screen" class="screen" style="display: none;">
+            <ui:VisualElement name="save-content">
+                <ui:VisualElement name="save-title-area">
+                    <ui:Label text="SELECT SAVE DATA" name="save-title"/>
+                    <ui:VisualElement name="save-title-divider"/>
+                </ui:VisualElement>
+
+                <ui:VisualElement name="save-slots-container">
+                    <!-- Slot 1 -->
+                    <ui:Button name="save-slot-0" class="save-slot filled">
+                        <ui:VisualElement class="save-slot-active-indicator"/>
+                        <ui:VisualElement class="save-slot-inner">
+                            <ui:VisualElement class="save-avatar">
+                                <ui:VisualElement class="save-avatar-circle purple"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="save-info">
+                                <ui:VisualElement class="save-info-top">
+                                    <ui:Label text="Kael the Undying" class="save-name"/>
+                                    <ui:Label text="LV. 42" class="save-level"/>
+                                </ui:VisualElement>
+                                <ui:Label text="📍 Ember Citadel — Inner Sanctum" class="save-location"/>
+                                <ui:VisualElement class="save-stats-row">
+                                    <ui:Label text="⏱ 24:17" class="save-playtime"/>
+                                    <ui:Label text="188 deaths" class="save-deaths"/>
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="save-slot-right">
+                                <ui:Label text="SLOT 1" class="save-slot-number"/>
+                                <ui:Button name="btn-delete-slot-0" class="save-delete-btn" text="🗑"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:Button>
+
+                    <!-- Slot 2 -->
+                    <ui:Button name="save-slot-1" class="save-slot filled">
+                        <ui:VisualElement class="save-slot-active-indicator"/>
+                        <ui:VisualElement class="save-slot-inner">
+                            <ui:VisualElement class="save-avatar">
+                                <ui:VisualElement class="save-avatar-circle blue"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="save-info">
+                                <ui:VisualElement class="save-info-top">
+                                    <ui:Label text="Saria Ashborne" class="save-name"/>
+                                    <ui:Label text="LV. 18" class="save-level"/>
+                                </ui:VisualElement>
+                                <ui:Label text="📍 Fungal Caverns — Lower Depths" class="save-location"/>
+                                <ui:VisualElement class="save-stats-row">
+                                    <ui:Label text="⏱ 08:44" class="save-playtime"/>
+                                    <ui:Label text="63 deaths" class="save-deaths"/>
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="save-slot-right">
+                                <ui:Label text="SLOT 2" class="save-slot-number"/>
+                                <ui:Button name="btn-delete-slot-1" class="save-delete-btn" text="🗑"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:Button>
+
+                    <!-- Slot 3: Empty -->
+                    <ui:Button name="save-slot-2" class="save-slot empty">
+                        <ui:VisualElement class="save-slot-active-indicator"/>
+                        <ui:VisualElement class="save-slot-inner-empty">
+                            <ui:VisualElement class="save-empty-circle">
+                                <ui:Label text="+" class="save-empty-plus"/>
+                            </ui:VisualElement>
+                            <ui:Label text="EMPTY SLOT 3" class="save-empty-text"/>
+                        </ui:VisualElement>
+                    </ui:Button>
+                </ui:VisualElement>
+
+                <ui:VisualElement name="save-actions">
+                    <ui:Button text="← BACK" name="btn-save-back" class="save-action-btn back"/>
+                    <ui:Button text="+ CREATE NEW CHARACTER" name="btn-save-create" class="save-action-btn create"/>
+                    <ui:Button text="CONTINUE →" name="btn-save-continue" class="save-action-btn continue"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- ==================== LOGIN SCREEN ==================== -->
+        <ui:VisualElement name="login-screen" class="screen" style="display: none;">
+            <ui:VisualElement name="login-panel">
+                <!-- Top accent line -->
+                <ui:VisualElement name="login-accent-top"/>
+
+                <ui:VisualElement name="login-form">
+                    <!-- Sigil + Title -->
+                    <ui:VisualElement name="login-header">
+                        <ui:VisualElement name="login-sigil">
+                            <ui:Label text="★" name="login-sigil-icon"/>
+                        </ui:VisualElement>
+                        <ui:Label text="SIGN IN" name="login-title"/>
+                        <ui:Label text="Enter the realm of Attrition" name="login-desc"/>
+                    </ui:VisualElement>
+
+                    <!-- Error Message (hidden by default) -->
+                    <ui:VisualElement name="login-error" style="display: none;">
+                        <ui:Label text="⚠ Incorrect email or password." name="login-error-text"/>
+                    </ui:VisualElement>
+
+                    <!-- Email field -->
+                    <ui:VisualElement class="login-field-group">
+                        <ui:Label text="USERNAME / EMAIL" class="login-field-label"/>
+                        <ui:TextField name="input-email" class="login-input"/>
+                    </ui:VisualElement>
+
+                    <!-- Password field -->
+                    <ui:VisualElement class="login-field-group">
+                        <ui:Label text="PASSWORD" class="login-field-label"/>
+                        <ui:TextField name="input-password" password="true" class="login-input"/>
+                    </ui:VisualElement>
+
+                    <!-- Login button -->
+                    <ui:Button text="LOGIN" name="btn-login-submit" class="login-submit-btn"/>
+
+                    <!-- Divider -->
+                    <ui:VisualElement name="login-divider-row">
+                        <ui:VisualElement class="login-divider-line"/>
+                        <ui:Label text="OR" name="login-divider-text"/>
+                        <ui:VisualElement class="login-divider-line"/>
+                    </ui:VisualElement>
+
+                    <!-- Google Sign-In -->
+                    <ui:Button text="Sign in with Google" name="btn-login-google" class="login-google-btn"/>
+
+                    <!-- Create account -->
+                    <ui:Label text="No account? Create one" name="login-create-account"/>
+
+                    <!-- Back button -->
+                    <ui:Button text="← BACK" name="btn-login-back" class="save-action-btn back" style="margin-top: 8px;"/>
+                </ui:VisualElement>
+
+                <!-- Bottom accent line -->
+                <ui:VisualElement name="login-accent-bottom"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- ==================== HOST OR JOIN SCREEN ==================== -->
+        <ui:VisualElement name="host-join-screen" class="screen" style="display: none;">
+            <ui:VisualElement name="host-join-content" style="align-items: center; justify-content: center; width: 400px;">
+                <ui:Label text="CO-OP MULTIPLAYER" style="color: white; font-size: 24px; -unity-font-definition: initial; -unity-font: url('Fonts/Cinzel/static/Cinzel-Bold.ttf'); letter-spacing: 5px; margin-bottom: 30px;"/>
+                
+                <ui:Button text="HOST GAME" name="btn-host-game" class="login-submit-btn" style="height: 50px; font-size: 14px; margin-bottom: 20px;"/>
+                
+                <ui:VisualElement style="flex-direction: row; align-items: center; margin-bottom: 20px; width: 100%;">
+                    <ui:VisualElement class="login-divider-line"/>
+                    <ui:Label text="OR JOIN" style="color: rgba(255,255,255,0.3); font-size: 10px; margin-left: 10px; margin-right: 10px; letter-spacing: 2px;"/>
+                    <ui:VisualElement class="login-divider-line"/>
+                </ui:VisualElement>
+
+                <ui:VisualElement class="login-field-group" style="width: 100%;">
+                    <ui:Label text="ROOM CODE" class="login-field-label"/>
+                    <ui:TextField name="input-room-code" class="login-input" style="margin-bottom: 10px;"/>
+                    <ui:Button text="JOIN GAME" name="btn-join-game" class="login-google-btn" style="height: 40px;"/>
+                </ui:VisualElement>
+
+                <ui:Button text="← BACK" name="btn-host-join-back" class="save-action-btn back" style="margin-top: 20px;"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- ==================== CO-OP LOBBY SCREEN ==================== -->
+        <ui:VisualElement name="coop-lobby-screen" class="screen" style="display: none;">
+            <ui:VisualElement name="coop-content">
+                <!-- Header -->
+                <ui:VisualElement name="coop-header">
+                    <ui:VisualElement class="ornament-line" style="width: 60px;"/>
+                    <ui:Label text="CO-OP ROOM" name="coop-title"/>
+                    <ui:VisualElement class="ornament-line" style="width: 60px;"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="coop-room-info">
+                    <ui:Label text="● ROOM ID: 8F4A-D91C" name="coop-room-id"/>
+                </ui:VisualElement>
+
+                <!-- Player Cards Container -->
+                <ui:VisualElement name="coop-players-row">
+                    <!-- Host Card -->
+                    <ui:VisualElement name="coop-card-host" class="coop-player-card host">
+                        <ui:VisualElement class="coop-card-badge host-badge">
+                            <ui:Label text="♔ HOST" class="coop-badge-text host"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="coop-avatar host-avatar"/>
+                        <ui:Label text="Artorias" class="coop-player-name"/>
+                        <ui:Label text="LEVEL 42" class="coop-player-level"/>
+                        <ui:VisualElement class="coop-status-badge connected">
+                            <ui:Label text="● Connected" class="coop-status-text connected"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <!-- VS -->
+                    <ui:Label text="VS" name="coop-vs-text"/>
+
+                    <!-- Client Card -->
+                    <ui:VisualElement name="coop-card-client" class="coop-player-card client">
+                        <ui:VisualElement class="coop-card-badge client-badge">
+                            <ui:Label text="👤 CLIENT" class="coop-badge-text client"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="coop-avatar client-avatar"/>
+                        <ui:Label text="Eileen" class="coop-player-name"/>
+                        <ui:Label text="LEVEL 38" class="coop-player-level"/>
+                        <ui:Button text="● NOT READY" name="btn-coop-ready" class="coop-ready-btn not-ready"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- Bottom Actions -->
+                <ui:VisualElement name="coop-bottom-bar">
+                    <ui:Button text="← BACK" name="btn-coop-back" class="save-action-btn back"/>
+                    <ui:Button text="START JOURNEY →" name="btn-coop-start" class="save-action-btn continue coop-start-disabled"/>
+                    <ui:Label text="● Ping: 24ms" name="coop-ping"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- ==================== SETTINGS SCREEN ==================== -->
+        <ui:VisualElement name="settings-screen" class="screen" style="display: none;">
+            <ui:VisualElement name="settings-panel">
+                <ui:VisualElement name="settings-sidebar">
+                    <ui:Label text="SETTINGS" name="settings-sidebar-title"/>
+                    <ui:Button text="GAMEPLAY" name="tab-gameplay" class="settings-tab active"/>
+                    <ui:Button text="GRAPHICS" name="tab-graphics" class="settings-tab"/>
+                    <ui:Button text="AUDIO" name="tab-audio" class="settings-tab"/>
+                    <ui:Button text="CONTROLS" name="tab-controls" class="settings-tab"/>
+                </ui:VisualElement>
+
+                <ui:VisualElement name="settings-content-area">
+                    <ui:VisualElement name="settings-content-header">
+                        <ui:Label text="GAMEPLAY" name="settings-content-title"/>
+                        <ui:Label text="PC · KEYBOARD &amp; MOUSE" name="settings-content-subtitle"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="settings-divider"/>
+
+                    <!-- Gameplay -->
+                    <ui:ScrollView name="settings-tab-gameplay" class="settings-tab-content">
+                        <ui:VisualElement class="settings-row">
+                            <ui:Label text="AUTO-LOCK TARGET" class="settings-label"/>
+                            <ui:Toggle name="toggle-autolock" class="settings-toggle" value="true"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="settings-row">
+                            <ui:Label text="SHOW DAMAGE NUMBERS" class="settings-label"/>
+                            <ui:Toggle name="toggle-dmg-numbers" class="settings-toggle" value="true"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="settings-row">
+                            <ui:Label text="CAMERA SHAKE" class="settings-label"/>
+                            <ui:Toggle name="toggle-cam-shake" class="settings-toggle"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="settings-row">
+                            <ui:Label text="DIFFICULTY" class="settings-label"/>
+                            <ui:DropdownField name="dropdown-difficulty" class="settings-dropdown" choices="Ember Novice,Cinder Warrior,Ashes of Despair" index="2"/>
+                        </ui:VisualElement>
+                    </ui:ScrollView>
+
+                    <!-- Graphics -->
+                    <ui:ScrollView name="settings-tab-graphics" class="settings-tab-content" style="display: none;">
+                        <ui:VisualElement class="settings-row">
+                            <ui:Label text="RESOLUTION" class="settings-label"/>
+                            <ui:DropdownField name="dropdown-resolution" class="settings-dropdown" choices="1280×720,1920×1080,2560×1440,3840×2160" index="1"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="settings-row">
+                            <ui:Label text="FULLSCREEN MODE" class="settings-label"/>
+                            <ui:DropdownField name="dropdown-fullscreen" class="settings-dropdown" choices="Fullscreen,Borderless Window,Windowed" index="1"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="settings-row">
+                            <ui:Label text="VSYNC" class="settings-label"/>
+                            <ui:Toggle name="toggle-vsync" class="settings-toggle" value="true"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="settings-row">
+                            <ui:Label text="FRAME LIMIT" class="settings-label"/>
+                            <ui:DropdownField name="dropdown-framelimit" class="settings-dropdown" choices="30 FPS,60 FPS,120 FPS,144 FPS,Unlimited" index="3"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="settings-row">
+                            <ui:Label text="SHADOW QUALITY" class="settings-label"/>
+                            <ui:DropdownField name="dropdown-shadows" class="settings-dropdown" choices="Low,Medium,High,Ultra" index="3"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="settings-row">
+                            <ui:Label text="POST PROCESSING" class="settings-label"/>
+                            <ui:Toggle name="toggle-post-processing" class="settings-toggle" value="true"/>
+                        </ui:VisualElement>
+                    </ui:ScrollView>
+
+                    <!-- Audio -->
+                    <ui:ScrollView name="settings-tab-audio" class="settings-tab-content" style="display: none;">
+                        <ui:VisualElement class="settings-row">
+                            <ui:Label text="MASTER VOLUME" class="settings-label"/>
+                            <ui:VisualElement class="settings-slider-group">
+                                <ui:Slider name="slider-master" class="settings-slider" low-value="0" high-value="100" value="80"/>
+                                <ui:Label text="80%" name="label-master-val" class="settings-slider-value"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="settings-row">
+                            <ui:Label text="MUSIC VOLUME" class="settings-label"/>
+                            <ui:VisualElement class="settings-slider-group">
+                                <ui:Slider name="slider-music" class="settings-slider" low-value="0" high-value="100" value="65"/>
+                                <ui:Label text="65%" name="label-music-val" class="settings-slider-value"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="settings-row">
+                            <ui:Label text="SFX VOLUME" class="settings-label"/>
+                            <ui:VisualElement class="settings-slider-group">
+                                <ui:Slider name="slider-sfx" class="settings-slider" low-value="0" high-value="100" value="100"/>
+                                <ui:Label text="100%" name="label-sfx-val" class="settings-slider-value"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="settings-row">
+                            <ui:Label text="AMBIENT VOLUME" class="settings-label"/>
+                            <ui:VisualElement class="settings-slider-group">
+                                <ui:Slider name="slider-ambient" class="settings-slider" low-value="0" high-value="100" value="70"/>
+                                <ui:Label text="70%" name="label-ambient-val" class="settings-slider-value"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="settings-row">
+                            <ui:Label text="VOICE VOLUME" class="settings-label"/>
+                            <ui:VisualElement class="settings-slider-group">
+                                <ui:Slider name="slider-voice" class="settings-slider" low-value="0" high-value="100" value="90"/>
+                                <ui:Label text="90%" name="label-voice-val" class="settings-slider-value"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:ScrollView>
+
+                    <!-- Controls -->
+                    <ui:ScrollView name="settings-tab-controls" class="settings-tab-content" style="display: none;">
+                        <ui:VisualElement class="keybind-row">
+                            <ui:Label text="JUMP" class="settings-label"/>
+                            <ui:Button text="SPACE" class="keybind-btn"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="keybind-row">
+                            <ui:Label text="DASH" class="settings-label"/>
+                            <ui:Button text="SHIFT" class="keybind-btn"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="keybind-row">
+                            <ui:Label text="ATTACK" class="settings-label"/>
+                            <ui:Button text="J" class="keybind-btn"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="keybind-row">
+                            <ui:Label text="SKILL" class="settings-label"/>
+                            <ui:Button text="K" class="keybind-btn"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="keybind-row">
+                            <ui:Label text="HEAL" class="settings-label"/>
+                            <ui:Button text="Q" class="keybind-btn"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="keybind-row">
+                            <ui:Label text="MANA FLASK" class="settings-label"/>
+                            <ui:Button text="E" class="keybind-btn"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="keybind-row">
+                            <ui:Label text="BLOCK" class="settings-label"/>
+                            <ui:Button text="L" class="keybind-btn"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="keybind-row">
+                            <ui:Label text="MAP" class="settings-label"/>
+                            <ui:Button text="M" class="keybind-btn"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="keybind-row">
+                            <ui:Label text="INVENTORY" class="settings-label"/>
+                            <ui:Button text="I" class="keybind-btn"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="keybind-row">
+                            <ui:Label text="INTERACT" class="settings-label"/>
+                            <ui:Button text="F" class="keybind-btn"/>
+                        </ui:VisualElement>
+                    </ui:ScrollView>
+
+                    <ui:VisualElement name="settings-bottom-bar">
+                        <ui:Button text="← BACK" name="btn-settings-back" class="save-action-btn back"/>
+                        <ui:Button text="RESET TO DEFAULT" name="btn-settings-reset" class="save-action-btn back"/>
+                        <ui:Button text="APPLY" name="btn-settings-apply" class="save-action-btn continue"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+    </ui:VisualElement>
+</ui:UXML>

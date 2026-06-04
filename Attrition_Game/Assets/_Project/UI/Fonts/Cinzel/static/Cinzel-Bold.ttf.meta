@@ -1,16 +1,15 @@
 fileFormatVersion: 2
-guid: 379faef6a95aa440781f3873babe4887
+guid: ed6ca2fafe4c08945b1fbfd346051247
 TrueTypeFontImporter:
   externalObjects: {}
   serializedVersion: 4
-  fontSize: 150
+  fontSize: 16
   forceTextureCase: -2
   characterSpacing: 0
   characterPadding: 1
   includeFontData: 1
-  fontName: Barkentina Test
   fontNames:
-  - Barkentina Test
+  - Cinzel
   fallbackFontReferences: []
   customCharacters: 
   fontRenderingMode: 0
