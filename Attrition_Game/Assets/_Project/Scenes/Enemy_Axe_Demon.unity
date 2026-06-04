@@ -1072,7 +1072,7 @@ MonoBehaviour:
   spawnPoints:
   - {fileID: 2011203877}
   fallbackEnemyPrefab:
-    RawGuidValue: 4296abdb85f86a14ea9477f6722555f6
+    RawGuidValue: 3599dc9c03021f843bd137c0b2696c8e
   enemySpawnConfigs:
   - spawnPoint: {fileID: 176590887}
     spawnCount: 1

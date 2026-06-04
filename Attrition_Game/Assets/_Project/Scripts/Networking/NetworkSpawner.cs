@@ -51,7 +51,7 @@ public class NetworkSpawner : MonoBehaviour, INetworkRunnerCallbacks
 #endif
     }
 
-    async void StartGame(GameMode mode)
+    async void StartGame(GameMode mode, string sessionName)
     {
         _runner = gameObject.AddComponent<NetworkRunner>();
         _runner.ProvideInput = true;
@@ -61,10 +61,16 @@ public class NetworkSpawner : MonoBehaviour, INetworkRunnerCallbacks
         await _runner.StartGame(new StartGameArgs()
         {
             GameMode = mode,
-            SessionName = "TestRoom",
+            SessionName = sessionName,
             Scene = SceneRef.FromIndex(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex),
             SceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>()
         });
+    }
+
+    public void StartCoopSession(GameMode mode, string sessionName)
+    {
+        if (lobbyPanel != null) lobbyPanel.SetActive(false);
+        StartGame(mode, sessionName);
     }
 
     private void SpawnAllEnemies()
@@ -161,13 +167,13 @@ public class NetworkSpawner : MonoBehaviour, INetworkRunnerCallbacks
     public void OnClickHost()
     {
         if (lobbyPanel != null) lobbyPanel.SetActive(false);
-        StartGame(GameMode.Host);
+        StartGame(GameMode.Host, "TestRoom");
     }
 
     public void OnClickClient()
     {
         if (lobbyPanel != null) lobbyPanel.SetActive(false);
-        StartGame(GameMode.Client);
+        StartGame(GameMode.Client, "TestRoom");
     }
 
     public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)

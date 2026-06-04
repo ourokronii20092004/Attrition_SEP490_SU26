@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1479014e8aa531b4f8a50c90ef8847c9, type: 3}
+  m_Name: Crab_Stats
+  m_EditorClassIdentifier: Attrition.Data::Attrition.Data.EnemyStatsSO
+  enemyId: crab
+  tier: 1
+  maxHP: 120
+  ad: 10
+  ap: 10
+  def: 20
+  res: 10
+  poise: 100
+  poiseRecoveryTime: 3
+  patrolSpeed: 2
+  chaseSpeed: 5
+  attackSpeed: 1
+  expReward: 50
+  coopHpMultiplier: 1.6
+  coopDamageMultiplier: 1.2
