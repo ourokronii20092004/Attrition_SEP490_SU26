@@ -1,0 +1,24 @@
+<svg viewBox="0 0 400 600" preserveAspectRatio="xMaxYMax meet" xmlns="http://www.w3.org/2000/svg">
+  <g fill="#05040c">
+    <rect x="50" y="200" width="60" height="400" />
+    <rect x="40" y="180" width="80" height="28" />
+    <rect x="40" y="175" width="10" height="14" /><rect x="60" y="175" width="10" height="14" />
+    <rect x="80" y="175" width="10" height="14" /><rect x="100" y="175" width="10" height="14" />
+    <rect x="160" y="280" width="50" height="320" />
+    <rect x="150" y="258" width="70" height="30" />
+    <rect x="150" y="252" width="12" height="14" /><rect x="168" y="252" width="12" height="14" />
+    <rect x="186" y="252" width="12" height="14" /><rect x="204" y="252" width="12" height="14" />
+    <rect x="250" y="310" width="140" height="290" />
+    <rect x="236" y="284" width="168" height="36" />
+    <rect x="236" y="276" width="16" height="18" /><rect x="262" y="276" width="16" height="18" />
+    <rect x="288" y="276" width="16" height="18" /><rect x="314" y="276" width="16" height="18" />
+    <rect x="340" y="276" width="16" height="18" /><rect x="366" y="276" width="16" height="18" />
+  </g>
+  <rect x="0" y="480" width="400" height="120" fill="url(#mf2)" />
+  <defs>
+    <linearGradient id="mf2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stopColor="rgba(5,4,12,0)" />
+      <stop offset="100%" stopColor="rgba(3,2,8,0.9)" />
+    </linearGradient>
+  </defs>
+</svg>
