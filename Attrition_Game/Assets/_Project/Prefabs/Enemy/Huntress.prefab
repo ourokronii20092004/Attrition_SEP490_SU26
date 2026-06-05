@@ -288,7 +288,7 @@ MonoBehaviour:
     rectSize: {x: 3, y: 4.5}
     damage: 2
     damageType: 0
-    duration: 0
+    duration: 0.5
     cooldown: 1.5
     recoveryDuration: 0.25
   enableDashSlash: 0

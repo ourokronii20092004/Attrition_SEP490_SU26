@@ -336,10 +336,15 @@ public class SummonOfUndeadAI : NetworkBehaviour, IDamageable
             rb.bodyType = RigidbodyType2D.Kinematic;
         }
 
-        Collider2D col = GetComponent<Collider2D>();
-        if (col != null) col.enabled = false;
+        // Tắt TẤT CẢ collider (bao gồm child trigger dùng cho contact damage)
+        Collider2D[] allCols = GetComponentsInChildren<Collider2D>();
+        foreach (var col in allCols)
+            col.enabled = false;
 
-        if (animationComp != null) animationComp.PlayDeath();
+        // Ẩn TẤT CẢ renderer để xác biến mất ngay lập tức
+        Renderer[] allRenderers = GetComponentsInChildren<Renderer>();
+        foreach (var rend in allRenderers)
+            rend.enabled = false;
     }
 
     private void IgnoreAllPlayerColliders()
