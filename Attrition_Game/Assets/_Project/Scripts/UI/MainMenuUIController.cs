@@ -71,6 +71,7 @@ namespace Attrition.UI
             SetupHostJoin();
             SetupCoopLobby();
             SetupSettings();
+            SetupGlobalProfile();
 
             SaveManager.CreateMockDataIfNeeded();
             LoadSavesFromDisk();
@@ -89,12 +90,76 @@ namespace Attrition.UI
             SetScreenVisible(_hostJoinScreen, screenName == "host-join");
             SetScreenVisible(_coopLobbyScreen, screenName == "coop-lobby");
             SetScreenVisible(_settingsScreen, screenName == "settings");
+            
+            UpdateGlobalProfileVisibility();
         }
 
         private void SetScreenVisible(VisualElement screen, bool visible)
         {
             if (screen != null)
                 screen.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+        }
+
+        private void SetupGlobalProfile()
+        {
+            var logoutBtn = _root.Q<Button>("btn-global-logout");
+            if (logoutBtn != null)
+            {
+                logoutBtn.RegisterCallback<PointerEnterEvent>(evt => PlayHoverSound());
+                logoutBtn.RegisterCallback<ClickEvent>(evt =>
+                {
+                    PlayClickSound();
+                    PlayerPrefs.DeleteKey("SavedUserId");
+                    PlayerPrefs.Save();
+                    _isLoggedIn = false;
+                    _currentUserId = null;
+                    UpdateGlobalProfileVisibility();
+                    ShowScreen("main-menu");
+                });
+            }
+
+            var loginBtn = _root.Q<Button>("btn-global-login");
+            if (loginBtn != null)
+            {
+                loginBtn.RegisterCallback<PointerEnterEvent>(evt => PlayHoverSound());
+                loginBtn.RegisterCallback<ClickEvent>(evt =>
+                {
+                    PlayClickSound();
+                    ShowScreen("login");
+                });
+            }
+        }
+
+        private void UpdateGlobalProfileVisibility()
+        {
+            var profileContainer = _root.Q<VisualElement>("global-profile-container");
+            var lbl = _root.Q<Label>("lbl-logged-in-user");
+            var loginBtn = _root.Q<Button>("btn-global-login");
+            var logoutBtn = _root.Q<Button>("btn-global-logout");
+
+            if (profileContainer == null) return;
+
+            // Don't show login/logout button ON the login screen itself
+            if (_currentScreen == "login")
+            {
+                profileContainer.style.display = DisplayStyle.None;
+                return;
+            }
+
+            profileContainer.style.display = DisplayStyle.Flex;
+
+            if (_isLoggedIn)
+            {
+                if (lbl != null) lbl.text = "Logged in";
+                if (loginBtn != null) loginBtn.style.display = DisplayStyle.None;
+                if (logoutBtn != null) logoutBtn.style.display = DisplayStyle.Flex;
+            }
+            else
+            {
+                if (lbl != null) lbl.text = "Not Logged in";
+                if (loginBtn != null) loginBtn.style.display = DisplayStyle.Flex;
+                if (logoutBtn != null) logoutBtn.style.display = DisplayStyle.None;
+            }
         }
 
         // =================================================================
@@ -459,6 +524,7 @@ namespace Attrition.UI
                             PlayerPrefs.Save();
                             _isLoggedIn = true;
                             _currentUserId = userId;
+                            UpdateGlobalProfileVisibility();
                             
                             if (loginError != null) loginError.style.display = DisplayStyle.None;
                             ShowScreen("host-join");
@@ -540,21 +606,6 @@ namespace Attrition.UI
                 {
                     PlayClickSound();
                     ShowScreen("main-menu");
-                });
-            }
-
-            var logoutBtn = _root.Q<Button>("btn-logout");
-            if (logoutBtn != null)
-            {
-                logoutBtn.RegisterCallback<PointerEnterEvent>(evt => PlayHoverSound());
-                logoutBtn.RegisterCallback<ClickEvent>(evt =>
-                {
-                    PlayClickSound();
-                    PlayerPrefs.DeleteKey("SavedUserId");
-                    PlayerPrefs.Save();
-                    _isLoggedIn = false;
-                    _currentUserId = null;
-                    ShowScreen("login");
                 });
             }
         }
