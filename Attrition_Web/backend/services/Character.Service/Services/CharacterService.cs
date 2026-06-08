@@ -114,6 +114,16 @@ public class CharacterService : ICharacterService
         return ApiResponse<CharacterDetailDto>.Ok(ToDetail(character));
     }
 
+    public async Task<ApiResponse> DeleteAsync(Guid id, Guid ownerId, bool isAdmin)
+    {
+        var character = await _repo.GetWithSnapshotsAsync(id);
+        if (character == null) return ApiResponse.Fail("Character not found.");
+        if (character.OwnerId != ownerId && !isAdmin) return ApiResponse.Fail("You do not have permission to delete this character.");
+
+        await _repo.DeleteAsync(character);
+        return ApiResponse.Ok();
+    }
+
     public Task<int> CountAsync() => _repo.CountAsync();
 
     // ─── mapping ───
