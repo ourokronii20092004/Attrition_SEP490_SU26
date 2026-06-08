@@ -9,5 +9,6 @@ public interface ICharacterService
     Task<CharacterDetailDto?> GetDetailAsync(Guid id);
     Task<PaginatedResponse<AdminCharacterDto>> GetAllAsync(int page, int pageSize, CancellationToken ct = default);
     Task<ApiResponse<CharacterDetailDto>> IngestSnapshotAsync(SnapshotIngestRequest request);
+    Task<ApiResponse> DeleteAsync(Guid id, Guid ownerId, bool isAdmin);
     Task<int> CountAsync();
 }
