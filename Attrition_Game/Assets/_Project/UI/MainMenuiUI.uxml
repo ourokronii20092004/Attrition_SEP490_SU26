@@ -210,9 +210,8 @@
                     <ui:Button text="JOIN GAME" name="btn-join-game" class="login-google-btn" style="height: 40px;"/>
                 </ui:VisualElement>
 
-                <ui:VisualElement style="flex-direction: row; justify-content: space-between; width: 100%; margin-top: 20px;">
-                    <ui:Button text="← BACK" name="btn-host-join-back" class="save-action-btn back" style="flex-grow: 1; margin-right: 10px;"/>
-                    <ui:Button text="LOGOUT" name="btn-logout" class="save-action-btn back" style="flex-grow: 1; margin-left: 10px;"/>
+                <ui:VisualElement style="flex-direction: row; justify-content: center; width: 100%; margin-top: 20px;">
+                    <ui:Button text="← BACK" name="btn-host-join-back" class="save-action-btn back" style="width: 200px;"/>
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
@@ -425,6 +424,12 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
+        </ui:VisualElement>
+        <!-- Global Profile Overlay (Top Right) -->
+        <ui:VisualElement name="global-profile-container" style="position: absolute; top: 20px; right: 20px; flex-direction: row; align-items: center; display: flex;">
+            <ui:Label name="lbl-logged-in-user" text="Not Logged in" style="color: rgba(255,255,255,0.7); font-size: 14px; margin-right: 15px; -unity-font-definition: initial; -unity-font: url('Fonts/Cinzel/static/Cinzel-Regular.ttf');"/>
+            <ui:Button text="LOGIN" name="btn-global-login" class="save-action-btn continue" style="margin: 0; height: 30px; font-size: 12px; display: none;"/>
+            <ui:Button text="LOGOUT" name="btn-global-logout" class="save-action-btn back" style="margin: 0; height: 30px; font-size: 12px; display: none;"/>
         </ui:VisualElement>
 
     </ui:VisualElement>
