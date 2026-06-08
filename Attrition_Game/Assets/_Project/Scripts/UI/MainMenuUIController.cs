@@ -36,8 +36,10 @@ namespace Attrition.UI
         private string _currentUserId = null;
         private string _currentRoomCode = null;
         private bool _isHost = false;
+        private bool _isOnlineMode = false;
 
         private SaveSlotData[] _saveSlots;
+        private string[] _characterIds = new string[3];
 
         // ===== Particles =====
         private List<Button> _menuButtons = new List<Button>();
@@ -129,6 +131,7 @@ namespace Attrition.UI
                     {
                         case "btn-solo-mode":
                             _isHost = false; // Solo mode isn't networking
+                            _isOnlineMode = false;
                             UpdateSaveTitle("SELECT SAVE DATA");
                             ShowScreen("save-selection");
                             break;
@@ -158,13 +161,58 @@ namespace Attrition.UI
         // =================================================================
         private void LoadSavesFromDisk()
         {
-            _saveSlots = SaveManager.LoadAllSlots();
-            for (int i = 0; i < 3; i++)
+            if (_saveSlots == null) _saveSlots = new SaveSlotData[3];
+            
+            if (_isOnlineMode)
             {
-                RenderSaveSlot(i, _saveSlots[i]);
+                if (APIManager.Instance != null && !string.IsNullOrEmpty(APIManager.Instance.AccessToken))
+                {
+                    StartCoroutine(APIManager.Instance.GetCharacters((characters) => {
+                        for (int i = 0; i < 3; i++)
+                        {
+                            if (characters != null && i < characters.Count)
+                            {
+                                var c = characters[i];
+                                _characterIds[i] = c.id;
+                                _saveSlots[i] = new SaveSlotData { 
+                                    characterName = c.name, 
+                                    level = c.latestSnapshot?.level ?? 1, 
+                                    location = "Server Save", 
+                                    playtime = c.latestSnapshot?.playtimeSeconds.ToString() ?? "0", 
+                                    deaths = 0 
+                                };
+                            }
+                            else
+                            {
+                                _characterIds[i] = null;
+                                _saveSlots[i] = null;
+                            }
+                            RenderSaveSlot(i, _saveSlots[i]);
+                        }
+                    }));
+                }
+                else
+                {
+                    for (int i = 0; i < 3; i++)
+                    {
+                        _characterIds[i] = null;
+                        _saveSlots[i] = null;
+                        RenderSaveSlot(i, null);
+                    }
+                }
+            }
+            else
+            {
+                // Offline mode
+                var localSaves = SaveManager.LoadAllSlots();
+                for (int i = 0; i < 3; i++)
+                {
+                    _characterIds[i] = null;
+                    _saveSlots[i] = localSaves[i];
+                    RenderSaveSlot(i, _saveSlots[i]);
+                }
             }
         }
-
         private void RenderSaveSlot(int index, SaveSlotData data)
         {
             var slotBtn = _root.Q<Button>($"save-slot-{index}");
@@ -226,9 +274,50 @@ namespace Attrition.UI
                     deleteBtn.RegisterCallback<ClickEvent>(evt =>
                     {
                         PlayClickSound();
-                        SaveManager.DeleteSlot(slotIndex);
-                        LoadSavesFromDisk();
                         evt.StopPropagation();
+
+                        if (_isOnlineMode && !string.IsNullOrEmpty(_characterIds[slotIndex]) || (!_isOnlineMode && _saveSlots[slotIndex] != null))
+                        {
+                            var overlay = _root.Q<VisualElement>("delete-confirm-overlay");
+                            if (overlay != null)
+                            {
+                                overlay.style.display = DisplayStyle.Flex;
+                                
+                                var confirmBtn = overlay.Q<Button>("btn-delete-confirm");
+                                var cancelBtn = overlay.Q<Button>("btn-delete-cancel");
+
+                                // Unregister previous callbacks to avoid multiple calls
+                                confirmBtn?.UnregisterCallback<ClickEvent>(ConfirmDeleteCallback);
+                                cancelBtn?.UnregisterCallback<ClickEvent>(CancelDeleteCallback);
+
+                                void ConfirmDeleteCallback(ClickEvent e)
+                                {
+                                    PlayClickSound();
+                                    overlay.style.display = DisplayStyle.None;
+
+                                    if (_isOnlineMode)
+                                    {
+                                        StartCoroutine(APIManager.Instance.DeleteCharacter(_characterIds[slotIndex], (success) => {
+                                            if (success) LoadSavesFromDisk();
+                                        }));
+                                    }
+                                    else
+                                    {
+                                        SaveManager.DeleteSlot(slotIndex);
+                                        LoadSavesFromDisk();
+                                    }
+                                }
+
+                                void CancelDeleteCallback(ClickEvent e)
+                                {
+                                    PlayClickSound();
+                                    overlay.style.display = DisplayStyle.None;
+                                }
+
+                                confirmBtn?.RegisterCallback<ClickEvent>(ConfirmDeleteCallback);
+                                cancelBtn?.RegisterCallback<ClickEvent>(CancelDeleteCallback);
+                            }
+                        }
                     });
                 }
             }
@@ -356,36 +445,33 @@ namespace Attrition.UI
                         errorText.style.color = new StyleColor(Color.white);
                     }
 
-                    // Gọi API thật (Yêu cầu APIManager phải tồn tại trong Scene)
-                    if (APIManager.Instance != null)
+                    if (APIManager.Instance == null)
                     {
-                        StartCoroutine(APIManager.Instance.Login(email, password, (userId) => {
-                            if (!string.IsNullOrEmpty(userId))
-                            {
-                                PlayerPrefs.SetString("SavedUserId", userId);
-                                PlayerPrefs.Save();
-                                _isLoggedIn = true;
-                                _currentUserId = userId;
-                                
-                                if (loginError != null) loginError.style.display = DisplayStyle.None;
-                                ShowScreen("host-join");
-                            }
-                            else
-                            {
-                                if (errorText != null) 
-                                {
-                                    errorText.style.color = new StyleColor(new Color(0.86f, 0.39f, 0.39f));
-                                    errorText.text = "⚠ Incorrect email or password.";
-                                }
-                            }
-                        }));
+                        Debug.Log("APIManager not found in scene. Creating one automatically.");
+                        var apiObj = new GameObject("APIManager");
+                        apiObj.AddComponent<APIManager>();
                     }
-                    else
-                    {
-                        Debug.LogWarning("APIManager not found! Faking login for testing.");
-                        _isLoggedIn = true;
-                        ShowScreen("host-join");
-                    }
+
+                    StartCoroutine(APIManager.Instance.Login(email, password, (userId) => {
+                        if (!string.IsNullOrEmpty(userId))
+                        {
+                            PlayerPrefs.SetString("SavedUserId", userId);
+                            PlayerPrefs.Save();
+                            _isLoggedIn = true;
+                            _currentUserId = userId;
+                            
+                            if (loginError != null) loginError.style.display = DisplayStyle.None;
+                            ShowScreen("host-join");
+                        }
+                        else
+                        {
+                            if (errorText != null) 
+                            {
+                                errorText.style.color = new StyleColor(new Color(0.86f, 0.39f, 0.39f));
+                                errorText.text = "⚠ Incorrect username or password.";
+                            }
+                        }
+                    }));
                 });
             }
 
@@ -454,6 +540,21 @@ namespace Attrition.UI
                 {
                     PlayClickSound();
                     ShowScreen("main-menu");
+                });
+            }
+
+            var logoutBtn = _root.Q<Button>("btn-logout");
+            if (logoutBtn != null)
+            {
+                logoutBtn.RegisterCallback<PointerEnterEvent>(evt => PlayHoverSound());
+                logoutBtn.RegisterCallback<ClickEvent>(evt =>
+                {
+                    PlayClickSound();
+                    PlayerPrefs.DeleteKey("SavedUserId");
+                    PlayerPrefs.Save();
+                    _isLoggedIn = false;
+                    _currentUserId = null;
+                    ShowScreen("login");
                 });
             }
         }
