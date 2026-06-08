@@ -119,6 +119,17 @@
                     <ui:Button text="+ CREATE NEW CHARACTER" name="btn-save-create" class="save-action-btn create"/>
                     <ui:Button text="CONTINUE →" name="btn-save-continue" class="save-action-btn continue"/>
                 </ui:VisualElement>
+
+                <!-- Delete Confirmation Overlay -->
+                <ui:VisualElement name="delete-confirm-overlay" style="display: none; position: absolute; left: 0; top: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.8); align-items: center; justify-content: center;">
+                    <ui:VisualElement style="background-color: #1a1a1a; padding: 30px; border-radius: 5px; border-width: 1px; border-color: #8c3f3f; width: 350px;">
+                        <ui:Label text="Are you sure you want to delete this character?" style="color: white; white-space: normal; margin-bottom: 25px; text-align: center; font-size: 16px;"/>
+                        <ui:VisualElement style="flex-direction: row; justify-content: space-around;">
+                            <ui:Button text="CANCEL" name="btn-delete-cancel" class="save-action-btn back" style="width: 120px;"/>
+                            <ui:Button text="DELETE" name="btn-delete-confirm" class="login-submit-btn" style="width: 120px; background-color: #aa3333;"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
 
@@ -199,7 +210,10 @@
                     <ui:Button text="JOIN GAME" name="btn-join-game" class="login-google-btn" style="height: 40px;"/>
                 </ui:VisualElement>
 
-                <ui:Button text="← BACK" name="btn-host-join-back" class="save-action-btn back" style="margin-top: 20px;"/>
+                <ui:VisualElement style="flex-direction: row; justify-content: space-between; width: 100%; margin-top: 20px;">
+                    <ui:Button text="← BACK" name="btn-host-join-back" class="save-action-btn back" style="flex-grow: 1; margin-right: 10px;"/>
+                    <ui:Button text="LOGOUT" name="btn-logout" class="save-action-btn back" style="flex-grow: 1; margin-left: 10px;"/>
+                </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
 

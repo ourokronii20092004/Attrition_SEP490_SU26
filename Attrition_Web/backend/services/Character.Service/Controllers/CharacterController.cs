@@ -40,4 +40,11 @@ public class CharacterController : ControllerBase
             return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Fail("You do not have access to this character."));
         return Ok(ApiResponse<CharacterDetailDto>.Ok(character));
     }
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        var response = await _service.DeleteAsync(id, userId, _user.IsAdmin);
+        return response.Success ? Ok(response) : BadRequest(response);
+    }
 }
