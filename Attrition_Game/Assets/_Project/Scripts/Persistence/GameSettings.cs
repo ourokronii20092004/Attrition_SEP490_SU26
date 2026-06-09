@@ -16,7 +16,7 @@ namespace Attrition.Persistence
         // ─── Hành động có thể đổi phím (khớp Game Mechanics trong concept) ───
         public enum InputAction
         {
-            Jump, Dash, LightAttack, Skill, HealthFlask, ManaFlask, Block, Map, Inventory, Interact
+            Jump, Dash, LightAttack, Skill, HealthFlask, ManaFlask, Block, Map, Inventory, Interact, Revive
         }
 
         public static readonly Dictionary<InputAction, KeyCode> DefaultKeys = new()
@@ -31,6 +31,7 @@ namespace Attrition.Persistence
             { InputAction.Map,         KeyCode.M },
             { InputAction.Inventory,   KeyCode.Tab },
             { InputAction.Interact,    KeyCode.F },
+            { InputAction.Revive,      KeyCode.R },
         };
 
         private static readonly Dictionary<InputAction, KeyCode> _keys = new();

@@ -58,7 +58,7 @@
 
             <!-- Interaction prompt -->
             <ui:VisualElement name="hud-prompt" class="hidden">
-                <ui:Label name="hud-prompt-text" text="[R] REST"/>
+                <ui:Label name="hud-prompt-text" text="[F] CHECKPOINT"/>
             </ui:VisualElement>
         </ui:VisualElement>
 
@@ -137,7 +137,7 @@
             <ui:VisualElement name="ft-dim" class="overlay-screen"/>
             <ui:VisualElement name="ft-panel">
                 <ui:VisualElement name="ft-list-col">
-                    <ui:Label name="ft-title" text="FAST TRAVEL"/>
+                    <ui:Label name="ft-title" text="CHECKPOINT"/>
                     <ui:Label name="ft-count" text="0 / 0 DISCOVERED"/>
                     <ui:ScrollView name="ft-list"/>
                 </ui:VisualElement>
@@ -148,6 +148,7 @@
                     </ui:VisualElement>
                     <ui:VisualElement name="ft-actions">
                         <ui:Button name="ft-close" text="CLOSE" class="ft-btn close"/>
+                        <ui:Button name="ft-rest" text="REST" class="ft-btn rest"/>
                         <ui:Button name="ft-go" text="TELEPORT" class="ft-btn go"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
@@ -181,6 +182,87 @@
                 <ui:Label name="loading-status" text="Preparing world..."/>
                 <ui:Label name="loading-countdown" text="" class="hidden"/>
                 <ui:Label name="loading-tip" text="Hold SPACE to jump higher. Dash grants brief invincibility."/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- ==================== PAUSE (ESC) ==================== -->
+        <ui:VisualElement name="pause-screen" class="overlay-screen hidden">
+            <ui:VisualElement name="pause-dim" class="overlay-screen"/>
+            <ui:VisualElement name="pause-content">
+                <ui:Label name="pause-title" text="PAUSED"/>
+                <ui:VisualElement name="pause-actions">
+                    <ui:Button name="pause-resume" text="RESUME" class="pause-btn resume"/>
+                    <ui:Button name="pause-settings" text="SETTINGS" class="pause-btn"/>
+                    <ui:Button name="pause-quit" text="QUIT TO MENU" class="pause-btn quit"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- ==================== SETTINGS (in-game) ==================== -->
+        <ui:VisualElement name="settings-screen" class="overlay-screen hidden">
+            <ui:VisualElement name="set-dim" class="overlay-screen"/>
+            <ui:VisualElement name="set-content">
+                <ui:Label name="set-title" text="SETTINGS"/>
+
+                <ui:Label text="AUDIO" class="set-section"/>
+                <ui:VisualElement class="set-row">
+                    <ui:Label text="Master" class="set-row-key"/>
+                    <ui:Slider name="set-vol-master" low-value="0" high-value="1" class="set-slider"/>
+                    <ui:Label name="set-vol-master-val" text="80%" class="set-row-val"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="set-row">
+                    <ui:Label text="Music" class="set-row-key"/>
+                    <ui:Slider name="set-vol-music" low-value="0" high-value="1" class="set-slider"/>
+                    <ui:Label name="set-vol-music-val" text="65%" class="set-row-val"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="set-row">
+                    <ui:Label text="SFX" class="set-row-key"/>
+                    <ui:Slider name="set-vol-sfx" low-value="0" high-value="1" class="set-slider"/>
+                    <ui:Label name="set-vol-sfx-val" text="100%" class="set-row-val"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="set-row">
+                    <ui:Label text="Ambient" class="set-row-key"/>
+                    <ui:Slider name="set-vol-ambient" low-value="0" high-value="1" class="set-slider"/>
+                    <ui:Label name="set-vol-ambient-val" text="70%" class="set-row-val"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="set-row">
+                    <ui:Label text="Voice" class="set-row-key"/>
+                    <ui:Slider name="set-vol-voice" low-value="0" high-value="1" class="set-slider"/>
+                    <ui:Label name="set-vol-voice-val" text="90%" class="set-row-val"/>
+                </ui:VisualElement>
+
+                <ui:Label text="GAMEPLAY &amp; GRAPHICS" class="set-section"/>
+                <ui:VisualElement class="set-row">
+                    <ui:Label text="Show Damage Numbers" class="set-row-key wide"/>
+                    <ui:Toggle name="set-dmg"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="set-row">
+                    <ui:Label text="Camera Shake" class="set-row-key wide"/>
+                    <ui:Toggle name="set-shake"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="set-row">
+                    <ui:Label text="VSync" class="set-row-key wide"/>
+                    <ui:Toggle name="set-vsync"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="set-row">
+                    <ui:Label text="Post Processing" class="set-row-key wide"/>
+                    <ui:Toggle name="set-postfx"/>
+                </ui:VisualElement>
+
+                <ui:VisualElement name="set-actions">
+                    <ui:Button name="set-reset" text="RESET" class="set-btn"/>
+                    <ui:Button name="set-back" text="SAVE &amp; BACK" class="set-btn primary"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- ==================== WAITING FOR PLAYER (coop) ==================== -->
+        <ui:VisualElement name="waiting-screen" class="overlay-screen hidden">
+            <ui:VisualElement name="waiting-dim"/>
+            <ui:VisualElement name="waiting-content">
+                <ui:Label text="WAITING FOR PLAYER..." name="waiting-title"/>
+                <ui:Label text="Đồng đội mất kết nối. Trận đấu tạm dừng cho đến khi họ quay lại." name="waiting-desc"/>
+                <ui:VisualElement name="waiting-spinner"/>
             </ui:VisualElement>
         </ui:VisualElement>
 

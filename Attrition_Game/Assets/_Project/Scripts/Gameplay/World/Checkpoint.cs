@@ -99,6 +99,12 @@ namespace Attrition.Gameplay.World
 
             RespawnPosition = RestPoint;
             HasBeenActivated = true;
+
+            // Lưu tiến trình tại mốc rest (host/single). Solo → local JSON; online → snapshot server.
+            var saver = Attrition.Gameplay.Persistence.GameSaveService.EnsureExists();
+            saver.Save(Attrition.Gameplay.Persistence.GameSaveService.SaveEvent.Rest,
+                       DisplayName, RestPoint);
+
             RpcOnRested();
             return true;
         }

@@ -576,7 +576,7 @@ MonoBehaviour:
   spawnPoints:
   - {fileID: 2011203877}
   fallbackEnemyPrefab:
-    RawGuidValue: 2cb608326fce76445a23b9321567c003
+    RawGuidValue: 5b4d661d4119c034f982e5bf747186c4
   enemySpawnConfigs:
   - spawnPoint: {fileID: 176590887}
     spawnCount: 1
@@ -610,6 +610,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   skipIfRunnerExists: 1
+  itemDatabase: {fileID: 11400000, guid: 534088253dac4014a875deafec8b961b, type: 2}
 --- !u!1 &1172396891
 GameObject:
   m_ObjectHideFlags: 0
@@ -640,6 +641,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5492ca1c914ef364eae4c4373bd20149, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::APIManager
+  InternalKey: dev-internal-key
 --- !u!114 &1172396893
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1367,6 +1369,10 @@ PrefabInstance:
     - target: {fileID: 7157405037218784309, guid: 00c5a4f58bd48284f97affb82c96b2df, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8959576500242561320, guid: 00c5a4f58bd48284f97affb82c96b2df, type: 3}
+      propertyPath: m_IsTrigger
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

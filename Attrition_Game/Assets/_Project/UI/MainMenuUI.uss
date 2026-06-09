@@ -1158,3 +1158,239 @@
 .coop-start-disabled {
     opacity: 0.4;
 }
+
+/* ============================================================
+   VISUAL POLISH OVERRIDES (chỉ chỉnh style — không đổi tên element/logic)
+   Đặt cuối file để override các rule ở trên.
+   ============================================================ */
+
+/* Nền tối sâu hơn + vignette ấm để art nổi khối */
+#overlay-gradient {
+    background-color: rgba(3, 2, 8, 0.62);
+}
+
+/* Tiêu đề: hào quang vàng ấm, chữ sắc nét hơn */
+#title {
+    font-size: 62px;
+    letter-spacing: 14px;
+    color: #fbf4e0;
+    -unity-text-outline-width: 0.6px;
+    -unity-text-outline-color: rgba(201, 168, 76, 0.35);
+    text-shadow: 0 6px 26px rgba(201, 168, 76, 0.35);
+}
+
+#subtitle {
+    color: #c9a84c;
+    letter-spacing: 8px;
+    opacity: 0.92;
+}
+
+.ornament-line {
+    background-color: rgba(201, 168, 76, 0.9);
+}
+.ornament-diamond {
+    background-color: #f3e6bd;
+    width: 7px; height: 7px;
+}
+
+/* Nút menu: nền gradient mờ, viền vàng tinh tế, hover trượt sáng */
+.menu-button {
+    height: 56px;
+    background-color: rgba(14, 12, 22, 0.55);
+    border-color: rgba(201, 168, 76, 0.14);
+    border-radius: 6px;
+    color: rgba(225, 219, 205, 0.82);
+    transition-duration: 0.22s, 0.28s, 0.22s, 0.28s;
+}
+
+.menu-button:hover {
+    background-color: rgba(201, 168, 76, 0.16);
+    border-color: rgba(201, 168, 76, 0.6);
+    color: #fff8e6;
+    scale: 1.05;
+}
+
+.menu-button-underline {
+    height: 2px;
+    left: 14%;
+    right: 14%;
+    background-color: #e8c873;
+}
+
+/* Panel chung (settings/login/coop/save): nền kính tối + viền vàng + bo góc lớn */
+#settings-panel,
+#login-panel,
+#coop-content {
+    background-color: rgba(10, 9, 16, 0.97);
+    border-color: rgba(201, 168, 76, 0.3);
+    border-radius: 12px;
+}
+
+/* Save slot: bo góc + nền sâu, hover sáng viền vàng */
+.save-slot {
+    border-radius: 10px;
+    transition-property: border-color, background-color, scale;
+    transition-duration: 0.2s;
+}
+.save-slot:hover {
+    border-color: rgba(201, 168, 76, 0.7);
+    scale: 1.015;
+}
+.save-slot.selected {
+    border-color: #c9a84c;
+}
+
+/* Tab settings: gạch chân vàng khi active */
+.settings-tab {
+    transition-property: color, background-color;
+    transition-duration: 0.18s;
+}
+.settings-tab.active {
+    color: #f3e6bd;
+    background-color: rgba(201, 168, 76, 0.12);
+}
+
+/* Nút hành động chính (continue/apply): nền vàng ấm */
+.save-action-btn.continue {
+    background-color: rgba(201, 168, 76, 0.22);
+    border-color: rgba(201, 168, 76, 0.55);
+    border-radius: 6px;
+    color: #fff8e6;
+    transition-property: background-color, scale;
+    transition-duration: 0.18s;
+}
+.save-action-btn.continue:hover {
+    background-color: rgba(201, 168, 76, 0.4);
+    scale: 1.04;
+}
+.save-action-btn.back {
+    border-radius: 6px;
+    transition-property: background-color, color;
+    transition-duration: 0.18s;
+}
+.save-action-btn.back:hover {
+    color: #f3e6bd;
+}
+
+/* Keybind button: bo góc + hover vàng */
+.keybind-btn {
+    border-radius: 5px;
+    transition-property: background-color, border-color, color;
+    transition-duration: 0.18s;
+}
+.keybind-btn:hover {
+    border-color: rgba(201, 168, 76, 0.7);
+    color: #f3e6bd;
+}
+
+/* ============================================================
+   LOADING OVERLAY (vào game / chuyển scene)
+   ============================================================ */
+#menu-loading {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    align-items: center;
+    justify-content: center;
+}
+#menu-loading-dim {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    background-color: #050309;
+}
+#menu-loading-content {
+    align-items: center;
+    width: 520px;
+}
+#menu-loading-title {
+    color: #fbf4e0;
+    font-size: 46px;
+    -unity-font-definition: initial;
+    -unity-font: url('Fonts/Cinzel/static/Cinzel-Bold.ttf');
+    letter-spacing: 12px;
+    text-shadow: 0 6px 24px rgba(201, 168, 76, 0.35);
+    margin-bottom: 10px;
+}
+#menu-loading-status {
+    color: #c9a84c;
+    font-size: 12px;
+    letter-spacing: 4px;
+    -unity-font-definition: initial;
+    -unity-font: url('Fonts/Cinzel/static/Cinzel-Regular.ttf');
+    margin-bottom: 26px;
+}
+#menu-loading-track {
+    width: 100%;
+    height: 4px;
+    background-color: rgba(255,255,255,0.08);
+    border-radius: 2px;
+    overflow: hidden;
+}
+#menu-loading-fill {
+    height: 100%;
+    width: 0;
+    background-color: #c9a84c;
+    border-radius: 2px;
+}
+#menu-loading-tip {
+    color: rgba(255,255,255,0.35);
+    font-size: 11px;
+    white-space: normal;
+    -unity-text-align: middle-center;
+    margin-top: 20px;
+    max-width: 460px;
+}
+
+/* ============================================================
+   NAME ENTRY OVERLAY (tạo nhân vật mới)
+   ============================================================ */
+#name-entry-overlay {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    align-items: center;
+    justify-content: center;
+}
+#name-entry-dim {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    background-color: rgba(3, 2, 8, 0.82);
+}
+#name-entry-panel {
+    width: 420px;
+    padding: 32px;
+    background-color: rgba(10, 9, 16, 0.98);
+    border-width: 1px;
+    border-color: rgba(201, 168, 76, 0.35);
+    border-radius: 12px;
+    align-items: center;
+}
+#name-entry-title {
+    color: #fbf4e0;
+    font-size: 20px;
+    -unity-font-definition: initial;
+    -unity-font: url('Fonts/Cinzel/static/Cinzel-Bold.ttf');
+    letter-spacing: 5px;
+    margin-bottom: 8px;
+}
+#name-entry-hint {
+    color: rgba(255,255,255,0.45);
+    font-size: 11px;
+    letter-spacing: 1px;
+    margin-bottom: 18px;
+}
+#name-entry-input {
+    width: 100%;
+    margin-bottom: 8px;
+}
+#name-entry-error {
+    color: rgb(220, 110, 90);
+    font-size: 11px;
+    white-space: normal;
+    min-height: 16px;
+    margin-bottom: 14px;
+    -unity-text-align: middle-center;
+}
+#name-entry-actions {
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+}

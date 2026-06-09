@@ -40,8 +40,10 @@ public class EliteEnemySkills : NetworkBehaviour
     public bool canHeal = true;
     [Tooltip("Lượng máu hồi mỗi lần")]
     public int healAmount = 1;
-    [Tooltip("Thời gian chơi animation heal (giây) — quái đứng yên trong khoảng này")]
+    [Tooltip("Thời gian chơi animation heal (giây) — quái đứng yên trong khoảng này. Bỏ qua nếu gán healClipName.")]
     public float healDuration = 1.0f;
+    [Tooltip("Tên clip animation Heal. Có → healDuration tự KHỚP độ dài clip.")]
+    public string healClipName = "";
     [Tooltip("Ngưỡng % HP để bắt đầu roll heal (vd: 0.7 = dưới 70% HP mới có thể heal)")]
     [Range(0f, 1f)] public float healThreshold = 0.7f;
     [Tooltip("Xác suất heal mỗi giây khi đủ điều kiện (0~1). Cao = hay heal hơn")]
@@ -60,7 +62,9 @@ public class EliteEnemySkills : NetworkBehaviour
         [Tooltip("Hình dạng hitbox")] public EnemyCombat.HitboxShape hitboxShape = EnemyCombat.HitboxShape.Circle;
         [Tooltip("Góc đánh (chỉ dùng cho Cone)")] [Range(0, 360)] public float angle = 180f;
         [Tooltip("Kích thước hình chữ nhật (chỉ dùng khi Rectangle)")] public Vector2 rectSize = new Vector2(2f, 1.5f);
-        [Tooltip("Thời gian animation skill (giây) - CẦN CHỈNH BẰNG ĐÚNG ĐỘ DÀI CLIP ANIMATION")] 
+        [Tooltip("Tên clip animation skill. Có → 'duration' tự KHỚP độ dài clip. Trống → dùng 'duration' thủ công.")]
+        public string clipName = "";
+        [Tooltip("Thời gian animation skill (giây) - CẦN CHỈNH BẰNG ĐÚNG ĐỘ DÀI CLIP ANIMATION. Bỏ qua nếu đã gán clipName.")]
         public float duration = 1.0f;
         [Tooltip("Thời gian khựng lại (nghỉ mệt) sau khi dùng xong skill này")] 
         public float recoveryDuration = 0.5f;
@@ -105,8 +109,10 @@ public class EliteEnemySkills : NetworkBehaviour
     [Range(0f, 1f)] public float summonChance = 0.15f;
     [Tooltip("Cooldown giữa 2 lần summon (giây)")]
     public float summonCooldown = 10f;
-    [Tooltip("Thời gian animation summon (giây)")]
+    [Tooltip("Thời gian animation summon (giây). Bỏ qua nếu gán summonClipName.")]
     public float summonDuration = 1.2f;
+    [Tooltip("Tên clip animation Summon. Có → summonDuration tự KHỚP độ dài clip.")]
+    public string summonClipName = "";
     [Tooltip("Số summon tối đa cùng tồn tại")] [Range(1, 20)]
     public int maxActiveSummons = 6;
 
@@ -261,7 +267,9 @@ public class EliteEnemySkills : NetworkBehaviour
 
         // Bắt đầu heal (animation sẽ gọi TriggerHeal khi tới frame hồi máu)
         IsHealing = true;
-        healActiveTimer = TickTimer.CreateFromSeconds(Runner, healDuration);
+        float hDur = !string.IsNullOrEmpty(healClipName) && animationComp != null
+            ? animationComp.GetClipLength(healClipName, healDuration) : healDuration;
+        healActiveTimer = TickTimer.CreateFromSeconds(Runner, hDur);
         RPC_PlayHealingAnim();
         return true;
     }
@@ -354,7 +362,9 @@ public class EliteEnemySkills : NetworkBehaviour
 
         SkillConfig cfg = skills[idx];
         IsUsingSkill = true;
-        skillActiveTimer = TickTimer.CreateFromSeconds(Runner, cfg.duration);
+        float skillDur = !string.IsNullOrEmpty(cfg.clipName) && animationComp != null
+            ? animationComp.GetClipLength(cfg.clipName, cfg.duration) : cfg.duration;
+        skillActiveTimer = TickTimer.CreateFromSeconds(Runner, skillDur);
 
         RPC_PlaySkillAnim(idx);
         return true;
@@ -536,7 +546,9 @@ public class EliteEnemySkills : NetworkBehaviour
         if (Random.value > chance) return false;
 
         IsSummoning = true;
-        summonActiveTimer = TickTimer.CreateFromSeconds(Runner, summonDuration);
+        float sDur = !string.IsNullOrEmpty(summonClipName) && animationComp != null
+            ? animationComp.GetClipLength(summonClipName, summonDuration) : summonDuration;
+        summonActiveTimer = TickTimer.CreateFromSeconds(Runner, sDur);
         RPC_PlaySummonAnim();
         return true;
     }
