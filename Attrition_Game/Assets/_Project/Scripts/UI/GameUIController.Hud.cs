@@ -14,12 +14,22 @@ namespace Attrition.UI
             SetVisible(_ftScreen, o == Overlay.FastTravel);
             SetVisible(_goScreen, o == Overlay.GameOver);
             SetVisible(_loading, o == Overlay.Loading);
+            SetVisible(_pauseScreen, o == Overlay.Pause);
+            SetVisible(_settingsScreen, o == Overlay.Settings);
             // HUD ẩn khi có overlay che toàn màn (trừ khi None)
             SetVisible(_hud, o == Overlay.None);
 
             bool wantCursor = o != Overlay.None;
             UnityEngine.Cursor.visible = wantCursor;
             UnityEngine.Cursor.lockState = wantCursor ? CursorLockMode.None : CursorLockMode.Locked;
+
+            // SOLO: dừng game khi mở bất kỳ overlay nào (ESC/map/inventory/checkpoint).
+            // Fusion physics bỏ qua Time.timeScale → phải dùng GamePause cho các sim tự đóng băng.
+            // COOP: KHÔNG bao giờ dừng (online — dừng sẽ phá đồng bộ).
+            bool solo = Attrition.Persistence.GameLaunch.Mode == Attrition.Persistence.LaunchMode.Solo;
+            bool pause = solo && o != Overlay.None && o != Overlay.Loading;
+            Time.timeScale = pause ? 0f : 1f;               // dừng Animator + Update non-network
+            Attrition.Persistence.GamePause.IsPaused = pause; // dừng các sim Fusion
 
             if (o == Overlay.Inventory) RefreshCharacterPanel();
             if (o == Overlay.FastTravel) RefreshFastTravelList();

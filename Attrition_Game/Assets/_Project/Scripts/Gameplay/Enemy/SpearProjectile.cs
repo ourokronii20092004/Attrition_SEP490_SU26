@@ -59,6 +59,7 @@ public class SpearProjectile : NetworkBehaviour
 
     public override void FixedUpdateNetwork()
     {
+        if (Attrition.Persistence.GamePause.IsPaused) return; // SOLO pause
         if (!HasStateAuthority) return;
 
         // Nếu lao đã cắm vào tường, đếm ngược để tự hủy

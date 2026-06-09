@@ -18,6 +18,15 @@ namespace Attrition.UI
         {
             BindButton("ft-close", () => ShowOverlay(Overlay.None));
             BindButton("ft-go", TeleportToSelected);
+            BindButton("ft-rest", RestHere);
+        }
+
+        /// <summary>Nút REST trong panel checkpoint: hồi đầy + lưu (host), rồi đóng UI.</summary>
+        private void RestHere()
+        {
+            if (_controller == null) return;
+            _controller.RequestRestAtCheckpoint();
+            ShowOverlay(Overlay.None);
         }
 
         private void RefreshFastTravelList()

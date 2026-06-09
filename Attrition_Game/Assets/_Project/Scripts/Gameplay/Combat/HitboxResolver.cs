@@ -37,10 +37,15 @@ namespace Attrition.Gameplay.Combat
                 {
                     int n = scene.OverlapCircle(overlapOrigin, range, filter, results);
                     int w = 0;
+                    float half = angle * 0.5f;
                     for (int i = 0; i < n; i++)
                     {
-                        Vector2 dir = ((Vector2)results[i].transform.position - angleOrigin).normalized;
-                        if (Vector2.Angle(facing, dir) < angle / 2f)
+                        // Dùng điểm GẦN NHẤT trên collider (thay vì tâm) → player to/đứng rìa vẫn ăn đòn,
+                        // cảm giác "trúng" công bằng như game pro thay vì lọt vì tính theo tâm.
+                        Vector2 closest = results[i].ClosestPoint(angleOrigin);
+                        Vector2 dir = closest - angleOrigin;
+                        if (dir.sqrMagnitude < 0.0001f) { results[w++] = results[i]; continue; } // chồng lên gốc → tính trúng
+                        if (Vector2.Angle(facing, dir.normalized) <= half)
                             results[w++] = results[i];
                     }
                     return w;

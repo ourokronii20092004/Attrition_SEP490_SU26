@@ -11,8 +11,9 @@ public enum MyButtons
     JumpHeld = 5,   // Space giữ (continuous) - cho variable jump
     HealthPotion = 6, // Q nhấn (one-shot) - uống bình máu
     ManaPotion = 7,   // E nhấn (one-shot) - uống bình mana
-    Rest = 8,          // R nhấn (one-shot) - rest tại checkpoint
-    ToggleInventory = 9 // Tab nhấn (one-shot) - mở/đóng inventory
+    Rest = 8,          // F nhấn (one-shot) - mở UI checkpoint (rest/teleport) khi đứng trong vùng
+    ToggleInventory = 9, // Tab nhấn (one-shot) - mở/đóng inventory
+    Revive = 10        // R giữ (continuous) - hồi sinh đồng đội trong coop
 }
 
 public struct NetworkInputData : INetworkInput

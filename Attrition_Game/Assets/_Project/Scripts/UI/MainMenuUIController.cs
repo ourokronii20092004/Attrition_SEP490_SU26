@@ -74,7 +74,6 @@ namespace Attrition.UI
             SetupSettings();
             SetupGlobalProfile();
 
-            SaveManager.CreateMockDataIfNeeded();
             LoadSavesFromDisk();
 
             ShowScreen("main-menu");
@@ -269,12 +268,16 @@ namespace Attrition.UI
             }
             else
             {
-                // Offline mode
+                // Offline / solo: chỉ hiện slot thuộc ĐÚNG chế độ đang chọn (BR — solo/coop tách biệt).
+                var wantMode = _isHost ? LaunchMode.Coop : LaunchMode.Solo;
                 var localSaves = SaveManager.LoadAllSlots();
                 for (int i = 0; i < 3; i++)
                 {
                     _characterIds[i] = null;
-                    _saveSlots[i] = localSaves[i];
+                    var s = localSaves[i];
+                    // Save cũ chưa gắn originMode → coi như tương thích; khác chế độ → ẩn (hiện slot trống).
+                    bool sameMode = s == null || string.IsNullOrEmpty(s.originMode) || s.originMode == wantMode.ToString();
+                    _saveSlots[i] = sameMode ? s : null;
                     RenderSaveSlot(i, _saveSlots[i]);
                 }
             }
@@ -409,9 +412,11 @@ namespace Attrition.UI
                 createBtn.RegisterCallback<ClickEvent>(evt =>
                 {
                     PlayClickSound();
-                    Debug.Log("Create character...");
+                    OpenNameEntry();
                 });
             }
+
+            SetupNameEntry();
 
             var continueBtn = _root.Q<Button>("btn-save-continue");
             if (continueBtn != null)
@@ -423,6 +428,16 @@ namespace Attrition.UI
                     if (_saveSlots[_selectedSaveSlot] == null)
                     {
                         Debug.LogWarning("Selected slot is empty!");
+                        return;
+                    }
+
+                    // Chặn dùng chéo chế độ: save Solo không mở ở Coop và ngược lại.
+                    var wantMode = _isHost ? LaunchMode.Coop : LaunchMode.Solo;
+                    if (!SaveManager.IsSlotCompatible(_selectedSaveSlot, wantMode))
+                    {
+                        var origin = _isHost ? "Solo" : "Co-op";
+                        var target = _isHost ? "Co-op" : "Solo";
+                        ShowSlotWarning($"Save này thuộc chế độ {origin}, không thể chơi ở {target}. Hãy chọn slot khác hoặc tạo nhân vật mới.");
                         return;
                     }
 
@@ -440,12 +455,227 @@ namespace Attrition.UI
                         GameLaunch.Mode = LaunchMode.Solo;
                         GameLaunch.SelectedSlot = _selectedSaveSlot;
                         Debug.Log($"[MainMenu] Bắt đầu SOLO, slot {_selectedSaveSlot} → scene {GameLaunch.GameplayScene}");
-                        SceneManager.LoadScene(GameLaunch.GameplayScene);
+                        StartCoroutine(LoadGameplaySceneAsync(GameLaunch.GameplayScene));
                     }
                 });
             }
 
             SelectSaveSlot(0);
+        }
+
+        private static readonly string[] LoadingTips =
+        {
+            "Giữ Space lâu hơn để nhảy cao hơn.",
+            "Shadow dash (Shift) miễn sát thương trong 1 giây.",
+            "Rest tại checkpoint hồi đầy máu, mana và bình.",
+            "Quái tinh anh không bị choáng — hãy né rồi phản đòn.",
+            "Co-op: đứng gần đồng đội đã ngã, giữ phím hồi sinh trong 3 giây.",
+            "Lên cấp cho 5 điểm tự cộng — xây hướng riêng của bạn."
+        };
+
+        /// <summary>Load scene gameplay (Solo) bất đồng bộ kèm màn loading + progress bar.</summary>
+        private IEnumerator LoadGameplaySceneAsync(string sceneName)
+        {
+            var loading = _root?.Q<VisualElement>("menu-loading");
+            var fill = _root?.Q<VisualElement>("menu-loading-fill");
+            var tip = _root?.Q<Label>("menu-loading-tip");
+
+            if (loading != null) loading.style.display = DisplayStyle.Flex;
+            if (tip != null) tip.text = LoadingTips[Random.Range(0, LoadingTips.Length)];
+
+            var op = SceneManager.LoadSceneAsync(sceneName);
+            op.allowSceneActivation = false;
+
+            // 0..0.9 = load thật; giữ ở 0.9 tới khi sẵn sàng kích hoạt.
+            while (op.progress < 0.9f)
+            {
+                if (fill != null) fill.style.width = Length.Percent(Mathf.Clamp01(op.progress / 0.9f) * 100f);
+                yield return null;
+            }
+
+            if (fill != null) fill.style.width = Length.Percent(100f);
+            yield return new WaitForSeconds(0.4f); // cho người chơi kịp đọc tip
+            op.allowSceneActivation = true;
+        }
+
+        // =================================================================
+        // NAME ENTRY (tạo nhân vật mới — BR-02/03/04)
+        // =================================================================
+        private void SetupNameEntry()
+        {
+            var confirm = _root.Q<Button>("btn-name-confirm");
+            if (confirm != null)
+            {
+                confirm.RegisterCallback<PointerEnterEvent>(evt => PlayHoverSound());
+                confirm.RegisterCallback<ClickEvent>(evt => { PlayClickSound(); OnConfirmName(); });
+            }
+
+            var cancel = _root.Q<Button>("btn-name-cancel");
+            if (cancel != null)
+            {
+                cancel.RegisterCallback<PointerEnterEvent>(evt => PlayHoverSound());
+                cancel.RegisterCallback<ClickEvent>(evt => { PlayClickSound(); CloseNameEntry(); });
+            }
+        }
+
+        private void OpenNameEntry()
+        {
+            var overlay = _root.Q<VisualElement>("name-entry-overlay");
+            var input = _root.Q<TextField>("name-entry-input");
+            var error = _root.Q<Label>("name-entry-error");
+            if (input != null) input.value = "";
+            if (error != null) error.text = "";
+            if (overlay != null) overlay.style.display = DisplayStyle.Flex;
+            if (input != null) input.Focus();
+        }
+
+        private void CloseNameEntry()
+        {
+            var overlay = _root.Q<VisualElement>("name-entry-overlay");
+            if (overlay != null) overlay.style.display = DisplayStyle.None;
+        }
+
+        /// <summary>BR-03 (chỉ chữ-số), BR-04 (3–16). Trả null nếu hợp lệ, hoặc thông báo lỗi.</summary>
+        private static string ValidateNameFormat(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return "Vui lòng nhập tên.";
+            if (name.Length < 3 || name.Length > 16) return "Tên phải dài 3–16 ký tự.";
+            foreach (char c in name)
+                if (!char.IsLetterOrDigit(c)) return "Chỉ cho phép chữ cái và số (không ký tự đặc biệt).";
+            return null;
+        }
+
+        /// <summary>BR-02: tên unique. Solo check các slot local; coop sẽ check thêm trên server.</summary>
+        private bool IsNameTakenLocally(string name)
+        {
+            if (_saveSlots == null) return false;
+            foreach (var s in _saveSlots)
+                if (s != null && string.Equals(s.characterName, name, System.StringComparison.OrdinalIgnoreCase))
+                    return true;
+            return false;
+        }
+
+        private void OnConfirmName()
+        {
+            var input = _root.Q<TextField>("name-entry-input");
+            var error = _root.Q<Label>("name-entry-error");
+            string name = input?.value?.Trim() ?? "";
+
+            string fmtErr = ValidateNameFormat(name);
+            if (fmtErr != null) { if (error != null) error.text = fmtErr; return; }
+
+            if (IsNameTakenLocally(name))
+            {
+                if (error != null) error.text = "Tên này đã tồn tại ở slot khác.";
+                return;
+            }
+
+            // Slot trống đầu tiên trong CHẾ ĐỘ hiện tại để chứa nhân vật mới.
+            int slot = FindFirstEmptySlot();
+            if (slot < 0) { if (error != null) error.text = "Hết slot trống — hãy xoá bớt nhân vật."; return; }
+            _selectedSaveSlot = slot;
+
+            var mode = _isHost ? LaunchMode.Coop : LaunchMode.Solo;
+            var newSave = new SaveSlotData
+            {
+                characterName = name,
+                level = 1,
+                location = "The Ashen Threshold",
+                playtimeSeconds = 0,
+                playtime = "00:00",
+                deaths = 0,
+                currentHP = 0, currentMana = 0,
+                potionMaxFlasks = 3,
+                allocatedPoints = new int[7],
+                originMode = mode.ToString(),
+                lastSavedUnix = 0
+            };
+
+            CloseNameEntry();
+
+            if (mode == LaunchMode.Solo)
+            {
+                // Tạo file save local rồi vào game qua màn loading.
+                SaveManager.SaveSlot(slot, newSave);
+                _saveSlots[slot] = newSave;
+                GameLaunch.Mode = LaunchMode.Solo;
+                GameLaunch.SelectedSlot = slot;
+                GameLaunch.CharacterName = name;
+                StartCoroutine(LoadGameplaySceneAsync(GameLaunch.GameplayScene));
+            }
+            else
+            {
+                // Coop host: ghi local làm cache + đánh dấu để tạo nhân vật server, rồi vào lobby.
+                SaveManager.SaveSlot(slot, newSave);
+                _saveSlots[slot] = newSave;
+                GameLaunch.CharacterName = name;
+                StartFusionNetwork(GameMode.Host, _currentRoomCode);
+                UpdateLobbyRoomCode(_currentRoomCode);
+                SetupLobbyHostView();
+                ShowScreen("coop-lobby");
+            }
+        }
+
+        /// <summary>Slot trống đầu tiên (theo dữ liệu đã lọc của chế độ hiện tại).</summary>
+        private int FindFirstEmptySlot()
+        {
+            if (_saveSlots == null) return 0;
+            for (int i = 0; i < _saveSlots.Length; i++)
+                if (_saveSlots[i] == null) return i;
+            return -1;
+        }
+
+        private VisualElement _slotWarningToast;
+
+        /// <summary>Hiện cảnh báo nổi (toast) khi chọn slot sai chế độ. Tự dựng runtime, tự ẩn sau 4s.</summary>
+        private void ShowSlotWarning(string message)
+        {
+            if (_root == null) return;
+
+            if (_slotWarningToast == null)
+            {
+                _slotWarningToast = new VisualElement();
+                _slotWarningToast.style.position = Position.Absolute;
+                _slotWarningToast.style.bottom = 40;
+                _slotWarningToast.style.left = Length.Percent(50);
+                _slotWarningToast.style.translate = new StyleTranslate(new Translate(Length.Percent(-50), 0));
+                _slotWarningToast.style.paddingLeft = 22;
+                _slotWarningToast.style.paddingRight = 22;
+                _slotWarningToast.style.paddingTop = 12;
+                _slotWarningToast.style.paddingBottom = 12;
+                _slotWarningToast.style.backgroundColor = new Color(0.12f, 0.04f, 0.04f, 0.96f);
+                _slotWarningToast.style.borderTopLeftRadius = 6;
+                _slotWarningToast.style.borderTopRightRadius = 6;
+                _slotWarningToast.style.borderBottomLeftRadius = 6;
+                _slotWarningToast.style.borderBottomRightRadius = 6;
+                SetBorder(_slotWarningToast, new Color(0.78f, 0.25f, 0.25f, 0.9f), 1);
+                _slotWarningToast.style.maxWidth = 560;
+
+                var label = new Label { name = "slot-warning-label" };
+                label.style.color = new Color(0.96f, 0.82f, 0.78f);
+                label.style.fontSize = 13;
+                label.style.whiteSpace = WhiteSpace.Normal;
+                label.style.unityTextAlign = TextAnchor.MiddleCenter;
+                _slotWarningToast.Add(label);
+                _root.Add(_slotWarningToast);
+            }
+
+            _slotWarningToast.Q<Label>("slot-warning-label").text = message;
+            _slotWarningToast.style.display = DisplayStyle.Flex;
+            _slotWarningToast.BringToFront();
+
+            _slotWarningToast.schedule.Execute(() =>
+            {
+                if (_slotWarningToast != null) _slotWarningToast.style.display = DisplayStyle.None;
+            }).StartingIn(4000);
+        }
+
+        private static void SetBorder(VisualElement ve, Color c, float w)
+        {
+            ve.style.borderTopColor = c; ve.style.borderBottomColor = c;
+            ve.style.borderLeftColor = c; ve.style.borderRightColor = c;
+            ve.style.borderTopWidth = w; ve.style.borderBottomWidth = w;
+            ve.style.borderLeftWidth = w; ve.style.borderRightWidth = w;
         }
 
         private void SelectSaveSlot(int index)
