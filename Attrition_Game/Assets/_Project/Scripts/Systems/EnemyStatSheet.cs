@@ -30,9 +30,11 @@ namespace Attrition.Systems
 
             if (isCoop)
             {
-                hp = Mathf.RoundToInt(hp * so.coopHpMultiplier);
-                ad = Mathf.RoundToInt(ad * so.coopDamageMultiplier);
-                ap = Mathf.RoundToInt(ap * so.coopDamageMultiplier);
+                // BR-20: Max HP is scaled up by exactly 50%
+                hp = Mathf.RoundToInt(hp * 1.5f);
+                
+                // BR-22: Enemy stagger resistance (Poise) is increased by exactly 50%
+                poise = Mathf.RoundToInt(poise * 1.5f);
             }
 
             return new EnemyStatSheet

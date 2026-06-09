@@ -15,7 +15,8 @@ public class LoginManager : MonoBehaviour
     public GameObject lobbyPanel;
     private void Start()
     {
-        loginButton.onClick.AddListener(HandleLogin);
+        if (loginButton != null)
+            loginButton.onClick.AddListener(HandleLogin);
     }
 
     private void HandleLogin()

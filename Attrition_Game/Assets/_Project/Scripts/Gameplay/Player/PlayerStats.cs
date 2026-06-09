@@ -23,8 +23,15 @@ namespace Attrition.Gameplay.Player
         [Networked] public float CurrentStamina { get; set; }
         [Networked] public int Level { get; set; }
 
+        // Điểm tự cộng (Option 2) — host-authoritative, sync xuống client.
+        // Index = (int)StatType (0..6). UI đọc để hiện, gọi RpcRequestAllocate để cộng.
+        [Networked, Capacity(7)] public NetworkArray<int> AllocatedPoints { get; }
+
         private StatSheet _sheet;
         public StatSheet Sheet => _sheet;
+
+        /// <summary>Event UI lắng nghe để refresh bảng chỉ số khi level/điểm/đồ đổi.</summary>
+        public event System.Action OnStatsChanged;
 
         // Fallback khi chưa gán SO (giữ tương thích prefab cũ)
         private const int FallbackHP = 100, FallbackMana = 100, FallbackStamina = 100;
@@ -45,11 +52,52 @@ namespace Attrition.Gameplay.Player
             {
                 if (Level <= 0) Level = 1;
                 _sheet?.SetLevel(Level);
+                SyncAllocatedToSheet();
                 CurrentHP = MaxHP;
                 CurrentMana = MaxMana;
                 CurrentStamina = MaxStamina;
             }
+            else
+            {
+                SyncAllocatedToSheet();
+            }
         }
+
+        /// <summary>Nạp NetworkArray điểm cộng vào StatSheet (gọi sau mỗi thay đổi level/điểm/khi spawn proxy).</summary>
+        private void SyncAllocatedToSheet()
+        {
+            if (_sheet == null) return;
+            var map = new System.Collections.Generic.Dictionary<Attrition.Core.StatType, int>();
+            for (int i = 0; i < AllocatedPoints.Length; i++)
+                if (AllocatedPoints.Get(i) > 0) map[(Attrition.Core.StatType)i] = AllocatedPoints.Get(i);
+            _sheet.LoadAllocated(map);
+            OnStatsChanged?.Invoke();
+        }
+
+        /// <summary>Số điểm chưa tiêu (đọc từ sheet). 0 nếu chưa có SO.</summary>
+        public int UnspentPoints => _sheet?.UnspentPoints ?? 0;
+
+        /// <summary>Cộng 1 điểm vào stat (Option 2). Chỉ host; clamp theo điểm còn lại. Trả false nếu hết điểm.</summary>
+        public bool TryAllocatePoint(Attrition.Core.StatType stat)
+        {
+            if (!HasStateAuthority || _sheet == null) return false;
+            if (!_sheet.AllocatePoint(stat)) return false;
+
+            int idx = (int)stat;
+            if (idx >= 0 && idx < AllocatedPoints.Length)
+                AllocatedPoints.Set(idx, AllocatedPoints.Get(idx) + 1);
+
+            // Cộng điểm có thể nâng Max → clamp current không vượt max mới (không tự hồi đầy).
+            CurrentHP = Mathf.Min(CurrentHP, MaxHP);
+            CurrentMana = Mathf.Min(CurrentMana, MaxMana);
+            CurrentStamina = Mathf.Min(CurrentStamina, MaxStamina);
+            OnStatsChanged?.Invoke();
+            return true;
+        }
+
+        /// <summary>Client gửi yêu cầu cộng điểm lên host.</summary>
+        [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+        public void RpcRequestAllocate(int statTypeInt) => TryAllocatePoint((Attrition.Core.StatType)statTypeInt);
 
         private void BuildSheet()
         {
@@ -99,6 +147,7 @@ namespace Attrition.Gameplay.Player
             CurrentHP = MaxHP;
             CurrentMana = MaxMana;
             CurrentStamina = MaxStamina;
+            OnStatsChanged?.Invoke();
         }
 
         /// <summary>Áp lại level + rebuild trang bị (gọi khi load session hoặc đổi đồ).</summary>
@@ -113,6 +162,7 @@ namespace Attrition.Gameplay.Player
                 CurrentHP = Mathf.Min(CurrentHP <= 0 ? MaxHP : CurrentHP, MaxHP);
                 CurrentMana = Mathf.Min(CurrentMana <= 0 ? MaxMana : CurrentMana, MaxMana);
             }
+            OnStatsChanged?.Invoke();
         }
 
         /// <summary>Sát thương phòng thủ-aware lên 1 mục tiêu. Dùng DamageCalculator chung.</summary>

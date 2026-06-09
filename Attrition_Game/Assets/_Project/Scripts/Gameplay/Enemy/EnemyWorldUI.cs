@@ -1,0 +1,135 @@
+using UnityEngine;
+using TMPro;
+using Attrition.Controllers;
+using Attrition.Persistence;
+
+namespace Attrition.Gameplay.Enemy
+{
+    /// <summary>
+    /// UI thế-giới gắn trên quái: thanh máu dưới chân + số sát thương nổi khi bị đánh.
+    /// Tự dựng runtime (không cần prefab). Đọc HP từ EnemyController, chạy trên mọi máy.
+    /// Số sát thương chỉ hiện khi GameSettings.ShowDamageNumbers bật.
+    /// </summary>
+    [RequireComponent(typeof(EnemyController))]
+    public class EnemyWorldUI : MonoBehaviour
+    {
+        [Header("---- VỊ TRÍ ----")]
+        [Tooltip("Lệch thanh máu so với gốc quái (dưới chân = y âm).")]
+        [SerializeField] private Vector3 barOffset = new Vector3(0f, -0.6f, 0f);
+        [Tooltip("Lệch điểm số sát thương nổi (trên đầu).")]
+        [SerializeField] private Vector3 popupOffset = new Vector3(0f, 1.2f, 0f);
+        [SerializeField] private Vector2 barSize = new Vector2(1.2f, 0.14f);
+
+        private EnemyController _enemy;
+        private Transform _barRoot;
+        private Transform _fill;
+        private float _shownFraction = 1f;
+        private bool _everDamaged;
+
+        private void Awake()
+        {
+            _enemy = GetComponent<EnemyController>();
+            BuildBar();
+        }
+
+        private void BuildBar()
+        {
+            // Root world-space (sprite-based, không cần Canvas → rẻ và luôn quay mặt camera 2D)
+            var root = new GameObject("HealthBar");
+            _barRoot = root.transform;
+            _barRoot.SetParent(transform, false);
+            _barRoot.localPosition = barOffset;
+
+            var bg = CreateQuad("BG", _barRoot, new Color(0f, 0f, 0f, 0.7f), barSize, 0);
+            var fillSize = new Vector2(barSize.x - 0.04f, barSize.y - 0.04f);
+            _fill = CreateQuad("Fill", bg.transform, new Color(0.7f, 0.16f, 0.16f, 1f), fillSize, 1).transform;
+
+            _barRoot.gameObject.SetActive(false); // ẩn tới khi bị đánh lần đầu
+        }
+
+        private GameObject CreateQuad(string name, Transform parent, Color color, Vector2 size, int order)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            var sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = WhiteSprite();
+            sr.color = color;
+            sr.sortingOrder = 50 + order;
+            go.transform.localScale = new Vector3(size.x, size.y, 1f);
+            return go;
+        }
+
+        private static Sprite _white;
+        private static Sprite WhiteSprite()
+        {
+            if (_white != null) return _white;
+            var tex = Texture2D.whiteTexture;
+            _white = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f), tex.width);
+            return _white;
+        }
+
+        /// <summary>Gọi từ EnemyController.RPC_NotifyDamageTaken trên mọi máy.</summary>
+        public void OnDamaged(int amount)
+        {
+            _everDamaged = true;
+            if (_barRoot != null) _barRoot.gameObject.SetActive(true);
+
+            if (GameSettings.ShowDamageNumbers && amount > 0)
+                SpawnPopup(amount);
+        }
+
+        private void SpawnPopup(int amount)
+        {
+            var go = new GameObject("DmgPopup");
+            go.transform.position = transform.position + popupOffset;
+            var tm = go.AddComponent<TextMeshPro>();
+            tm.text = amount.ToString();
+            tm.fontSize = 4f;
+            tm.alignment = TextAlignmentOptions.Center;
+            tm.color = new Color(1f, 0.85f, 0.3f, 1f);
+            tm.sortingOrder = 60;
+            go.AddComponent<FloatingNumber>();
+        }
+
+        private void Update()
+        {
+            if (!_everDamaged || _enemy == null || _fill == null) return;
+
+            int max = Mathf.Max(1, _enemy.maxHealth);
+            float target = Mathf.Clamp01((float)_enemy.CurrentHealth / max);
+            _shownFraction = Mathf.MoveTowards(_shownFraction, target, Time.deltaTime * 2f);
+
+            float w = (barSize.x - 0.04f) * _shownFraction;
+            _fill.localScale = new Vector3(w, barSize.y - 0.04f, 1f);
+            // neo trái: dịch theo nửa phần hụt
+            float missing = (barSize.x - 0.04f) - w;
+            _fill.localPosition = new Vector3(-missing * 0.5f, 0f, 0f);
+
+            if (_enemy.IsDead && _barRoot != null) _barRoot.gameObject.SetActive(false);
+        }
+    }
+
+    /// <summary>Hiệu ứng số sát thương: bay lên + mờ dần rồi tự huỷ.</summary>
+    public class FloatingNumber : MonoBehaviour
+    {
+        private TextMeshPro _tm;
+        private float _life;
+        private const float Duration = 0.8f;
+
+        private void Awake() => _tm = GetComponent<TextMeshPro>();
+
+        private void Update()
+        {
+            _life += Time.deltaTime;
+            transform.position += Vector3.up * Time.deltaTime * 1.5f;
+
+            if (_tm != null)
+            {
+                float a = 1f - (_life / Duration);
+                var c = _tm.color; c.a = Mathf.Clamp01(a); _tm.color = c;
+            }
+
+            if (_life >= Duration) Destroy(gameObject);
+        }
+    }
+}

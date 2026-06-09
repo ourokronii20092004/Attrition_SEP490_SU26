@@ -1,0 +1,188 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="GameUI.uss"/>
+    <ui:VisualElement name="game-root" picking-mode="Ignore">
+
+        <!-- ==================== HUD ==================== -->
+        <ui:VisualElement name="hud" picking-mode="Ignore">
+            <!-- Top-left: avatar + HP/Mana/Stamina -->
+            <ui:VisualElement name="hud-topleft">
+                <ui:VisualElement class="hud-avatar"/>
+                <ui:VisualElement name="hud-bars">
+                    <ui:VisualElement class="stat-bar-row">
+                        <ui:VisualElement class="stat-bar-track">
+                            <ui:VisualElement name="hud-hp-fill" class="stat-bar-fill fill-hp"/>
+                        </ui:VisualElement>
+                        <ui:Label name="hud-hp-label" text="100/100" class="stat-bar-label"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="stat-bar-row">
+                        <ui:VisualElement class="stat-bar-track">
+                            <ui:VisualElement name="hud-mana-fill" class="stat-bar-fill fill-mana"/>
+                        </ui:VisualElement>
+                        <ui:Label name="hud-mana-label" text="100/100" class="stat-bar-label"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="stat-bar-row">
+                        <ui:VisualElement class="stat-bar-track">
+                            <ui:VisualElement name="hud-stamina-fill" class="stat-bar-fill fill-stamina"/>
+                        </ui:VisualElement>
+                        <ui:Label name="hud-stamina-label" text="100/100" class="stat-bar-label"/>
+                    </ui:VisualElement>
+                    <ui:Label name="hud-level" text="LV. 1" class="stat-bar-label" style="width: auto; -unity-text-align: middle-left; color: #c9a84c; margin-top: 2px;"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- Boss bar -->
+            <ui:VisualElement name="hud-boss" class="hidden">
+                <ui:Label name="hud-boss-name" text="LORD CINDER"/>
+                <ui:VisualElement name="hud-boss-track">
+                    <ui:VisualElement name="hud-boss-fill"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- Bottom-left: flasks + skill -->
+            <ui:VisualElement name="hud-bottomleft">
+                <ui:VisualElement name="hud-hp-flask" class="hud-slot">
+                    <ui:VisualElement name="hud-hp-flask-icon" class="hud-slot-icon"/>
+                    <ui:Label text="Q" class="hud-slot-key"/>
+                    <ui:Label name="hud-hp-flask-count" text="3" class="hud-slot-count"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="hud-skill" class="hud-slot skill">
+                    <ui:VisualElement name="hud-skill-icon" class="hud-slot-icon"/>
+                    <ui:Label text="K" class="hud-slot-key"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="hud-mana-flask" class="hud-slot">
+                    <ui:VisualElement name="hud-mana-flask-icon" class="hud-slot-icon"/>
+                    <ui:Label text="E" class="hud-slot-key"/>
+                    <ui:Label name="hud-mana-flask-count" text="3" class="hud-slot-count"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- Interaction prompt -->
+            <ui:VisualElement name="hud-prompt" class="hidden">
+                <ui:Label name="hud-prompt-text" text="[R] REST"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- ==================== CHARACTER / INVENTORY ==================== -->
+        <ui:VisualElement name="inv-screen" class="overlay-screen hidden">
+            <ui:VisualElement name="inv-dim" class="overlay-screen"/>
+            <ui:VisualElement name="inv-panel">
+                <!-- LEFT: character + equipment -->
+                <ui:VisualElement name="inv-left">
+                    <ui:Label name="inv-char-name" text="ARTORIAS"/>
+                    <ui:Label name="inv-char-level" text="LEVEL 1"/>
+                    <ui:VisualElement name="inv-equip-row">
+                        <ui:VisualElement class="equip-col">
+                            <ui:Button name="equip-head" class="equip-slot"><ui:VisualElement name="equip-head-icon" class="equip-slot-icon"/></ui:Button>
+                            <ui:Button name="equip-chest" class="equip-slot"><ui:VisualElement name="equip-chest-icon" class="equip-slot-icon"/></ui:Button>
+                            <ui:Button name="equip-legs" class="equip-slot"><ui:VisualElement name="equip-legs-icon" class="equip-slot-icon"/></ui:Button>
+                            <ui:Button name="equip-boots" class="equip-slot"><ui:VisualElement name="equip-boots-icon" class="equip-slot-icon"/></ui:Button>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="equip-col" style="justify-content: center;">
+                            <ui:VisualElement name="inv-avatar"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="equip-col">
+                            <ui:Button name="equip-accessory" class="equip-slot"><ui:VisualElement name="equip-accessory-icon" class="equip-slot-icon"/></ui:Button>
+                            <ui:Button name="equip-skill" class="equip-slot skill"><ui:VisualElement name="equip-skill-icon" class="equip-slot-icon"/></ui:Button>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <ui:VisualElement name="inv-stats">
+                        <ui:VisualElement class="stat-cell"><ui:Label text="DEF" class="stat-cell-key"/><ui:Label name="stat-def" text="10" class="stat-cell-val"/></ui:VisualElement>
+                        <ui:VisualElement class="stat-cell"><ui:Label text="RES" class="stat-cell-key"/><ui:Label name="stat-res" text="10" class="stat-cell-val"/></ui:VisualElement>
+                        <ui:VisualElement class="stat-cell"><ui:Label text="AD" class="stat-cell-key"/><ui:Label name="stat-ad" text="10" class="stat-cell-val"/></ui:VisualElement>
+                        <ui:VisualElement class="stat-cell"><ui:Label text="AP" class="stat-cell-key"/><ui:Label name="stat-ap" text="10" class="stat-cell-val"/></ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <ui:Label name="inv-points" text="UNSPENT POINTS: 0"/>
+                    <ui:VisualElement name="inv-alloc" style="flex-direction: row; flex-wrap: wrap; justify-content: center;">
+                        <ui:Button name="alloc-MaxHP" text="+HP" class="alloc-btn" style="width: auto; padding: 0 6px;"/>
+                        <ui:Button name="alloc-MaxMana" text="+MP" class="alloc-btn" style="width: auto; padding: 0 6px;"/>
+                        <ui:Button name="alloc-AD" text="+AD" class="alloc-btn" style="width: auto; padding: 0 6px;"/>
+                        <ui:Button name="alloc-AP" text="+AP" class="alloc-btn" style="width: auto; padding: 0 6px;"/>
+                        <ui:Button name="alloc-DEF" text="+DEF" class="alloc-btn" style="width: auto; padding: 0 6px;"/>
+                        <ui:Button name="alloc-RES" text="+RES" class="alloc-btn" style="width: auto; padding: 0 6px;"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- RIGHT: inventory grid -->
+                <ui:VisualElement name="inv-right">
+                    <ui:VisualElement name="inv-tabs">
+                        <ui:Button name="inv-tab-equipment" text="EQUIPMENT" class="inv-tab active"/>
+                        <ui:Button name="inv-tab-accessory" text="ACCESSORY" class="inv-tab"/>
+                        <ui:Button name="inv-tab-skill" text="SKILL" class="inv-tab"/>
+                    </ui:VisualElement>
+                    <ui:ScrollView name="inv-grid-scroll" style="flex-grow: 1;">
+                        <ui:VisualElement name="inv-grid"/>
+                    </ui:ScrollView>
+                    <ui:VisualElement name="inv-weight-row">
+                        <ui:Label text="SLOTS" class="inv-tab" style="padding: 0; border-bottom-width: 0;"/>
+                        <ui:VisualElement name="inv-weight-track"><ui:VisualElement name="inv-weight-fill"/></ui:VisualElement>
+                        <ui:Label name="inv-weight-label" text="0/40"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- Detail popup -->
+                <ui:VisualElement name="inv-detail" class="hidden">
+                    <ui:Label name="inv-detail-name" text="Item"/>
+                    <ui:Label name="inv-detail-desc" text=""/>
+                    <ui:VisualElement name="inv-detail-mods"/>
+                    <ui:Button name="inv-detail-equip" text="EQUIP" class="detail-btn"/>
+                    <ui:Button name="inv-detail-drop" text="DROP" class="detail-btn drop"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- ==================== FAST TRAVEL ==================== -->
+        <ui:VisualElement name="ft-screen" class="overlay-screen hidden">
+            <ui:VisualElement name="ft-dim" class="overlay-screen"/>
+            <ui:VisualElement name="ft-panel">
+                <ui:VisualElement name="ft-list-col">
+                    <ui:Label name="ft-title" text="FAST TRAVEL"/>
+                    <ui:Label name="ft-count" text="0 / 0 DISCOVERED"/>
+                    <ui:ScrollView name="ft-list"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="ft-preview-col">
+                    <ui:VisualElement name="ft-preview">
+                        <ui:Label name="ft-preview-name" text="SELECT A BEACON"/>
+                        <ui:Label name="ft-preview-region" text=""/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="ft-actions">
+                        <ui:Button name="ft-close" text="CLOSE" class="ft-btn close"/>
+                        <ui:Button name="ft-go" text="TELEPORT" class="ft-btn go"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- ==================== GAME OVER ==================== -->
+        <ui:VisualElement name="go-screen" class="overlay-screen hidden">
+            <ui:VisualElement name="go-dim" class="overlay-screen"/>
+            <ui:VisualElement name="go-content">
+                <ui:VisualElement name="go-sigil"><ui:Label name="go-sigil-icon" text="☠"/></ui:VisualElement>
+                <ui:Label name="go-title" text="YOU DIED"/>
+                <ui:Label name="go-subtitle" text="The flame has been extinguished."/>
+                <ui:VisualElement name="go-stats">
+                    <ui:VisualElement class="go-stat"><ui:Label name="go-time" text="0:00" class="go-stat-val"/><ui:Label text="SURVIVED" class="go-stat-key"/></ui:VisualElement>
+                    <ui:VisualElement class="go-stat"><ui:Label name="go-level" text="1" class="go-stat-val"/><ui:Label text="LEVEL" class="go-stat-key"/></ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="go-actions">
+                    <ui:Button name="go-resume" text="LAST CHECKPOINT" class="go-btn resume"/>
+                    <ui:Button name="go-quit" text="QUIT TO MENU" class="go-btn quit"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- ==================== LOADING ==================== -->
+        <ui:VisualElement name="loading" class="overlay-screen hidden">
+            <ui:VisualElement name="loading-content">
+                <ui:Label name="loading-title" text="ATTRITION"/>
+                <ui:Label name="loading-area" text="LOADING"/>
+                <ui:VisualElement name="loading-track"><ui:VisualElement name="loading-fill"/></ui:VisualElement>
+                <ui:Label name="loading-status" text="Preparing world..."/>
+                <ui:Label name="loading-countdown" text="" class="hidden"/>
+                <ui:Label name="loading-tip" text="Hold SPACE to jump higher. Dash grants brief invincibility."/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+    </ui:VisualElement>
+</ui:UXML>

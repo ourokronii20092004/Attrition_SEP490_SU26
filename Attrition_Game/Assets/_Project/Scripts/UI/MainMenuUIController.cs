@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 using Attrition.Persistence;
 using Fusion;
@@ -435,9 +436,11 @@ namespace Attrition.UI
                     }
                     else
                     {
-                        // Solo play
-                        Debug.Log("Starting Solo game...");
-                        // SceneManager.LoadScene("GameScene");
+                        // SOLO cục bộ: lưu ý định + load thẳng scene gameplay (không cần login/mạng).
+                        GameLaunch.Mode = LaunchMode.Solo;
+                        GameLaunch.SelectedSlot = _selectedSaveSlot;
+                        Debug.Log($"[MainMenu] Bắt đầu SOLO, slot {_selectedSaveSlot} → scene {GameLaunch.GameplayScene}");
+                        SceneManager.LoadScene(GameLaunch.GameplayScene);
                     }
                 });
             }
@@ -673,7 +676,19 @@ namespace Attrition.UI
                 {
                     if (!_isCoopReady) return;
                     PlayClickSound();
-                    Debug.Log("Starting Co-op Game...");
+                    // COOP có mạng: runner đã chạy (Host). Đánh dấu Coop để bootstrap KHÔNG tự start Single.
+                    GameLaunch.Mode = LaunchMode.Coop;
+                    GameLaunch.SelectedSlot = _selectedSaveSlot;
+                    Debug.Log("[MainMenu] Host bắt đầu CO-OP → load scene gameplay cho cả phòng.");
+
+                    // Host điều khiển load scene; Fusion NetworkSceneManager sync client theo.
+                    var runner = FindObjectOfType<NetworkRunner>();
+                    if (runner != null && runner.IsServer)
+                    {
+                        int idx = SceneUtility.GetBuildIndexByScenePath($"Assets/_Project/Scenes/{GameLaunch.GameplayScene}.unity");
+                        if (idx >= 0) runner.LoadScene(SceneRef.FromIndex(idx));
+                        else Debug.LogError($"[MainMenu] Scene '{GameLaunch.GameplayScene}' chưa có trong Build Settings.");
+                    }
                 });
             }
         }
@@ -791,6 +806,8 @@ namespace Attrition.UI
             SetupSliderLabel("slider-voice", "label-voice-val");
 
             SetupKeybindButtons();
+            LoadSettingsIntoUI();
+            GameSettings.ApplyToEngine();
         }
 
         private void SetupSliderLabel(string sliderName, string labelName)
@@ -803,22 +820,46 @@ namespace Attrition.UI
 
         private void SetupKeybindButtons()
         {
-            var keybindBtns = _root.Query<Button>(className: "keybind-btn").ToList();
-            foreach (var btn in keybindBtns)
+            foreach (GameSettings.InputAction action in System.Enum.GetValues(typeof(GameSettings.InputAction)))
             {
+                var btn = _root.Q<Button>($"key-{action}");
+                if (btn == null) continue;
+                var captured = action;
+                btn.text = PrettyKey(GameSettings.GetKey(captured));
                 btn.RegisterCallback<PointerEnterEvent>(evt => PlayHoverSound());
-                btn.RegisterCallback<ClickEvent>(evt =>
-                {
-                    PlayClickSound();
-                    btn.text = "PRESS KEY…";
-                    btn.AddToClassList("rebinding");
-                    btn.RegisterCallback<KeyDownEvent>(keyEvt =>
-                    {
-                        btn.text = keyEvt.keyCode.ToString().ToUpper();
-                        btn.RemoveFromClassList("rebinding");
-                        keyEvt.StopPropagation();
-                    });
-                });
+                btn.RegisterCallback<ClickEvent>(evt => BeginRebind(btn, captured));
+            }
+        }
+
+        private void BeginRebind(Button btn, GameSettings.InputAction action)
+        {
+            PlayClickSound();
+            btn.text = "PRESS KEY…";
+            btn.AddToClassList("rebinding");
+            btn.focusable = true;
+            btn.Focus();
+            EventCallback<KeyDownEvent> handler = null;
+            handler = keyEvt =>
+            {
+                if (keyEvt.keyCode == KeyCode.None) return;
+                GameSettings.SetKey(action, keyEvt.keyCode);
+                GameSettings.Save();
+                btn.text = PrettyKey(keyEvt.keyCode);
+                btn.RemoveFromClassList("rebinding");
+                btn.UnregisterCallback(handler);
+                keyEvt.StopPropagation();
+            };
+            btn.RegisterCallback(handler);
+        }
+
+        private static string PrettyKey(KeyCode k)
+        {
+            switch (k)
+            {
+                case KeyCode.Space: return "SPACE";
+                case KeyCode.LeftShift: case KeyCode.RightShift: return "SHIFT";
+                case KeyCode.Tab: return "TAB";
+                default: return k.ToString().ToUpper();
             }
         }
 
@@ -843,51 +884,77 @@ namespace Attrition.UI
 
         private void ResetSettingsToDefault()
         {
-            SetSliderValue("slider-master", 80, "label-master-val");
-            SetSliderValue("slider-music", 65, "label-music-val");
-            SetSliderValue("slider-sfx", 100, "label-sfx-val");
-            SetSliderValue("slider-ambient", 70, "label-ambient-val");
-            SetSliderValue("slider-voice", 90, "label-voice-val");
-            SetToggleValue("toggle-autolock", true);
-            SetToggleValue("toggle-dmg-numbers", true);
-            SetToggleValue("toggle-cam-shake", false);
-            SetToggleValue("toggle-vsync", true);
-            SetToggleValue("toggle-post-processing", true);
-            SetDropdownIndex("dropdown-difficulty", 2);
+            GameSettings.ResetToDefault();
+            GameSettings.Save();
+            LoadSettingsIntoUI();
             SetDropdownIndex("dropdown-resolution", 1);
             SetDropdownIndex("dropdown-fullscreen", 1);
             SetDropdownIndex("dropdown-framelimit", 3);
             SetDropdownIndex("dropdown-shadows", 3);
+            GameSettings.ApplyToEngine();
+            ApplyGraphicsFromUI();
+            SetupKeybindButtons();
+        }
+
+        /// <summary>Đổ giá trị đã lưu (PlayerPrefs) lên các control trong UI.</summary>
+        private void LoadSettingsIntoUI()
+        {
+            GameSettings.EnsureLoaded();
+            SetSliderValue("slider-master", GameSettings.MasterVolume * 100f, "label-master-val");
+            SetSliderValue("slider-music", GameSettings.MusicVolume * 100f, "label-music-val");
+            SetSliderValue("slider-sfx", GameSettings.SfxVolume * 100f, "label-sfx-val");
+            SetSliderValue("slider-ambient", GameSettings.AmbientVolume * 100f, "label-ambient-val");
+            SetSliderValue("slider-voice", GameSettings.VoiceVolume * 100f, "label-voice-val");
+            SetToggleValue("toggle-dmg-numbers", GameSettings.ShowDamageNumbers);
+            SetToggleValue("toggle-cam-shake", GameSettings.CameraShake);
+            SetToggleValue("toggle-vsync", GameSettings.VSync);
+            SetToggleValue("toggle-post-processing", GameSettings.PostProcessing);
         }
 
         private void ApplySettings()
         {
-            var masterSlider = _root.Q<Slider>("slider-master");
-            if (masterSlider != null) AudioListener.volume = masterSlider.value / 100f;
+            float V(string n) { var s = _root.Q<Slider>(n); return s != null ? s.value / 100f : 0f; }
+            bool T(string n) { var t = _root.Q<Toggle>(n); return t != null && t.value; }
 
-            var vsyncToggle = _root.Q<Toggle>("toggle-vsync");
-            if (vsyncToggle != null) QualitySettings.vSyncCount = vsyncToggle.value ? 1 : 0;
+            GameSettings.SetAudio(V("slider-master"), V("slider-music"), V("slider-sfx"), V("slider-ambient"), V("slider-voice"));
+            GameSettings.SetToggles(T("toggle-dmg-numbers"), T("toggle-cam-shake"), T("toggle-vsync"), T("toggle-post-processing"));
+            GameSettings.Save();
+            GameSettings.ApplyToEngine();
+            ApplyGraphicsFromUI();
+        }
 
-            var fullscreenDropdown = _root.Q<DropdownField>("dropdown-fullscreen");
-            if (fullscreenDropdown != null)
-            {
-                switch (fullscreenDropdown.index)
+        /// <summary>Áp thiết lập đồ hoạ không lưu trong GameSettings: độ phân giải, fps, shadow, fullscreen.</summary>
+        private void ApplyGraphicsFromUI()
+        {
+            var fs = _root.Q<DropdownField>("dropdown-fullscreen");
+            if (fs != null)
+                Screen.fullScreenMode = fs.index switch
                 {
-                    case 0: Screen.fullScreenMode = FullScreenMode.ExclusiveFullScreen; break;
-                    case 1: Screen.fullScreenMode = FullScreenMode.FullScreenWindow; break;
-                    case 2: Screen.fullScreenMode = FullScreenMode.Windowed; break;
-                }
-            }
+                    0 => FullScreenMode.ExclusiveFullScreen,
+                    2 => FullScreenMode.Windowed,
+                    _ => FullScreenMode.FullScreenWindow,
+                };
 
             var resDropdown = _root.Q<DropdownField>("dropdown-resolution");
-            if (resDropdown != null)
+            if (resDropdown != null && resDropdown.index >= 0)
             {
                 int[][] resolutions = { new[]{1280,720}, new[]{1920,1080}, new[]{2560,1440}, new[]{3840,2160} };
-                if (resDropdown.index >= 0 && resDropdown.index < resolutions.Length)
+                if (resDropdown.index < resolutions.Length)
                 {
                     var res = resolutions[resDropdown.index];
                     Screen.SetResolution(res[0], res[1], Screen.fullScreenMode);
                 }
+            }
+
+            var fps = _root.Q<DropdownField>("dropdown-framelimit");
+            if (fps != null)
+                Application.targetFrameRate = fps.index switch { 0 => 30, 1 => 60, 2 => 120, 3 => 144, _ => -1 };
+
+            var shadows = _root.Q<DropdownField>("dropdown-shadows");
+            if (shadows != null)
+            {
+                QualitySettings.shadows = shadows.index <= 0 ? ShadowQuality.Disable : ShadowQuality.All;
+                QualitySettings.shadowResolution = (ShadowResolution)Mathf.Clamp(shadows.index, 0, 3);
             }
         }
 

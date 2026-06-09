@@ -73,6 +73,17 @@ public class NetworkSpawner : MonoBehaviour, INetworkRunnerCallbacks
         StartGame(mode, sessionName);
     }
 
+    /// <summary>
+    /// Chơi SOLO cục bộ: GameMode.Single — không kết nối relay/mạng, không cần login.
+    /// Vẫn dùng Fusion nên mọi [Networked]/RPC/spawn chạy y hệt coop (test gameplay chuẩn).
+    /// Gọi tự động khi scene gameplay khởi động ở chế độ Solo.
+    /// </summary>
+    public void StartSinglePlayer()
+    {
+        if (lobbyPanel != null) lobbyPanel.SetActive(false);
+        StartGame(GameMode.Single, "SoloLocal");
+    }
+
     private void SpawnAllEnemies()
     {
         if (enemySpawnConfigs == null || enemySpawnConfigs.Length == 0)

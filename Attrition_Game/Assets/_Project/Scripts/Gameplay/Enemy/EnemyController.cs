@@ -220,6 +220,16 @@ namespace Attrition.Controllers
                 // Dù có bị knockback hay không, quái vẫn chớp sáng báo hiệu đã nhận sát thương
                 RPC_PlayHitAnimation();
             }
+
+            // Báo cho UI thế-giới (thanh máu + số sát thương nổi) trên MỌI máy.
+            RPC_NotifyDamageTaken(taken);
+        }
+
+        [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+        private void RPC_NotifyDamageTaken(int taken)
+        {
+            var worldUI = GetComponent<Attrition.Gameplay.Enemy.EnemyWorldUI>();
+            if (worldUI != null) worldUI.OnDamaged(taken);
         }
 
         [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
