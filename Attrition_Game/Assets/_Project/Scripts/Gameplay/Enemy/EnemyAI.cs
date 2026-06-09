@@ -20,7 +20,8 @@ public enum EnemyState : byte
     RetreatingUp,       // Bay lên cao sau khi đánh (Fly Melee)
     UsingSkill,         // Đang dùng skill đặc biệt (facing LOCKED)
     Summoning,          // Đang triệu hồi quái phụ (facing LOCKED)
-    Jumping             // Đang nhảy (tránh né / di chuyển)
+    Jumping,            // Đang nhảy (tránh né / di chuyển)
+    Telegraphing        // Đang "lấy đà" báo đòn trước khi đánh (facing LOCKED, đứng yên)
 }
 
 public class EnemyAI : NetworkBehaviour
@@ -43,6 +44,16 @@ public class EnemyAI : NetworkBehaviour
     public float patrolRadius = 3f;
     [Tooltip("Đánh dấu nếu quái là loại bay (di chuyển cả trục Y khi đuổi)")]
     public bool isFlying = false;
+
+    [Header("---- FLY ENGAGEMENT (cao độ giao chiến) ----")]
+    [Tooltip("Độ cao quái bay muốn giữ SO VỚI thân player khi đuổi (units). 0 = ngang thân, dương = hơi cao hơn. Nên 0.5-1.2 để chéo xuống đánh.")]
+    public float flyHoverOffsetY = 0.8f;
+    [Tooltip("Khoảng cách an toàn TỐI THIỂU so với mặt đất khi bay (units) — tránh sà sát đất.")]
+    public float flyMinGroundClearance = 1.2f;
+    [Tooltip("Giới hạn lệch cao độ TỐI ĐA so với player (units) — tránh bay quá cao trên đầu rồi không đánh được.")]
+    public float flyMaxOffsetFromPlayer = 2.5f;
+    [Tooltip("Layer mặt đất để đo ground clearance (thường = obstacleLayer).")]
+    public LayerMask flyGroundLayer;
 
     [Header("---- FLY MELEE (Bat swoop) ----")]
     [Tooltip("Bật nếu quái bay cận chiến: tấn công xong bay lên cao rồi lao xuống đánh tiếp. Không ảnh hưởng quái bay bắn xa.")]
@@ -106,6 +117,7 @@ public class EnemyAI : NetworkBehaviour
 
     [Networked] private TickTimer recoveryTimer { get; set; }
     [Networked] private TickTimer jumpCooldownTimer { get; set; }
+    [Networked] private TickTimer telegraphTimer { get; set; }
 
     // ═══════════════════════════════════════════════════════════════
     // BACKWARD COMPATIBILITY — Cho MimicSleepTrigger và các script cũ
@@ -140,6 +152,9 @@ public class EnemyAI : NetworkBehaviour
     // Sleep timers
     private float noPlayerTimer;
     private float wakeUpAnimTimer;
+
+    // Đòn đã chốt khi bắt đầu telegraph (local — chỉ host chạy AI nên không cần sync).
+    private EnemyCombat.AttackStyle _committedAttackStyle;
 
     // Render-side animation state (tránh gọi anim lặp)
     private bool localSleepHandled;
@@ -236,9 +251,13 @@ public class EnemyAI : NetworkBehaviour
                          || CurrentState == EnemyState.Recovery
                          || CurrentState == EnemyState.WakingUp
                          || CurrentState == EnemyState.UsingSkill
-                         || CurrentState == EnemyState.Summoning;
+                         || CurrentState == EnemyState.Summoning
+                         || CurrentState == EnemyState.Telegraphing;
 
         animationComp.FaceDirection(facingLocked ? AttackLockedFacingDir : NetFacingDir);
+
+        // Nhấp nháy báo đòn khi đang telegraph (hiệu ứng hình, chạy mọi máy).
+        animationComp.SetTelegraph(CurrentState == EnemyState.Telegraphing);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -315,6 +334,7 @@ public class EnemyAI : NetworkBehaviour
             case EnemyState.Chase:            StateChase();            break;
             case EnemyState.Attacking:        StateAttacking();        break;
             case EnemyState.Recovery:         StateRecovery();         break;
+            case EnemyState.Telegraphing:     StateTelegraphing();     break;
             case EnemyState.RetreatingUp:     StateRetreatingUp();     break;
             case EnemyState.UsingSkill:       /* handled by override above */ break;
             case EnemyState.Summoning:        /* handled by override above */ break;
@@ -343,7 +363,8 @@ public class EnemyAI : NetworkBehaviour
             case EnemyState.RetreatingUp:
             case EnemyState.UsingSkill:
             case EnemyState.Summoning:
-                // Bị đánh khi đang tấn công/hồi phục/bay lên/dùng skill → hủy, chuyển chase
+            case EnemyState.Telegraphing:
+                // Bị đánh khi đang tấn công/hồi phục/bay lên/dùng skill/báo đòn → hủy, chuyển chase
                 CurrentState = EnemyState.Chase;
                 break;
 
@@ -411,33 +432,69 @@ public class EnemyAI : NetworkBehaviour
 
     private void StateReturningToSleep()
     {
-        float distToSleep = Vector2.Distance(transform.position, sleepPosition);
-
-        if (distToSleep < 0.3f)
-        {
-            // Đã về đến nơi → ngủ
-            transform.position = new Vector3(sleepPosition.x, sleepPosition.y, transform.position.z);
-            rb.linearVelocity = Vector2.zero;
-            CurrentState = EnemyState.Sleeping;
-            cachedChasePlayer = default;
-            playerTarget = null;
-            NetSpeed = 0f;
-            return;
-        }
-
-        // Bay về vị trí ngủ
-        Vector2 dir = (sleepPosition - (Vector2)transform.position).normalized;
-        rb.linearVelocity = dir * returnToSleepSpeed;
-        UpdateFacing(dir.x);
-        NetSpeed = returnToSleepSpeed;
-
-        // Nếu bất ngờ thấy player khi đang bay về → tỉnh dậy đuổi
+        // Nếu bất ngờ thấy player khi đang về → tỉnh dậy đuổi ngay (ưu tiên cao nhất).
         FindPlayer();
         if (playerTarget != null)
         {
             CurrentState = EnemyState.Chase;
             noPlayerTimer = 0f;
+            return;
         }
+
+        if (isFlying)
+        {
+            // QUÁI BAY: bay thẳng (chéo) lên vị trí ngủ trên trần.
+            float dist = Vector2.Distance(transform.position, sleepPosition);
+            if (dist < 0.3f)
+            {
+                transform.position = new Vector3(sleepPosition.x, sleepPosition.y, transform.position.z);
+                rb.linearVelocity = Vector2.zero;
+                EnterSleep();
+                return;
+            }
+
+            Vector2 dir = (sleepPosition - (Vector2)transform.position).normalized;
+            rb.linearVelocity = dir * returnToSleepSpeed;
+            UpdateFacing(dir.x);
+            NetSpeed = returnToSleepSpeed;
+        }
+        else
+        {
+            // QUÁI ĐẤT: KHÔNG bay lơ lửng. Đi NGANG về cột X của spawn, để trọng lực giữ chân trên đất.
+            float xDiff = sleepPosition.x - transform.position.x;
+            if (Mathf.Abs(xDiff) <= 0.25f)
+            {
+                // Đã về đúng cột X spawn → đứng yên, để rơi/đứng trên nền rồi ngủ.
+                rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+                NetSpeed = 0f;
+                if (IsGrounded()) EnterSleep();
+                return;
+            }
+
+            float dirX = xDiff > 0 ? 1f : -1f;
+            // Bị tường chặn giữa đường → ngủ luôn tại chỗ (không kẹt mãi).
+            if (IsPathBlocked(dirX))
+            {
+                rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+                NetSpeed = 0f;
+                if (IsGrounded()) EnterSleep();
+                return;
+            }
+
+            float rSpeed = returnToSleepSpeed;
+            rb.linearVelocity = new Vector2(dirX * rSpeed, rb.linearVelocity.y);
+            UpdateFacing(xDiff);
+            NetSpeed = Mathf.Abs(rb.linearVelocity.x);
+        }
+    }
+
+    /// <summary>Chốt trạng thái ngủ: reset target, hướng nhìn về spawn.</summary>
+    private void EnterSleep()
+    {
+        CurrentState = EnemyState.Sleeping;
+        cachedChasePlayer = default;
+        playerTarget = null;
+        NetSpeed = 0f;
     }
 
     // ─────────────────────── PATROL ───────────────────────
@@ -575,7 +632,9 @@ public class EnemyAI : NetworkBehaviour
         else
         {
             float cSpeed = statsComp != null ? statsComp.ChaseSpeed : 5f;
-            MoveTowards(currentTarget, cSpeed);
+            // Quái bay: nhắm cao độ ngang thân player (clamp ground clearance + max offset), không sà đất / bay quá cao.
+            Vector2 chaseTarget = isFlying ? ComputeFlyTarget(currentTarget) : currentTarget;
+            MoveTowards(chaseTarget, cSpeed);
             NetSpeed = Mathf.Abs(rb.linearVelocity.x);
         }
 
@@ -695,6 +754,10 @@ public class EnemyAI : NetworkBehaviour
         float minY = playerTarget != null ? playerTarget.position.y + 1f : startPosition.y + 1f;
         retreatY = Mathf.Max(retreatY, minY);
 
+        // Clamp tối đa: không vọt quá cao khỏi player (giữ trong tầm lao xuống đánh được).
+        if (playerTarget != null)
+            retreatY = Mathf.Min(retreatY, playerTarget.position.y + flyMaxOffsetFromPlayer + flyMeleeRetreatAltitude);
+
         if (transform.position.y >= retreatY - 0.3f)
         {
             // Đã lên cao đủ → tiếp tục AI bình thường
@@ -794,36 +857,62 @@ public class EnemyAI : NetworkBehaviour
         AttackLockedFacingDir = facingDir;
         NetFacingDir = facingDir;
 
+        // Chọn TRƯỚC đòn sẽ đánh để biết telegraph bao lâu (đòn nặng báo lâu hơn).
+        _committedAttackStyle = combatComp.PrepareNextAttack();
+        float telegraph = combatComp.GetTelegraphDuration(combatComp.CurrentAttackIndex);
+
+        if (telegraph > 0.01f)
+        {
+            // Có telegraph → vào trạng thái "lấy đà" (đứng yên, nhấp nháy) rồi mới đánh.
+            telegraphTimer = TickTimer.CreateFromSeconds(Runner, telegraph);
+            CurrentState = EnemyState.Telegraphing;
+        }
+        else
+        {
+            // Không telegraph → đánh ngay.
+            CurrentState = EnemyState.Attacking;
+            ExecuteCommittedAttack(facingDir);
+        }
+    }
+
+    // ─────────────────────── TELEGRAPHING ───────────────────────
+
+    private void StateTelegraphing()
+    {
+        // Đứng yên, giữ hướng nhìn khóa, chờ hết "lấy đà".
+        rb.linearVelocity = isFlying ? Vector2.zero : new Vector2(0f, rb.linearVelocity.y);
+        NetSpeed = 0f;
+
+        if (!telegraphTimer.ExpiredOrNotRunning(Runner)) return;
+
         CurrentState = EnemyState.Attacking;
-        ExecuteAttack(facingDir);
+        ExecuteCommittedAttack(AttackLockedFacingDir);
     }
 
     /// <summary>
-    /// Chọn và thực thi kiểu tấn công (random giữa các kiểu đã bật).
+    /// Thực thi đòn ĐÃ CHỌN (committed) trong PrepareNextAttack — dùng index đã chốt để telegraph khớp.
     /// </summary>
-    private void ExecuteAttack(float facingDirX)
+    private void ExecuteCommittedAttack(float facingDirX)
     {
-        var styles = combatComp.GetEnabledAttackStyles();
-        var chosen = styles[Random.Range(0, styles.Count)];
-
-        switch (chosen)
+        int idx = combatComp.CurrentAttackIndex;
+        switch (_committedAttackStyle)
         {
             case EnemyCombat.AttackStyle.DashSlash:
                 Vector2 dashDir = playerTarget != null
                     ? ((Vector2)(playerTarget.position - transform.position)).normalized
                     : new Vector2(facingDirX, 0);
-                combatComp.AttemptDashAttack(dashDir);
+                combatComp.AttemptDashAttack(dashDir, idx);
                 break;
 
             case EnemyCombat.AttackStyle.LeapAttack:
                 Vector2 leapTarget = playerTarget != null
                     ? (Vector2)playerTarget.position
                     : (Vector2)transform.position + new Vector2(facingDirX * 2f, 0);
-                combatComp.AttemptLeapAttack(leapTarget);
+                combatComp.AttemptLeapAttack(leapTarget, idx);
                 break;
 
             default:
-                combatComp.AttemptAttack();
+                combatComp.AttemptAttack(idx);
                 break;
         }
     }
@@ -857,6 +946,32 @@ public class EnemyAI : NetworkBehaviour
             currentTarget = new Vector2(PickRandomPatrolX(), isFlying ? startPosition.y : transform.position.y);
 
         MoveTowards(currentTarget, pSpeed);
+    }
+
+    /// <summary>
+    /// Cao độ giao chiến cho quái bay: nhắm ngang thân player + offset, nhưng
+    /// KẸP để (1) không sà sát đất (flyMinGroundClearance) và (2) không bay quá cao trên đầu player
+    /// (flyMaxOffsetFromPlayer). Trả về target đã điều chỉnh Y; giữ nguyên X.
+    /// </summary>
+    private Vector2 ComputeFlyTarget(Vector2 rawTarget)
+    {
+        float desiredY = rawTarget.y + flyHoverOffsetY;
+
+        // (2) Không lệch quá xa so với player theo cả 2 chiều.
+        float maxY = rawTarget.y + flyMaxOffsetFromPlayer;
+        float minY = rawTarget.y - flyMaxOffsetFromPlayer;
+        desiredY = Mathf.Clamp(desiredY, minY, maxY);
+
+        // (1) Giữ khoảng hở tối thiểu với mặt đất ngay dưới vị trí target.
+        LayerMask groundMask = flyGroundLayer.value != 0 ? flyGroundLayer : obstacleLayer;
+        RaycastHit2D ground = Physics2D.Raycast(new Vector2(rawTarget.x, desiredY), Vector2.down, 30f, groundMask);
+        if (ground.collider != null)
+        {
+            float minAboveGround = ground.point.y + flyMinGroundClearance;
+            if (desiredY < minAboveGround) desiredY = minAboveGround;
+        }
+
+        return new Vector2(rawTarget.x, desiredY);
     }
 
     private void MoveTowards(Vector2 target, float speed)
@@ -1053,19 +1168,24 @@ public class EnemyAI : NetworkBehaviour
     // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
-    /// Tìm vị trí ngủ: Raycast lên trần (hoặc xuống sàn) từ điểm spawn.
-    /// Nếu không tìm được surface → dùng startPosition.
+    /// Tìm vị trí ngủ, LẤY SPAWN LÀM CHUẨN:
+    /// - Quái BAY → raycast LÊN tìm trần để treo ngủ (sleepOnCeiling). Không thấy trần → ngủ tại spawn.
+    /// - Quái ĐẤT → raycast XUỐNG tìm sàn để nằm ngủ. Không thấy sàn → ngủ tại spawn.
+    /// Tránh quái đất ngủ lơ lửng hoặc quái bay treo giữa không trung.
     /// </summary>
     private Vector2 FindSleepPosition()
     {
-        if (sleepSurfaceLayer == 0)
-            return startPosition;
+        // Quái bay theo cờ sleepOnCeiling; quái đất LUÔN tìm sàn (xuống dưới).
+        bool toCeiling = isFlying && sleepOnCeiling;
+        Vector2 rayDir = toCeiling ? Vector2.up : Vector2.down;
 
-        Vector2 rayDir = sleepOnCeiling ? Vector2.up : Vector2.down;
-        RaycastHit2D hitSurface = Physics2D.Raycast(startPosition, rayDir, 20f, sleepSurfaceLayer);
+        LayerMask surfaceMask = sleepSurfaceLayer.value != 0 ? sleepSurfaceLayer : obstacleLayer;
+        if (surfaceMask.value == 0) return startPosition; // không có layer hợp lệ
+
+        RaycastHit2D hitSurface = Physics2D.Raycast(startPosition, rayDir, 30f, surfaceMask);
         if (hitSurface.collider != null)
         {
-            float offset = sleepOnCeiling ? -0.3f : 0.3f;
+            float offset = toCeiling ? -0.3f : 0.5f; // treo dưới trần / nằm trên sàn
             return hitSurface.point + new Vector2(0f, offset);
         }
         return startPosition;

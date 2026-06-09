@@ -149,4 +149,45 @@ public class APIManager : MonoBehaviour
             }
         }
     }
+
+    // ─── SAVE ONLINE: post snapshot tiến trình lên server (Postgres) ───
+    // Khớp SnapshotIngestRequest của web. Guard bằng X-Internal-Key (game server tin cậy).
+    [System.Serializable]
+    public class SnapshotIngestRequest
+    {
+        public string ownerId;
+        public string characterId;   // null/empty → server resolve theo (owner, name)
+        public string name;
+        public string archetype;
+        public int level;
+        public int hp;
+        public int maxHp;
+        public int gold;
+        public bool isAlive;
+        public string roomCode;
+        public string eventType;     // "rest" | "quit" | "death" | "levelup"
+        public int playtimeSeconds;
+    }
+
+    [Tooltip("Khóa nội bộ khớp với web (X-Internal-Key). Đặt qua config, không hardcode khi build thật.")]
+    public string InternalKey = "dev-internal-key";
+
+    public IEnumerator PostSnapshot(SnapshotIngestRequest req, System.Action<bool> callback)
+    {
+        string json = JsonConvert.SerializeObject(req);
+        using (UnityWebRequest request = new UnityWebRequest($"{baseUrl}/internal/characters/snapshot", "POST"))
+        {
+            byte[] body = Encoding.UTF8.GetBytes(json);
+            request.uploadHandler = new UploadHandlerRaw(body);
+            request.downloadHandler = new DownloadHandlerBuffer();
+            request.SetRequestHeader("Content-Type", "application/json");
+            request.SetRequestHeader("X-Internal-Key", InternalKey);
+
+            yield return request.SendWebRequest();
+
+            bool ok = request.result == UnityWebRequest.Result.Success;
+            if (!ok) Debug.LogError("PostSnapshot Fail: " + request.error + " | " + request.downloadHandler.text);
+            callback?.Invoke(ok);
+        }
+    }
 }

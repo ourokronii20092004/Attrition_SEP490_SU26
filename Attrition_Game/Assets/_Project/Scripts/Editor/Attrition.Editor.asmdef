@@ -4,7 +4,8 @@
     "references": [
         "Attrition.Core",
         "Attrition.Data",
-        "Attrition.Gameplay"
+        "Attrition.Gameplay",
+        "Fusion.Unity"
     ],
     "includePlatforms": [
         "Editor"

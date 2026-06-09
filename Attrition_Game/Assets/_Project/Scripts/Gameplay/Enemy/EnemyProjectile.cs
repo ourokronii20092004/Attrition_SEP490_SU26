@@ -43,6 +43,8 @@ public class EnemyProjectile : NetworkBehaviour
 
     public override void FixedUpdateNetwork()
     {
+        if (Attrition.Persistence.GamePause.IsPaused) return; // SOLO pause
+
         // SỬA: Chỉ Host mới được chạy FixedUpdateNetwork để tính va chạm và vị trí gốc
         if (!HasStateAuthority) return;
 

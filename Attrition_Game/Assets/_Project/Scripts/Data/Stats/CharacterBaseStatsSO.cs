@@ -27,8 +27,8 @@ namespace Attrition.Data
         public float jumpForce = 15f;
         public float doubleJumpForce = 8f;
         public float attackSpeed = 1f;
-        [Tooltip("Hệ số nhân sát thương khi Charge Attack (ví dụ: 2.0 = gấp đôi sát thương cơ bản)")]
-        public float chargeDamageMultiplier = 2f;
+        [Tooltip("Hệ số nhân sát thương khi Charge Attack")]
+        public float chargeDamageMultiplier = 1.5f;
 
         /// <summary>Giá trị gốc của 1 stat ở level 1 (chưa cộng điểm, chưa trang bị).</summary>
         public int GetBase(StatType stat)
