@@ -19,6 +19,15 @@ namespace Attrition.Gameplay.World
     [RequireComponent(typeof(Collider2D))]
     public class Checkpoint : NetworkBehaviour
     {
+        [Header("---- IDENTITY ----")]
+        [Tooltip("Tên hiển thị trên UI Fast Travel. Bỏ trống = dùng tên GameObject.")]
+        [SerializeField] private string displayName = "";
+        [Tooltip("Khu vực (region) hiển thị phụ trên UI.")]
+        [SerializeField] private string region = "";
+
+        public string DisplayName => string.IsNullOrEmpty(displayName) ? gameObject.name : displayName;
+        public string Region => region;
+
         [Header("---- REST ----")]
         [Tooltip("Điểm hồi sinh khi rest tại đây. Bỏ trống = dùng vị trí của chính checkpoint.")]
         [SerializeField] private Transform respawnPoint;

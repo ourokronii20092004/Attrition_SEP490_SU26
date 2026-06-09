@@ -18,17 +18,18 @@
     top: 0;
     right: 0;
     bottom: 0;
-    background-image: url('Textures/MainMenuBackground.png');
+    background-image: url('Textures/fallen_kingdom.png');
     -unity-background-scale-mode: scale-and-crop;
 }
 
+/* Vignette + bottom-to-top darkening so Cinzel title/nav stay legible over the art. */
 #overlay-gradient {
     position: absolute;
     left: 0;
     top: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(4, 3, 10, 0.75);
+    background-color: rgba(4, 3, 10, 0.55);
 }
 
 .screen {
@@ -626,15 +627,37 @@
 }
 
 .settings-toggle .unity-toggle__input {
+    width: 44px;
+    height: 22px;
     background-color: rgba(60, 60, 80, 0.8);
     border-width: 1px;
     border-color: rgba(255, 255, 255, 0.08);
     border-radius: 11px;
+    justify-content: flex-start;
+    align-items: center;
+    transition: background-color 0.18s ease-in-out;
 }
 
 .settings-toggle .unity-toggle__checkmark {
-    background-color: rgba(201, 168, 76, 0.6);
-    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    margin-left: 3px;
+    margin-right: 3px;
+    background-color: rgba(235, 235, 240, 0.9);
+    background-image: none;
+    border-width: 0;
+    border-radius: 8px;
+    transition: translate 0.18s ease-in-out;
+}
+
+.settings-toggle:checked .unity-toggle__input {
+    background-color: rgba(201, 168, 76, 0.85);
+    border-color: rgba(201, 168, 76, 0.5);
+}
+
+.settings-toggle:checked .unity-toggle__checkmark {
+    translate: 22px 0;
+    background-color: rgb(20, 16, 10);
 }
 
 /* Dropdown */
