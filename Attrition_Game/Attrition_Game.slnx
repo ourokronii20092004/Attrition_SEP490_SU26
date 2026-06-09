@@ -1,6 +1,6 @@
 ﻿<Solution>
-  <Project Path="Fusion.Unity.Editor.csproj" />
   <Project Path="Attrition.UI.csproj" />
+  <Project Path="Fusion.Unity.Editor.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
   <Project Path="Fusion.Addons.Physics.csproj" />
   <Project Path="Attrition.Gameplay.csproj" />
