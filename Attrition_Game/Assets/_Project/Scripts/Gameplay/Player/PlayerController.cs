@@ -1,6 +1,7 @@
 using Fusion;
 using UnityEngine;
 using System.Collections;
+using System.Linq;
 using Unity.Cinemachine;
 using Attrition.Controllers;
 using Attrition.Gameplay.Player;
@@ -94,6 +95,9 @@ public class PlayerController : NetworkBehaviour, IDamageable
 
     public bool IsDead => isDeadNetworked;
 
+    /// <summary>True khi player đang đứng trong vùng 1 checkpoint (UI hiện gợi ý [R] REST).</summary>
+    public bool IsAtCheckpoint => _currentCheckpoint != null;
+
     // Nguồn HP DUY NHẤT: có statsComp → dùng PlayerStats.CurrentHP (chỗ PotionSystem hồi vào).
     // Không có → fallback currentHP riêng (tương thích prefab cũ).
     public int HP
@@ -127,6 +131,14 @@ public class PlayerController : NetworkBehaviour, IDamageable
             {
                 cam.Follow = transform;
             }
+        }
+
+        // Mũi tên P1/P2 trên đầu — chỉ hiện khi coop (>1 người). Local = P1 (xanh), remote = P2 (cam).
+        if (Runner != null && Runner.ActivePlayers.Count() > 1)
+        {
+            bool isLocal = HasInputAuthority;
+            PlayerMarker.Attach(transform, isLocal ? "P1" : "P2",
+                isLocal ? new Color(0.4f, 0.9f, 0.5f) : new Color(0.95f, 0.6f, 0.25f));
         }
     }
 
@@ -500,6 +512,37 @@ public class PlayerController : NetworkBehaviour, IDamageable
         rb.linearVelocity = Vector2.zero;
         NetworkPosition = position;
         NetworkVelocity = Vector2.zero;
+    }
+
+    /// <summary>Client/host yêu cầu Fast Travel. Host dịch chuyển TẤT CẢ player (giữ chung khung camera coop).</summary>
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    public void RpcRequestFastTravel(Vector3 destination)
+    {
+        var players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+        foreach (var p in players) p.TeleportTo(destination);
+    }
+
+    /// <summary>Resume sau Game Over: host hồi sinh mọi player tại checkpoint đã kích hoạt + reset quái.</summary>
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    public void RpcRequestRespawnAll()
+    {
+        var checkpoints = FindObjectsByType<Attrition.Gameplay.World.Checkpoint>(FindObjectsSortMode.None);
+        var active = checkpoints.FirstOrDefault(cp => cp.HasBeenActivated);
+        Vector3 spawn = active != null ? active.RespawnPosition : Vector3.zero;
+
+        var players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+        foreach (var p in players)
+        {
+            p.isDeadNetworked = false;
+            p.TeleportTo(spawn);
+            var st = p.GetComponent<PlayerStats>();
+            if (st != null) st.RestoreFull();
+            var pot = p.GetComponent<PotionSystem>();
+            if (pot != null) pot.RefillAll();
+        }
+
+        var spawner = FindFirstObjectByType<NetworkSpawner>();
+        if (spawner != null) spawner.RespawnConfiguredEnemies();
     }
 
     IEnumerator InvincibleCoroutine()

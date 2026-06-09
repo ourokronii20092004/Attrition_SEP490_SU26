@@ -289,20 +289,12 @@
                     <!-- Gameplay -->
                     <ui:ScrollView name="settings-tab-gameplay" class="settings-tab-content">
                         <ui:VisualElement class="settings-row">
-                            <ui:Label text="AUTO-LOCK TARGET" class="settings-label"/>
-                            <ui:Toggle name="toggle-autolock" class="settings-toggle" value="true"/>
-                        </ui:VisualElement>
-                        <ui:VisualElement class="settings-row">
                             <ui:Label text="SHOW DAMAGE NUMBERS" class="settings-label"/>
                             <ui:Toggle name="toggle-dmg-numbers" class="settings-toggle" value="true"/>
                         </ui:VisualElement>
                         <ui:VisualElement class="settings-row">
                             <ui:Label text="CAMERA SHAKE" class="settings-label"/>
                             <ui:Toggle name="toggle-cam-shake" class="settings-toggle"/>
-                        </ui:VisualElement>
-                        <ui:VisualElement class="settings-row">
-                            <ui:Label text="DIFFICULTY" class="settings-label"/>
-                            <ui:DropdownField name="dropdown-difficulty" class="settings-dropdown" choices="Ember Novice,Cinder Warrior,Ashes of Despair" index="2"/>
                         </ui:VisualElement>
                     </ui:ScrollView>
 
@@ -377,43 +369,43 @@
                     <ui:ScrollView name="settings-tab-controls" class="settings-tab-content" style="display: none;">
                         <ui:VisualElement class="keybind-row">
                             <ui:Label text="JUMP" class="settings-label"/>
-                            <ui:Button text="SPACE" class="keybind-btn"/>
+                            <ui:Button text="SPACE" name="key-Jump" class="keybind-btn"/>
                         </ui:VisualElement>
                         <ui:VisualElement class="keybind-row">
                             <ui:Label text="DASH" class="settings-label"/>
-                            <ui:Button text="SHIFT" class="keybind-btn"/>
+                            <ui:Button text="SHIFT" name="key-Dash" class="keybind-btn"/>
                         </ui:VisualElement>
                         <ui:VisualElement class="keybind-row">
                             <ui:Label text="ATTACK" class="settings-label"/>
-                            <ui:Button text="J" class="keybind-btn"/>
+                            <ui:Button text="J" name="key-LightAttack" class="keybind-btn"/>
                         </ui:VisualElement>
                         <ui:VisualElement class="keybind-row">
                             <ui:Label text="SKILL" class="settings-label"/>
-                            <ui:Button text="K" class="keybind-btn"/>
+                            <ui:Button text="K" name="key-Skill" class="keybind-btn"/>
                         </ui:VisualElement>
                         <ui:VisualElement class="keybind-row">
                             <ui:Label text="HEAL" class="settings-label"/>
-                            <ui:Button text="Q" class="keybind-btn"/>
+                            <ui:Button text="Q" name="key-HealthFlask" class="keybind-btn"/>
                         </ui:VisualElement>
                         <ui:VisualElement class="keybind-row">
                             <ui:Label text="MANA FLASK" class="settings-label"/>
-                            <ui:Button text="E" class="keybind-btn"/>
+                            <ui:Button text="E" name="key-ManaFlask" class="keybind-btn"/>
                         </ui:VisualElement>
                         <ui:VisualElement class="keybind-row">
                             <ui:Label text="BLOCK" class="settings-label"/>
-                            <ui:Button text="L" class="keybind-btn"/>
+                            <ui:Button text="L" name="key-Block" class="keybind-btn"/>
                         </ui:VisualElement>
                         <ui:VisualElement class="keybind-row">
                             <ui:Label text="MAP" class="settings-label"/>
-                            <ui:Button text="M" class="keybind-btn"/>
+                            <ui:Button text="M" name="key-Map" class="keybind-btn"/>
                         </ui:VisualElement>
                         <ui:VisualElement class="keybind-row">
                             <ui:Label text="INVENTORY" class="settings-label"/>
-                            <ui:Button text="I" class="keybind-btn"/>
+                            <ui:Button text="TAB" name="key-Inventory" class="keybind-btn"/>
                         </ui:VisualElement>
                         <ui:VisualElement class="keybind-row">
                             <ui:Label text="INTERACT" class="settings-label"/>
-                            <ui:Button text="F" class="keybind-btn"/>
+                            <ui:Button text="F" name="key-Interact" class="keybind-btn"/>
                         </ui:VisualElement>
                     </ui:ScrollView>
 

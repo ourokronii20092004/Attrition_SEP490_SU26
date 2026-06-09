@@ -9,7 +9,8 @@
         "Attrition.Networking",
         "Fusion.Unity",
         "Fusion.Addons.Physics",
-        "Unity.Cinemachine"
+        "Unity.Cinemachine",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
