@@ -3,6 +3,7 @@ using Fusion.Addons.Physics;
 using Fusion.Sockets;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -172,6 +173,12 @@ public class NetworkSpawner : MonoBehaviour, INetworkRunnerCallbacks
                 SpawnAllEnemies();
                 _hasSpawnedEnemies = true;
             }
+
+            // Coop: client (re)join → đủ người trở lại → kết thúc trạng thái chờ + resume.
+            if (runner.GameMode != GameMode.Single && runner.ActivePlayers.Count() >= 2)
+            {
+                Attrition.Persistence.CoopSession.EndWaiting();
+            }
         }
     }
 
@@ -196,6 +203,13 @@ public class NetworkSpawner : MonoBehaviour, INetworkRunnerCallbacks
                 runner.Despawn(playerObj);
                 runner.SetPlayerObject(player, null);
                 Debug.Log($"[SERVER] Người chơi {player.PlayerId} đã thoát.");
+            }
+
+            // Coop (Host mode, không phải Single): client rời → CHỜ họ quay lại (không drop về solo).
+            // Pause + hiện overlay Waiting cho host; client vào lại sẽ EndWaiting ở OnPlayerJoined.
+            if (runner.GameMode != GameMode.Single && runner.ActivePlayers.Count() <= 1)
+            {
+                Attrition.Persistence.CoopSession.BeginWaiting("WAITING FOR PLAYER TO RECONNECT...");
             }
         }
     }

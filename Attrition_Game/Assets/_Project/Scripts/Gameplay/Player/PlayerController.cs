@@ -95,8 +95,17 @@ public class PlayerController : NetworkBehaviour, IDamageable
 
     public bool IsDead => isDeadNetworked;
 
-    /// <summary>True khi player đang đứng trong vùng 1 checkpoint (UI hiện gợi ý [R] REST).</summary>
+    /// <summary>True khi player đang đứng trong vùng 1 checkpoint (UI hiện gợi ý [F] OPTIONS).</summary>
     public bool IsAtCheckpoint => _currentCheckpoint != null;
+
+    /// <summary>Tên checkpoint đang đứng (UI hiển thị). Rỗng nếu không ở checkpoint nào.</summary>
+    public string CurrentCheckpointName => _currentCheckpoint != null ? _currentCheckpoint.DisplayName : "";
+
+    /// <summary>UI gọi khi bấm REST trong panel checkpoint: hồi đầy + lưu (host xử lý qua RPC).</summary>
+    public void RequestRestAtCheckpoint()
+    {
+        if (_currentCheckpoint != null) _currentCheckpoint.RequestRest();
+    }
 
     // Nguồn HP DUY NHẤT: có statsComp → dùng PlayerStats.CurrentHP (chỗ PotionSystem hồi vào).
     // Không có → fallback currentHP riêng (tương thích prefab cũ).
@@ -144,6 +153,13 @@ public class PlayerController : NetworkBehaviour, IDamageable
 
     public override void FixedUpdateNetwork()
     {
+        // SOLO pause: đóng băng player (Fusion bỏ qua Time.timeScale).
+        if (Attrition.Persistence.GamePause.IsPaused)
+        {
+            if (rb != null) rb.linearVelocity = Vector2.zero;
+            return;
+        }
+
         CheckGround();
         NetworkVelocityY = rb.linearVelocity.y;
 
@@ -393,9 +409,8 @@ public class PlayerController : NetworkBehaviour, IDamageable
                 if (pressed.IsSet(MyButtons.ManaPotion)) potionComp.TryUseManaPotion();
             }
 
-            // --- REST (R) khi đang đứng trong vùng checkpoint ---
-            if (pressed.IsSet(MyButtons.Rest) && _currentCheckpoint != null)
-                _currentCheckpoint.RequestRest();
+            // --- REST/CHECKPOINT UI (F): mở UI lựa chọn (rest/teleport) được xử lý ở GameUIController (local).
+            // Nút REST trong UI sẽ gọi RequestRestAtCheckpoint() → checkpoint.RequestRest().
 
             _buttonsPrev = data.buttons;
 

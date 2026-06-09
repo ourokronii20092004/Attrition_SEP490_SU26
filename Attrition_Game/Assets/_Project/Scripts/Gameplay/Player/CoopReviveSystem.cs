@@ -44,11 +44,10 @@ namespace Attrition.Gameplay.Player
             }
             _lastHp = currentHp;
 
-            // Need to check input. NetworkInputData should have a Rest button or Revive button.
-            // Using MyButtons.Rest since the prompt mentioned "R" for revive.
+            // R (giữ) để hồi sinh đồng đội — tách riêng khỏi nút Rest (F) tại checkpoint.
             if (GetInput(out NetworkInputData data))
             {
-                if (data.buttons.IsSet(MyButtons.Rest) && !_myController.IsDead)
+                if (data.buttons.IsSet(MyButtons.Revive) && !_myController.IsDead)
                 {
                     HandleReviveLogic();
                 }

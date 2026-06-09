@@ -1,6 +1,7 @@
 using UnityEngine;
 using Fusion;
 using Attrition.Persistence;
+using Attrition.Data;
 
 namespace Attrition.Networking
 {
@@ -17,6 +18,23 @@ namespace Attrition.Networking
     {
         [Tooltip("Nếu đã có NetworkRunner đang chạy (từ coop) thì KHÔNG tự start lại.")]
         [SerializeField] private bool skipIfRunnerExists = true;
+
+        [Tooltip("Registry mọi ItemSO. PHẢI gán — nếu null thì DroppedItem/PickupItem/UI inventory không tra được item.")]
+        [SerializeField] private ItemDatabaseSO itemDatabase;
+
+        private void Awake()
+        {
+            // Gán singleton sớm nhất để DroppedItem/PickupItem/UI dùng được.
+            if (itemDatabase != null)
+            {
+                ItemDatabaseSO.Instance = itemDatabase;
+                itemDatabase.Initialize();
+            }
+            else
+            {
+                Debug.LogError("[GameBootstrap] Chưa gán ItemDatabase! Item rơi/nhặt và inventory UI sẽ không hoạt động.");
+            }
+        }
 
         private void Start()
         {

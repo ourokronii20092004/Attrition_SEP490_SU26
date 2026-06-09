@@ -56,11 +56,64 @@ namespace Attrition.Gameplay.Player
                 CurrentHP = MaxHP;
                 CurrentMana = MaxMana;
                 CurrentStamina = MaxStamina;
+
+                // Áp tiến trình đã lưu (chỉ local player, chỉ solo — online hydrate ở chỗ khác).
+                if (HasInputAuthority || Object == null)
+                    ApplyLoadedProgress();
             }
             else
             {
                 SyncAllocatedToSheet();
             }
+        }
+
+        /// <summary>
+        /// Nạp tiến trình từ save slot cục bộ (solo) vào player vừa spawn: level, điểm cộng,
+        /// HP/Mana hiện tại, max bình, và dịch chuyển về checkpoint đã lưu. Host-side.
+        /// </summary>
+        private void ApplyLoadedProgress()
+        {
+            if (Attrition.Persistence.GameLaunch.IsOnline) return; // online: server là nguồn, không nạp local
+            var data = Attrition.Persistence.SaveManager.LoadSlot(Attrition.Persistence.GameLaunch.SelectedSlot);
+            if (data == null) return;
+
+            // Level + điểm cộng
+            var prog = GetComponent<PlayerProgression>();
+            if (data.level > 0)
+            {
+                Level = data.level;
+                _sheet?.SetLevel(Level);
+                if (prog != null) prog.CurrentExp = data.currentExp;
+            }
+            if (data.allocatedPoints != null)
+            {
+                for (int i = 0; i < data.allocatedPoints.Length && i < AllocatedPoints.Length; i++)
+                    AllocatedPoints.Set(i, data.allocatedPoints[i]);
+                SyncAllocatedToSheet();
+            }
+
+            // Bình máu/mana tối đa đã mở
+            if (data.potionMaxFlasks > 0)
+            {
+                var potions = GetComponent<PotionSystem>();
+                if (potions != null) potions.MaxHealthCharges = data.potionMaxFlasks;
+            }
+
+            // HP/Mana hiện tại (clamp theo max mới)
+            CurrentHP = data.currentHP > 0 ? Mathf.Min(data.currentHP, MaxHP) : MaxHP;
+            CurrentMana = data.currentMana > 0 ? Mathf.Min(data.currentMana, MaxMana) : MaxMana;
+            CurrentStamina = MaxStamina;
+
+            // Dịch chuyển về checkpoint đã lưu (nếu có)
+            if (data.checkpointId != null && (data.checkpointX != 0f || data.checkpointY != 0f))
+            {
+                var pc = GetComponent<PlayerController>();
+                if (pc != null) pc.TeleportTo(new Vector3(data.checkpointX, data.checkpointY, data.checkpointZ));
+            }
+
+            // Nạp playtime nền để session cộng dồn
+            Attrition.Gameplay.Persistence.GameSaveService.EnsureExists().SetBasePlaytime(data.playtimeSeconds);
+            OnStatsChanged?.Invoke();
         }
 
         /// <summary>Nạp NetworkArray điểm cộng vào StatSheet (gọi sau mỗi thay đổi level/điểm/khi spawn proxy).</summary>

@@ -130,6 +130,21 @@
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
+
+                <!-- Name Entry Overlay (tạo nhân vật mới) -->
+                <ui:VisualElement name="name-entry-overlay" style="display: none;">
+                    <ui:VisualElement name="name-entry-dim"/>
+                    <ui:VisualElement name="name-entry-panel">
+                        <ui:Label text="NAME YOUR CHARACTER" name="name-entry-title"/>
+                        <ui:Label text="3–16 ký tự, chỉ chữ và số." name="name-entry-hint"/>
+                        <ui:TextField name="name-entry-input" max-length="16" class="login-input"/>
+                        <ui:Label text="" name="name-entry-error"/>
+                        <ui:VisualElement name="name-entry-actions">
+                            <ui:Button text="← CANCEL" name="btn-name-cancel" class="save-action-btn back"/>
+                            <ui:Button text="CONFIRM →" name="btn-name-confirm" class="save-action-btn continue"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
 
@@ -417,6 +432,19 @@
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
+        <!-- ==================== LOADING OVERLAY ==================== -->
+        <ui:VisualElement name="menu-loading" style="display: none;">
+            <ui:VisualElement name="menu-loading-dim"/>
+            <ui:VisualElement name="menu-loading-content">
+                <ui:Label text="ATTRITION" name="menu-loading-title"/>
+                <ui:Label text="ENTERING THE ASHES..." name="menu-loading-status"/>
+                <ui:VisualElement name="menu-loading-track">
+                    <ui:VisualElement name="menu-loading-fill"/>
+                </ui:VisualElement>
+                <ui:Label text="" name="menu-loading-tip"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
         <!-- Global Profile Overlay (Top Right) -->
         <ui:VisualElement name="global-profile-container" style="position: absolute; top: 20px; right: 20px; flex-direction: row; align-items: center; display: flex;">
             <ui:Label name="lbl-logged-in-user" text="Not Logged in" style="color: rgba(255,255,255,0.7); font-size: 14px; margin-right: 15px; -unity-font-definition: initial; -unity-font: url('Fonts/Cinzel/static/Cinzel-Regular.ttf');"/>

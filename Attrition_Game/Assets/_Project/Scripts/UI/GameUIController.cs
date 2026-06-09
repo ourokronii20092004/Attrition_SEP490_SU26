@@ -25,7 +25,7 @@ namespace Attrition.UI
         private VisualElement _root;
 
         // screens
-        private VisualElement _hud, _invScreen, _ftScreen, _goScreen, _loading;
+        private VisualElement _hud, _invScreen, _ftScreen, _goScreen, _loading, _pauseScreen, _settingsScreen, _waitingScreen;
 
         // bound player components
         private PlayerStats _stats;
@@ -36,7 +36,7 @@ namespace Attrition.UI
 
         private ItemDatabaseSO _db;
 
-        private enum Overlay { None, Inventory, FastTravel, GameOver, Loading }
+        private enum Overlay { None, Inventory, FastTravel, GameOver, Loading, Pause, Settings }
         private Overlay _overlay = Overlay.None;
 
         private float _runStartTime;
@@ -52,6 +52,9 @@ namespace Attrition.UI
             _ftScreen = _root.Q<VisualElement>("ft-screen");
             _goScreen = _root.Q<VisualElement>("go-screen");
             _loading = _root.Q<VisualElement>("loading");
+            _pauseScreen = _root.Q<VisualElement>("pause-screen");
+            _settingsScreen = _root.Q<VisualElement>("settings-screen");
+            _waitingScreen = _root.Q<VisualElement>("waiting-screen");
 
             _db = ItemDatabaseSO.Instance;
             _runStartTime = Time.time;
@@ -60,12 +63,18 @@ namespace Attrition.UI
             SetupInventoryControls();
             SetupFastTravelControls();
             SetupGameOverControls();
+            SetupPauseControls();
+            SetupSettingsControls();
 
-            ShowOverlay(Overlay.None);
+            // Hiện màn loading tới khi player của máy này spawn xong (mỗi máy tự chờ).
+            ShowOverlay(Overlay.Loading);
         }
 
         private void OnDisable()
         {
+            Time.timeScale = 1f; // tránh để MainMenu bị đứng hình nếu quit lúc đang pause (solo)
+            Attrition.Persistence.GamePause.IsPaused = false;
+            Attrition.Persistence.CoopSession.Reset();
             if (_stats != null) _stats.OnStatsChanged -= RefreshCharacterPanel;
             if (_inventory != null) _inventory.OnInventoryChanged -= RefreshInventory;
         }
@@ -75,18 +84,49 @@ namespace Attrition.UI
             if (_stats == null) TryBindLocalPlayer();
             if (_stats != null) UpdateHud();
 
+            UpdateWaitingOverlay();
+
             CheckGameOver();
 
             // Tab = mở/đóng Character/Inventory (không khi đang Game Over/Loading)
             if (Input.GetKeyDown(KeyCode.Tab) && _overlay != Overlay.GameOver && _overlay != Overlay.Loading)
                 ToggleOverlay(Overlay.Inventory);
 
-            // M = Fast Travel (chỉ khi đang ở checkpoint đã kích hoạt — xem SetupFastTravelControls)
-            if (Input.GetKeyDown(KeyCode.M) && _overlay != Overlay.GameOver && _overlay != Overlay.Loading)
-                ToggleOverlay(Overlay.FastTravel);
+            // F (Interact) = mở UI checkpoint (Rest + Fast Travel) khi đang đứng trong vùng checkpoint.
+            if (Input.GetKeyDown(Attrition.Persistence.GameSettings.GetKey(Attrition.Persistence.GameSettings.InputAction.Interact))
+                && _overlay != Overlay.GameOver && _overlay != Overlay.Loading)
+            {
+                if (_overlay == Overlay.FastTravel) ShowOverlay(Overlay.None);
+                else if (_controller != null && _controller.IsAtCheckpoint) ShowOverlay(Overlay.FastTravel);
+            }
 
-            if (Input.GetKeyDown(KeyCode.Escape) && (_overlay == Overlay.Inventory || _overlay == Overlay.FastTravel))
-                ShowOverlay(Overlay.None);
+            // ESC = menu tạm dừng, hoặc lùi/đóng overlay đang mở.
+            if (Input.GetKeyDown(KeyCode.Escape) && _overlay != Overlay.GameOver && _overlay != Overlay.Loading)
+            {
+                if (_overlay == Overlay.Settings) ShowOverlay(Overlay.Pause);          // Settings → lùi về Pause
+                else if (_overlay == Overlay.Inventory || _overlay == Overlay.FastTravel) ShowOverlay(Overlay.None);
+                else ToggleOverlay(Overlay.Pause);                                      // None ↔ Pause
+            }
+        }
+
+        private bool _waitingShown;
+
+        private void UpdateWaitingOverlay()
+        {
+            bool waiting = Attrition.Persistence.CoopSession.WaitingForPlayer;
+            if (waiting == _waitingShown) return;
+            _waitingShown = waiting;
+
+            if (_waitingScreen != null)
+            {
+                if (waiting) _waitingScreen.RemoveFromClassList("hidden");
+                else _waitingScreen.AddToClassList("hidden");
+            }
+
+            var title = _root?.Q<Label>("waiting-title");
+            if (title != null) title.text = Attrition.Persistence.CoopSession.WaitingMessage;
+
+            UnityEngine.Cursor.visible = waiting || _overlay != Overlay.None;
         }
 
         private void TryBindLocalPlayer()
@@ -106,6 +146,9 @@ namespace Attrition.UI
 
                 RefreshCharacterPanel();
                 RefreshInventory();
+
+                // Player của máy này đã sẵn sàng → ẩn màn loading.
+                if (_overlay == Overlay.Loading) ShowOverlay(Overlay.None);
                 break;
             }
         }

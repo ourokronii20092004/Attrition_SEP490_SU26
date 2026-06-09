@@ -36,7 +36,9 @@ public class EnemyCombat : NetworkBehaviour
         public Attrition.Core.DamageType damageType = Attrition.Core.DamageType.Physical;
 
         [Header("── Thời gian ──")]
-        [Tooltip("Thời gian đứng yên khi đánh - nên bằng độ dài animation attack (giây)")]
+        [Tooltip("Tên clip animation của đòn này. Có → 'duration' tự KHỚP độ dài clip. Trống → dùng 'duration' thủ công.")]
+        public string clipName = "";
+        [Tooltip("Thời gian đứng yên khi đánh - nên bằng độ dài animation attack (giây). Bỏ qua nếu đã gán clipName.")]
         public float duration = 0.6f;
         [Tooltip("Thời gian nghỉ giữa 2 đòn đánh (Cooldown - giây)")]
         public float cooldown = 1.0f;
@@ -44,6 +46,14 @@ public class EnemyCombat : NetworkBehaviour
         [Header("── Recovery ──")]
         [Tooltip("Thời gian hồi phục sau đòn đánh (giây) — quái đứng yên, giữ nguyên hướng nhìn. Đòn nặng nên có recovery lâu hơn.")]
         public float recoveryDuration = 0.25f;
+
+        [Header("── Telegraph (báo đòn) ──")]
+        [Tooltip("Thời gian 'lấy đà' báo trước đòn (giây): quái nhấp nháy đỏ + đứng yên để player kịp né. 0 = không telegraph (đòn nhanh). Đòn nặng nên 0.3-0.6s.")]
+        public float telegraphDuration = 0f;
+
+        [Header("── Trọng số chọn đòn ──")]
+        [Tooltip("Tỉ lệ chọn đòn này so với các đòn khác (random có trọng số). Cao = hay dùng hơn. 1 = mặc định.")]
+        [Min(0f)] public float weight = 1f;
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -144,9 +154,19 @@ public class EnemyCombat : NetworkBehaviour
     public HitboxShape GetHitboxShape(int index) => GetConfig(index).hitboxShape;
     public Vector2 GetRectSize(int index) => GetConfig(index).rectSize;
     public int GetAttackDamage(int index) => GetConfig(index).damage;
-    public float GetAttackDuration(int index) => GetConfig(index).duration;
+
+    /// <summary>Thời gian đòn đánh: khớp độ dài clip nếu gán clipName, ngược lại dùng duration thủ công.</summary>
+    public float GetAttackDuration(int index)
+    {
+        var cfg = GetConfig(index);
+        if (!string.IsNullOrEmpty(cfg.clipName) && animationComp != null)
+            return animationComp.GetClipLength(cfg.clipName, cfg.duration);
+        return cfg.duration;
+    }
+
     public float GetAttackCooldown(int index) => GetConfig(index).cooldown;
     public float GetRecoveryDuration(int index) => GetConfig(index).recoveryDuration;
+    public float GetTelegraphDuration(int index) => GetConfig(index).telegraphDuration;
 
     // ═══════════════════════════════════════════════════════════════
     // LIFECYCLE
@@ -164,6 +184,8 @@ public class EnemyCombat : NetworkBehaviour
 
     public override void FixedUpdateNetwork()
     {
+        if (Attrition.Persistence.GamePause.IsPaused) return; // SOLO pause: dừng timer đòn đánh
+
         // Hết thời gian dash → tắt dash + rã đông animation
         if (IsDashAttacking && dashTimer.ExpiredOrNotRunning(Runner))
         {
@@ -201,6 +223,28 @@ public class EnemyCombat : NetworkBehaviour
     }
 
     // ═══════════════════════════════════════════════════════════════
+    // ATTACK SELECTION — Chọn trước đòn (để telegraph khớp), thực thi sau
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Chọn TRƯỚC kiểu đòn + index (có trọng số) và chốt vào CurrentAttackIndex,
+    /// KHÔNG thực thi. AI dùng để biết telegraph/duration trước khi commit.
+    /// </summary>
+    public AttackStyle PrepareNextAttack()
+    {
+        var styles = GetEnabledAttackStyles();
+        AttackStyle chosen = styles[Random.Range(0, styles.Count)];
+
+        switch (chosen)
+        {
+            case AttackStyle.DashSlash:  CurrentAttackIndex = GetRandomAttackIndex(dashSlashAttacks); break;
+            case AttackStyle.LeapAttack: CurrentAttackIndex = GetRandomAttackIndex(leapAttacks);      break;
+            default:                     CurrentAttackIndex = GetRandomNormalAttackIndex();            break;
+        }
+        return chosen;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
     // ATTACK METHODS
     // ═══════════════════════════════════════════════════════════════
 
@@ -208,13 +252,15 @@ public class EnemyCombat : NetworkBehaviour
     /// Đánh thường — đứng yên tại chỗ.
     /// Chỉ random những đòn KHÔNG được gán cho dash/leap.
     /// </summary>
-    public void AttemptAttack()
+    public void AttemptAttack() => AttemptAttack(GetRandomNormalAttackIndex());
+
+    /// <summary>Đánh thường với index đã chốt sẵn (từ PrepareNextAttack).</summary>
+    public void AttemptAttack(int atkIdx)
     {
         if (!CanAttack()) return;
 
         IsAttacking = true;
         currentAttackStyle = AttackStyle.Normal;
-        int atkIdx = GetRandomNormalAttackIndex();
         CurrentAttackIndex = atkIdx;
 
         float duration = GetAttackDuration(atkIdx);
@@ -225,13 +271,15 @@ public class EnemyCombat : NetworkBehaviour
     /// <summary>
     /// Dash-slash — lao về phía player rồi chém.
     /// </summary>
-    public void AttemptDashAttack(Vector2 directionToPlayer)
+    public void AttemptDashAttack(Vector2 directionToPlayer) => AttemptDashAttack(directionToPlayer, GetRandomAttackIndex(dashSlashAttacks));
+
+    /// <summary>Dash-slash với index đã chốt sẵn.</summary>
+    public void AttemptDashAttack(Vector2 directionToPlayer, int atkIdx)
     {
         if (!CanAttack()) return;
 
         IsAttacking = true;
         currentAttackStyle = AttackStyle.DashSlash;
-        int atkIdx = GetRandomAttackIndex(dashSlashAttacks);
         CurrentAttackIndex = atkIdx;
 
         float duration = GetAttackDuration(atkIdx);
@@ -248,13 +296,15 @@ public class EnemyCombat : NetworkBehaviour
     /// <summary>
     /// Leap attack — nhảy lên cao rồi rơi xuống vị trí player để đánh.
     /// </summary>
-    public void AttemptLeapAttack(Vector2 targetPos)
+    public void AttemptLeapAttack(Vector2 targetPos) => AttemptLeapAttack(targetPos, GetRandomAttackIndex(leapAttacks));
+
+    /// <summary>Leap attack với index đã chốt sẵn.</summary>
+    public void AttemptLeapAttack(Vector2 targetPos, int atkIdx)
     {
         if (!CanAttack()) return;
 
         IsAttacking = true;
         currentAttackStyle = AttackStyle.LeapAttack;
-        int atkIdx = GetRandomAttackIndex(leapAttacks);
         CurrentAttackIndex = atkIdx;
 
         float duration = GetAttackDuration(atkIdx);
@@ -304,7 +354,7 @@ public class EnemyCombat : NetworkBehaviour
     // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
-    /// Random chọn attack index dựa trên mảng toggle.
+    /// Random chọn attack index dựa trên mảng toggle, CÓ TRỌNG SỐ (AttackConfig.weight).
     /// </summary>
     private int GetRandomAttackIndex(bool[] attackToggles)
     {
@@ -317,11 +367,11 @@ public class EnemyCombat : NetworkBehaviour
             }
         }
         if (options.Count == 0) options.Add(0); // fallback
-        return options[Random.Range(0, options.Count)];
+        return WeightedPick(options);
     }
 
     /// <summary>
-    /// Lấy attack index cho đánh thường: loại bỏ những đòn đã gán cho dash/leap.
+    /// Lấy attack index cho đánh thường: loại bỏ những đòn đã gán cho dash/leap. CÓ TRỌNG SỐ.
     /// </summary>
     private int GetRandomNormalAttackIndex()
     {
@@ -344,7 +394,28 @@ public class EnemyCombat : NetworkBehaviour
         }
 
         if (available.Count == 0) available.Add(0);
-        return available[Random.Range(0, available.Count)];
+        return WeightedPick(available);
+    }
+
+    /// <summary>Chọn ngẫu nhiên 1 index theo trọng số AttackConfig.weight.</summary>
+    private int WeightedPick(List<int> options)
+    {
+        if (options.Count == 1) return options[0];
+
+        float total = 0f;
+        for (int i = 0; i < options.Count; i++)
+            total += Mathf.Max(0f, GetConfig(options[i]).weight);
+
+        if (total <= 0f) return options[Random.Range(0, options.Count)]; // tất cả weight=0 → đều
+
+        float roll = Random.value * total;
+        float acc = 0f;
+        for (int i = 0; i < options.Count; i++)
+        {
+            acc += Mathf.Max(0f, GetConfig(options[i]).weight);
+            if (roll <= acc) return options[i];
+        }
+        return options[options.Count - 1];
     }
 
     /// <summary>

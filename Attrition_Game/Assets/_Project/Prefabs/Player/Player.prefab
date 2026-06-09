@@ -23,6 +23,7 @@ GameObject:
   - component: {fileID: 2638378353840522064}
   - component: {fileID: 2044027385345098150}
   - component: {fileID: -5924329882642562811}
+  - component: {fileID: -8304798322267633763}
   m_Layer: 7
   m_Name: Player
   m_TagString: Player
@@ -335,6 +336,7 @@ MonoBehaviour:
   - {fileID: 2638378353840522064}
   - {fileID: 2044027385345098150}
   - {fileID: -5924329882642562811}
+  - {fileID: -8304798322267633763}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &-9211217073537501404
 MonoBehaviour:
@@ -376,6 +378,7 @@ MonoBehaviour:
   _CurrentMana: 0
   _CurrentStamina: 0
   _Level: 0
+  _AllocatedPoints: 
   dashStaminaCost: 20
   staminaRegenPerSecond: 10
 --- !u!114 &2638378353840522064
@@ -416,11 +419,11 @@ MonoBehaviour:
   perLevelExp: 50
   maxLevel: 21
   statPointsPerLevel: 5
-  hpPerPoint: 20
-  manaPerPoint: 10
-  staminaPerPoint: 5
-  adPerPoint: 2
-  apPerPoint: 2
+  hpPerPoint: 5
+  manaPerPoint: 5
+  staminaPerPoint: 0
+  adPerPoint: 1
+  apPerPoint: 1
   defPerPoint: 1
   resPerPoint: 1
   _Level: 0
@@ -443,6 +446,20 @@ MonoBehaviour:
   maxRayDistance: 50
   _ItemIndex: 0
   _Amount: 0
+--- !u!114 &-8304798322267633763
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6831727267532873526}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66a18fbf9aa57e54fb626910e06baec4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Player.Inventory.PlayerInventory
+  droppedItemPrefab:
+    RawGuidValue: 12e1ff761e13b114e99dad527c7a0233
 --- !u!1 &7643912872851063712
 GameObject:
   m_ObjectHideFlags: 0

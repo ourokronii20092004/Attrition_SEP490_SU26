@@ -15,6 +15,27 @@ namespace Attrition.Persistence
         public string playtime;
         public int deaths;
         public int avatarColorIndex; // 0=purple, 1=blue, etc.
+
+        // ─── Tiến trình thật (dùng khi load lại) ───
+        public int currentExp;
+        public int currentHP;
+        public int currentMana;
+        public string checkpointId;       // checkpoint cuối đã rest
+        public float checkpointX;
+        public float checkpointY;
+        public float checkpointZ;
+        public int playtimeSeconds;       // nguồn thật; `playtime` chỉ để hiển thị
+        public int potionMaxFlasks;       // số bình tối đa đã mở (tăng qua elite/puzzle)
+        public int[] allocatedPoints;     // 7 chỉ số tự cộng (Option 2)
+        public long lastSavedUnix;        // mốc lưu gần nhất
+        public string originMode;         // "Solo" | "Coop" — chặn dùng chéo chế độ
+
+        public string ToDisplayPlaytime()
+        {
+            int h = playtimeSeconds / 3600;
+            int m = (playtimeSeconds % 3600) / 60;
+            return $"{h:00}:{m:00}";
+        }
     }
 
     public static class SaveManager
@@ -83,6 +104,17 @@ namespace Attrition.Persistence
             {
                 File.Delete(filePath);
             }
+        }
+
+        /// <summary>
+        /// Save slot có dùng được ở chế độ đang chọn không? Save Solo KHÔNG mở ở Coop và ngược lại.
+        /// Slot trống (chưa có data) hoặc chưa gắn originMode (save cũ) → cho phép, coi như tương thích.
+        /// </summary>
+        public static bool IsSlotCompatible(int slotIndex, LaunchMode mode)
+        {
+            var data = LoadSlot(slotIndex);
+            if (data == null || string.IsNullOrEmpty(data.originMode)) return true;
+            return data.originMode == mode.ToString();
         }
 
         // --- Mock generator cho testing ---

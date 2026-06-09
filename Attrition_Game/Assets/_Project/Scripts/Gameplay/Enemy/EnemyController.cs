@@ -17,6 +17,10 @@ namespace Attrition.Controllers
         [Tooltip("Số lần HP về 0 nhưng hồi sinh sau reviveDelaySeconds (0 = chết hẳn ngay như Axe_Demon).")]
         [SerializeField] private int extraLivesAfterHpZero;
         [SerializeField] private float reviveDelaySeconds = 2.5f;
+        [Tooltip("Tên clip animation Chết. Có → thời gian despawn KHỚP độ dài clip. Trống → dùng despawnFallback.")]
+        [SerializeField] private string deathClipName = "";
+        [Tooltip("Thời gian chờ despawn sau khi chết nếu không gán deathClipName (giây).")]
+        [SerializeField] private float despawnFallback = 1.5f;
 
         [Header("---- HIT / STUN ----")]
         [Tooltip("Bật nếu quái có thể bị đẩy lùi và choáng. Tắt đi đối với Boss hoặc Quái to.")]
@@ -87,6 +91,13 @@ namespace Attrition.Controllers
         public override void FixedUpdateNetwork()
         {
             if (!HasStateAuthority) return;
+
+            // SOLO pause: đóng băng hoàn toàn (Fusion bỏ qua Time.timeScale).
+            if (Attrition.Persistence.GamePause.IsPaused)
+            {
+                if (rb != null) rb.linearVelocity = Vector2.zero;
+                return;
+            }
 
             if (isDeadNetworked)
             {
@@ -280,7 +291,11 @@ namespace Attrition.Controllers
             // Despawn tất cả summon khi Undead chết
             if (eliteSkills != null) eliteSkills.DespawnAllSummons();
 
-            despawnTimer = TickTimer.CreateFromSeconds(Runner, 1.5f);
+            // Thời gian despawn khớp độ dài clip Chết (nếu gán), ngược lại dùng fallback.
+            float deathDur = animationComp != null && !string.IsNullOrEmpty(deathClipName)
+                ? animationComp.GetClipLength(deathClipName, despawnFallback)
+                : despawnFallback;
+            despawnTimer = TickTimer.CreateFromSeconds(Runner, deathDur);
         }
 
         private void HandleDownedVisuals()

@@ -63,6 +63,7 @@ public class NetworkInputHandler : MonoBehaviour, INetworkRunnerCallbacks
         data.buttons.Set(MyButtons.Crouch, Input.GetKey(KeyCode.S));
         data.buttons.Set(MyButtons.AttackHold, Input.GetKey(K(GameSettings.InputAction.LightAttack)));
         data.buttons.Set(MyButtons.JumpHeld, Input.GetKey(K(GameSettings.InputAction.Jump)));
+        data.buttons.Set(MyButtons.Revive, Input.GetKey(K(GameSettings.InputAction.Revive)));
 
         input.Set(data);
 
