@@ -298,9 +298,8 @@ namespace Attrition.Gameplay.Player.Inventory
             return true;
         }
 
-        // ═══════════════════════════════════════════
-        //  DROP ITEM (BR-43, BR-44, BR-45)
-        // ═══════════════════════════════════════════
+        [Header("---- PREFABS ----")]
+        [SerializeField] private NetworkPrefabRef droppedItemPrefab;
 
         /// <summary>Vứt vật phẩm ra thế giới. Block Key Item (BR-45). Chỉ host.</summary>
         public bool TryDropItem(ItemCategory cat, int slotIndex)
@@ -317,7 +316,18 @@ namespace Attrition.Gameplay.Player.Inventory
             if (item.isKeyItem) return false; // BR-45
 
             // Spawn DroppedItem ở vị trí player (DroppedItem tự raycast xuống sàn — BR-43)
-            // TODO: Integrate with DroppedItem prefab spawning via Runner.Spawn()
+            if (droppedItemPrefab.IsValid)
+            {
+                Runner.Spawn(droppedItemPrefab, transform.position, Quaternion.identity, null, (runner, obj) =>
+                {
+                    var dropped = obj.GetComponent<Attrition.Gameplay.World.DroppedItem>();
+                    if (dropped != null)
+                    {
+                        dropped.ItemIndex = slot.ItemIndex;
+                        dropped.Amount = slot.Amount;
+                    }
+                });
+            }
 
             arr.Set(slotIndex, InventorySlot.Empty);
             NotifyChanged();

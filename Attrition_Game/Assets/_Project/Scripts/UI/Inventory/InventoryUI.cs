@@ -64,6 +64,21 @@ namespace Attrition.UI.Inventory
 
         private void Update()
         {
+            if (_inventory == null)
+            {
+                var players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+                foreach (var p in players)
+                {
+                    if (p.Object != null && p.Object.HasInputAuthority)
+                    {
+                        var inv = p.GetComponent<Attrition.Gameplay.Player.Inventory.PlayerInventory>();
+                        var stats = p.GetComponent<Attrition.Gameplay.Player.PlayerStats>();
+                        BindToPlayer(inv, stats);
+                        break;
+                    }
+                }
+            }
+
             // Mở/đóng bằng Tab (local only, không qua network)
             if (Input.GetKeyDown(KeyCode.Tab))
             {

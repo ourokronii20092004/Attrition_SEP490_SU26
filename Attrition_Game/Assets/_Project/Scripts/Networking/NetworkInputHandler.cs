@@ -3,6 +3,7 @@ using Fusion.Sockets;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Attrition.Persistence;
 
 public class NetworkInputHandler : MonoBehaviour, INetworkRunnerCallbacks
 {
@@ -14,28 +15,31 @@ public class NetworkInputHandler : MonoBehaviour, INetworkRunnerCallbacks
     private bool _restPressed;
     private bool _inventoryToggled;
 
+    // Đọc phím đã đổi từ GameSettings (lưu local). Dash chấp nhận cả phím phụ Shift phải.
+    private static KeyCode K(GameSettings.InputAction a) => GameSettings.GetKey(a);
+
     private void Update()
     {
         // One-shot inputs (chỉ bắt lúc nhấn xuống)
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(K(GameSettings.InputAction.Jump)))
             _jumpPressed = true;
 
-        if (Input.GetKeyDown(KeyCode.J))
+        if (Input.GetKeyDown(K(GameSettings.InputAction.LightAttack)))
             _attackPressed = true;
 
-        if (Input.GetKeyDown(KeyCode.LeftShift) || Input.GetKeyDown(KeyCode.RightShift))
+        if (Input.GetKeyDown(K(GameSettings.InputAction.Dash)) || Input.GetKeyDown(KeyCode.RightShift))
             _dashPressed = true;
 
-        if (Input.GetKeyDown(KeyCode.Q))
+        if (Input.GetKeyDown(K(GameSettings.InputAction.HealthFlask)))
             _healthPotionPressed = true;
 
-        if (Input.GetKeyDown(KeyCode.E))
+        if (Input.GetKeyDown(K(GameSettings.InputAction.ManaFlask)))
             _manaPotionPressed = true;
 
-        if (Input.GetKeyDown(KeyCode.R))
+        if (Input.GetKeyDown(K(GameSettings.InputAction.Interact)))
             _restPressed = true;
 
-        if (Input.GetKeyDown(KeyCode.Tab))
+        if (Input.GetKeyDown(K(GameSettings.InputAction.Inventory)))
             _inventoryToggled = true;
     }
 
@@ -57,8 +61,8 @@ public class NetworkInputHandler : MonoBehaviour, INetworkRunnerCallbacks
 
         // Continuous buttons (giữ liên tục)
         data.buttons.Set(MyButtons.Crouch, Input.GetKey(KeyCode.S));
-        data.buttons.Set(MyButtons.AttackHold, Input.GetKey(KeyCode.J));
-        data.buttons.Set(MyButtons.JumpHeld, Input.GetKey(KeyCode.Space));
+        data.buttons.Set(MyButtons.AttackHold, Input.GetKey(K(GameSettings.InputAction.LightAttack)));
+        data.buttons.Set(MyButtons.JumpHeld, Input.GetKey(K(GameSettings.InputAction.Jump)));
 
         input.Set(data);
 

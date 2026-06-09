@@ -22,6 +22,7 @@ GameObject:
   - component: {fileID: 5532332673274492828}
   - component: {fileID: 2638378353840522064}
   - component: {fileID: 2044027385345098150}
+  - component: {fileID: -5924329882642562811}
   m_Layer: 7
   m_Name: Player
   m_TagString: Player
@@ -286,6 +287,8 @@ MonoBehaviour:
   targetLayers:
     serializedVersion: 2
     m_Bits: 768
+  normalAttackType: 0
+  chargeAttackType: 0
   chargeThreshold: 0.25
   _IsAttacking:
     _value: 0
@@ -331,6 +334,7 @@ MonoBehaviour:
   - {fileID: 5532332673274492828}
   - {fileID: 2638378353840522064}
   - {fileID: 2044027385345098150}
+  - {fileID: -5924329882642562811}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &-9211217073537501404
 MonoBehaviour:
@@ -410,8 +414,35 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Player.PlayerProgression
   baseExp: 100
   perLevelExp: 50
+  maxLevel: 21
+  statPointsPerLevel: 5
+  hpPerPoint: 20
+  manaPerPoint: 10
+  staminaPerPoint: 5
+  adPerPoint: 2
+  apPerPoint: 2
+  defPerPoint: 1
+  resPerPoint: 1
   _Level: 0
   _CurrentExp: 0
+--- !u!114 &-5924329882642562811
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6831727267532873526}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aeeaca30d73e2714c932451c005cd917, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.World.DroppedItem
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  maxRayDistance: 50
+  _ItemIndex: 0
+  _Amount: 0
 --- !u!1 &7643912872851063712
 GameObject:
   m_ObjectHideFlags: 0
