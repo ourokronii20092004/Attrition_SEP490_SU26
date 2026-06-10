@@ -16,6 +16,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
     [Header("---- INJECT COMPONENTS ----")]
     [SerializeField] private PlayerCombat combatComp;
     [SerializeField] private PlayerAnimation animationComp;
+    [SerializeField] private Attrition.Gameplay.Player.PlayerSkillCaster skillCaster;
     [Tooltip("Tùy chọn: nguồn chỉ số runtime. Bỏ trống = dùng maxHP serialized bên dưới.")]
     [SerializeField] private PlayerStats statsComp;
     [Tooltip("Tùy chọn: hệ thống bình HP/Mana. Bỏ trống = không có bình (prefab cũ).")]
@@ -84,6 +85,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
     [Networked] private TickTimer _slideCooldown { get; set; }
     [Networked] private float _slideDirection { get; set; }
     [Networked] private TickTimer _knockbackTimer { get; set; }
+    [Networked] private Vector2 _lastStableGround { get; set; }
 
     // ─── Đồng bộ vị trí cho proxy ───
     [Networked] public Vector2 NetworkPosition { get; set; }
@@ -124,6 +126,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
         if (HasStateAuthority && statsComp == null) currentHP = maxHP;
 
         if (combatComp == null) combatComp = GetComponent<PlayerCombat>();
+        if (skillCaster == null) skillCaster = GetComponent<Attrition.Gameplay.Player.PlayerSkillCaster>();
         if (animationComp == null) animationComp = GetComponent<PlayerAnimation>();
         if (rb == null) rb = GetComponent<Rigidbody2D>();
         if (playerCollider == null) playerCollider = GetComponent<Collider2D>();
@@ -318,7 +321,12 @@ public class PlayerController : NetworkBehaviour, IDamageable
             if (!IsSliding)
             {
                 // --- MOVEMENT ---
-                if ((combatComp.IsHoldingAttack || combatComp.IsAttacking) && IsGrounded)
+                if (skillCaster != null && skillCaster.IsCasting && IsGrounded)
+                {
+                    rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
+                    IsMoving = false;
+                }
+                else if ((combatComp.IsHoldingAttack || combatComp.IsAttacking) && IsGrounded)
                 {
                     rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
                     IsMoving = false;
@@ -416,6 +424,9 @@ public class PlayerController : NetworkBehaviour, IDamageable
 
             // --- COMBAT ---
             combatComp.HandleCombat(data, IsFacingRight, IsCrouching);
+
+            // --- SKILL (K) ---
+            if (skillCaster != null) skillCaster.HandleSkill(data, IsFacingRight);
         }
     }
 
@@ -433,6 +444,10 @@ public class PlayerController : NetworkBehaviour, IDamageable
         // Dùng rb.Cast vì nó tự động dùng đúng physics scene của Fusion
         // Fix góc đất được xử lý bằng cách clamp velocity Y ở trên
         IsGrounded = rb.Cast(Vector2.down, new ContactFilter2D { layerMask = groundLayer, useLayerMask = true }, new RaycastHit2D[1], 0.05f) > 0;
+
+        // BR-39: ghi nhớ điểm đất an toàn cuối (đứng yên trên đất) để hồi sinh khi rơi bẫy.
+        if (HasStateAuthority && IsGrounded && Mathf.Abs(rb.linearVelocity.y) < 0.1f)
+            _lastStableGround = rb.position;
     }
 
     private bool CheckCeiling()
@@ -529,6 +544,34 @@ public class PlayerController : NetworkBehaviour, IDamageable
         NetworkVelocity = Vector2.zero;
     }
 
+    /// <summary>
+    /// BR-38/39: rơi vào bẫy môi trường. Trừ 15% Max HP rồi đưa về điểm đất an toàn cuối.
+    /// Gọi từ Hazard (trigger). Bỏ qua nếu đang bất tử/đã chết.
+    /// </summary>
+    public void HazardHit()
+    {
+        if (isInvincible || isDeadNetworked) return;
+        RPC_HazardHit();
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RPC_HazardHit()
+    {
+        if (isDeadNetworked) return;
+
+        int max = statsComp != null ? statsComp.MaxHP : maxHP;
+        int dmg = Mathf.Max(1, Mathf.RoundToInt(max * 0.15f)); // BR-38
+        HP -= dmg;
+
+        if (HP <= 0) { Die(); return; }
+
+        // BR-39: đưa về điểm đất an toàn cuối (nếu có).
+        if (_lastStableGround != Vector2.zero)
+            TeleportTo(_lastStableGround);
+
+        StartCoroutine(InvincibleCoroutine());
+    }
+
     /// <summary>Client/host yêu cầu Fast Travel. Host dịch chuyển TẤT CẢ player (giữ chung khung camera coop).</summary>
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
     public void RpcRequestFastTravel(Vector3 destination)
@@ -554,6 +597,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
             if (st != null) st.RestoreFull();
             var pot = p.GetComponent<PotionSystem>();
             if (pot != null) pot.RefillAll();
+            p.GrantReviveInvincibility(3.0f); // BR-18
         }
 
         var spawner = FindFirstObjectByType<NetworkSpawner>();
@@ -565,6 +609,20 @@ public class PlayerController : NetworkBehaviour, IDamageable
         isInvincible = true;
         StartCoroutine(animationComp.BlinkRoutine(invincibleDuration));
         yield return new WaitForSeconds(invincibleDuration);
+        isInvincible = false;
+    }
+
+    /// <summary>BR-18: 3s bất tử khi hồi sinh/respawn tại checkpoint. Gọi từ revive/respawn.</summary>
+    public void GrantReviveInvincibility(float duration = 3.0f)
+    {
+        StartCoroutine(TimedInvincibility(duration));
+    }
+
+    private IEnumerator TimedInvincibility(float duration)
+    {
+        isInvincible = true;
+        if (animationComp != null) StartCoroutine(animationComp.BlinkRoutine(duration));
+        yield return new WaitForSeconds(duration);
         isInvincible = false;
     }
 

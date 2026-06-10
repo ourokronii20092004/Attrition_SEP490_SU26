@@ -56,6 +56,8 @@ public class EliteEnemySkills : NetworkBehaviour
     public class SkillConfig
     {
         [Tooltip("Tên skill (để debug)")] public string skillName = "Skill";
+        [Tooltip("Trọng số ưu tiên khi chọn giữa nhiều skill cùng đủ tầm (cao = hay dùng hơn). VD skill A=3, B=1 → A dùng ~75%.")]
+        [Min(0f)] public float weight = 1f;
         [Tooltip("Sát thương gây ra")] public int damage = 2;
         [Tooltip("Loại sát thương")] public Attrition.Core.DamageType damageType = Attrition.Core.DamageType.Magic;
         [Tooltip("Phạm vi skill (bán kính)")] public float range = 2f;
@@ -83,6 +85,18 @@ public class EliteEnemySkills : NetworkBehaviour
         public bool isRanged = false;
         [Tooltip("Prefab của cây lao/đạn (Kéo HuntressSpear vào đây)")]
         public NetworkPrefabRef projectilePrefab;
+
+        [Header("── Nâng cao (pro) ──")]
+        [Tooltip("Số đạn bắn 1 lần (>1 = toả quạt theo spreadAngle). Chỉ dùng khi isRanged.")]
+        [Range(1, 12)] public int projectileCount = 1;
+        [Tooltip("Góc toả tổng khi bắn nhiều đạn (độ).")] public float spreadAngle = 30f;
+        [Tooltip("Tốc độ đạn. <=0 = dùng mặc định.")] public float projectileSpeed = 0f;
+        [Tooltip("Lực đẩy lùi khi trúng (cận chiến).")] public float knockbackForce = 4f;
+        [Tooltip("Số lần gây damage trong 1 lần dùng (multi-hit cận chiến). 1 = đánh 1 phát.")]
+        [Range(1, 10)] public int hitCount = 1;
+        [Tooltip("Giãn cách giữa các hit khi hitCount>1 (giây).")] public float hitInterval = 0.12f;
+        [Tooltip("Bán kính lõi thưởng damage (sweet spot). 0 = tắt.")] public float sweetSpotRadius = 0f;
+        [Tooltip("Hệ số damage khi trúng sweet spot.")] public float sweetSpotMultiplier = 1.5f;
     }
 
     [Header("---- SKILL (Undead) ----")]
@@ -115,6 +129,10 @@ public class EliteEnemySkills : NetworkBehaviour
     public string summonClipName = "";
     [Tooltip("Số summon tối đa cùng tồn tại")] [Range(1, 20)]
     public int maxActiveSummons = 6;
+    [Tooltip("Layer mặt đất để 'dán' summon xuống đất (tránh spawn lơ lửng). Bỏ trống = spawn tại chỗ tính.")]
+    public LayerMask summonGroundLayer;
+    [Tooltip("Tầm raycast xuống tìm đất khi snap summon.")]
+    public float summonGroundSnapDistance = 6f;
 
     // ═══════════════════════════════════════════════════════════════
     // RUNTIME (ẩn khỏi Inspector)
@@ -356,8 +374,8 @@ public class EliteEnemySkills : NetworkBehaviour
         // Roll tỉ lệ
         if (Random.value > skillChance) return false;
 
-        // Random chọn 1 skill hợp lệ
-        int idx = validSkills[Random.Range(0, validSkills.Count)];
+        // Chọn skill theo TRỌNG SỐ (weight) — nhiều skill có tỉ lệ riêng, không chia đều.
+        int idx = PickWeightedSkill(validSkills);
         currentSkillIndex = idx;
 
         SkillConfig cfg = skills[idx];
@@ -368,6 +386,33 @@ public class EliteEnemySkills : NetworkBehaviour
 
         RPC_PlaySkillAnim(idx);
         return true;
+    }
+
+    /// <summary>
+    /// Chọn 1 skill trong danh sách hợp lệ theo trọng số weight (roulette).
+    /// weight cao → hay được chọn hơn. Nếu tổng weight = 0 → fallback chia đều.
+    /// </summary>
+    private int PickWeightedSkill(List<int> validSkills)
+    {
+        float total = 0f;
+        for (int i = 0; i < validSkills.Count; i++)
+        {
+            var s = skills[validSkills[i]];
+            total += (s != null ? Mathf.Max(0f, s.weight) : 0f);
+        }
+
+        if (total <= 0f) // tất cả weight = 0 → chia đều
+            return validSkills[Random.Range(0, validSkills.Count)];
+
+        float roll = Random.value * total;
+        for (int i = 0; i < validSkills.Count; i++)
+        {
+            var s = skills[validSkills[i]];
+            float w = (s != null ? Mathf.Max(0f, s.weight) : 0f);
+            roll -= w;
+            if (roll <= 0f) return validSkills[i];
+        }
+        return validSkills[validSkills.Count - 1]; // an toàn do sai số float
     }
 
     /// <summary>
@@ -418,39 +463,82 @@ public class EliteEnemySkills : NetworkBehaviour
             if (cfg.projectilePrefab.IsValid)
             {
                 int skillDmg = RawSkillDamage(cfg.damage, cfg.damageType);
-                Runner.Spawn(cfg.projectilePrefab, skillOrigin, Quaternion.identity, null, (runner, obj) =>
+                float speed = cfg.projectileSpeed > 0f
+                    ? cfg.projectileSpeed : Attrition.Gameplay.Combat.ProjectileInitializer.DefaultSpeed;
+
+                int count = Mathf.Max(1, cfg.projectileCount);
+                float baseAng = Mathf.Atan2(facingDir.y, facingDir.x) * Mathf.Rad2Deg;
+                float step = count > 1 ? cfg.spreadAngle / (count - 1) : 0f;
+                float startAng = baseAng - (count > 1 ? cfg.spreadAngle * 0.5f : 0f);
+
+                for (int s = 0; s < count; s++)
                 {
-                    Attrition.Gameplay.Combat.ProjectileInitializer.Init(obj, facingDir, skillDmg, Attrition.Gameplay.Combat.ProjectileInitializer.DefaultSpeed, cfg.damageType);
-                });
+                    float a = (startAng + step * s) * Mathf.Deg2Rad;
+                    Vector2 dir = new Vector2(Mathf.Cos(a), Mathf.Sin(a)).normalized;
+                    Runner.Spawn(cfg.projectilePrefab, skillOrigin, Quaternion.identity, null, (runner, obj) =>
+                    {
+                        Attrition.Gameplay.Combat.ProjectileInitializer.Init(obj, dir, skillDmg, speed, cfg.damageType, cfg.knockbackForce);
+                    });
+                }
             }
             return; // Xong phần ném, thoát hàm để không gây sát thương cận chiến nữa
         }
 
-        // NẾU LÀ ĐÁNH CẬN CHIẾN
+        // NẾU LÀ ĐÁNH CẬN CHIẾN — multi-hit theo hitCount/hitInterval
+        if (cfg.hitCount > 1)
+            StartCoroutine(MeleeMultiHit(cfg));
+        else
+            ResolveMeleeHit(cfg);
+    }
+
+    private System.Collections.IEnumerator MeleeMultiHit(SkillConfig cfg)
+    {
+        for (int h = 0; h < cfg.hitCount; h++)
+        {
+            if (!HasStateAuthority || !IsUsingSkill) yield break;
+            ResolveMeleeHit(cfg);
+            if (h < cfg.hitCount - 1)
+                yield return new WaitForSeconds(Mathf.Max(0.02f, cfg.hitInterval));
+        }
+    }
+
+    private void ResolveMeleeHit(SkillConfig cfg)
+    {
+        Vector2 origin = GetSkillOrigin(cfg);
+        Vector2 facing = GetFacingDir();
+
         Collider2D[] results = new Collider2D[10];
-        ContactFilter2D filter = new ContactFilter2D();
-        filter.useLayerMask = true;
-        filter.layerMask = playerLayer;
-        filter.useTriggers = false;
+        ContactFilter2D filter = new ContactFilter2D
+        {
+            useLayerMask = true,
+            layerMask = playerLayer,
+            useTriggers = false
+        };
 
         int count = Attrition.Gameplay.Combat.HitboxResolver.Overlap(
             Runner.GetPhysicsScene2D(), cfg.hitboxShape,
-            skillOrigin, skillOrigin, facingDir,
+            origin, origin, facing,
             cfg.range, cfg.angle, cfg.rectSize, filter, results);
 
         for (int i = 0; i < count; i++)
-            DealSkillDamage(results[i], RawSkillDamage(cfg.damage, cfg.damageType), cfg.damageType);
+            DealSkillDamage(results[i], cfg, origin);
     }
 
-    private void DealSkillDamage(Collider2D player, int damage, Attrition.Core.DamageType type)
+    private void DealSkillDamage(Collider2D player, SkillConfig cfg, Vector2 origin)
     {
-        Vector2 dirToPlayer = (player.transform.position - transform.position).normalized;
         IDamageable dmg = player.GetComponentInParent<IDamageable>();
-        if (dmg != null && !dmg.IsDead)
+        if (dmg == null || dmg.IsDead) return;
+
+        int raw = RawSkillDamage(cfg.damage, cfg.damageType);
+        if (cfg.sweetSpotRadius > 0f)
         {
-            Vector2 pushDir = new Vector2(dirToPlayer.x, 0.5f).normalized;
-            dmg.TakeDamage(damage, pushDir, 0f, type);
+            float d = Vector2.Distance(player.ClosestPoint(origin), origin);
+            if (d <= cfg.sweetSpotRadius) raw = Mathf.RoundToInt(raw * cfg.sweetSpotMultiplier);
         }
+
+        Vector2 dirToPlayer = ((Vector2)player.transform.position - origin).normalized;
+        Vector2 pushDir = new Vector2(dirToPlayer.x, 0.5f).normalized;
+        dmg.TakeDamage(raw, pushDir, cfg.knockbackForce, cfg.damageType);
     }
 
     /// <summary>
@@ -587,6 +675,15 @@ public class EliteEnemySkills : NetworkBehaviour
                 Mathf.Sin(angle * Mathf.Deg2Rad)
             ) * dist;
             Vector3 spawnPos = transform.position + (Vector3)offset;
+
+            // Dán xuống đất nếu có layer (tránh summon lơ lửng — chuyên nghiệp hơn).
+            if (summonGroundLayer.value != 0)
+            {
+                var hit = Runner.GetPhysicsScene2D().Raycast(
+                    spawnPos + Vector3.up * 0.5f, Vector2.down, summonGroundSnapDistance,
+                    summonGroundLayer);
+                if (hit.collider != null) spawnPos.y = hit.point.y;
+            }
 
             NetworkObject summonObj = Runner.Spawn(summonPrefab, spawnPos, Quaternion.identity, null, (runner, obj) =>
             {
@@ -793,5 +890,25 @@ public class EliteEnemySkills : NetworkBehaviour
             Gizmos.DrawWireSphere(transform.position, teleportMinDistance);
             Gizmos.DrawWireSphere(transform.position, teleportMaxDistance);
         }
+    }
+
+    /// <summary>
+    /// Boss phase escalation: mỗi phase boss hung hãn hơn — tăng tỉ lệ dùng skill,
+    /// giảm cooldown teleport/summon/skill. Gọi từ BossController.OnPhaseEnter (host).
+    /// </summary>
+    public void EscalateForPhase(int phase)
+    {
+        if (!HasStateAuthority || phase <= 0) return;
+
+        // Tăng dần độ dồn dập theo phase (clamp an toàn).
+        skillChance = Mathf.Clamp01(skillChance + 0.15f * phase);
+        summonChance = Mathf.Clamp01(summonChance + 0.05f * phase);
+        healChancePerSecond = Mathf.Clamp01(healChancePerSecond * 0.8f); // ít heal hơn về cuối
+
+        teleportCooldown = Mathf.Max(1f, teleportCooldown * 0.8f);
+        summonCooldown = Mathf.Max(2f, summonCooldown * 0.8f);
+        if (skills != null)
+            foreach (var s in skills)
+                if (s != null) s.cooldown = Mathf.Max(0.5f, s.cooldown * 0.8f);
     }
 }

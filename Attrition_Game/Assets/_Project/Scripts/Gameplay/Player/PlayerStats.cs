@@ -266,6 +266,18 @@ namespace Attrition.Gameplay.Player
             CurrentMana = Mathf.Min(MaxMana, CurrentMana + amount);
         }
 
+        /// <summary>Đủ mana để dùng skill không?</summary>
+        public bool HasMana(int cost) => CurrentMana >= cost;
+
+        /// <summary>Trừ mana nếu đủ (BR-16). Trả false nếu thiếu. Chỉ host.</summary>
+        public bool TryConsumeMana(int cost)
+        {
+            if (cost <= 0) return true;
+            if (CurrentMana < cost) return false;
+            CurrentMana -= cost;
+            return true;
+        }
+
         /// <summary>Rest tại checkpoint: hồi đầy HP/Mana/Stamina. Không hồi sinh nếu đã chết. Chỉ host.</summary>
         public void RestoreFull()
         {

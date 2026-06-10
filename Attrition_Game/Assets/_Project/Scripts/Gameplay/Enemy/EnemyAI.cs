@@ -96,6 +96,18 @@ public class EnemyAI : NetworkBehaviour
     [Tooltip("Cooldown giữa 2 lần nhảy")]
     public float jumpCooldown = 3f;
 
+    [Header("---- LUNGE JUMP (Elite, lao tới) ----")]
+    [Tooltip("Bật để quái nhảy lao TỚI player khi player ở ngoài tầm đánh nhưng trong khoảng lao.")]
+    public bool canLungeJump = false;
+    [Tooltip("Player phải xa hơn mức này (thường = MaxAttackRange) mới lao tới.")]
+    public float lungeMinDistance = 2.5f;
+    [Tooltip("Player phải gần hơn mức này thì mới đáng để lao (ngoài khoảng này thì đi bộ tới).")]
+    public float lungeMaxDistance = 7f;
+    [Tooltip("Lực ngang khi lao tới.")]
+    public float lungeForwardSpeed = 11f;
+    [Tooltip("Lực nhảy (Y) khi lao tới.")]
+    public float lungeJumpForce = 10f;
+
     [Header("---- FACING ----")]
     [Tooltip("Dead zone: không đổi hướng nhìn khi khoảng cách X với mục tiêu nhỏ hơn giá trị này (tránh giật/nhấp nháy)")]
     public float facingDeadZone = 0.3f;
@@ -577,10 +589,19 @@ public class EnemyAI : NetworkBehaviour
 
         if (hasLineOfSight)
         {
-            // 1. KIỂM TRA NHẢY LÙI (EVADE)
+            // 1. KIỂM TRA NHẢY LÙI (EVADE) — player áp sát quá gần
             if (canEvadeJump && !isFlying && dist <= evadeTriggerDistance && jumpCooldownTimer.ExpiredOrNotRunning(Runner))
             {
                 ExecuteEvadeJump(xDiff);
+                return;
+            }
+
+            // 1b. KIỂM TRA NHẢY LAO TỚI (LUNGE) — player ngoài tầm đánh nhưng trong khoảng lao
+            if (canLungeJump && !isFlying && dist > combatComp.MaxAttackRange
+                && dist >= lungeMinDistance && dist <= lungeMaxDistance
+                && IsGrounded() && jumpCooldownTimer.ExpiredOrNotRunning(Runner))
+            {
+                ExecuteLungeJump(xDiff);
                 return;
             }
 
@@ -794,7 +815,25 @@ public class EnemyAI : NetworkBehaviour
         AttackLockedFacingDir = facingDir;
         
         rb.linearVelocity = new Vector2(jumpDirX * evadeBackwardSpeed, jumpForce);
-        
+
+        RPC_PlayJumpAnim();
+    }
+
+    /// <summary>Nhảy lao TỚI player (lunge). Dùng chung Jumping state để xử lý chạm đất.</summary>
+    private void ExecuteLungeJump(float xDiff)
+    {
+        CurrentState = EnemyState.Jumping;
+        IsJumping = true;
+        jumpCooldownTimer = TickTimer.CreateFromSeconds(Runner, jumpCooldown);
+
+        // Lao về phía player (cùng hướng xDiff)
+        float lungeDirX = xDiff > 0 ? 1f : -1f;
+        float facingDir = lungeDirX;
+        NetFacingDir = facingDir;
+        AttackLockedFacingDir = facingDir;
+
+        rb.linearVelocity = new Vector2(lungeDirX * lungeForwardSpeed, lungeJumpForce);
+
         RPC_PlayJumpAnim();
     }
 

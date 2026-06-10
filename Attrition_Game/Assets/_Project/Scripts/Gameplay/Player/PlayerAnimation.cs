@@ -97,4 +97,13 @@ public class PlayerAnimation : NetworkBehaviour
             anim.SetTrigger("Hit");
         }
     }
+
+    /// <summary>Phát animation cast skill. element = (int)SkillElement (Fire/Wood/Earth/Thunder/Thrust).</summary>
+    public void PlaySkillCast(int element)
+    {
+        if (anim == null) return;
+        anim.speed = 1f;
+        anim.SetInteger("SkillElement", element);
+        anim.SetTrigger("CastSkill");
+    }
 }

@@ -24,6 +24,7 @@ GameObject:
   - component: {fileID: 2044027385345098150}
   - component: {fileID: -5924329882642562811}
   - component: {fileID: -8304798322267633763}
+  - component: {fileID: 4926934666965263351}
   m_Layer: 7
   m_Name: Player
   m_TagString: Player
@@ -45,6 +46,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7035351457917283103}
+  - {fileID: 4851926045855186506}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!50 &8158020556837803344
@@ -222,6 +224,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   combatComp: {fileID: 8687308238461515992}
   animationComp: {fileID: 8805790379459285585}
+  skillCaster: {fileID: 0}
   statsComp: {fileID: 5532332673274492828}
   potionComp: {fileID: 2638378353840522064}
   rb: {fileID: 8158020556837803344}
@@ -337,6 +340,7 @@ MonoBehaviour:
   - {fileID: 2044027385345098150}
   - {fileID: -5924329882642562811}
   - {fileID: -8304798322267633763}
+  - {fileID: 4926934666965263351}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &-9211217073537501404
 MonoBehaviour:
@@ -458,8 +462,61 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 66a18fbf9aa57e54fb626910e06baec4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Player.Inventory.PlayerInventory
+  startingItemIds: []
   droppedItemPrefab:
     RawGuidValue: 12e1ff761e13b114e99dad527c7a0233
+--- !u!114 &4926934666965263351
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6831727267532873526}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80690f9c28d7a504e9c9c2e30be3befc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Player.PlayerSkillCaster
+  castPoint: {fileID: 4851926045855186506}
+  castRange: 2.2
+  castAngle: 160
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 768
+  knockbackForce: 0
+  _IsCasting:
+    _value: 0
+--- !u!1 &7179476028545329090
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4851926045855186506}
+  m_Layer: 7
+  m_Name: castPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4851926045855186506
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7179476028545329090}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.035, y: -0.005, z: 0}
+  m_LocalScale: {x: 0.99, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 9001223699615762312}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7643912872851063712
 GameObject:
   m_ObjectHideFlags: 0

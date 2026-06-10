@@ -1,0 +1,156 @@
+using Fusion;
+using UnityEngine;
+using Attrition.Core;
+using Attrition.Data;
+using Attrition.Gameplay.Combat;
+using Attrition.Gameplay.Enemy;
+using Attrition.Gameplay.Player.Inventory;
+
+namespace Attrition.Gameplay.Player
+{
+    /// <summary>
+    /// Skill chủ động (phím K) — KHÔNG cần animation. Mỗi SkillSO tự định nghĩa hitbox/VFX/đạn
+    /// nên mỗi skill cast ra khác nhau. Cải tiến kiểu game hành động:
+    ///  - Active frames: hitbox chỉ sống trong [activeStartFrac, activeEndFrac] của castTime.
+    ///  - Multi-hit: tickInterval >0 → gây nhiều hit (lingering AoE) thay vì 1 phát.
+    ///  - Sweet spot: trúng vùng lõi được nhân damage.
+    ///  - Per-target dedup trong 1 lần tick (không đánh trùng cùng tick).
+    /// Host tính damage; VFX phát trên mọi máy qua RPC.
+    /// </summary>
+    [RequireComponent(typeof(PlayerStats))]
+    [RequireComponent(typeof(PlayerInventory))]
+    public class PlayerSkillCaster : NetworkBehaviour
+    {
+        [Header("---- HITBOX ----")]
+        [SerializeField] private Transform castPoint;
+        [SerializeField] private LayerMask targetLayers;
+
+        [Networked] public NetworkBool IsCasting { get; set; }
+        [Networked] private TickTimer _castTimer { get; set; }
+        [Networked] private TickTimer _cooldown { get; set; }
+        [Networked] private int _ticksDone { get; set; }
+        [Networked] private NetworkBool _projectileFired { get; set; }
+
+        private PlayerStats _stats;
+        private PlayerInventory _inventory;
+        private NetworkButtons _prevButtons;
+        private readonly Collider2D[] _hits = new Collider2D[16];
+
+        public override void Spawned()
+        {
+            _stats = GetComponent<PlayerStats>();
+            _inventory = GetComponent<PlayerInventory>();
+        }
+
+        public void HandleSkill(NetworkInputData data, bool isFacingRight)
+        {
+            if (castPoint != null)
+            {
+                var lp = castPoint.localPosition;
+                castPoint.localPosition = new Vector3(Mathf.Abs(lp.x) * (isFacingRight ? 1f : -1f), lp.y, lp.z);
+            }
+
+            if (IsCasting) { TickCast(isFacingRight); _prevButtons = data.buttons; return; }
+
+            var pressed = data.buttons.GetPressed(_prevButtons);
+            _prevButtons = data.buttons;
+            if (!pressed.IsSet(MyButtons.Skill)) return;
+            if (!_cooldown.ExpiredOrNotRunning(Runner)) return;
+
+            var skill = _inventory.GetEquippedSkillSO();
+            if (skill == null || !_stats.HasMana(skill.manaCost)) return;
+            if (!_stats.TryConsumeMana(skill.manaCost)) return;
+
+            IsCasting = true;
+            _ticksDone = 0;
+            _projectileFired = false;
+            _castTimer = TickTimer.CreateFromSeconds(Runner, skill.castTime);
+            _cooldown = TickTimer.CreateFromSeconds(Runner, skill.castTime + skill.cooldown);
+            if (Runner.IsForward) RPC_PlayVfx((int)skill.element);
+        }
+
+        private void TickCast(bool isFacingRight)
+        {
+            var skill = _inventory.GetEquippedSkillSO();
+            float total = skill != null ? skill.castTime : 0.6f;
+            float remain = _castTimer.RemainingTime(Runner) ?? 0f;
+            float elapsedFrac = total <= 0f ? 1f : 1f - (remain / total);
+
+            if (skill != null && elapsedFrac >= skill.activeStartFrac && elapsedFrac <= skill.activeEndFrac + 0.001f)
+            {
+                if (skill.delivery == SkillDelivery.Projectile)
+                {
+                    if (!_projectileFired) { FireProjectiles(skill, isFacingRight); _projectileFired = true; }
+                }
+                else
+                {
+                    int wantTicks = Mathf.Min(skill.ComputeTickCount(),
+                        Mathf.FloorToInt((elapsedFrac - skill.activeStartFrac) / Mathf.Max(0.0001f,
+                            (skill.activeEndFrac - skill.activeStartFrac)) * skill.ComputeTickCount()) + 1);
+                    if (_ticksDone < wantTicks) { DealArea(skill, isFacingRight); _ticksDone++; }
+                }
+            }
+
+            if (_castTimer.Expired(Runner)) IsCasting = false;
+        }
+
+        private void DealArea(SkillSO skill, bool isFacingRight)
+        {
+            if (castPoint == null) return;
+            Vector2 facing = isFacingRight ? Vector2.right : Vector2.left;
+            Vector2 origin = (Vector2)transform.position + new Vector2(skill.hitboxOffset.x * (isFacingRight ? 1f : -1f), skill.hitboxOffset.y);
+
+            var filter = new ContactFilter2D { useLayerMask = true, layerMask = targetLayers, useTriggers = false };
+            var shape = (EnemyCombat.HitboxShape)(int)skill.hitShape;
+            int n = HitboxResolver.Overlap(Runner.GetPhysicsScene2D(), shape, origin, origin, facing,
+                skill.range, skill.angle, skill.rectSize, filter, _hits);
+
+            int baseRaw = skill.baseDamage + Mathf.RoundToInt(_stats.AP * skill.apScaling);
+            for (int i = 0; i < n; i++)
+            {
+                var hit = _hits[i];
+                if (hit == null || hit.gameObject == gameObject) continue;
+                var dmg = hit.GetComponentInParent<IDamageable>();
+                if (dmg == null || dmg.IsDead) continue;
+
+                int raw = baseRaw;
+                if (skill.sweetSpotRadius > 0f)
+                {
+                    float d = Vector2.Distance(hit.ClosestPoint(origin), origin);
+                    if (d <= skill.sweetSpotRadius) raw = Mathf.RoundToInt(raw * skill.sweetSpotMultiplier);
+                }
+                Vector2 dir = ((Vector2)hit.transform.position - origin).normalized;
+                dmg.TakeDamage(raw, new Vector2(dir.x, 0.4f).normalized, skill.knockbackForce, skill.damageType);
+            }
+        }
+
+        private void FireProjectiles(SkillSO skill, bool isFacingRight)
+        {
+            if (!skill.projectilePrefab.IsValid) return;
+            Vector3 spawn = castPoint != null ? castPoint.position : transform.position;
+            int raw = skill.baseDamage + Mathf.RoundToInt(_stats.AP * skill.apScaling);
+            int count = Mathf.Max(1, skill.projectileCount);
+            float baseAng = isFacingRight ? 0f : 180f;
+            float step = count > 1 ? skill.spreadAngle / (count - 1) : 0f;
+            float start = baseAng - (count > 1 ? skill.spreadAngle * 0.5f : 0f);
+
+            for (int i = 0; i < count; i++)
+            {
+                float a = (start + step * i) * Mathf.Deg2Rad;
+                Vector2 dir = new Vector2(Mathf.Cos(a), Mathf.Sin(a)).normalized;
+                Runner.Spawn(skill.projectilePrefab, spawn, Quaternion.identity, null,
+                    (r, obj) => ProjectileInitializer.Init(obj, dir, raw, skill.projectileSpeed, skill.damageType, skill.knockbackForce));
+            }
+        }
+
+        [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
+        private void RPC_PlayVfx(int element)
+        {
+            var skill = _inventory != null ? _inventory.GetEquippedSkillSO() : null;
+            if (skill == null || skill.castVfxPrefab == null) return;
+            Vector3 pos = castPoint != null ? castPoint.position : transform.position;
+            var fx = Instantiate(skill.castVfxPrefab, pos, Quaternion.identity);
+            if (skill.vfxLifetime > 0f) Destroy(fx, skill.vfxLifetime);
+        }
+    }
+}
