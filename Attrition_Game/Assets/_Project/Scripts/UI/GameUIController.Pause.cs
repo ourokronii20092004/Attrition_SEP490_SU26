@@ -23,7 +23,7 @@ namespace Attrition.UI
             Time.timeScale = 1f; // bỏ pause trước khi rời scene
             var runner = _controller != null ? _controller.Runner : null;
             if (runner != null) runner.Shutdown();
-            SceneManager.LoadScene("MainMenu");
+            SceneManager.LoadScene("Main_Menu_UI");
         }
     }
 }

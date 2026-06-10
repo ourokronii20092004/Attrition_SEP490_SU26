@@ -230,7 +230,15 @@
 
 #save-slots-container {
     width: 100%;
+    max-height: 420px;
     margin-bottom: 28px;
+    flex-grow: 0;
+    flex-shrink: 1;
+}
+
+/* chừa khoảng cho thanh cuộn để slot không bị che */
+#save-slots-container .unity-scroll-view__content-container {
+    padding-right: 6px;
 }
 
 /* --- Save Slot Card --- */
@@ -299,6 +307,22 @@
 
 .save-avatar-circle.blue {
     background-color: rgb(20, 35, 55);
+}
+
+.save-avatar-circle.green {
+    background-color: rgb(22, 48, 32);
+}
+
+.save-avatar-circle.red {
+    background-color: rgb(55, 22, 25);
+}
+
+.save-avatar-circle.gold {
+    background-color: rgb(52, 42, 18);
+}
+
+.save-avatar-circle.cyan {
+    background-color: rgb(18, 48, 50);
 }
 
 .save-slot:hover .save-avatar-circle {

@@ -40,6 +40,9 @@ namespace Attrition.Persistence
 
     public static class SaveManager
     {
+        /// <summary>Số save slot tối đa. Đổi 1 chỗ này là toàn bộ UI + load/save theo.</summary>
+        public const int SlotCount = 8;
+
         private static string SaveDirectory => Path.Combine(Application.persistentDataPath, "saves");
 
         public static void EnsureDirectoryExists()
@@ -73,8 +76,8 @@ namespace Attrition.Persistence
 
         public static SaveSlotData[] LoadAllSlots()
         {
-            SaveSlotData[] slots = new SaveSlotData[3];
-            for (int i = 0; i < 3; i++)
+            SaveSlotData[] slots = new SaveSlotData[SlotCount];
+            for (int i = 0; i < SlotCount; i++)
             {
                 slots[i] = LoadSlot(i);
             }

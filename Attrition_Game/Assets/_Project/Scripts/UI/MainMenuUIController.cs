@@ -40,7 +40,7 @@ namespace Attrition.UI
         private bool _isOnlineMode = false;
 
         private SaveSlotData[] _saveSlots;
-        private string[] _characterIds = new string[3];
+        private string[] _characterIds = new string[SaveManager.SlotCount];
 
         // ===== Particles =====
         private List<Button> _menuButtons = new List<Button>();
@@ -67,6 +67,7 @@ namespace Attrition.UI
             _settingsScreen = _root.Q<VisualElement>("settings-screen");
 
             SetupMainMenu();
+            BuildSaveSlots();
             SetupSaveSelection();
             SetupLogin();
             SetupHostJoin();
@@ -226,14 +227,14 @@ namespace Attrition.UI
         // =================================================================
         private void LoadSavesFromDisk()
         {
-            if (_saveSlots == null) _saveSlots = new SaveSlotData[3];
+            if (_saveSlots == null) _saveSlots = new SaveSlotData[SaveManager.SlotCount];
             
             if (_isOnlineMode)
             {
                 if (APIManager.Instance != null && !string.IsNullOrEmpty(APIManager.Instance.AccessToken))
                 {
                     StartCoroutine(APIManager.Instance.GetCharacters((characters) => {
-                        for (int i = 0; i < 3; i++)
+                        for (int i = 0; i < SaveManager.SlotCount; i++)
                         {
                             if (characters != null && i < characters.Count)
                             {
@@ -258,7 +259,7 @@ namespace Attrition.UI
                 }
                 else
                 {
-                    for (int i = 0; i < 3; i++)
+                    for (int i = 0; i < SaveManager.SlotCount; i++)
                     {
                         _characterIds[i] = null;
                         _saveSlots[i] = null;
@@ -271,7 +272,7 @@ namespace Attrition.UI
                 // Offline / solo: chỉ hiện slot thuộc ĐÚNG chế độ đang chọn (BR — solo/coop tách biệt).
                 var wantMode = _isHost ? LaunchMode.Coop : LaunchMode.Solo;
                 var localSaves = SaveManager.LoadAllSlots();
-                for (int i = 0; i < 3; i++)
+                for (int i = 0; i < SaveManager.SlotCount; i++)
                 {
                     _characterIds[i] = null;
                     var s = localSaves[i];
@@ -321,9 +322,89 @@ namespace Attrition.UI
             }
         }
 
+        /// <summary>
+        /// Dựng động SaveManager.SlotCount thẻ save trong ScrollView "save-slots-container".
+        /// Mỗi thẻ giữ đúng tên/class như UXML cũ (save-slot-{i}, btn-delete-slot-{i}, các class)
+        /// để RenderSaveSlot và SetupSaveSelection query không đổi.
+        /// </summary>
+        private void BuildSaveSlots()
+        {
+            var container = _root?.Q<ScrollView>("save-slots-container");
+            if (container == null) return;
+            container.Clear();
+
+            string[] avatarColors = { "purple", "blue", "green", "red", "gold", "cyan" };
+
+            for (int i = 0; i < SaveManager.SlotCount; i++)
+            {
+                var slotBtn = new Button { name = $"save-slot-{i}" };
+                slotBtn.AddToClassList("save-slot");
+                slotBtn.AddToClassList("empty");
+
+                var indicator = new VisualElement();
+                indicator.AddToClassList("save-slot-active-indicator");
+                slotBtn.Add(indicator);
+
+                // --- inner FILLED ---
+                var inner = new VisualElement();
+                inner.AddToClassList("save-slot-inner");
+
+                var avatar = new VisualElement();
+                avatar.AddToClassList("save-avatar");
+                var circle = new VisualElement();
+                circle.AddToClassList("save-avatar-circle");
+                circle.AddToClassList(avatarColors[i % avatarColors.Length]);
+                avatar.Add(circle);
+                inner.Add(avatar);
+
+                var info = new VisualElement();
+                info.AddToClassList("save-info");
+                var infoTop = new VisualElement();
+                infoTop.AddToClassList("save-info-top");
+                infoTop.Add(MakeLabel("", "save-name"));
+                infoTop.Add(MakeLabel("", "save-level"));
+                info.Add(infoTop);
+                info.Add(MakeLabel("", "save-location"));
+                var statsRow = new VisualElement();
+                statsRow.AddToClassList("save-stats-row");
+                statsRow.Add(MakeLabel("", "save-playtime"));
+                statsRow.Add(MakeLabel("", "save-deaths"));
+                info.Add(statsRow);
+                inner.Add(info);
+
+                var right = new VisualElement();
+                right.AddToClassList("save-slot-right");
+                right.Add(MakeLabel($"SLOT {i + 1}", "save-slot-number"));
+                var del = new Button { name = $"btn-delete-slot-{i}", text = "🗑" };
+                del.AddToClassList("save-delete-btn");
+                right.Add(del);
+                inner.Add(right);
+                slotBtn.Add(inner);
+
+                // --- inner EMPTY ---
+                var innerEmpty = new VisualElement();
+                innerEmpty.AddToClassList("save-slot-inner-empty");
+                var emptyCircle = new VisualElement();
+                emptyCircle.AddToClassList("save-empty-circle");
+                emptyCircle.Add(MakeLabel("+", "save-empty-plus"));
+                innerEmpty.Add(emptyCircle);
+                innerEmpty.Add(MakeLabel($"EMPTY SLOT {i + 1}", "save-empty-text"));
+                slotBtn.Add(innerEmpty);
+
+                container.Add(slotBtn);
+            }
+        }
+
+        private static Label MakeLabel(string text, string className)
+        {
+            var l = new Label(text);
+            l.AddToClassList(className);
+            return l;
+        }
+
         private void SetupSaveSelection()
         {
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < SaveManager.SlotCount; i++)
             {
                 int slotIndex = i;
                 var slotBtn = _root.Q<Button>($"save-slot-{i}");
@@ -437,7 +518,7 @@ namespace Attrition.UI
                     {
                         var origin = _isHost ? "Solo" : "Co-op";
                         var target = _isHost ? "Co-op" : "Solo";
-                        ShowSlotWarning($"Save này thuộc chế độ {origin}, không thể chơi ở {target}. Hãy chọn slot khác hoặc tạo nhân vật mới.");
+                        ShowSlotWarning($"This save belongs to {origin} mode and cannot be played in {target}. Pick another slot or create a new character.");
                         return;
                     }
 
@@ -465,12 +546,12 @@ namespace Attrition.UI
 
         private static readonly string[] LoadingTips =
         {
-            "Giữ Space lâu hơn để nhảy cao hơn.",
-            "Shadow dash (Shift) miễn sát thương trong 1 giây.",
-            "Rest tại checkpoint hồi đầy máu, mana và bình.",
-            "Quái tinh anh không bị choáng — hãy né rồi phản đòn.",
-            "Co-op: đứng gần đồng đội đã ngã, giữ phím hồi sinh trong 3 giây.",
-            "Lên cấp cho 5 điểm tự cộng — xây hướng riêng của bạn."
+            "Hold Space longer to jump higher.",
+            "Shadow dash (Shift) grants 1 second of invincibility.",
+            "Resting at a checkpoint refills HP, mana and flasks.",
+            "Elite enemies can't be stunned - dodge, then counterattack.",
+            "Co-op: stand near a downed ally and hold the revive key for 3 seconds.",
+            "Each level grants 5 free stat points - build your own way."
         };
 
         /// <summary>Load scene gameplay (Solo) bất đồng bộ kèm màn loading + progress bar.</summary>
@@ -538,10 +619,10 @@ namespace Attrition.UI
         /// <summary>BR-03 (chỉ chữ-số), BR-04 (3–16). Trả null nếu hợp lệ, hoặc thông báo lỗi.</summary>
         private static string ValidateNameFormat(string name)
         {
-            if (string.IsNullOrEmpty(name)) return "Vui lòng nhập tên.";
-            if (name.Length < 3 || name.Length > 16) return "Tên phải dài 3–16 ký tự.";
+            if (string.IsNullOrEmpty(name)) return "Please enter a name.";
+            if (name.Length < 3 || name.Length > 16) return "Name must be 3-16 characters long.";
             foreach (char c in name)
-                if (!char.IsLetterOrDigit(c)) return "Chỉ cho phép chữ cái và số (không ký tự đặc biệt).";
+                if (!char.IsLetterOrDigit(c)) return "Only letters and numbers are allowed (no special characters).";
             return null;
         }
 
@@ -566,13 +647,13 @@ namespace Attrition.UI
 
             if (IsNameTakenLocally(name))
             {
-                if (error != null) error.text = "Tên này đã tồn tại ở slot khác.";
+                if (error != null) error.text = "This name is already used in another slot.";
                 return;
             }
 
-            // Slot trống đầu tiên trong CHẾ ĐỘ hiện tại để chứa nhân vật mới.
+            // First empty slot in the CURRENT mode to hold the new character.
             int slot = FindFirstEmptySlot();
-            if (slot < 0) { if (error != null) error.text = "Hết slot trống — hãy xoá bớt nhân vật."; return; }
+            if (slot < 0) { if (error != null) error.text = "No empty slots - please delete a character first."; return; }
             _selectedSaveSlot = slot;
 
             var mode = _isHost ? LaunchMode.Coop : LaunchMode.Solo;
@@ -682,7 +763,7 @@ namespace Attrition.UI
         {
             _selectedSaveSlot = index;
 
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < SaveManager.SlotCount; i++)
             {
                 var slot = _root.Q<Button>($"save-slot-{i}");
                 if (slot == null) continue;

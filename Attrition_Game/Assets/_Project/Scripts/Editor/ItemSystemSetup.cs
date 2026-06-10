@@ -29,6 +29,7 @@ namespace Attrition.Editor
 
             var droppedPrefab = CreateDroppedItemPrefab();
             CreatePickupPrefab();
+            var skillProjectile = CreateSkillProjectilePrefab();
 
             var items = new List<ItemSO>();
             items.Add(Equip("iron_helm", "Iron Helm", EquipmentSlot.Head, (StatType.DEF, 4)));
@@ -40,17 +41,39 @@ namespace Attrition.Editor
             items.Add(AbilityAcc("acc_shadow_dash", "Shadow Cloak", GrantedAbility.ShadowDash));
             items.Add(DamageAcc("acc_power_ring", "Power Ring", (StatType.AD, 6)));
 
-            items.Add(Skill("skill_fire", "Fireball", SkillElement.Fire, 20, 0.7f, 35));
-            items.Add(Skill("skill_wood", "Thorn Lash", SkillElement.Wood, 18, 0.6f, 30));
-            items.Add(Skill("skill_earth", "Stone Spike", SkillElement.Earth, 25, 0.9f, 45));
-            items.Add(Skill("skill_thunder", "Chain Bolt", SkillElement.Thunder, 22, 0.6f, 38));
-            items.Add(Skill("skill_thrust", "Phantom Thrust", SkillElement.Thrust, 15, 0.5f, 28));
+            // Fire & Thunder = bắn đạn toả quạt; Wood/Earth/Thrust = vùng cận (Cone/Circle).
+            items.Add(SkillProjectile("skill_fire", "Fireball", SkillElement.Fire, 20, 0.7f, 35, skillProjectile, count: 3, spread: 30f));
+            items.Add(SkillArea("skill_wood", "Thorn Lash", SkillElement.Wood, 18, 0.6f, 30, SkillHitShape.Cone, range: 3f, angle: 100f));
+            items.Add(SkillArea("skill_earth", "Stone Spike", SkillElement.Earth, 25, 0.9f, 45, SkillHitShape.Circle, range: 2.5f, angle: 360f));
+            items.Add(SkillProjectile("skill_thunder", "Chain Bolt", SkillElement.Thunder, 22, 0.6f, 38, skillProjectile, count: 5, spread: 45f));
+            items.Add(SkillArea("skill_thrust", "Phantom Thrust", SkillElement.Thrust, 15, 0.5f, 28, SkillHitShape.Rectangle, range: 3.5f, angle: 0f));
 
             CreateDatabase(items);
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log($"[ItemSystemSetup] Xong. Prefab generic: {droppedPrefab}. {items.Count} item + ItemDatabase tạo tại {DataDir}.");
+        }
+
+        /// <summary>Prefab đạn cho skill PLAYER. hitLayer set qua Inspector (chọn layer Enemy) sau khi tạo.</summary>
+        private static GameObject CreateSkillProjectilePrefab()
+        {
+            string path = PrefabDir + "/SkillProjectile.prefab";
+            var existing = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (existing != null) return existing;
+
+            var go = new GameObject("SkillProjectile");
+            var col = go.AddComponent<CircleCollider2D>();
+            col.isTrigger = true;
+            col.radius = 0.2f;
+            go.AddComponent<SpriteRenderer>();
+            go.AddComponent<Fusion.NetworkObject>();
+            var proj = go.AddComponent<EnemyProjectile>();
+            proj.speed = 12f;
+            proj.hitboxRadius = 0.2f;
+            var prefab = PrefabUtility.SaveAsPrefabAsset(go, path);
+            Object.DestroyImmediate(go);
+            return prefab;
         }
 
         private static GameObject CreateDroppedItemPrefab()
@@ -109,11 +132,28 @@ namespace Attrition.Editor
             return so;
         }
 
-        private static SkillSO Skill(string id, string name, SkillElement el, int mana, float cast, int dmg)
+        private static SkillSO SkillArea(string id, string name, SkillElement el, int mana, float cast, int dmg,
+            SkillHitShape shape, float range, float angle)
         {
             var so = ScriptableObject.CreateInstance<SkillSO>();
             so.itemId = id; so.displayName = name; so.maxStack = 1;
             so.element = el; so.manaCost = mana; so.castTime = cast; so.baseDamage = dmg;
+            so.delivery = SkillDelivery.AreaInstant;
+            so.hitShape = shape; so.range = range; so.angle = angle;
+            Save(so, id);
+            return so;
+        }
+
+        private static SkillSO SkillProjectile(string id, string name, SkillElement el, int mana, float cast, int dmg,
+            GameObject projectilePrefab, int count, float spread)
+        {
+            var so = ScriptableObject.CreateInstance<SkillSO>();
+            so.itemId = id; so.displayName = name; so.maxStack = 1;
+            so.element = el; so.manaCost = mana; so.castTime = cast; so.baseDamage = dmg;
+            so.delivery = SkillDelivery.Projectile;
+            so.projectileCount = count; so.spreadAngle = spread; so.projectileSpeed = 12f;
+            // LƯU Ý: projectilePrefab (NetworkPrefabRef) phải kéo TAY vào asset trong Inspector —
+            // Fusion không cho gán NetworkObject → NetworkPrefabRef bằng code editor đơn giản.
             Save(so, id);
             return so;
         }
