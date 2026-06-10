@@ -21,10 +21,11 @@ namespace Attrition.Data
     {
         [SerializeField] private List<ItemSO> items = new();
 
-        // Runtime lookup
-        private Dictionary<int, ItemSO> _byIndex;
-        private Dictionary<string, int> _byStringId;
-        private bool _initialized;
+        // Runtime lookup — [NonSerialized] để Unity KHÔNG lưu trạng thái cũ giữa các phiên/domain reload.
+        // (Dictionary không serialize được; nếu _initialized bị lưu = true mà _byIndex = null → NRE.)
+        [System.NonSerialized] private Dictionary<int, ItemSO> _byIndex;
+        [System.NonSerialized] private Dictionary<string, int> _byStringId;
+        [System.NonSerialized] private bool _initialized;
 
         /// <summary>Singleton accessor — set bởi GameManager hoặc loader scene sớm nhất.</summary>
         public static ItemDatabaseSO Instance { get; set; }
@@ -35,7 +36,7 @@ namespace Attrition.Data
         /// <summary>Build dictionary. Tự gọi lazy nếu chưa init. Gọi sớm để bắt lỗi trùng ID.</summary>
         public void Initialize()
         {
-            if (_initialized) return;
+            if (_initialized && _byIndex != null) return;
             _byIndex = new Dictionary<int, ItemSO>(items.Count);
             _byStringId = new Dictionary<string, int>(items.Count);
 
@@ -61,7 +62,7 @@ namespace Attrition.Data
 
         private void EnsureInit()
         {
-            if (!_initialized) Initialize();
+            if (!_initialized || _byIndex == null) Initialize();
         }
 
         /// <summary>Tra cứu SO từ Fusion network index. Trả null nếu không tìm thấy.</summary>
@@ -69,6 +70,22 @@ namespace Attrition.Data
         {
             EnsureInit();
             return _byIndex.TryGetValue(index, out var item) ? item : null;
+        }
+
+        /// <summary>
+        /// Index ngẫu nhiên của 1 item thuộc category cho trước (vd Equipment). Trả -1 nếu không có.
+        /// seed >=0 để chọn xác định (host truyền tick để client khỏi lệch); &lt;0 = Random.Range.
+        /// </summary>
+        public int GetRandomIndexOfCategory(ItemCategory category, int seed = -1)
+        {
+            EnsureInit();
+            var candidates = new List<int>();
+            foreach (var kv in _byIndex)
+                if (kv.Value != null && kv.Value.Category == category)
+                    candidates.Add(kv.Key);
+            if (candidates.Count == 0) return -1;
+            int pick = seed >= 0 ? (seed % candidates.Count) : Random.Range(0, candidates.Count);
+            return candidates[pick];
         }
 
         /// <summary>Tra cứu network index từ SO. Trả -1 nếu không có trong database.</summary>

@@ -193,8 +193,8 @@
                             <ui:Label text="♔ HOST" class="coop-badge-text host"/>
                         </ui:VisualElement>
                         <ui:VisualElement class="coop-avatar host-avatar"/>
-                        <ui:Label text="Artorias" class="coop-player-name"/>
-                        <ui:Label text="LEVEL 42" class="coop-player-level"/>
+                        <ui:Label text="Host" name="coop-host-name" class="coop-player-name"/>
+                        <ui:Label text="LEVEL 1" name="coop-host-level" class="coop-player-level"/>
                         <ui:VisualElement class="coop-status-badge connected">
                             <ui:Label text="● Connected" class="coop-status-text connected"/>
                         </ui:VisualElement>
@@ -209,8 +209,8 @@
                             <ui:Label text="👤 CLIENT" class="coop-badge-text client"/>
                         </ui:VisualElement>
                         <ui:VisualElement class="coop-avatar client-avatar"/>
-                        <ui:Label text="Eileen" class="coop-player-name"/>
-                        <ui:Label text="LEVEL 38" class="coop-player-level"/>
+                        <ui:Label text="Waiting..." name="coop-client-name" class="coop-player-name"/>
+                        <ui:Label text="" name="coop-client-level" class="coop-player-level"/>
                         <ui:Button text="● NOT READY" name="btn-coop-ready" class="coop-ready-btn not-ready"/>
                     </ui:VisualElement>
                 </ui:VisualElement>

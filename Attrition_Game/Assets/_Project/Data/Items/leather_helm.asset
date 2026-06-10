@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5169bec6b72d93447a155aa416878291, type: 3}
+  m_Name: leather_helm
+  m_EditorClassIdentifier: Attrition.Data::Attrition.Data.EquipmentSO
+  itemId: leather_helm
+  displayName: Leather Helm
+  description: 
+  icon: {fileID: -3700663162450825621, guid: 72d791a55123cb84082b1362f093052e, type: 3}
+  maxStack: 1
+  isKeyItem: 0
+  slot: 0
+  modifiers:
+  - stat: 5
+    amount: 2

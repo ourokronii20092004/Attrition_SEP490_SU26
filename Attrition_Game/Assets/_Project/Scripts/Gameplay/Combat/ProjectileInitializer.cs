@@ -10,7 +10,8 @@ namespace Attrition.Gameplay.Combat
     /// </summary>
     public static class ProjectileInitializer
     {
-        public const float DefaultSpeed = 8f;
+        /// <summary>0 = GIỮ tốc độ cấu hình sẵn trên prefab (EnemyProjectile/SpearProjectile.speed).</summary>
+        public const float DefaultSpeed = 0f;
         public const float DefaultKnockback = 4f;
 
         public static void Init(NetworkObject obj, Vector2 dir, int damage, float speed = DefaultSpeed, Attrition.Core.DamageType type = Attrition.Core.DamageType.Physical, float knockback = DefaultKnockback)
@@ -20,7 +21,7 @@ namespace Attrition.Gameplay.Combat
             var proj = obj.GetComponent<EnemyProjectile>();
             if (proj != null)
             {
-                if (speed > 0f) proj.speed = speed; // tốc độ đạn thật
+                if (speed > 0f) proj.speed = speed; // >0 = ghi đè; 0 = giữ tốc độ prefab
                 proj.Init(dir, damage, knockback, type); // tham số 3 = lực đẩy lùi
             }
 
