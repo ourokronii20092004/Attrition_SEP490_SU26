@@ -356,6 +356,7 @@ namespace Attrition.Gameplay.Player.Inventory
             return true;
         }
 
+
         // ═══════════════════════════════════════════
         //  GEAR → STATS INTEGRATION
         // ═══════════════════════════════════════════

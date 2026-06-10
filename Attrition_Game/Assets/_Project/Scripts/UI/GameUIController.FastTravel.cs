@@ -21,12 +21,13 @@ namespace Attrition.UI
             BindButton("ft-rest", RestHere);
         }
 
-        /// <summary>Nút REST trong panel checkpoint: hồi đầy + lưu (host), rồi đóng UI.</summary>
+        /// <summary>Nút REST trong panel checkpoint: hồi đầy + lưu (host), hiện loading rồi đóng UI.</summary>
         private void RestHere()
         {
             if (_controller == null) return;
             _controller.RequestRestAtCheckpoint();
             ShowOverlay(Overlay.None);
+            StartCoroutine(FastTravelLoadingRoutine("Resting..."));
         }
 
         private void RefreshFastTravelList()

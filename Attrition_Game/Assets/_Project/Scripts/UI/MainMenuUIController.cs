@@ -1008,28 +1008,61 @@ namespace Attrition.UI
         {
             var startBtn = _root.Q<Button>("btn-coop-start");
             if (startBtn != null) startBtn.style.display = DisplayStyle.Flex; // Host can start
-            
+
             var readyBtn = _root.Q<Button>("btn-coop-ready");
             if (readyBtn != null) readyBtn.style.display = DisplayStyle.None; // Host is always ready
-            
+
             // Auto ready for host
             _isCoopReady = true;
             if (startBtn != null) startBtn.RemoveFromClassList("coop-start-disabled");
 
             var clientCard = _root.Q<VisualElement>("coop-card-client");
             if (clientCard != null) clientCard.style.opacity = 0.5f; // Wait for client
+
+            // Data THẬT của host = nhân vật đang chọn (slot/CharacterName), không mock.
+            FillLocalPlayerCard("coop-host-name", "coop-host-level");
+            SetText("coop-client-name", "Waiting for player...");
+            SetText("coop-client-level", "");
         }
 
         private void SetupLobbyClientView()
         {
             var startBtn = _root.Q<Button>("btn-coop-start");
             if (startBtn != null) startBtn.style.display = DisplayStyle.None; // Client cannot start
-            
+
             var readyBtn = _root.Q<Button>("btn-coop-ready");
-            if (readyBtn != null) readyBtn.style.display = DisplayStyle.Flex; 
+            if (readyBtn != null) readyBtn.style.display = DisplayStyle.Flex;
 
             _isCoopReady = false;
             UpdateReadyState(readyBtn);
+
+            // Data THẬT của client = nhân vật mình chọn.
+            FillLocalPlayerCard("coop-client-name", "coop-client-level");
+        }
+
+        /// <summary>Điền tên + level THẬT của nhân vật local vào card lobby (đọc từ save slot đang chọn).</summary>
+        private void FillLocalPlayerCard(string nameElement, string levelElement)
+        {
+            string charName = string.IsNullOrEmpty(GameLaunch.CharacterName) ? "Wanderer" : GameLaunch.CharacterName;
+            int level = 1;
+            var slot = SaveManager.LoadSlot(_selectedSaveSlot);
+            if (slot != null)
+            {
+                if (!string.IsNullOrEmpty(slot.characterName)) charName = slot.characterName;
+                level = Mathf.Max(1, slot.level);
+            }
+            SetText(nameElement, charName);
+            SetText(levelElement, $"LEVEL {level}");
+
+            // Ping thật chưa có trước trận (chưa vào sim) → ẩn nhãn mock thay vì hiện số giả.
+            var ping = _root.Q<Label>("coop-ping");
+            if (ping != null) ping.style.display = DisplayStyle.None;
+        }
+
+        private void SetText(string elementName, string value)
+        {
+            var lbl = _root.Q<Label>(elementName);
+            if (lbl != null) lbl.text = value;
         }
 
         private void UpdateLobbyRoomCode(string code)
