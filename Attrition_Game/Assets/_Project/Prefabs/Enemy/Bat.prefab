@@ -119,7 +119,7 @@ Transform:
   m_GameObject: {fileID: 6367123818187140445}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.162, y: -0.088, z: 0}
+  m_LocalPosition: {x: -0.36, y: -0.49, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -311,10 +311,9 @@ MonoBehaviour:
   eliteSkills: {fileID: 0}
   extraLivesAfterHpZero: 0
   reviveDelaySeconds: 5
+  deathClipName: 
+  despawnFallback: 1.5
   canBeKnockedBack: 1
-  usePoise: 1
-  maxPoise: 100
-  poiseRecoveryTime: 3
   stunDuration: 0.4
   _Health: 0
   _CurrentPoise: 0
@@ -342,11 +341,15 @@ MonoBehaviour:
   combatComp: {fileID: 6994683141523818755}
   controller: {fileID: 1269004696628969722}
   eliteSkills: {fileID: 0}
-  patrolSpeed: 2
-  chaseSpeed: 5
   viewRadius: 10
   patrolRadius: 3
   isFlying: 1
+  flyHoverOffsetY: 0.8
+  flyMinGroundClearance: 1.2
+  flyMaxOffsetFromPlayer: 2.5
+  flyGroundLayer:
+    serializedVersion: 2
+    m_Bits: 0
   flyMeleeRetreat: 1
   flyMeleeRetreatAltitude: 3
   flyMeleeRetreatSpeed: 8
@@ -368,6 +371,11 @@ MonoBehaviour:
   jumpForce: 12
   evadeBackwardSpeed: 8
   jumpCooldown: 3
+  canLungeJump: 0
+  lungeMinDistance: 2.5
+  lungeMaxDistance: 7
+  lungeForwardSpeed: 11
+  lungeJumpForce: 10
   facingDeadZone: 0.3
   _CurrentState: 0
   _NetSpeed: 0
@@ -389,6 +397,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAnimation
   anim: {fileID: 0}
   defaultFacingLeft: 1
+  telegraphRenderer: {fileID: 0}
+  telegraphColor: {r: 1, g: 0.4, b: 0.4, a: 1}
 --- !u!114 &6994683141523818755
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -407,17 +417,25 @@ MonoBehaviour:
     angle: 180
     rectSize: {x: 1, y: 3}
     damage: 1
+    damageType: 0
+    clipName: 
     duration: 0.5
     cooldown: 1.5
     recoveryDuration: 0.25
+    telegraphDuration: 0
+    weight: 1
   - hitboxShape: 0
     range: 2
     angle: 180
     rectSize: {x: 1, y: 1}
     damage: 1
+    damageType: 0
+    clipName: 
     duration: 0.3
     cooldown: 1.5
     recoveryDuration: 0.25
+    telegraphDuration: 0
+    weight: 1
   enableDashSlash: 1
   dashSlashAttacks: 0001
   dashSpeed: 15
@@ -432,7 +450,6 @@ MonoBehaviour:
   playerLayer:
     serializedVersion: 2
     m_Bits: 128
-  currentAttackSpeed: 1
   isRanged: 0
   projectilePrefab:
     RawGuidValue: 905ff5a81333ca143a6997cd345b8277
@@ -553,3 +570,7 @@ MonoBehaviour:
   _DEF: 0
   _RES: 0
   _Poise: 0
+  _PoiseRecoveryTime: 0
+  _PatrolSpeed: 0
+  _ChaseSpeed: 0
+  _AttackSpeed: 0

@@ -51,68 +51,9 @@
                     <ui:VisualElement name="save-title-divider"/>
                 </ui:VisualElement>
 
-                <ui:VisualElement name="save-slots-container">
-                    <!-- Slot 1 -->
-                    <ui:Button name="save-slot-0" class="save-slot filled">
-                        <ui:VisualElement class="save-slot-active-indicator"/>
-                        <ui:VisualElement class="save-slot-inner">
-                            <ui:VisualElement class="save-avatar">
-                                <ui:VisualElement class="save-avatar-circle purple"/>
-                            </ui:VisualElement>
-                            <ui:VisualElement class="save-info">
-                                <ui:VisualElement class="save-info-top">
-                                    <ui:Label text="Kael the Undying" class="save-name"/>
-                                    <ui:Label text="LV. 42" class="save-level"/>
-                                </ui:VisualElement>
-                                <ui:Label text="📍 Ember Citadel — Inner Sanctum" class="save-location"/>
-                                <ui:VisualElement class="save-stats-row">
-                                    <ui:Label text="⏱ 24:17" class="save-playtime"/>
-                                    <ui:Label text="188 deaths" class="save-deaths"/>
-                                </ui:VisualElement>
-                            </ui:VisualElement>
-                            <ui:VisualElement class="save-slot-right">
-                                <ui:Label text="SLOT 1" class="save-slot-number"/>
-                                <ui:Button name="btn-delete-slot-0" class="save-delete-btn" text="🗑"/>
-                            </ui:VisualElement>
-                        </ui:VisualElement>
-                    </ui:Button>
-
-                    <!-- Slot 2 -->
-                    <ui:Button name="save-slot-1" class="save-slot filled">
-                        <ui:VisualElement class="save-slot-active-indicator"/>
-                        <ui:VisualElement class="save-slot-inner">
-                            <ui:VisualElement class="save-avatar">
-                                <ui:VisualElement class="save-avatar-circle blue"/>
-                            </ui:VisualElement>
-                            <ui:VisualElement class="save-info">
-                                <ui:VisualElement class="save-info-top">
-                                    <ui:Label text="Saria Ashborne" class="save-name"/>
-                                    <ui:Label text="LV. 18" class="save-level"/>
-                                </ui:VisualElement>
-                                <ui:Label text="📍 Fungal Caverns — Lower Depths" class="save-location"/>
-                                <ui:VisualElement class="save-stats-row">
-                                    <ui:Label text="⏱ 08:44" class="save-playtime"/>
-                                    <ui:Label text="63 deaths" class="save-deaths"/>
-                                </ui:VisualElement>
-                            </ui:VisualElement>
-                            <ui:VisualElement class="save-slot-right">
-                                <ui:Label text="SLOT 2" class="save-slot-number"/>
-                                <ui:Button name="btn-delete-slot-1" class="save-delete-btn" text="🗑"/>
-                            </ui:VisualElement>
-                        </ui:VisualElement>
-                    </ui:Button>
-
-                    <!-- Slot 3: Empty -->
-                    <ui:Button name="save-slot-2" class="save-slot empty">
-                        <ui:VisualElement class="save-slot-active-indicator"/>
-                        <ui:VisualElement class="save-slot-inner-empty">
-                            <ui:VisualElement class="save-empty-circle">
-                                <ui:Label text="+" class="save-empty-plus"/>
-                            </ui:VisualElement>
-                            <ui:Label text="EMPTY SLOT 3" class="save-empty-text"/>
-                        </ui:VisualElement>
-                    </ui:Button>
-                </ui:VisualElement>
+                <ui:ScrollView name="save-slots-container" mode="Vertical">
+                    <!-- Slot cards được dựng động trong MainMenuUIController.BuildSaveSlots() -->
+                </ui:ScrollView>
 
                 <ui:VisualElement name="save-actions">
                     <ui:Button text="← BACK" name="btn-save-back" class="save-action-btn back"/>
