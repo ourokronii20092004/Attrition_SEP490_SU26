@@ -29,7 +29,7 @@ public class EnemyAnimation : NetworkBehaviour
 
     /// <summary>
     /// Tìm SpriteRenderer THÂN quái cho telegraph, BỎ QUA các renderer UI runtime
-    /// (HealthBar/DmgPopup/PlayerMarker) do EnemyWorldUI tạo trong Awake (chạy trước Spawned).
+    /// (HealthBar/DmgPopup/PlayerNameTag) do EnemyWorldUI tạo trong Awake (chạy trước Spawned).
     /// </summary>
     private SpriteRenderer FindBodyRenderer()
     {
@@ -43,7 +43,7 @@ public class EnemyAnimation : NetworkBehaviour
             bool underUI = false;
             while (p != null)
             {
-                if (p.name == "HealthBar" || p.name == "PlayerMarker") { underUI = true; break; }
+                if (p.name == "HealthBar" || p.name == "PlayerNameTag") { underUI = true; break; }
                 p = p.parent;
             }
             if (!underUI) return sr;

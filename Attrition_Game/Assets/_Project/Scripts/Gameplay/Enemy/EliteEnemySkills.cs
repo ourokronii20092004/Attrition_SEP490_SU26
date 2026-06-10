@@ -85,18 +85,6 @@ public class EliteEnemySkills : NetworkBehaviour
         public bool isRanged = false;
         [Tooltip("Prefab của cây lao/đạn (Kéo HuntressSpear vào đây)")]
         public NetworkPrefabRef projectilePrefab;
-
-        [Header("── Nâng cao (pro) ──")]
-        [Tooltip("Số đạn bắn 1 lần (>1 = toả quạt theo spreadAngle). Chỉ dùng khi isRanged.")]
-        [Range(1, 12)] public int projectileCount = 1;
-        [Tooltip("Góc toả tổng khi bắn nhiều đạn (độ).")] public float spreadAngle = 30f;
-        [Tooltip("Tốc độ đạn. <=0 = dùng mặc định.")] public float projectileSpeed = 0f;
-        [Tooltip("Lực đẩy lùi khi trúng (cận chiến).")] public float knockbackForce = 4f;
-        [Tooltip("Số lần gây damage trong 1 lần dùng (multi-hit cận chiến). 1 = đánh 1 phát.")]
-        [Range(1, 10)] public int hitCount = 1;
-        [Tooltip("Giãn cách giữa các hit khi hitCount>1 (giây).")] public float hitInterval = 0.12f;
-        [Tooltip("Bán kính lõi thưởng damage (sweet spot). 0 = tắt.")] public float sweetSpotRadius = 0f;
-        [Tooltip("Hệ số damage khi trúng sweet spot.")] public float sweetSpotMultiplier = 1.5f;
     }
 
     [Header("---- SKILL (Undead) ----")]
@@ -463,50 +451,15 @@ public class EliteEnemySkills : NetworkBehaviour
             if (cfg.projectilePrefab.IsValid)
             {
                 int skillDmg = RawSkillDamage(cfg.damage, cfg.damageType);
-                float speed = cfg.projectileSpeed > 0f
-                    ? cfg.projectileSpeed : Attrition.Gameplay.Combat.ProjectileInitializer.DefaultSpeed;
-
-                int count = Mathf.Max(1, cfg.projectileCount);
-                float baseAng = Mathf.Atan2(facingDir.y, facingDir.x) * Mathf.Rad2Deg;
-                float step = count > 1 ? cfg.spreadAngle / (count - 1) : 0f;
-                float startAng = baseAng - (count > 1 ? cfg.spreadAngle * 0.5f : 0f);
-
-                for (int s = 0; s < count; s++)
+                Runner.Spawn(cfg.projectilePrefab, skillOrigin, Quaternion.identity, null, (runner, obj) =>
                 {
-                    float a = (startAng + step * s) * Mathf.Deg2Rad;
-                    Vector2 dir = new Vector2(Mathf.Cos(a), Mathf.Sin(a)).normalized;
-                    Runner.Spawn(cfg.projectilePrefab, skillOrigin, Quaternion.identity, null, (runner, obj) =>
-                    {
-                        Attrition.Gameplay.Combat.ProjectileInitializer.Init(obj, dir, skillDmg, speed, cfg.damageType, cfg.knockbackForce);
-                    });
-                }
+                    Attrition.Gameplay.Combat.ProjectileInitializer.Init(obj, facingDir, skillDmg, Attrition.Gameplay.Combat.ProjectileInitializer.DefaultSpeed, cfg.damageType);
+                });
             }
             return; // Xong phần ném, thoát hàm để không gây sát thương cận chiến nữa
         }
 
-        // NẾU LÀ ĐÁNH CẬN CHIẾN — multi-hit theo hitCount/hitInterval
-        if (cfg.hitCount > 1)
-            StartCoroutine(MeleeMultiHit(cfg));
-        else
-            ResolveMeleeHit(cfg);
-    }
-
-    private System.Collections.IEnumerator MeleeMultiHit(SkillConfig cfg)
-    {
-        for (int h = 0; h < cfg.hitCount; h++)
-        {
-            if (!HasStateAuthority || !IsUsingSkill) yield break;
-            ResolveMeleeHit(cfg);
-            if (h < cfg.hitCount - 1)
-                yield return new WaitForSeconds(Mathf.Max(0.02f, cfg.hitInterval));
-        }
-    }
-
-    private void ResolveMeleeHit(SkillConfig cfg)
-    {
-        Vector2 origin = GetSkillOrigin(cfg);
-        Vector2 facing = GetFacingDir();
-
+        // NẾU LÀ ĐÁNH CẬN CHIẾN
         Collider2D[] results = new Collider2D[10];
         ContactFilter2D filter = new ContactFilter2D
         {
@@ -517,28 +470,22 @@ public class EliteEnemySkills : NetworkBehaviour
 
         int count = Attrition.Gameplay.Combat.HitboxResolver.Overlap(
             Runner.GetPhysicsScene2D(), cfg.hitboxShape,
-            origin, origin, facing,
+            skillOrigin, skillOrigin, facingDir,
             cfg.range, cfg.angle, cfg.rectSize, filter, results);
 
         for (int i = 0; i < count; i++)
-            DealSkillDamage(results[i], cfg, origin);
+            DealSkillDamage(results[i], RawSkillDamage(cfg.damage, cfg.damageType), cfg.damageType);
     }
 
-    private void DealSkillDamage(Collider2D player, SkillConfig cfg, Vector2 origin)
+    private void DealSkillDamage(Collider2D player, int damage, Attrition.Core.DamageType type)
     {
+        Vector2 dirToPlayer = ((Vector2)player.transform.position - (Vector2)transform.position).normalized;
         IDamageable dmg = player.GetComponentInParent<IDamageable>();
-        if (dmg == null || dmg.IsDead) return;
-
-        int raw = RawSkillDamage(cfg.damage, cfg.damageType);
-        if (cfg.sweetSpotRadius > 0f)
+        if (dmg != null && !dmg.IsDead)
         {
-            float d = Vector2.Distance(player.ClosestPoint(origin), origin);
-            if (d <= cfg.sweetSpotRadius) raw = Mathf.RoundToInt(raw * cfg.sweetSpotMultiplier);
+            Vector2 pushDir = new Vector2(dirToPlayer.x, 0.5f).normalized;
+            dmg.TakeDamage(damage, pushDir, 0f, type);
         }
-
-        Vector2 dirToPlayer = ((Vector2)player.transform.position - origin).normalized;
-        Vector2 pushDir = new Vector2(dirToPlayer.x, 0.5f).normalized;
-        dmg.TakeDamage(raw, pushDir, cfg.knockbackForce, cfg.damageType);
     }
 
     /// <summary>

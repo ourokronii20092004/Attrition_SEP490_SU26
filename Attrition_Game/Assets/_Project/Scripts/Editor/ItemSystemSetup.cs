@@ -20,6 +20,30 @@ namespace Attrition.Editor
     {
         private const string PrefabDir = "Assets/_Project/Prefabs";
         private const string DataDir = "Assets/_Project/Data/Items";
+        private const string IconDir = "Assets/_Project/Art/UI_Elements/16x16";
+
+        /// <summary>Nạp sprite icon theo tên file (không đuôi) trong IconDir. Trả null nếu không có.</summary>
+        private static Sprite Icon(string fileName)
+        {
+            string path = $"{IconDir}/{fileName}.png";
+
+            // Nếu file chưa import thành Sprite (vẫn là Default texture) → ép sang Sprite rồi nạp lại.
+            // Nhờ vậy không phụ thuộc thứ tự chạy "Fix Icon Import" trước hay sau.
+            var ti = AssetImporter.GetAtPath(path) as TextureImporter;
+            if (ti != null && ti.textureType != TextureImporterType.Sprite)
+            {
+                ti.textureType = TextureImporterType.Sprite;
+                ti.spriteImportMode = SpriteImportMode.Single;
+                ti.filterMode = FilterMode.Point;
+                ti.textureCompression = TextureImporterCompression.Uncompressed;
+                ti.mipmapEnabled = false;
+                ti.SaveAndReimport();
+            }
+
+            var sp = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+            if (sp == null) Debug.LogWarning($"[ItemSystemSetup] Không tìm thấy icon: {path}");
+            return sp;
+        }
 
         [MenuItem("Attrition/Setup Item System")]
         public static void Setup()
@@ -32,17 +56,33 @@ namespace Attrition.Editor
             var skillProjectile = CreateSkillProjectilePrefab();
 
             var items = new List<ItemSO>();
-            items.Add(Equip("iron_helm", "Iron Helm", EquipmentSlot.Head, (StatType.DEF, 4)));
-            items.Add(Equip("iron_chest", "Iron Chestplate", EquipmentSlot.Chest, (StatType.DEF, 8), (StatType.MaxHP, 20)));
-            items.Add(Equip("iron_legs", "Iron Greaves", EquipmentSlot.Legs, (StatType.DEF, 5)));
-            items.Add(Equip("iron_boots", "Iron Boots", EquipmentSlot.Boots, (StatType.DEF, 3), (StatType.RES, 3)));
 
+            // ─── ARMOR: 4 tier (Leather/Bronze/Iron/Gold) × 3 slot (Helm/Chest/Boots) ───
+            // Tên hiển thị TIẾNG ANH; tên file icon tiếng Việt khớp file bạn đã đặt.
+            // Lưu ý: chưa có icon cho slot Legs (quần) nên tạm bỏ.
+            items.Add(Equip("leather_helm",  "Leather Helm",  EquipmentSlot.Head,  Icon("nón da"),   (StatType.DEF, 2)));
+            items.Add(Equip("leather_chest", "Leather Armor", EquipmentSlot.Chest, Icon("giáp da"),  (StatType.DEF, 4), (StatType.MaxHP, 10)));
+            items.Add(Equip("leather_boots", "Leather Boots", EquipmentSlot.Boots, Icon("giày da"),  (StatType.DEF, 1), (StatType.RES, 1)));
+
+            items.Add(Equip("bronze_helm",  "Bronze Helm",  EquipmentSlot.Head,  Icon("nón đồng"),  (StatType.DEF, 3)));
+            items.Add(Equip("bronze_chest", "Bronze Armor", EquipmentSlot.Chest, Icon("giáp đồng"), (StatType.DEF, 6), (StatType.MaxHP, 15)));
+            items.Add(Equip("bronze_boots", "Bronze Boots", EquipmentSlot.Boots, Icon("giày đồng"), (StatType.DEF, 2), (StatType.RES, 2)));
+
+            items.Add(Equip("iron_helm",  "Iron Helm",  EquipmentSlot.Head,  Icon("nón sắt"),  (StatType.DEF, 4)));
+            items.Add(Equip("iron_chest", "Iron Armor", EquipmentSlot.Chest, Icon("giáp sắt"), (StatType.DEF, 8), (StatType.MaxHP, 20)));
+            items.Add(Equip("iron_boots", "Iron Boots", EquipmentSlot.Boots, Icon("giày sắt"), (StatType.DEF, 3), (StatType.RES, 3)));
+
+            items.Add(Equip("gold_helm",  "Gilded Helm",  EquipmentSlot.Head,  Icon("nón vàng"),  (StatType.DEF, 6), (StatType.RES, 2)));
+            items.Add(Equip("gold_chest", "Gilded Armor", EquipmentSlot.Chest, Icon("giáp vàng"), (StatType.DEF, 11), (StatType.MaxHP, 30)));
+            items.Add(Equip("gold_boots", "Gilded Boots", EquipmentSlot.Boots, Icon("giày vàng"), (StatType.DEF, 4), (StatType.RES, 4)));
+
+            // ─── ACCESSORY ───
             items.Add(AbilityAcc("acc_double_jump", "Feather Charm", GrantedAbility.DoubleJump));
             items.Add(AbilityAcc("acc_shadow_dash", "Shadow Cloak", GrantedAbility.ShadowDash));
-            items.Add(DamageAcc("acc_power_ring", "Power Ring", (StatType.AD, 6)));
+            items.Add(DamageAcc("acc_stamina_charm", "Vigor Charm", Icon("bùa thể lực"), (StatType.MaxStamina, 20)));
 
-            // Fire & Thunder = bắn đạn toả quạt; Wood/Earth/Thrust = vùng cận (Cone/Circle).
-            items.Add(SkillProjectile("skill_fire", "Fireball", SkillElement.Fire, 20, 0.7f, 35, skillProjectile, count: 3, spread: 30f));
+            // ─── SKILL ───
+            items.Add(SkillProjectile("skill_fire", "Fireball", SkillElement.Fire, 20, 0.7f, 35, skillProjectile, count: 3, spread: 30f, icon: Icon("fire_ball_skill")));
             items.Add(SkillArea("skill_wood", "Thorn Lash", SkillElement.Wood, 18, 0.6f, 30, SkillHitShape.Cone, range: 3f, angle: 100f));
             items.Add(SkillArea("skill_earth", "Stone Spike", SkillElement.Earth, 25, 0.9f, 45, SkillHitShape.Circle, range: 2.5f, angle: 360f));
             items.Add(SkillProjectile("skill_thunder", "Chain Bolt", SkillElement.Thunder, 22, 0.6f, 38, skillProjectile, count: 5, spread: 45f));
@@ -105,57 +145,57 @@ namespace Attrition.Editor
             Object.DestroyImmediate(go);
         }
 
-        private static EquipmentSO Equip(string id, string name, EquipmentSlot slot, params (StatType, int)[] mods)
+        private static EquipmentSO Equip(string id, string name, EquipmentSlot slot, Sprite icon, params (StatType, int)[] mods)
         {
             var so = ScriptableObject.CreateInstance<EquipmentSO>();
             so.itemId = id; so.displayName = name; so.slot = slot; so.maxStack = 1;
+            so.icon = icon;
             so.modifiers = ToMods(mods);
-            Save(so, id);
-            return so;
+            return Save(so, id);
         }
 
-        private static AccessorySO AbilityAcc(string id, string name, GrantedAbility ability)
+        private static AccessorySO AbilityAcc(string id, string name, GrantedAbility ability, Sprite icon = null)
         {
             var so = ScriptableObject.CreateInstance<AccessorySO>();
             so.itemId = id; so.displayName = name; so.maxStack = 1;
+            so.icon = icon;
             so.kind = AccessoryKind.AbilityGrant; so.grantedAbility = ability;
-            Save(so, id);
-            return so;
+            return Save(so, id);
         }
 
-        private static AccessorySO DamageAcc(string id, string name, params (StatType, int)[] mods)
+        private static AccessorySO DamageAcc(string id, string name, Sprite icon, params (StatType, int)[] mods)
         {
             var so = ScriptableObject.CreateInstance<AccessorySO>();
             so.itemId = id; so.displayName = name; so.maxStack = 1;
+            so.icon = icon;
             so.kind = AccessoryKind.DamageEffect; so.modifiers = ToMods(mods);
-            Save(so, id);
-            return so;
+            return Save(so, id);
         }
 
         private static SkillSO SkillArea(string id, string name, SkillElement el, int mana, float cast, int dmg,
-            SkillHitShape shape, float range, float angle)
+            SkillHitShape shape, float range, float angle, Sprite icon = null)
         {
             var so = ScriptableObject.CreateInstance<SkillSO>();
             so.itemId = id; so.displayName = name; so.maxStack = 1;
+            so.icon = icon;
             so.element = el; so.manaCost = mana; so.castTime = cast; so.baseDamage = dmg;
             so.delivery = SkillDelivery.AreaInstant;
             so.hitShape = shape; so.range = range; so.angle = angle;
-            Save(so, id);
-            return so;
+            return Save(so, id);
         }
 
         private static SkillSO SkillProjectile(string id, string name, SkillElement el, int mana, float cast, int dmg,
-            GameObject projectilePrefab, int count, float spread)
+            GameObject projectilePrefab, int count, float spread, Sprite icon = null)
         {
             var so = ScriptableObject.CreateInstance<SkillSO>();
             so.itemId = id; so.displayName = name; so.maxStack = 1;
+            so.icon = icon;
             so.element = el; so.manaCost = mana; so.castTime = cast; so.baseDamage = dmg;
             so.delivery = SkillDelivery.Projectile;
             so.projectileCount = count; so.spreadAngle = spread; so.projectileSpeed = 12f;
             // LƯU Ý: projectilePrefab (NetworkPrefabRef) phải kéo TAY vào asset trong Inspector —
             // Fusion không cho gán NetworkObject → NetworkPrefabRef bằng code editor đơn giản.
-            Save(so, id);
-            return so;
+            return Save(so, id);
         }
 
         private static StatModifier[] ToMods((StatType, int)[] mods)
@@ -180,11 +220,23 @@ namespace Attrition.Editor
             EditorUtility.SetDirty(db);
         }
 
-        private static void Save(Object so, string id)
+        /// <summary>
+        /// Ghi SO ra disk và TRẢ VỀ asset thực trên disk. Nếu đã có → copy giá trị vào asset cũ
+        /// (giữ nguyên GUID/tham chiếu) thay vì để instance RAM mồ côi (gây database rỗng khi chạy lại).
+        /// </summary>
+        private static T Save<T>(T so, string id) where T : ScriptableObject
         {
             string path = DataDir + "/" + id + ".asset";
-            if (AssetDatabase.LoadAssetAtPath<Object>(path) == null)
-                AssetDatabase.CreateAsset(so, path);
+            var existing = AssetDatabase.LoadAssetAtPath<T>(path);
+            if (existing != null)
+            {
+                EditorUtility.CopySerialized(so, existing); // ghi đè nội dung, giữ asset cũ
+                Object.DestroyImmediate(so);                 // bỏ instance RAM thừa
+                EditorUtility.SetDirty(existing);
+                return existing;
+            }
+            AssetDatabase.CreateAsset(so, path);
+            return so;
         }
 
         private static void EnsureDir(string path)
