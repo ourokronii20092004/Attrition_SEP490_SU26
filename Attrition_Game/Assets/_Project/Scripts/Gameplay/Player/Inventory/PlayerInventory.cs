@@ -49,6 +49,10 @@ namespace Attrition.Gameplay.Player.Inventory
         /// <summary>Event UI lắng nghe để refresh grid.</summary>
         public event System.Action OnInventoryChanged;
 
+        [Header("---- STARTING ITEMS (host seed) ----")]
+        [Tooltip("String id của item phát cho nhân vật mới (vd: iron_helm, skill_fire). Chỉ host seed, chỉ khi túi đang trống.")]
+        [SerializeField] private string[] startingItemIds = new string[0];
+
         public override void Spawned()
         {
             _stats = GetComponent<PlayerStats>();
@@ -56,6 +60,24 @@ namespace Attrition.Gameplay.Player.Inventory
 
             if (_db == null)
                 Debug.LogError("[PlayerInventory] ItemDatabaseSO.Instance chưa được set!");
+            else if (HasStateAuthority)
+                SeedStartingItems();
+        }
+
+        /// <summary>Phát item khởi đầu cho nhân vật mới (host-only, chỉ khi túi trống).</summary>
+        private void SeedStartingItems()
+        {
+            if (startingItemIds == null || startingItemIds.Length == 0) return;
+            // Chỉ seed khi cả 3 nhóm đang trống (tránh ghi đè save đã load).
+            if (!EquipmentSlots.Get(0).IsEmpty || !AccessorySlots.Get(0).IsEmpty) return;
+
+            foreach (var id in startingItemIds)
+            {
+                if (string.IsNullOrEmpty(id)) continue;
+                int idx = _db.GetIndex(id);
+                if (idx >= 0) TryAddItem(idx, 1);
+                else Debug.LogWarning($"[PlayerInventory] startingItemId '{id}' không có trong ItemDatabase.");
+            }
         }
 
         // ═══════════════════════════════════════════
@@ -435,6 +457,13 @@ namespace Attrition.Gameplay.Player.Inventory
 
         [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
         public void RpcRequestEquipSkill(int slotIndex) => TryEquipSkillFromSlot(slotIndex);
+
+        /// <summary>SkillSO đang trang bị (ô EquippedSkill), hoặc null nếu trống. Dùng cho PlayerSkillCaster.</summary>
+        public Attrition.Data.SkillSO GetEquippedSkillSO()
+        {
+            if (EquippedSkill.IsEmpty || _db == null) return null;
+            return _db.GetItem(EquippedSkill.ItemIndex) as Attrition.Data.SkillSO;
+        }
 
         [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
         public void RpcRequestEquipAccessory(int slotIndex) => TryEquipAccessoryFromSlot(slotIndex);

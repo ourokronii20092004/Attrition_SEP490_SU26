@@ -14,6 +14,7 @@ public class NetworkInputHandler : MonoBehaviour, INetworkRunnerCallbacks
     private bool _manaPotionPressed;
     private bool _restPressed;
     private bool _inventoryToggled;
+    private bool _skillPressed;
 
     // Đọc phím đã đổi từ GameSettings (lưu local). Dash chấp nhận cả phím phụ Shift phải.
     private static KeyCode K(GameSettings.InputAction a) => GameSettings.GetKey(a);
@@ -41,6 +42,9 @@ public class NetworkInputHandler : MonoBehaviour, INetworkRunnerCallbacks
 
         if (Input.GetKeyDown(K(GameSettings.InputAction.Inventory)))
             _inventoryToggled = true;
+
+        if (Input.GetKeyDown(K(GameSettings.InputAction.Skill)))
+            _skillPressed = true;
     }
 
     public void OnInput(NetworkRunner runner, NetworkInput input)
@@ -58,6 +62,7 @@ public class NetworkInputHandler : MonoBehaviour, INetworkRunnerCallbacks
         data.buttons.Set(MyButtons.ManaPotion, _manaPotionPressed);
         data.buttons.Set(MyButtons.Rest, _restPressed);
         data.buttons.Set(MyButtons.ToggleInventory, _inventoryToggled);
+        data.buttons.Set(MyButtons.Skill, _skillPressed);
 
         // Continuous buttons (giữ liên tục)
         data.buttons.Set(MyButtons.Crouch, Input.GetKey(KeyCode.S));
@@ -75,6 +80,7 @@ public class NetworkInputHandler : MonoBehaviour, INetworkRunnerCallbacks
         _manaPotionPressed = false;
         _restPressed = false;
         _inventoryToggled = false;
+        _skillPressed = false;
     }
 
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player) { }

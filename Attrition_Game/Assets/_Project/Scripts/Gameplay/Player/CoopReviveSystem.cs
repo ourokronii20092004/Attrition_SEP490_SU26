@@ -119,7 +119,7 @@ namespace Attrition.Gameplay.Player
                     }
 
                     // BR-18: 3.0s invincibility on revive
-                    target.Invoke("GrantReviveInvincibility", 0.1f);
+                    target.GrantReviveInvincibility(3.0f);
                 }
             }
             CancelRevive();

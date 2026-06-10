@@ -14,6 +14,7 @@ public enum MyButtons
     Rest = 8,          // F nhấn (one-shot) - mở UI checkpoint (rest/teleport) khi đứng trong vùng
     ToggleInventory = 9, // Tab nhấn (one-shot) - mở/đóng inventory
     Revive = 10        // R giữ (continuous) - hồi sinh đồng đội trong coop
+    , Skill = 11       // K nhấn (one-shot) - dùng skill chủ động
 }
 
 public struct NetworkInputData : INetworkInput

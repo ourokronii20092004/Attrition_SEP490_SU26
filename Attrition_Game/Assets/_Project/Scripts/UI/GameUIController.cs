@@ -68,6 +68,11 @@ namespace Attrition.UI
 
             // Hiện màn loading tới khi player của máy này spawn xong (mỗi máy tự chờ).
             ShowOverlay(Overlay.Loading);
+
+            // Boss bar qua event bus (Gameplay không ref UI).
+            Attrition.Controllers.BossEvents.OnBossSpawned += ShowBossBar;
+            Attrition.Controllers.BossEvents.OnBossHpChanged += UpdateBossBar;
+            Attrition.Controllers.BossEvents.OnBossDespawned += HideBossBar;
         }
 
         private void OnDisable()
@@ -77,6 +82,10 @@ namespace Attrition.UI
             Attrition.Persistence.CoopSession.Reset();
             if (_stats != null) _stats.OnStatsChanged -= RefreshCharacterPanel;
             if (_inventory != null) _inventory.OnInventoryChanged -= RefreshInventory;
+
+            Attrition.Controllers.BossEvents.OnBossSpawned -= ShowBossBar;
+            Attrition.Controllers.BossEvents.OnBossHpChanged -= UpdateBossBar;
+            Attrition.Controllers.BossEvents.OnBossDespawned -= HideBossBar;
         }
 
         private void Update()

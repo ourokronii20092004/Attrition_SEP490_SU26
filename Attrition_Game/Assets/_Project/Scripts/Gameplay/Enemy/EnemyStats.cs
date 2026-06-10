@@ -81,5 +81,14 @@ namespace Attrition.Gameplay.Enemy
         /// <summary>Sát thương quái gây lên player (phòng thủ-aware).</summary>
         public int ComputeContactDamage(int targetDef)
             => DamageCalculator.Compute(DamageType.Physical, AD, targetDef, 0);
+
+        /// <summary>Boss phase: tăng nhịp độ (di chuyển + đánh). Chỉ host (giá trị networked).</summary>
+        public void ApplyPhaseSpeedMultiplier(float mult)
+        {
+            if (!HasStateAuthority || mult <= 0f) return;
+            PatrolSpeed *= mult;
+            ChaseSpeed *= mult;
+            AttackSpeed *= mult;
+        }
     }
 }

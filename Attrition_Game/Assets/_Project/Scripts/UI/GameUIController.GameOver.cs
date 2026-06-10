@@ -57,7 +57,7 @@ namespace Attrition.UI
         {
             var runner = _controller != null ? _controller.Runner : null;
             if (runner != null) runner.Shutdown();   // host shutdown = kết thúc session (BR-31)
-            SceneManager.LoadScene("MainMenu");
+            SceneManager.LoadScene("Main_Menu_UI");
         }
 
         // ─────────────────────────── LOADING ───────────────────────────

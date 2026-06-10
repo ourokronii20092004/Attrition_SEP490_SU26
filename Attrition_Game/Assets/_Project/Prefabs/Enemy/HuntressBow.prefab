@@ -281,6 +281,8 @@ MonoBehaviour:
   eliteSkills: {fileID: 5015065705529886319}
   extraLivesAfterHpZero: 0
   reviveDelaySeconds: 5
+  deathClipName: 
+  despawnFallback: 1.5
   canBeKnockedBack: 0
   stunDuration: 0.2
   _Health: 0
@@ -312,6 +314,12 @@ MonoBehaviour:
   viewRadius: 15
   patrolRadius: 3
   isFlying: 0
+  flyHoverOffsetY: 0.8
+  flyMinGroundClearance: 1.2
+  flyMaxOffsetFromPlayer: 2.5
+  flyGroundLayer:
+    serializedVersion: 2
+    m_Bits: 0
   flyMeleeRetreat: 0
   flyMeleeRetreatAltitude: 3
   flyMeleeRetreatSpeed: 8
@@ -333,6 +341,11 @@ MonoBehaviour:
   jumpForce: 3
   evadeBackwardSpeed: 10
   jumpCooldown: 10
+  canLungeJump: 0
+  lungeMinDistance: 2.5
+  lungeMaxDistance: 7
+  lungeForwardSpeed: 11
+  lungeJumpForce: 10
   facingDeadZone: 0.3
   _CurrentState: 0
   _NetSpeed: 0
@@ -354,6 +367,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAnimation
   anim: {fileID: 0}
   defaultFacingLeft: 0
+  telegraphRenderer: {fileID: 0}
+  telegraphColor: {r: 1, g: 0.4, b: 0.4, a: 1}
 --- !u!114 &5876798167884690251
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -373,9 +388,12 @@ MonoBehaviour:
     rectSize: {x: 0, y: 0}
     damage: 0
     damageType: 0
+    clipName: 
     duration: 0
     cooldown: 0
     recoveryDuration: 0
+    telegraphDuration: 0
+    weight: 1
   enableDashSlash: 0
   dashSlashAttacks: 01
   dashSpeed: 10
@@ -476,17 +494,20 @@ MonoBehaviour:
   canHeal: 0
   healAmount: 1
   healDuration: 1
+  healClipName: 
   healThreshold: 0.7
   healChancePerSecond: 0.15
   canUseSkills: 1
   skills:
   - skillName: "b\u1EAFn cung"
+    weight: 1
     damage: 2
     damageType: 0
     range: 15
     hitboxShape: 0
     angle: 360
     rectSize: {x: 0, y: 0}
+    clipName: 
     duration: 1
     recoveryDuration: 1
     cooldown: 1.5
@@ -495,6 +516,14 @@ MonoBehaviour:
     isRanged: 1
     projectilePrefab:
       RawGuidValue: 36607f02eabd5a344b43134b099ec065
+    projectileCount: 1
+    spreadAngle: 30
+    projectileSpeed: 0
+    knockbackForce: 4
+    hitCount: 1
+    hitInterval: 0.12
+    sweetSpotRadius: 0
+    sweetSpotMultiplier: 1.5
   skillChance: 1
   canSummon: 0
   summonPrefab:
@@ -504,7 +533,12 @@ MonoBehaviour:
   summonChance: 0.15
   summonCooldown: 10
   summonDuration: 1.2
+  summonClipName: 
   maxActiveSummons: 6
+  summonGroundLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  summonGroundSnapDistance: 6
   _IsTeleporting:
     _value: 0
   _IsHealing:
