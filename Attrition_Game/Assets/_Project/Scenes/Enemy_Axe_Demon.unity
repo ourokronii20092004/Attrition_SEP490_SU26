@@ -318,6 +318,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b118c92ac00d9004a8ca50373b0aa384, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Attrition.UI::Attrition.UI.GameUIController
+  healthFlaskIcon: {fileID: 21300000, guid: 5675952efb7f68e40bfc6f3f96aaf79e, type: 3}
+  manaFlaskIcon: {fileID: 21300000, guid: 71377b159e19f5440a19cd6c3a43fe63, type: 3}
 --- !u!114 &393447431
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -576,7 +578,7 @@ MonoBehaviour:
   spawnPoints:
   - {fileID: 2011203877}
   fallbackEnemyPrefab:
-    RawGuidValue: 5b4d661d4119c034f982e5bf747186c4
+    RawGuidValue: 1b36424b313c2dd4dbaea3a351844809
   enemySpawnConfigs:
   - spawnPoint: {fileID: 176590887}
     spawnCount: 1

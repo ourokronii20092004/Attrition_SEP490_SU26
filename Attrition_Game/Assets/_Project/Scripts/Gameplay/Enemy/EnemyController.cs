@@ -22,6 +22,16 @@ namespace Attrition.Controllers
         [Tooltip("Thời gian chờ despawn sau khi chết nếu không gán deathClipName (giây).")]
         [SerializeField] private float despawnFallback = 1.5f;
 
+        [Header("---- LOOT (khi chết) ----")]
+        [Tooltip("itemId trong ItemDatabase mà quái thưởng khi chết. NORMAL: drop ra thế giới (theo dropChance). ELITE/BOSS: thêm THẲNG vào kho mọi player, chỉ 1 lần.")]
+        [SerializeField] private string[] lootItemIds = new string[0];
+        [Tooltip("Tỉ lệ rơi cho quái THƯỜNG (0..1). Elite/Boss luôn cho (bỏ qua giá trị này).")]
+        [Range(0f, 1f)][SerializeField] private float normalDropChance = 0.35f;
+        [Tooltip("Prefab DroppedItem để rơi ra thế giới (quái THƯỜNG). Bỏ trống = không rơi.")]
+        [SerializeField] private Fusion.NetworkPrefabRef droppedItemPrefab;
+
+        private Vector3 _spawnPos;
+
         [Header("---- HIT / STUN ----")]
         [Tooltip("Bật nếu quái có thể bị đẩy lùi và choáng. Tắt đi đối với Boss hoặc Quái to.")]
         public bool canBeKnockedBack = true;
@@ -62,6 +72,7 @@ namespace Attrition.Controllers
                 Health = maxHealth;
                 RevivesRemaining = extraLivesAfterHpZero;
                 CurrentPoise = GetMaxPoise();
+                _spawnPos = transform.position; // mốc cho EnemyLootTracker (elite chỉ loot 1 lần/chỗ)
             }
 
             rb = GetComponent<Rigidbody2D>();
@@ -239,8 +250,10 @@ namespace Attrition.Controllers
         [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
         private void RPC_NotifyDamageTaken(int taken)
         {
+            // Tự gắn EnemyWorldUI nếu prefab chưa có → mọi quái đều có thanh máu + số damage.
             var worldUI = GetComponent<Attrition.Gameplay.Enemy.EnemyWorldUI>();
-            if (worldUI != null) worldUI.OnDamaged(taken);
+            if (worldUI == null) worldUI = gameObject.AddComponent<Attrition.Gameplay.Enemy.EnemyWorldUI>();
+            worldUI.OnDamaged(taken);
         }
 
         [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
@@ -285,6 +298,8 @@ namespace Attrition.Controllers
                     if (p != null) p.GainExp(statsComp.ExpReward);
             }
 
+            GrantLoot();
+
             if (aiComp != null) aiComp.enabled = false;
             if (combatComp != null) combatComp.enabled = false;
 
@@ -296,6 +311,52 @@ namespace Attrition.Controllers
                 ? animationComp.GetClipLength(deathClipName, despawnFallback)
                 : despawnFallback;
             despawnTimer = TickTimer.CreateFromSeconds(Runner, deathDur);
+        }
+
+        /// <summary>
+        /// Thưởng vật phẩm khi chết (host).
+        ///  - NORMAL: rơi 1 item ra thế giới theo normalDropChance (player tự nhặt).
+        ///  - ELITE/BOSS: thêm THẲNG vào kho mọi player (instanced BR-33), CHỈ 1 lần — respawn sau rest không cho nữa.
+        /// </summary>
+        private void GrantLoot()
+        {
+            if (!HasStateAuthority || lootItemIds == null || lootItemIds.Length == 0) return;
+            var db = Attrition.Data.ItemDatabaseSO.Instance;
+            if (db == null) return;
+
+            var tier = statsComp != null ? statsComp.Tier : Attrition.Data.EnemyTier.Normal;
+            string enemyId = statsComp != null ? statsComp.EnemyId : name;
+
+            if (tier == Attrition.Data.EnemyTier.Normal)
+            {
+                // Quái thường: roll tỉ lệ, rơi 1 item ngẫu nhiên ra thế giới.
+                if (Random.value > normalDropChance) return;
+                string id = lootItemIds[Random.Range(0, lootItemIds.Length)];
+                int idx = db.GetIndex(id);
+                if (idx < 0 || !droppedItemPrefab.IsValid) return;
+
+                Vector3 pos = transform.position + new Vector3(Random.Range(-0.5f, 0.5f), 0.5f, 0f);
+                Runner.Spawn(droppedItemPrefab, pos, Quaternion.identity, null, (r, obj) =>
+                {
+                    var d = obj.GetComponent<Attrition.Gameplay.World.DroppedItem>();
+                    if (d != null) { d.ItemIndex = idx; d.Amount = 1; }
+                });
+            }
+            else
+            {
+                // Elite/Boss: chỉ thưởng 1 lần/chỗ. Respawn sau rest → không cho lại.
+                if (EnemyLootTracker.AlreadyLooted(enemyId, _spawnPos)) return;
+                EnemyLootTracker.MarkLooted(enemyId, _spawnPos);
+
+                var players = FindObjectsByType<Attrition.Gameplay.Player.Inventory.PlayerInventory>(FindObjectsSortMode.None);
+                foreach (var id in lootItemIds)
+                {
+                    int idx = db.GetIndex(id);
+                    if (idx < 0) continue;
+                    foreach (var inv in players)
+                        if (inv != null) inv.TryAddItem(idx, 1); // instanced cho từng player
+                }
+            }
         }
 
         private void HandleDownedVisuals()

@@ -516,14 +516,6 @@ MonoBehaviour:
     isRanged: 1
     projectilePrefab:
       RawGuidValue: 36607f02eabd5a344b43134b099ec065
-    projectileCount: 1
-    spreadAngle: 30
-    projectileSpeed: 0
-    knockbackForce: 4
-    hitCount: 1
-    hitInterval: 0.12
-    sweetSpotRadius: 0
-    sweetSpotMultiplier: 1.5
   skillChance: 1
   canSummon: 0
   summonPrefab:

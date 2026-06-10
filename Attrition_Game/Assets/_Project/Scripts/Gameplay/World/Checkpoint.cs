@@ -44,7 +44,25 @@ namespace Attrition.Gameplay.World
 
         public override void Spawned()
         {
+            // Khôi phục trạng thái "đã kích hoạt" từ save (host/solo). HasBeenActivated là [Networked]
+            // nên KHÔNG tự bền qua lần chơi — phải đọc lại từ slot đã lưu rồi bật cờ.
+            if (HasStateAuthority) RestoreActivatedFromSave();
             if (activeVisual != null) activeVisual.SetActive(HasBeenActivated);
+        }
+
+        private void RestoreActivatedFromSave()
+        {
+            // Online (coop) khôi phục từ server — bỏ qua local.
+            if (Attrition.Persistence.GameLaunch.IsOnline) return;
+
+            var data = Attrition.Persistence.SaveManager.LoadSlot(Attrition.Persistence.GameLaunch.SelectedSlot);
+            if (data == null || string.IsNullOrEmpty(data.checkpointId)) return;
+
+            if (data.checkpointId == DisplayName)
+            {
+                HasBeenActivated = true;
+                RespawnPosition = RestPoint;
+            }
         }
 
         /// <summary>

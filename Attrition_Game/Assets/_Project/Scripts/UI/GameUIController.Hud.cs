@@ -66,10 +66,24 @@ namespace Attrition.UI
                 SetText("hud-mana-flask-count", _potions.ManaCharges.ToString());
                 SetSlotEmpty("hud-hp-flask", _potions.HealthCharges <= 0);
                 SetSlotEmpty("hud-mana-flask", _potions.ManaCharges <= 0);
+                ApplyFlaskIcons();
             }
 
             UpdateHudSkillIcon();
             UpdateRestPrompt();
+        }
+
+        private bool _flaskIconsApplied;
+
+        /// <summary>Gán icon bình HP/Mana lên HUD (1 lần, từ Sprite trong Inspector).</summary>
+        private void ApplyFlaskIcons()
+        {
+            if (_flaskIconsApplied) return;
+            var hpIcon = _root.Q<VisualElement>("hud-hp-flask-icon");
+            var manaIcon = _root.Q<VisualElement>("hud-mana-flask-icon");
+            if (hpIcon != null && healthFlaskIcon != null) hpIcon.style.backgroundImage = new StyleBackground(healthFlaskIcon);
+            if (manaIcon != null && manaFlaskIcon != null) manaIcon.style.backgroundImage = new StyleBackground(manaFlaskIcon);
+            _flaskIconsApplied = true;
         }
 
         private void UpdateHudSkillIcon()

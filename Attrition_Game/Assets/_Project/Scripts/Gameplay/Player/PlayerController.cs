@@ -92,6 +92,9 @@ public class PlayerController : NetworkBehaviour, IDamageable
     [Networked] public Vector2 NetworkVelocity { get; set; }
     [Networked] public float NetworkGravityScale { get; set; }
 
+    /// <summary>Tên hiển thị (sync mọi máy) — hiện trên đầu player + thanh máu đồng đội.</summary>
+    [Networked] public NetworkString<_32> DisplayName { get; set; }
+
     public int maxHP = 100;
     private bool isInvincible = false;
 
@@ -143,16 +146,20 @@ public class PlayerController : NetworkBehaviour, IDamageable
             {
                 cam.Follow = transform;
             }
+
+            // Player local đặt tên hiển thị (sync xuống mọi máy) từ nhân vật đang chơi.
+            string myName = Attrition.Persistence.GameLaunch.CharacterName;
+            if (string.IsNullOrEmpty(myName)) myName = "Player";
+            RpcSetDisplayName(myName);
         }
 
-        // Mũi tên P1/P2 trên đầu — chỉ hiện khi coop (>1 người). Local = P1 (xanh), remote = P2 (cam).
-        if (Runner != null && Runner.ActivePlayers.Count() > 1)
-        {
-            bool isLocal = HasInputAuthority;
-            PlayerMarker.Attach(transform, isLocal ? "P1" : "P2",
-                isLocal ? new Color(0.4f, 0.9f, 0.5f) : new Color(0.95f, 0.6f, 0.25f));
-        }
+        // Nhãn TÊN + thanh máu trên đầu mỗi player. Local = xanh, remote = cam.
+        bool isLocal = HasInputAuthority;
+        PlayerNameTag.Attach(this, isLocal);
     }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RpcSetDisplayName(string n) => DisplayName = n;
 
     public override void FixedUpdateNetwork()
     {

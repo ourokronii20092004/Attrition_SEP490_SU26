@@ -21,6 +21,12 @@ namespace Attrition.UI
     [RequireComponent(typeof(UIDocument))]
     public partial class GameUIController : MonoBehaviour
     {
+        [Header("---- HUD ICONS (gán trong Inspector) ----")]
+        [Tooltip("Icon bình máu hiện ở HUD (Art/UI_Elements/16x16/hp potion).")]
+        [SerializeField] private Sprite healthFlaskIcon;
+        [Tooltip("Icon bình mana hiện ở HUD (Art/UI_Elements/16x16/mana potion).")]
+        [SerializeField] private Sprite manaFlaskIcon;
+
         private UIDocument _doc;
         private VisualElement _root;
 
