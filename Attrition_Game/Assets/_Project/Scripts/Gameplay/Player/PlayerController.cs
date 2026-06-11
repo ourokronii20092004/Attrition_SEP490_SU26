@@ -147,15 +147,17 @@ public class PlayerController : NetworkBehaviour, IDamageable
                 cam.Follow = transform;
             }
 
-            // Player local đặt tên hiển thị (sync xuống mọi máy) từ nhân vật đang chơi.
+            // Đặt tên hiển thị. Solo/host (có StateAuthority) set THẲNG; coop CLIENT mới gửi RPC.
+            // KHÔNG gọi RPC khi đang có StateAuthority trong Spawned() → tránh exception làm hỏng init (player rơi).
             string myName = Attrition.Persistence.GameLaunch.CharacterName;
             if (string.IsNullOrEmpty(myName)) myName = "Player";
-            RpcSetDisplayName(myName);
+            if (HasStateAuthority) DisplayName = myName;
+            else RpcSetDisplayName(myName);
         }
 
-        // Nhãn TÊN + thanh máu trên đầu mỗi player. Local = xanh, remote = cam.
-        bool isLocal = HasInputAuthority;
-        PlayerNameTag.Attach(this, isLocal);
+        // Nhãn TÊN + thanh máu trên đầu mỗi player. Bọc try/catch để KHÔNG làm hỏng Spawned nếu lỗi.
+        try { PlayerNameTag.Attach(this, HasInputAuthority); }
+        catch (System.Exception e) { Debug.LogWarning($"[PlayerController] NameTag lỗi: {e.Message}"); }
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]

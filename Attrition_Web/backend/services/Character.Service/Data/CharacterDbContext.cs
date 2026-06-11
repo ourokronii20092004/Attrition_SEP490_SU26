@@ -19,6 +19,9 @@ public class CharacterDbContext : DbContext
             e.HasKey(x => x.Id);
             e.Property(x => x.Name).HasMaxLength(100);
             e.Property(x => x.Archetype).HasMaxLength(50);
+            // Inventory/equipment lưu nguyên khối JSON (Postgres jsonb).
+            e.Property(x => x.InventoryJson).HasColumnType("jsonb");
+            e.Property(x => x.EquipmentJson).HasColumnType("jsonb");
             e.HasIndex(x => x.OwnerId);
             // One character per (owner, name): the snapshot-ingest resolve-or-create races without
             // this, silently creating duplicates. Service handles the resulting unique violation.
