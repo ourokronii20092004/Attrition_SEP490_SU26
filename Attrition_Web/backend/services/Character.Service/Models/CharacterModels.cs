@@ -14,6 +14,11 @@ public class CharacterEntity
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
+    // Inventory + equipment hiện tại (client là source-of-truth). Lưu nguyên khối JSON (jsonb).
+    // Null = chưa từng lưu. Ghi đè mỗi lần ingest có gửi (giữ giá trị cũ nếu client gửi null).
+    public string? InventoryJson { get; set; }
+    public string? EquipmentJson { get; set; }
+
     // Snapshot history — appended on every save/quit the client reports.
     public List<CharacterSnapshot> Snapshots { get; set; } = new();
 }

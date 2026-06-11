@@ -15,7 +15,7 @@ MonoBehaviour:
   itemId: acc_stamina_charm
   displayName: Vigor Charm
   description: 
-  icon: {fileID: 700042286916042155, guid: 8623889e0b61dd54f98f1f9bc652a64b, type: 3}
+  icon: {fileID: 21300000, guid: 8623889e0b61dd54f98f1f9bc652a64b, type: 3}
   maxStack: 1
   isKeyItem: 0
   kind: 0

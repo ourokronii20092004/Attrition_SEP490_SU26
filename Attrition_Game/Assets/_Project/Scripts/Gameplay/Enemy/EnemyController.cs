@@ -339,7 +339,13 @@ namespace Attrition.Controllers
                 Runner.Spawn(droppedItemPrefab, pos, Quaternion.identity, null, (r, obj) =>
                 {
                     var d = obj.GetComponent<Attrition.Gameplay.World.DroppedItem>();
-                    if (d != null) { d.ItemIndex = idx; d.Amount = 1; }
+                    if (d != null)
+                    {
+                        d.ItemIndex = idx;
+                        d.Amount = 1;
+                        // PlayerRef.None = không ai bị cooldown → ai cũng nhặt ngay (item rơi từ quái).
+                        d.InitDrop(Fusion.PlayerRef.None, r.Tick);
+                    }
                 });
             }
             else

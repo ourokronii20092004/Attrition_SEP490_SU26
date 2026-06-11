@@ -15,7 +15,7 @@ MonoBehaviour:
   itemId: leather_chest
   displayName: Leather Armor
   description: 
-  icon: {fileID: 262957816052743745, guid: 917c3c3c5cbdb2c4096f29d708d1a088, type: 3}
+  icon: {fileID: 21300000, guid: 917c3c3c5cbdb2c4096f29d708d1a088, type: 3}
   maxStack: 1
   isKeyItem: 0
   slot: 1
