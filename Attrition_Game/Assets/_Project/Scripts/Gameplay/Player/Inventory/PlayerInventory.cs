@@ -50,8 +50,13 @@ namespace Attrition.Gameplay.Player.Inventory
         public event System.Action OnInventoryChanged;
 
         [Header("---- STARTING ITEMS (host seed) ----")]
-        [Tooltip("String id của item phát cho nhân vật mới (vd: iron_helm, skill_fire). Chỉ host seed, chỉ khi túi đang trống.")]
-        [SerializeField] private string[] startingItemIds = new string[0];
+        [Tooltip("String id của item phát cho nhân vật mới (vd: iron_helm, skill_fire). Chỉ host seed, chỉ khi túi đang trống. Để TEST: mặc định phát sẵn vài món.")]
+        [SerializeField] private string[] startingItemIds =
+        {
+            "leather_helm", "iron_chest", "gold_boots",
+            "acc_double_jump", "acc_stamina_charm",
+            "skill_fire", "skill_thunder"
+        };
 
         public override void Spawned()
         {
@@ -61,12 +66,40 @@ namespace Attrition.Gameplay.Player.Inventory
             if (_db == null)
                 Debug.LogError("[PlayerInventory] ItemDatabaseSO.Instance chưa được set!");
             else if (HasStateAuthority)
-                SeedStartingItems();
+            {
+                // Online (coop, đã login): nạp inventory từ server (Postgres). Ngược lại: local JSON.
+                if (Attrition.Persistence.GameLaunch.IsOnline)
+                    StartCoroutine(LoadFromServerThenSeed());
+                else
+                {
+                    LoadFromLocal();    // nạp save local (solo)
+                    SeedStartingItems(); // chỉ seed khi túi vẫn trống sau khi load
+                }
+            }
+        }
+
+        /// <summary>Coop: GET character detail từ server → ImportJson; nếu trống thì seed item khởi đầu.</summary>
+        private System.Collections.IEnumerator LoadFromServerThenSeed()
+        {
+            string charId = Attrition.Persistence.GameLaunch.CharacterId;
+            if (APIManager.Instance != null && !string.IsNullOrEmpty(charId))
+            {
+                bool done = false;
+                yield return APIManager.Instance.GetCharacterDetail(charId, detail =>
+                {
+                    if (detail != null && !string.IsNullOrEmpty(detail.inventoryJson))
+                        ImportJson(detail.inventoryJson);
+                    done = true;
+                });
+                if (!done) yield return null;
+            }
+            SeedStartingItems(); // chỉ seed nếu túi vẫn trống sau khi nạp từ server
         }
 
         /// <summary>Phát item khởi đầu cho nhân vật mới (host-only, chỉ khi túi trống).</summary>
         private void SeedStartingItems()
         {
+            Debug.Log($"[Seed] start. db.Count={_db.Count}, ids={(startingItemIds==null?0:startingItemIds.Length)}, eq0empty={EquipmentSlots.Get(0).IsEmpty}, acc0empty={AccessorySlots.Get(0).IsEmpty}");
             if (startingItemIds == null || startingItemIds.Length == 0) return;
             // Chỉ seed khi cả 3 nhóm đang trống (tránh ghi đè save đã load).
             if (!EquipmentSlots.Get(0).IsEmpty || !AccessorySlots.Get(0).IsEmpty) return;
@@ -75,8 +108,12 @@ namespace Attrition.Gameplay.Player.Inventory
             {
                 if (string.IsNullOrEmpty(id)) continue;
                 int idx = _db.GetIndex(id);
-                if (idx >= 0) TryAddItem(idx, 1);
-                else Debug.LogWarning($"[PlayerInventory] startingItemId '{id}' không có trong ItemDatabase.");
+                if (idx >= 0)
+                {
+                    bool ok = TryAddItem(idx, 1);
+                    Debug.Log($"[Seed] '{id}' idx={idx} added={ok}");
+                }
+                else Debug.LogWarning($"[Seed] '{id}' KHÔNG có trong ItemDatabase.");
             }
         }
 
@@ -337,16 +374,20 @@ namespace Attrition.Gameplay.Player.Inventory
             if (item == null) return false;
             if (item.isKeyItem) return false; // BR-45
 
-            // Spawn DroppedItem ở vị trí player (DroppedItem tự raycast xuống sàn — BR-43)
+            // Spawn DroppedItem gần tâm player (lệch ngang nhỏ để raycast xuống vẫn trúng sàn dưới chân).
             if (droppedItemPrefab.IsValid)
             {
-                Runner.Spawn(droppedItemPrefab, transform.position, Quaternion.identity, null, (runner, obj) =>
+                var dropper = Object.InputAuthority; // ai vứt → bị cooldown nhặt lại
+                float face = transform.localScale.x >= 0 ? 1f : -1f;
+                Vector3 spawnPos = transform.position + new Vector3(0.25f * face, 0.2f, 0f);
+                Runner.Spawn(droppedItemPrefab, spawnPos, Quaternion.identity, null, (runner, obj) =>
                 {
                     var dropped = obj.GetComponent<Attrition.Gameplay.World.DroppedItem>();
                     if (dropped != null)
                     {
                         dropped.ItemIndex = slot.ItemIndex;
                         dropped.Amount = slot.Amount;
+                        dropped.InitDrop(dropper, runner.Tick);
                     }
                 });
             }
@@ -397,22 +438,53 @@ namespace Attrition.Gameplay.Player.Inventory
         public void CommitLocalSave()
         {
             if (_db == null) return;
+            string json = JsonUtility.ToJson(BuildSaveData(), true);
+            System.IO.File.WriteAllText(GetSavePath(), json);
+        }
 
+        /// <summary>Xuất toàn bộ inventory + trang bị ra JSON (cho lưu server coop).</summary>
+        public string ExportJson()
+        {
+            if (_db == null) return null;
+            return JsonUtility.ToJson(BuildSaveData(), false);
+        }
+
+        /// <summary>Nạp inventory + trang bị từ JSON (server coop trả về). Chỉ host.</summary>
+        public void ImportJson(string json)
+        {
+            if (!HasStateAuthority || _db == null || string.IsNullOrEmpty(json)) return;
+            var data = JsonUtility.FromJson<InventorySaveData>(json);
+            if (data != null) ApplySaveData(data);
+        }
+
+        private InventorySaveData BuildSaveData()
+        {
             var data = new InventorySaveData();
             SerializeArray(EquipmentSlots, data.equipmentSlots);
             SerializeArray(AccessorySlots, data.accessorySlots);
             SerializeArray(MaterialSlots, data.materialSlots);
-
             data.equippedHead = SlotToSave(EquippedHead);
             data.equippedChest = SlotToSave(EquippedChest);
             data.equippedLegs = SlotToSave(EquippedLegs);
             data.equippedBoots = SlotToSave(EquippedBoots);
             data.equippedSkill = SlotToSave(EquippedSkill);
             data.equippedAccessory = SlotToSave(EquippedAccessory);
+            return data;
+        }
 
-            string json = JsonUtility.ToJson(data, true);
-            string path = GetSavePath();
-            System.IO.File.WriteAllText(path, json);
+        private void ApplySaveData(InventorySaveData data)
+        {
+            DeserializeArray(data.equipmentSlots, EquipmentSlots);
+            DeserializeArray(data.accessorySlots, AccessorySlots);
+            DeserializeArray(data.materialSlots, MaterialSlots);
+            EquippedHead = SaveToSlot(data.equippedHead);
+            EquippedChest = SaveToSlot(data.equippedChest);
+            EquippedLegs = SaveToSlot(data.equippedLegs);
+            EquippedBoots = SaveToSlot(data.equippedBoots);
+            EquippedSkill = SaveToSlot(data.equippedSkill);
+            EquippedAccessory = SaveToSlot(data.equippedAccessory);
+            RebuildAndApplyGear();
+            NotifyChanged();
         }
 
         /// <summary>Load inventory từ local JSON. Gọi khi game start hoặc respawn.</summary>
@@ -425,28 +497,26 @@ namespace Attrition.Gameplay.Player.Inventory
 
             string json = System.IO.File.ReadAllText(path);
             var data = JsonUtility.FromJson<InventorySaveData>(json);
-            if (data == null) return;
-
-            DeserializeArray(data.equipmentSlots, EquipmentSlots);
-            DeserializeArray(data.accessorySlots, AccessorySlots);
-            DeserializeArray(data.materialSlots, MaterialSlots);
-
-            EquippedHead = SaveToSlot(data.equippedHead);
-            EquippedChest = SaveToSlot(data.equippedChest);
-            EquippedLegs = SaveToSlot(data.equippedLegs);
-            EquippedBoots = SaveToSlot(data.equippedBoots);
-            EquippedSkill = SaveToSlot(data.equippedSkill);
-            EquippedAccessory = SaveToSlot(data.equippedAccessory);
-
-            RebuildAndApplyGear();
-            NotifyChanged();
+            if (data != null) ApplySaveData(data);
         }
 
         private string GetSavePath()
         {
-            // Mỗi player có file riêng theo Object.InputAuthority
-            string playerId = Object != null ? Object.InputAuthority.PlayerId.ToString() : "local";
-            return System.IO.Path.Combine(Application.persistentDataPath, $"inventory_{playerId}.json");
+            // Solo: theo save slot đang chơi (mỗi nhân vật 1 file).
+            // Coop: theo Owner + tên nhân vật (mỗi tài khoản/nhân vật riêng), tránh đè save solo.
+            var gl = Attrition.Persistence.GameLaunch.Mode;
+            string key;
+            if (gl == Attrition.Persistence.LaunchMode.Coop)
+            {
+                string owner = string.IsNullOrEmpty(Attrition.Persistence.GameLaunch.OwnerId) ? "guest" : Attrition.Persistence.GameLaunch.OwnerId;
+                string chr = string.IsNullOrEmpty(Attrition.Persistence.GameLaunch.CharacterName) ? "char" : Attrition.Persistence.GameLaunch.CharacterName;
+                key = $"coop_{owner}_{chr}";
+            }
+            else
+            {
+                key = $"solo_{Attrition.Persistence.GameLaunch.SelectedSlot}";
+            }
+            return System.IO.Path.Combine(Application.persistentDataPath, $"inventory_{key}.json");
         }
 
         // ═══════════════════════════════════════════

@@ -15,7 +15,7 @@ MonoBehaviour:
   itemId: iron_boots
   displayName: Iron Boots
   description: 
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 4c182a91860ddf445bc1a6ef6b63957b, type: 3}
   maxStack: 1
   isKeyItem: 0
   slot: 3

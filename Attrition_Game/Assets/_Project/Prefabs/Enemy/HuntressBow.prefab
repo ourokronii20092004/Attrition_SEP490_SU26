@@ -283,6 +283,14 @@ MonoBehaviour:
   reviveDelaySeconds: 5
   deathClipName: 
   despawnFallback: 1.5
+  lootItemIds:
+  - leather_helm
+  - bronze_boots
+  - iron_chest
+  - leather_helm
+  normalDropChance: 0.35
+  droppedItemPrefab:
+    RawGuidValue: 12e1ff761e13b114e99dad527c7a0233
   canBeKnockedBack: 0
   stunDuration: 0.2
   _Health: 0

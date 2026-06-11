@@ -13,7 +13,8 @@ public record CharacterSummaryDto(
 // Character with full snapshot history (detail view).
 public record CharacterDetailDto(
     Guid Id, Guid OwnerId, string Name, string Archetype,
-    DateTime CreatedAt, DateTime UpdatedAt, List<SnapshotDto> Snapshots);
+    DateTime CreatedAt, DateTime UpdatedAt, List<SnapshotDto> Snapshots,
+    string? InventoryJson = null, string? EquipmentJson = null);
 
 // Admin row — adds owner display fields resolved from Identity (kept null in the stub for now).
 public record AdminCharacterDto(
@@ -24,7 +25,8 @@ public record AdminCharacterDto(
 public record SnapshotIngestRequest(
     Guid OwnerId, Guid? CharacterId, string Name, string Archetype,
     int Level, int Hp, int MaxHp, int Gold, bool IsAlive,
-    string? RoomCode, string EventType, int PlaytimeSeconds);
+    string? RoomCode, string EventType, int PlaytimeSeconds,
+    string? InventoryJson = null, string? EquipmentJson = null);
 
 // Local mirror of Identity's UserSummaryDto, for deserializing the internal batch lookup.
 public record UserSummaryDto(Guid Id, string Username, string? DisplayName, string? AvatarUrl, string Role);

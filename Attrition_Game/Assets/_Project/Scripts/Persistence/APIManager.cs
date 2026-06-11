@@ -107,6 +107,40 @@ public class APIManager : MonoBehaviour
         public int playtimeSeconds;
     }
 
+    // Khớp CharacterDetailDto của web — dùng để đọc lại inventory/equipment khi vào game coop.
+    public class CharacterDetailDto
+    {
+        public string id;
+        public string ownerId;
+        public string name;
+        public string archetype;
+        public string inventoryJson;
+        public string equipmentJson;
+    }
+
+    /// <summary>Đọc chi tiết 1 nhân vật (gồm inventoryJson) theo characterId. JWT.</summary>
+    public IEnumerator GetCharacterDetail(string characterId, System.Action<CharacterDetailDto> callback)
+    {
+        using (UnityWebRequest request = UnityWebRequest.Get($"{baseUrl}/characters/{characterId}"))
+        {
+            if (!string.IsNullOrEmpty(AccessToken))
+                request.SetRequestHeader("Authorization", $"Bearer {AccessToken}");
+
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                var response = JsonConvert.DeserializeObject<ApiResponse<CharacterDetailDto>>(request.downloadHandler.text);
+                callback?.Invoke(response?.data);
+            }
+            else
+            {
+                Debug.LogError("GetCharacterDetail Fail: " + request.error);
+                callback?.Invoke(null);
+            }
+        }
+    }
+
     public IEnumerator GetCharacters(System.Action<System.Collections.Generic.List<CharacterSummaryDto>> callback)
     {
         using (UnityWebRequest request = UnityWebRequest.Get($"{baseUrl}/characters"))
@@ -167,6 +201,8 @@ public class APIManager : MonoBehaviour
         public string roomCode;
         public string eventType;     // "rest" | "quit" | "death" | "levelup"
         public int playtimeSeconds;
+        public string inventoryJson; // JSON inventory (null = không đổi)
+        public string equipmentJson; // JSON trang bị đang mặc
     }
 
     [Tooltip("Khóa nội bộ khớp với web (X-Internal-Key). Đặt qua config, không hardcode khi build thật.")]

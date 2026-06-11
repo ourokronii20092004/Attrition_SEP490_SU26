@@ -270,6 +270,10 @@ MonoBehaviour:
   _NetworkPosition: {x: 0, y: 0}
   _NetworkVelocity: {x: 0, y: 0}
   _NetworkGravityScale: 0
+  _DisplayName:
+    _length: 0
+    _data:
+      Data: 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
   maxHP: 15
 --- !u!114 &8687308238461515992
 MonoBehaviour:
@@ -448,6 +452,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   maxRayDistance: 50
+  groundOffset: 0.05
+  selfPickupCooldown: 3
   _ItemIndex: 0
   _Amount: 0
 --- !u!114 &-8304798322267633763
@@ -478,12 +484,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Player.PlayerSkillCaster
   castPoint: {fileID: 4851926045855186506}
-  castRange: 2.2
-  castAngle: 160
   targetLayers:
     serializedVersion: 2
     m_Bits: 768
-  knockbackForce: 0
   _IsCasting:
     _value: 0
 --- !u!1 &7179476028545329090

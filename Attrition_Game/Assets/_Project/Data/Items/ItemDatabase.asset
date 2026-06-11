@@ -13,23 +13,23 @@ MonoBehaviour:
   m_Name: ItemDatabase
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.ItemDatabaseSO
   items:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 11400000, guid: 0ae0253e498f0bd4494d488dcddbb5e8, type: 2}
+  - {fileID: 11400000, guid: 71aa78ac1a288874c9288a00e3a86605, type: 2}
+  - {fileID: 11400000, guid: c4c4ea71f979c924c827f3fe4239d45f, type: 2}
+  - {fileID: 11400000, guid: 3b0b70739634e9247a488de5377f7585, type: 2}
+  - {fileID: 11400000, guid: e0b44b7f32f26c24b99c56563e372e05, type: 2}
+  - {fileID: 11400000, guid: b0941c56c00447c4b96163ce6a285b7b, type: 2}
+  - {fileID: 11400000, guid: 39baea802a0875e48ae0e8c64ddc6e04, type: 2}
+  - {fileID: 11400000, guid: 123bf3b174d2da843872da554b72d18c, type: 2}
+  - {fileID: 11400000, guid: 26ae7d74e2a250d438a38ac50b78da0f, type: 2}
+  - {fileID: 11400000, guid: dc310241e45cb4043a5071e2463fbb26, type: 2}
+  - {fileID: 11400000, guid: 3818f5015f53111429a9d67fd4ac764b, type: 2}
+  - {fileID: 11400000, guid: c5493fee50346cf4c88432a795758854, type: 2}
+  - {fileID: 11400000, guid: 6bad1e51473da2b4c83e3456ac0ab637, type: 2}
+  - {fileID: 11400000, guid: a0f9d9eeb57dedd46926906f8666b7c5, type: 2}
+  - {fileID: 11400000, guid: ac5f224d87c234d489f6faf11eb48568, type: 2}
+  - {fileID: 11400000, guid: b95f76cf894ec644f817813a96696a05, type: 2}
+  - {fileID: 11400000, guid: d7209b28a101c9c4a8542ffdcacfb3af, type: 2}
+  - {fileID: 11400000, guid: bcfba867bcd119648b409f2a65fd55c3, type: 2}
+  - {fileID: 11400000, guid: fd4c065656936ff4ba15f18d650ac046, type: 2}
+  - {fileID: 11400000, guid: 1a881f1f29e01f247ae6185f311265dd, type: 2}
