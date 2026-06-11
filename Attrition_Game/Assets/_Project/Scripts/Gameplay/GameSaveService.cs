@@ -120,6 +120,8 @@ namespace Attrition.Gameplay.Persistence
                 yield break;
             }
 
+            var inv = player.GetComponent<Attrition.Gameplay.Player.Inventory.PlayerInventory>();
+
             var req = new APIManager.SnapshotIngestRequest
             {
                 ownerId = GameLaunch.OwnerId,
@@ -133,7 +135,8 @@ namespace Attrition.Gameplay.Persistence
                 isAlive = !player.IsDead,
                 roomCode = GameLaunch.RoomCode,
                 eventType = evt.ToString().ToLowerInvariant(),
-                playtimeSeconds = TotalPlaytimeSeconds
+                playtimeSeconds = TotalPlaytimeSeconds,
+                inventoryJson = inv != null ? inv.ExportJson() : null
             };
 
             yield return APIManager.Instance.PostSnapshot(req, ok =>

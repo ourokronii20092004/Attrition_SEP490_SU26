@@ -15,7 +15,7 @@ MonoBehaviour:
   itemId: bronze_chest
   displayName: Bronze Armor
   description: 
-  icon: {fileID: -8659902818862019149, guid: 424f76601b348a741ab8c878c3b681f5, type: 3}
+  icon: {fileID: 21300000, guid: 424f76601b348a741ab8c878c3b681f5, type: 3}
   maxStack: 1
   isKeyItem: 0
   slot: 1
