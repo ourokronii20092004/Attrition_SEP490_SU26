@@ -24,6 +24,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
 
     // Checkpoint đang đứng trong vùng (local, không cần [Networked] — chỉ dùng để gate input R).
     private Attrition.Gameplay.World.Checkpoint _currentCheckpoint;
+    private Attrition.Gameplay.NPC.NetworkNPC _currentNPC;
 
     [Header("---- MOVEMENT & PHYSICS ----")]
     [SerializeField] private Rigidbody2D rb;
@@ -105,6 +106,12 @@ public class PlayerController : NetworkBehaviour, IDamageable
 
     /// <summary>Tên checkpoint đang đứng (UI hiển thị). Rỗng nếu không ở checkpoint nào.</summary>
     public string CurrentCheckpointName => _currentCheckpoint != null ? _currentCheckpoint.DisplayName : "";
+
+    /// <summary>True khi player đứng gần NPC (DialogueUI kiểm tra để mở hội thoại).</summary>
+    public bool IsNearNPC => _currentNPC != null;
+
+    /// <summary>NPC đang đứng gần (DialogueUI đọc).</summary>
+    public Attrition.Gameplay.NPC.NetworkNPC CurrentNPC => _currentNPC;
 
     /// <summary>UI gọi khi bấm REST trong panel checkpoint: hồi đầy + lưu (host xử lý qua RPC).</summary>
     public void RequestRestAtCheckpoint()
@@ -238,6 +245,14 @@ public class PlayerController : NetworkBehaviour, IDamageable
         if (!_knockbackTimer.ExpiredOrNotRunning(Runner))
         {
             NetworkVelocityY = rb.linearVelocity.y;
+            return;
+        }
+
+        // --- DIALOGUE LOCK: khóa di chuyển khi hội thoại NPC đang mở ---
+        if (HasInputAuthority && Attrition.Persistence.DialogueState.IsActive)
+        {
+            rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
+            IsMoving = false;
             return;
         }
 
@@ -679,6 +694,9 @@ public class PlayerController : NetworkBehaviour, IDamageable
         if (!HasInputAuthority) return;
         var cp = other.GetComponentInParent<Attrition.Gameplay.World.Checkpoint>();
         if (cp != null) _currentCheckpoint = cp;
+
+        var npc = other.GetComponentInParent<Attrition.Gameplay.NPC.NetworkNPC>();
+        if (npc != null) _currentNPC = npc;
     }
 
     private void OnTriggerExit2D(Collider2D other)
@@ -686,6 +704,9 @@ public class PlayerController : NetworkBehaviour, IDamageable
         if (!HasInputAuthority) return;
         var cp = other.GetComponentInParent<Attrition.Gameplay.World.Checkpoint>();
         if (cp != null && cp == _currentCheckpoint) _currentCheckpoint = null;
+
+        var npc = other.GetComponentInParent<Attrition.Gameplay.NPC.NetworkNPC>();
+        if (npc != null && npc == _currentNPC) _currentNPC = null;
     }
 
     /// <summary>
