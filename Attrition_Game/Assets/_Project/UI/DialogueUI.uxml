@@ -1,0 +1,56 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+
+    <!-- ═══════════════════════════════════════════════════════
+         DIALOGUE PANEL — cuối màn hình, slide-up khi mở
+         ═══════════════════════════════════════════════════════ -->
+    <ui:VisualElement name="dialogue-overlay" class="dialogue-overlay hidden">
+        <ui:VisualElement name="dialogue-panel" class="dialogue-panel">
+
+            <!-- Tên người nói -->
+            <ui:VisualElement name="speaker-bar" class="speaker-bar">
+                <ui:Label name="speaker-name" class="speaker-name" text="NPC" />
+            </ui:VisualElement>
+
+            <!-- Nội dung hội thoại (typewriter) -->
+            <ui:Label name="dialogue-text" class="dialogue-text" text="" />
+
+            <!-- Quest info (chỉ hiện khi NPC có quest) -->
+            <ui:VisualElement name="quest-info" class="quest-info hidden">
+                <ui:Label name="quest-title" class="quest-title" text="" />
+                <ui:Label name="quest-desc" class="quest-desc" text="" />
+            </ui:VisualElement>
+
+            <!-- Nút bấm -->
+            <ui:VisualElement name="dialogue-buttons" class="dialogue-buttons">
+                <ui:Button name="btn-accept" class="dlg-btn btn-accept" text="Accept" />
+                <ui:Button name="btn-decline" class="dlg-btn btn-decline" text="Decline" />
+                <ui:Button name="btn-continue" class="dlg-btn btn-continue" text="Continue ▶" />
+            </ui:VisualElement>
+
+            <!-- Gợi ý phím -->
+            <ui:Label name="key-hint" class="key-hint" text="[F] or [Space] to continue" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+
+    <!-- ═══════════════════════════════════════════════════════
+         REWARD POPUP — giữa màn hình, fade-in + scale-up
+         ═══════════════════════════════════════════════════════ -->
+    <ui:VisualElement name="reward-overlay" class="reward-overlay hidden">
+        <ui:VisualElement name="reward-panel" class="reward-panel">
+            <ui:Label name="reward-title" class="reward-title" text="Congratulations!" />
+            <ui:VisualElement name="reward-divider" class="reward-divider" />
+            <ui:VisualElement name="reward-items" class="reward-items" />
+            <ui:Label name="reward-exp" class="reward-exp hidden" text="" />
+            <ui:Button name="btn-reward-close" class="dlg-btn btn-reward-close" text="OK" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+
+    <!-- ═══════════════════════════════════════════════════════
+         QUEST TRACKER — bên phải, luôn hiện khi có quest active
+         ═══════════════════════════════════════════════════════ -->
+    <ui:VisualElement name="quest-tracker" class="quest-tracker hidden">
+        <ui:Label name="tracker-header" class="tracker-header" text="⚔  Active Quests" />
+        <ui:VisualElement name="tracker-list" class="tracker-list" />
+    </ui:VisualElement>
+
+</ui:UXML>
