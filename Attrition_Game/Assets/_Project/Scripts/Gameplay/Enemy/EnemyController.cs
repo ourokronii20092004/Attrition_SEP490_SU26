@@ -298,6 +298,9 @@ namespace Attrition.Controllers
                     if (p != null) p.GainExp(statsComp.ExpReward);
             }
 
+            // Thông báo cho hệ thống quest biết quái vừa chết (host cộng tiến độ quest nếu khớp)
+            Attrition.Gameplay.NPC.NetworkNPC.NotifyEnemyKilled(statsComp != null ? statsComp.EnemyId : "");
+
             GrantLoot();
 
             if (aiComp != null) aiComp.enabled = false;
@@ -362,7 +365,23 @@ namespace Attrition.Controllers
                     foreach (var inv in players)
                         if (inv != null) inv.TryAddItem(idx, 1); // instanced cho từng player
                 }
+
+                // Fire reward popup trên tất cả client (Elite/Boss loot → "Congratulations!")
+                RpcNotifyEliteBossLoot(lootItemIds);
             }
+        }
+
+        /// <summary>Thông báo tất cả client về loot Elite/Boss để hiện reward popup.</summary>
+        [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+        private void RpcNotifyEliteBossLoot(string[] itemIds)
+        {
+            if (itemIds == null) return;
+            foreach (var id in itemIds)
+            {
+                if (!string.IsNullOrEmpty(id))
+                    Attrition.Data.RewardEvents.NotifyItem(id, 1);
+            }
+            Attrition.Data.RewardEvents.NotifyBatchComplete();
         }
 
         private void HandleDownedVisuals()

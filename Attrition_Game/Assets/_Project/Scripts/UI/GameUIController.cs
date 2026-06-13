@@ -108,10 +108,13 @@ namespace Attrition.UI
                 ToggleOverlay(Overlay.Inventory);
 
             // F (Interact) = mở UI checkpoint (Rest + Fast Travel) khi đang đứng trong vùng checkpoint.
+            // NPC ưu tiên hơn checkpoint — DialogueUI tự xử lý NPC khi player đứng gần.
             if (Input.GetKeyDown(Attrition.Persistence.GameSettings.GetKey(Attrition.Persistence.GameSettings.InputAction.Interact))
-                && _overlay != Overlay.GameOver && _overlay != Overlay.Loading)
+                && _overlay != Overlay.GameOver && _overlay != Overlay.Loading
+                && !Attrition.Persistence.DialogueState.IsActive)
             {
                 if (_overlay == Overlay.FastTravel) ShowOverlay(Overlay.None);
+                else if (_controller != null && _controller.IsNearNPC) { /* NPC ưu tiên — DialogueUI xử lý */ }
                 else if (_controller != null && _controller.IsAtCheckpoint) ShowOverlay(Overlay.FastTravel);
             }
 
