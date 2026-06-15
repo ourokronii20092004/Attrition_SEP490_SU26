@@ -104,6 +104,7 @@ namespace Attrition.Gameplay.Persistence
 
             if (potions != null) data.potionMaxFlasks = potions.MaxHealthCharges;
             data.allocatedPoints = CaptureAllocated(stats);
+            data.quests = Attrition.Gameplay.NPC.NetworkNPC.CaptureAll();
             data.originMode = GameLaunch.Mode.ToString();
             data.lastSavedUnix = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
