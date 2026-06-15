@@ -9,6 +9,50 @@
 }
 
 /* ═════════════════════════════════
+   INTERACT PROMPT ("[F] Talk")
+   ═════════════════════════════════ */
+.interact-prompt {
+    position: absolute;
+    left: 0; right: 0;
+    bottom: 220px;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+
+    /* Float-up + fade khi hiện */
+    translate: 0 12px;
+    opacity: 0;
+    transition-property: translate, opacity;
+    transition-duration: 0.22s, 0.22s;
+    transition-timing-function: ease-out, ease-out;
+}
+
+.interact-prompt.visible {
+    translate: 0 0;
+    opacity: 1;
+}
+
+.interact-key {
+    font-size: 16px;
+    color: #1A1206;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    background-color: #E8C869;
+    border-radius: 6px;
+    padding: 2px 10px;
+    margin-right: 8px;
+    min-width: 22px;
+}
+
+.interact-label {
+    font-size: 16px;
+    color: #F0E8D0;
+    -unity-font-style: bold;
+    letter-spacing: 0.5px;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
+/* ═════════════════════════════════
    DIALOGUE OVERLAY + PANEL
    ═════════════════════════════════ */
 .dialogue-overlay {
