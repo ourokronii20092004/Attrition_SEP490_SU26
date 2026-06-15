@@ -18,6 +18,8 @@ namespace Attrition.Gameplay.Enemy
         [SerializeField] private Vector3 barOffset = new Vector3(0f, -0.6f, 0f);
         [Tooltip("Lệch điểm số sát thương nổi (trên đầu).")]
         [SerializeField] private Vector3 popupOffset = new Vector3(0f, 1.2f, 0f);
+        [Tooltip("Lệch nhãn tên (trên đầu quái).")]
+        [SerializeField] private Vector3 nameOffset = new Vector3(0f, 0.95f, 0f);
         [SerializeField] private Vector2 barSize = new Vector2(1.2f, 0.14f);
 
         private EnemyController _enemy;
@@ -30,6 +32,27 @@ namespace Attrition.Gameplay.Enemy
         {
             _enemy = GetComponent<EnemyController>();
             BuildBar();
+            BuildNameLabel();
+        }
+
+        private void BuildNameLabel()
+        {
+            // Nguồn tên: EnemyStats.EnemyId ("axe_demon") → "Axe Demon"; fallback tên gameobject.
+            var stats = GetComponent<EnemyStats>();
+            string raw = stats != null && !string.IsNullOrEmpty(stats.EnemyId) ? stats.EnemyId : name;
+            string display = WorldNameLabel.Prettify(raw);
+
+            // Boss to + đỏ, elite cam, thường xám nhạt.
+            var tier = stats != null ? stats.Tier : Attrition.Data.EnemyTier.Normal;
+            Color color; float size;
+            switch (tier)
+            {
+                case Attrition.Data.EnemyTier.Boss:  color = new Color(1f, 0.4f, 0.35f); size = 4.2f; break;
+                case Attrition.Data.EnemyTier.Elite: color = new Color(1f, 0.7f, 0.3f);  size = 3.4f; break;
+                default:                             color = new Color(0.85f, 0.82f, 0.78f); size = 3f; break;
+            }
+
+            WorldNameLabel.Attach(transform, display, nameOffset, color, size);
         }
 
         private void BuildBar()

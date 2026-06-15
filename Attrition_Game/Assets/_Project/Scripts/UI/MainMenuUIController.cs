@@ -91,8 +91,12 @@ namespace Attrition.UI
             SetScreenVisible(_hostJoinScreen, screenName == "host-join");
             SetScreenVisible(_coopLobbyScreen, screenName == "coop-lobby");
             SetScreenVisible(_settingsScreen, screenName == "settings");
-            
+
             UpdateGlobalProfileVisibility();
+
+            // Lobby: poll roster networked để host↔client thấy nhau; rời lobby thì dừng.
+            if (screenName == "coop-lobby") StartLobbyRosterPolling();
+            else StopLobbyRosterPolling();
         }
 
         private void SetScreenVisible(VisualElement screen, bool visible)
@@ -1057,6 +1061,75 @@ namespace Attrition.UI
             // Ping thật chưa có trước trận (chưa vào sim) → ẩn nhãn mock thay vì hiện số giả.
             var ping = _root.Q<Label>("coop-ping");
             if (ping != null) ping.style.display = DisplayStyle.None;
+        }
+
+        private Coroutine _lobbyRosterCoroutine;
+
+        /// <summary>Bắt đầu poll roster networked khi vào lobby (host↔client thấy nhau dù không có start trận).</summary>
+        private void StartLobbyRosterPolling()
+        {
+            StopLobbyRosterPolling();
+            _lobbyRosterCoroutine = StartCoroutine(PollLobbyRoster());
+        }
+
+        private void StopLobbyRosterPolling()
+        {
+            if (_lobbyRosterCoroutine != null)
+            {
+                StopCoroutine(_lobbyRosterCoroutine);
+                _lobbyRosterCoroutine = null;
+            }
+        }
+
+        /// <summary>
+        /// Mỗi 0.5s đọc PlayerStats của tất cả player trong runner và điền 2 card lobby.
+        /// Card host = player có IsHostPlayer; card client = player còn lại. Nhờ vậy host
+        /// thấy client (và ngược lại) ngay khi client join, không cần bắt đầu trận.
+        /// </summary>
+        private System.Collections.IEnumerator PollLobbyRoster()
+        {
+            var wait = new WaitForSeconds(0.5f);
+            while (true)
+            {
+                var runner = FindObjectOfType<NetworkRunner>();
+                if (runner != null)
+                {
+                    Attrition.Gameplay.Player.PlayerStats hostStats = null;
+                    Attrition.Gameplay.Player.PlayerStats clientStats = null;
+
+                    foreach (var p in runner.ActivePlayers)
+                    {
+                        if (!runner.TryGetPlayerObject(p, out var obj) || obj == null) continue;
+                        var stats = obj.GetComponent<Attrition.Gameplay.Player.PlayerStats>();
+                        if (stats == null) continue;
+                        if (stats.IsHostPlayer) hostStats = stats;
+                        else clientStats = stats;
+                    }
+
+                    if (hostStats != null)
+                    {
+                        string n = hostStats.DisplayName.Value;
+                        SetText("coop-host-name", string.IsNullOrEmpty(n) ? "Wanderer" : n);
+                        SetText("coop-host-level", $"LEVEL {Mathf.Max(1, hostStats.Level)}");
+                    }
+
+                    var clientCard = _root.Q<VisualElement>("coop-card-client");
+                    if (clientStats != null)
+                    {
+                        string n = clientStats.DisplayName.Value;
+                        SetText("coop-client-name", string.IsNullOrEmpty(n) ? "Wanderer" : n);
+                        SetText("coop-client-level", $"LEVEL {Mathf.Max(1, clientStats.Level)}");
+                        if (clientCard != null) clientCard.style.opacity = 1f;
+                    }
+                    else
+                    {
+                        SetText("coop-client-name", "Waiting for player...");
+                        SetText("coop-client-level", "");
+                        if (clientCard != null) clientCard.style.opacity = 0.5f;
+                    }
+                }
+                yield return wait;
+            }
         }
 
         private void SetText(string elementName, string value)

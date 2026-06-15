@@ -1,4 +1,3 @@
-using System.Linq;
 using Fusion;
 using UnityEngine;
 using Attrition.Data;
@@ -9,13 +8,13 @@ namespace Attrition.Gameplay.NPC
 {
     /// <summary>
     /// NPC controller gắn vào NPC prefab (scene-placed NetworkObject).
-    /// - Phát hiện player gần qua trigger.
     /// - Quản lý trạng thái quest [Networked] (CHUNG cho cả hai player).
     /// - Cung cấp RPC để UI gọi (accept, claim reward).
     /// - Phát thưởng cho TẤT CẢ player khi hoàn thành quest.
     ///
-    /// Prefab cần: NetworkObject + Collider2D (Is Trigger) cho vùng tương tác
-    ///             + child GameObject "InteractPrompt" (TMP hiện "[F] Talk").
+    /// Prefab cần: NetworkObject + Collider2D (Is Trigger) cho vùng tương tác.
+    /// Prompt "[F] Talk" do DialogueUI (UI Toolkit) render — PlayerController phát hiện
+    /// NPC gần qua trigger và expose IsNearNPC/CurrentNPC, không cần world-canvas trên NPC.
     /// </summary>
     [RequireComponent(typeof(Collider2D))]
     public class NetworkNPC : NetworkBehaviour
@@ -35,10 +34,6 @@ namespace Attrition.Gameplay.NPC
         [Header("──── IDLE DIALOGUE (không có quest) ────")]
         [Tooltip("Hội thoại mặc định khi NPC không giao quest hoặc quest đã xong.")]
         [SerializeField] private DialogueSO idleDialogue;
-
-        [Header("──── WORLD UI ────")]
-        [Tooltip("Child object hiện gợi ý '[F] Talk' — script toggle SetActive.")]
-        [SerializeField] private GameObject interactPrompt;
 
         // ═══════════════════════════════════════════
         //  NETWORKED QUEST STATE (shared cả hai player)
@@ -85,7 +80,32 @@ namespace Attrition.Gameplay.NPC
 
         public override void Spawned()
         {
-            if (interactPrompt != null) interactPrompt.SetActive(false);
+            // Nhãn tên nổi trên đầu NPC (world-space, mọi máy thấy giống nhau). Vàng kim cho NPC.
+            string display = string.IsNullOrEmpty(npcName) ? "NPC" : npcName;
+            Attrition.Gameplay.WorldNameLabel.Attach(
+                transform, display, new Vector3(0f, 0.95f, 0f), new Color(0.91f, 0.78f, 0.41f), 3f);
+
+            // Host khôi phục tiến trình quest đã lưu (solo local). Mỗi NPC tự đọc questId của mình
+            // → không lệ thuộc thứ tự spawn. Online: server là nguồn, không nạp từ slot.
+            RestoreSavedProgress();
+        }
+
+        /// <summary>Host nạp lại state/progress của quest NPC này từ save slot (solo). No-op nếu chưa có.</summary>
+        private void RestoreSavedProgress()
+        {
+            if (!HasStateAuthority || quest == null || string.IsNullOrEmpty(quest.questId)) return;
+            if (Attrition.Persistence.GameLaunch.IsOnline) return;
+
+            var data = Attrition.Persistence.SaveManager.LoadSlot(Attrition.Persistence.GameLaunch.SelectedSlot);
+            if (data?.quests == null) return;
+
+            foreach (var e in data.quests)
+            {
+                if (e == null || e.questId != quest.questId) continue;
+                QuestState = e.state;
+                QuestProgress = e.progress;
+                break;
+            }
         }
 
         // ═══════════════════════════════════════════
@@ -164,6 +184,32 @@ namespace Attrition.Gameplay.NPC
         }
 
         // ═══════════════════════════════════════════
+        //  SAVE / LOAD — Host gom & khôi phục tiến trình quest
+        // ═══════════════════════════════════════════
+
+        /// <summary>
+        /// Host gom trạng thái quest của MỌI NPC trong scene để lưu vào save slot.
+        /// Chỉ lưu NPC có quest và đã có tiến triển (state>0) để file gọn.
+        /// </summary>
+        public static Attrition.Persistence.QuestProgressEntry[] CaptureAll()
+        {
+            var npcs = FindObjectsByType<NetworkNPC>(FindObjectsSortMode.None);
+            var list = new System.Collections.Generic.List<Attrition.Persistence.QuestProgressEntry>();
+            foreach (var npc in npcs)
+            {
+                if (npc.quest == null || string.IsNullOrEmpty(npc.quest.questId)) continue;
+                if (npc.QuestState == 0) continue; // chưa nhận → khỏi lưu
+                list.Add(new Attrition.Persistence.QuestProgressEntry
+                {
+                    questId = npc.quest.questId,
+                    state = npc.QuestState,
+                    progress = npc.QuestProgress
+                });
+            }
+            return list.ToArray();
+        }
+
+        // ═══════════════════════════════════════════
         //  REWARD DISTRIBUTION — Host
         // ═══════════════════════════════════════════
 
@@ -218,30 +264,6 @@ namespace Attrition.Gameplay.NPC
             }
 
             RewardEvents.NotifyBatchComplete();
-        }
-
-        // ═══════════════════════════════════════════
-        //  INTERACTION PROMPT — Local
-        // ═══════════════════════════════════════════
-
-        /// <summary>Player local vào vùng NPC → hiện gợi ý [F].</summary>
-        private void OnTriggerEnter2D(Collider2D other)
-        {
-            var pc = other.GetComponentInParent<PlayerController>();
-            if (pc != null && pc.HasInputAuthority)
-            {
-                if (interactPrompt != null) interactPrompt.SetActive(true);
-            }
-        }
-
-        /// <summary>Player local ra khỏi vùng NPC → ẩn gợi ý [F].</summary>
-        private void OnTriggerExit2D(Collider2D other)
-        {
-            var pc = other.GetComponentInParent<PlayerController>();
-            if (pc != null && pc.HasInputAuthority)
-            {
-                if (interactPrompt != null) interactPrompt.SetActive(false);
-            }
         }
     }
 }

@@ -1,5 +1,15 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
 
+    <Style src="DialogueUI.uss" />
+
+    <!-- ═══════════════════════════════════════════════════════
+         INTERACT PROMPT — "[F] Talk" nổi gần đáy màn hình khi đứng cạnh NPC
+         ═══════════════════════════════════════════════════════ -->
+    <ui:VisualElement name="interact-prompt" class="interact-prompt hidden">
+        <ui:Label name="interact-key" class="interact-key" text="F" />
+        <ui:Label name="interact-label" class="interact-label" text="Talk" />
+    </ui:VisualElement>
+
     <!-- ═══════════════════════════════════════════════════════
          DIALOGUE PANEL — cuối màn hình, slide-up khi mở
          ═══════════════════════════════════════════════════════ -->

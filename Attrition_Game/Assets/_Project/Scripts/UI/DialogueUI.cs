@@ -56,6 +56,11 @@ namespace Attrition.UI
         // Quest Tracker
         private VisualElement _questTracker, _trackerList;
 
+        // Interact prompt ("[F] Talk")
+        private VisualElement _interactPrompt;
+        private Label _interactKey, _interactLabel;
+        private bool _promptShown;
+
         // ═══════════════════════════════════════════
         //  STATE
         // ═══════════════════════════════════════════
@@ -124,6 +129,11 @@ namespace Attrition.UI
             _questTracker = _root.Q<VisualElement>("quest-tracker");
             _trackerList = _root.Q<VisualElement>("tracker-list");
 
+            // Interact prompt elements
+            _interactPrompt = _root.Q<VisualElement>("interact-prompt");
+            _interactKey = _root.Q<Label>("interact-key");
+            _interactLabel = _root.Q<Label>("interact-label");
+
             // Button callbacks
             _btnAccept.clicked += OnAcceptClicked;
             _btnDecline.clicked += OnDeclineClicked;
@@ -161,23 +171,30 @@ namespace Attrition.UI
 
         private void Update()
         {
-            // ── F key: mở hội thoại khi gần NPC ──
-            if (!_isDialogueOpen && !_isRewardShowing
-                && Input.GetKeyDown(Attrition.Persistence.GameSettings.GetKey(
-                    Attrition.Persistence.GameSettings.InputAction.Interact)))
+            KeyCode interactKey = Attrition.Persistence.GameSettings.GetKey(
+                Attrition.Persistence.GameSettings.InputAction.Interact);
+
+            // ── Interact key: mở hội thoại khi gần NPC ──
+            if (!_isDialogueOpen && !_isRewardShowing && Input.GetKeyDown(interactKey))
             {
                 TryOpenFromNearbyNPC();
+                // Mở xong return ngay: tránh cùng frame rơi vào khối advance bên dưới
+                // (bug cũ: dòng đầu bị bỏ qua typewriter mỗi lần mở).
+                return;
             }
 
-            // ── F/Space: advance dialogue khi đang mở ──
+            // ── Interact/Space: advance dialogue khi đang mở ──
             if (_isDialogueOpen
-                && (Input.GetKeyDown(KeyCode.F) || Input.GetKeyDown(KeyCode.Space)))
+                && (Input.GetKeyDown(interactKey) || Input.GetKeyDown(KeyCode.Space)))
             {
                 if (_isTyping)
                     CompleteTyping();
                 else
                     AdvanceLine();
             }
+
+            // ── Interact prompt: hiện "[F] Talk" khi đứng gần NPC, ẩn khi rời ──
+            UpdateInteractPrompt(interactKey);
 
             // ── Typewriter ──
             if (_isTyping)
@@ -224,6 +241,71 @@ namespace Attrition.UI
             OpenDialogue(npc);
         }
 
+        /// <summary>
+        /// Hiện/ẩn prompt "[F] Talk" theo NPC gần local player. Ẩn khi đang thoại/reward.
+        /// Badge phím + tên NPC cập nhật động (theo keybind người chơi đã đổi).
+        /// </summary>
+        private void UpdateInteractPrompt(KeyCode interactKey)
+        {
+            if (_interactPrompt == null) return;
+
+            NetworkNPC nearby = null;
+            if (!_isDialogueOpen && !_isRewardShowing)
+            {
+                var players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+                foreach (var p in players)
+                {
+                    if (p.Object != null && p.Object.HasInputAuthority)
+                    {
+                        if (p.IsNearNPC) nearby = p.CurrentNPC;
+                        break;
+                    }
+                }
+            }
+
+            bool shouldShow = nearby != null;
+            if (shouldShow)
+            {
+                if (_interactKey != null) _interactKey.text = FormatKey(interactKey);
+                if (_interactLabel != null)
+                {
+                    string n = nearby.NpcName;
+                    _interactLabel.text = string.IsNullOrEmpty(n) ? "Talk" : $"Talk to {n}";
+                }
+            }
+
+            if (shouldShow == _promptShown) return; // không spam toggle class mỗi frame
+            _promptShown = shouldShow;
+
+            if (shouldShow)
+            {
+                _interactPrompt.RemoveFromClassList("hidden");
+                _interactPrompt.schedule.Execute(() => _interactPrompt.AddToClassList("visible")).ExecuteLater(10);
+            }
+            else
+            {
+                _interactPrompt.RemoveFromClassList("visible");
+                _interactPrompt.schedule.Execute(() =>
+                {
+                    if (!_promptShown) _interactPrompt.AddToClassList("hidden");
+                }).ExecuteLater(250);
+            }
+        }
+
+        /// <summary>Rút gọn KeyCode thành nhãn badge dễ đọc (Space→SPACE, LeftShift→SHIFT…).</summary>
+        private static string FormatKey(KeyCode key)
+        {
+            switch (key)
+            {
+                case KeyCode.Space: return "SPACE";
+                case KeyCode.LeftShift: case KeyCode.RightShift: return "SHIFT";
+                case KeyCode.LeftControl: case KeyCode.RightControl: return "CTRL";
+                case KeyCode.Tab: return "TAB";
+                case KeyCode.Return: return "ENTER";
+                default: return key.ToString().ToUpperInvariant();
+            }
+        }
+
         /// <summary>Mở hội thoại với NPC cụ thể.</summary>
         public void OpenDialogue(NetworkNPC npc)
         {
@@ -237,7 +319,7 @@ namespace Attrition.UI
             _currentLineIndex = -1;
             _isDialogueOpen = true;
             Attrition.Persistence.DialogueState.IsActive = true;
-            UnityEngine.Cursor.visible = true;
+            SetCursorFree(true);
 
             // Show overlay
             _dialogueOverlay.RemoveFromClassList("hidden");
@@ -348,7 +430,7 @@ namespace Attrition.UI
             _isDialogueOpen = false;
             _isTyping = false;
             Attrition.Persistence.DialogueState.IsActive = false;
-            UnityEngine.Cursor.visible = false;
+            SetCursorFree(false);
 
             _dialoguePanel.RemoveFromClassList("visible");
 
@@ -390,6 +472,17 @@ namespace Attrition.UI
             _btnAccept.AddToClassList("hidden");
             _btnDecline.AddToClassList("hidden");
             _btnContinue.AddToClassList("hidden");
+        }
+
+        /// <summary>
+        /// Mở (free=true) → chuột hiện + unlock để bấm nút; đóng → khóa lại về gameplay.
+        /// Set CẢ visible lẫn lockState giống Inventory/HUD — chỉ set visible là không đủ
+        /// khi lockState đang Locked (chuột kẹt giữa màn, không bấm được nút).
+        /// </summary>
+        private void SetCursorFree(bool free)
+        {
+            UnityEngine.Cursor.visible = free;
+            UnityEngine.Cursor.lockState = free ? CursorLockMode.None : CursorLockMode.Locked;
         }
 
         private void UpdateQuestInfoVisibility()
@@ -448,7 +541,7 @@ namespace Attrition.UI
         private void ShowRewardPopup()
         {
             _isRewardShowing = true;
-            UnityEngine.Cursor.visible = true;
+            SetCursorFree(true);
 
             // Clear old items
             _rewardItems.Clear();
@@ -528,7 +621,7 @@ namespace Attrition.UI
         private void CloseRewardPopup()
         {
             _isRewardShowing = false;
-            UnityEngine.Cursor.visible = false;
+            SetCursorFree(false);
 
             _rewardPanel.RemoveFromClassList("visible");
             _rewardOverlay.RemoveFromClassList("visible");

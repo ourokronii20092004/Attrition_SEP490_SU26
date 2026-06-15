@@ -6,6 +6,15 @@ using System.Collections.Generic;
 
 namespace Attrition.Persistence
 {
+    /// <summary>Tiến trình 1 quest đã lưu — khớp lại NPC qua questId khi load.</summary>
+    [Serializable]
+    public class QuestProgressEntry
+    {
+        public string questId;
+        public byte state;     // 0=NotStarted, 1=Active, 2=Completed, 3=Rewarded
+        public int progress;   // số mục tiêu đã hoàn thành
+    }
+
     [Serializable]
     public class SaveSlotData
     {
@@ -29,6 +38,7 @@ namespace Attrition.Persistence
         public int[] allocatedPoints;     // 7 chỉ số tự cộng (Option 2)
         public long lastSavedUnix;        // mốc lưu gần nhất
         public string originMode;         // "Solo" | "Coop" — chặn dùng chéo chế độ
+        public QuestProgressEntry[] quests; // tiến trình quest NPC (khớp lại qua questId)
 
         public string ToDisplayPlaytime()
         {
