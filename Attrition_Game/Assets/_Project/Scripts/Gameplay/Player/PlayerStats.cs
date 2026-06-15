@@ -23,6 +23,10 @@ namespace Attrition.Gameplay.Player
         [Networked] public float CurrentStamina { get; set; }
         [Networked] public int Level { get; set; }
 
+        // Identity hiển thị ở lobby (sync host↔client). Client gửi lên qua RpcSetLobbyIdentity.
+        [Networked] public NetworkString<_16> DisplayName { get; set; }
+        [Networked] public NetworkBool IsHostPlayer { get; set; }
+
         // Điểm tự cộng (Option 2) — host-authoritative, sync xuống client.
         // Index = (int)StatType (0..6). UI đọc để hiện, gọi RpcRequestAllocate để cộng.
         [Networked, Capacity(7)] public NetworkArray<int> AllocatedPoints { get; }
@@ -64,6 +68,38 @@ namespace Attrition.Gameplay.Player
             else
             {
                 SyncAllocatedToSheet();
+            }
+
+            // Gửi identity lobby cho local player: host ghi thẳng [Networked], client gửi RPC lên host.
+            if (HasInputAuthority)
+                PushLobbyIdentity();
+        }
+
+        /// <summary>Đẩy tên + level local lên state (host: ghi trực tiếp; client: qua RPC) để hiện ở lobby.</summary>
+        private void PushLobbyIdentity()
+        {
+            string name = Attrition.Persistence.GameLaunch.CharacterName;
+            int level = Mathf.Max(1, Level);
+
+            // Level [Networked] còn 0 ở client trước khi host ghi → đọc tên/level từ save slot local.
+            var slot = Attrition.Persistence.SaveManager.LoadSlot(Attrition.Persistence.GameLaunch.SelectedSlot);
+            if (slot != null)
+            {
+                if (!string.IsNullOrEmpty(slot.characterName)) name = slot.characterName;
+                level = Mathf.Max(level, slot.level);
+            }
+
+            if (string.IsNullOrEmpty(name)) name = "Wanderer";
+            if (name.Length > 16) name = name.Substring(0, 16);
+
+            if (HasStateAuthority)
+            {
+                DisplayName = name;
+                IsHostPlayer = true;
+            }
+            else
+            {
+                RpcSetLobbyIdentity(name, level);
             }
         }
 
@@ -151,6 +187,14 @@ namespace Attrition.Gameplay.Player
         /// <summary>Client gửi yêu cầu cộng điểm lên host.</summary>
         [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
         public void RpcRequestAllocate(int statTypeInt) => TryAllocatePoint((Attrition.Core.StatType)statTypeInt);
+
+        /// <summary>Client gửi tên + level local lên host để hiện ở lobby (host-authoritative ghi [Networked]).</summary>
+        [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+        public void RpcSetLobbyIdentity(NetworkString<_16> displayName, int level)
+        {
+            DisplayName = displayName;
+            if (level > 0) Level = level;
+        }
 
         private void BuildSheet()
         {
