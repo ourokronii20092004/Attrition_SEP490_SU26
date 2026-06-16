@@ -1,49 +1,43 @@
 fileFormatVersion: 2
-guid: 73319258f8653704fb5e382ad0cf162a
+guid: c0fe81bbfe0ff034fb541559dc55ce8d
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 4038620271298193691
-    second: SeveredFangSheathe001-Sheet_0
+      213: 7548742475732107364
+    second: Firebolt SpriteSheet_0
   - first:
-      213: -2411315695206687059
-    second: SeveredFangSheathe001-Sheet_1
+      213: 306219143863640384
+    second: Firebolt SpriteSheet_1
   - first:
-      213: -935385496999656621
-    second: SeveredFangSheathe001-Sheet_2
+      213: -3744757891071147524
+    second: Firebolt SpriteSheet_2
   - first:
-      213: -1142509139446243327
-    second: SeveredFangSheathe001-Sheet_3
+      213: -3884485359023492735
+    second: Firebolt SpriteSheet_3
   - first:
-      213: 6684200013170049397
-    second: SeveredFangSheathe001-Sheet_4
+      213: -8344620753644177729
+    second: Firebolt SpriteSheet_4
   - first:
-      213: -5252672237007001363
-    second: SeveredFangSheathe001-Sheet_5
+      213: 8752090258065097107
+    second: Firebolt SpriteSheet_5
   - first:
-      213: -4804426877522978759
-    second: SeveredFangSheathe001-Sheet_6
+      213: 1847394199649331469
+    second: Firebolt SpriteSheet_6
   - first:
-      213: -1022380757502543662
-    second: SeveredFangSheathe001-Sheet_7
+      213: -9026615604156508812
+    second: Firebolt SpriteSheet_7
   - first:
-      213: 6576017595578823051
-    second: SeveredFangSheathe001-Sheet_8
+      213: 8965878915032480692
+    second: Firebolt SpriteSheet_8
   - first:
-      213: -8237392358645458336
-    second: SeveredFangSheathe001-Sheet_9
+      213: -9211971603802564175
+    second: Firebolt SpriteSheet_9
   - first:
-      213: 8672822157670484893
-    second: SeveredFangSheathe001-Sheet_10
+      213: 4274796765636291823
+    second: Firebolt SpriteSheet_10
   - first:
-      213: 4661510136732446097
-    second: SeveredFangSheathe001-Sheet_11
-  - first:
-      213: 833563254461776030
-    second: SeveredFangSheathe001-Sheet_12
-  - first:
-      213: 6587202376500500168
-    second: SeveredFangSheathe001-Sheet_13
+      213: -3979185046042636639
+    second: Firebolt SpriteSheet_11
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -139,309 +133,265 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: SeveredFangSheathe001-Sheet_0
+      name: Firebolt SpriteSheet_0
       rect:
         serializedVersion: 2
-        x: 44
-        y: 47
-        width: 33
-        height: 46
+        x: 257
+        y: 0
+        width: 29
+        height: 39
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: b19ab6d3dbf0c0830800000000000000
-      internalID: 4038620271298193691
+      spriteID: 4604ae6694582c860800000000000000
+      internalID: 7548742475732107364
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: SeveredFangSheathe001-Sheet_1
+      name: Firebolt SpriteSheet_1
       rect:
         serializedVersion: 2
-        x: 172
-        y: 47
-        width: 33
-        height: 46
+        x: 301
+        y: 0
+        width: 34
+        height: 41
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: dae91e1a629498ed0800000000000000
-      internalID: -2411315695206687059
+      spriteID: 041aa6d50b8ef3400800000000000000
+      internalID: 306219143863640384
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: SeveredFangSheathe001-Sheet_2
+      name: Firebolt SpriteSheet_2
       rect:
         serializedVersion: 2
-        x: 300
-        y: 47
-        width: 33
-        height: 46
+        x: 348
+        y: 0
+        width: 34
+        height: 41
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 353884ba8d7d403f0800000000000000
-      internalID: -935385496999656621
+      spriteID: cf10dd4e982f70cc0800000000000000
+      internalID: -3744757891071147524
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: SeveredFangSheathe001-Sheet_3
+      name: Firebolt SpriteSheet_3
       rect:
         serializedVersion: 2
-        x: 428
-        y: 47
-        width: 29
-        height: 46
-      alignment: 9
-      pivot: {x: 0.566, y: 0.5}
+        x: 407
+        y: 26
+        width: 9
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 1006baeadfdf420f0800000000000000
-      internalID: -1142509139446243327
+      spriteID: 181f2389529871ac0800000000000000
+      internalID: -3884485359023492735
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: SeveredFangSheathe001-Sheet_4
+      name: Firebolt SpriteSheet_4
       rect:
         serializedVersion: 2
-        x: 556
-        y: 47
-        width: 45
-        height: 46
-      alignment: 9
-      pivot: {x: 0.364, y: 0.5}
+        x: 408
+        y: 4
+        width: 112
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 57189a06f7c03cc50800000000000000
-      internalID: 6684200013170049397
+      spriteID: fb6bfa1e2a3f13c80800000000000000
+      internalID: -8344620753644177729
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: SeveredFangSheathe001-Sheet_5
+      name: Firebolt SpriteSheet_5
       rect:
         serializedVersion: 2
-        x: 684
-        y: 47
-        width: 45
-        height: 46
-      alignment: 9
-      pivot: {x: 0.364, y: 0.5}
+        x: 412
+        y: 21
+        width: 9
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: de824a72e62ca17b0800000000000000
-      internalID: -5252672237007001363
+      spriteID: 391802a18bba57970800000000000000
+      internalID: 8752090258065097107
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: SeveredFangSheathe001-Sheet_6
+      name: Firebolt SpriteSheet_6
       rect:
         serializedVersion: 2
-        x: 812
-        y: 47
-        width: 45
-        height: 46
-      alignment: 9
-      pivot: {x: 0.364, y: 0.5}
+        x: 13
+        y: 11
+        width: 34
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 93857e7b53f335db0800000000000000
-      internalID: -4804426877522978759
+      spriteID: d0927369c3343a910800000000000000
+      internalID: 1847394199649331469
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: SeveredFangSheathe001-Sheet_7
+      name: Firebolt SpriteSheet_7
       rect:
         serializedVersion: 2
-        x: 941
-        y: 47
-        width: 29
-        height: 46
-      alignment: 9
-      pivot: {x: 0.53, y: 0.5}
+        x: 58
+        y: 12
+        width: 37
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 2d8bddb2e16cfc1f0800000000000000
-      internalID: -1022380757502543662
+      spriteID: 475d04edee40bb280800000000000000
+      internalID: -9026615604156508812
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: SeveredFangSheathe001-Sheet_8
+      name: Firebolt SpriteSheet_8
       rect:
         serializedVersion: 2
-        x: 1069
-        y: 47
-        width: 29
-        height: 46
-      alignment: 9
-      pivot: {x: 0.53, y: 0.5}
+        x: 103
+        y: 12
+        width: 40
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: b81b1357925b24b50800000000000000
-      internalID: 6576017595578823051
+      spriteID: 4bbfca5be533d6c70800000000000000
+      internalID: 8965878915032480692
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: SeveredFangSheathe001-Sheet_9
+      name: Firebolt SpriteSheet_9
       rect:
         serializedVersion: 2
-        x: 1197
-        y: 47
-        width: 29
-        height: 46
-      alignment: 9
-      pivot: {x: 0.53, y: 0.5}
+        x: 149
+        y: 15
+        width: 11
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 06a9b6b1b47eead80800000000000000
-      internalID: -8237392358645458336
+      spriteID: 1b9dc5a22a0882080800000000000000
+      internalID: -9211971603802564175
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: SeveredFangSheathe001-Sheet_10
+      name: Firebolt SpriteSheet_10
       rect:
         serializedVersion: 2
-        x: 1322
-        y: 47
-        width: 30
-        height: 46
-      alignment: 9
-      pivot: {x: 0.61, y: 0.5}
+        x: 159
+        y: 11
+        width: 32
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: d9b06144dcd0c5870800000000000000
-      internalID: 8672822157670484893
+      spriteID: fec6dbe6201235b30800000000000000
+      internalID: 4274796765636291823
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: SeveredFangSheathe001-Sheet_11
+      name: Firebolt SpriteSheet_11
       rect:
         serializedVersion: 2
-        x: 1452
-        y: 47
-        width: 30
-        height: 46
-      alignment: 9
-      pivot: {x: 0.55, y: 0.5}
+        x: 407
+        y: 16
+        width: 10
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 19de1d885c201b040800000000000000
-      internalID: 4661510136732446097
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: SeveredFangSheathe001-Sheet_12
-      rect:
-        serializedVersion: 2
-        x: 1580
-        y: 47
-        width: 36
-        height: 46
-      alignment: 9
-      pivot: {x: 0.467, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: e9043001d59619b00800000000000000
-      internalID: 833563254461776030
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: SeveredFangSheathe001-Sheet_13
-      rect:
-        serializedVersion: 2
-        x: 1708
-        y: 47
-        width: 36
-        height: 46
-      alignment: 9
-      pivot: {x: 0.467, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 8c6dbe239a17a6b50800000000000000
-      internalID: 6587202376500500168
+      spriteID: 1ae0513884817c8c0800000000000000
+      internalID: -3979185046042636639
       vertices: []
       indices: 
       edges: []
@@ -450,7 +400,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 7a28a4a1c5ad33b4c990b225061afdf7
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -460,20 +410,18 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      SeveredFangSheathe001-Sheet_0: 4038620271298193691
-      SeveredFangSheathe001-Sheet_1: -2411315695206687059
-      SeveredFangSheathe001-Sheet_10: 8672822157670484893
-      SeveredFangSheathe001-Sheet_11: 4661510136732446097
-      SeveredFangSheathe001-Sheet_12: 833563254461776030
-      SeveredFangSheathe001-Sheet_13: 6587202376500500168
-      SeveredFangSheathe001-Sheet_2: -935385496999656621
-      SeveredFangSheathe001-Sheet_3: -1142509139446243327
-      SeveredFangSheathe001-Sheet_4: 6684200013170049397
-      SeveredFangSheathe001-Sheet_5: -5252672237007001363
-      SeveredFangSheathe001-Sheet_6: -4804426877522978759
-      SeveredFangSheathe001-Sheet_7: -1022380757502543662
-      SeveredFangSheathe001-Sheet_8: 6576017595578823051
-      SeveredFangSheathe001-Sheet_9: -8237392358645458336
+      Firebolt SpriteSheet_0: 7548742475732107364
+      Firebolt SpriteSheet_1: 306219143863640384
+      Firebolt SpriteSheet_10: 4274796765636291823
+      Firebolt SpriteSheet_11: -3979185046042636639
+      Firebolt SpriteSheet_2: -3744757891071147524
+      Firebolt SpriteSheet_3: -3884485359023492735
+      Firebolt SpriteSheet_4: -8344620753644177729
+      Firebolt SpriteSheet_5: 8752090258065097107
+      Firebolt SpriteSheet_6: 1847394199649331469
+      Firebolt SpriteSheet_7: -9026615604156508812
+      Firebolt SpriteSheet_8: 8965878915032480692
+      Firebolt SpriteSheet_9: -9211971603802564175
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
