@@ -26,6 +26,8 @@ builder.Services.AddDbWarmup();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<ICharacterRepository, CharacterRepository>();
 builder.Services.AddScoped<ICharacterService, CharacterService>();
+builder.Services.AddScoped<ISessionRepository, SessionRepository>();
+builder.Services.AddScoped<ISessionService, SessionService>();
 
 // Internal client to resolve owner usernames from Identity (3s timeout, GET/POST retry, internal key).
 builder.Services.AddHttpClient<IdentityClient>(c =>

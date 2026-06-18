@@ -115,7 +115,12 @@ namespace Attrition.UI
             {
                 if (_overlay == Overlay.FastTravel) ShowOverlay(Overlay.None);
                 else if (_controller != null && _controller.IsNearNPC) { /* NPC ưu tiên — DialogueUI xử lý */ }
-                else if (_controller != null && _controller.IsAtCheckpoint) ShowOverlay(Overlay.FastTravel);
+                else if (_controller != null && _controller.IsAtCheckpoint)
+                {
+                    // Mở bảng checkpoint = kích hoạt beacon + LƯU tiến trình (save không cần out-of-combat).
+                    _controller.ActivateAndSaveCheckpoint();
+                    ShowOverlay(Overlay.FastTravel);
+                }
             }
 
             // ESC = menu tạm dừng, hoặc lùi/đóng overlay đang mở.

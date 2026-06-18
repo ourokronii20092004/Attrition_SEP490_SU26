@@ -127,6 +127,11 @@ InitTestScene*.unity*
 # ---- Gradle (Android builds) ----
 .gradle/
 
+# ---- Secrets (KHÔNG commit) ----
+# X-Internal-Key của game ↔ backend. Nạp runtime; mỗi máy host tự đặt file này.
+/[Aa]ssets/StreamingAssets/internal_key.txt
+/[Aa]ssets/StreamingAssets/internal_key.txt.meta
+
 # ---- Misc project files ----
 Temp.txt
 
