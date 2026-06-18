@@ -19,6 +19,9 @@ public class CharacterEntity
     public string? InventoryJson { get; set; }
     public string? EquipmentJson { get; set; }
 
+    // Quest world-state của session (host-authoritative). Chỉ host gửi; null = không đổi.
+    public string? QuestsJson { get; set; }
+
     // Snapshot history — appended on every save/quit the client reports.
     public List<CharacterSnapshot> Snapshots { get; set; } = new();
 }

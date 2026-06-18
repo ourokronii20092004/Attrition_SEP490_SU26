@@ -33,9 +33,12 @@ namespace Attrition.UI
         private string _previousScreen = "main-menu"; 
         private int _selectedSaveSlot = 0;
         private bool _isCoopReady = false;
+        private bool _clientPresent = false; // host poll: client đã vào lobby chưa
+        private bool _clientReady = false;   // host poll: client đã bấm Ready chưa
         private bool _isLoggedIn = false;
         private string _currentUserId = null;
         private string _currentRoomCode = null;
+        private string _currentRoomName = null; // tên phòng host đặt (hiển thị trong lobby)
         private bool _isHost = false;
         private bool _isOnlineMode = false;
 
@@ -203,9 +206,11 @@ namespace Attrition.UI
                             _isHost = false; // Solo mode isn't networking
                             _isOnlineMode = false;
                             UpdateSaveTitle("SELECT SAVE DATA");
+                            LoadSavesFromDisk(); // reload slot LOCAL (tránh giữ list nhân vật server từ coop)
                             ShowScreen("save-selection");
                             break;
                         case "btn-coop-mode":
+                            _isOnlineMode = true; // coop = nhân vật server (table character), không phải save local
                             if (_isLoggedIn)
                                 ShowScreen("host-join");
                             else
@@ -273,16 +278,18 @@ namespace Attrition.UI
             }
             else
             {
-                // Offline / solo: chỉ hiện slot thuộc ĐÚNG chế độ đang chọn (BR — solo/coop tách biệt).
-                var wantMode = _isHost ? LaunchMode.Coop : LaunchMode.Solo;
+                // SOLO: chỉ dùng file JSON local. Coop luôn đi nhánh _isOnlineMode (character server),
+                // nên nhánh này luôn lọc theo Solo — KHÔNG phụ thuộc _isHost (có thể kẹt true từ
+                // phiên coop trước). Save coop cũ lỡ nằm trong file local cũng bị ẩn khỏi solo.
                 var localSaves = SaveManager.LoadAllSlots();
                 for (int i = 0; i < SaveManager.SlotCount; i++)
                 {
                     _characterIds[i] = null;
                     var s = localSaves[i];
-                    // Save cũ chưa gắn originMode → coi như tương thích; khác chế độ → ẩn (hiện slot trống).
-                    bool sameMode = s == null || string.IsNullOrEmpty(s.originMode) || s.originMode == wantMode.ToString();
-                    _saveSlots[i] = sameMode ? s : null;
+                    // originMode == "Coop" → ẩn khỏi solo. Trống / save cũ chưa gắn mode → coi là solo.
+                    bool isSolo = s == null || string.IsNullOrEmpty(s.originMode)
+                                  || s.originMode == LaunchMode.Solo.ToString();
+                    _saveSlots[i] = isSolo ? s : null;
                     RenderSaveSlot(i, _saveSlots[i]);
                 }
             }
@@ -517,22 +524,52 @@ namespace Attrition.UI
                     }
 
                     // Chặn dùng chéo chế độ: save Solo không mở ở Coop và ngược lại.
-                    var wantMode = _isHost ? LaunchMode.Coop : LaunchMode.Solo;
+                    // _isOnlineMode = coop (host hoặc client join); ngược lại = solo.
+                    var wantMode = _isOnlineMode ? LaunchMode.Coop : LaunchMode.Solo;
                     if (!SaveManager.IsSlotCompatible(_selectedSaveSlot, wantMode))
                     {
-                        var origin = _isHost ? "Solo" : "Co-op";
-                        var target = _isHost ? "Co-op" : "Solo";
+                        var origin = _isOnlineMode ? "Solo" : "Co-op";
+                        var target = _isOnlineMode ? "Co-op" : "Solo";
                         ShowSlotWarning($"This save belongs to {origin} mode and cannot be played in {target}. Pick another slot or create a new character.");
                         return;
                     }
 
-                    if (_isHost)
+                    if (_isOnlineMode && _isHost)
                     {
-                        // Connect fusion as Host
-                        StartFusionNetwork(GameMode.Host, _currentRoomCode);
+                        // HOST: tạo phòng. Session name = room code; tên player = tên nhân vật đã chọn.
+                        SetCoopLaunchContext();
+                        CreateHostSessionOnServer();
                         UpdateLobbyRoomCode(_currentRoomCode);
                         SetupLobbyHostView();
                         ShowScreen("coop-lobby");
+                        StartFusionNetwork(GameMode.Host, _currentRoomCode, (ok, err) =>
+                        {
+                            if (!ok)
+                            {
+                                ShowSlotWarning($"Could not create room: {err}");
+                                ShowScreen("host-join");
+                            }
+                        });
+                    }
+                    else if (_isOnlineMode)
+                    {
+                        // CLIENT JOIN: chọn nhân vật xong mới connect Fusion ĐÚNG 1 LẦN với identity đã
+                        // sẵn sàng (SetCoopLaunchContext set tên/char/owner TRƯỚC khi connect). LobbyPlayer
+                        // spawn sẽ đọc đúng identity ngay — không cần đẩy lại sau.
+                        SetCoopLaunchContext();
+                        UpdateLobbyRoomCode(_currentRoomCode);
+                        SetupLobbyClientView();
+                        ShowScreen("coop-lobby");
+                        StartFusionNetwork(GameMode.Client, _currentRoomCode, (ok, err) =>
+                        {
+                            if (!ok)
+                            {
+                                var launcher = Attrition.Networking.NetworkLauncher.Instance;
+                                if (launcher != null) launcher.LeaveSession();
+                                ShowSlotWarning($"Could not join room '{_currentRoomCode}': {err}");
+                                ShowScreen("host-join");
+                            }
+                        });
                     }
                     else
                     {
@@ -660,7 +697,8 @@ namespace Attrition.UI
             if (slot < 0) { if (error != null) error.text = "No empty slots - please delete a character first."; return; }
             _selectedSaveSlot = slot;
 
-            var mode = _isHost ? LaunchMode.Coop : LaunchMode.Solo;
+            // _isOnlineMode = coop (host hoặc client join); ngược lại = solo.
+            var mode = _isOnlineMode ? LaunchMode.Coop : LaunchMode.Solo;
             var newSave = new SaveSlotData
             {
                 characterName = name,
@@ -676,28 +714,48 @@ namespace Attrition.UI
                 lastSavedUnix = 0
             };
 
+            SaveManager.SaveSlot(slot, newSave);
+            _saveSlots[slot] = newSave;
             CloseNameEntry();
 
             if (mode == LaunchMode.Solo)
             {
                 // Tạo file save local rồi vào game qua màn loading.
-                SaveManager.SaveSlot(slot, newSave);
-                _saveSlots[slot] = newSave;
                 GameLaunch.Mode = LaunchMode.Solo;
                 GameLaunch.SelectedSlot = slot;
                 GameLaunch.CharacterName = name;
                 StartCoroutine(LoadGameplaySceneAsync(GameLaunch.GameplayScene));
             }
-            else
+            else if (_isHost)
             {
-                // Coop host: ghi local làm cache + đánh dấu để tạo nhân vật server, rồi vào lobby.
-                SaveManager.SaveSlot(slot, newSave);
-                _saveSlots[slot] = newSave;
-                GameLaunch.CharacterName = name;
-                StartFusionNetwork(GameMode.Host, _currentRoomCode);
+                // HOST: tạo phòng (session = room code). Tên player = tên nhân vật vừa tạo.
+                SetCoopLaunchContext();
+                CreateHostSessionOnServer();
                 UpdateLobbyRoomCode(_currentRoomCode);
                 SetupLobbyHostView();
                 ShowScreen("coop-lobby");
+                StartFusionNetwork(GameMode.Host, _currentRoomCode, (ok, err) =>
+                {
+                    if (!ok) { ShowSlotWarning($"Could not create room: {err}"); ShowScreen("host-join"); }
+                });
+            }
+            else
+            {
+                // CLIENT JOIN bằng nhân vật mới: phải ĐÚNG room code mới vào được phòng host.
+                SetCoopLaunchContext();
+                UpdateLobbyRoomCode(_currentRoomCode);
+                SetupLobbyClientView();
+                ShowScreen("coop-lobby");
+                StartFusionNetwork(GameMode.Client, _currentRoomCode, (ok, err) =>
+                {
+                    if (!ok)
+                    {
+                        var launcher = Attrition.Networking.NetworkLauncher.Instance;
+                        if (launcher != null) launcher.LeaveSession();
+                        ShowSlotWarning($"Could not join room '{_currentRoomCode}': {err}");
+                        ShowScreen("host-join");
+                    }
+                });
             }
         }
 
@@ -885,10 +943,13 @@ namespace Attrition.UI
                 {
                     PlayClickSound();
                     _isHost = true;
+                    _isOnlineMode = true;
                     // Auto generate 4 char room code
                     _currentRoomCode = GenerateRoomCode();
-                    
-                    UpdateSaveTitle("SELECT SAVE DATA (HOST)");
+                    _currentRoomName = $"Room {_currentRoomCode}";
+
+                    UpdateSaveTitle("SELECT CHARACTER (HOST)");
+                    LoadSavesFromDisk(); // nạp nhân vật server (table character) cho host
                     ShowScreen("save-selection");
                 });
             }
@@ -904,15 +965,35 @@ namespace Attrition.UI
                     PlayClickSound();
                     string code = roomCodeInput?.value;
                     if (string.IsNullOrEmpty(code)) return;
-                    
-                    _isHost = false;
-                    _currentRoomCode = code;
 
-                    // Client joins directly to lobby and waits
-                    StartFusionNetwork(GameMode.Client, _currentRoomCode);
-                    UpdateLobbyRoomCode(_currentRoomCode);
-                    SetupLobbyClientView();
-                    ShowScreen("coop-lobby");
+                    _isHost = false;
+                    _isOnlineMode = true;
+                    _currentRoomCode = code.Trim().ToUpperInvariant();
+
+                    // Validate room code bằng API (KHÔNG connect Fusion sớm). Phòng tồn tại → sang màn
+                    // chọn nhân vật; connect Fusion ĐÚNG 1 LẦN ở bước Continue với identity đã sẵn sàng.
+                    // Sai mã → báo lỗi, ở lại màn nhập code. Tránh luồng connect-2-lần + đẩy-lại-identity.
+                    if (APIManager.Instance == null)
+                    {
+                        ShowSlotWarning("Service not ready. Please try again.");
+                        return;
+                    }
+                    joinBtn.SetEnabled(false);
+                    StartCoroutine(APIManager.Instance.GetSessionByCode(_currentRoomCode, session =>
+                    {
+                        joinBtn.SetEnabled(true);
+                        if (session != null)
+                        {
+                            _currentRoomName = session.name;
+                            UpdateSaveTitle("SELECT CHARACTER (JOIN)");
+                            LoadSavesFromDisk();
+                            ShowScreen("save-selection");
+                        }
+                        else
+                        {
+                            ShowSlotWarning($"Room '{_currentRoomCode}' not found. Check the code and try again.");
+                        }
+                    }));
                 });
             }
 
@@ -936,17 +1017,77 @@ namespace Attrition.UI
             return code;
         }
 
-        private void StartFusionNetwork(GameMode mode, string code)
+        private void StartFusionNetwork(GameMode mode, string code, System.Action<bool, string> onResult = null)
         {
-            NetworkSpawner spawner = FindObjectOfType<NetworkSpawner>();
-            if (spawner != null)
+            var launcher = Attrition.Networking.NetworkLauncher.Instance;
+            if (launcher != null)
             {
-                spawner.StartCoopSession(mode, code);
+                launcher.StartCoopLobby(mode, code, onResult);
             }
             else
             {
-                Debug.LogError("NetworkSpawner not found in scene! Cannot start Fusion.");
+                Debug.LogError("NetworkLauncher not found! Phải đặt sẵn object NetworkLauncher trong scene Menu.");
+                onResult?.Invoke(false, "NetworkLauncher not found in Menu scene");
             }
+        }
+
+        /// <summary>
+        /// Gán bối cảnh ONLINE coop vào GameLaunch từ slot đang chọn: room code, tên nhân vật,
+        /// characterId (server) và ownerId (đăng nhập). Lưu/khôi phục online dựa vào các giá trị này.
+        /// </summary>
+        private void SetCoopLaunchContext()
+        {
+            GameLaunch.Mode = LaunchMode.Coop;
+            GameLaunch.SelectedSlot = _selectedSaveSlot;
+            GameLaunch.RoomCode = _currentRoomCode;
+            GameLaunch.RoomName = _currentRoomName ?? "";
+            GameLaunch.OwnerId = _currentUserId ?? "";
+            GameLaunch.CharacterId = _characterIds != null && _selectedSaveSlot < _characterIds.Length
+                ? (_characterIds[_selectedSaveSlot] ?? "") : "";
+
+            // Tên player = USERNAME tài khoản (Postgres, vd "PlayerOne"), KHÔNG phải tên save slot.
+            // Save slot chỉ là tên file save/load. Fallback: tên nhân vật slot, rồi "Wanderer".
+            string playerName = APIManager.Instance != null ? APIManager.Instance.Username : null;
+            if (string.IsNullOrEmpty(playerName))
+            {
+                var slot = _saveSlots != null && _selectedSaveSlot < _saveSlots.Length ? _saveSlots[_selectedSaveSlot] : null;
+                if (slot != null && !string.IsNullOrEmpty(slot.characterName)) playerName = slot.characterName;
+            }
+            if (!string.IsNullOrEmpty(playerName)) GameLaunch.CharacterName = playerName;
+        }
+
+        /// <summary>
+        /// HOST: tạo (hoặc reopen) room bền trên server theo ĐÚNG room code Fusion đang dùng, rồi lưu
+        /// SessionId vào GameLaunch làm khóa cho save/load per-room (character_session, world_state).
+        /// Backend tôn trọng room code host gửi nên server code == join code. Lỗi mạng → KHÔNG chặn
+        /// vào lobby (vẫn chơi được; chỉ là tiến trình per-room chưa lưu được tới khi có session).
+        /// Chỉ host gọi: client không tự lưu (host-authoritative), nên client không cần SessionId.
+        /// </summary>
+        private void CreateHostSessionOnServer()
+        {
+            if (APIManager.Instance == null || string.IsNullOrEmpty(GameLaunch.OwnerId)) return;
+
+            var req = new APIManager.CreateSessionRequest
+            {
+                ownerId = GameLaunch.OwnerId,
+                name = string.IsNullOrEmpty(_currentRoomName) ? $"Room {_currentRoomCode}" : _currentRoomName,
+                roomCode = _currentRoomCode,
+                currentScene = GameLaunch.GameplayScene
+            };
+
+            StartCoroutine(APIManager.Instance.CreateOrReopenSession(req, session =>
+            {
+                if (session != null)
+                {
+                    GameLaunch.SessionId = session.id;
+                    Debug.Log($"[Session] Host room sẵn sàng: id={session.id} code={session.roomCode}");
+                }
+                else
+                {
+                    GameLaunch.SessionId = "";
+                    Debug.LogWarning("[Session] Không tạo được room trên server (vẫn vào lobby, tiến trình per-room chưa lưu).");
+                }
+            }));
         }
 
         // =================================================================
@@ -965,6 +1106,9 @@ namespace Attrition.UI
                     PlayClickSound();
                     _isCoopReady = !_isCoopReady;
                     UpdateReadyState(readyBtn);
+                    // Gửi trạng thái sẵn sàng lên host (client). Host đọc IsReady để bật nút Start.
+                    var local = FindLocalLobbyStats();
+                    if (local != null) local.RpcSetReady(_isCoopReady);
                 });
             }
 
@@ -975,9 +1119,9 @@ namespace Attrition.UI
                 backBtn.RegisterCallback<ClickEvent>(evt =>
                 {
                     PlayClickSound();
-                    // NetworkRunner.Shutdown() needed if going back
-                    NetworkRunner runner = FindObjectOfType<NetworkRunner>();
-                    if (runner != null) runner.Shutdown();
+                    // Rời phòng chờ: tắt runner qua launcher để có thể tạo/join lại.
+                    var launcher = Attrition.Networking.NetworkLauncher.Instance;
+                    if (launcher != null) launcher.LeaveSession();
 
                     ShowScreen("host-join");
                 });
@@ -989,21 +1133,21 @@ namespace Attrition.UI
                 startBtn.RegisterCallback<PointerEnterEvent>(evt => PlayHoverSound());
                 startBtn.RegisterCallback<ClickEvent>(evt =>
                 {
-                    if (!_isCoopReady) return;
+                    // Host chỉ start khi client đã VÀO và SẴN SÀNG (giống lobby game chuyên nghiệp).
+                    if (!_clientPresent || !_clientReady)
+                    {
+                        ShowSlotWarning("Waiting for the other player to be ready...");
+                        return;
+                    }
                     PlayClickSound();
-                    // COOP có mạng: runner đã chạy (Host). Đánh dấu Coop để bootstrap KHÔNG tự start Single.
+                    // COOP: runner đã chạy (lobby). Đánh dấu Coop để bootstrap KHÔNG tự start Single.
                     GameLaunch.Mode = LaunchMode.Coop;
                     GameLaunch.SelectedSlot = _selectedSaveSlot;
                     Debug.Log("[MainMenu] Host bắt đầu CO-OP → load scene gameplay cho cả phòng.");
 
-                    // Host điều khiển load scene; Fusion NetworkSceneManager sync client theo.
-                    var runner = FindObjectOfType<NetworkRunner>();
-                    if (runner != null && runner.IsServer)
-                    {
-                        int idx = SceneUtility.GetBuildIndexByScenePath($"Assets/_Project/Scenes/{GameLaunch.GameplayScene}.unity");
-                        if (idx >= 0) runner.LoadScene(SceneRef.FromIndex(idx));
-                        else Debug.LogError($"[MainMenu] Scene '{GameLaunch.GameplayScene}' chưa có trong Build Settings.");
-                    }
+                    // Host điều khiển load scene; NetworkLauncher despawn LobbyPlayer + spawn nhân vật thật.
+                    var launcher = Attrition.Networking.NetworkLauncher.Instance;
+                    if (launcher != null) launcher.BeginGameplay(GameLaunch.GameplayScene);
                 });
             }
         }
@@ -1016,9 +1160,11 @@ namespace Attrition.UI
             var readyBtn = _root.Q<Button>("btn-coop-ready");
             if (readyBtn != null) readyBtn.style.display = DisplayStyle.None; // Host is always ready
 
-            // Auto ready for host
+            // Auto ready for host. Nút Start KHÓA tới khi client vào + sẵn sàng (poll cập nhật).
             _isCoopReady = true;
-            if (startBtn != null) startBtn.RemoveFromClassList("coop-start-disabled");
+            _clientPresent = false;
+            _clientReady = false;
+            if (startBtn != null) startBtn.AddToClassList("coop-start-disabled");
 
             var clientCard = _root.Q<VisualElement>("coop-card-client");
             if (clientCard != null) clientCard.style.opacity = 0.5f; // Wait for client
@@ -1082,54 +1228,88 @@ namespace Attrition.UI
         }
 
         /// <summary>
-        /// Mỗi 0.5s đọc PlayerStats của tất cả player trong runner và điền 2 card lobby.
-        /// Card host = player có IsHostPlayer; card client = player còn lại. Nhờ vậy host
-        /// thấy client (và ngược lại) ngay khi client join, không cần bắt đầu trận.
+        /// Mỗi 0.5s đọc LobbyPlayer của tất cả peer trong runner và điền 2 thẻ phòng chờ.
+        /// Thẻ host = LobbyPlayer có IsHostPlayer; thẻ client = peer còn lại. Nhờ vậy host
+        /// thấy client (và ngược lại) ngay khi client vào phòng, chưa cần bắt đầu trận.
         /// </summary>
         private System.Collections.IEnumerator PollLobbyRoster()
         {
             var wait = new WaitForSeconds(0.5f);
             while (true)
             {
-                var runner = FindObjectOfType<NetworkRunner>();
+                var launcher = Attrition.Networking.NetworkLauncher.Instance;
+                var runner = launcher != null ? launcher.Runner : null;
                 if (runner != null)
                 {
-                    Attrition.Gameplay.Player.PlayerStats hostStats = null;
-                    Attrition.Gameplay.Player.PlayerStats clientStats = null;
+                    Attrition.Networking.LobbyPlayer hostLp = null;
+                    Attrition.Networking.LobbyPlayer clientLp = null;
 
-                    foreach (var p in runner.ActivePlayers)
+                    foreach (var lp in FindObjectsByType<Attrition.Networking.LobbyPlayer>(FindObjectsSortMode.None))
                     {
-                        if (!runner.TryGetPlayerObject(p, out var obj) || obj == null) continue;
-                        var stats = obj.GetComponent<Attrition.Gameplay.Player.PlayerStats>();
-                        if (stats == null) continue;
-                        if (stats.IsHostPlayer) hostStats = stats;
-                        else clientStats = stats;
+                        if (lp == null) continue;
+                        if (lp.IsHostPlayer) hostLp = lp;
+                        else clientLp = lp;
                     }
 
-                    if (hostStats != null)
+                    if (hostLp != null)
                     {
-                        string n = hostStats.DisplayName.Value;
+                        string n = hostLp.DisplayName.Value;
                         SetText("coop-host-name", string.IsNullOrEmpty(n) ? "Wanderer" : n);
-                        SetText("coop-host-level", $"LEVEL {Mathf.Max(1, hostStats.Level)}");
+                        SetText("coop-host-level", $"LEVEL {Mathf.Max(1, hostLp.Level)}");
+                        // Tên phòng do host đặt (client đọc từ LobbyPlayer host). Bỏ trống → giữ nhãn cũ.
+                        string room = hostLp.RoomName.Value;
+                        if (!string.IsNullOrEmpty(room)) SetText("coop-room-name", room);
                     }
 
                     var clientCard = _root.Q<VisualElement>("coop-card-client");
-                    if (clientStats != null)
+                    if (clientLp != null)
                     {
-                        string n = clientStats.DisplayName.Value;
+                        string n = clientLp.DisplayName.Value;
+                        bool ready = clientLp.IsReady;
                         SetText("coop-client-name", string.IsNullOrEmpty(n) ? "Wanderer" : n);
-                        SetText("coop-client-level", $"LEVEL {Mathf.Max(1, clientStats.Level)}");
+                        // Hiện trạng thái sẵn sàng kèm level để host biết khi nào start được.
+                        SetText("coop-client-level", $"LEVEL {Mathf.Max(1, clientLp.Level)}  •  {(ready ? "READY" : "NOT READY")}");
                         if (clientCard != null) clientCard.style.opacity = 1f;
+
+                        _clientPresent = true;
+                        _clientReady = ready;
                     }
                     else
                     {
                         SetText("coop-client-name", "Waiting for player...");
                         SetText("coop-client-level", "");
                         if (clientCard != null) clientCard.style.opacity = 0.5f;
+
+                        _clientPresent = false;
+                        _clientReady = false;
+                    }
+
+                    // Host: bật/tắt nút Start theo client present + ready (gate vào game).
+                    if (_isHost)
+                    {
+                        var startBtn = _root.Q<Button>("btn-coop-start");
+                        if (startBtn != null)
+                        {
+                            bool canStart = _clientPresent && _clientReady;
+                            startBtn.SetEnabled(canStart);
+                            if (canStart) startBtn.RemoveFromClassList("coop-start-disabled");
+                            else startBtn.AddToClassList("coop-start-disabled");
+                        }
                     }
                 }
                 yield return wait;
             }
+        }
+
+        /// <summary>LobbyPlayer của peer LOCAL (InputAuthority) — dùng để client gửi RpcSetReady.</summary>
+        private Attrition.Networking.LobbyPlayer FindLocalLobbyStats()
+        {
+            foreach (var lp in FindObjectsByType<Attrition.Networking.LobbyPlayer>(FindObjectsSortMode.None))
+            {
+                if (lp == null || lp.Object == null) continue;
+                if (lp.Object.HasInputAuthority) return lp;
+            }
+            return null;
         }
 
         private void SetText(string elementName, string value)

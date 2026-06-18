@@ -78,6 +78,7 @@ public class CharacterService : ICharacterService
                 Archetype = request.Archetype,
                 InventoryJson = request.InventoryJson,
                 EquipmentJson = request.EquipmentJson,
+                QuestsJson = request.QuestsJson,
                 Snapshots = new List<CharacterSnapshot> { snapshot }
             };
             // Race-safe insert: a concurrent snapshot for the same new (owner, name) hits the unique
@@ -106,6 +107,7 @@ public class CharacterService : ICharacterService
         // Giữ giá trị cũ nếu client không gửi (null) → tránh xoá nhầm inventory khi snapshot không kèm.
         character.InventoryJson = request.InventoryJson ?? character.InventoryJson;
         character.EquipmentJson = request.EquipmentJson ?? character.EquipmentJson;
+        character.QuestsJson = request.QuestsJson ?? character.QuestsJson;
         character.Snapshots.Add(snapshot);
         try
         {
@@ -146,5 +148,5 @@ public class CharacterService : ICharacterService
     private static CharacterDetailDto ToDetail(CharacterEntity c) => new(
         c.Id, c.OwnerId, c.Name, c.Archetype, c.CreatedAt, c.UpdatedAt,
         c.Snapshots.OrderByDescending(s => s.CapturedAt).Select(ToSnapshotDto).ToList(),
-        c.InventoryJson, c.EquipmentJson);
+        c.InventoryJson, c.EquipmentJson, c.QuestsJson);
 }

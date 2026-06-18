@@ -113,10 +113,16 @@ public class PlayerController : NetworkBehaviour, IDamageable
     /// <summary>NPC đang đứng gần (DialogueUI đọc).</summary>
     public Attrition.Gameplay.NPC.NetworkNPC CurrentNPC => _currentNPC;
 
-    /// <summary>UI gọi khi bấm REST trong panel checkpoint: hồi đầy + lưu (host xử lý qua RPC).</summary>
+    /// <summary>UI gọi khi bấm REST trong panel checkpoint: hồi đầy + hồi sinh quái (host xử lý qua RPC).</summary>
     public void RequestRestAtCheckpoint()
     {
         if (_currentCheckpoint != null) _currentCheckpoint.RequestRest();
+    }
+
+    /// <summary>Gọi khi nhấn F mở bảng checkpoint: kích hoạt beacon + LƯU tiến trình (tách khỏi Rest).</summary>
+    public void ActivateAndSaveCheckpoint()
+    {
+        if (_currentCheckpoint != null) _currentCheckpoint.RequestActivateAndSave();
     }
 
     // Nguồn HP DUY NHẤT: có statsComp → dùng PlayerStats.CurrentHP (chỗ PotionSystem hồi vào).
