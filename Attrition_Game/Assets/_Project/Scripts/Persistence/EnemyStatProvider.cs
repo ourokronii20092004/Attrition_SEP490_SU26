@@ -33,6 +33,23 @@ namespace Attrition.Persistence
         {
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+
+        /// <summary>
+        /// Lấy provider (tạo runtime nếu scene chưa có). baseUrl đồng bộ với APIManager để khỏi
+        /// hardcode lệch port. Gọi bởi host trước khi spawn quái.
+        /// </summary>
+        public static EnemyStatProvider Ensure()
+        {
+            if (Instance == null)
+            {
+                var go = new GameObject("EnemyStatProvider");
+                Instance = go.AddComponent<EnemyStatProvider>();
+            }
+            if (APIManager.Instance != null && !string.IsNullOrEmpty(APIManager.Instance.BaseUrl))
+                Instance.baseUrl = APIManager.Instance.BaseUrl;
+            return Instance;
         }
 
         /// <summary>Host gọi 1 lần khi vào phòng: tải override cho các enemyId trong scene.</summary>
@@ -50,6 +67,50 @@ namespace Attrition.Persistence
             {
                 if (string.IsNullOrEmpty(id) || _cache.ContainsKey(id)) continue;
                 yield return FetchOne(id);
+            }
+
+            _ready = true;
+            onDone?.Invoke();
+        }
+
+        /// <summary>
+        /// Host gọi 1 lần khi vào scene: tải TOÀN BỘ bestiary trong 1 request (GET /api/enemies)
+        /// → cache override theo enemyId. Khỏi cần biết scene có quái gì (tránh đọc component
+        /// Gameplay → không tạo vòng lặp assembly). baseUrl rỗng = bỏ qua, dùng default SO (offline).
+        /// </summary>
+        public IEnumerator PrefetchAll(Action onDone = null)
+        {
+            _cache.Clear();
+            if (string.IsNullOrEmpty(baseUrl))
+            {
+                _ready = true;
+                onDone?.Invoke();
+                yield break;
+            }
+
+            string url = $"{baseUrl}/enemies";
+            using (var req = UnityWebRequest.Get(url))
+            {
+                yield return req.SendWebRequest();
+                if (req.result != UnityWebRequest.Result.Success)
+                {
+                    Debug.LogWarning($"[EnemyStatProvider] PrefetchAll: {req.error} — dùng default SO.");
+                }
+                else
+                {
+                    try
+                    {
+                        var resp = JsonConvert.DeserializeObject<ApiResponse<List<EnemyResponseDto>>>(req.downloadHandler.text);
+                        if (resp != null && resp.Success && resp.Data != null)
+                            foreach (var d in resp.Data)
+                                if (d != null && !string.IsNullOrEmpty(d.EnemyId))
+                                    _cache[d.EnemyId] = ToOverride(d);
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogWarning($"[EnemyStatProvider] PrefetchAll parse fail: {e.Message}");
+                    }
+                }
             }
 
             _ready = true;

@@ -151,7 +151,7 @@
         <ui:VisualElement name="host-join-screen" class="screen" style="display: none;">
             <ui:VisualElement name="host-join-content" style="align-items: center; justify-content: center; width: 400px;">
                 <ui:Label text="CO-OP MULTIPLAYER" style="color: white; font-size: 24px; -unity-font-definition: initial; -unity-font: url('Fonts/Cinzel/static/Cinzel-Bold.ttf'); letter-spacing: 5px; margin-bottom: 30px;"/>
-                
+
                 <ui:Button text="HOST GAME" name="btn-host-game" class="login-submit-btn" style="height: 50px; font-size: 14px; margin-bottom: 20px;"/>
                 
                 <ui:VisualElement style="flex-direction: row; align-items: center; margin-bottom: 20px; width: 100%;">
@@ -182,6 +182,7 @@
                     <ui:VisualElement class="ornament-line" style="width: 60px;"/>
                 </ui:VisualElement>
                 <ui:VisualElement name="coop-room-info">
+                    <ui:Label text="ROOM" name="coop-room-name"/>
                     <ui:Label text="● ROOM ID: 8F4A-D91C" name="coop-room-id"/>
                 </ui:VisualElement>
 

@@ -29,6 +29,20 @@ namespace Attrition.Persistence
         public static string CharacterName = "";
         /// <summary>Mã phòng coop hiện tại (đính kèm snapshot online).</summary>
         public static string RoomCode = "";
+        /// <summary>
+        /// SessionId (room bền) trên server — host tạo/reopen room qua API trả về. Dùng làm khóa
+        /// lưu/đọc tiến trình per-room (character_session, world_state). Rỗng = chưa gắn room server.
+        /// </summary>
+        public static string SessionId = "";
+        /// <summary>Tên phòng do host đặt (hiển thị trong lobby). Client đọc từ LobbyPlayer của host.</summary>
+        public static string RoomName = "";
+
+        /// <summary>
+        /// Quest world-state JSON host fetch từ server khi vào room (host-authoritative).
+        /// NPC online đọc holder này để khôi phục (đối xứng với solo đọc save slot), tránh đua timing
+        /// giữa Spawned() của NPC và lúc fetch xong. Rỗng = chưa có tiến trình quest đã lưu.
+        /// </summary>
+        public static string CoopQuestsJson = "";
 
         /// <summary>True nếu đang chơi online (coop, đã đăng nhập) → lưu server. Ngược lại lưu local.</summary>
         public static bool IsOnline => Mode == LaunchMode.Coop && !string.IsNullOrEmpty(OwnerId);

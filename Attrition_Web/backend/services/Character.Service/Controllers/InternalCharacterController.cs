@@ -40,4 +40,19 @@ public class InternalCharacterController : ControllerBase
         if (!KeyValid()) return Unauthorized(ApiResponse.Fail("Valid service authentication is required."));
         return Ok(ApiResponse<int>.Ok(await _service.CountAsync()));
     }
+
+    /// <summary>
+    /// Host (trusted game server) đọc character detail (gồm inventoryJson) của BẤT KỲ player nào
+    /// để nạp đồ cho nhân vật client trong coop. Dùng X-Internal-Key thay JWT — bỏ qua ownership
+    /// guard ở endpoint player-facing (host cần đọc đồ của client, không phải của chính host).
+    /// </summary>
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetDetail(Guid id)
+    {
+        if (!KeyValid()) return Unauthorized(ApiResponse.Fail("Valid service authentication is required."));
+        var character = await _service.GetDetailAsync(id);
+        return character == null
+            ? NotFound(ApiResponse.Fail("Character not found."))
+            : Ok(ApiResponse<CharacterDetailDto>.Ok(character));
+    }
 }

@@ -90,22 +90,45 @@ namespace Attrition.Gameplay.NPC
             RestoreSavedProgress();
         }
 
-        /// <summary>Host nạp lại state/progress của quest NPC này từ save slot (solo). No-op nếu chưa có.</summary>
+        /// <summary>
+        /// Host nạp lại state/progress của quest NPC này khi spawn. Mỗi NPC tự đọc questId của mình
+        /// → không lệ thuộc thứ tự spawn. Solo: từ save slot. Online: từ holder CoopQuestsJson host đã
+        /// fetch về (host-authoritative). No-op nếu chưa có tiến trình.
+        /// </summary>
         private void RestoreSavedProgress()
         {
             if (!HasStateAuthority || quest == null || string.IsNullOrEmpty(quest.questId)) return;
-            if (Attrition.Persistence.GameLaunch.IsOnline) return;
 
-            var data = Attrition.Persistence.SaveManager.LoadSlot(Attrition.Persistence.GameLaunch.SelectedSlot);
-            if (data?.quests == null) return;
+            Attrition.Persistence.QuestProgressEntry[] entries;
+            if (Attrition.Persistence.GameLaunch.IsOnline)
+            {
+                entries = ParseQuestsJson(Attrition.Persistence.GameLaunch.CoopQuestsJson);
+            }
+            else
+            {
+                var data = Attrition.Persistence.SaveManager.LoadSlot(Attrition.Persistence.GameLaunch.SelectedSlot);
+                entries = data?.quests;
+            }
+            if (entries == null) return;
 
-            foreach (var e in data.quests)
+            foreach (var e in entries)
             {
                 if (e == null || e.questId != quest.questId) continue;
                 QuestState = e.state;
                 QuestProgress = e.progress;
                 break;
             }
+        }
+
+        private static Attrition.Persistence.QuestProgressEntry[] ParseQuestsJson(string json)
+        {
+            if (string.IsNullOrEmpty(json)) return null;
+            try
+            {
+                var parsed = JsonUtility.FromJson<Attrition.Persistence.QuestProgressList>(json);
+                return parsed?.quests;
+            }
+            catch { return null; }
         }
 
         // ═══════════════════════════════════════════
@@ -209,6 +232,40 @@ namespace Attrition.Gameplay.NPC
             return list.ToArray();
         }
 
+        /// <summary>Host gom quest mọi NPC → JSON (gửi lên server coop). Null nếu không có gì để lưu.</summary>
+        public static string CaptureAllJson()
+        {
+            var arr = CaptureAll();
+            if (arr == null || arr.Length == 0) return null;
+            return JsonUtility.ToJson(new Attrition.Persistence.QuestProgressList { quests = arr });
+        }
+
+        /// <summary>
+        /// Host (coop) áp tiến trình quest từ JSON server vào các NPC khớp questId. Gọi một lần khi
+        /// vào room — NPC nào không khớp giữ nguyên NotStarted. No-op nếu JSON rỗng.
+        /// </summary>
+        public static void ApplyAllJson(string json)
+        {
+            if (string.IsNullOrEmpty(json)) return;
+            Attrition.Persistence.QuestProgressList parsed;
+            try { parsed = JsonUtility.FromJson<Attrition.Persistence.QuestProgressList>(json); }
+            catch { return; }
+            if (parsed?.quests == null || parsed.quests.Length == 0) return;
+
+            var npcs = FindObjectsByType<NetworkNPC>(FindObjectsSortMode.None);
+            foreach (var npc in npcs)
+            {
+                if (!npc.HasStateAuthority || npc.quest == null || string.IsNullOrEmpty(npc.quest.questId)) continue;
+                foreach (var e in parsed.quests)
+                {
+                    if (e == null || e.questId != npc.quest.questId) continue;
+                    npc.QuestState = e.state;
+                    npc.QuestProgress = e.progress;
+                    break;
+                }
+            }
+        }
+
         // ═══════════════════════════════════════════
         //  REWARD DISTRIBUTION — Host
         // ═══════════════════════════════════════════
@@ -236,7 +293,7 @@ namespace Attrition.Gameplay.NPC
                     int idx = db.GetIndex(reward.itemId);
                     if (idx < 0) continue;
                     foreach (var inv in inventories)
-                        if (inv != null) inv.TryAddItem(idx, reward.amount);
+                        if (inv != null) inv.AddItemOrDrop(idx, reward.amount);
                 }
             }
 

@@ -80,6 +80,31 @@ namespace Attrition.Gameplay.World
             DoRest();
         }
 
+        /// <summary>
+        /// Gọi khi player nhấn F mở bảng checkpoint: kích hoạt beacon (fast-travel) + LƯU tiến trình.
+        /// Tách khỏi Rest — mở bảng luôn lưu, kể cả khi còn quái (save không cần out-of-combat).
+        /// </summary>
+        public void RequestActivateAndSave()
+        {
+            RpcRequestActivateAndSave();
+        }
+
+        [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+        private void RpcRequestActivateAndSave()
+        {
+            if (!HasStateAuthority) return;
+
+            RespawnPosition = RestPoint;
+            HasBeenActivated = true;
+
+            // Lưu tiến trình tại mốc tới checkpoint (host/single). Solo → local JSON; online → snapshot.
+            var saver = Attrition.Gameplay.Persistence.GameSaveService.EnsureExists();
+            saver.Save(Attrition.Gameplay.Persistence.GameSaveService.SaveEvent.Rest,
+                       DisplayName, RestPoint);
+
+            RpcOnRested();
+        }
+
         // Host thực thi rest. Trả về true nếu thành công.
         private bool DoRest()
         {
@@ -117,11 +142,6 @@ namespace Attrition.Gameplay.World
 
             RespawnPosition = RestPoint;
             HasBeenActivated = true;
-
-            // Lưu tiến trình tại mốc rest (host/single). Solo → local JSON; online → snapshot server.
-            var saver = Attrition.Gameplay.Persistence.GameSaveService.EnsureExists();
-            saver.Save(Attrition.Gameplay.Persistence.GameSaveService.SaveEvent.Rest,
-                       DisplayName, RestPoint);
 
             RpcOnRested();
             return true;
