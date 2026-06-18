@@ -27,6 +27,11 @@ namespace Attrition.Gameplay.Player.Inventory
         [Networked, Capacity(10)] public NetworkArray<InventorySlot> AccessorySlots { get; }
         [Networked, Capacity(14)] public NetworkArray<InventorySlot> MaterialSlots { get; }
 
+        // Định danh chủ nhân của nhân vật này (host ghi/đọc để LOAD + LƯU đồ đúng người trong coop).
+        // Host's own player: host ghi thẳng. Client's player: client gửi qua RpcSetOwnerIdentity.
+        [Networked] public NetworkString<_64> OwnerUserId { get; set; }
+        [Networked] public NetworkString<_64> OwnerCharacterId { get; set; }
+
         // ═══════════════════════════════════════════
         //  NETWORKED EQUIP SLOTS (đang mặc)
         // ═══════════════════════════════════════════
@@ -64,31 +69,75 @@ namespace Attrition.Gameplay.Player.Inventory
             _db = ItemDatabaseSO.Instance;
 
             if (_db == null)
-                Debug.LogError("[PlayerInventory] ItemDatabaseSO.Instance chưa được set!");
-            else if (HasStateAuthority)
             {
-                // Online (coop, đã login): nạp inventory từ server (Postgres). Ngược lại: local JSON.
-                if (Attrition.Persistence.GameLaunch.IsOnline)
-                    StartCoroutine(LoadFromServerThenSeed());
+                Debug.LogError("[PlayerInventory] ItemDatabaseSO.Instance chưa được set!");
+                return;
+            }
+
+            // SOLO (không online): host=single, load local ngay.
+            if (!Attrition.Persistence.GameLaunch.IsOnline)
+            {
+                if (HasStateAuthority)
+                {
+                    LoadFromLocal();
+                    SeedStartingItems();
+                }
+                return;
+            }
+
+            // ONLINE COOP: nạp đồ phải theo ĐÚNG chủ nhân của nhân vật này, không dùng GameLaunch
+            // chung (trên host, GameLaunch.CharacterId là của host → sẽ nạp nhầm đồ host cho client).
+            // Peer sở hữu (InputAuthority) biết danh tính của mình → đẩy lên host:
+            //   - Host's own player: host vừa StateAuthority vừa InputAuthority → ghi thẳng rồi load.
+            //   - Client's player:   chỉ client có InputAuthority → gửi RPC; host nhận → load.
+            if (HasInputAuthority)
+            {
+                string ownerId = Attrition.Persistence.GameLaunch.OwnerId ?? "";
+                string charId = Attrition.Persistence.GameLaunch.CharacterId ?? "";
+
+                if (HasStateAuthority)
+                {
+                    OwnerUserId = ownerId;
+                    OwnerCharacterId = charId;
+                    StartCoroutine(LoadOnlineInventory(charId, isOwningPeerHere: true));
+                }
                 else
                 {
-                    LoadFromLocal();    // nạp save local (solo)
-                    SeedStartingItems(); // chỉ seed khi túi vẫn trống sau khi load
+                    RpcSetOwnerIdentity(ownerId, charId);
                 }
             }
         }
 
-        /// <summary>Coop: GET character detail từ server → ImportJson; nếu trống thì seed item khởi đầu.</summary>
-        private System.Collections.IEnumerator LoadFromServerThenSeed()
+        /// <summary>Client báo danh tính chủ nhân lên host; host ghi state + fetch đồ đúng character.</summary>
+        [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+        private void RpcSetOwnerIdentity(NetworkString<_64> ownerId, NetworkString<_64> characterId)
         {
-            string charId = Attrition.Persistence.GameLaunch.CharacterId;
+            OwnerUserId = ownerId;
+            OwnerCharacterId = characterId;
+            StartCoroutine(LoadOnlineInventory(characterId.ToString(), isOwningPeerHere: false));
+        }
+
+        /// <summary>
+        /// Host fetch inventory từ server theo characterId của CHỦ NHÂN nhân vật này (qua internal key,
+        /// bỏ qua ownership guard) rồi áp vào túi. Quest world-state chỉ nạp khi đây là nhân vật host.
+        /// </summary>
+        private System.Collections.IEnumerator LoadOnlineInventory(string charId, bool isOwningPeerHere)
+        {
             if (APIManager.Instance != null && !string.IsNullOrEmpty(charId))
             {
                 bool done = false;
-                yield return APIManager.Instance.GetCharacterDetail(charId, detail =>
+                yield return APIManager.Instance.GetCharacterDetailInternal(charId, detail =>
                 {
                     if (detail != null && !string.IsNullOrEmpty(detail.inventoryJson))
                         ImportJson(detail.inventoryJson);
+
+                    // Quest world-state là của HOST (host-authoritative). Chỉ nạp từ character của host.
+                    bool isHostOwnPlayer = isOwningPeerHere && HasInputAuthority;
+                    if (detail != null && isHostOwnPlayer)
+                    {
+                        Attrition.Persistence.GameLaunch.CoopQuestsJson = detail.questsJson;
+                        Attrition.Gameplay.NPC.NetworkNPC.ApplyAllJson(detail.questsJson);
+                    }
                     done = true;
                 });
                 if (!done) yield return null;
@@ -125,11 +174,33 @@ namespace Attrition.Gameplay.Player.Inventory
         public bool TryAddItem(int itemIndex, int amount = 1)
         {
             if (!HasStateAuthority || _db == null || amount <= 0) return false;
+            int remaining = AddItemInternal(itemIndex, amount);
+            if (remaining >= amount) return false; // không thêm được gì cả
+            NotifyChanged();
+            return true;
+        }
+
+        /// <summary>
+        /// Thêm item vào túi; phần KHÔNG vừa (túi đầy) sẽ VĂNG ra thế giới gần player.
+        /// Dùng cho phần thưởng quest (BR-40): item luôn tới tay player, đầy thì rơi ra đất.
+        /// Chỉ host.
+        /// </summary>
+        public void AddItemOrDrop(int itemIndex, int amount = 1)
+        {
+            if (!HasStateAuthority || _db == null || amount <= 0) return;
+            int remaining = AddItemInternal(itemIndex, amount);
+            if (remaining > 0) SpawnDroppedItem(itemIndex, remaining, Object.InputAuthority);
+            if (remaining < amount) NotifyChanged();
+        }
+
+        /// <summary>Lõi thêm item: stack + lấp ô trống. Trả về số lượng KHÔNG thêm được (dư vì đầy).</summary>
+        private int AddItemInternal(int itemIndex, int amount)
+        {
             var item = _db.GetItem(itemIndex);
-            if (item == null) return false;
+            if (item == null) return amount;
 
             var arr = GetArrayForCategory(item.Category);
-            if (arr.Length == 0) return false;
+            if (arr.Length == 0) return amount;
 
             int remaining = amount;
 
@@ -161,10 +232,7 @@ namespace Attrition.Gameplay.Player.Inventory
                 }
             }
 
-            if (remaining >= amount) return false; // không thêm được gì cả
-
-            NotifyChanged();
-            return true;
+            return remaining;
         }
 
         // ═══════════════════════════════════════════
@@ -374,27 +442,31 @@ namespace Attrition.Gameplay.Player.Inventory
             if (item == null) return false;
             if (item.isKeyItem) return false; // BR-45
 
-            // Spawn DroppedItem gần tâm player (lệch ngang nhỏ để raycast xuống vẫn trúng sàn dưới chân).
-            if (droppedItemPrefab.IsValid)
-            {
-                var dropper = Object.InputAuthority; // ai vứt → bị cooldown nhặt lại
-                float face = transform.localScale.x >= 0 ? 1f : -1f;
-                Vector3 spawnPos = transform.position + new Vector3(0.25f * face, 0.2f, 0f);
-                Runner.Spawn(droppedItemPrefab, spawnPos, Quaternion.identity, null, (runner, obj) =>
-                {
-                    var dropped = obj.GetComponent<Attrition.Gameplay.World.DroppedItem>();
-                    if (dropped != null)
-                    {
-                        dropped.ItemIndex = slot.ItemIndex;
-                        dropped.Amount = slot.Amount;
-                        dropped.InitDrop(dropper, runner.Tick);
-                    }
-                });
-            }
+            SpawnDroppedItem(slot.ItemIndex, slot.Amount, Object.InputAuthority);
 
             arr.Set(slotIndex, InventorySlot.Empty);
             NotifyChanged();
             return true;
+        }
+
+        /// <summary>Spawn 1 DroppedItem ra sàn gần player (dùng cho vứt thủ công + reward tràn túi). Chỉ host.</summary>
+        private void SpawnDroppedItem(int itemIndex, int amount, PlayerRef dropper)
+        {
+            if (!HasStateAuthority || !droppedItemPrefab.IsValid || amount <= 0) return;
+
+            // Lệch ngang nhỏ để raycast xuống vẫn trúng sàn dưới chân.
+            float face = transform.localScale.x >= 0 ? 1f : -1f;
+            Vector3 spawnPos = transform.position + new Vector3(0.25f * face, 0.2f, 0f);
+            Runner.Spawn(droppedItemPrefab, spawnPos, Quaternion.identity, null, (runner, obj) =>
+            {
+                var dropped = obj.GetComponent<Attrition.Gameplay.World.DroppedItem>();
+                if (dropped != null)
+                {
+                    dropped.ItemIndex = itemIndex;
+                    dropped.Amount = amount;
+                    dropped.InitDrop(dropper, runner.Tick);
+                }
+            });
         }
 
 

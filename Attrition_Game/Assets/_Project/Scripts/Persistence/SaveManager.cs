@@ -15,6 +15,13 @@ namespace Attrition.Persistence
         public int progress;   // số mục tiêu đã hoàn thành
     }
 
+    /// <summary>Bọc mảng quest để (de)serialize JSON ổn định (Unity/Newtonsoft) cho lưu server coop.</summary>
+    [Serializable]
+    public class QuestProgressList
+    {
+        public QuestProgressEntry[] quests;
+    }
+
     [Serializable]
     public class SaveSlotData
     {

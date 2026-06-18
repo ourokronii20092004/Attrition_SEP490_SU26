@@ -38,15 +38,23 @@ namespace Attrition.Networking
 
         private void Start()
         {
+            // Coop: NetworkLauncher (object bền từ Menu) đã giữ runner + sẽ tự spawn player/quái
+            // ở OnSceneLoadDone. Không làm gì ở đây.
             if (skipIfRunnerExists && FindFirstObjectByType<NetworkRunner>() != null)
-                return; // coop đã start runner từ trước → bỏ qua
+                return;
 
             if (GameLaunch.Mode == LaunchMode.Solo)
             {
-                var spawner = GetComponent<NetworkSpawner>();
-                spawner.StartSinglePlayer();
+                // Solo: cần NetworkLauncher để giữ runner. Bấm Play THẲNG scene gameplay (test) thì
+                // scene Menu không chạy → chưa có launcher → tự tạo một cái tại đây.
+                var launcher = NetworkLauncher.Instance;
+                if (launcher == null)
+                {
+                    var go = new GameObject("NetworkLauncher");
+                    launcher = go.AddComponent<NetworkLauncher>();
+                }
+                launcher.StartSinglePlayer();
             }
-            // Coop: runner do lobby tạo trước khi đổi scene, không làm gì ở đây.
         }
     }
 }

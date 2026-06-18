@@ -1,8 +1,4 @@
 using Fusion;
-using Fusion.Addons.Physics;
-using Fusion.Sockets;
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -17,7 +13,13 @@ public class EnemySpawnConfig
     public EnemyBiomeDefinition biome;
 }
 
-public class NetworkSpawner : MonoBehaviour, INetworkRunnerCallbacks
+/// <summary>
+/// Spawn nhân vật gameplay + quái cho RIÊNG scene gameplay (spawnPoints/enemySpawnConfigs là Transform
+/// của scene này). KHÔNG còn sở hữu NetworkRunner — runner do NetworkLauncher (object bền) quản lý.
+/// NetworkLauncher gọi ServerSpawnPlayer / ServerSpawnEnemies khi scene gameplay load xong (host-side).
+/// Checkpoint gọi RespawnConfiguredEnemies / DespawnObject khi Rest.
+/// </summary>
+public class NetworkSpawner : MonoBehaviour
 {
     public NetworkPrefabRef playerPrefab;
     public NetworkPrefabRef player1Prefab;
@@ -29,60 +31,55 @@ public class NetworkSpawner : MonoBehaviour, INetworkRunnerCallbacks
     public NetworkPrefabRef fallbackEnemyPrefab;
     public EnemySpawnConfig[] enemySpawnConfigs;
 
-    [Header("UI References")]
-    public GameObject lobbyPanel;
-
     private NetworkRunner _runner;
     private bool _hasSpawnedEnemies;
 
-    private void Awake()
-    {
-        var sim = GetComponent<RunnerSimulatePhysics2D>();
-        if (sim == null)
-            sim = gameObject.AddComponent<RunnerSimulatePhysics2D>();
-        sim.ClientPhysicsSimulation = ClientPhysicsSimulation.SimulateForward;
+    /// <summary>Runner đang dùng (lấy từ NetworkLauncher). Null nếu chưa khởi tạo.</summary>
+    private NetworkRunner Runner
+        => _runner != null ? _runner
+         : (_runner = Attrition.Networking.NetworkLauncher.Instance != null
+              ? Attrition.Networking.NetworkLauncher.Instance.Runner : null);
 
-        QualitySettings.vSyncCount = 1;
-#if UNITY_ANDROID || UNITY_IOS
-        Application.targetFrameRate = 60;
-#else
-        var rr = Screen.currentResolution.refreshRateRatio;
-        var hz = rr.denominator != 0 ? rr.numerator / (double)rr.denominator : 60.0;
-        Application.targetFrameRate = Mathf.Clamp(Mathf.RoundToInt((float)hz), 60, 360);
-#endif
+    /// <summary>Host spawn 1 nhân vật gameplay cho 1 peer. Gọi bởi NetworkLauncher.</summary>
+    public void ServerSpawnPlayer(NetworkRunner runner, PlayerRef player)
+    {
+        if (runner == null || !runner.IsServer) return;
+        _runner = runner;
+
+        // Idempotent: peer đã có nhân vật rồi thì bỏ qua. Chặn spawn trùng khi cả OnSceneLoadDone
+        // lẫn OnPlayerJoined cùng gọi (Solo: local player join fire SAU khi scene load xong → 2 nhân vật).
+        if (runner.TryGetPlayerObject(player, out var existing) && existing != null) return;
+
+        bool isHostPlayer = player == runner.LocalPlayer;
+        NetworkPrefabRef prefabToSpawn = isHostPlayer ? playerPrefab : player1Prefab;
+
+        Vector3 spawnPos;
+        if (spawnPoints != null && spawnPoints.Length > 0)
+            spawnPos = spawnPoints[player.RawEncoded % spawnPoints.Length].position;
+        else
+            spawnPos = new Vector3(UnityEngine.Random.Range(-2f, 2f), 48f, 0);
+
+        NetworkObject playerObj = runner.Spawn(prefabToSpawn, spawnPos, Quaternion.identity, player);
+        runner.SetPlayerObject(player, playerObj);
     }
 
-    async void StartGame(GameMode mode, string sessionName)
+    /// <summary>Host spawn toàn bộ quái theo config (một lần khi vào scene). Gọi bởi NetworkLauncher.</summary>
+    public void ServerSpawnEnemies(NetworkRunner runner)
     {
-        _runner = gameObject.AddComponent<NetworkRunner>();
-        _runner.ProvideInput = true;
-        _runner.AddCallbacks(this);
-        _runner.AddCallbacks(GetComponent<NetworkInputHandler>());
-
-        await _runner.StartGame(new StartGameArgs()
-        {
-            GameMode = mode,
-            SessionName = sessionName,
-            Scene = SceneRef.FromIndex(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex),
-            SceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>()
-        });
+        if (runner == null || !runner.IsServer) return;
+        _runner = runner;
+        if (_hasSpawnedEnemies) return;
+        _hasSpawnedEnemies = true;
+        // Host prefetch override chỉ số quái (web sửa) TRƯỚC khi spawn, rồi mới spawn để EnemyStats
+        // đọc được cache. Lỗi mạng → PrefetchAll tự fallback dùng default SO, vẫn spawn bình thường.
+        StartCoroutine(PrefetchThenSpawn());
     }
 
-    public void StartCoopSession(GameMode mode, string sessionName)
+    private System.Collections.IEnumerator PrefetchThenSpawn()
     {
-        if (lobbyPanel != null) lobbyPanel.SetActive(false);
-        StartGame(mode, sessionName);
-    }
-
-    /// <summary>
-    /// Chơi SOLO cục bộ: GameMode.Single — không kết nối relay/mạng, không cần login.
-    /// Vẫn dùng Fusion nên mọi [Networked]/RPC/spawn chạy y hệt coop (test gameplay chuẩn).
-    /// Gọi tự động khi scene gameplay khởi động ở chế độ Solo.
-    /// </summary>
-    public void StartSinglePlayer()
-    {
-        if (lobbyPanel != null) lobbyPanel.SetActive(false);
-        StartGame(GameMode.Single, "SoloLocal");
+        var provider = Attrition.Persistence.EnemyStatProvider.Ensure();
+        yield return provider.PrefetchAll();
+        SpawnAllEnemies();
     }
 
     private void SpawnAllEnemies()
@@ -118,13 +115,15 @@ public class NetworkSpawner : MonoBehaviour, INetworkRunnerCallbacks
 
     private NetworkObject TrySpawnOneEnemy(EnemySpawnConfig config, Vector3 spawnPos)
     {
-        NetworkObject prefabNo = config.biome != null ? config.biome.PickRandomPrefab() : null;
+        var runner = Runner;
+        if (runner == null) return null;
 
+        NetworkObject prefabNo = config.biome != null ? config.biome.PickRandomPrefab() : null;
         if (prefabNo != null)
-            return _runner.Spawn(prefabNo, spawnPos, Quaternion.identity, null);
+            return runner.Spawn(prefabNo, spawnPos, Quaternion.identity, null);
 
         if (fallbackEnemyPrefab.IsValid)
-            return _runner.Spawn(fallbackEnemyPrefab, spawnPos, Quaternion.identity, null);
+            return runner.Spawn(fallbackEnemyPrefab, spawnPos, Quaternion.identity, null);
 
         return null;
     }
@@ -136,99 +135,16 @@ public class NetworkSpawner : MonoBehaviour, INetworkRunnerCallbacks
     /// </summary>
     public void RespawnConfiguredEnemies()
     {
-        if (_runner == null || !_runner.IsServer) return;
+        var runner = Runner;
+        if (runner == null || !runner.IsServer) return;
         SpawnAllEnemies();
     }
 
     /// <summary>Despawn 1 NetworkObject (Checkpoint quyết định con nào, tránh phụ thuộc type Gameplay → không tạo vòng lặp assembly).</summary>
     public void DespawnObject(NetworkObject obj)
     {
-        if (_runner == null || !_runner.IsServer) return;
-        if (obj != null && obj.IsValid) _runner.Despawn(obj);
+        var runner = Runner;
+        if (runner == null || !runner.IsServer) return;
+        if (obj != null && obj.IsValid) runner.Despawn(obj);
     }
-
-    public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
-    {
-        if (runner.IsServer)
-        {
-            bool isHostPlayer = player == runner.LocalPlayer;
-            NetworkPrefabRef prefabToSpawn = isHostPlayer ? playerPrefab : player1Prefab;
-
-            Vector3 spawnPos;
-            if (spawnPoints != null && spawnPoints.Length > 0)
-            {
-                spawnPos = spawnPoints[player.RawEncoded % spawnPoints.Length].position;
-            }
-            else
-            {
-                float randomX = UnityEngine.Random.Range(-2f, 2f);
-                spawnPos = new Vector3(randomX, 48f, 0);
-            }
-
-            NetworkObject playerObj = runner.Spawn(prefabToSpawn, spawnPos, Quaternion.identity, player);
-            runner.SetPlayerObject(player, playerObj);
-
-            if (player == runner.LocalPlayer && !_hasSpawnedEnemies)
-            {
-                SpawnAllEnemies();
-                _hasSpawnedEnemies = true;
-            }
-
-            // Coop: client (re)join → đủ người trở lại → kết thúc trạng thái chờ + resume.
-            if (runner.GameMode != GameMode.Single && runner.ActivePlayers.Count() >= 2)
-            {
-                Attrition.Persistence.CoopSession.EndWaiting();
-            }
-        }
-    }
-
-    public void OnClickHost()
-    {
-        if (lobbyPanel != null) lobbyPanel.SetActive(false);
-        StartGame(GameMode.Host, "TestRoom");
-    }
-
-    public void OnClickClient()
-    {
-        if (lobbyPanel != null) lobbyPanel.SetActive(false);
-        StartGame(GameMode.Client, "TestRoom");
-    }
-
-    public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
-    {
-        if (runner.IsServer)
-        {
-            if (runner.TryGetPlayerObject(player, out NetworkObject playerObj))
-            {
-                runner.Despawn(playerObj);
-                runner.SetPlayerObject(player, null);
-                Debug.Log($"[SERVER] Người chơi {player.PlayerId} đã thoát.");
-            }
-
-            // Coop (Host mode, không phải Single): client rời → CHỜ họ quay lại (không drop về solo).
-            // Pause + hiện overlay Waiting cho host; client vào lại sẽ EndWaiting ở OnPlayerJoined.
-            if (runner.GameMode != GameMode.Single && runner.ActivePlayers.Count() <= 1)
-            {
-                Attrition.Persistence.CoopSession.BeginWaiting("WAITING FOR PLAYER TO RECONNECT...");
-            }
-        }
-    }
-
-    public void OnInput(NetworkRunner runner, NetworkInput input) { }
-    public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
-    public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason) { }
-    public void OnConnectedToServer(NetworkRunner runner) { }
-    public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason) { }
-    public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] payload) { }
-    public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason) { }
-    public void OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message) { }
-    public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList) { }
-    public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data) { }
-    public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken) { }
-    public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data) { }
-    public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress) { }
-    public void OnSceneLoadDone(NetworkRunner runner) { }
-    public void OnSceneLoadStart(NetworkRunner runner) { }
-    public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
-    public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
 }
