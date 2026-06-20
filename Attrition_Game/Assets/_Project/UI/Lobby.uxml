@@ -1,0 +1,60 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="MainMenuUI.uss"/>
+    <ui:VisualElement name="container">
+        <ui:VisualElement name="background"/>
+        <ui:VisualElement name="overlay-gradient"/>
+
+        <!-- ==================== CO-OP LOBBY SCREEN ==================== -->
+        <ui:VisualElement name="coop-lobby-screen" class="screen">
+            <ui:VisualElement name="coop-content">
+                <!-- Header -->
+                <ui:VisualElement name="coop-header">
+                    <ui:VisualElement class="ornament-line" style="width: 60px;"/>
+                    <ui:Label text="CO-OP ROOM" name="coop-title"/>
+                    <ui:VisualElement class="ornament-line" style="width: 60px;"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="coop-room-info">
+                    <ui:Label text="ROOM" name="coop-room-name"/>
+                    <ui:Label text="● ROOM ID: 8F4A-D91C" name="coop-room-id"/>
+                </ui:VisualElement>
+
+                <!-- Player Cards Container -->
+                <ui:VisualElement name="coop-players-row">
+                    <!-- Host Card -->
+                    <ui:VisualElement name="coop-card-host" class="coop-player-card host">
+                        <ui:VisualElement class="coop-card-badge host-badge">
+                            <ui:Label text="♔ HOST" class="coop-badge-text host"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="coop-avatar host-avatar"/>
+                        <ui:Label text="Host" name="coop-host-name" class="coop-player-name"/>
+                        <ui:Label text="LEVEL 1" name="coop-host-level" class="coop-player-level"/>
+                        <ui:VisualElement class="coop-status-badge connected">
+                            <ui:Label text="● Connected" class="coop-status-text connected"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <!-- VS -->
+                    <ui:Label text="VS" name="coop-vs-text"/>
+
+                    <!-- Client Card -->
+                    <ui:VisualElement name="coop-card-client" class="coop-player-card client">
+                        <ui:VisualElement class="coop-card-badge client-badge">
+                            <ui:Label text="👤 CLIENT" class="coop-badge-text client"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="coop-avatar client-avatar"/>
+                        <ui:Label text="Waiting..." name="coop-client-name" class="coop-player-name"/>
+                        <ui:Label text="" name="coop-client-level" class="coop-player-level"/>
+                        <ui:Button text="● NOT READY" name="btn-coop-ready" class="coop-ready-btn not-ready"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- Bottom Actions -->
+                <ui:VisualElement name="coop-bottom-bar">
+                    <ui:Button text="← BACK" name="btn-coop-back" class="save-action-btn back"/>
+                    <ui:Button text="START JOURNEY →" name="btn-coop-start" class="save-action-btn continue coop-start-disabled"/>
+                    <ui:Label text="● Ping: 24ms" name="coop-ping"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

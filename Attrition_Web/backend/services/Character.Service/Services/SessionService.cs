@@ -147,6 +147,17 @@ public class SessionService : ISessionService
         return ApiResponse<WorldStateDto>.Ok(ToWorldStateDto(entity));
     }
 
+    public async Task<ApiResponse> DeleteSessionAsync(Guid sessionId)
+    {
+        if (sessionId == Guid.Empty)
+            return ApiResponse.Fail("SessionId is required.");
+
+        var deleted = await _repo.DeleteSessionAsync(sessionId);
+        if (!deleted) return ApiResponse.Fail("Room not found.");
+
+        return ApiResponse.Ok();
+    }
+
     // ─── room code ───
     // Fixed per room: generated once at creation and never changes, so a host can re-open the
     // same journey and invite the same friend back with the same code.

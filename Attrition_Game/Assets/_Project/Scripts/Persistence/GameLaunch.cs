@@ -46,5 +46,29 @@ namespace Attrition.Persistence
 
         /// <summary>True nếu đang chơi online (coop, đã đăng nhập) → lưu server. Ngược lại lưu local.</summary>
         public static bool IsOnline => Mode == LaunchMode.Coop && !string.IsNullOrEmpty(OwnerId);
+
+        /// <summary>
+        /// Cache inventory theo SESSION (host fetch 1 lần khi vào game): characterId → inventoryJson của
+        /// ĐÚNG cặp (character, session hiện tại). Đồ gắn theo hành trình/room, KHÔNG phải toàn cục theo
+        /// character. Rỗng/không có key = character này chưa có tiến trình trong session → seed tân thủ.
+        /// Quest world-state của session cache riêng ở CoopQuestsJson. Reset khi rời/đổi session.
+        /// </summary>
+        public static readonly System.Collections.Generic.Dictionary<string, string> SessionInventoryByChar
+            = new System.Collections.Generic.Dictionary<string, string>();
+
+        /// <summary>True khi MỘT PlayerInventory đã bắt đầu fetch session (chặn fetch trùng).</summary>
+        public static bool SessionInventoryFetchStarted = false;
+
+        /// <summary>True khi fetch session đã XONG (các player khác chờ cờ này rồi mới đọc cache).</summary>
+        public static bool SessionInventoryLoaded = false;
+
+        /// <summary>Xoá cache inventory-theo-session (gọi khi rời room / đổi session / reset).</summary>
+        public static void ClearSessionInventoryCache()
+        {
+            SessionInventoryByChar.Clear();
+            SessionInventoryFetchStarted = false;
+            SessionInventoryLoaded = false;
+            CoopQuestsJson = "";
+        }
     }
 }

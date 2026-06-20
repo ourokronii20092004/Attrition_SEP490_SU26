@@ -25,4 +25,7 @@ public interface ISessionRepository
     // ─── world_state upsert ───
     Task<WorldStateEntity?> GetWorldStateAsync(Guid sessionId, string eventId);
     Task UpsertWorldStateAsync(WorldStateEntity entity);
+
+    // Delete a room entirely (session + all child rows).
+    Task<bool> DeleteSessionAsync(Guid sessionId);
 }
