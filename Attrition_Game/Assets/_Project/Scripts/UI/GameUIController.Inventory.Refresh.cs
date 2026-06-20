@@ -11,7 +11,7 @@ namespace Attrition.UI
     {
         private void RefreshInventory()
         {
-            if (_inventory == null || _db == null) return;
+            if (_inventory == null || _db == null || _inventory.Object == null || !_inventory.Object.IsValid) return;
             var grid = _root?.Q<VisualElement>("inv-grid");
             if (grid == null) return;
 

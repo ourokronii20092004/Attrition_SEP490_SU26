@@ -172,55 +172,35 @@
             </ui:VisualElement>
         </ui:VisualElement>
 
-        <!-- ==================== CO-OP LOBBY SCREEN ==================== -->
-        <ui:VisualElement name="coop-lobby-screen" class="screen" style="display: none;">
-            <ui:VisualElement name="coop-content">
-                <!-- Header -->
-                <ui:VisualElement name="coop-header">
-                    <ui:VisualElement class="ornament-line" style="width: 60px;"/>
-                    <ui:Label text="CO-OP ROOM" name="coop-title"/>
-                    <ui:VisualElement class="ornament-line" style="width: 60px;"/>
-                </ui:VisualElement>
-                <ui:VisualElement name="coop-room-info">
-                    <ui:Label text="ROOM" name="coop-room-name"/>
-                    <ui:Label text="● ROOM ID: 8F4A-D91C" name="coop-room-id"/>
+        <!-- ==================== SESSION SELECTION SCREEN (HOST) ==================== -->
+        <ui:VisualElement name="session-selection-screen" class="screen" style="display: none;">
+            <ui:VisualElement name="session-content">
+                <ui:VisualElement name="session-title-area">
+                    <ui:Label text="SELECT JOURNEY" name="session-title"/>
+                    <ui:Label text="Continue an existing room or start a new adventure" name="session-subtitle"/>
+                    <ui:VisualElement name="session-title-divider"/>
                 </ui:VisualElement>
 
-                <!-- Player Cards Container -->
-                <ui:VisualElement name="coop-players-row">
-                    <!-- Host Card -->
-                    <ui:VisualElement name="coop-card-host" class="coop-player-card host">
-                        <ui:VisualElement class="coop-card-badge host-badge">
-                            <ui:Label text="♔ HOST" class="coop-badge-text host"/>
-                        </ui:VisualElement>
-                        <ui:VisualElement class="coop-avatar host-avatar"/>
-                        <ui:Label text="Host" name="coop-host-name" class="coop-player-name"/>
-                        <ui:Label text="LEVEL 1" name="coop-host-level" class="coop-player-level"/>
-                        <ui:VisualElement class="coop-status-badge connected">
-                            <ui:Label text="● Connected" class="coop-status-text connected"/>
+                <ui:ScrollView name="session-list-container" mode="Vertical">
+                    <!-- Session cards dựng động bởi MainMenuUIController -->
+                </ui:ScrollView>
+
+                <ui:VisualElement name="session-actions">
+                    <ui:Button text="← BACK" name="btn-session-back" class="save-action-btn back"/>
+                    <ui:Button text="+ NEW JOURNEY" name="btn-session-new" class="save-action-btn create"/>
+                    <ui:Button text="CONTINUE →" name="btn-session-continue" class="save-action-btn continue"/>
+                </ui:VisualElement>
+
+                <!-- Reset Confirmation Overlay -->
+                <ui:VisualElement name="session-reset-overlay" style="display: none; position: absolute; left: 0; top: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.8); align-items: center; justify-content: center;">
+                    <ui:VisualElement style="background-color: #1a1a1a; padding: 30px; border-radius: 5px; border-width: 1px; border-color: #8c3f3f; width: 400px;">
+                        <ui:Label text="DELETE JOURNEY" style="color: #c9a84c; font-size: 16px; -unity-text-align: middle-center; margin-bottom: 10px; letter-spacing: 3px;"/>
+                        <ui:Label text="This will erase this room entirely, including all character progress and world state. This cannot be undone. Are you sure?" style="color: rgba(255,255,255,0.7); white-space: normal; margin-bottom: 25px; text-align: center; font-size: 13px;"/>
+                        <ui:VisualElement style="flex-direction: row; justify-content: space-around;">
+                            <ui:Button text="CANCEL" name="btn-reset-cancel" class="save-action-btn back" style="width: 120px;"/>
+                            <ui:Button text="DELETE" name="btn-reset-confirm" class="login-submit-btn" style="width: 120px; background-color: #aa3333;"/>
                         </ui:VisualElement>
                     </ui:VisualElement>
-
-                    <!-- VS -->
-                    <ui:Label text="VS" name="coop-vs-text"/>
-
-                    <!-- Client Card -->
-                    <ui:VisualElement name="coop-card-client" class="coop-player-card client">
-                        <ui:VisualElement class="coop-card-badge client-badge">
-                            <ui:Label text="👤 CLIENT" class="coop-badge-text client"/>
-                        </ui:VisualElement>
-                        <ui:VisualElement class="coop-avatar client-avatar"/>
-                        <ui:Label text="Waiting..." name="coop-client-name" class="coop-player-name"/>
-                        <ui:Label text="" name="coop-client-level" class="coop-player-level"/>
-                        <ui:Button text="● NOT READY" name="btn-coop-ready" class="coop-ready-btn not-ready"/>
-                    </ui:VisualElement>
-                </ui:VisualElement>
-
-                <!-- Bottom Actions -->
-                <ui:VisualElement name="coop-bottom-bar">
-                    <ui:Button text="← BACK" name="btn-coop-back" class="save-action-btn back"/>
-                    <ui:Button text="START JOURNEY →" name="btn-coop-start" class="save-action-btn continue coop-start-disabled"/>
-                    <ui:Label text="● Ping: 24ms" name="coop-ping"/>
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>

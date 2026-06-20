@@ -11,7 +11,7 @@ namespace Attrition.UI
     {
         private void RefreshCharacterPanel()
         {
-            if (_stats == null) return;
+            if (_stats == null || _stats.Object == null || !_stats.Object.IsValid) return;
 
             SetText("inv-char-level", $"LEVEL {_stats.Level}");
             SetText("stat-def", _stats.DEF.ToString());

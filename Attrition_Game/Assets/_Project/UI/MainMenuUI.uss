@@ -975,6 +975,244 @@
 }
 
 /* ============================================================
+   SESSION SELECTION SCREEN (HOST)
+   ============================================================ */
+
+#session-content {
+    width: 580px;
+    align-items: center;
+    justify-content: center;
+}
+
+#session-title-area {
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+#session-title {
+    color: #ffffff;
+    font-size: 22px;
+    -unity-font-definition: initial;
+    -unity-font: url('Fonts/Cinzel/static/Cinzel-Bold.ttf');
+    letter-spacing: 8px;
+    margin-bottom: 6px;
+    -unity-text-align: middle-center;
+    text-shadow: 0px 4px 12px rgba(0, 0, 0, 0.8);
+}
+
+#session-subtitle {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 11px;
+    -unity-font-definition: initial;
+    -unity-font: url('Fonts/Cinzel/static/Cinzel-Regular.ttf');
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+    -unity-text-align: middle-center;
+}
+
+#session-title-divider {
+    width: 200px;
+    height: 1px;
+    background-color: rgba(201, 168, 76, 0.5);
+}
+
+#session-list-container {
+    width: 100%;
+    max-height: 380px;
+    margin-bottom: 24px;
+    flex-grow: 0;
+    flex-shrink: 1;
+}
+
+#session-list-container .unity-scroll-view__content-container {
+    padding-right: 6px;
+}
+
+/* --- Session Card --- */
+.session-card {
+    width: 100%;
+    margin-bottom: 10px;
+    background-color: rgba(10, 12, 20, 0.85);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.07);
+    border-radius: 8px;
+    padding: 0;
+    transition-property: border-color, background-color, scale;
+    transition-duration: 0.2s, 0.2s, 0.15s;
+    overflow: hidden;
+}
+
+.session-card:hover {
+    border-color: rgba(201, 168, 76, 0.45);
+    background-color: rgba(201, 168, 76, 0.08);
+    scale: 1.01;
+}
+
+.session-card.selected {
+    border-color: rgba(201, 168, 76, 0.7);
+    background-color: rgba(201, 168, 76, 0.12);
+}
+
+.session-card-indicator {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background-color: #c9a84c;
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 0.2s;
+}
+
+.session-card.selected > .session-card-indicator {
+    opacity: 1;
+}
+
+.session-card-inner {
+    flex-direction: row;
+    align-items: center;
+    padding: 14px 18px;
+}
+
+/* Room code badge (left side) */
+.session-code-badge {
+    width: 64px;
+    height: 40px;
+    border-radius: 6px;
+    background-color: rgba(201, 168, 76, 0.12);
+    border-width: 1px;
+    border-color: rgba(201, 168, 76, 0.3);
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+    flex-shrink: 0;
+}
+
+.session-code-text {
+    color: #c9a84c;
+    font-size: 13px;
+    -unity-font-definition: initial;
+    -unity-font: url('Fonts/Cinzel/static/Cinzel-Bold.ttf');
+    letter-spacing: 2px;
+    -unity-text-align: middle-center;
+}
+
+/* Session info (center) */
+.session-info {
+    flex-grow: 1;
+    flex-shrink: 1;
+    overflow: hidden;
+}
+
+.session-info-top {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.session-room-name {
+    color: #ffffff;
+    font-size: 14px;
+    -unity-font-definition: initial;
+    -unity-font: url('Fonts/Cinzel/static/Cinzel-SemiBold.ttf');
+    letter-spacing: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.session-player-count {
+    color: rgba(201, 168, 76, 0.7);
+    font-size: 10px;
+    -unity-font-definition: initial;
+    -unity-font: url('Fonts/Cinzel/static/Cinzel-Regular.ttf');
+    letter-spacing: 2px;
+    flex-shrink: 0;
+    margin-left: 12px;
+}
+
+.session-detail-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.session-scene {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 10px;
+    margin-right: 16px;
+}
+
+.session-playtime {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 10px;
+    margin-right: 16px;
+}
+
+.session-last-played {
+    color: rgba(255, 255, 255, 0.2);
+    font-size: 10px;
+}
+
+/* Right side actions */
+.session-card-right {
+    flex-direction: column;
+    align-items: center;
+    margin-left: 16px;
+    flex-shrink: 0;
+}
+
+.session-reset-btn {
+    width: 28px;
+    height: 28px;
+    background-color: transparent;
+    border-width: 1px;
+    border-color: rgba(180, 40, 40, 0.2);
+    border-radius: 4px;
+    color: rgba(220, 80, 80, 0.5);
+    font-size: 10px;
+    -unity-text-align: middle-center;
+    transition-property: background-color, border-color;
+    transition-duration: 0.2s, 0.2s;
+}
+
+.session-reset-btn:hover {
+    background-color: rgba(180, 40, 40, 0.15);
+    border-color: rgba(180, 40, 40, 0.5);
+}
+
+/* --- Session Actions Bar --- */
+#session-actions {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+/* --- Empty state (no sessions) --- */
+.session-empty-state {
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+}
+
+.session-empty-icon {
+    font-size: 32px;
+    color: rgba(201, 168, 76, 0.3);
+    margin-bottom: 14px;
+}
+
+.session-empty-text {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 12px;
+    -unity-font-definition: initial;
+    -unity-font: url('Fonts/Cinzel/static/Cinzel-Regular.ttf');
+    letter-spacing: 3px;
+    -unity-text-align: middle-center;
+    white-space: normal;
+}
+
+/* ============================================================
    CO-OP LOBBY SCREEN
    ============================================================ */
 

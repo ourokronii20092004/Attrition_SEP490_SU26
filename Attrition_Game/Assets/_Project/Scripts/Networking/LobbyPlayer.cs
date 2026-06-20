@@ -26,11 +26,16 @@ namespace Attrition.Networking
         {
             if (!HasInputAuthority) return; // chỉ chủ sở hữu local gửi identity của mình
 
-            // Tên player = username (GameLaunch.CharacterName, lấy từ Postgres). Slot chỉ cho level.
-            string name = Attrition.Persistence.GameLaunch.CharacterName;
+            // Tên hiển thị lobby = TÊN NHÂN VẬT của save slot người chơi đặt (không phải username account).
             int level = 1;
+            string name = null;
             var slot = Attrition.Persistence.SaveManager.LoadSlot(Attrition.Persistence.GameLaunch.SelectedSlot);
-            if (slot != null) level = Mathf.Max(1, slot.level);
+            if (slot != null)
+            {
+                level = Mathf.Max(1, slot.level);
+                if (!string.IsNullOrEmpty(slot.characterName)) name = slot.characterName;
+            }
+            if (string.IsNullOrEmpty(name)) name = Attrition.Persistence.GameLaunch.CharacterName;
             if (string.IsNullOrEmpty(name)) name = "Wanderer";
             if (name.Length > 16) name = name.Substring(0, 16);
 
