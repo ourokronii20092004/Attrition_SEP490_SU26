@@ -83,4 +83,13 @@ public class InternalSessionController : ControllerBase
         var result = await _service.SaveWorldStateAsync(request);
         return result.Success ? Ok(result) : BadRequest(result);
     }
+
+    /// <summary>Host deletes a room entirely.</summary>
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> DeleteSession(Guid id)
+    {
+        if (!KeyValid()) return Unauthorized(ApiResponse.Fail("Valid service authentication is required."));
+        var result = await _service.DeleteSessionAsync(id);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
 }

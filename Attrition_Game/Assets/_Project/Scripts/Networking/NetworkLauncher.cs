@@ -58,10 +58,23 @@ namespace Attrition.Networking
 #endif
         }
 
+        private void OnDestroy()
+        {
+            if (Instance == this) Instance = null;
+        }
+
         /// <summary>Tạo runner nếu chưa có (gắn lên chính object bền này) + cấu hình physics 2D.</summary>
         private void EnsureRunner()
         {
-            if (_runner != null) return;
+            // Runner cũ có thể vẫn còn trên GO ở trạng thái shutdown (Fusion không tự hủy component).
+            // Dọn hết runner rác trước khi tạo mới để tránh AddComponent tạo ra 2 runner trùng.
+            if (_runner == null)
+            {
+                var stale = GetComponents<NetworkRunner>();
+                foreach (var r in stale) DestroyImmediate(r);
+            }
+            else return; // _runner vẫn còn sống → dùng lại.
+
             _runner = gameObject.AddComponent<NetworkRunner>();
             _runner.ProvideInput = true;
 
@@ -111,12 +124,20 @@ namespace Attrition.Networking
             string userId = Attrition.Persistence.GameLaunch.OwnerId;
             if (string.IsNullOrEmpty(userId)) userId = System.Guid.NewGuid().ToString();
 
-            // Phòng chờ KHÔNG truyền args.Scene. Nếu truyền, Fusion (NetworkSceneManagerDefault) SỞ HỮU
-            // scene Menu → vài giây sau reload nó (host bị văng về main-menu) và khi LeaveSession shutdown
-            // runner thì Fusion UNLOAD scene Menu → mất camera ("Display 1 no camera rendering" lúc Back).
-            // Luồng client giờ đã validate qua API + connect 1 lần (không còn early-connect race), nên
-            // StartGame vẫn hoàn tất bình thường mà không cần Scene. Host đổi scene khi bấm Start
-            // (BeginGameplay → runner.LoadScene); client tự follow qua Fusion.
+#if UNITY_EDITOR
+            // Tạm thời để test ParrelSync 2 acc không bị văng: 
+            // Nếu là clone project thì nối thêm một chuỗi random vào UserId để Photon coi là 2 người khác nhau.
+            if (Application.dataPath.Contains("clone", StringComparison.OrdinalIgnoreCase))
+            {
+                userId += "_clone_" + System.Guid.NewGuid().ToString().Substring(0, 4);
+            }
+#endif
+
+            // Lobby là scene RIÊNG (Lobby.unity) — KHÔNG phải scene Menu. Host truyền args.Scene =
+            // Lobby để runner SỞ HỮU scene đó; Fusion 2 chỉ spawn NetworkObject vào scene runner sở
+            // hữu (không có scene → Spawn trả null). Vì Lobby tách khỏi Menu nên load nó không reload
+            // Menu → host không bị văng. Client để TRỐNG Scene, tự follow scene của host qua Fusion.
+            // Host bấm Start → BeginGameplay → runner.LoadScene(gameplay).
             var args = new StartGameArgs
             {
                 GameMode = mode,
@@ -125,6 +146,12 @@ namespace Attrition.Networking
                 SceneManager = SceneManager_,
                 AuthValues = new Fusion.Photon.Realtime.AuthenticationValues(userId)
             };
+            if (mode == GameMode.Host)
+            {
+                int lobbyIdx = SceneUtility.GetBuildIndexByScenePath("Assets/_Project/Scenes/Lobby.unity");
+                if (lobbyIdx >= 0) args.Scene = SceneRef.FromIndex(lobbyIdx);
+                else Debug.LogError("[NetworkLauncher] Scene 'Lobby' chưa có trong Build Settings — host sẽ không spawn được LobbyPlayer.");
+            }
 
             var result = await _runner.StartGame(args);
 
@@ -156,6 +183,8 @@ namespace Attrition.Networking
             ShutdownInternal();
             _phase = Phase.Idle;
             _starting = false;
+            // Đổi room/session → xoá cache đồ-theo-session để lần vào sau fetch lại đúng session mới.
+            Attrition.Persistence.GameLaunch.ClearSessionInventoryCache();
         }
 
         // ─────────────────────────── SOLO ───────────────────────────
@@ -189,28 +218,86 @@ namespace Attrition.Networking
         {
             if (_runner != null)
             {
-                // destroyGameObject:false — runner là component TRÊN chính NetworkLauncher (object bền).
-                // Shutdown() mặc định huỷ luôn GameObject chứa runner → NetworkLauncher biến mất →
-                // lần host/join sau "NetworkLauncher not found". Giữ GO sống để tái dùng.
+                // destroyGameObject:false — giữ GO sống; chỉ tắt mạng.
+                // Sau Shutdown, component NetworkRunner vẫn nằm trên GO nhưng ở trạng thái "đã tắt".
+                // Phải Destroy component cũ để EnsureRunner tạo mới sạch sẽ, tránh trùng lặp.
                 _runner.Shutdown(destroyGameObject: false);
+                Destroy(_runner);
                 _runner = null;
+            }
+
+            // Scene manager cũ gắn liền runner cũ — reset để EnsureRunner property tạo lại.
+            if (_sceneManager != null)
+            {
+                Destroy(_sceneManager);
+                _sceneManager = null;
             }
         }
 
         // ─────────────────────────── CALLBACKS ───────────────────────────
 
+        private bool _spawnAttempted;
+
+        private void Update()
+        {
+            if (_runner == null || !_runner.IsRunning || !_runner.IsServer) return;
+
+            if (_phase == Phase.Lobby)
+            {
+                if (!lobbyPlayerPrefab.IsValid && !_spawnAttempted)
+                {
+                    Debug.LogError("[NetworkLauncher] LỖI: lobbyPlayerPrefab.IsValid đang là FALSE! Ô Lobby Player Prefab ở Inspector chưa được gán đúng hoặc chưa được Rebuild Prefab Table!");
+                    _spawnAttempted = true;
+                    return;
+                }
+
+                foreach (var player in _runner.ActivePlayers)
+                    TrySpawnLobbyPlayer(player);
+            }
+        }
+
+        /// <summary>
+        /// Host spawn 1 LobbyPlayer cho 1 peer (idempotent). Gọi từ OnPlayerJoined (đúng phase
+        /// simulation của Fusion) và retry trong Update phòng khi callback chạy trước lúc runner sẵn sàng.
+        /// </summary>
+        private void TrySpawnLobbyPlayer(PlayerRef player)
+        {
+            if (_runner == null || !_runner.IsServer || _phase != Phase.Lobby) return;
+            if (_runner.TryGetPlayerObject(player, out var existingObj) && existingObj != null) return;
+
+            try
+            {
+                var newObj = _runner.Spawn(lobbyPlayerPrefab, Vector3.zero, Quaternion.identity, player);
+                if (newObj != null)
+                {
+                    _runner.SetPlayerObject(player, newObj);
+                    Debug.Log($"[NetworkLauncher] Spawn LobbyPlayer OK cho {player}");
+                }
+                else if (!_spawnAttempted)
+                {
+                    Debug.LogError($"[NetworkLauncher] Spawn trả về null cho {player}. Có thể Prefab chưa được đăng ký trong Fusion.");
+                    _spawnAttempted = true;
+                }
+            }
+            catch (System.Exception ex)
+            {
+                if (!_spawnAttempted)
+                {
+                    Debug.LogError($"[NetworkLauncher] Exception khi spawn: {ex}");
+                    _spawnAttempted = true;
+                }
+            }
+        }
+
         public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
         {
             if (!runner.IsServer) return;
 
+            // Phòng chờ: peer (kể cả host) join → spawn LobbyPlayer NGAY trong callback (đúng
+            // simulation phase của Fusion 2). Spawn trong Update có thể trả null do sai phase.
             if (_phase == Phase.Lobby)
             {
-                // Phòng chờ: spawn object nhẹ LobbyPlayer cho peer vừa vào.
-                if (lobbyPlayerPrefab.IsValid)
-                {
-                    var obj = runner.Spawn(lobbyPlayerPrefab, Vector3.zero, Quaternion.identity, player);
-                    runner.SetPlayerObject(player, obj);
-                }
+                TrySpawnLobbyPlayer(player);
                 return;
             }
 

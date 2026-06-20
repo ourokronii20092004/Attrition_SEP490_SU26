@@ -381,7 +381,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Attrition.Networking::Attrition.Networking.NetworkLauncher
   lobbyPlayerPrefab:
-    RawGuidValue: 64050d2b1ce6d5849859dbef655d0f73
+    RawGuidValue: 84538b989fd53274b96473e6f50489dd
 --- !u!114 &1209826783
 MonoBehaviour:
   m_ObjectHideFlags: 0

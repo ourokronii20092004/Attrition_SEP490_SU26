@@ -486,4 +486,68 @@ public class APIManager : MonoBehaviour
             }
         }
     }
+
+    // ─── SESSION SUMMARY (player-facing, JWT) ───
+
+    [System.Serializable]
+    public class SessionSummaryDto
+    {
+        public string id;
+        public string ownerId;
+        public string roomCode;
+        public string name;
+        public bool isMultiplayer;
+        public int playTimeSeconds;
+        public string currentScene;
+        public string createdAt;
+        public string updatedAt;
+        public string lastPlayedAt;
+        public int characterCount;
+    }
+
+    /// <summary>Host lấy danh sách phòng mình sở hữu (JWT). Dùng cho màn chọn session.</summary>
+    public IEnumerator GetMySessions(System.Action<System.Collections.Generic.List<SessionSummaryDto>> callback)
+    {
+        using (UnityWebRequest request = UnityWebRequest.Get($"{baseUrl}/sessions"))
+        {
+            if (!string.IsNullOrEmpty(AccessToken))
+                request.SetRequestHeader("Authorization", $"Bearer {AccessToken}");
+
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                var resp = JsonConvert.DeserializeObject<ApiResponse<System.Collections.Generic.List<SessionSummaryDto>>>(request.downloadHandler.text);
+                callback?.Invoke(resp != null && resp.success ? resp.data : null);
+            }
+            else
+            {
+                Debug.LogError($"[Session] GetMySessions Fail: {request.error} | {request.downloadHandler.text}");
+                callback?.Invoke(null);
+            }
+        }
+    }
+
+    // ─── DELETE SESSION (internal, X-Internal-Key) ───
+
+    /// <summary>Host deletes a room entirely.</summary>
+    public IEnumerator DeleteSession(string sessionId, System.Action<bool> callback)
+    {
+        using (UnityWebRequest request = UnityWebRequest.Delete($"{baseUrl}/internal/sessions/{sessionId}"))
+        {
+            request.SetRequestHeader("X-Internal-Key", InternalKey);
+
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                callback?.Invoke(true);
+            }
+            else
+            {
+                Debug.LogError($"[Session] DELETE session {sessionId} Fail: {request.error} | {request.downloadHandler.text}");
+                callback?.Invoke(false);
+            }
+        }
+    }
 }
