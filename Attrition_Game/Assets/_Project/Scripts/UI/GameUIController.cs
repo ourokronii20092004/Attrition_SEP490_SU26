@@ -40,6 +40,14 @@ namespace Attrition.UI
         private PlayerProgression _progression;
         private PlayerController _controller;
 
+        /// <summary>
+        /// True khi đã tìm thấy local player VÀ tất cả component đã Spawned (Object.IsValid).
+        /// Trước cờ này bật, KHÔNG được đọc bất kỳ [Networked] property nào (sẽ ném
+        /// InvalidOperationException). Pattern chuyên nghiệp: UI chờ event Spawned thay
+        /// vì try-catch / null-check mỗi frame.
+        /// </summary>
+        private bool _isBound;
+
         private ItemDatabaseSO _db;
 
         private enum Overlay { None, Inventory, FastTravel, GameOver, Loading, Pause, Settings }
@@ -88,6 +96,7 @@ namespace Attrition.UI
             Attrition.Persistence.CoopSession.Reset();
             if (_stats != null) _stats.OnStatsChanged -= RefreshCharacterPanel;
             if (_inventory != null) _inventory.OnInventoryChanged -= RefreshInventory;
+            _isBound = false;
 
             Attrition.Controllers.BossEvents.OnBossSpawned -= ShowBossBar;
             Attrition.Controllers.BossEvents.OnBossHpChanged -= UpdateBossBar;
@@ -96,8 +105,9 @@ namespace Attrition.UI
 
         private void Update()
         {
-            if (_stats == null) TryBindLocalPlayer();
-            if (_stats != null) UpdateHud();
+            // Không polling thô: chỉ tìm player cho đến khi bind thành công, sau đó tin vào sự kiện.
+            if (!_isBound) TryBindLocalPlayer();
+            if (_isBound) UpdateHud();
 
             UpdateWaitingOverlay();
 
@@ -157,16 +167,28 @@ namespace Attrition.UI
             var players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
             foreach (var p in players)
             {
-                if (p.Object == null || !p.Object.HasInputAuthority) continue;
+                // Chờ cho Object đã được Fusion xử lý hoàn tất (HasInputAuthority + IsValid).
+                // Nếu chưa IsValid thì Networked properties sẽ ném exception → bỏ qua frame này.
+                if (p.Object == null || !p.Object.HasInputAuthority || !p.Object.IsValid) continue;
+
+                // Kiểm tra mọi component quan trọng cũng đã sẵn sàng.
+                var stats = p.GetComponent<PlayerStats>();
+                var inv = p.GetComponent<PlayerInventory>();
+                if (stats == null || stats.Object == null || !stats.Object.IsValid) continue;
+                if (inv != null && (inv.Object == null || !inv.Object.IsValid)) continue;
+
                 _controller = p;
-                _stats = p.GetComponent<PlayerStats>();
+                _stats = stats;
                 _potions = p.GetComponent<PotionSystem>();
-                _inventory = p.GetComponent<PlayerInventory>();
+                _inventory = inv;
                 _progression = p.GetComponent<PlayerProgression>();
 
-                if (_stats != null) _stats.OnStatsChanged += RefreshCharacterPanel;
+                _stats.OnStatsChanged += RefreshCharacterPanel;
                 if (_inventory != null) _inventory.OnInventoryChanged += RefreshInventory;
 
+                _isBound = true;
+
+                // An toàn gọi lần đầu vì đã xác nhận IsValid.
                 RefreshCharacterPanel();
                 RefreshInventory();
 

@@ -25,16 +25,13 @@ namespace Attrition.UI
         private VisualElement _saveSelectionScreen;
         private VisualElement _loginScreen;
         private VisualElement _hostJoinScreen;
-        private VisualElement _coopLobbyScreen;
         private VisualElement _settingsScreen;
+        private VisualElement _sessionSelectionScreen;
 
         // ===== State =====
         private string _currentScreen = "main-menu";
-        private string _previousScreen = "main-menu"; 
+        private string _previousScreen = "main-menu";
         private int _selectedSaveSlot = 0;
-        private bool _isCoopReady = false;
-        private bool _clientPresent = false; // host poll: client đã vào lobby chưa
-        private bool _clientReady = false;   // host poll: client đã bấm Ready chưa
         private bool _isLoggedIn = false;
         private string _currentUserId = null;
         private string _currentRoomCode = null;
@@ -44,6 +41,11 @@ namespace Attrition.UI
 
         private SaveSlotData[] _saveSlots;
         private string[] _characterIds = new string[SaveManager.SlotCount];
+
+        // ===== Session Selection =====
+        private System.Collections.Generic.List<APIManager.SessionSummaryDto> _cachedSessions;
+        private int _selectedSessionIndex = -1; // -1 = "New Journey"
+        private string _sessionIdToDelete;
 
         // ===== Particles =====
         private List<Button> _menuButtons = new List<Button>();
@@ -66,17 +68,24 @@ namespace Attrition.UI
             _saveSelectionScreen = _root.Q<VisualElement>("save-selection-screen");
             _loginScreen = _root.Q<VisualElement>("login-screen");
             _hostJoinScreen = _root.Q<VisualElement>("host-join-screen");
-            _coopLobbyScreen = _root.Q<VisualElement>("coop-lobby-screen");
             _settingsScreen = _root.Q<VisualElement>("settings-screen");
+            _sessionSelectionScreen = _root.Q<VisualElement>("session-selection-screen");
 
             SetupMainMenu();
             BuildSaveSlots();
             SetupSaveSelection();
             SetupLogin();
             SetupHostJoin();
-            SetupCoopLobby();
             SetupSettings();
             SetupGlobalProfile();
+            SetupSessionSelection();
+
+            // Khôi phục trạng thái login nếu APIManager (DontDestroyOnLoad) vẫn còn token hợp lệ
+            if (APIManager.Instance != null && !string.IsNullOrEmpty(APIManager.Instance.AccessToken))
+            {
+                _isLoggedIn = true;
+                _currentUserId = PlayerPrefs.GetString("SavedUserId", null);
+            }
 
             LoadSavesFromDisk();
 
@@ -92,14 +101,10 @@ namespace Attrition.UI
             SetScreenVisible(_saveSelectionScreen, screenName == "save-selection");
             SetScreenVisible(_loginScreen, screenName == "login");
             SetScreenVisible(_hostJoinScreen, screenName == "host-join");
-            SetScreenVisible(_coopLobbyScreen, screenName == "coop-lobby");
             SetScreenVisible(_settingsScreen, screenName == "settings");
+            SetScreenVisible(_sessionSelectionScreen, screenName == "session-selection");
 
             UpdateGlobalProfileVisibility();
-
-            // Lobby: poll roster networked để host↔client thấy nhau; rời lobby thì dừng.
-            if (screenName == "coop-lobby") StartLobbyRosterPolling();
-            else StopLobbyRosterPolling();
         }
 
         private void SetScreenVisible(VisualElement screen, bool visible)
@@ -536,30 +541,17 @@ namespace Attrition.UI
 
                     if (_isOnlineMode && _isHost)
                     {
-                        // HOST: tạo phòng. Session name = room code; tên player = tên nhân vật đã chọn.
+                        // HOST: chọn nhân vật xong → mở màn chọn session (phòng cũ / tạo mới).
                         SetCoopLaunchContext();
-                        CreateHostSessionOnServer();
-                        UpdateLobbyRoomCode(_currentRoomCode);
-                        SetupLobbyHostView();
-                        ShowScreen("coop-lobby");
-                        StartFusionNetwork(GameMode.Host, _currentRoomCode, (ok, err) =>
-                        {
-                            if (!ok)
-                            {
-                                ShowSlotWarning($"Could not create room: {err}");
-                                ShowScreen("host-join");
-                            }
-                        });
+                        LoadSessionsFromServer();
+                        ShowScreen("session-selection");
                     }
                     else if (_isOnlineMode)
                     {
                         // CLIENT JOIN: chọn nhân vật xong mới connect Fusion ĐÚNG 1 LẦN với identity đã
-                        // sẵn sàng (SetCoopLaunchContext set tên/char/owner TRƯỚC khi connect). LobbyPlayer
-                        // spawn sẽ đọc đúng identity ngay — không cần đẩy lại sau.
+                        // sẵn sàng (SetCoopLaunchContext set tên/char/owner TRƯỚC khi connect). Connect xong
+                        // Fusion sync scene Lobby của host → client tự load scene Lobby (không ShowScreen).
                         SetCoopLaunchContext();
-                        UpdateLobbyRoomCode(_currentRoomCode);
-                        SetupLobbyClientView();
-                        ShowScreen("coop-lobby");
                         StartFusionNetwork(GameMode.Client, _currentRoomCode, (ok, err) =>
                         {
                             if (!ok)
@@ -726,36 +718,61 @@ namespace Attrition.UI
                 GameLaunch.CharacterName = name;
                 StartCoroutine(LoadGameplaySceneAsync(GameLaunch.GameplayScene));
             }
-            else if (_isHost)
-            {
-                // HOST: tạo phòng (session = room code). Tên player = tên nhân vật vừa tạo.
-                SetCoopLaunchContext();
-                CreateHostSessionOnServer();
-                UpdateLobbyRoomCode(_currentRoomCode);
-                SetupLobbyHostView();
-                ShowScreen("coop-lobby");
-                StartFusionNetwork(GameMode.Host, _currentRoomCode, (ok, err) =>
-                {
-                    if (!ok) { ShowSlotWarning($"Could not create room: {err}"); ShowScreen("host-join"); }
-                });
-            }
             else
             {
-                // CLIENT JOIN bằng nhân vật mới: phải ĐÚNG room code mới vào được phòng host.
-                SetCoopLaunchContext();
-                UpdateLobbyRoomCode(_currentRoomCode);
-                SetupLobbyClientView();
-                ShowScreen("coop-lobby");
-                StartFusionNetwork(GameMode.Client, _currentRoomCode, (ok, err) =>
+                if (APIManager.Instance != null)
                 {
-                    if (!ok)
+                    var req = new APIManager.SnapshotIngestRequest
                     {
-                        var launcher = Attrition.Networking.NetworkLauncher.Instance;
-                        if (launcher != null) launcher.LeaveSession();
-                        ShowSlotWarning($"Could not join room '{_currentRoomCode}': {err}");
-                        ShowScreen("host-join");
-                    }
-                });
+                        ownerId = _currentUserId ?? "",
+                        characterId = null,
+                        name = name,
+                        archetype = "Wanderer",
+                        level = 1,
+                        hp = 100, maxHp = 100, gold = 0, isAlive = true,
+                        roomCode = _currentRoomCode ?? "",
+                        eventType = "rest",
+                        playtimeSeconds = 0,
+                        inventoryJson = "{}", equipmentJson = "{}", questsJson = "{}"
+                    };
+                    
+                    StartCoroutine(APIManager.Instance.PostSnapshot(req, success =>
+                    {
+                        if (success) LoadSavesFromDisk(); // Refresh danh sách để lấy ID
+                        ProceedOnlineFlow();
+                    }));
+                }
+                else
+                {
+                    ProceedOnlineFlow();
+                }
+            }
+
+            void ProceedOnlineFlow()
+            {
+                if (_isHost)
+                {
+                    // HOST: nhân vật mới tạo xong → mở màn chọn session.
+                    SetCoopLaunchContext();
+                    LoadSessionsFromServer();
+                    ShowScreen("session-selection");
+                }
+                else
+                {
+                    // CLIENT JOIN: phải ĐÚNG room code. Connect xong, Fusion sync scene Lobby của host →
+                    // client tự load scene Lobby. KHÔNG ShowScreen("coop-lobby") nữa (lobby là scene riêng).
+                    SetCoopLaunchContext();
+                    StartFusionNetwork(GameMode.Client, _currentRoomCode, (ok, err) =>
+                    {
+                        if (!ok)
+                        {
+                            var launcher = Attrition.Networking.NetworkLauncher.Instance;
+                            if (launcher != null) launcher.LeaveSession();
+                            ShowSlotWarning($"Could not join room '{_currentRoomCode}': {err}");
+                            ShowScreen("host-join");
+                        }
+                    });
+                }
             }
         }
 
@@ -1020,9 +1037,26 @@ namespace Attrition.UI
         private void StartFusionNetwork(GameMode mode, string code, System.Action<bool, string> onResult = null)
         {
             var launcher = Attrition.Networking.NetworkLauncher.Instance;
+
+            // Fallback: Instance có thể bị null nếu Fusion Shutdown hủy GO bất ngờ.
+            // Tìm bằng type để khôi phục; nếu không tìm thấy mới báo lỗi.
+            if (launcher == null)
+                launcher = FindFirstObjectByType<Attrition.Networking.NetworkLauncher>();
+
             if (launcher != null)
             {
-                launcher.StartCoopLobby(mode, code, onResult);
+                launcher.StartCoopLobby(mode, code, (ok, err) => 
+                {
+                    if (ok) 
+                    {
+                        // Ẩn Main Menu UI và Camera để nhường chỗ cho Lobby/Game UI
+                        if (_root != null) _root.style.display = DisplayStyle.None;
+                        var cam = Camera.main;
+                        if (cam != null && cam.gameObject.scene.name == "Main_Menu_UI") 
+                            cam.gameObject.SetActive(false);
+                    }
+                    onResult?.Invoke(ok, err);
+                });
             }
             else
             {
@@ -1091,257 +1125,291 @@ namespace Attrition.UI
         }
 
         // =================================================================
-        // CO-OP LOBBY
+        // SESSION SELECTION (HOST ONLY)
         // =================================================================
-        private void SetupCoopLobby()
+
+        private void SetupSessionSelection()
         {
-            _isCoopReady = false;
-
-            var readyBtn = _root.Q<Button>("btn-coop-ready");
-            if (readyBtn != null)
-            {
-                readyBtn.RegisterCallback<PointerEnterEvent>(evt => PlayHoverSound());
-                readyBtn.RegisterCallback<ClickEvent>(evt =>
-                {
-                    PlayClickSound();
-                    _isCoopReady = !_isCoopReady;
-                    UpdateReadyState(readyBtn);
-                    // Gửi trạng thái sẵn sàng lên host (client). Host đọc IsReady để bật nút Start.
-                    var local = FindLocalLobbyStats();
-                    if (local != null) local.RpcSetReady(_isCoopReady);
-                });
-            }
-
-            var backBtn = _root.Q<Button>("btn-coop-back");
+            var backBtn = _root.Q<Button>("btn-session-back");
             if (backBtn != null)
             {
                 backBtn.RegisterCallback<PointerEnterEvent>(evt => PlayHoverSound());
                 backBtn.RegisterCallback<ClickEvent>(evt =>
                 {
                     PlayClickSound();
-                    // Rời phòng chờ: tắt runner qua launcher để có thể tạo/join lại.
-                    var launcher = Attrition.Networking.NetworkLauncher.Instance;
-                    if (launcher != null) launcher.LeaveSession();
-
-                    ShowScreen("host-join");
+                    ShowScreen("save-selection");
                 });
             }
 
-            var startBtn = _root.Q<Button>("btn-coop-start");
-            if (startBtn != null)
+            var newBtn = _root.Q<Button>("btn-session-new");
+            if (newBtn != null)
             {
-                startBtn.RegisterCallback<PointerEnterEvent>(evt => PlayHoverSound());
-                startBtn.RegisterCallback<ClickEvent>(evt =>
+                newBtn.RegisterCallback<PointerEnterEvent>(evt => PlayHoverSound());
+                newBtn.RegisterCallback<ClickEvent>(evt =>
                 {
-                    // Host chỉ start khi client đã VÀO và SẴN SÀNG (giống lobby game chuyên nghiệp).
-                    if (!_clientPresent || !_clientReady)
-                    {
-                        ShowSlotWarning("Waiting for the other player to be ready...");
-                        return;
-                    }
                     PlayClickSound();
-                    // COOP: runner đã chạy (lobby). Đánh dấu Coop để bootstrap KHÔNG tự start Single.
-                    GameLaunch.Mode = LaunchMode.Coop;
-                    GameLaunch.SelectedSlot = _selectedSaveSlot;
-                    Debug.Log("[MainMenu] Host bắt đầu CO-OP → load scene gameplay cho cả phòng.");
+                    _selectedSessionIndex = -1;
+                    HighlightSelectedSession();
+                });
+            }
 
-                    // Host điều khiển load scene; NetworkLauncher despawn LobbyPlayer + spawn nhân vật thật.
-                    var launcher = Attrition.Networking.NetworkLauncher.Instance;
-                    if (launcher != null) launcher.BeginGameplay(GameLaunch.GameplayScene);
+            var continueBtn = _root.Q<Button>("btn-session-continue");
+            if (continueBtn != null)
+            {
+                continueBtn.RegisterCallback<PointerEnterEvent>(evt => PlayHoverSound());
+                continueBtn.RegisterCallback<ClickEvent>(evt =>
+                {
+                    PlayClickSound();
+                    OnSessionContinue();
+                });
+            }
+
+            // Reset overlay buttons
+            var resetCancel = _root.Q<Button>("btn-reset-cancel");
+            if (resetCancel != null)
+            {
+                resetCancel.RegisterCallback<PointerEnterEvent>(evt => PlayHoverSound());
+                resetCancel.RegisterCallback<ClickEvent>(evt =>
+                {
+                    PlayClickSound();
+                    var overlay = _root.Q<VisualElement>("session-reset-overlay");
+                    if (overlay != null) overlay.style.display = DisplayStyle.None;
+                });
+            }
+
+            var resetConfirm = _root.Q<Button>("btn-reset-confirm");
+            if (resetConfirm != null)
+            {
+                resetConfirm.RegisterCallback<PointerEnterEvent>(evt => PlayHoverSound());
+                resetConfirm.RegisterCallback<ClickEvent>(evt =>
+                {
+                    PlayClickSound();
+                    var overlay = _root.Q<VisualElement>("session-reset-overlay");
+                    if (overlay != null) overlay.style.display = DisplayStyle.None;
+                    if (!string.IsNullOrEmpty(_sessionIdToDelete) && APIManager.Instance != null)
+                    {
+                        StartCoroutine(APIManager.Instance.DeleteSession(_sessionIdToDelete, success =>
+                        {
+                            if (success)
+                                Debug.Log($"[Session] Delete thành công: {_sessionIdToDelete}");
+                            else
+                                ShowSlotWarning("Failed to delete session.");
+                            LoadSessionsFromServer(); // refresh list
+                        }));
+                    }
                 });
             }
         }
 
-        private void SetupLobbyHostView()
+        private void LoadSessionsFromServer()
         {
-            var startBtn = _root.Q<Button>("btn-coop-start");
-            if (startBtn != null) startBtn.style.display = DisplayStyle.Flex; // Host can start
-
-            var readyBtn = _root.Q<Button>("btn-coop-ready");
-            if (readyBtn != null) readyBtn.style.display = DisplayStyle.None; // Host is always ready
-
-            // Auto ready for host. Nút Start KHÓA tới khi client vào + sẵn sàng (poll cập nhật).
-            _isCoopReady = true;
-            _clientPresent = false;
-            _clientReady = false;
-            if (startBtn != null) startBtn.AddToClassList("coop-start-disabled");
-
-            var clientCard = _root.Q<VisualElement>("coop-card-client");
-            if (clientCard != null) clientCard.style.opacity = 0.5f; // Wait for client
-
-            // Data THẬT của host = nhân vật đang chọn (slot/CharacterName), không mock.
-            FillLocalPlayerCard("coop-host-name", "coop-host-level");
-            SetText("coop-client-name", "Waiting for player...");
-            SetText("coop-client-level", "");
-        }
-
-        private void SetupLobbyClientView()
-        {
-            var startBtn = _root.Q<Button>("btn-coop-start");
-            if (startBtn != null) startBtn.style.display = DisplayStyle.None; // Client cannot start
-
-            var readyBtn = _root.Q<Button>("btn-coop-ready");
-            if (readyBtn != null) readyBtn.style.display = DisplayStyle.Flex;
-
-            _isCoopReady = false;
-            UpdateReadyState(readyBtn);
-
-            // Data THẬT của client = nhân vật mình chọn.
-            FillLocalPlayerCard("coop-client-name", "coop-client-level");
-        }
-
-        /// <summary>Điền tên + level THẬT của nhân vật local vào card lobby (đọc từ save slot đang chọn).</summary>
-        private void FillLocalPlayerCard(string nameElement, string levelElement)
-        {
-            string charName = string.IsNullOrEmpty(GameLaunch.CharacterName) ? "Wanderer" : GameLaunch.CharacterName;
-            int level = 1;
-            var slot = SaveManager.LoadSlot(_selectedSaveSlot);
-            if (slot != null)
+            if (APIManager.Instance == null || string.IsNullOrEmpty(APIManager.Instance.AccessToken))
             {
-                if (!string.IsNullOrEmpty(slot.characterName)) charName = slot.characterName;
-                level = Mathf.Max(1, slot.level);
+                _cachedSessions = null;
+                BuildSessionCards();
+                return;
             }
-            SetText(nameElement, charName);
-            SetText(levelElement, $"LEVEL {level}");
 
-            // Ping thật chưa có trước trận (chưa vào sim) → ẩn nhãn mock thay vì hiện số giả.
-            var ping = _root.Q<Label>("coop-ping");
-            if (ping != null) ping.style.display = DisplayStyle.None;
-        }
-
-        private Coroutine _lobbyRosterCoroutine;
-
-        /// <summary>Bắt đầu poll roster networked khi vào lobby (host↔client thấy nhau dù không có start trận).</summary>
-        private void StartLobbyRosterPolling()
-        {
-            StopLobbyRosterPolling();
-            _lobbyRosterCoroutine = StartCoroutine(PollLobbyRoster());
-        }
-
-        private void StopLobbyRosterPolling()
-        {
-            if (_lobbyRosterCoroutine != null)
+            StartCoroutine(APIManager.Instance.GetMySessions(sessions =>
             {
-                StopCoroutine(_lobbyRosterCoroutine);
-                _lobbyRosterCoroutine = null;
+                _cachedSessions = sessions;
+                _selectedSessionIndex = _cachedSessions != null && _cachedSessions.Count > 0 ? 0 : -1;
+                BuildSessionCards();
+            }));
+        }
+
+        private void BuildSessionCards()
+        {
+            var container = _root?.Q<ScrollView>("session-list-container");
+            if (container == null) return;
+            container.Clear();
+
+            if (_cachedSessions == null || _cachedSessions.Count == 0)
+            {
+                // Empty state
+                var emptyState = new VisualElement();
+                emptyState.AddToClassList("session-empty-state");
+                var icon = new Label("⚔");
+                icon.AddToClassList("session-empty-icon");
+                emptyState.Add(icon);
+                var text = new Label("NO JOURNEYS YET\nCreate a new journey to begin your adventure.");
+                text.AddToClassList("session-empty-text");
+                emptyState.Add(text);
+                container.Add(emptyState);
+                _selectedSessionIndex = -1;
+                return;
+            }
+
+            for (int i = 0; i < _cachedSessions.Count; i++)
+            {
+                int idx = i;
+                var session = _cachedSessions[i];
+
+                var card = new Button { name = $"session-card-{i}" };
+                card.AddToClassList("session-card");
+
+                // Selection indicator
+                var indicator = new VisualElement();
+                indicator.AddToClassList("session-card-indicator");
+                card.Add(indicator);
+
+                var inner = new VisualElement();
+                inner.AddToClassList("session-card-inner");
+
+                // Room code badge
+                var codeBadge = new VisualElement();
+                codeBadge.AddToClassList("session-code-badge");
+                var codeText = new Label(session.roomCode ?? "???");
+                codeText.AddToClassList("session-code-text");
+                codeBadge.Add(codeText);
+                inner.Add(codeBadge);
+
+                // Info block
+                var info = new VisualElement();
+                info.AddToClassList("session-info");
+
+                var infoTop = new VisualElement();
+                infoTop.AddToClassList("session-info-top");
+                var nameLabel = new Label(session.name ?? "Unnamed Room");
+                nameLabel.AddToClassList("session-room-name");
+                infoTop.Add(nameLabel);
+                var playerCount = new Label($"{session.characterCount}/2");
+                playerCount.AddToClassList("session-player-count");
+                infoTop.Add(playerCount);
+                info.Add(infoTop);
+
+                var detailRow = new VisualElement();
+                detailRow.AddToClassList("session-detail-row");
+
+                if (!string.IsNullOrEmpty(session.currentScene))
+                {
+                    var sceneLabel = new Label($"📍 {session.currentScene}");
+                    sceneLabel.AddToClassList("session-scene");
+                    detailRow.Add(sceneLabel);
+                }
+
+                var playtimeLabel = new Label($"⏱ {FormatPlaytime(session.playTimeSeconds)}");
+                playtimeLabel.AddToClassList("session-playtime");
+                detailRow.Add(playtimeLabel);
+
+                if (!string.IsNullOrEmpty(session.lastPlayedAt))
+                {
+                    var lastPlayed = new Label($"Last: {FormatLastPlayed(session.lastPlayedAt)}");
+                    lastPlayed.AddToClassList("session-last-played");
+                    detailRow.Add(lastPlayed);
+                }
+
+                info.Add(detailRow);
+                inner.Add(info);
+
+                // Right side: delete button
+                var right = new VisualElement();
+                right.AddToClassList("session-card-right");
+                var resetBtn = new Button { name = $"btn-session-reset-{i}", text = "✖" };
+                resetBtn.AddToClassList("session-reset-btn");
+                resetBtn.RegisterCallback<PointerEnterEvent>(evt => PlayHoverSound());
+                resetBtn.RegisterCallback<ClickEvent>(evt =>
+                {
+                    PlayClickSound();
+                    evt.StopPropagation();
+                    _sessionIdToDelete = session.id;
+                    var overlay = _root.Q<VisualElement>("session-reset-overlay");
+                    if (overlay != null) overlay.style.display = DisplayStyle.Flex;
+                });
+                right.Add(resetBtn);
+                inner.Add(right);
+
+                card.Add(inner);
+
+                card.RegisterCallback<PointerEnterEvent>(evt => PlayHoverSound());
+                card.RegisterCallback<ClickEvent>(evt =>
+                {
+                    PlayClickSound();
+                    _selectedSessionIndex = idx;
+                    HighlightSelectedSession();
+                });
+
+                container.Add(card);
+            }
+
+            HighlightSelectedSession();
+        }
+
+        private void HighlightSelectedSession()
+        {
+            if (_cachedSessions == null) return;
+            for (int i = 0; i < _cachedSessions.Count; i++)
+            {
+                var card = _root.Q<Button>($"session-card-{i}");
+                if (card == null) continue;
+                if (i == _selectedSessionIndex) card.AddToClassList("selected");
+                else card.RemoveFromClassList("selected");
             }
         }
 
         /// <summary>
-        /// Mỗi 0.5s đọc LobbyPlayer của tất cả peer trong runner và điền 2 thẻ phòng chờ.
-        /// Thẻ host = LobbyPlayer có IsHostPlayer; thẻ client = peer còn lại. Nhờ vậy host
-        /// thấy client (và ngược lại) ngay khi client vào phòng, chưa cần bắt đầu trận.
+        /// Host bấm Continue: dùng session đã chọn (reopen) hoặc tạo mới, rồi StartGame Fusion.
         /// </summary>
-        private System.Collections.IEnumerator PollLobbyRoster()
+        private void OnSessionContinue()
         {
-            var wait = new WaitForSeconds(0.5f);
-            while (true)
+            if (_selectedSessionIndex >= 0 && _cachedSessions != null && _selectedSessionIndex < _cachedSessions.Count)
             {
-                var launcher = Attrition.Networking.NetworkLauncher.Instance;
-                var runner = launcher != null ? launcher.Runner : null;
-                if (runner != null)
+                // Reopen session cũ: dùng room code của session đó.
+                var session = _cachedSessions[_selectedSessionIndex];
+                _currentRoomCode = session.roomCode;
+                _currentRoomName = session.name;
+                GameLaunch.RoomCode = _currentRoomCode;
+                GameLaunch.RoomName = _currentRoomName ?? "";
+
+                CreateHostSessionOnServer();
+                StartFusionNetwork(GameMode.Host, _currentRoomCode, (ok, err) =>
                 {
-                    Attrition.Networking.LobbyPlayer hostLp = null;
-                    Attrition.Networking.LobbyPlayer clientLp = null;
-
-                    foreach (var lp in FindObjectsByType<Attrition.Networking.LobbyPlayer>(FindObjectsSortMode.None))
+                    if (!ok)
                     {
-                        if (lp == null) continue;
-                        if (lp.IsHostPlayer) hostLp = lp;
-                        else clientLp = lp;
+                        ShowSlotWarning($"Could not open room: {err}");
+                        ShowScreen("session-selection");
                     }
-
-                    if (hostLp != null)
-                    {
-                        string n = hostLp.DisplayName.Value;
-                        SetText("coop-host-name", string.IsNullOrEmpty(n) ? "Wanderer" : n);
-                        SetText("coop-host-level", $"LEVEL {Mathf.Max(1, hostLp.Level)}");
-                        // Tên phòng do host đặt (client đọc từ LobbyPlayer host). Bỏ trống → giữ nhãn cũ.
-                        string room = hostLp.RoomName.Value;
-                        if (!string.IsNullOrEmpty(room)) SetText("coop-room-name", room);
-                    }
-
-                    var clientCard = _root.Q<VisualElement>("coop-card-client");
-                    if (clientLp != null)
-                    {
-                        string n = clientLp.DisplayName.Value;
-                        bool ready = clientLp.IsReady;
-                        SetText("coop-client-name", string.IsNullOrEmpty(n) ? "Wanderer" : n);
-                        // Hiện trạng thái sẵn sàng kèm level để host biết khi nào start được.
-                        SetText("coop-client-level", $"LEVEL {Mathf.Max(1, clientLp.Level)}  •  {(ready ? "READY" : "NOT READY")}");
-                        if (clientCard != null) clientCard.style.opacity = 1f;
-
-                        _clientPresent = true;
-                        _clientReady = ready;
-                    }
-                    else
-                    {
-                        SetText("coop-client-name", "Waiting for player...");
-                        SetText("coop-client-level", "");
-                        if (clientCard != null) clientCard.style.opacity = 0.5f;
-
-                        _clientPresent = false;
-                        _clientReady = false;
-                    }
-
-                    // Host: bật/tắt nút Start theo client present + ready (gate vào game).
-                    if (_isHost)
-                    {
-                        var startBtn = _root.Q<Button>("btn-coop-start");
-                        if (startBtn != null)
-                        {
-                            bool canStart = _clientPresent && _clientReady;
-                            startBtn.SetEnabled(canStart);
-                            if (canStart) startBtn.RemoveFromClassList("coop-start-disabled");
-                            else startBtn.AddToClassList("coop-start-disabled");
-                        }
-                    }
-                }
-                yield return wait;
-            }
-        }
-
-        /// <summary>LobbyPlayer của peer LOCAL (InputAuthority) — dùng để client gửi RpcSetReady.</summary>
-        private Attrition.Networking.LobbyPlayer FindLocalLobbyStats()
-        {
-            foreach (var lp in FindObjectsByType<Attrition.Networking.LobbyPlayer>(FindObjectsSortMode.None))
-            {
-                if (lp == null || lp.Object == null) continue;
-                if (lp.Object.HasInputAuthority) return lp;
-            }
-            return null;
-        }
-
-        private void SetText(string elementName, string value)
-        {
-            var lbl = _root.Q<Label>(elementName);
-            if (lbl != null) lbl.text = value;
-        }
-
-        private void UpdateLobbyRoomCode(string code)
-        {
-            var roomId = _root.Q<Label>("coop-room-id");
-            if (roomId != null) roomId.text = $"● ROOM ID: {code}";
-        }
-
-        private void UpdateReadyState(Button readyBtn)
-        {
-            var startBtn = _root.Q<Button>("btn-coop-start");
-
-            if (_isCoopReady)
-            {
-                readyBtn.text = "● READY";
-                readyBtn.RemoveFromClassList("not-ready");
-                readyBtn.AddToClassList("ready");
-                if (startBtn != null) startBtn.RemoveFromClassList("coop-start-disabled");
+                });
             }
             else
             {
-                readyBtn.text = "● NOT READY";
-                readyBtn.RemoveFromClassList("ready");
-                readyBtn.AddToClassList("not-ready");
-                if (startBtn != null) startBtn.AddToClassList("coop-start-disabled");
+                // Tạo mới: sinh room code mới.
+                _currentRoomCode = GenerateRoomCode();
+                _currentRoomName = $"Room {_currentRoomCode}";
+                GameLaunch.RoomCode = _currentRoomCode;
+                GameLaunch.RoomName = _currentRoomName;
+
+                CreateHostSessionOnServer();
+                StartFusionNetwork(GameMode.Host, _currentRoomCode, (ok, err) =>
+                {
+                    if (!ok)
+                    {
+                        ShowSlotWarning($"Could not create room: {err}");
+                        ShowScreen("session-selection");
+                    }
+                });
             }
+        }
+
+        private static string FormatPlaytime(int seconds)
+        {
+            if (seconds <= 0) return "00:00";
+            int h = seconds / 3600;
+            int m = (seconds % 3600) / 60;
+            return h > 0 ? $"{h}h {m:D2}m" : $"{m:D2}:{seconds % 60:D2}";
+        }
+
+        private static string FormatLastPlayed(string isoDate)
+        {
+            if (System.DateTime.TryParse(isoDate, null, System.Globalization.DateTimeStyles.RoundtripKind, out var dt))
+            {
+                var diff = System.DateTime.UtcNow - dt;
+                if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes}m ago";
+                if (diff.TotalHours < 24) return $"{(int)diff.TotalHours}h ago";
+                if (diff.TotalDays < 7) return $"{(int)diff.TotalDays}d ago";
+                return dt.ToString("MMM dd");
+            }
+            return "";
         }
 
         // =================================================================

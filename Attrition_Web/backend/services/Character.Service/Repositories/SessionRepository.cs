@@ -78,4 +78,20 @@ public class SessionRepository : ISessionRepository
             _context.Entry(existing).CurrentValues.SetValues(entity);
         await _context.SaveChangesAsync();
     }
+
+    // Delete a room entirely: session row + all character progress + world state.
+    public async Task<bool> DeleteSessionAsync(Guid sessionId)
+    {
+        var session = await _context.Sessions
+            .Include(s => s.Characters)
+            .Include(s => s.WorldStates)
+            .FirstOrDefaultAsync(s => s.Id == sessionId);
+        if (session == null) return false;
+
+        if (session.Characters.Count > 0) _context.CharacterSessions.RemoveRange(session.Characters);
+        if (session.WorldStates.Count > 0) _context.WorldStates.RemoveRange(session.WorldStates);
+        _context.Sessions.Remove(session);
+        await _context.SaveChangesAsync();
+        return true;
+    }
 }

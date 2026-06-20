@@ -17,4 +17,7 @@ public interface ISessionService
     // Upsert one character's progress / world state for a room.
     Task<ApiResponse<CharacterSessionDto>> SaveCharacterSessionAsync(SaveCharacterSessionRequest request);
     Task<ApiResponse<WorldStateDto>> SaveWorldStateAsync(SaveWorldStateRequest request);
+
+    // Delete a room entirely (session + all child data). Irreversible.
+    Task<ApiResponse> DeleteSessionAsync(Guid sessionId);
 }

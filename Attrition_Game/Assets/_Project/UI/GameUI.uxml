@@ -261,7 +261,7 @@
             <ui:VisualElement name="waiting-dim"/>
             <ui:VisualElement name="waiting-content">
                 <ui:Label text="WAITING FOR PLAYER..." name="waiting-title"/>
-                <ui:Label text="Đồng đội mất kết nối. Trận đấu tạm dừng cho đến khi họ quay lại." name="waiting-desc"/>
+                <ui:Label text="Teammate disconnected. The match is paused until they return." name="waiting-desc"/>
                 <ui:VisualElement name="waiting-spinner"/>
             </ui:VisualElement>
         </ui:VisualElement>

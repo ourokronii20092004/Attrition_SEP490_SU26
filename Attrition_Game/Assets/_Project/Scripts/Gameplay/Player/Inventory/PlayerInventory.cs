@@ -103,46 +103,127 @@ namespace Attrition.Gameplay.Player.Inventory
                 }
                 else
                 {
-                    RpcSetOwnerIdentity(ownerId, charId);
+                    RpcSetOwnerIdentity(PackGuid(ownerId) + PackGuid(charId));
                 }
             }
         }
 
-        /// <summary>Client báo danh tính chủ nhân lên host; host ghi state + fetch đồ đúng character.</summary>
+        /// <summary>
+        /// Client báo danh tính chủ nhân lên host; host ghi state + fetch đồ đúng character.
+        /// GỘP owner+char vào 1 NetworkString để tránh vượt giới hạn payload RPC 512 byte
+        /// (2× NetworkString&lt;_64&gt; = 528 byte > 512 → RPC bị huỷ, host không nhận được danh tính).
+        /// GUID bỏ dấu '-' = 32 hex; ghép owner(32)+char(32) = 64 ký tự vừa khít _64.
+        /// </summary>
         [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
-        private void RpcSetOwnerIdentity(NetworkString<_64> ownerId, NetworkString<_64> characterId)
+        private void RpcSetOwnerIdentity(NetworkString<_64> packed)
         {
+            string s = packed.ToString();
+            string ownerId = UnpackGuid(s.Length >= 32 ? s.Substring(0, 32) : s);
+            string charId = UnpackGuid(s.Length >= 64 ? s.Substring(32, 32) : "");
             OwnerUserId = ownerId;
-            OwnerCharacterId = characterId;
-            StartCoroutine(LoadOnlineInventory(characterId.ToString(), isOwningPeerHere: false));
+            OwnerCharacterId = charId;
+            StartCoroutine(LoadOnlineInventory(charId, isOwningPeerHere: false));
+        }
+
+        /// <summary>Bỏ dấu '-' của GUID → 32 hex (PadRight nếu thiếu) để gộp 2 GUID vào 1 NetworkString&lt;_64&gt;.</summary>
+        private static string PackGuid(string raw)
+        {
+            if (string.IsNullOrEmpty(raw)) return new string('0', 32);
+            string hex = raw.Replace("-", "");
+            if (hex.Length > 32) hex = hex.Substring(0, 32);
+            else if (hex.Length < 32) hex = hex.PadRight(32, '0');
+            return hex;
+        }
+
+        /// <summary>32 hex → GUID chuẩn 8-4-4-4-12 (khôi phục dạng có dấu '-' để khớp host-own-player + API).</summary>
+        private static string UnpackGuid(string hex)
+        {
+            return System.Guid.TryParseExact(hex, "N", out var g) ? g.ToString() : "";
         }
 
         /// <summary>
-        /// Host fetch inventory từ server theo characterId của CHỦ NHÂN nhân vật này (qua internal key,
-        /// bỏ qua ownership guard) rồi áp vào túi. Quest world-state chỉ nạp khi đây là nhân vật host.
+        /// Host nạp đồ cho nhân vật này theo ĐÚNG cặp (charId, session hiện tại) — KHÔNG phải đồ toàn cục
+        /// của character. Fetch session detail 1 lần (cache vào GameLaunch), rồi đọc inventoryJson của
+        /// charId trong session đó. Không có row → túi trống → seed tân thủ (đây chính là hành vi
+        /// "session mới / char mới vào session = đồ trống" mong muốn). Quest world-state theo session,
+        /// chỉ nạp 1 lần (gắn vào nhân vật host).
         /// </summary>
         private System.Collections.IEnumerator LoadOnlineInventory(string charId, bool isOwningPeerHere)
         {
-            if (APIManager.Instance != null && !string.IsNullOrEmpty(charId))
-            {
-                bool done = false;
-                yield return APIManager.Instance.GetCharacterDetailInternal(charId, detail =>
-                {
-                    if (detail != null && !string.IsNullOrEmpty(detail.inventoryJson))
-                        ImportJson(detail.inventoryJson);
+            yield return EnsureSessionLoaded(isOwningPeerHere);
 
-                    // Quest world-state là của HOST (host-authoritative). Chỉ nạp từ character của host.
-                    bool isHostOwnPlayer = isOwningPeerHere && HasInputAuthority;
-                    if (detail != null && isHostOwnPlayer)
-                    {
-                        Attrition.Persistence.GameLaunch.CoopQuestsJson = detail.questsJson;
-                        Attrition.Gameplay.NPC.NetworkNPC.ApplyAllJson(detail.questsJson);
-                    }
-                    done = true;
-                });
-                if (!done) yield return null;
+            if (!string.IsNullOrEmpty(charId)
+                && Attrition.Persistence.GameLaunch.SessionInventoryByChar.TryGetValue(charId, out var invJson)
+                && !string.IsNullOrEmpty(invJson))
+            {
+                ImportJson(invJson);
             }
-            SeedStartingItems(); // chỉ seed nếu túi vẫn trống sau khi nạp từ server
+
+            SeedStartingItems(); // chỉ seed nếu túi vẫn trống sau khi nạp từ session
+        }
+
+        /// <summary>
+        /// Host fetch session detail (GET /internal/sessions/{id}) MỘT LẦN, đổ inventoryJson từng
+        /// character vào GameLaunch.SessionInventoryByChar và quest world-state vào CoopQuestsJson.
+        /// Các PlayerInventory sau đọc thẳng từ cache (không gọi API lại). Nếu chưa có SessionId
+        /// (chưa tạo room server) → bỏ qua, mọi người sẽ seed tân thủ.
+        /// </summary>
+        private System.Collections.IEnumerator EnsureSessionLoaded(bool isOwningPeerHere)
+        {
+            // Player KHÁC (không phải người fetch) → chờ tới khi fetch xong rồi mới đọc cache.
+            if (Attrition.Persistence.GameLaunch.SessionInventoryFetchStarted)
+            {
+                while (!Attrition.Persistence.GameLaunch.SessionInventoryLoaded) yield return null;
+                yield break;
+            }
+            Attrition.Persistence.GameLaunch.SessionInventoryFetchStarted = true; // claim fetch (idempotent)
+
+            string sessionId = Attrition.Persistence.GameLaunch.SessionId;
+            if (APIManager.Instance != null && !string.IsNullOrEmpty(sessionId))
+            {
+                yield return APIManager.Instance.GetSession(sessionId, detail =>
+                {
+                    if (detail == null) return;
+
+                    if (detail.characters != null)
+                    {
+                        foreach (var cs in detail.characters)
+                        {
+                            if (cs == null || string.IsNullOrEmpty(cs.characterId)) continue;
+                            Attrition.Persistence.GameLaunch.SessionInventoryByChar[cs.characterId] = cs.inventoryJson;
+                        }
+                    }
+
+                    // Quest world-state của session (host-authoritative). Khôi phục NPC theo tiến trình session.
+                    string questsJson = BuildQuestsJson(detail.worldStates);
+                    Attrition.Persistence.GameLaunch.CoopQuestsJson = questsJson;
+                    Attrition.Gameplay.NPC.NetworkNPC.ApplyAllJson(questsJson);
+                });
+            }
+
+            Attrition.Persistence.GameLaunch.SessionInventoryLoaded = true; // mở khoá cho player đang chờ
+        }
+
+        /// <summary>Map worldStates (per session: eventId/stateValue/progress) → QuestProgressList JSON
+        /// mà NetworkNPC.ApplyAllJson hiểu (questId/state/progress). eventId chính là questId.</summary>
+        private static string BuildQuestsJson(System.Collections.Generic.List<APIManager.WorldStateDto> states)
+        {
+            if (states == null || states.Count == 0) return "";
+            var list = new Attrition.Persistence.QuestProgressList();
+            var entries = new System.Collections.Generic.List<Attrition.Persistence.QuestProgressEntry>();
+            foreach (var ws in states)
+            {
+                if (ws == null || string.IsNullOrEmpty(ws.eventId)) continue;
+                entries.Add(new Attrition.Persistence.QuestProgressEntry
+                {
+                    questId = ws.eventId,
+                    state = (byte)ws.stateValue,
+                    progress = ws.progress
+                });
+            }
+            if (entries.Count == 0) return "";
+            list.quests = entries.ToArray();
+            return UnityEngine.JsonUtility.ToJson(list);
         }
 
         /// <summary>Phát item khởi đầu cho nhân vật mới (host-only, chỉ khi túi trống).</summary>
