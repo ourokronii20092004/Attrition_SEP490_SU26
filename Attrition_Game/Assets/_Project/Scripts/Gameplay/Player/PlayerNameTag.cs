@@ -16,7 +16,9 @@ namespace Attrition.Gameplay.Player
         private PlayerController _player;
         private TextMeshPro _nameText;
         private Transform _fill;
+        private Transform _trailFill;
         private float _shown = 1f;
+        private float _trail = 1f;
 
         public static void Attach(PlayerController player, bool isLocal)
         {
@@ -44,7 +46,8 @@ namespace Attrition.Gameplay.Player
 
             // Thanh máu: nền đen + fill màu
             var bg = Quad("BarBG", transform, new Color(0f, 0f, 0f, 0.75f), BarW, BarH, 78);
-            _fill = Quad("BarFill", bg.transform, color, BarW - 0.04f, BarH - 0.04f, 79).transform;
+            _trailFill = Quad("BarTrail", bg.transform, new Color(1f, 0.85f, 0.3f, 1f), BarW - 0.04f, BarH - 0.04f, 79).transform;
+            _fill = Quad("BarFill", bg.transform, color, BarW - 0.04f, BarH - 0.04f, 80).transform;
         }
 
         private GameObject Quad(string n, Transform parent, Color c, float w, float h, int order)
@@ -70,12 +73,19 @@ namespace Attrition.Gameplay.Player
             // Thanh máu
             int max = Mathf.Max(1, _player.maxHP);
             float target = Mathf.Clamp01((float)_player.HP / max);
-            _shown = Mathf.MoveTowards(_shown, target, Time.deltaTime * 2f);
+            _shown = target;
+            _trail = Mathf.MoveTowards(_trail, target, Time.deltaTime * 1.5f);
             if (_fill != null)
             {
                 float w = (BarW - 0.04f) * _shown;
                 _fill.localScale = new Vector3(w, BarH - 0.04f, 1f);
                 _fill.localPosition = new Vector3(-((BarW - 0.04f) - w) * 0.5f, 0f, 0f);
+            }
+            if (_trailFill != null)
+            {
+                float tw = (BarW - 0.04f) * _trail;
+                _trailFill.localScale = new Vector3(tw, BarH - 0.04f, 1f);
+                _trailFill.localPosition = new Vector3(-((BarW - 0.04f) - tw) * 0.5f, 0f, 0f);
             }
         }
     }

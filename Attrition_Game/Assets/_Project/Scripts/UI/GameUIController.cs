@@ -94,7 +94,11 @@ namespace Attrition.UI
             Time.timeScale = 1f; // tránh để MainMenu bị đứng hình nếu quit lúc đang pause (solo)
             Attrition.Persistence.GamePause.IsPaused = false;
             Attrition.Persistence.CoopSession.Reset();
-            if (_stats != null) _stats.OnStatsChanged -= RefreshCharacterPanel;
+            if (_stats != null)
+            {
+                _stats.OnStatsChanged -= RefreshCharacterPanel;
+                _stats.OnStatsChanged -= RefreshAllocPoints;
+            }
             if (_inventory != null) _inventory.OnInventoryChanged -= RefreshInventory;
             _isBound = false;
 
@@ -184,6 +188,7 @@ namespace Attrition.UI
                 _progression = p.GetComponent<PlayerProgression>();
 
                 _stats.OnStatsChanged += RefreshCharacterPanel;
+                _stats.OnStatsChanged += RefreshAllocPoints;
                 if (_inventory != null) _inventory.OnInventoryChanged += RefreshInventory;
 
                 _isBound = true;
