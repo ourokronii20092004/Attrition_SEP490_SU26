@@ -19,11 +19,31 @@ namespace Attrition.UI
             SetText("stat-ad", _stats.AD.ToString());
             SetText("stat-ap", _stats.AP.ToString());
 
-            int unspent = _stats.UnspentPoints;
-            SetText("inv-points", $"UNSPENT POINTS: {unspent}");
-            SetAllocEnabled(unspent > 0);
+            // Bars
+            SetFill("inv-hp-fill", _stats.CurrentHP, _stats.MaxHP);
+            SetText("inv-hp-label", $"{_stats.CurrentHP}/{_stats.MaxHP}");
+
+            SetFill("inv-mana-fill", _stats.CurrentMana, _stats.MaxMana);
+            SetText("inv-mana-label", $"{_stats.CurrentMana}/{_stats.MaxMana}");
+
+            int sta = Mathf.FloorToInt(_stats.CurrentStamina);
+            SetFill("inv-stamina-fill", sta, _stats.MaxStamina);
+            SetText("inv-stamina-label", $"{sta}/{_stats.MaxStamina}");
+
+            var prog = _stats.GetComponent<Attrition.Gameplay.Player.PlayerProgression>();
+            if (prog != null)
+            {
+                SetFill("inv-exp-fill", prog.CurrentExp, prog.ExpToNext);
+                SetText("inv-exp-label", $"EXP {prog.CurrentExp}/{prog.ExpToNext}");
+            }
 
             RefreshEquipSlots();
+        }
+
+        public void RefreshAllocPoints()
+        {
+            // Now handled entirely by the provisional Level Up menu logic in GameUIController.FastTravel.cs
+            // to prevent overwriting provisional points during real-time allocation.
         }
 
         private void SetAllocEnabled(bool on)

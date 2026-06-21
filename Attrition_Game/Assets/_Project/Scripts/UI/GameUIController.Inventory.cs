@@ -56,6 +56,14 @@ namespace Attrition.UI
             BindAlloc("alloc-AP", StatType.AP);
             BindAlloc("alloc-DEF", StatType.DEF);
             BindAlloc("alloc-RES", StatType.RES);
+
+            // Gỡ trang bị khi click vào ô trang bị
+            BindButton("equip-head", () => { if (_inventory != null) _inventory.RpcRequestUnequipArmor((int)EquipmentSlot.Head); });
+            BindButton("equip-chest", () => { if (_inventory != null) _inventory.RpcRequestUnequipArmor((int)EquipmentSlot.Chest); });
+            BindButton("equip-legs", () => { if (_inventory != null) _inventory.RpcRequestUnequipArmor((int)EquipmentSlot.Legs); });
+            BindButton("equip-boots", () => { if (_inventory != null) _inventory.RpcRequestUnequipArmor((int)EquipmentSlot.Boots); });
+            BindButton("equip-accessory", () => { if (_inventory != null) _inventory.RpcRequestUnequipAccessory(); });
+            BindButton("equip-skill", () => { if (_inventory != null) _inventory.RpcRequestUnequipSkill(); });
         }
 
         private void BindTab(string name, ItemCategory cat)

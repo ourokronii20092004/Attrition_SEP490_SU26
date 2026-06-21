@@ -97,5 +97,17 @@ namespace Attrition.Gameplay.Player
             if (!HasStateAuthority) return;
             MaxManaCharges = Mathf.Min(hardMaxManaCharges, MaxManaCharges + by);
         }
+
+        /// <summary>Thay đổi tỷ lệ bình (chỉ cho phép nếu tổng không đổi). Chỉ client gửi cho host.</summary>
+        [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+        public void RpcReallocateFlasks(int newHealth, int newMana)
+        {
+            if (newHealth + newMana == MaxHealthCharges + MaxManaCharges)
+            {
+                MaxHealthCharges = newHealth;
+                MaxManaCharges = newMana;
+                RefillAll();
+            }
+        }
     }
 }
