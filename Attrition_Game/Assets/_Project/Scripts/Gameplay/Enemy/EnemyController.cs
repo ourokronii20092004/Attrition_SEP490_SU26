@@ -65,10 +65,11 @@ namespace Attrition.Controllers
         {
             if (statsComp == null) statsComp = GetComponent<EnemyStats>();
 
+            // Khởi tạo maxHealth trên MỌI máy để client tính thanh máu đúng
+            if (statsComp != null && statsComp.MaxHP > 0) maxHealth = statsComp.MaxHP;
+
             if (HasStateAuthority)
             {
-                // statsComp có MaxHP point-based (vd 30) → HP theo điểm; nếu không, giữ hit-based cũ.
-                if (statsComp != null && statsComp.MaxHP > 0) maxHealth = statsComp.MaxHP;
                 Health = maxHealth;
                 RevivesRemaining = extraLivesAfterHpZero;
                 CurrentPoise = GetMaxPoise();

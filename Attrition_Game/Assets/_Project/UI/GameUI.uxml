@@ -6,6 +6,8 @@
         <ui:VisualElement name="hud" picking-mode="Ignore">
             <!-- Top-left: avatar + HP/Mana/Stamina -->
             <ui:VisualElement name="hud-topleft">
+                <!-- HUD Dark Fantasy Decor (Viền/bóng) -->
+                <ui:VisualElement class="hud-decor-bg"/>
                 <ui:VisualElement class="hud-avatar"/>
                 <ui:VisualElement name="hud-bars">
                     <ui:VisualElement class="stat-bar-row">
@@ -26,7 +28,7 @@
                         </ui:VisualElement>
                         <ui:Label name="hud-stamina-label" text="100/100" class="stat-bar-label"/>
                     </ui:VisualElement>
-                    <ui:Label name="hud-level" text="LV. 1" class="stat-bar-label" style="width: auto; -unity-text-align: middle-left; color: #c9a84c; margin-top: 2px;"/>
+                    <ui:Label name="hud-level" text="LV. 1" class="stat-bar-label hud-lvl"/>
                 </ui:VisualElement>
             </ui:VisualElement>
 
@@ -40,6 +42,7 @@
 
             <!-- Bottom-left: flasks + skill -->
             <ui:VisualElement name="hud-bottomleft">
+                <ui:VisualElement class="hud-decor-bg-small"/>
                 <ui:VisualElement name="hud-hp-flask" class="hud-slot">
                     <ui:VisualElement name="hud-hp-flask-icon" class="hud-slot-icon"/>
                     <ui:Label text="Q" class="hud-slot-key"/>
@@ -68,8 +71,13 @@
             <ui:VisualElement name="inv-panel">
                 <!-- LEFT: character + equipment -->
                 <ui:VisualElement name="inv-left">
-                    <ui:Label name="inv-char-name" text="ARTORIAS"/>
-                    <ui:Label name="inv-char-level" text="LEVEL 1"/>
+                    <ui:VisualElement class="ornate-header">
+                        <ui:Label name="inv-char-name" text="ARTORIAS"/>
+                        <ui:Label name="inv-char-level" text="LEVEL 1"/>
+                    </ui:VisualElement>
+                    
+                    <ui:VisualElement class="fancy-divider"/>
+
                     <ui:VisualElement name="inv-equip-row">
                         <ui:VisualElement class="equip-col">
                             <ui:Button name="equip-head" class="equip-slot"><ui:VisualElement name="equip-head-icon" class="equip-slot-icon"/></ui:Button>
@@ -86,6 +94,8 @@
                         </ui:VisualElement>
                     </ui:VisualElement>
 
+                    <ui:VisualElement class="fancy-divider" style="margin-top: 10px;"/>
+
                     <ui:VisualElement name="inv-stats">
                         <ui:VisualElement class="stat-cell"><ui:Label text="DEF" class="stat-cell-key"/><ui:Label name="stat-def" text="10" class="stat-cell-val"/></ui:VisualElement>
                         <ui:VisualElement class="stat-cell"><ui:Label text="RES" class="stat-cell-key"/><ui:Label name="stat-res" text="10" class="stat-cell-val"/></ui:VisualElement>
@@ -93,14 +103,31 @@
                         <ui:VisualElement class="stat-cell"><ui:Label text="AP" class="stat-cell-key"/><ui:Label name="stat-ap" text="10" class="stat-cell-val"/></ui:VisualElement>
                     </ui:VisualElement>
 
-                    <ui:Label name="inv-points" text="UNSPENT POINTS: 0"/>
-                    <ui:VisualElement name="inv-alloc" style="flex-direction: row; flex-wrap: wrap; justify-content: center;">
-                        <ui:Button name="alloc-MaxHP" text="+HP" class="alloc-btn" style="width: auto; padding: 0 6px;"/>
-                        <ui:Button name="alloc-MaxMana" text="+MP" class="alloc-btn" style="width: auto; padding: 0 6px;"/>
-                        <ui:Button name="alloc-AD" text="+AD" class="alloc-btn" style="width: auto; padding: 0 6px;"/>
-                        <ui:Button name="alloc-AP" text="+AP" class="alloc-btn" style="width: auto; padding: 0 6px;"/>
-                        <ui:Button name="alloc-DEF" text="+DEF" class="alloc-btn" style="width: auto; padding: 0 6px;"/>
-                        <ui:Button name="alloc-RES" text="+RES" class="alloc-btn" style="width: auto; padding: 0 6px;"/>
+                    <ui:VisualElement name="inv-bars" style="margin-top: 10px; width: 80%; align-self: center;">
+                        <ui:VisualElement class="stat-bar-row">
+                            <ui:VisualElement class="stat-bar-track">
+                                <ui:VisualElement name="inv-hp-fill" class="stat-bar-fill fill-hp"/>
+                            </ui:VisualElement>
+                            <ui:Label name="inv-hp-label" text="100/100" class="stat-bar-label"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="stat-bar-row">
+                            <ui:VisualElement class="stat-bar-track">
+                                <ui:VisualElement name="inv-mana-fill" class="stat-bar-fill fill-mana"/>
+                            </ui:VisualElement>
+                            <ui:Label name="inv-mana-label" text="100/100" class="stat-bar-label"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="stat-bar-row">
+                            <ui:VisualElement class="stat-bar-track">
+                                <ui:VisualElement name="inv-stamina-fill" class="stat-bar-fill fill-stamina"/>
+                            </ui:VisualElement>
+                            <ui:Label name="inv-stamina-label" text="100/100" class="stat-bar-label"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="stat-bar-row">
+                            <ui:VisualElement class="stat-bar-track">
+                                <ui:VisualElement name="inv-exp-fill" class="stat-bar-fill fill-exp"/>
+                            </ui:VisualElement>
+                            <ui:Label name="inv-exp-label" text="EXP 0/100" class="stat-bar-label"/>
+                        </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
 
@@ -111,6 +138,9 @@
                         <ui:Button name="inv-tab-accessory" text="ACCESSORY" class="inv-tab"/>
                         <ui:Button name="inv-tab-skill" text="SKILL" class="inv-tab"/>
                     </ui:VisualElement>
+                    
+                    <ui:VisualElement class="fancy-divider" style="margin-top: -14px; margin-bottom: 10px; opacity: 0.5;"/>
+
                     <ui:ScrollView name="inv-grid-scroll" style="flex-grow: 1;">
                         <ui:VisualElement name="inv-grid"/>
                     </ui:ScrollView>
@@ -124,6 +154,7 @@
                 <!-- Detail popup -->
                 <ui:VisualElement name="inv-detail" class="hidden">
                     <ui:Label name="inv-detail-name" text="Item"/>
+                    <ui:VisualElement class="fancy-divider" style="margin-bottom: 8px;"/>
                     <ui:Label name="inv-detail-desc" text=""/>
                     <ui:VisualElement name="inv-detail-mods"/>
                     <ui:Button name="inv-detail-equip" text="EQUIP" class="detail-btn"/>
@@ -132,27 +163,93 @@
             </ui:VisualElement>
         </ui:VisualElement>
 
-        <!-- ==================== FAST TRAVEL ==================== -->
+        <!-- ==================== BONFIRE / CHECKPOINT ==================== -->
         <ui:VisualElement name="ft-screen" class="overlay-screen hidden">
             <ui:VisualElement name="ft-dim" class="overlay-screen"/>
-            <ui:VisualElement name="ft-panel">
-                <ui:VisualElement name="ft-list-col">
-                    <ui:Label name="ft-title" text="CHECKPOINT"/>
-                    <ui:Label name="ft-count" text="0 / 0 DISCOVERED"/>
-                    <ui:ScrollView name="ft-list"/>
+            
+            <!-- Main Vertical Menu -->
+            <ui:VisualElement name="ft-main-menu" class="bonfire-menu">
+                <ui:Label text="REST" class="bonfire-title"/>
+                <ui:VisualElement class="fancy-divider" style="width: 80%;"/>
+                <ui:Button name="ft-btn-rest" text="REST" class="bonfire-btn"/>
+                <ui:Button name="ft-btn-levelup" text="LEVEL UP" class="bonfire-btn"/>
+                <ui:Button name="ft-btn-flasks" text="FLASKS" class="bonfire-btn"/>
+                <ui:Button name="ft-btn-travel" text="FAST TRAVEL" class="bonfire-btn"/>
+                <ui:Button name="ft-btn-leave" text="LEAVE" class="bonfire-btn"/>
+            </ui:VisualElement>
+
+            <!-- Level Up Popup -->
+            <ui:VisualElement name="ft-levelup-menu" class="bonfire-popup hidden">
+                <ui:Label text="LEVEL UP" class="popup-title"/>
+                <ui:VisualElement class="fancy-divider"/>
+                <ui:Label name="ft-points" text="UNSPENT POINTS: 0" class="unspent-label"/>
+                <ui:VisualElement name="ft-alloc" class="alloc-list">
+                    <ui:VisualElement class="alloc-row"><ui:Label text="MAX HP" class="alloc-name"/><ui:Label name="lbl-MaxHP" text="100" class="alloc-val"/><ui:Button name="alloc-MaxHP" text="+" class="plus-btn"/></ui:VisualElement>
+                    <ui:VisualElement class="alloc-row"><ui:Label text="MAX MANA" class="alloc-name"/><ui:Label name="lbl-MaxMana" text="100" class="alloc-val"/><ui:Button name="alloc-MaxMana" text="+" class="plus-btn"/></ui:VisualElement>
+                    <ui:VisualElement class="alloc-row"><ui:Label text="ATTACK (AD)" class="alloc-name"/><ui:Label name="lbl-AD" text="10" class="alloc-val"/><ui:Button name="alloc-AD" text="+" class="plus-btn"/></ui:VisualElement>
+                    <ui:VisualElement class="alloc-row"><ui:Label text="MAGIC (AP)" class="alloc-name"/><ui:Label name="lbl-AP" text="10" class="alloc-val"/><ui:Button name="alloc-AP" text="+" class="plus-btn"/></ui:VisualElement>
+                    <ui:VisualElement class="alloc-row"><ui:Label text="DEFENSE" class="alloc-name"/><ui:Label name="lbl-DEF" text="10" class="alloc-val"/><ui:Button name="alloc-DEF" text="+" class="plus-btn"/></ui:VisualElement>
+                    <ui:VisualElement class="alloc-row"><ui:Label text="RESIST" class="alloc-name"/><ui:Label name="lbl-RES" text="10" class="alloc-val"/><ui:Button name="alloc-RES" text="+" class="plus-btn"/></ui:VisualElement>
                 </ui:VisualElement>
-                <ui:VisualElement name="ft-preview-col">
-                    <ui:VisualElement name="ft-preview">
-                        <ui:Label name="ft-preview-name" text="SELECT A BEACON"/>
-                        <ui:Label name="ft-preview-region" text=""/>
-                    </ui:VisualElement>
-                    <ui:VisualElement name="ft-actions">
-                        <ui:Button name="ft-close" text="CLOSE" class="ft-btn close"/>
-                        <ui:Button name="ft-rest" text="REST" class="ft-btn rest"/>
-                        <ui:Button name="ft-go" text="TELEPORT" class="ft-btn go"/>
-                    </ui:VisualElement>
+                <ui:VisualElement class="popup-actions">
+                    <ui:Button name="ft-levelup-apply" text="APPLY" class="bonfire-btn half"/>
+                    <ui:Button name="ft-levelup-back" text="BACK" class="bonfire-btn half"/>
                 </ui:VisualElement>
             </ui:VisualElement>
+
+            <!-- Flasks Popup -->
+            <ui:VisualElement name="ft-flasks-menu" class="bonfire-popup hidden">
+                <ui:Label text="ALLOCATE FLASKS" class="popup-title"/>
+                <ui:VisualElement class="fancy-divider"/>
+                <ui:Label name="ft-flasks-total" text="TOTAL FLASKS: 6" class="unspent-label"/>
+                <ui:VisualElement class="flask-alloc-container">
+                    <ui:VisualElement class="flask-col">
+                        <ui:VisualElement class="hud-slot-icon" style="background-color: #ff3b3b; width: 48px; height: 48px; margin: auto; border-radius: 24px;"/>
+                        <ui:Label text="HP FLASK" class="flask-name"/>
+                        <ui:VisualElement class="flask-stepper">
+                            <ui:Button name="flask-hp-sub" text="&lt;" class="stepper-btn"/>
+                            <ui:Label name="flask-hp-val" text="3" class="stepper-val"/>
+                            <ui:Button name="flask-hp-add" text="&gt;" class="stepper-btn"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="flask-col">
+                        <ui:VisualElement class="hud-slot-icon" style="background-color: #3b82ff; width: 48px; height: 48px; margin: auto; border-radius: 24px;"/>
+                        <ui:Label text="MANA FLASK" class="flask-name"/>
+                        <ui:VisualElement class="flask-stepper">
+                            <ui:Button name="flask-mana-sub" text="&lt;" class="stepper-btn"/>
+                            <ui:Label name="flask-mana-val" text="3" class="stepper-val"/>
+                            <ui:Button name="flask-mana-add" text="&gt;" class="stepper-btn"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement class="popup-actions">
+                    <ui:Button name="ft-flasks-apply" text="APPLY" class="bonfire-btn half"/>
+                    <ui:Button name="ft-flasks-back" text="BACK" class="bonfire-btn half"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- Fast Travel Popup -->
+            <ui:VisualElement name="ft-travel-menu" class="bonfire-popup hidden" style="width: 500px;">
+                <ui:Label text="FAST TRAVEL" class="popup-title"/>
+                <ui:VisualElement class="fancy-divider"/>
+                <ui:VisualElement name="ft-panel" style="background-color: transparent; border-width: 0;">
+                    <ui:VisualElement name="ft-list-col">
+                        <ui:Label name="ft-count" text="0 / 0 DISCOVERED"/>
+                        <ui:ScrollView name="ft-list" style="flex-grow: 1; height: 200px;"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="ft-preview-col">
+                        <ui:VisualElement name="ft-preview">
+                            <ui:Label name="ft-preview-name" text="SELECT A BEACON"/>
+                            <ui:Label name="ft-preview-region" text=""/>
+                        </ui:VisualElement>
+                        <ui:VisualElement name="ft-actions">
+                            <ui:Button name="ft-go" text="TELEPORT" class="ft-btn go"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:Button name="ft-travel-back" text="BACK" class="bonfire-btn" style="margin-top: 10px;"/>
+            </ui:VisualElement>
+
         </ui:VisualElement>
 
         <!-- ==================== GAME OVER ==================== -->

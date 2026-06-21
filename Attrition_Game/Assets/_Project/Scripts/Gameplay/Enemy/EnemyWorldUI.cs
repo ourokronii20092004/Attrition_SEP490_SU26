@@ -25,7 +25,9 @@ namespace Attrition.Gameplay.Enemy
         private EnemyController _enemy;
         private Transform _barRoot;
         private Transform _fill;
+        private Transform _trailFill;
         private float _shownFraction = 1f;
+        private float _trailFraction = 1f;
         private bool _everDamaged;
 
         private void Awake()
@@ -65,7 +67,8 @@ namespace Attrition.Gameplay.Enemy
 
             var bg = CreateQuad("BG", _barRoot, new Color(0f, 0f, 0f, 0.7f), barSize, 0);
             var fillSize = new Vector2(barSize.x - 0.04f, barSize.y - 0.04f);
-            _fill = CreateQuad("Fill", bg.transform, new Color(0.7f, 0.16f, 0.16f, 1f), fillSize, 1).transform;
+            _trailFill = CreateQuad("Trail", bg.transform, new Color(1f, 0.85f, 0.3f, 1f), fillSize, 1).transform;
+            _fill = CreateQuad("Fill", bg.transform, new Color(0.7f, 0.16f, 0.16f, 1f), fillSize, 2).transform;
 
             _barRoot.gameObject.SetActive(false); // ẩn tới khi bị đánh lần đầu
         }
@@ -120,13 +123,20 @@ namespace Attrition.Gameplay.Enemy
 
             int max = Mathf.Max(1, _enemy.maxHealth);
             float target = Mathf.Clamp01((float)_enemy.CurrentHealth / max);
-            _shownFraction = Mathf.MoveTowards(_shownFraction, target, Time.deltaTime * 2f);
+            
+            _shownFraction = target;
+            _trailFraction = Mathf.MoveTowards(_trailFraction, target, Time.deltaTime * 1.5f);
 
             float w = (barSize.x - 0.04f) * _shownFraction;
             _fill.localScale = new Vector3(w, barSize.y - 0.04f, 1f);
             // neo trái: dịch theo nửa phần hụt
             float missing = (barSize.x - 0.04f) - w;
             _fill.localPosition = new Vector3(-missing * 0.5f, 0f, 0f);
+
+            float tw = (barSize.x - 0.04f) * _trailFraction;
+            _trailFill.localScale = new Vector3(tw, barSize.y - 0.04f, 1f);
+            float tmissing = (barSize.x - 0.04f) - tw;
+            _trailFill.localPosition = new Vector3(-tmissing * 0.5f, 0f, 0f);
 
             if (_enemy.IsDead && _barRoot != null) _barRoot.gameObject.SetActive(false);
         }
