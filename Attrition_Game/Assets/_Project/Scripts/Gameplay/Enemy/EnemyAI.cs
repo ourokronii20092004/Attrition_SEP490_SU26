@@ -31,12 +31,12 @@ public class EnemyAI : NetworkBehaviour
     // ═══════════════════════════════════════════════════════════════
 
     [Header("---- REFS ----")]
-    [SerializeField] private EnemyAnimation animationComp;
-    [SerializeField] private EnemyCombat combatComp;
-    [SerializeField] private EnemyController controller;
+    [SerializeField] protected EnemyAnimation animationComp;
+    [SerializeField] protected EnemyCombat combatComp;
+    [SerializeField] protected EnemyController controller;
     [Tooltip("Gắn EliteEnemySkills nếu đây là quái tinh anh (Cultist, NightBorne, Gollux). Bỏ trống nếu quái thường.")]
     [SerializeField] private EliteEnemySkills eliteSkills;
-    private Rigidbody2D rb;
+    protected Rigidbody2D rb;
 
     [Header("---- SETTINGS ----")]
     public float viewRadius = 5f;
@@ -154,12 +154,12 @@ public class EnemyAI : NetworkBehaviour
     // LOCAL STATE (không cần đồng bộ mạng)
     // ═══════════════════════════════════════════════════════════════
 
-    private Vector2 startPosition;
+    protected Vector2 startPosition;
     private Vector2 sleepPosition;
     private Vector2 currentTarget;
-    private Transform playerTarget;
+    protected Transform playerTarget;
     private PlayerRef cachedChasePlayer;
-    private EnemyStats statsComp;
+    protected EnemyStats statsComp;
 
     // Sleep timers
     private float noPlayerTimer;
@@ -276,7 +276,7 @@ public class EnemyAI : NetworkBehaviour
     // AI LOGIC — State Machine (chỉ chạy trên Host/StateAuthority)
     // ═══════════════════════════════════════════════════════════════
 
-    public void RunAILogic()
+    public virtual void RunAILogic()
     {
         // ─── KNOCKBACK OVERRIDE (ưu tiên cao nhất) ───
         if (controller.IsKnockbackActive)
@@ -1067,7 +1067,7 @@ public class EnemyAI : NetworkBehaviour
     /// Ép quay mặt về phía player (gọi từ EnemyController.TakeDamage).
     /// Chỉ hoạt động khi state cho phép thay đổi hướng.
     /// </summary>
-    public void ForceFacePlayer()
+    public virtual void ForceFacePlayer()
     {
         if (!CanChangeFacing()) return;
         if (playerTarget != null)
@@ -1082,7 +1082,7 @@ public class EnemyAI : NetworkBehaviour
     // PLAYER DETECTION
     // ═══════════════════════════════════════════════════════════════
 
-    private void FindPlayer()
+    protected void FindPlayer()
     {
         if (TryUseCachedChaseTarget()) return;
 
@@ -1183,7 +1183,7 @@ public class EnemyAI : NetworkBehaviour
         wakeUpAnimTimer = 0f;
     }
 
-    public void NotifyRevived()
+    public virtual void NotifyRevived()
     {
         if (!HasStateAuthority) return;
         currentTarget = new Vector2(PickRandomPatrolX(), isFlying ? startPosition.y : transform.position.y);

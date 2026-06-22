@@ -1,7 +1,7 @@
 ﻿<Solution>
+  <Project Path="Attrition.Gameplay.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
   <Project Path="Fusion.Addons.Physics.csproj" />
-  <Project Path="Attrition.Gameplay.csproj" />
   <Project Path="Attrition.Persistence.csproj" />
   <Project Path="Attrition.UI.csproj" />
   <Project Path="Fusion.Unity.csproj" />
