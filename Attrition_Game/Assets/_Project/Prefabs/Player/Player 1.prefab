@@ -1,36 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &6254375289511153116
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 23466511282581369}
-  m_Layer: 7
-  m_Name: castPoint
-  m_TagString: Untagged
-  m_Icon: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &23466511282581369
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6254375289511153116}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.034999806, y: -0.0050016353, z: 0}
-  m_LocalScale: {x: 0.9899957, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 9001223699615762312}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6831727267532873526
 GameObject:
   m_ObjectHideFlags: 0
@@ -50,13 +19,12 @@ GameObject:
   - component: {fileID: 8805790379459285585}
   - component: {fileID: 7965685129494306560}
   - component: {fileID: -9211217073537501404}
-  - component: {fileID: 5327757002411394394}
-  - component: {fileID: 7759888339924423815}
-  - component: {fileID: 522152246384499169}
-  - component: {fileID: 7946587274463856822}
-  - component: {fileID: 1457117644395290471}
-  - component: {fileID: -8144433297692103127}
-  - component: {fileID: 899589428073694232}
+  - component: {fileID: 5532332673274492828}
+  - component: {fileID: 2638378353840522064}
+  - component: {fileID: 2044027385345098150}
+  - component: {fileID: -5924329882642562811}
+  - component: {fileID: -8304798322267633763}
+  - component: {fileID: 4926934666965263351}
   m_Layer: 7
   m_Name: Player 1
   m_TagString: Player
@@ -77,8 +45,8 @@ Transform:
   m_LocalScale: {x: 0.8105186, y: 0.78099453, z: 6}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 23466511282581369}
   - {fileID: 7035351457917283103}
+  - {fileID: 4851926045855186506}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!50 &8158020556837803344
@@ -195,7 +163,7 @@ SpriteRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 3204480812468917802, guid: 0a1f8a85df257174e8103af5a44c099e, type: 3}
-  m_Color: {r: 0.86910725, g: 1, b: 0, a: 1}
+  m_Color: {r: 0.91027504, g: 0.9150943, b: 0.22014059, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -257,15 +225,15 @@ MonoBehaviour:
   combatComp: {fileID: 8687308238461515992}
   animationComp: {fileID: 8805790379459285585}
   skillCaster: {fileID: 0}
-  statsComp: {fileID: 5327757002411394394}
-  potionComp: {fileID: 7759888339924423815}
+  statsComp: {fileID: 5532332673274492828}
+  potionComp: {fileID: 2638378353840522064}
   rb: {fileID: 8158020556837803344}
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
   hasShadowDash: 0
   dashDuration: 0.2
-  dashCooldownTime: 0.8
+  dashCooldownTime: 1
   crouchSpeedMultiplier: 0.4
   variableJumpCutMultiplier: 0.5
   maxJumps: 2
@@ -320,7 +288,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCombat
   animationComp: {fileID: 8805790379459285585}
-  statsComp: {fileID: 5327757002411394394}
+  statsComp: {fileID: 5532332673274492828}
   attackPoint: {fileID: 7035351457917283103}
   attackRange: 3
   attackAngle: 75
@@ -362,7 +330,7 @@ MonoBehaviour:
   m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
-  SortKey: 763698960
+  SortKey: 3361078075
   ObjectInterest: 1
   Flags: 262145
   NestedObjects: []
@@ -371,13 +339,12 @@ MonoBehaviour:
   - {fileID: 8687308238461515992}
   - {fileID: 8805790379459285585}
   - {fileID: -9211217073537501404}
-  - {fileID: 5327757002411394394}
-  - {fileID: 7759888339924423815}
-  - {fileID: 522152246384499169}
-  - {fileID: 7946587274463856822}
-  - {fileID: 1457117644395290471}
-  - {fileID: -8144433297692103127}
-  - {fileID: 899589428073694232}
+  - {fileID: 5532332673274492828}
+  - {fileID: 2638378353840522064}
+  - {fileID: 2044027385345098150}
+  - {fileID: -5924329882642562811}
+  - {fileID: -8304798322267633763}
+  - {fileID: 4926934666965263351}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &-9211217073537501404
 MonoBehaviour:
@@ -402,7 +369,7 @@ MonoBehaviour:
     Position: 0.01
     Rotation: 0.01
     Scale: 0.01
---- !u!114 &5327757002411394394
+--- !u!114 &5532332673274492828
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -422,7 +389,7 @@ MonoBehaviour:
   _AllocatedPoints: 
   dashStaminaCost: 20
   staminaRegenPerSecond: 10
---- !u!114 &7759888339924423815
+--- !u!114 &2638378353840522064
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -444,27 +411,7 @@ MonoBehaviour:
   _MaxManaCharges: 0
   _HealthCharges: 0
   _ManaCharges: 0
---- !u!114 &522152246384499169
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6831727267532873526}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cc7e2cde1b70c0845938b7d50215b7eb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Player.PlayerStats
-  baseStats: {fileID: 0}
-  _CurrentHP: 0
-  _CurrentMana: 0
-  _CurrentStamina: 0
-  _Level: 0
-  _AllocatedPoints: 
-  dashStaminaCost: 20
-  staminaRegenPerSecond: 10
---- !u!114 &7946587274463856822
+--- !u!114 &2044027385345098150
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -489,7 +436,7 @@ MonoBehaviour:
   resPerPoint: 1
   _Level: 0
   _CurrentExp: 0
---- !u!114 &1457117644395290471
+--- !u!114 &-5924329882642562811
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -509,7 +456,7 @@ MonoBehaviour:
   selfPickupCooldown: 3
   _ItemIndex: 0
   _Amount: 0
---- !u!114 &-8144433297692103127
+--- !u!114 &-8304798322267633763
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -521,10 +468,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 66a18fbf9aa57e54fb626910e06baec4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Player.Inventory.PlayerInventory
+  _OwnerUserId:
+    _length: 0
+    _data:
+      Data: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+  _OwnerCharacterId:
+    _length: 0
+    _data:
+      Data: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
   startingItemIds: []
   droppedItemPrefab:
     RawGuidValue: 12e1ff761e13b114e99dad527c7a0233
---- !u!114 &899589428073694232
+--- !u!114 &4926934666965263351
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -536,12 +491,43 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 80690f9c28d7a504e9c9c2e30be3befc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Player.PlayerSkillCaster
-  castPoint: {fileID: 23466511282581369}
+  castPoint: {fileID: 4851926045855186506}
   targetLayers:
     serializedVersion: 2
     m_Bits: 768
   _IsCasting:
     _value: 0
+--- !u!1 &7179476028545329090
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4851926045855186506}
+  m_Layer: 7
+  m_Name: castPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4851926045855186506
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7179476028545329090}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.035, y: -0.005, z: 0}
+  m_LocalScale: {x: 0.99, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 9001223699615762312}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7643912872851063712
 GameObject:
   m_ObjectHideFlags: 0

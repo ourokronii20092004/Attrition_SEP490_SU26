@@ -19,10 +19,10 @@ MonoBehaviour:
   baseAP: 10
   baseDEF: 10
   baseRES: 10
-  moveSpeed: 10
-  dashSpeed: 20
-  slideSpeed: 15
-  jumpForce: 15
+  moveSpeed: 8
+  dashSpeed: 15
+  slideSpeed: 10
+  jumpForce: 11
   doubleJumpForce: 8
   attackSpeed: 1
-  chargeDamageMultiplier: 2
+  chargeDamageMultiplier: 1.5

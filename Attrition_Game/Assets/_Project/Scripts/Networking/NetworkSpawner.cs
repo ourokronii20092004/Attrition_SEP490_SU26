@@ -9,7 +9,11 @@ public class EnemySpawnConfig
     [Tooltip("Vị trí spawn (Transform trong scene).")]
     public Transform spawnPoint;
     [Min(1)] public int spawnCount = 1;
-    [Tooltip("Random trong pool biom; null thì dùng fallbackEnemyPrefab.")]
+
+    [Header("Chọn 1 trong 2 (ưu tiên Override Prefab)")]
+    [Tooltip("Gán quái CỤ THỂ vào đây → spawn đúng con này, bỏ qua biome.")]
+    public Fusion.NetworkPrefabRef overridePrefab;
+    [Tooltip("Random trong pool biom. Chỉ dùng khi overridePrefab KHÔNG được gán.")]
     public EnemyBiomeDefinition biome;
 }
 
@@ -118,10 +122,16 @@ public class NetworkSpawner : MonoBehaviour
         var runner = Runner;
         if (runner == null) return null;
 
+        // 1. Ưu tiên: quái cụ thể (overridePrefab) → spawn đúng con này, bỏ qua biome.
+        if (config.overridePrefab.IsValid)
+            return runner.Spawn(config.overridePrefab, spawnPos, Quaternion.identity, null);
+
+        // 2. Random từ biome pool.
         NetworkObject prefabNo = config.biome != null ? config.biome.PickRandomPrefab() : null;
         if (prefabNo != null)
             return runner.Spawn(prefabNo, spawnPos, Quaternion.identity, null);
 
+        // 3. Fallback cuối cùng.
         if (fallbackEnemyPrefab.IsValid)
             return runner.Spawn(fallbackEnemyPrefab, spawnPos, Quaternion.identity, null);
 
