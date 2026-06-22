@@ -1,0 +1,448 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &9021740236213614157
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4752218916472239508}
+  - component: {fileID: 8911632148087346463}
+  - component: {fileID: 5815666270526996158}
+  - component: {fileID: 1305674911525360987}
+  - component: {fileID: 8536680212977938323}
+  - component: {fileID: 4638011544058176176}
+  - component: {fileID: 2772478674253539969}
+  - component: {fileID: 1332196076588393368}
+  - component: {fileID: 1494089205846838339}
+  - component: {fileID: 935892068514357828}
+  - component: {fileID: 3265679129314310001}
+  - component: {fileID: 1530198762425528706}
+  m_Layer: 0
+  m_Name: SeveredFang
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4752218916472239508
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9021740236213614157}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -32.26094, y: 50.57713, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!212 &8911632148087346463
+SpriteRenderer:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9021740236213614157}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_Sprite: {fileID: 1810033441652940789, guid: 057fde2f1e1c70f40afbb99ed27938fc, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 2.25, y: 2.875}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_SpriteSortPoint: 0
+--- !u!95 &5815666270526996158
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9021740236213614157}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 601d1b673d3687f4c9f244f72ff53443, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &1305674911525360987
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9021740236213614157}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 21320d8d90fd8e443ad56709acc2dcb7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Enemy.SeveredFang.SeveredFangAI
+  animationComp: {fileID: 935892068514357828}
+  combatComp: {fileID: 3265679129314310001}
+  controller: {fileID: 1530198762425528706}
+  eliteSkills: {fileID: 0}
+  viewRadius: 5
+  patrolRadius: 3
+  isFlying: 0
+  flyHoverOffsetY: 0.8
+  flyMinGroundClearance: 1.2
+  flyMaxOffsetFromPlayer: 2.5
+  flyGroundLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  flyMeleeRetreat: 0
+  flyMeleeRetreatAltitude: 3
+  flyMeleeRetreatSpeed: 8
+  enableSleep: 0
+  wakeUpRadius: 0
+  sleepReturnDelay: 3
+  returnToSleepSpeed: 6
+  sleepOnCeiling: 1
+  sleepSurfaceLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  obstacleLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  wallCheckDistance: 0.8
+  wallCheckHeightOffset: 0.5
+  canEvadeJump: 0
+  evadeTriggerDistance: 2
+  jumpForce: 12
+  evadeBackwardSpeed: 8
+  jumpCooldown: 3
+  canLungeJump: 0
+  lungeMinDistance: 2.5
+  lungeMaxDistance: 7
+  lungeForwardSpeed: 11
+  lungeJumpForce: 10
+  facingDeadZone: 0.3
+  _CurrentState: 0
+  _NetSpeed: 0
+  _NetFacingDir: 1
+  _IsJumping:
+    _value: 0
+  _AttackLockedFacingDir: 1
+  fireExplosionPrefab:
+    RawGuidValue: b8b7878c310b6e8488743d3e5691f2a3
+  fireBoltPrefab:
+    RawGuidValue: e5ac07bdad8d05c4fad4d9d96d9e85ac
+  dashSpeed: 18
+  dashDuration: 0.45
+  dashExplosionCount: 4
+  dashExplosionInterval: 0.1
+  dashExplosionDamage: 20
+  sheatheChargeTime: 0.6
+  sheatheFireboltDamage: 25
+  sheatheFireboltSpeed: 0
+  shortDashSpeed: 14
+  shortDashDuration: 0.25
+  shortDashFireboltDamage: 20
+  shortDashFireboltSpeed: 0
+  meleeRange: 2
+  meleeDamage: 15
+  skillCooldown: 2.5
+  recoveryTime: 0.8
+  _BossPhaseIndex: 0
+  DashExplosionSpawned: 0
+  StateLocalTimer: 0
+  DashDirectionX: 0
+--- !u!114 &8536680212977938323
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9021740236213614157}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 1683002239
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 1305674911525360987}
+  - {fileID: 2772478674253539969}
+  - {fileID: 1332196076588393368}
+  - {fileID: 935892068514357828}
+  - {fileID: 3265679129314310001}
+  - {fileID: 1530198762425528706}
+  ForceRemoteRenderTimeframe: 0
+--- !u!50 &4638011544058176176
+Rigidbody2D:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9021740236213614157}
+  m_BodyType: 0
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_GravityScale: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 4
+--- !u!114 &2772478674253539969
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9021740236213614157}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5e690b5fb1084f5ab1c86457af401d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Addons.Physics::Fusion.Addons.Physics.NetworkRigidbody2D
+  _stateAuthorityChangeErrorCorrectionDelta: 0
+  SyncScale: 0
+  SyncParent: 1
+  _interpolationTarget: {fileID: 0}
+  UsePreciseRotation: 0
+  UseRenderSleepThresholds: 1
+  RenderThresholds:
+    UseEnergy: 1
+    Position: 0.01
+    Rotation: 0.01
+    Scale: 0.01
+--- !u!114 &1332196076588393368
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9021740236213614157}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bde3acf5f2a5191498de3b6e774d849c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Enemy.EnemyStats
+  statsSO: {fileID: 11400000, guid: 276b00ed51ee0954a841522cc3478494, type: 2}
+  _MaxHP: 0
+  _AD: 0
+  _AP: 0
+  _DEF: 0
+  _RES: 0
+  _Poise: 0
+  _PoiseRecoveryTime: 0
+  _PatrolSpeed: 0
+  _ChaseSpeed: 0
+  _AttackSpeed: 0
+--- !u!70 &1494089205846838339
+CapsuleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9021740236213614157}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_Size: {x: 2.25, y: 2.875}
+  m_Direction: 0
+--- !u!114 &935892068514357828
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9021740236213614157}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 501014430ac2fca4c9aa96bf9efc23cc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::EnemyAnimation
+  anim: {fileID: 0}
+  defaultFacingLeft: 0
+  telegraphRenderer: {fileID: 0}
+  telegraphColor: {r: 1, g: 0.4, b: 0.4, a: 1}
+--- !u!114 &3265679129314310001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9021740236213614157}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a0f1e1211565723478e7f9602af1dfb1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::EnemyCombat
+  attacks:
+  - hitboxShape: 0
+    range: 1.5
+    angle: 90
+    rectSize: {x: 1, y: 1}
+    damage: 1
+    damageType: 0
+    clipName: 
+    duration: 0.6
+    cooldown: 1
+    recoveryDuration: 0.25
+    telegraphDuration: 0
+    weight: 1
+  enableDashSlash: 0
+  dashSlashAttacks: 01
+  dashSpeed: 10
+  dashDuration: 0.3
+  enableLeapAttack: 0
+  leapAttacks: 01
+  leapHeight: 3
+  leapDuration: 0.6
+  animationComp: {fileID: 0}
+  statsComp: {fileID: 0}
+  attackPoint: {fileID: 0}
+  playerLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  isRanged: 0
+  projectilePrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  projectileSpawnPoint: {fileID: 0}
+  _IsAttacking:
+    _value: 0
+  _IsDashAttacking:
+    _value: 0
+  _DashDirection: {x: 0, y: 0}
+  _IsLeapAttacking:
+    _value: 0
+  _LeapTargetPos: {x: 0, y: 0}
+  _LeapStartPos: {x: 0, y: 0}
+  _LeapProgress: 0
+  _CurrentAttackIndex: 0
+  currentAttackStyle: 0
+--- !u!114 &1530198762425528706
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9021740236213614157}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 700cca239293a354095d0e6f048f06c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Controllers.EnemyController
+  aiComp: {fileID: 0}
+  animationComp: {fileID: 0}
+  combatComp: {fileID: 0}
+  eliteSkills: {fileID: 0}
+  extraLivesAfterHpZero: 0
+  reviveDelaySeconds: 2.5
+  deathClipName: 
+  despawnFallback: 1.5
+  lootItemIds: []
+  normalDropChance: 0.35
+  droppedItemPrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  canBeKnockedBack: 1
+  stunDuration: 0.4
+  _Health: 0
+  _CurrentPoise: 0
+  _isDeadNetworked:
+    _value: 0
+  _IsKnockbackActive:
+    _value: 0
+  _IsAwaitingRevive:
+    _value: 0
+  maxHealth: 3
+  statsComp: {fileID: 0}
