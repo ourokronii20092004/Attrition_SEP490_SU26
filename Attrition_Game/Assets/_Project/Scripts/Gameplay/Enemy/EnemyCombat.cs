@@ -20,8 +20,12 @@ public class EnemyCombat : NetworkBehaviour
         [Tooltip("Hình dạng vùng gây sát thương: Cone (hình nón), Circle (tròn 360°), Rectangle (hình chữ nhật)")]
         public HitboxShape hitboxShape = HitboxShape.Cone;
 
-        [Header("── Phạm vi & Góc ──")]
-        [Tooltip("Phạm vi tấn công (bán kính)")]
+        [Header("── Tầm tiếp cận (Engage Range) ──")]
+        [Tooltip("Khoảng cách quái phải di chuyển đến ĐỦ GẦN mới bắt đầu đánh. 0 = dùng range (hitbox) làm tầm tiếp cận (tương thích cũ).")]
+        public float engageRange = 0f;
+
+        [Header("── Phạm vi hitbox & Góc ──")]
+        [Tooltip("Bán kính hitbox gây sát thương (vùng damage thực tế)")]
         public float range = 1.5f;
         [Tooltip("Góc đánh (chỉ dùng cho Cone). 90 = hẹp, 180 = nửa vòng, 360 = toàn bộ")]
         [Range(0, 360)]
@@ -122,7 +126,7 @@ public class EnemyCombat : NetworkBehaviour
     /// <summary>Số đòn đánh = attacks.Length</summary>
     public int AttackVariants => attacks != null ? attacks.Length : 1;
 
-    /// <summary>Phạm vi xa nhất trong tất cả đòn — dùng cho AI kiểm tra khoảng cách</summary>
+    /// <summary>Phạm vi hitbox xa nhất trong tất cả đòn (dùng cho lunge check etc.)</summary>
     public float MaxAttackRange
     {
         get
@@ -135,6 +139,30 @@ public class EnemyCombat : NetworkBehaviour
             }
             return max > 0f ? max : 1.5f;
         }
+    }
+
+    /// <summary>Tầm tiếp cận xa nhất trong tất cả đòn — dùng cho AI chase kiểm tra khoảng cách mặc định.</summary>
+    public float MaxEngageRange
+    {
+        get
+        {
+            float max = 0f;
+            if (attacks != null)
+            {
+                for (int i = 0; i < attacks.Length; i++)
+                {
+                    float er = attacks[i].engageRange > 0f ? attacks[i].engageRange : attacks[i].range;
+                    if (er > max) max = er;
+                }
+            }
+            return max > 0f ? max : 1.5f;
+        }
+    }
+
+    /// <summary>Tầm tiếp cận CỦA ĐÒN ĐÃ CHỌN (CurrentAttackIndex). AI dùng sau PrepareNextAttack.</summary>
+    public float GetEngageRangeForCurrentAttack()
+    {
+        return GetEngageRange(CurrentAttackIndex);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -150,6 +178,11 @@ public class EnemyCombat : NetworkBehaviour
     }
 
     public float GetAttackRange(int index) => GetConfig(index).range;
+    public float GetEngageRange(int index)
+    {
+        var cfg = GetConfig(index);
+        return cfg.engageRange > 0f ? cfg.engageRange : cfg.range;
+    }
     public float GetAttackAngle(int index) => GetConfig(index).angle;
     public HitboxShape GetHitboxShape(int index) => GetConfig(index).hitboxShape;
     public Vector2 GetRectSize(int index) => GetConfig(index).rectSize;

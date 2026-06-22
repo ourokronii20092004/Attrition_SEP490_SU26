@@ -168,6 +168,11 @@ public class EnemyAI : NetworkBehaviour
     // Đòn đã chốt khi bắt đầu telegraph (local — chỉ host chạy AI nên không cần sync).
     private EnemyCombat.AttackStyle _committedAttackStyle;
 
+    // Per-attack chase: đã chọn đòn trước khi check tầm chưa
+    private bool _hasCommittedAttack;
+    // Anti-jitter: đếm thời gian bị tường/vực chặn liên tục
+    private float _chaseBlockedTimer;
+
     // Render-side animation state (tránh gọi anim lặp)
     private bool localSleepHandled;
     private bool localWakeHandled;
@@ -574,6 +579,8 @@ public class EnemyAI : NetworkBehaviour
             CurrentState = EnemyState.Patrol;
             noPlayerTimer = 0f;
             NetSpeed = 0f;
+            _hasCommittedAttack = false;
+            _chaseBlockedTimer = 0f;
             return;
         }
 
@@ -583,6 +590,27 @@ public class EnemyAI : NetworkBehaviour
         currentTarget = playerTarget.position;
         float dist = Vector2.Distance(transform.position, currentTarget);
         float xDiff = currentTarget.x - transform.position.x;
+
+        // ─── ANTI-JITTER: Quái mặt đất bỏ đuổi nếu player KHÔNG THỂ TỚI ĐƯỢC ───
+        if (!isFlying && playerTarget != null)
+        {
+            float yDiff = Mathf.Abs(playerTarget.position.y - transform.position.y);
+            float xDist = Mathf.Abs(xDiff);
+            bool blocked = IsPathBlocked(xDiff > 0 ? 1f : -1f);
+
+            // Player quá cao (trên đầu quái) VÀ gần cùng cột X
+            // HOẶC bị tường chặn liên tục > 1 giây → bỏ đuổi.
+            if ((yDiff > 2.5f && xDist < 1.5f) || (blocked && _chaseBlockedTimer > 1f))
+            {
+                currentTarget = new Vector2(PickRandomPatrolX(), transform.position.y);
+                CurrentState = EnemyState.Patrol;
+                noPlayerTimer = 0f;
+                _hasCommittedAttack = false;
+                _chaseBlockedTimer = 0f;
+                NetSpeed = 0f;
+                return;
+            }
+        }
 
         // Kiểm tra tầm nhìn tới Player (không bị tường che)
         bool hasLineOfSight = !Physics2D.Linecast(transform.position, playerTarget.position, obstacleLayer);
@@ -597,7 +625,7 @@ public class EnemyAI : NetworkBehaviour
             }
 
             // 1b. KIỂM TRA NHẢY LAO TỚI (LUNGE) — player ngoài tầm đánh nhưng trong khoảng lao
-            if (canLungeJump && !isFlying && dist > combatComp.MaxAttackRange
+            if (canLungeJump && !isFlying && dist > combatComp.MaxEngageRange
                 && dist >= lungeMinDistance && dist <= lungeMaxDistance
                 && IsGrounded() && jumpCooldownTimer.ExpiredOrNotRunning(Runner))
             {
@@ -618,8 +646,18 @@ public class EnemyAI : NetworkBehaviour
                 return;
             }
 
-            // 3. KIỂM TRA ĐÁNH CẬN CHIẾN
-            if (dist <= combatComp.MaxAttackRange)
+            // 3. KIỂM TRA ĐÁNH CẬN CHIẾN — dùng tầm tiếp cận CỦA ĐÒN ĐÃ CHỌN
+            // Chuẩn bị đòn TRƯỚC → biết tầm cần chạy tới
+            if (combatComp.CanAttack() && !_hasCommittedAttack)
+            {
+                _committedAttackStyle = combatComp.PrepareNextAttack();
+                _hasCommittedAttack = true;
+            }
+            float neededRange = _hasCommittedAttack
+                ? combatComp.GetEngageRangeForCurrentAttack()
+                : combatComp.MaxEngageRange;
+
+            if (dist <= neededRange)
             {
                 // TRONG TẦM ĐÁNH VÀ CÓ TẦM NHÌN → dừng lại
                 rb.linearVelocity = isFlying ? Vector2.zero : new Vector2(0f, rb.linearVelocity.y);
@@ -629,6 +667,7 @@ public class EnemyAI : NetworkBehaviour
                 if (combatComp.CanAttack())
                 {
                     TransitionToAttacking(xDiff);
+                    _hasCommittedAttack = false;
                 }
                 else if (eliteSkills != null)
                 {
@@ -645,13 +684,15 @@ public class EnemyAI : NetworkBehaviour
         }
         else if (!isFlying && IsPathBlocked(xDiff > 0 ? 1f : -1f))
         {
-            // Bị chặn bởi tường
+            // Bị chặn bởi tường → tăng bộ đếm kẹt
+            _chaseBlockedTimer += Runner.DeltaTime;
             rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
             UpdateFacing(xDiff);
             NetSpeed = 0f;
         }
         else
         {
+            _chaseBlockedTimer = 0f; // Đường thông → reset bộ đếm
             float cSpeed = statsComp != null ? statsComp.ChaseSpeed : 5f;
             // Quái bay: nhắm cao độ ngang thân player (clamp ground clearance + max offset), không sà đất / bay quá cao.
             Vector2 chaseTarget = isFlying ? ComputeFlyTarget(currentTarget) : currentTarget;
@@ -660,7 +701,7 @@ public class EnemyAI : NetworkBehaviour
         }
 
         // Elite: roll heal và summon ngẫu nhiên khi đang chase nhưng ngoài tầm đánh
-        if (eliteSkills != null && !combatComp.IsAttacking && (dist > combatComp.MaxAttackRange || !hasLineOfSight))
+        if (eliteSkills != null && !combatComp.IsAttacking && (dist > combatComp.MaxEngageRange || !hasLineOfSight))
         {
             eliteSkills.TryRandomHeal(controller.CurrentHealth, controller.maxHealth);
 
@@ -897,7 +938,12 @@ public class EnemyAI : NetworkBehaviour
         NetFacingDir = facingDir;
 
         // Chọn TRƯỚC đòn sẽ đánh để biết telegraph bao lâu (đòn nặng báo lâu hơn).
-        _committedAttackStyle = combatComp.PrepareNextAttack();
+        // Nếu đã chọn trong StateChase (per-attack range) → dùng lại, không random lần nữa.
+        if (!_hasCommittedAttack)
+        {
+            _committedAttackStyle = combatComp.PrepareNextAttack();
+        }
+        _hasCommittedAttack = false;
         float telegraph = combatComp.GetTelegraphDuration(combatComp.CurrentAttackIndex);
 
         if (telegraph > 0.01f)
