@@ -136,12 +136,12 @@ TextureImporter:
       name: Firebolt SpriteSheet_0
       rect:
         serializedVersion: 2
-        x: 257
-        y: 0
-        width: 29
-        height: 39
+        x: 10
+        y: 7
+        width: 38
+        height: 21
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -158,12 +158,12 @@ TextureImporter:
       name: Firebolt SpriteSheet_1
       rect:
         serializedVersion: 2
-        x: 301
-        y: 0
-        width: 34
-        height: 41
+        x: 56
+        y: 7
+        width: 42
+        height: 21
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -180,12 +180,12 @@ TextureImporter:
       name: Firebolt SpriteSheet_2
       rect:
         serializedVersion: 2
-        x: 348
-        y: 0
-        width: 34
-        height: 41
+        x: 103
+        y: 7
+        width: 41
+        height: 21
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -202,12 +202,12 @@ TextureImporter:
       name: Firebolt SpriteSheet_3
       rect:
         serializedVersion: 2
-        x: 407
-        y: 26
-        width: 9
-        height: 7
+        x: 149
+        y: 7
+        width: 42
+        height: 21
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -224,12 +224,12 @@ TextureImporter:
       name: Firebolt SpriteSheet_4
       rect:
         serializedVersion: 2
-        x: 408
-        y: 4
-        width: 112
-        height: 37
+        x: 248
+        y: 0
+        width: 49
+        height: 40
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -246,12 +246,12 @@ TextureImporter:
       name: Firebolt SpriteSheet_5
       rect:
         serializedVersion: 2
-        x: 412
-        y: 21
-        width: 9
-        height: 6
+        x: 300
+        y: 0
+        width: 47
+        height: 42
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -268,12 +268,12 @@ TextureImporter:
       name: Firebolt SpriteSheet_6
       rect:
         serializedVersion: 2
-        x: 13
-        y: 11
-        width: 34
-        height: 13
+        x: 349
+        y: 0
+        width: 47
+        height: 42
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -290,12 +290,12 @@ TextureImporter:
       name: Firebolt SpriteSheet_7
       rect:
         serializedVersion: 2
-        x: 58
-        y: 12
-        width: 37
-        height: 13
+        x: 401
+        y: 3
+        width: 36
+        height: 41
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -312,12 +312,12 @@ TextureImporter:
       name: Firebolt SpriteSheet_8
       rect:
         serializedVersion: 2
-        x: 103
+        x: 442
         y: 12
-        width: 40
-        height: 13
+        width: 55
+        height: 30
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -334,12 +334,12 @@ TextureImporter:
       name: Firebolt SpriteSheet_9
       rect:
         serializedVersion: 2
-        x: 149
-        y: 15
-        width: 11
-        height: 6
+        x: 507
+        y: 12
+        width: 21
+        height: 13
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -352,55 +352,11 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
-    - serializedVersion: 2
-      name: Firebolt SpriteSheet_10
-      rect:
-        serializedVersion: 2
-        x: 159
-        y: 11
-        width: 32
-        height: 14
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: fec6dbe6201235b30800000000000000
-      internalID: 4274796765636291823
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Firebolt SpriteSheet_11
-      rect:
-        serializedVersion: 2
-        x: 407
-        y: 16
-        width: 10
-        height: 7
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 1ae0513884817c8c0800000000000000
-      internalID: -3979185046042636639
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
     outline: []
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 8fa599656794fcf4ea883ab9988a2693
     internalID: 0
     vertices: []
     indices: 
@@ -408,12 +364,12 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":10.0,"y":1.0},"gridSpriteSize":{"x":52.0,"y":48.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       Firebolt SpriteSheet_0: 7548742475732107364
       Firebolt SpriteSheet_1: 306219143863640384
-      Firebolt SpriteSheet_10: 4274796765636291823
-      Firebolt SpriteSheet_11: -3979185046042636639
       Firebolt SpriteSheet_2: -3744757891071147524
       Firebolt SpriteSheet_3: -3884485359023492735
       Firebolt SpriteSheet_4: -8344620753644177729
