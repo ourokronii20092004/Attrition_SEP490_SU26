@@ -18,7 +18,7 @@ namespace Attrition.Persistence
         public static int SelectedSlot = 0;
 
         /// <summary>Tên scene gameplay sẽ load khi bắt đầu (test: Enemy_Axe_Demon).</summary>
-        public static string GameplayScene = "Enemy_Axe_Demon";
+        public static string GameplayScene = "The Darkest Path - Map 1";
 
         // ─── Bối cảnh ONLINE (chỉ dùng khi Mode = Coop / có đăng nhập) ───
         /// <summary>UserId (OwnerId) từ đăng nhập. Rỗng = chưa login → chỉ lưu local.</summary>

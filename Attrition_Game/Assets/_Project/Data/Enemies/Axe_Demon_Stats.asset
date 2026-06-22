@@ -14,15 +14,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.EnemyStatsSO
   enemyId: axe_demon
   tier: 0
-  maxHP: 40
-  ad: 10
+  maxHP: 100
+  ad: 30
   ap: 0
   def: 4
   res: 0
   poise: 0
   poiseRecoveryTime: 3
-  patrolSpeed: 2
-  chaseSpeed: 5
+  patrolSpeed: 1
+  chaseSpeed: 3
   attackSpeed: 1
   expReward: 10
   coopHpMultiplier: 1.6

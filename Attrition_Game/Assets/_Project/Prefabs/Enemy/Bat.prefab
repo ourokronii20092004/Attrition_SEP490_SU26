@@ -313,6 +313,10 @@ MonoBehaviour:
   reviveDelaySeconds: 5
   deathClipName: 
   despawnFallback: 1.5
+  lootItemIds: []
+  normalDropChance: 0.35
+  droppedItemPrefab:
+    RawGuidValue: 00000000000000000000000000000000
   canBeKnockedBack: 1
   stunDuration: 0.4
   _Health: 0
@@ -413,6 +417,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyCombat
   attacks:
   - hitboxShape: 0
+    engageRange: 1
     range: 1
     angle: 180
     rectSize: {x: 1, y: 3}
@@ -425,6 +430,7 @@ MonoBehaviour:
     telegraphDuration: 0
     weight: 1
   - hitboxShape: 0
+    engageRange: 2
     range: 2
     angle: 180
     rectSize: {x: 1, y: 1}
