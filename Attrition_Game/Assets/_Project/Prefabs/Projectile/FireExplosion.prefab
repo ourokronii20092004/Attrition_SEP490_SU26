@@ -170,6 +170,6 @@ MonoBehaviour:
   lifetime: 3
   hitLayer:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 128
   hitboxRadius: 0.2
   rotationOffset: 0
