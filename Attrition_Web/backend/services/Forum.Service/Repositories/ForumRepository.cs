@@ -102,7 +102,7 @@ public class ForumRepository : Repository<ForumThread>, IForumRepository
     public async Task<(Guid PostId, string Content)?> GetFirstPostAsync(Guid threadId)
     {
         var post = await _context.ForumPosts
-            .Where(p => p.ThreadId == threadId && !p.IsRemoved)
+            .Where(p => p.ThreadId == threadId && !p.Moderation.IsRemoved)
             .OrderBy(p => p.CreatedAt)
             .Select(p => new { p.Id, p.Content })
             .FirstOrDefaultAsync();

@@ -24,13 +24,13 @@ public class UserRepository : Repository<User>, IUserRepository
         !await _context.Users.AnyAsync(u => u.Username.ToLower() == username.ToLower());
 
     public async Task<User?> GetByRefreshTokenAsync(string hashedToken) =>
-        await _context.Users.FirstOrDefaultAsync(u => u.RefreshToken == hashedToken);
+        await _context.Users.FirstOrDefaultAsync(u => u.Refresh.Token == hashedToken);
 
     public async Task<User?> GetByPasswordResetTokenAsync(string hashedToken) =>
-        await _context.Users.FirstOrDefaultAsync(u => u.PasswordResetToken == hashedToken);
+        await _context.Users.FirstOrDefaultAsync(u => u.PasswordReset.Token == hashedToken);
 
     public async Task<User?> GetByEmailVerificationTokenAsync(string hashedToken) =>
-        await _context.Users.FirstOrDefaultAsync(u => u.EmailVerificationToken == hashedToken);
+        await _context.Users.FirstOrDefaultAsync(u => u.EmailVerification.Token == hashedToken);
 
     public async Task<List<User>> SearchByUsernameAsync(string query, int limit) =>
         await _context.Users
