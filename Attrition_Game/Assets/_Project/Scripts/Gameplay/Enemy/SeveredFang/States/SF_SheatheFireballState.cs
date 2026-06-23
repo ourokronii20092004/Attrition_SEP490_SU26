@@ -52,8 +52,8 @@ namespace Attrition.Gameplay.Enemy.SeveredFang.States
                 Vector2 spawnPos = (Vector2)ai.transform.position + new Vector2(ai.AttackLockedFacingDir * 0.8f, 1f);
                 Vector2 fireDir = (targetPos - spawnPos).normalized;
 
-                // Tránh việc đạn bắn xuống đất thẳng đứng
-                if (fireDir.y < -0.8f) fireDir.y = -0.8f;
+                // Tránh việc đạn bắn xuống đất (giới hạn góc chúc xuống rất nhỏ)
+                if (fireDir.y < -0.1f) fireDir.y = -0.1f;
                 fireDir = fireDir.normalized;
 
                 ai.SpawnFireBolt(spawnPos, fireDir, ai.sheatheFireboltDamage, ai.sheatheFireboltSpeed);

@@ -152,12 +152,12 @@
 
 .hud-slot-empty { opacity: 0.4; }
 
-/* --- Boss bar (top center) --- */
+/* --- Boss bar (bottom center) --- */
 #hud-boss {
     position: absolute;
-    top: 24px; left: 50%;
+    bottom: 60px; left: 50%;
     translate: -50% 0;
-    width: 520px;
+    width: 600px;
     align-items: center;
 }
 
