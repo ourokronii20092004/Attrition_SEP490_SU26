@@ -88,7 +88,9 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
 
         private SeveredFangState _currentState;
 
-        // Singleton state instances — không tạo mới mỗi lần chuyển state.
+        // Singleton state instances — chỉ tạo 1 lần
+        public static readonly SF_IntroState IntroState = new SF_IntroState();
+        public static readonly SF_TelegraphState TelegraphState = new SF_TelegraphState();
         public static readonly SF_IdleState IdleState = new SF_IdleState();
         public static readonly SF_ChaseState ChaseState = new SF_ChaseState();
         public static readonly SF_DashExplosionState DashExplosionState = new SF_DashExplosionState();
@@ -107,6 +109,14 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
         [HideInInspector] public float StateLocalTimer;
         /// <summary>Hướng dash đã chốt.</summary>
         [HideInInspector] public float DashDirectionX;
+        /// <summary>Trạng thái chuẩn bị tung chiêu (để TelegraphState biết cần chuyển sang đâu tiếp).</summary>
+        [HideInInspector] public SeveredFangState NextAttackState;
+        
+        [Header("Intro Sequence")]
+        [Tooltip("Có đợi kích hoạt không? Nếu bật, Boss sẽ đứng im và không lấy máu/vô hình cho đến khi StartIntroSequence được gọi.")]
+        public bool waitForTrigger = true;
+        [Tooltip("File thoại mở đầu")]
+        public Attrition.Data.DialogueSO introDialogue;
 
         // ═══════════════════════════════════════════════════════════════
         // PUBLIC ACCESSORS
@@ -135,8 +145,22 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
                 SkillCooldownTimer = TickTimer.CreateFromSeconds(Runner, 1.5f); // Đợi 1.5s ban đầu
             }
 
-            // Bắt đầu ở Idle
-            ChangeState(IdleState);
+            if (waitForTrigger)
+            {
+                // Boss đứng im chờ trigger, không chuyển state
+                // (sẽ không FixedUpdateNetwork vì _currentState == null)
+            }
+            else
+            {
+                ChangeState(IdleState);
+            }
+        }
+
+        public void StartIntroSequence()
+        {
+            if (!HasStateAuthority || !waitForTrigger) return;
+            waitForTrigger = false;
+            ChangeState(IntroState);
         }
 
         // ═══════════════════════════════════════════════════════════════
