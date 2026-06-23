@@ -48,6 +48,8 @@ namespace Attrition.UI
 
         private void UpdateHud()
         {
+            if (_stats == null || _stats.Object == null || !_stats.Object.IsValid) return;
+
             SetFill("hud-hp-fill", _stats.CurrentHP, _stats.MaxHP);
             SetText("hud-hp-label", $"{_stats.CurrentHP}/{_stats.MaxHP}");
 

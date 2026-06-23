@@ -51,7 +51,7 @@ namespace Attrition.Controllers
         [Networked] private TickTimer despawnTimer { get; set; }
         [Networked] private int RevivesRemaining { get; set; }
 
-        [HideInInspector] public int maxHealth = 3;
+        [HideInInspector] public int maxHealth = 1;
         [Tooltip("Nguồn chỉ số (point-based).")]
         [SerializeField] private EnemyStats statsComp;
         private Rigidbody2D rb;
@@ -68,15 +68,30 @@ namespace Attrition.Controllers
 
             if (statsComp == null) statsComp = GetComponent<EnemyStats>();
 
-            // Khởi tạo maxHealth trên MỌI máy để client tính thanh máu đúng
-            if (statsComp != null && statsComp.MaxHP > 0) maxHealth = statsComp.MaxHP;
+            // KHÔNG đọc statsComp.MaxHP ở đây vì nó là [Networked] và
+            // EnemyStats.Spawned() có thể chưa chạy → giá trị = 0.
+            // EnemyStats.Spawned() sẽ gọi lại gán maxHealth + Health sau khi build xong.
 
             if (HasStateAuthority)
             {
-                Health = maxHealth;
+                // Chỉ set Health tạm nếu EnemyStats đã chạy trước (MaxHP > 0).
+                // Nếu chưa (MaxHP == 0) thì EnemyStats.Spawned() sẽ gán sau.
+                if (statsComp != null && statsComp.MaxHP > 0)
+                {
+                    maxHealth = statsComp.MaxHP;
+                    Health = maxHealth;
+                }
+                // Nếu không có statsComp → dùng maxHealth mặc định (prefab cũ)
+                else if (statsComp == null)
+                {
+                    Health = maxHealth;
+                }
+                // else: statsComp có nhưng MaxHP=0 → KHÔNG gán Health,
+                //       chờ EnemyStats.Spawned() gán đúng giá trị.
+
                 RevivesRemaining = extraLivesAfterHpZero;
                 CurrentPoise = GetMaxPoise();
-                _spawnPos = transform.position; // mốc cho EnemyLootTracker (elite chỉ loot 1 lần/chỗ)
+                _spawnPos = transform.position;
             }
 
             rb = GetComponent<Rigidbody2D>();
@@ -181,7 +196,9 @@ namespace Attrition.Controllers
             int def = statsComp != null ? statsComp.DEF : 0;
             int res = statsComp != null ? statsComp.RES : 0;
             int taken = Attrition.Core.DamageCalculator.Compute((Attrition.Core.DamageType)type, damage, def, res);
+            int hpBefore = Health;
             Health -= taken;
+            Debug.Log($"[EnemyController] {gameObject.name} bị đánh: rawDmg={damage}, DEF={def}, taken={taken}, HP: {hpBefore}→{Health}/{maxHealth}");
             aiComp.ForceFacePlayer();
 
             if (Health <= 0)

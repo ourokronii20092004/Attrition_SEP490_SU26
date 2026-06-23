@@ -11,9 +11,9 @@ namespace Attrition.Gameplay
     /// </summary>
     public static class WorldNameLabel
     {
-        public static void Attach(Transform parent, string text, Vector3 offset, Color color, float fontSize = 3f)
+        public static GameObject Attach(Transform parent, string text, Vector3 offset, Color color, float fontSize = 3f)
         {
-            if (parent == null || string.IsNullOrEmpty(text)) return;
+            if (parent == null || string.IsNullOrEmpty(text)) return null;
 
             var go = new GameObject("NameLabel");
             go.transform.SetParent(parent, false);
@@ -26,6 +26,8 @@ namespace Attrition.Gameplay
             tm.color = color;
             tm.sortingOrder = 80;
             tm.enableWordWrapping = false;
+            
+            return go;
         }
 
         /// <summary>

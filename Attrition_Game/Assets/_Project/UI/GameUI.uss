@@ -451,7 +451,7 @@
 /* item detail popup */
 #inv-detail {
     position: absolute;
-    right: -240px; top: 60px;
+    right: 20px; top: 60px;
     width: 240px;
     padding: 18px;
     background-color: rgba(6, 6, 8, 0.98);
