@@ -15,6 +15,11 @@ namespace Attrition.Gameplay.Enemy.SeveredFang.States
         private float _elapsedTime;
         private float _nextExplosionTime;
         private bool _attackAnimPlayed;
+        
+        // Cache to prevent GC alloc lag and duplicate hits
+        private Collider2D[] _hitResults = new Collider2D[5];
+        private ContactFilter2D _contactFilter;
+        private System.Collections.Generic.HashSet<IDamageable> _hitTargets = new System.Collections.Generic.HashSet<IDamageable>();
 
         public override void Enter(SeveredFangAI ai)
         {
@@ -23,6 +28,7 @@ namespace Attrition.Gameplay.Enemy.SeveredFang.States
             _nextExplosionTime = 0f;
             _attackAnimPlayed = false;
             ai.DashExplosionSpawned = 0;
+            _hitTargets.Clear();
 
             // Chốt hướng dash về phía player
             ai.DetectPlayer();
@@ -41,6 +47,14 @@ namespace Attrition.Gameplay.Enemy.SeveredFang.States
             // Chơi animation attack
             ai.PlayAttackAnim();
             _attackAnimPlayed = true;
+
+            // Setup contact filter
+            _contactFilter = new ContactFilter2D
+            {
+                useLayerMask = true,
+                layerMask = ai.obstacleLayer | LayerMask.GetMask("Player"),
+                useTriggers = false
+            };
         }
 
         public override void Update(SeveredFangAI ai)
@@ -53,6 +67,30 @@ namespace Attrition.Gameplay.Enemy.SeveredFang.States
                 // Di chuyển nhanh theo hướng đã chốt
                 ai.Rb.linearVelocity = new Vector2(ai.DashDirectionX * ai.dashSpeed, ai.Rb.linearVelocity.y);
                 ai.NetSpeed = ai.dashSpeed;
+
+                if (ai.HasStateAuthority)
+                {
+                    Vector2 hitboxCenter = (Vector2)ai.transform.position;
+                    Vector2 boxSize = new Vector2(2f, 2.5f);
+                    
+                    int count = Attrition.Gameplay.Combat.HitboxResolver.Overlap(
+                        ai.Runner.GetPhysicsScene2D(), EnemyCombat.HitboxShape.Rectangle,
+                        hitboxCenter, hitboxCenter, new Vector2(ai.DashDirectionX, 0),
+                        0f, 0f, boxSize, _contactFilter, _hitResults);
+
+                    for (int i = 0; i < count; i++)
+                    {
+                        var hit = _hitResults[i];
+                        if (hit.gameObject.layer == LayerMask.NameToLayer("Enemy")) continue;
+                        IDamageable dmg = hit.GetComponentInParent<IDamageable>();
+                        if (dmg != null && !dmg.IsDead && !_hitTargets.Contains(dmg))
+                        {
+                            _hitTargets.Add(dmg);
+                            Vector2 pushDir = new Vector2(ai.DashDirectionX, 0.5f).normalized;
+                            dmg.TakeDamage(ai.meleeDamage, pushDir, 5f, Attrition.Core.DamageType.Physical);
+                        }
+                    }
+                }
 
                 // Spawn FireExplosion theo interval
                 if (_elapsedTime >= _nextExplosionTime && ai.DashExplosionSpawned < ai.dashExplosionCount)

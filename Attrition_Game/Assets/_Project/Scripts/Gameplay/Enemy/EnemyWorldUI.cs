@@ -63,14 +63,27 @@ namespace Attrition.Gameplay.Enemy
             var root = new GameObject("HealthBar");
             _barRoot = root.transform;
             _barRoot.SetParent(transform, false);
-            _barRoot.localPosition = barOffset;
+
+            var stats = GetComponent<EnemyStats>();
+            var tier = stats != null ? stats.Tier : Attrition.Data.EnemyTier.Normal;
+
+            if (tier == Attrition.Data.EnemyTier.Boss)
+            {
+                _barRoot.localPosition = new Vector3(0f, -2.2f, 0f);
+                _barRoot.localScale = new Vector3(3.5f, 2.0f, 1f);
+                _barRoot.gameObject.SetActive(true);
+                _everDamaged = true;
+            }
+            else
+            {
+                _barRoot.localPosition = barOffset;
+                _barRoot.gameObject.SetActive(false); // ẩn tới khi bị đánh lần đầu
+            }
 
             var bg = CreateQuad("BG", _barRoot, new Color(0f, 0f, 0f, 0.7f), barSize, 0);
             var fillSize = new Vector2(barSize.x - 0.04f, barSize.y - 0.04f);
             _trailFill = CreateQuad("Trail", bg.transform, new Color(1f, 0.85f, 0.3f, 1f), fillSize, 1).transform;
             _fill = CreateQuad("Fill", bg.transform, new Color(0.7f, 0.16f, 0.16f, 1f), fillSize, 2).transform;
-
-            _barRoot.gameObject.SetActive(false); // ẩn tới khi bị đánh lần đầu
         }
 
         private GameObject CreateQuad(string name, Transform parent, Color color, Vector2 size, int order)
