@@ -7,10 +7,10 @@
   <Project Path="Fusion.Unity.csproj" />
   <Project Path="Attrition.Core.csproj" />
   <Project Path="Attrition.Data.csproj" />
+  <Project Path="Attrition.Editor.csproj" />
   <Project Path="Fusion.Unity.Editor.csproj" />
   <Project Path="Attrition.Networking.csproj" />
   <Project Path="Unity.Fusion.CodeGen.csproj" />
-  <Project Path="Attrition.Editor.csproj" />
   <Project Path="Attrition.Systems.csproj" />
   <Project Path="Fusion.Addons.Physics.Editor.csproj" />
 </Solution>
