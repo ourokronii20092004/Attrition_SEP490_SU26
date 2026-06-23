@@ -73,6 +73,7 @@ namespace Attrition.UI
         private string _fullText;
         private int _charCount;
         private float _typeTimer;
+        private System.Action _onDialogueComplete;
 
         // Reward popup
         private readonly List<RewardEntry> _pendingRewards = new();
@@ -144,10 +145,14 @@ namespace Attrition.UI
             RewardEvents.OnItemReceived += OnItemReceived;
             RewardEvents.OnExpReceived += OnExpReceived;
             RewardEvents.OnRewardBatchComplete += OnRewardBatchComplete;
+
+            Attrition.Data.DialogueEvents.OnOpenCustomDialogue += OpenCustomDialogue;
         }
 
         private void OnDisable()
         {
+            Attrition.Data.DialogueEvents.OnOpenCustomDialogue -= OpenCustomDialogue;
+
             if (_btnAccept != null) _btnAccept.clicked -= OnAcceptClicked;
             if (_btnDecline != null) _btnDecline.clicked -= OnDeclineClicked;
             if (_btnContinue != null) _btnContinue.clicked -= AdvanceLine;
@@ -318,6 +323,7 @@ namespace Attrition.UI
 
             _currentLineIndex = -1;
             _isDialogueOpen = true;
+            _onDialogueComplete = null;
             Attrition.Persistence.DialogueState.IsActive = true;
             SetCursorFree(true);
 
@@ -329,6 +335,28 @@ namespace Attrition.UI
             // Quest info
             UpdateQuestInfoVisibility();
 
+            AdvanceLine();
+        }
+
+        /// <summary>Mở hội thoại tuỳ chỉnh (dành cho Boss hoặc Event không có NPC).</summary>
+        public void OpenCustomDialogue(DialogueSO dialogue, System.Action onComplete = null)
+        {
+            if (_isDialogueOpen || dialogue == null || dialogue.lines == null || dialogue.lines.Length == 0) return;
+
+            _currentNPC = null;
+            _currentDialogue = dialogue;
+            _currentLineIndex = -1;
+            _isDialogueOpen = true;
+            _onDialogueComplete = onComplete;
+            
+            Attrition.Persistence.DialogueState.IsActive = true;
+            SetCursorFree(true);
+
+            // Show overlay
+            _dialogueOverlay.RemoveFromClassList("hidden");
+            _dialoguePanel.schedule.Execute(() => _dialoguePanel.AddToClassList("visible")).ExecuteLater(20);
+
+            UpdateQuestInfoVisibility();
             AdvanceLine();
         }
 
@@ -411,6 +439,15 @@ namespace Attrition.UI
         /// <summary>Hết dòng hội thoại — xử lý theo trạng thái quest.</summary>
         private void OnDialogueFinished()
         {
+            if (_onDialogueComplete != null)
+            {
+                var callback = _onDialogueComplete;
+                _onDialogueComplete = null;
+                CloseDialogue();
+                callback.Invoke();
+                return;
+            }
+
             if (_currentNPC != null && _currentNPC.Quest != null)
             {
                 byte state = _currentNPC.QuestState;

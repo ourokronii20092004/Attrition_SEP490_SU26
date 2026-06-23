@@ -254,8 +254,8 @@ public class PlayerController : NetworkBehaviour, IDamageable
             return;
         }
 
-        // --- DIALOGUE LOCK: khóa di chuyển khi hội thoại NPC đang mở ---
-        if (HasInputAuthority && Attrition.Persistence.DialogueState.IsActive)
+        // --- DIALOGUE & TRANSITION LOCK: khóa di chuyển ---
+        if (HasInputAuthority && (Attrition.Persistence.DialogueState.IsActive || Attrition.Gameplay.Environment.SceneFader.IsTransitioning))
         {
             rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
             IsMoving = false;
@@ -567,15 +567,22 @@ public class PlayerController : NetworkBehaviour, IDamageable
     /// <summary>Dịch chuyển player về vị trí (vd điểm rest). Set cả rb lẫn NetworkPosition để sync. Chỉ host.</summary>
     public void TeleportTo(Vector3 position)
     {
-        if (!HasStateAuthority) return;
-        if (rb == null) rb = GetComponent<Rigidbody2D>();
-        if (rb != null)
+        if (HasStateAuthority)
         {
-            rb.position = position;
-            rb.linearVelocity = Vector2.zero;
+            RPC_ForceTeleport(position);
         }
-        NetworkPosition = position;
-        NetworkVelocity = Vector2.zero;
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_ForceTeleport(Vector3 position)
+    {
+        rb.position = position;
+        rb.linearVelocity = Vector2.zero;
+        if (HasStateAuthority)
+        {
+            NetworkPosition = position;
+            NetworkVelocity = Vector2.zero;
+        }
     }
 
     /// <summary>

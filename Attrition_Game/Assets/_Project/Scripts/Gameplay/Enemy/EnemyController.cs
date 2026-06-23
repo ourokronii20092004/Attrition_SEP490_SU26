@@ -63,6 +63,9 @@ namespace Attrition.Controllers
 
         public override void Spawned()
         {
+            // Bắt buộc set layer về Enemy để nhận được đòn đánh từ Player
+            gameObject.layer = LayerMask.NameToLayer("Enemy");
+
             if (statsComp == null) statsComp = GetComponent<EnemyStats>();
 
             // KHÔNG đọc statsComp.MaxHP ở đây vì nó là [Networked] và
