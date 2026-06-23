@@ -156,9 +156,23 @@ public class EnemyAnimation : NetworkBehaviour
         if (anim != null) anim.SetTrigger("Teleport");
     }
 
+    private Coroutine _hitFlashCoroutine;
+
     public void PlayHit()
     {
         if (anim != null) anim.SetTrigger("Hit");
+        if (telegraphRenderer != null)
+        {
+            if (_hitFlashCoroutine != null) StopCoroutine(_hitFlashCoroutine);
+            _hitFlashCoroutine = StartCoroutine(HitFlashRoutine());
+        }
+    }
+
+    private System.Collections.IEnumerator HitFlashRoutine()
+    {
+        telegraphRenderer.color = Color.red;
+        yield return new WaitForSeconds(0.1f);
+        if (!_telegraphActive) telegraphRenderer.color = _baseColor;
     }
 
     public void PlayDeath()
