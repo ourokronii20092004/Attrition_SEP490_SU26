@@ -297,7 +297,9 @@ MonoBehaviour:
     m_Bits: 768
   normalAttackType: 0
   chargeAttackType: 0
-  chargeThreshold: 0.25
+  chargeThreshold: 0.2
+  normalAttackCooldown: 0.5
+  chargeAttackCooldown: 0.5
   _IsAttacking:
     _value: 0
   _IsChargingAttack:

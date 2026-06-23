@@ -29,6 +29,7 @@ namespace Attrition.Gameplay.Enemy
         private float _shownFraction = 1f;
         private float _trailFraction = 1f;
         private bool _everDamaged;
+        private Transform _nameLabel;
 
         private void Awake()
         {
@@ -54,7 +55,8 @@ namespace Attrition.Gameplay.Enemy
                 default:                             color = new Color(0.85f, 0.82f, 0.78f); size = 3f; break;
             }
 
-            WorldNameLabel.Attach(transform, display, nameOffset, color, size);
+            var labelObj = WorldNameLabel.Attach(transform, display, nameOffset, color, size);
+            if (labelObj != null) _nameLabel = labelObj.transform;
         }
 
         private void BuildBar()
@@ -139,6 +141,20 @@ namespace Attrition.Gameplay.Enemy
             _trailFill.localPosition = new Vector3(-tmissing * 0.5f, 0f, 0f);
 
             if (_enemy.IsDead && _barRoot != null) _barRoot.gameObject.SetActive(false);
+
+            // Chống lật UI (khi enemy quay mặt, transform.localScale.x bị lật âm, 
+            // khiến chữ và thanh máu bị lộn ngược trái phải).
+            float signX = Mathf.Sign(transform.localScale.x);
+            if (_nameLabel != null)
+            {
+                var ns = _nameLabel.localScale;
+                _nameLabel.localScale = new Vector3(Mathf.Abs(ns.x) * signX, ns.y, ns.z);
+            }
+            if (_barRoot != null)
+            {
+                var bs = _barRoot.localScale;
+                _barRoot.localScale = new Vector3(Mathf.Abs(bs.x) * signX, bs.y, bs.z);
+            }
         }
     }
 

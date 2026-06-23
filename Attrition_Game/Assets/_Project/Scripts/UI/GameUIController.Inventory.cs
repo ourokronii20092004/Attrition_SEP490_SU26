@@ -18,12 +18,17 @@ namespace Attrition.UI
         private ItemCategory _activeTab = ItemCategory.Equipment;
         private int _selectedSlot = -1;
 
+        public enum SelectedSlotContext { None, InventoryGrid, EquippedHead, EquippedChest, EquippedLegs, EquippedBoots, EquippedAccessory, EquippedSkill }
+        private SelectedSlotContext _selectedContext = SelectedSlotContext.None;
+
         // ── Build grid 1 lần khi OnEnable ──
         private void BuildInventoryGrid()
         {
             var grid = _root?.Q<VisualElement>("inv-grid");
             if (grid == null) return;
             grid.Clear();
+
+            SetupDragAndDrop(); // Tạo ghost element
 
             for (int i = 0; i < 40; i++)
             {
@@ -36,7 +41,8 @@ namespace Attrition.UI
                 var count = new Label { name = $"cell-count-{i}", text = "" };
                 count.AddToClassList("inv-cell-count");
                 cell.Add(count);
-                cell.RegisterCallback<ClickEvent>(_ => OnCellClicked(idx));
+                
+                RegisterDragCallbacks(cell, SelectedSlotContext.InventoryGrid, idx);
                 grid.Add(cell);
             }
         }
@@ -47,7 +53,7 @@ namespace Attrition.UI
             BindTab("inv-tab-accessory", ItemCategory.Accessory);
             BindTab("inv-tab-skill", ItemCategory.Skill);
 
-            BindButton("inv-detail-equip", EquipSelected);
+            BindButton("inv-detail-equip", EquipOrUnequipSelected);
             BindButton("inv-detail-drop", DropSelected);
 
             BindAlloc("alloc-MaxHP", StatType.MaxHP);
@@ -57,14 +63,24 @@ namespace Attrition.UI
             BindAlloc("alloc-DEF", StatType.DEF);
             BindAlloc("alloc-RES", StatType.RES);
 
-            // Gỡ trang bị khi click vào ô trang bị
-            BindButton("equip-head", () => { if (_inventory != null) _inventory.RpcRequestUnequipArmor((int)EquipmentSlot.Head); });
-            BindButton("equip-chest", () => { if (_inventory != null) _inventory.RpcRequestUnequipArmor((int)EquipmentSlot.Chest); });
-            BindButton("equip-legs", () => { if (_inventory != null) _inventory.RpcRequestUnequipArmor((int)EquipmentSlot.Legs); });
-            BindButton("equip-boots", () => { if (_inventory != null) _inventory.RpcRequestUnequipArmor((int)EquipmentSlot.Boots); });
-            BindButton("equip-accessory", () => { if (_inventory != null) _inventory.RpcRequestUnequipAccessory(); });
-            BindButton("equip-skill", () => { if (_inventory != null) _inventory.RpcRequestUnequipSkill(); });
+            // Chọn trang bị đang mặc để hiển thị detail panel thay vì gỡ ngay lập tức
+            BindButton("equip-head", () => OnEquipSlotClicked(SelectedSlotContext.EquippedHead));
+            BindButton("equip-chest", () => OnEquipSlotClicked(SelectedSlotContext.EquippedChest));
+            BindButton("equip-legs", () => OnEquipSlotClicked(SelectedSlotContext.EquippedLegs));
+            BindButton("equip-boots", () => OnEquipSlotClicked(SelectedSlotContext.EquippedBoots));
+            BindButton("equip-accessory", () => OnEquipSlotClicked(SelectedSlotContext.EquippedAccessory));
+            BindButton("equip-skill", () => OnEquipSlotClicked(SelectedSlotContext.EquippedSkill));
+
+            // Đăng ký kéo thả cho các ô trang bị
+            if (_root.Q<Button>("equip-head") is Button headBtn) RegisterDragCallbacks(headBtn, SelectedSlotContext.EquippedHead);
+            if (_root.Q<Button>("equip-chest") is Button chestBtn) RegisterDragCallbacks(chestBtn, SelectedSlotContext.EquippedChest);
+            if (_root.Q<Button>("equip-legs") is Button legsBtn) RegisterDragCallbacks(legsBtn, SelectedSlotContext.EquippedLegs);
+            if (_root.Q<Button>("equip-boots") is Button bootsBtn) RegisterDragCallbacks(bootsBtn, SelectedSlotContext.EquippedBoots);
+            if (_root.Q<Button>("equip-accessory") is Button accBtn) RegisterDragCallbacks(accBtn, SelectedSlotContext.EquippedAccessory);
+            if (_root.Q<Button>("equip-skill") is Button skillBtn) RegisterDragCallbacks(skillBtn, SelectedSlotContext.EquippedSkill);
         }
+
+
 
         private void BindTab(string name, ItemCategory cat)
         {

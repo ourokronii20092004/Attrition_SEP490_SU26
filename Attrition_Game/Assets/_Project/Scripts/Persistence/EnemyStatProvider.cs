@@ -91,6 +91,7 @@ namespace Attrition.Persistence
             string url = $"{baseUrl}/enemies";
             using (var req = UnityWebRequest.Get(url))
             {
+                req.timeout = 3; // Tối đa 3 giây — nếu API không chạy thì fail nhanh, dùng default SO.
                 yield return req.SendWebRequest();
                 if (req.result != UnityWebRequest.Result.Success)
                 {

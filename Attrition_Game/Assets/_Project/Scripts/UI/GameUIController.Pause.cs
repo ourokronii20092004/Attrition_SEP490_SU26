@@ -21,6 +21,11 @@ namespace Attrition.UI
         private void OnPauseQuit()
         {
             Time.timeScale = 1f; // bỏ pause trước khi rời scene
+
+            // BẮT BUỘC LƯU TRƯỚC KHI THOÁT ĐỂ GIỮ LẠI VỊ TRÍ, HP, VÀ ĐIỂM
+            var saver = Attrition.Gameplay.Persistence.GameSaveService.EnsureExists();
+            saver.Save(Attrition.Gameplay.Persistence.GameSaveService.SaveEvent.Quit);
+
             var runner = _controller != null ? _controller.Runner : null;
             if (runner != null) runner.Shutdown();
             SceneManager.LoadScene("Main_Menu_UI");
