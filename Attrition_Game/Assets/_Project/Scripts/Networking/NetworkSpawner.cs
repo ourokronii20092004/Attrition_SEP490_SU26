@@ -63,6 +63,17 @@ public class NetworkSpawner : MonoBehaviour
         else
             spawnPos = new Vector3(UnityEngine.Random.Range(-2f, 2f), 48f, 0);
 
+        // [TỐI ƯU LOAD] Nếu chơi Solo, nạp vị trí checkpoint trực tiếp từ lúc mới spawn
+        // để nhân vật xuất hiện thẳng tại đó thay vì bị chớp giật ở điểm xuất phát
+        if (!Attrition.Persistence.GameLaunch.IsOnline)
+        {
+            var data = Attrition.Persistence.SaveManager.LoadSlot(Attrition.Persistence.GameLaunch.SelectedSlot);
+            if (data != null && !string.IsNullOrEmpty(data.checkpointId))
+            {
+                spawnPos = new Vector3(data.checkpointX, data.checkpointY, data.checkpointZ);
+            }
+        }
+
         NetworkObject playerObj = runner.Spawn(prefabToSpawn, spawnPos, Quaternion.identity, player);
         runner.SetPlayerObject(player, playerObj);
     }

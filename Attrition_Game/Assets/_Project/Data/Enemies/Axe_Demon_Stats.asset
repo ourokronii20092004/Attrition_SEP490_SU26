@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.EnemyStatsSO
   enemyId: axe_demon
   tier: 0
-  maxHP: 100
+  maxHP: 40
   ad: 30
   ap: 0
   def: 4

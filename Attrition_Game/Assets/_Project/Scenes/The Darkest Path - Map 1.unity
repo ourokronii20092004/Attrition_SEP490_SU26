@@ -1007,6 +1007,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Checkpoint
       objectReference: {fileID: 0}
+    - target: {fileID: 3988591037164655265, guid: 00c5a4f58bd48284f97affb82c96b2df, type: 3}
+      propertyPath: displayName
+      value: CP1
+      objectReference: {fileID: 0}
     - target: {fileID: 4532775707390572016, guid: 00c5a4f58bd48284f97affb82c96b2df, type: 3}
       propertyPath: SortKey
       value: 504468726
