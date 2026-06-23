@@ -18,11 +18,14 @@ public class PlayerCombat : NetworkBehaviour
     public Attrition.Core.DamageType normalAttackType = Attrition.Core.DamageType.Physical;
     public Attrition.Core.DamageType chargeAttackType = Attrition.Core.DamageType.Physical;
     [Tooltip("Thời gian giữ nút tối thiểu để tính là đòn gồng (giây)")]
-    [SerializeField] private float chargeThreshold = 0.25f;
+    private float chargeThreshold => statsComp?.Sheet?.Config != null ? statsComp.Sheet.Config.chargeThreshold : 0.25f;
     [Tooltip("Khoảng nghỉ (cooldown) sau khi tung đòn chém thường (giây)")]
-    [SerializeField] private float normalAttackCooldown = 0.5f;
+    private float normalAttackCooldown => statsComp?.Sheet?.Config != null ? statsComp.Sheet.Config.normalAttackCooldown : 0.5f;
     [Tooltip("Khoảng nghỉ (cooldown) của đòn đánh gồng (giây)")]
-    [SerializeField] private float chargeAttackCooldown = 1.5f;
+    private float chargeAttackCooldown => statsComp?.Sheet?.Config != null ? statsComp.Sheet.Config.chargeAttackCooldown : 1.5f;
+
+    private float NormalAttackStaminaCost => statsComp?.Sheet?.Config != null ? statsComp.Sheet.Config.normalAttackStaminaCost : 10f;
+    private float ChargeAttackStaminaCost => statsComp?.Sheet?.Config != null ? statsComp.Sheet.Config.chargeAttackStaminaCost : 20f;
     
     private float CurrentAttackSpeed => statsComp != null ? statsComp.AttackSpeed : 1f;
 
@@ -63,8 +66,8 @@ public class PlayerCombat : NetworkBehaviour
         // --- J VỪA NHẤN ---
         if (attackJustPressed && attackCooldown.ExpiredOrNotRunning(Runner))
         {
-            // Kiểm tra xem có đủ 10 Stamina để tung Light Attack không
-            bool canAffordLight = statsComp == null || statsComp.HasStamina(10f);
+            // Kiểm tra xem có đủ Stamina để tung Light Attack không
+            bool canAffordLight = statsComp == null || statsComp.HasStamina(NormalAttackStaminaCost);
             if (canAffordLight)
             {
                 IsHoldingAttack = true;
@@ -80,11 +83,11 @@ public class PlayerCombat : NetworkBehaviour
 
             if (_holdTime >= chargeThreshold && !_chargeTriggered)
             {
-                // Kiểm tra xem có đủ 20 Stamina để tung Heavy Attack không
-                bool canAffordHeavy = statsComp == null || statsComp.HasStamina(20f);
+                // Kiểm tra xem có đủ Stamina để tung Heavy Attack không
+                bool canAffordHeavy = statsComp == null || statsComp.HasStamina(ChargeAttackStaminaCost);
                 if (canAffordHeavy)
                 {
-                    if (statsComp != null) statsComp.TryConsumeStamina(20f);
+                    if (statsComp != null) statsComp.TryConsumeStamina(ChargeAttackStaminaCost);
                     
                     _chargeTriggered = true;
                     IsAttacking = true;
@@ -122,8 +125,8 @@ public class PlayerCombat : NetworkBehaviour
             {
                 if (attackCooldown.ExpiredOrNotRunning(Runner))
                 {
-                    // Trừ 10 Stamina cho Light Attack
-                    bool consumed = statsComp == null || statsComp.TryConsumeStamina(10f);
+                    // Trừ Stamina cho Light Attack
+                    bool consumed = statsComp == null || statsComp.TryConsumeStamina(NormalAttackStaminaCost);
                     if (consumed)
                     {
                         IsAttacking = true;

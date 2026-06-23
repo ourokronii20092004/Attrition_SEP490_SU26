@@ -36,13 +36,8 @@ namespace Attrition.Gameplay.Player
         // Fallback khi chưa gán SO (giữ tương thích prefab cũ)
         private const int FallbackHP = 100, FallbackMana = 100, FallbackStamina = 100;
 
-        [Header("---- STAMINA ----")]
-        [Tooltip("Stamina tiêu hao mỗi lần dash.")]
-        [SerializeField] private float dashStaminaCost = 20f;
-        [Tooltip("Stamina hồi lại mỗi giây.")]
-        [SerializeField] private float staminaRegenPerSecond = 10f;
-
-        public float DashStaminaCost => dashStaminaCost;
+        public float DashStaminaCost => baseStats != null ? baseStats.dashStaminaCost : 20f;
+        public float StaminaRegenPerSecond => baseStats != null ? baseStats.staminaRegenPerSecond : 10f;
 
         public override void Spawned()
         {
@@ -160,7 +155,7 @@ namespace Attrition.Gameplay.Player
         private void BuildSheet()
         {
             var progression = GetComponent<PlayerProgression>();
-            var leveling = progression != null ? progression.GetLevelingConfig() : new LevelingConfig();
+            var leveling = progression != null ? progression.GetLevelingConfig() : null;
             
             if (baseStats != null)
                 _sheet = new StatSheet(baseStats, leveling);
@@ -189,7 +184,7 @@ namespace Attrition.Gameplay.Player
             get 
             {
                 var progression = GetComponent<PlayerProgression>();
-                return progression != null ? progression.maxLevel : 21;
+                return progression != null && progression.GetLevelingConfig() != null ? progression.GetLevelingConfig().maxLevel : 21;
             }
         }
 
@@ -251,7 +246,7 @@ namespace Attrition.Gameplay.Player
         {
             if (!HasStateAuthority) return;
             if (CurrentStamina >= MaxStamina) return;
-            CurrentStamina = Mathf.Min(MaxStamina, CurrentStamina + staminaRegenPerSecond * deltaTime);
+            CurrentStamina = Mathf.Min(MaxStamina, CurrentStamina + StaminaRegenPerSecond * deltaTime);
         }
 
         // ─── HỒI HP / MANA (chỉ host) ───
