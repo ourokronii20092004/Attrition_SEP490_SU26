@@ -17,7 +17,12 @@ public class PlayerCombat : NetworkBehaviour
     [Header("---- DAMAGE & SPEED ----")]
     public Attrition.Core.DamageType normalAttackType = Attrition.Core.DamageType.Physical;
     public Attrition.Core.DamageType chargeAttackType = Attrition.Core.DamageType.Physical;
+    [Tooltip("Thời gian giữ nút tối thiểu để tính là đòn gồng (giây)")]
     [SerializeField] private float chargeThreshold = 0.25f;
+    [Tooltip("Khoảng nghỉ (cooldown) sau khi tung đòn chém thường (giây)")]
+    [SerializeField] private float normalAttackCooldown = 0.5f;
+    [Tooltip("Khoảng nghỉ (cooldown) của đòn đánh gồng (giây)")]
+    [SerializeField] private float chargeAttackCooldown = 1.5f;
     
     private float CurrentAttackSpeed => statsComp != null ? statsComp.AttackSpeed : 1f;
 
@@ -85,7 +90,7 @@ public class PlayerCombat : NetworkBehaviour
                     IsAttacking = true;
                     IsChargingAttack = true;
 
-                    attackCooldown = TickTimer.CreateFromSeconds(Runner, 1.5f / CurrentAttackSpeed);
+                    attackCooldown = TickTimer.CreateFromSeconds(Runner, chargeAttackCooldown / CurrentAttackSpeed);
 
                     if (Runner.IsForward)
                     {
@@ -123,7 +128,7 @@ public class PlayerCombat : NetworkBehaviour
                     {
                         IsAttacking = true;
 
-                        attackCooldown = TickTimer.CreateFromSeconds(Runner, 0.5f / CurrentAttackSpeed);
+                        attackCooldown = TickTimer.CreateFromSeconds(Runner, normalAttackCooldown / CurrentAttackSpeed);
 
                         if (Runner.IsForward)
                         {

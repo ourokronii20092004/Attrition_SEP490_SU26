@@ -29,7 +29,10 @@ namespace Attrition.UI
             if (players.Length == 0) return;
 
             foreach (var p in players)
+            {
+                if (p.Object == null || !p.Object.IsValid) continue;
                 if (!p.IsDead) return; // còn ai sống → chưa over (BR-27)
+            }
 
             ShowGameOver();
         }

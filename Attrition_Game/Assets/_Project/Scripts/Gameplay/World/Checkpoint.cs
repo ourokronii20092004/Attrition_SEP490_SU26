@@ -143,6 +143,11 @@ namespace Attrition.Gameplay.World
             RespawnPosition = RestPoint;
             HasBeenActivated = true;
 
+            // LƯU game SAU khi đã hồi đầy máu và bình (quan trọng: đè lên file save cũ để nhớ 100% HP)
+            var saver = Attrition.Gameplay.Persistence.GameSaveService.EnsureExists();
+            saver.Save(Attrition.Gameplay.Persistence.GameSaveService.SaveEvent.Rest,
+                       DisplayName, RestPoint);
+
             RpcOnRested();
             return true;
         }
