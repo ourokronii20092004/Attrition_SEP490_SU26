@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a63de20b5f8a2bd468c91d9783c82f59, type: 3}
+  m_Name: LevelingConfig
+  m_EditorClassIdentifier: Attrition.Data::Attrition.Data.LevelingConfigSO
+  baseExp: 100
+  perLevelExp: 50
+  maxLevel: 100
+  statPointsPerLevel: 1
+  hpPerPoint: 5
+  manaPerPoint: 5
+  staminaPerPoint: 5
+  adPerPoint: 2
+  apPerPoint: 2
+  defPerPoint: 2
+  resPerPoint: 2
