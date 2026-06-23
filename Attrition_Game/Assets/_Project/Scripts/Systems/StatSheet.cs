@@ -13,23 +13,10 @@ namespace Attrition.Systems
     ///   4. accessory — modifiers từ damage-accessory đang trang bị
     /// Đây là nguồn chỉ số DUY NHẤT mà gameplay đọc — không hard-code ở Controller.
     /// </summary>
-    public struct LevelingConfig
-    {
-        public int maxLevel;
-        public int statPointsPerLevel;
-        public int hpPerPoint;
-        public int manaPerPoint;
-        public int staminaPerPoint;
-        public int adPerPoint;
-        public int apPerPoint;
-        public int defPerPoint;
-        public int resPerPoint;
-    }
-
     public class StatSheet
     {
         private readonly CharacterBaseStatsSO _baseStats;
-        private readonly LevelingConfig _leveling;
+        private readonly LevelingConfigSO _leveling;
         private int _level = 1;
 
         // điểm tự cộng (Option 2): stat -> số điểm đã đầu tư
@@ -37,7 +24,7 @@ namespace Attrition.Systems
         // tổng modifier phẳng từ trang bị + accessory
         private readonly Dictionary<StatType, int> _gearFlat = new();
 
-        public StatSheet(CharacterBaseStatsSO baseStats, LevelingConfig leveling)
+        public StatSheet(CharacterBaseStatsSO baseStats, LevelingConfigSO leveling)
         {
             _baseStats = baseStats;
             _leveling = leveling;
@@ -45,6 +32,7 @@ namespace Attrition.Systems
 
         public int Level => _level;
         public CharacterBaseStatsSO Config => _baseStats;
+        public LevelingConfigSO LevelingConfig => _leveling;
 
         /// <summary>Số điểm chưa tiêu = điểm tích lũy tới level - điểm đã cộng.</summary>
         public int UnspentPoints
@@ -53,13 +41,15 @@ namespace Attrition.Systems
             {
                 int spent = 0;
                 foreach (var kv in _allocated) spent += kv.Value;
-                int clamped = Mathf.Clamp(_level, 1, _leveling.maxLevel);
-                int totalPoints = (clamped - 1) * _leveling.statPointsPerLevel;
+                int maxLvl = _leveling != null ? _leveling.maxLevel : 21;
+                int pointsPerLvl = _leveling != null ? _leveling.statPointsPerLevel : 5;
+                int clamped = Mathf.Clamp(_level, 1, maxLvl);
+                int totalPoints = (clamped - 1) * pointsPerLvl;
                 return totalPoints - spent;
             }
         }
 
-        public void SetLevel(int level) => _level = Mathf.Clamp(level, 1, _leveling.maxLevel);
+        public void SetLevel(int level) => _level = Mathf.Clamp(level, 1, _leveling != null ? _leveling.maxLevel : 21);
 
         /// <summary>Cộng 1 điểm tự phân bổ vào stat (Option 2). Trả false nếu hết điểm.</summary>
         public bool AllocatePoint(StatType stat)
@@ -119,6 +109,7 @@ namespace Attrition.Systems
 
         private int PerPoint(StatType stat)
         {
+            if (_leveling == null) return 0;
             switch (stat)
             {
                 case StatType.MaxHP: return _leveling.hpPerPoint;

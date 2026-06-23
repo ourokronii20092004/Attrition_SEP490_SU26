@@ -26,9 +26,23 @@ namespace Attrition.Data
         public float slideSpeed = 15f;
         public float jumpForce = 15f;
         public float doubleJumpForce = 8f;
+        
+        [Header("---- COMBAT SPEED & TIMING ----")]
         public float attackSpeed = 1f;
         [Tooltip("Hệ số nhân sát thương khi Charge Attack")]
         public float chargeDamageMultiplier = 1.5f;
+        [Tooltip("Khoảng nghỉ sau khi tung đòn chém thường")]
+        public float normalAttackCooldown = 0.5f;
+        [Tooltip("Khoảng nghỉ sau khi tung đòn chém gồng")]
+        public float chargeAttackCooldown = 1.5f;
+        [Tooltip("Thời gian giữ nút tối thiểu để tính là đòn gồng")]
+        public float chargeThreshold = 0.25f;
+
+        [Header("---- STAMINA COSTS ----")]
+        public float dashStaminaCost = 20f;
+        public float staminaRegenPerSecond = 10f;
+        public float normalAttackStaminaCost = 10f;
+        public float chargeAttackStaminaCost = 20f;
 
         /// <summary>Giá trị gốc của 1 stat ở level 1 (chưa cộng điểm, chưa trang bị).</summary>
         public int GetBase(StatType stat)

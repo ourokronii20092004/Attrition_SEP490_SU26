@@ -21,15 +21,13 @@ namespace Attrition.Gameplay.Player
         [Tooltip("SO định nghĩa lượng hồi bình mana.")]
         [SerializeField] private ConsumableSO manaPotion;
 
-        [Header("---- CHARGE CAPS ----")]
-        [Tooltip("Số bình máu khởi đầu (concept: bắt đầu 3).")]
-        [SerializeField] private int startingHealthCharges = 3;
-        [Tooltip("Số bình mana khởi đầu.")]
-        [SerializeField] private int startingManaCharges = 3;
-        [Tooltip("Cap tuyệt đối số bình máu (concept: 7-8).")]
-        [SerializeField] private int hardMaxHealthCharges = 8;
-        [Tooltip("Cap tuyệt đối số bình mana.")]
-        [SerializeField] private int hardMaxManaCharges = 8;
+        [Header("---- POTION CONFIG ----")]
+        [SerializeField] private Attrition.Data.PotionConfigSO configSO;
+
+        private int startingHealthCharges => configSO != null ? configSO.startingHealthCharges : 3;
+        private int startingManaCharges => configSO != null ? configSO.startingManaCharges : 3;
+        private int hardMaxHealthCharges => configSO != null ? configSO.hardMaxHealthCharges : 8;
+        private int hardMaxManaCharges => configSO != null ? configSO.hardMaxManaCharges : 8;
 
         [Networked] public int MaxHealthCharges { get; set; }
         [Networked] public int MaxManaCharges { get; set; }
