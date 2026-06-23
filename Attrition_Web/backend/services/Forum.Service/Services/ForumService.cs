@@ -162,7 +162,7 @@ public class ForumService : IForumService
     public async Task<PaginatedResponse<ForumPostDto>> GetPostsAsync(Guid threadId, int page, int pageSize, Guid? currentUserId)
     {
         var (posts, total) = await _postRepo.GetPagedAsync(page, pageSize,
-            p => p.ThreadId == threadId && !p.IsRemoved, q => q.OrderBy(p => p.CreatedAt));
+            p => p.ThreadId == threadId && !p.Moderation.IsRemoved, q => q.OrderBy(p => p.CreatedAt));
 
         var postIds = posts.Select(p => p.Id).ToList();
         var reactions = await _reactionRepo.ListAsync(r => postIds.Contains(r.PostId));
@@ -407,11 +407,11 @@ public class ForumService : IForumService
         var post = await _postRepo.GetByIdAsync(postId);
         if (post == null) return ApiResponse.Fail("Post not found.");
 
-        post.IsRemoved = true;
-        post.RemovedReason = reason;
-        post.RemovedByUserId = moderator.Id;
-        post.RemovedByName = moderator.Name;
-        post.RemovedAt = DateTime.UtcNow;
+        post.Moderation.IsRemoved = true;
+        post.Moderation.Reason = reason;
+        post.Moderation.ByUserId = moderator.Id;
+        post.Moderation.ByName = moderator.Name;
+        post.Moderation.At = DateTime.UtcNow;
         await _postRepo.UpdateAsync(post);
 
         // Resolved-after-action: pending reports on this post are now actioned.
@@ -430,11 +430,11 @@ public class ForumService : IForumService
         var post = await _postRepo.GetByIdAsync(postId);
         if (post == null) return ApiResponse.Fail("Post not found.");
 
-        post.IsRemoved = false;
-        post.RemovedReason = null;
-        post.RemovedByUserId = null;
-        post.RemovedByName = null;
-        post.RemovedAt = null;
+        post.Moderation.IsRemoved = false;
+        post.Moderation.Reason = null;
+        post.Moderation.ByUserId = null;
+        post.Moderation.ByName = null;
+        post.Moderation.At = null;
         await _postRepo.UpdateAsync(post);
         return ApiResponse.Ok();
     }
@@ -452,15 +452,15 @@ public class ForumService : IForumService
     {
         Expression<Func<ForumPost, bool>>? filter = (removedOnly, search?.ToLower()) switch
         {
-            (true, string s) => p => p.IsRemoved && p.Content.ToLower().Contains(s),
-            (true, null) => p => p.IsRemoved,
+            (true, string s) => p => p.Moderation.IsRemoved && p.Content.ToLower().Contains(s),
+            (true, null) => p => p.Moderation.IsRemoved,
             (false, string s) => p => p.Content.ToLower().Contains(s),
             _ => null
         };
         var (posts, total) = await _postRepo.GetPagedAsync(page, pageSize, filter,
             q => q.OrderByDescending(p => p.CreatedAt));
         var items = posts.Select(p => new AdminForumPostDto(p.Id, p.ThreadId, p.Content, p.CreatedAt, p.UpdatedAt,
-            p.IsRemoved, p.RemovedReason, p.RemovedAt, p.AuthorName, p.RemovedByName)).ToList();
+            p.Moderation.IsRemoved, p.Moderation.Reason, p.Moderation.At, p.AuthorName, p.Moderation.ByName)).ToList();
         return new PaginatedResponse<AdminForumPostDto>(items, total, page, pageSize);
     }
 
@@ -580,7 +580,7 @@ public class ForumService : IForumService
     {
         var threads = await _threadRepo.CountAsync();
         var posts = await _postRepo.CountAsync();
-        var removed = await _postRepo.CountAsync(p => p.IsRemoved);
+        var removed = await _postRepo.CountAsync(p => p.Moderation.IsRemoved);
         return (threads, posts, removed);
     }
 }

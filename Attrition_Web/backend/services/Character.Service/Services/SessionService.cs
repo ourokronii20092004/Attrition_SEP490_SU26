@@ -107,16 +107,16 @@ public class SessionService : ISessionService
         entity.CurrentLevel = request.CurrentLevel;
         entity.CurrentExp = request.CurrentExp;
         entity.AllocatedPointsJson = request.AllocatedPointsJson ?? entity.AllocatedPointsJson;
-        entity.MaxHp = request.MaxHp;
-        entity.CurrentHp = request.CurrentHp;
-        entity.MaxMana = request.MaxMana;
-        entity.CurrentMana = request.CurrentMana;
-        entity.MaxStamina = request.MaxStamina;
-        entity.PotionMaxFlasks = request.PotionMaxFlasks;
-        entity.AttackSpeed = request.AttackSpeed;
-        entity.PosX = request.PosX;
-        entity.PosY = request.PosY;
-        entity.LastRestPointId = request.LastRestPointId ?? entity.LastRestPointId;
+        entity.Vitals.MaxHp = request.MaxHp;
+        entity.Vitals.CurrentHp = request.CurrentHp;
+        entity.Vitals.MaxMana = request.MaxMana;
+        entity.Vitals.CurrentMana = request.CurrentMana;
+        entity.Vitals.MaxStamina = request.MaxStamina;
+        entity.Combat.PotionMaxFlasks = request.PotionMaxFlasks;
+        entity.Combat.AttackSpeed = request.AttackSpeed;
+        entity.Position.PosX = request.PosX;
+        entity.Position.PosY = request.PosY;
+        entity.Position.LastRestPointId = request.LastRestPointId ?? entity.Position.LastRestPointId;
         // JSON blob null = keep existing (don't wipe inventory when a save omits it).
         entity.InventoryJson = request.InventoryJson ?? entity.InventoryJson;
         entity.EquipmentJson = request.EquipmentJson ?? entity.EquipmentJson;
@@ -197,9 +197,9 @@ public class SessionService : ISessionService
 
     private static CharacterSessionDto ToCharacterSessionDto(CharacterSessionEntity c) => new(
         c.CharacterId, c.SessionId, c.PlayerRole, c.CurrentLevel, c.CurrentExp, c.AllocatedPointsJson,
-        c.MaxHp, c.CurrentHp, c.MaxMana, c.CurrentMana, c.MaxStamina,
-        c.PotionMaxFlasks, c.AttackSpeed, c.PosX, c.PosY,
-        c.LastRestPointId, c.InventoryJson, c.EquipmentJson, c.UpdatedAt);
+        c.Vitals.MaxHp, c.Vitals.CurrentHp, c.Vitals.MaxMana, c.Vitals.CurrentMana, c.Vitals.MaxStamina,
+        c.Combat.PotionMaxFlasks, c.Combat.AttackSpeed, c.Position.PosX, c.Position.PosY,
+        c.Position.LastRestPointId, c.InventoryJson, c.EquipmentJson, c.UpdatedAt);
 
     private static WorldStateDto ToWorldStateDto(WorldStateEntity w) => new(
         w.EventId, w.StateValue, w.Progress, w.UpdatedAt);
