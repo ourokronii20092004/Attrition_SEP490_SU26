@@ -61,6 +61,9 @@ namespace Attrition.UI
             _root = _uiDocument.rootVisualElement;
             if (_root == null) return;
 
+            if (LocalAuthServer.Instance != null)
+                LocalAuthServer.Instance.OnTokenReceived.AddListener(HandleGoogleTokenReceived);
+
             if (_audioSource == null) _audioSource = GetComponent<AudioSource>();
             if (_audioSource == null) _audioSource = gameObject.AddComponent<AudioSource>();
 
@@ -90,6 +93,12 @@ namespace Attrition.UI
             LoadSavesFromDisk();
 
             ShowScreen("main-menu");
+        }
+
+        private void OnDisable()
+        {
+            if (LocalAuthServer.Instance != null)
+                LocalAuthServer.Instance.OnTokenReceived.RemoveListener(HandleGoogleTokenReceived);
         }
 
         private void ShowScreen(string screenName)
@@ -952,6 +961,69 @@ namespace Attrition.UI
                     ShowScreen("main-menu");
                 });
             }
+
+            var googleBtn = _root.Q<Button>("btn-login-google");
+            if (googleBtn != null)
+            {
+                googleBtn.RegisterCallback<PointerEnterEvent>(evt => PlayHoverSound());
+                googleBtn.RegisterCallback<ClickEvent>(evt =>
+                {
+                    PlayClickSound();
+                    
+                    if (loginError != null) loginError.style.display = DisplayStyle.Flex;
+                    if (errorText != null)
+                    {
+                        errorText.text = "Waiting for browser login...";
+                        errorText.style.color = new StyleColor(Color.white);
+                    }
+
+                    if (LocalAuthServer.Instance != null)
+                        LocalAuthServer.Instance.StartListening();
+
+                    Application.OpenURL("http://localhost:3000/login?client=unity");
+                });
+            }
+        }
+
+        private void HandleGoogleTokenReceived(string token)
+        {
+            var loginError = _root.Q<VisualElement>("login-error");
+            var errorText = _root.Q<Label>("login-error-text");
+
+            if (loginError != null) loginError.style.display = DisplayStyle.Flex;
+            if (errorText != null)
+            {
+                errorText.text = "Authenticating Google Token...";
+                errorText.style.color = new StyleColor(Color.white);
+            }
+
+            if (APIManager.Instance == null)
+            {
+                var apiObj = new GameObject("APIManager");
+                apiObj.AddComponent<APIManager>();
+            }
+
+            StartCoroutine(APIManager.Instance.LoginWithToken(token, (userId) => {
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    PlayerPrefs.SetString("SavedUserId", userId);
+                    PlayerPrefs.Save();
+                    _isLoggedIn = true;
+                    _currentUserId = userId;
+                    UpdateGlobalProfileVisibility();
+                    
+                    if (loginError != null) loginError.style.display = DisplayStyle.None;
+                    ShowScreen("host-join");
+                }
+                else
+                {
+                    if (errorText != null) 
+                    {
+                        errorText.style.color = new StyleColor(new Color(0.86f, 0.39f, 0.39f));
+                        errorText.text = "⚠ Google Login failed. Please try again.";
+                    }
+                }
+            }));
         }
 
         // =================================================================
