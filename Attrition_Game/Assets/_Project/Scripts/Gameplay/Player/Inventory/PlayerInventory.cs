@@ -56,12 +56,7 @@ namespace Attrition.Gameplay.Player.Inventory
 
         [Header("---- STARTING ITEMS (host seed) ----")]
         [Tooltip("String id của item phát cho nhân vật mới (vd: iron_helm, skill_fire). Chỉ host seed, chỉ khi túi đang trống. Để TEST: mặc định phát sẵn vài món.")]
-        [SerializeField] private string[] startingItemIds =
-        {
-            "leather_helm", "iron_chest", "gold_boots",
-            "acc_double_jump", "acc_stamina_charm",
-            "skill_fire", "skill_thunder"
-        };
+        [SerializeField] private string[] startingItemIds = new string[0];
 
         public override void Spawned()
         {
@@ -475,6 +470,34 @@ namespace Attrition.Gameplay.Player.Inventory
             return true;
         }
 
+        public bool TryUnequipArmorToSlot(EquipmentSlot armorSlot, int destSlot)
+        {
+            if (!HasStateAuthority || IsInBossZone) return false;
+            var equipped = GetEquipSlotValue(armorSlot);
+            if (equipped.IsEmpty) return false;
+
+            if (destSlot >= 0 && destSlot < EquipmentSlots.Length)
+            {
+                var targetSlot = EquipmentSlots.Get(destSlot);
+                if (targetSlot.IsEmpty)
+                {
+                    EquipmentSlots.Set(destSlot, equipped);
+                    SetEquipSlot(armorSlot, InventorySlot.Empty);
+                    RebuildAndApplyGear();
+                    NotifyChanged();
+                    return true;
+                }
+                else
+                {
+                    // Nếu ô đích có đồ, xem nó có cùng slot không thì equip luôn (tự swap)
+                    var item = _db.GetItem(targetSlot.ItemIndex);
+                    if (item is EquipmentSO eq && eq.slot == armorSlot)
+                        return TryEquipFromSlot(destSlot);
+                }
+            }
+            return TryUnequipArmor(armorSlot);
+        }
+
         /// <summary>Gỡ skill đang trang bị → trả về inventory.</summary>
         public bool TryUnequipSkill()
         {
@@ -490,6 +513,31 @@ namespace Attrition.Gameplay.Player.Inventory
             return true;
         }
 
+        public bool TryUnequipSkillToSlot(int destSlot)
+        {
+            if (!HasStateAuthority || IsInBossZone) return false;
+            if (EquippedSkill.IsEmpty) return false;
+
+            if (destSlot >= 0 && destSlot < EquipmentSlots.Length)
+            {
+                var targetSlot = EquipmentSlots.Get(destSlot);
+                if (targetSlot.IsEmpty)
+                {
+                    EquipmentSlots.Set(destSlot, EquippedSkill);
+                    EquippedSkill = InventorySlot.Empty;
+                    NotifyChanged();
+                    return true;
+                }
+                else
+                {
+                    var item = _db.GetItem(targetSlot.ItemIndex);
+                    if (item is SkillSO)
+                        return TryEquipSkillFromSlot(destSlot);
+                }
+            }
+            return TryUnequipSkill();
+        }
+
         /// <summary>Gỡ accessory đang trang bị → trả về inventory.</summary>
         public bool TryUnequipAccessory()
         {
@@ -500,6 +548,77 @@ namespace Attrition.Gameplay.Player.Inventory
             if (emptyIdx < 0) return false;
 
             AccessorySlots.Set(emptyIdx, EquippedAccessory);
+            EquippedAccessory = InventorySlot.Empty;
+            RebuildAndApplyGear();
+            NotifyChanged();
+            return true;
+        }
+
+        public bool TryUnequipAccessoryToSlot(int destSlot)
+        {
+            if (!HasStateAuthority || IsInBossZone) return false;
+            if (EquippedAccessory.IsEmpty) return false;
+
+            if (destSlot >= 0 && destSlot < AccessorySlots.Length)
+            {
+                var targetSlot = AccessorySlots.Get(destSlot);
+                if (targetSlot.IsEmpty)
+                {
+                    AccessorySlots.Set(destSlot, EquippedAccessory);
+                    EquippedAccessory = InventorySlot.Empty;
+                    RebuildAndApplyGear();
+                    NotifyChanged();
+                    return true;
+                }
+                else
+                {
+                    var item = _db.GetItem(targetSlot.ItemIndex);
+                    if (item is AccessorySO)
+                        return TryEquipAccessoryFromSlot(destSlot);
+                }
+            }
+            return TryUnequipAccessory();
+        }
+
+        public bool TryDropEquippedArmor(EquipmentSlot armorSlot)
+        {
+            if (!HasStateAuthority || _db == null) return false;
+            var equipped = GetEquipSlotValue(armorSlot);
+            if (equipped.IsEmpty) return false;
+            
+            var item = _db.GetItem(equipped.ItemIndex);
+            if (item == null || item.isKeyItem) return false;
+
+            SpawnDroppedItem(equipped.ItemIndex, equipped.Amount, Object.InputAuthority);
+            SetEquipSlot(armorSlot, InventorySlot.Empty);
+            RebuildAndApplyGear();
+            NotifyChanged();
+            return true;
+        }
+
+        public bool TryDropEquippedSkill()
+        {
+            if (!HasStateAuthority || _db == null) return false;
+            if (EquippedSkill.IsEmpty) return false;
+
+            var item = _db.GetItem(EquippedSkill.ItemIndex);
+            if (item == null || item.isKeyItem) return false;
+
+            SpawnDroppedItem(EquippedSkill.ItemIndex, EquippedSkill.Amount, Object.InputAuthority);
+            EquippedSkill = InventorySlot.Empty;
+            NotifyChanged();
+            return true;
+        }
+
+        public bool TryDropEquippedAccessory()
+        {
+            if (!HasStateAuthority || _db == null) return false;
+            if (EquippedAccessory.IsEmpty) return false;
+
+            var item = _db.GetItem(EquippedAccessory.ItemIndex);
+            if (item == null || item.isKeyItem) return false;
+
+            SpawnDroppedItem(EquippedAccessory.ItemIndex, EquippedAccessory.Amount, Object.InputAuthority);
             EquippedAccessory = InventorySlot.Empty;
             RebuildAndApplyGear();
             NotifyChanged();
@@ -696,16 +815,34 @@ namespace Attrition.Gameplay.Player.Inventory
         public void RpcRequestUnequipArmor(int armorSlotInt) => TryUnequipArmor((EquipmentSlot)armorSlotInt);
 
         [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+        public void RpcRequestUnequipArmorToSlot(int armorSlotInt, int destSlot) => TryUnequipArmorToSlot((EquipmentSlot)armorSlotInt, destSlot);
+
+        [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
         public void RpcRequestUnequipSkill() => TryUnequipSkill();
 
         [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+        public void RpcRequestUnequipSkillToSlot(int destSlot) => TryUnequipSkillToSlot(destSlot);
+
+        [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
         public void RpcRequestUnequipAccessory() => TryUnequipAccessory();
+
+        [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+        public void RpcRequestUnequipAccessoryToSlot(int destSlot) => TryUnequipAccessoryToSlot(destSlot);
 
         [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
         public void RpcRequestSwap(int category, int from, int to) => SwapSlots((ItemCategory)category, from, to);
 
         [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
         public void RpcRequestDrop(int category, int slotIndex) => TryDropItem((ItemCategory)category, slotIndex);
+
+        [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+        public void RpcRequestDropEquippedArmor(int equipmentSlot) => TryDropEquippedArmor((EquipmentSlot)equipmentSlot);
+
+        [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+        public void RpcRequestDropEquippedSkill() => TryDropEquippedSkill();
+
+        [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+        public void RpcRequestDropEquippedAccessory() => TryDropEquippedAccessory();
 
         // ═══════════════════════════════════════════
         //  HELPERS

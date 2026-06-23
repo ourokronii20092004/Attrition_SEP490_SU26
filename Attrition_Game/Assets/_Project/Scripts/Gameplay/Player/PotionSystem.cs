@@ -44,10 +44,16 @@ namespace Attrition.Gameplay.Player
 
             if (HasStateAuthority)
             {
-                if (MaxHealthCharges <= 0) MaxHealthCharges = startingHealthCharges;
-                if (MaxManaCharges <= 0) MaxManaCharges = startingManaCharges;
-                HealthCharges = MaxHealthCharges;
-                ManaCharges = MaxManaCharges;
+                if (MaxHealthCharges <= 0)
+                {
+                    MaxHealthCharges = startingHealthCharges;
+                    HealthCharges = MaxHealthCharges;
+                }
+                if (MaxManaCharges <= 0)
+                {
+                    MaxManaCharges = startingManaCharges;
+                    ManaCharges = MaxManaCharges;
+                }
             }
         }
 

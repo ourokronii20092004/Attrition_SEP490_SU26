@@ -68,13 +68,41 @@ namespace Attrition.UI
         private void OnCellClicked(int i)
         {
             var slot = GetSlot(i);
-            if (slot.IsEmpty) { SetVisible(_root.Q<VisualElement>("inv-detail"), false); _selectedSlot = -1; return; }
+            if (slot.IsEmpty) { SetVisible(_root.Q<VisualElement>("inv-detail"), false); _selectedSlot = -1; _selectedContext = SelectedSlotContext.None; return; }
             _selectedSlot = i;
+            _selectedContext = SelectedSlotContext.InventoryGrid;
             ShowDetail(slot);
 
             var grid = _root.Q<VisualElement>("inv-grid");
             for (int k = 0; k < 40; k++) grid.Q<VisualElement>($"cell-{k}")?.RemoveFromClassList("selected");
             grid.Q<VisualElement>($"cell-{i}")?.AddToClassList("selected");
+        }
+
+        private void OnEquipSlotClicked(SelectedSlotContext context)
+        {
+            if (_inventory == null || _db == null) return;
+            InventorySlot slot = InventorySlot.Empty;
+            switch (context)
+            {
+                case SelectedSlotContext.EquippedHead: slot = _inventory.EquippedHead; break;
+                case SelectedSlotContext.EquippedChest: slot = _inventory.EquippedChest; break;
+                case SelectedSlotContext.EquippedLegs: slot = _inventory.EquippedLegs; break;
+                case SelectedSlotContext.EquippedBoots: slot = _inventory.EquippedBoots; break;
+                case SelectedSlotContext.EquippedAccessory: slot = _inventory.EquippedAccessory; break;
+                case SelectedSlotContext.EquippedSkill: slot = _inventory.EquippedSkill; break;
+            }
+
+            if (slot.IsEmpty) { SetVisible(_root.Q<VisualElement>("inv-detail"), false); _selectedContext = SelectedSlotContext.None; return; }
+            
+            _selectedSlot = -1; // Not in grid
+            _selectedContext = context;
+            
+            // Remove grid selection visual
+            var grid = _root.Q<VisualElement>("inv-grid");
+            if (grid != null)
+                for (int k = 0; k < 40; k++) grid.Q<VisualElement>($"cell-{k}")?.RemoveFromClassList("selected");
+
+            ShowDetail(slot);
         }
 
         private void ShowDetail(InventorySlot slot)
@@ -90,6 +118,12 @@ namespace Attrition.UI
             {
                 mods.Clear();
                 AppendMods(mods, item);
+            }
+
+            var equipBtn = _root.Q<Button>("inv-detail-equip");
+            if (equipBtn != null)
+            {
+                equipBtn.text = _selectedContext == SelectedSlotContext.InventoryGrid ? "EQUIP" : "UNEQUIP";
             }
 
             // Key item không drop được (BR-45)
@@ -119,24 +153,61 @@ namespace Attrition.UI
             return l;
         }
 
-        private void EquipSelected()
+        private void EquipOrUnequipSelected()
         {
-            if (_inventory == null || _selectedSlot < 0) return;
-            switch (_activeTab)
+            if (_inventory == null || _selectedContext == SelectedSlotContext.None) return;
+
+            if (_selectedContext == SelectedSlotContext.InventoryGrid)
             {
-                case ItemCategory.Equipment: _inventory.RpcRequestEquip(_selectedSlot); break;
-                case ItemCategory.Skill: _inventory.RpcRequestEquipSkill(_selectedSlot); break;
-                case ItemCategory.Accessory: _inventory.RpcRequestEquipAccessory(_selectedSlot); break;
+                if (_selectedSlot < 0) return;
+                switch (_activeTab)
+                {
+                    case ItemCategory.Equipment: _inventory.RpcRequestEquip(_selectedSlot); break;
+                    case ItemCategory.Skill: _inventory.RpcRequestEquipSkill(_selectedSlot); break;
+                    case ItemCategory.Accessory: _inventory.RpcRequestEquipAccessory(_selectedSlot); break;
+                }
+            }
+            else
+            {
+                switch (_selectedContext)
+                {
+                    case SelectedSlotContext.EquippedHead: _inventory.RpcRequestUnequipArmor((int)EquipmentSlot.Head); break;
+                    case SelectedSlotContext.EquippedChest: _inventory.RpcRequestUnequipArmor((int)EquipmentSlot.Chest); break;
+                    case SelectedSlotContext.EquippedLegs: _inventory.RpcRequestUnequipArmor((int)EquipmentSlot.Legs); break;
+                    case SelectedSlotContext.EquippedBoots: _inventory.RpcRequestUnequipArmor((int)EquipmentSlot.Boots); break;
+                    case SelectedSlotContext.EquippedAccessory: _inventory.RpcRequestUnequipAccessory(); break;
+                    case SelectedSlotContext.EquippedSkill: _inventory.RpcRequestUnequipSkill(); break;
+                }
             }
             SetVisible(_root.Q<VisualElement>("inv-detail"), false);
+            _selectedContext = SelectedSlotContext.None;
             _selectedSlot = -1;
         }
 
         private void DropSelected()
         {
-            if (_inventory == null || _selectedSlot < 0) return;
-            _inventory.RpcRequestDrop((int)_activeTab, _selectedSlot);
+            if (_inventory == null || _selectedContext == SelectedSlotContext.None) return;
+            
+            if (_selectedContext == SelectedSlotContext.InventoryGrid)
+            {
+                if (_selectedSlot < 0) return;
+                _inventory.RpcRequestDrop((int)_activeTab, _selectedSlot);
+            }
+            else
+            {
+                switch (_selectedContext)
+                {
+                    case SelectedSlotContext.EquippedHead: _inventory.RpcRequestDropEquippedArmor((int)EquipmentSlot.Head); break;
+                    case SelectedSlotContext.EquippedChest: _inventory.RpcRequestDropEquippedArmor((int)EquipmentSlot.Chest); break;
+                    case SelectedSlotContext.EquippedLegs: _inventory.RpcRequestDropEquippedArmor((int)EquipmentSlot.Legs); break;
+                    case SelectedSlotContext.EquippedBoots: _inventory.RpcRequestDropEquippedArmor((int)EquipmentSlot.Boots); break;
+                    case SelectedSlotContext.EquippedAccessory: _inventory.RpcRequestDropEquippedAccessory(); break;
+                    case SelectedSlotContext.EquippedSkill: _inventory.RpcRequestDropEquippedSkill(); break;
+                }
+            }
+            
             SetVisible(_root.Q<VisualElement>("inv-detail"), false);
+            _selectedContext = SelectedSlotContext.None;
             _selectedSlot = -1;
         }
     }
