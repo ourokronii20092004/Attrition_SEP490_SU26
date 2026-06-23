@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/providers";
 import { Button } from "@/components/ui/button";
 import { GOOGLE_CLIENT_ID } from "@/lib/config";
@@ -23,6 +23,7 @@ function tryParseError(body: string): string {
 export function GoogleButton({ label = "Continue with Google" }: { label?: string }) {
   const { loginWithGoogle } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -36,8 +37,14 @@ export function GoogleButton({ label = "Continue with Google" }: { label?: strin
         setError("");
         setLoading(true);
         try {
-          await loginWithGoogle(response.credential);
-          router.push("/");
+          const authData = await loginWithGoogle(response.credential);
+          const isUnityClient = searchParams.get("client") === "unity";
+          
+          if (isUnityClient && authData?.accessToken) {
+            window.location.href = `http://localhost:52000/?token=${authData.accessToken}`;
+          } else {
+            router.push("/");
+          }
         } catch (e) {
           setError(e instanceof ApiError ? tryParseError(e.body) || "Google sign-in failed" : "Google sign-in failed");
         } finally {

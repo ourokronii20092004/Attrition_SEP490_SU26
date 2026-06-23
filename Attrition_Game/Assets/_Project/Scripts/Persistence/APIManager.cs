@@ -119,6 +119,38 @@ public class APIManager : MonoBehaviour
         }
     }
 
+    public IEnumerator LoginWithToken(string token, System.Action<string> callback)
+    {
+        AccessToken = token;
+
+        using (UnityWebRequest request = UnityWebRequest.Get($"{baseUrl}/Auth/me"))
+        {
+            request.SetRequestHeader("Authorization", "Bearer " + token);
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                var response = JsonConvert.DeserializeObject<ApiResponse<UserDto>>(request.downloadHandler.text);
+                if (response.success && response.data != null)
+                {
+                    string userId = response.data.id;
+                    Username = response.data.username;
+                    callback?.Invoke(userId);
+                }
+                else
+                {
+                    Debug.LogError("Token Login Fail: " + response.error);
+                    callback?.Invoke(null);
+                }
+            }
+            else
+            {
+                Debug.LogError("Token Login Fail: " + request.error);
+                callback?.Invoke(null);
+            }
+        }
+    }
+
    
     public async Task<Player> GetCharacterData(string userId)
     {

@@ -4,7 +4,7 @@ import { createContext, useContext, useCallback, useEffect, useState, type React
 import { authApi } from "@/lib/api/auth";
 import { charactersApi } from "@/lib/api/characters";
 import { ApiError } from "@/lib/api/client";
-import type { UserDto, LoginRequest, RegisterRequest } from "@/lib/types";
+import type { UserDto, LoginRequest, RegisterRequest, AuthResponse } from "@/lib/types";
 
 interface AuthState {
   user: UserDto | null;
@@ -14,7 +14,7 @@ interface AuthState {
 interface AuthContextValue extends AuthState {
   login: (data: LoginRequest) => Promise<UserDto | null>;
   register: (data: RegisterRequest) => Promise<UserDto | null>;
-  loginWithGoogle: (idToken: string) => Promise<UserDto | null>;
+  loginWithGoogle: (idToken: string) => Promise<AuthResponse | null>;
   logout: () => void;
   refreshUser: () => Promise<void>;
   setUser: (user: UserDto) => void;
@@ -89,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const res = await authApi.google({ code: idToken, redirectUri: window.location.origin });
     if (res.success && res.data) {
       setState({ user: res.data.user, loading: false });
-      return res.data.user;
+      return res.data;
     }
     return null;
   }, []);
