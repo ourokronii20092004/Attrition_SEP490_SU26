@@ -46,6 +46,12 @@ namespace Attrition.Gameplay.Enemy
             if (statsSO == null)
             {
                 MaxHP = FallbackHP; AD = FallbackAD;
+                var fallbackCtrl = GetComponent<Attrition.Controllers.EnemyController>();
+                if (fallbackCtrl != null)
+                {
+                    fallbackCtrl.maxHealth = MaxHP;
+                    fallbackCtrl.Health = MaxHP;
+                }
                 return;
             }
 
@@ -75,6 +81,14 @@ namespace Attrition.Gameplay.Enemy
                 PatrolSpeed = 2f;
                 ChaseSpeed = 5f;
                 AttackSpeed = 1f;
+            }
+
+            var ctrl = GetComponent<Attrition.Controllers.EnemyController>();
+            if (ctrl != null)
+            {
+                ctrl.maxHealth = MaxHP;
+                ctrl.Health = MaxHP;
+                Debug.Log($"[EnemyStats] {gameObject.name} → MaxHP={MaxHP}, AD={AD}, DEF={DEF}, Health gán={ctrl.Health}");
             }
         }
 

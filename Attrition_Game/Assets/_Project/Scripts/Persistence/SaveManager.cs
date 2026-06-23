@@ -41,7 +41,10 @@ namespace Attrition.Persistence
         public float checkpointY;
         public float checkpointZ;
         public int playtimeSeconds;       // nguồn thật; `playtime` chỉ để hiển thị
-        public int potionMaxFlasks;       // số bình tối đa đã mở (tăng qua elite/puzzle)
+        public int potionMaxFlasks;       // số bình máu tối đa
+        public int potionMaxManaFlasks;   // số bình mana tối đa
+        public int healthCharges;         // số lượng bình máu hiện có
+        public int manaCharges;           // số lượng bình mana hiện có
         public int[] allocatedPoints;     // 7 chỉ số tự cộng (Option 2)
         public long lastSavedUnix;        // mốc lưu gần nhất
         public string originMode;         // "Solo" | "Coop" — chặn dùng chéo chế độ

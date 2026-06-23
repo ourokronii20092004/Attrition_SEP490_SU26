@@ -113,7 +113,13 @@ namespace Attrition.Gameplay.Persistence
                 data.checkpointZ = checkpointPos.Value.z;
             }
 
-            if (potions != null) data.potionMaxFlasks = potions.MaxHealthCharges;
+            if (potions != null)
+            {
+                data.potionMaxFlasks = potions.MaxHealthCharges;
+                data.potionMaxManaFlasks = potions.MaxManaCharges;
+                data.healthCharges = potions.HealthCharges;
+                data.manaCharges = potions.ManaCharges;
+            }
             data.allocatedPoints = CaptureAllocated(stats);
             data.quests = Attrition.Gameplay.NPC.NetworkNPC.CaptureAll();
             data.originMode = GameLaunch.Mode.ToString();

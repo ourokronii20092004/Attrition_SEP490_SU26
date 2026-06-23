@@ -568,8 +568,12 @@ public class PlayerController : NetworkBehaviour, IDamageable
     public void TeleportTo(Vector3 position)
     {
         if (!HasStateAuthority) return;
-        rb.position = position;
-        rb.linearVelocity = Vector2.zero;
+        if (rb == null) rb = GetComponent<Rigidbody2D>();
+        if (rb != null)
+        {
+            rb.position = position;
+            rb.linearVelocity = Vector2.zero;
+        }
         NetworkPosition = position;
         NetworkVelocity = Vector2.zero;
     }

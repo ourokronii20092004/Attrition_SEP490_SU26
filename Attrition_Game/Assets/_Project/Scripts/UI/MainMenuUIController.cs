@@ -598,6 +598,13 @@ namespace Attrition.UI
             if (tip != null) tip.text = LoadingTips[Random.Range(0, LoadingTips.Length)];
 
             var op = SceneManager.LoadSceneAsync(sceneName);
+            if (op == null)
+            {
+                Debug.LogError($"[MainMenu] Lỗi không thể load scene '{sceneName}'. Hãy kiểm tra File -> Build Settings xem đã tick chọn scene chưa.");
+                if (loading != null) loading.style.display = DisplayStyle.None;
+                yield break;
+            }
+
             op.allowSceneActivation = false;
 
             // 0..0.9 = load thật; giữ ở 0.9 tới khi sẵn sàng kích hoạt.
