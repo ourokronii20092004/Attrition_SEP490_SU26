@@ -24,6 +24,12 @@ namespace Attrition.Gameplay.Enemy
         public float damageDelay = 0.05f;
         [Tooltip("Lực đẩy lùi khi trúng.")]
         public float knockbackForce = 4f;
+        [Tooltip("Tự hạ vụ nổ xuống MẶT ĐẤT lúc spawn (tránh nổ lơ lửng). Tắt nếu muốn nổ đúng vị trí spawn.")]
+        public bool snapToGround = true;
+        [Tooltip("Layer mặt đất để hạ xuống. Bỏ trống = tự dùng layer 'Ground'.")]
+        public LayerMask groundLayer;
+        [Tooltip("Khoảng nhô lên trên mặt nền sau khi hạ (units).")]
+        public float groundOffset = 0.3f;
 
         [Networked] private TickTimer LifeTimer { get; set; }
         [Networked] private int Damage { get; set; }
@@ -42,7 +48,38 @@ namespace Attrition.Gameplay.Enemy
         public override void Spawned()
         {
             _elapsed = 0f;
+
+            // HẠ XUỐNG MẶT ĐẤT tại đây (sau khi NetworkTransform đã đặt vị trí spawn) — host sửa Y rồi
+            // NetworkTransform sync xuống client. Khắc phục nổ lơ lửng do spawn ở tâm boss / NT ghi đè.
+            if (HasStateAuthority && snapToGround)
+                SnapToGround();
+
             if (HasStateAuthority) LifeTimer = TickTimer.CreateFromSeconds(Runner, lifetime);
+        }
+
+        private void SnapToGround()
+        {
+            int mask = groundLayer.value != 0 ? groundLayer.value : LayerMask.GetMask("Ground");
+            if (mask == 0) return;
+            Vector2 origin = (Vector2)transform.position + Vector2.up * 5f;
+            // QUAN TRỌNG: query PHYSICS SCENE CỦA FUSION, không phải Physics2D mặc định (scene đó rỗng
+            // trong Fusion → raycast không trúng → nổ lơ lửng).
+            var filter = new ContactFilter2D { useLayerMask = true, layerMask = mask, useTriggers = true };
+            var results = new RaycastHit2D[4];
+            int n = Runner.GetPhysicsScene2D().Raycast(origin, Vector2.down, 40f, filter, results);
+            float bestY = float.NegativeInfinity;
+            bool found = false;
+            for (int i = 0; i < n; i++)
+            {
+                if (results[i].collider == null) continue;
+                if (results[i].point.y > bestY) { bestY = results[i].point.y; found = true; }
+            }
+            if (found)
+            {
+                var p = transform.position;
+                p.y = bestY + groundOffset;
+                transform.position = p;
+            }
         }
 
         public override void FixedUpdateNetwork()

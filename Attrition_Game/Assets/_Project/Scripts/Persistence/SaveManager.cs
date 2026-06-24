@@ -51,6 +51,10 @@ namespace Attrition.Persistence
         public string originMode;         // "Solo" | "Coop" — chặn dùng chéo chế độ
         public QuestProgressEntry[] quests; // tiến trình quest NPC (khớp lại qua questId)
 
+        // ─── World Map (fog of war + fast-travel) ───
+        public List<string> discoveredCheckpoints = new List<string>(); // id (DisplayName) các checkpoint ĐÃ REST
+        public List<string> fogVisited = new List<string>();            // "scene:cellX:cellY" các ô fog đã xua
+
         public string ToDisplayPlaytime()
         {
             int h = playtimeSeconds / 3600;

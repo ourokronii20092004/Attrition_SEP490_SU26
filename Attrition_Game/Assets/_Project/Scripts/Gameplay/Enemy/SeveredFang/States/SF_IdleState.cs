@@ -20,11 +20,24 @@ namespace Attrition.Gameplay.Enemy.SeveredFang.States
             // Walk chậm rãi về phía player trong thời gian nghỉ
             if (ai.PlayerTarget != null)
             {
-                float dir = Mathf.Sign(ai.PlayerTarget.position.x - ai.Rb.position.x);
-                ai.NetFacingDir = dir;
-                float walkSpd = ai.StatsComp.PatrolSpeed * 0.7f; // Đi chậm rãi
-                ai.NetSpeed = walkSpd;
-                ai.Rb.linearVelocity = new Vector2(dir * walkSpd, ai.Rb.linearVelocity.y);
+                float xDiff = ai.PlayerTarget.position.x - ai.Rb.position.x;
+
+                // Chỉ quay mặt + đi khi player LỆCH HẲN sang một bên (deadzone). Player đứng giữa/đè boss
+                // → xDiff ~0 → KHÔNG lật hướng, đứng yên (tránh boss xoay + giật qua lại liên tục).
+                ai.FaceTowardsPlayer(); // đã có deadzone rộng cho boss
+
+                float deadZone = 1.2f;
+                if (Mathf.Abs(xDiff) > deadZone)
+                {
+                    float dir = ai.NetFacingDir > 0 ? 1f : -1f;
+                    float walkSpd = ai.StatsComp.PatrolSpeed * 0.7f; // Đi chậm rãi
+                    ai.NetSpeed = walkSpd;
+                    ai.Rb.linearVelocity = new Vector2(dir * walkSpd, ai.Rb.linearVelocity.y);
+                }
+                else
+                {
+                    ai.StopMovement(); // đủ gần theo trục X → đứng yên, không giật
+                }
             }
             else
             {
