@@ -9,8 +9,12 @@ public class LocalAuthServer : MonoBehaviour
     public static LocalAuthServer Instance { get; private set; }
 
     [Header("Events")]
-    [Tooltip("Sự kiện được gọi khi nhận được Token từ trình duyệt")]
-    public UnityEvent<string> OnTokenReceived;
+    [Tooltip("Sự kiện được gọi khi nhận được Token từ trình duyệt (access token, refresh token)")]
+    public TokenReceivedEvent OnTokenReceived;
+
+    /// <summary>access token + refresh token (refresh có thể rỗng nếu web không gửi).</summary>
+    [System.Serializable]
+    public class TokenReceivedEvent : UnityEngine.Events.UnityEvent<string, string> { }
 
     private HttpListener _listener;
     private const string ServerUrl = "http://localhost:52000/";
@@ -88,20 +92,20 @@ public class LocalAuthServer : MonoBehaviour
                 // Task này sẽ chặn cho tới khi có một request HTTP bay vào
                 HttpListenerContext context = await _listener.GetContextAsync();
 
-                // Lấy URL mà trình duyệt gửi đến (VD: http://localhost:52000/?token=abc)
+                // Lấy URL mà trình duyệt gửi đến (VD: http://localhost:52000/?token=abc&refresh=xyz)
                 string token = context.Request.QueryString["token"];
+                string refresh = context.Request.QueryString["refresh"];
 
                 // Gửi phản hồi lại cho trình duyệt báo thành công
                 SendSuccessResponse(context.Response);
 
                 if (!string.IsNullOrEmpty(token))
                 {
-                    Debug.Log($"[LocalAuthServer] Đã bắt được token: {token}");
-                    
-                    // Đẩy sự kiện về Main Thread thông qua một biến tạm hoặc context
-                    // Trong trường hợp này để đơn giản và an toàn với Unity API,
-                    // Ta sẽ dùng một biến cờ (flag) để Update() gọi ra OnTokenReceived.
+                    Debug.Log($"[LocalAuthServer] Đã bắt được token (refresh: {(string.IsNullOrEmpty(refresh) ? "không" : "có")}).");
+
+                    // Đẩy sự kiện về Main Thread qua biến cờ để Update() gọi OnTokenReceived.
                     _pendingToken = token;
+                    _pendingRefresh = refresh;
                 }
                 else
                 {
@@ -129,14 +133,17 @@ public class LocalAuthServer : MonoBehaviour
     }
 
     private string _pendingToken = null;
+    private string _pendingRefresh = null;
 
     private void Update()
     {
         if (_pendingToken != null)
         {
             string tokenToPass = _pendingToken;
+            string refreshToPass = _pendingRefresh;
             _pendingToken = null; // Reset để không gọi 2 lần
-            OnTokenReceived?.Invoke(tokenToPass);
+            _pendingRefresh = null;
+            OnTokenReceived?.Invoke(tokenToPass, refreshToPass);
         }
     }
 

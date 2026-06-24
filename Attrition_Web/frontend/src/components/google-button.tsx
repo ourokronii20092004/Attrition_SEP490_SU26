@@ -41,7 +41,11 @@ export function GoogleButton({ label = "Continue with Google" }: { label?: strin
           const isUnityClient = searchParams.get("client") === "unity";
           
           if (isUnityClient && authData?.accessToken) {
-            window.location.href = `http://localhost:52000/?token=${authData.accessToken}`;
+            // Gửi cả refresh token về game (localhost:52000) để host login Google cũng persist
+            // được phiên như login email/password — tránh phải đăng nhập lại sau 15 phút.
+            const params = new URLSearchParams({ token: authData.accessToken });
+            if (authData.refreshToken) params.set("refresh", authData.refreshToken);
+            window.location.href = `http://localhost:52000/?${params.toString()}`;
           } else {
             router.push("/");
           }

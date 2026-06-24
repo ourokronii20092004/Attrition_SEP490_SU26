@@ -41,18 +41,18 @@ public class LoginManager : MonoBehaviour
         if (LocalAuthServer.Instance != null)
             LocalAuthServer.Instance.StartListening();
 
-        // Mở thẳng trang Login của web Attrition (Frontend) kèm tham số client=unity
-        // Nếu web của bạn deploy ở link khác thì đổi localhost:3000 thành domain thực tế.
-        Application.OpenURL("http://localhost:3000/login?client=unity");
+        // Mở trang Login của web Attrition (frontend) kèm client=unity. URL lấy từ APIManager
+        // (override qua ATTRITION_WEB_URL / StreamingAssets/web_base_url.txt) để test từ xa khỏi build lại.
+        Application.OpenURL(APIManager.Instance.WebLoginUrl);
     }
 
-    private void HandleTokenReceived(string token)
+    private void HandleTokenReceived(string token, string refreshToken)
     {
         statusText.text = "Đang xác thực tài khoản Google...";
         loginButton.interactable = false;
         if (googleLoginButton != null) googleLoginButton.interactable = false;
 
-        StartCoroutine(APIManager.Instance.LoginWithToken(token, (userId) => {
+        StartCoroutine(APIManager.Instance.LoginWithToken(token, refreshToken, (userId) => {
             loginButton.interactable = true;
             if (googleLoginButton != null) googleLoginButton.interactable = true;
 
