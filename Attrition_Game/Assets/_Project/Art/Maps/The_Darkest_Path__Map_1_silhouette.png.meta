@@ -1,0 +1,871 @@
+fileFormatVersion: 2
+guid: a33e7150f49d57f4382cfa0efc1e399e
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 2370025144869990669
+    second: The_Darkest_Path__Map_1_silhouette_0
+  - first:
+      213: -5883203632950779309
+    second: The_Darkest_Path__Map_1_silhouette_1
+  - first:
+      213: 4723470139632716460
+    second: The_Darkest_Path__Map_1_silhouette_2
+  - first:
+      213: -6359759349252750930
+    second: The_Darkest_Path__Map_1_silhouette_3
+  - first:
+      213: 3193185187848803826
+    second: The_Darkest_Path__Map_1_silhouette_4
+  - first:
+      213: 1362784813377337951
+    second: The_Darkest_Path__Map_1_silhouette_5
+  - first:
+      213: 3438099393629475015
+    second: The_Darkest_Path__Map_1_silhouette_6
+  - first:
+      213: 5683397242530220447
+    second: The_Darkest_Path__Map_1_silhouette_7
+  - first:
+      213: -6779321068649978759
+    second: The_Darkest_Path__Map_1_silhouette_8
+  - first:
+      213: 4495012954289269850
+    second: The_Darkest_Path__Map_1_silhouette_9
+  - first:
+      213: 2724342968732312126
+    second: The_Darkest_Path__Map_1_silhouette_10
+  - first:
+      213: 1792629425102207169
+    second: The_Darkest_Path__Map_1_silhouette_11
+  - first:
+      213: -6009965349737169354
+    second: The_Darkest_Path__Map_1_silhouette_12
+  - first:
+      213: 2277106366708342127
+    second: The_Darkest_Path__Map_1_silhouette_13
+  - first:
+      213: -8186773892575786980
+    second: The_Darkest_Path__Map_1_silhouette_14
+  - first:
+      213: 6301502515921530524
+    second: The_Darkest_Path__Map_1_silhouette_15
+  - first:
+      213: 141952142859168801
+    second: The_Darkest_Path__Map_1_silhouette_16
+  - first:
+      213: -2233419675273281933
+    second: The_Darkest_Path__Map_1_silhouette_17
+  - first:
+      213: -5056703838680534262
+    second: The_Darkest_Path__Map_1_silhouette_18
+  - first:
+      213: 2134208151336462244
+    second: The_Darkest_Path__Map_1_silhouette_19
+  - first:
+      213: 7000351758455539454
+    second: The_Darkest_Path__Map_1_silhouette_20
+  - first:
+      213: -7102495222064960869
+    second: The_Darkest_Path__Map_1_silhouette_21
+  - first:
+      213: -108824166311414020
+    second: The_Darkest_Path__Map_1_silhouette_22
+  - first:
+      213: -8500483024738165746
+    second: The_Darkest_Path__Map_1_silhouette_23
+  - first:
+      213: 8961261902465692223
+    second: The_Darkest_Path__Map_1_silhouette_24
+  - first:
+      213: -7029496044158852216
+    second: The_Darkest_Path__Map_1_silhouette_25
+  - first:
+      213: -5222583683694525811
+    second: The_Darkest_Path__Map_1_silhouette_26
+  - first:
+      213: -6891704379111696090
+    second: The_Darkest_Path__Map_1_silhouette_27
+  - first:
+      213: -7213776105516787329
+    second: The_Darkest_Path__Map_1_silhouette_28
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: The_Darkest_Path__Map_1_silhouette_0
+      rect:
+        serializedVersion: 2
+        x: 31
+        y: 307
+        width: 586
+        height: 166
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d0138b4ff4504e020800000000000000
+      internalID: 2370025144869990669
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: The_Darkest_Path__Map_1_silhouette_1
+      rect:
+        serializedVersion: 2
+        x: 695
+        y: 83
+        width: 194
+        height: 390
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3526ea46779aa5ea0800000000000000
+      internalID: -5883203632950779309
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: The_Darkest_Path__Map_1_silhouette_2
+      rect:
+        serializedVersion: 2
+        x: 975
+        y: 315
+        width: 586
+        height: 158
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: caa09f3e0132d8140800000000000000
+      internalID: 4723470139632716460
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: The_Darkest_Path__Map_1_silhouette_3
+      rect:
+        serializedVersion: 2
+        x: 1627
+        y: 319
+        width: 218
+        height: 150
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ea102da31989db7a0800000000000000
+      internalID: -6359759349252750930
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: The_Darkest_Path__Map_1_silhouette_4
+      rect:
+        serializedVersion: 2
+        x: 31
+        y: 75
+        width: 586
+        height: 162
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2f554c79209705c20800000000000000
+      internalID: 3193185187848803826
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: The_Darkest_Path__Map_1_silhouette_5
+      rect:
+        serializedVersion: 2
+        x: 227
+        y: 67
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f5a37a2419599e210800000000000000
+      internalID: 1362784813377337951
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: The_Darkest_Path__Map_1_silhouette_6
+      rect:
+        serializedVersion: 2
+        x: 243
+        y: 67
+        width: 26
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7c055c3ce2596bf20800000000000000
+      internalID: 3438099393629475015
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: The_Darkest_Path__Map_1_silhouette_7
+      rect:
+        serializedVersion: 2
+        x: 279
+        y: 63
+        width: 10
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f99c27e1eab7fde40800000000000000
+      internalID: 5683397242530220447
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: The_Darkest_Path__Map_1_silhouette_8
+      rect:
+        serializedVersion: 2
+        x: 363
+        y: 67
+        width: 30
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 974ebcc08630be1a0800000000000000
+      internalID: -6779321068649978759
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: The_Darkest_Path__Map_1_silhouette_9
+      rect:
+        serializedVersion: 2
+        x: 95
+        y: 55
+        width: 6
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a5ce031677e716e30800000000000000
+      internalID: 4495012954289269850
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: The_Darkest_Path__Map_1_silhouette_10
+      rect:
+        serializedVersion: 2
+        x: 223
+        y: 55
+        width: 10
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e326f91fe7fcec520800000000000000
+      internalID: 2724342968732312126
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: The_Darkest_Path__Map_1_silhouette_11
+      rect:
+        serializedVersion: 2
+        x: 239
+        y: 55
+        width: 14
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1c83121e6f2b0e810800000000000000
+      internalID: 1792629425102207169
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: The_Darkest_Path__Map_1_silhouette_12
+      rect:
+        serializedVersion: 2
+        x: 311
+        y: 55
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 63e72884b50589ca0800000000000000
+      internalID: -6009965349737169354
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: The_Darkest_Path__Map_1_silhouette_13
+      rect:
+        serializedVersion: 2
+        x: 387
+        y: 55
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f6d5e670d28e99f10800000000000000
+      internalID: 2277106366708342127
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: The_Darkest_Path__Map_1_silhouette_14
+      rect:
+        serializedVersion: 2
+        x: 115
+        y: 39
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c180494258cb26e80800000000000000
+      internalID: -8186773892575786980
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: The_Darkest_Path__Map_1_silhouette_15
+      rect:
+        serializedVersion: 2
+        x: 127
+        y: 39
+        width: 14
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c9eabb4c62f637750800000000000000
+      internalID: 6301502515921530524
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: The_Darkest_Path__Map_1_silhouette_16
+      rect:
+        serializedVersion: 2
+        x: 99
+        y: 23
+        width: 14
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 12ce93ac8b058f100800000000000000
+      internalID: 141952142859168801
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: The_Darkest_Path__Map_1_silhouette_17
+      rect:
+        serializedVersion: 2
+        x: 107
+        y: 31
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 37eb7f473ac4101e0800000000000000
+      internalID: -2233419675273281933
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: The_Darkest_Path__Map_1_silhouette_18
+      rect:
+        serializedVersion: 2
+        x: 167
+        y: 27
+        width: 10
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a03b71976aaf2d9b0800000000000000
+      internalID: -5056703838680534262
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: The_Darkest_Path__Map_1_silhouette_19
+      rect:
+        serializedVersion: 2
+        x: 191
+        y: 23
+        width: 14
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4a72721910b3e9d10800000000000000
+      internalID: 2134208151336462244
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: The_Darkest_Path__Map_1_silhouette_20
+      rect:
+        serializedVersion: 2
+        x: 211
+        y: 23
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ef60689b5de362160800000000000000
+      internalID: 7000351758455539454
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: The_Darkest_Path__Map_1_silhouette_21
+      rect:
+        serializedVersion: 2
+        x: 219
+        y: 23
+        width: 10
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b9aa8e5e93ede6d90800000000000000
+      internalID: -7102495222064960869
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: The_Darkest_Path__Map_1_silhouette_22
+      rect:
+        serializedVersion: 2
+        x: 235
+        y: 23
+        width: 10
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cf6b7005ff06d7ef0800000000000000
+      internalID: -108824166311414020
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: The_Darkest_Path__Map_1_silhouette_23
+      rect:
+        serializedVersion: 2
+        x: 183
+        y: 15
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e0c5e3bf9b7380a80800000000000000
+      internalID: -8500483024738165746
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: The_Darkest_Path__Map_1_silhouette_24
+      rect:
+        serializedVersion: 2
+        x: 191
+        y: 15
+        width: 18
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f3275b3b83ccc5c70800000000000000
+      internalID: 8961261902465692223
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: The_Darkest_Path__Map_1_silhouette_25
+      rect:
+        serializedVersion: 2
+        x: 211
+        y: 15
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 883e5e97796327e90800000000000000
+      internalID: -7029496044158852216
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: The_Darkest_Path__Map_1_silhouette_26
+      rect:
+        serializedVersion: 2
+        x: 231
+        y: 15
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d8203a36fc7a587b0800000000000000
+      internalID: -5222583683694525811
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: The_Darkest_Path__Map_1_silhouette_27
+      rect:
+        serializedVersion: 2
+        x: 227
+        y: 7
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6291b0a816fbb50a0800000000000000
+      internalID: -6891704379111696090
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: The_Darkest_Path__Map_1_silhouette_28
+      rect:
+        serializedVersion: 2
+        x: 227
+        y: 0
+        width: 14
+        height: 5
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f79987d2ad483eb90800000000000000
+      internalID: -7213776105516787329
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      The_Darkest_Path__Map_1_silhouette_0: 2370025144869990669
+      The_Darkest_Path__Map_1_silhouette_1: -5883203632950779309
+      The_Darkest_Path__Map_1_silhouette_10: 2724342968732312126
+      The_Darkest_Path__Map_1_silhouette_11: 1792629425102207169
+      The_Darkest_Path__Map_1_silhouette_12: -6009965349737169354
+      The_Darkest_Path__Map_1_silhouette_13: 2277106366708342127
+      The_Darkest_Path__Map_1_silhouette_14: -8186773892575786980
+      The_Darkest_Path__Map_1_silhouette_15: 6301502515921530524
+      The_Darkest_Path__Map_1_silhouette_16: 141952142859168801
+      The_Darkest_Path__Map_1_silhouette_17: -2233419675273281933
+      The_Darkest_Path__Map_1_silhouette_18: -5056703838680534262
+      The_Darkest_Path__Map_1_silhouette_19: 2134208151336462244
+      The_Darkest_Path__Map_1_silhouette_2: 4723470139632716460
+      The_Darkest_Path__Map_1_silhouette_20: 7000351758455539454
+      The_Darkest_Path__Map_1_silhouette_21: -7102495222064960869
+      The_Darkest_Path__Map_1_silhouette_22: -108824166311414020
+      The_Darkest_Path__Map_1_silhouette_23: -8500483024738165746
+      The_Darkest_Path__Map_1_silhouette_24: 8961261902465692223
+      The_Darkest_Path__Map_1_silhouette_25: -7029496044158852216
+      The_Darkest_Path__Map_1_silhouette_26: -5222583683694525811
+      The_Darkest_Path__Map_1_silhouette_27: -6891704379111696090
+      The_Darkest_Path__Map_1_silhouette_28: -7213776105516787329
+      The_Darkest_Path__Map_1_silhouette_3: -6359759349252750930
+      The_Darkest_Path__Map_1_silhouette_4: 3193185187848803826
+      The_Darkest_Path__Map_1_silhouette_5: 1362784813377337951
+      The_Darkest_Path__Map_1_silhouette_6: 3438099393629475015
+      The_Darkest_Path__Map_1_silhouette_7: 5683397242530220447
+      The_Darkest_Path__Map_1_silhouette_8: -6779321068649978759
+      The_Darkest_Path__Map_1_silhouette_9: 4495012954289269850
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

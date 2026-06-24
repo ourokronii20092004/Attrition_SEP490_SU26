@@ -67,6 +67,7 @@ public class NetworkSpawner : MonoBehaviour
         // thuộc ĐÚNG scene hiện tại (logic Metroidvania kiểu Hollow Knight/Afterimage: bench gắn
         // với room của nó; sang map mới thì vào ở điểm xuất phát của map đó, không nhảy về bench cũ).
         // Coop (IsOnline) KHÔNG đọc save local — luôn dùng spawnPoints của scene để 2 máy nhất quán.
+        // (Fast-travel CROSS-MAP do PendingTravelSpawner phía Gameplay xử lý SAU khi load scene.)
         if (!Attrition.Persistence.GameLaunch.IsOnline)
         {
             var data = Attrition.Persistence.SaveManager.LoadSlot(Attrition.Persistence.GameLaunch.SelectedSlot);
