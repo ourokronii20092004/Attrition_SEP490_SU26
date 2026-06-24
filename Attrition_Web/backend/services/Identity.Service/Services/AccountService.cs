@@ -142,8 +142,7 @@ public class AccountService : IAccountService
 
         var verifyToken = TokenService.NewRawToken();
         user.PendingEmail = request.NewEmail;
-        user.EmailVerificationToken = TokenService.HashToken(verifyToken);
-        user.EmailVerificationTokenExpiry = DateTime.UtcNow.AddHours(24);
+        user.EmailVerification = new() { Token = TokenService.HashToken(verifyToken), ExpiresAt = DateTime.UtcNow.AddHours(24) };
         try
         {
             await _userRepo.UpdateAsync(user);
@@ -176,8 +175,7 @@ public class AccountService : IAccountService
 
         // Email-confirmed deletion: store a hashed token + expiry and mail the confirm link.
         var rawToken = TokenService.NewRawToken();
-        user.DeletionConfirmToken = TokenService.HashToken(rawToken);
-        user.DeletionConfirmTokenExpiry = DateTime.UtcNow.AddHours(24);
+        user.DeletionConfirm = new() { Token = TokenService.HashToken(rawToken), ExpiresAt = DateTime.UtcNow.AddHours(24) };
         await _userRepo.UpdateAsync(user);
 
         try
@@ -201,19 +199,17 @@ public class AccountService : IAccountService
     {
         var user = await _userRepo.GetByIdAsync(userId);
         if (user == null) return ApiResponse.Fail("User not found.");
-        if (string.IsNullOrEmpty(token) || user.DeletionConfirmToken == null
-            || user.DeletionConfirmTokenExpiry == null || user.DeletionConfirmTokenExpiry < DateTime.UtcNow
-            || user.DeletionConfirmToken != TokenService.HashToken(token))
+        if (string.IsNullOrEmpty(token) || user.DeletionConfirm.Token == null
+            || user.DeletionConfirm.ExpiresAt == null || user.DeletionConfirm.ExpiresAt < DateTime.UtcNow
+            || user.DeletionConfirm.Token != TokenService.HashToken(token))
             return ApiResponse.Fail("This confirmation link is invalid or has expired.");
 
         // Soft-delete: mark deleted and revoke sessions, but KEEP PII so the user can recover within
         // 90 days by signing back in. A purge job tombstones (anonymizes) accounts past 90 days.
         user.IsDeleted = true;
         user.DeletedAt = DateTime.UtcNow;
-        user.DeletionConfirmToken = null;
-        user.DeletionConfirmTokenExpiry = null;
-        user.RefreshToken = null;
-        user.RefreshTokenExpiresAt = null;
+        user.DeletionConfirm = new() { Token = null, ExpiresAt = null };
+        user.Refresh = new() { Token = null, ExpiresAt = null };
         await _userRepo.UpdateAsync(user);
         return ApiResponse.Ok();
     }

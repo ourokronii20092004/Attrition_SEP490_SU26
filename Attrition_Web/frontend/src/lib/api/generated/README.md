@@ -31,7 +31,7 @@ docker run -d --rm --name attr-spec-pg -e POSTGRES_USER=postgres -e POSTGRES_PAS
 cd backend/services/Enemy.Service
 ConnectionStrings__DefaultConnection="Host=localhost;Port=55432;Database=attrition;Username=postgres;Password=postgres" \
   ASPNETCORE_ENVIRONMENT=Development DOTNET_ROLL_FORWARD=LatestMajor \
-  dotnet swagger tofile --output ../../../frontend/openapi/Enemy.json bin/Debug/net9.0/Enemy.Service.dll v1
+  dotnet swagger tofile --output ../../../frontend/openapi/Enemy.json bin/Debug/net10.0/Enemy.Service.dll v1
 
 # 3. tear down, then regenerate TS:
 docker stop attr-spec-pg

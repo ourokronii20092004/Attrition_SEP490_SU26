@@ -44,13 +44,11 @@ public class AuthService : IAuthService
             Email = request.Email,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
             IsEmailVerified = false,
-            EmailVerificationToken = TokenService.HashToken(verifyToken),
-            EmailVerificationTokenExpiry = DateTime.UtcNow.AddHours(24)
+            EmailVerification = new() { Token = TokenService.HashToken(verifyToken), ExpiresAt = DateTime.UtcNow.AddHours(24) }
         };
 
         var (accessToken, refreshToken) = _tokens.GenerateTokens(user);
-        user.RefreshToken = TokenService.HashToken(refreshToken);
-        user.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(_tokens.RefreshExpiryDays);
+        user.Refresh = new() { Token = TokenService.HashToken(refreshToken), ExpiresAt = DateTime.UtcNow.AddDays(_tokens.RefreshExpiryDays) };
 
         try
         {
@@ -84,16 +82,16 @@ public class AuthService : IAuthService
         // Account-state messages (locked/suspended) are only revealed to a caller who supplied the
         // correct password — i.e. the real owner. Anyone else always gets the generic failure, so
         // login can't be used to enumerate which accounts exist or are locked/banned.
-        if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTime.UtcNow)
+        if (user.Security.LockoutEnd.HasValue && user.Security.LockoutEnd.Value > DateTime.UtcNow)
             return passwordValid
                 ? ApiResponse<AuthResponse>.Fail("Account temporarily locked due to failed login attempts. Try again later.")
                 : ApiResponse<AuthResponse>.Fail("Invalid username or password.");
 
         if (!passwordValid)
         {
-            user.FailedLoginAttempts++;
-            if (user.FailedLoginAttempts >= 5)
-                user.LockoutEnd = DateTime.UtcNow.AddMinutes(15);
+            user.Security.FailedLoginAttempts++;
+            if (user.Security.FailedLoginAttempts >= 5)
+                user.Security.LockoutEnd = DateTime.UtcNow.AddMinutes(15);
             await _userRepo.UpdateAsync(user);
             return ApiResponse<AuthResponse>.Fail("Invalid username or password.");
         }
@@ -107,17 +105,15 @@ public class AuthService : IAuthService
         {
             user.IsDeleted = false;
             user.DeletedAt = null;
-            user.DeletionConfirmToken = null;
-            user.DeletionConfirmTokenExpiry = null;
+            user.DeletionConfirm = new() { Token = null, ExpiresAt = null };
         }
 
         var (accessToken, refreshToken) = _tokens.GenerateTokens(user);
-        user.RefreshToken = TokenService.HashToken(refreshToken);
-        user.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(_tokens.RefreshExpiryDays);
-        user.FailedLoginAttempts = 0;
-        user.LockoutEnd = null;
-        user.LastLoginAt = DateTime.UtcNow;
-        user.LastLoginIp = ip;
+        user.Refresh = new() { Token = TokenService.HashToken(refreshToken), ExpiresAt = DateTime.UtcNow.AddDays(_tokens.RefreshExpiryDays) };
+        user.Security.FailedLoginAttempts = 0;
+        user.Security.LockoutEnd = null;
+        user.Security.LastLoginAt = DateTime.UtcNow;
+        user.Security.LastLoginIp = ip;
         await _userRepo.UpdateAsync(user);
 
         return ApiResponse<AuthResponse>.Ok(new AuthResponse(accessToken, refreshToken, TokenService.MapToDto(user)));
@@ -130,12 +126,11 @@ public class AuthService : IAuthService
         var hashed = TokenService.HashToken(request.RefreshToken);
         var user = await _userRepo.GetByRefreshTokenAsync(hashed);
 
-        if (user == null || user.RefreshTokenExpiresAt <= DateTime.UtcNow || user.IsBanned)
+        if (user == null || user.Refresh.ExpiresAt <= DateTime.UtcNow || user.IsBanned)
             return ApiResponse<AuthResponse>.Fail("Invalid or expired refresh token.");
 
         var (accessToken, refreshToken) = _tokens.GenerateTokens(user);
-        user.RefreshToken = TokenService.HashToken(refreshToken);
-        user.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(_tokens.RefreshExpiryDays);
+        user.Refresh = new() { Token = TokenService.HashToken(refreshToken), ExpiresAt = DateTime.UtcNow.AddDays(_tokens.RefreshExpiryDays) };
         await _userRepo.UpdateAsync(user);
 
         return ApiResponse<AuthResponse>.Ok(new AuthResponse(accessToken, refreshToken, TokenService.MapToDto(user)));
@@ -200,10 +195,9 @@ public class AuthService : IAuthService
             if (user.IsBanned)
                 return ApiResponse<AuthResponse>.Fail("Account is suspended.");
 
-            user.LastLoginAt = DateTime.UtcNow;
+            user.Security.LastLoginAt = DateTime.UtcNow;
             var (accessToken, refreshToken) = _tokens.GenerateTokens(user);
-            user.RefreshToken = TokenService.HashToken(refreshToken);
-            user.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(_tokens.RefreshExpiryDays);
+            user.Refresh = new() { Token = TokenService.HashToken(refreshToken), ExpiresAt = DateTime.UtcNow.AddDays(_tokens.RefreshExpiryDays) };
             await _userRepo.UpdateAsync(user);
 
             return ApiResponse<AuthResponse>.Ok(new AuthResponse(accessToken, refreshToken, TokenService.MapToDto(user)));
@@ -240,8 +234,7 @@ public class AuthService : IAuthService
 
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
         user.MustChangePassword = false;
-        user.RefreshToken = null;
-        user.RefreshTokenExpiresAt = null;
+        user.Refresh = new() { Token = null, ExpiresAt = null };
         await _userRepo.UpdateAsync(user);
         return ApiResponse.Ok();
     }
@@ -251,8 +244,7 @@ public class AuthService : IAuthService
         var user = await _userRepo.GetByIdAsync(userId);
         if (user == null) return ApiResponse.Fail("User not found.");
 
-        user.RefreshToken = null;
-        user.RefreshTokenExpiresAt = null;
+        user.Refresh = new() { Token = null, ExpiresAt = null };
         await _userRepo.UpdateAsync(user);
         return ApiResponse.Ok();
     }
@@ -267,8 +259,7 @@ public class AuthService : IAuthService
         if (user == null) return generic;
 
         var resetToken = TokenService.NewRawToken();
-        user.PasswordResetToken = TokenService.HashToken(resetToken);
-        user.PasswordResetTokenExpiry = DateTime.UtcNow.AddHours(1);
+        user.PasswordReset = new() { Token = TokenService.HashToken(resetToken), ExpiresAt = DateTime.UtcNow.AddHours(1) };
         await _userRepo.UpdateAsync(user);
 
         var clientUrl = _config["App:ClientUrl"] ?? "http://localhost:3000";
@@ -284,15 +275,13 @@ public class AuthService : IAuthService
 
         var hashed = TokenService.HashToken(request.Token);
         var user = await _userRepo.GetByPasswordResetTokenAsync(hashed);
-        if (user == null || user.PasswordResetTokenExpiry <= DateTime.UtcNow)
+        if (user == null || user.PasswordReset.ExpiresAt <= DateTime.UtcNow)
             return ApiResponse.Fail("Invalid or expired password reset token.");
 
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
-        user.PasswordResetToken = null;
-        user.PasswordResetTokenExpiry = null;
+        user.PasswordReset = new() { Token = null, ExpiresAt = null };
         user.MustChangePassword = false;
-        user.RefreshToken = null;
-        user.RefreshTokenExpiresAt = null;
+        user.Refresh = new() { Token = null, ExpiresAt = null };
         await _userRepo.UpdateAsync(user);
         return ApiResponse.Ok();
     }
@@ -303,7 +292,7 @@ public class AuthService : IAuthService
 
         var user = await _userRepo.GetByEmailVerificationTokenAsync(TokenService.HashToken(request.Token));
         if (user == null) return ApiResponse.Fail("Invalid verification token.");
-        if (user.EmailVerificationTokenExpiry.HasValue && user.EmailVerificationTokenExpiry.Value <= DateTime.UtcNow)
+        if (user.EmailVerification.ExpiresAt.HasValue && user.EmailVerification.ExpiresAt.Value <= DateTime.UtcNow)
             return ApiResponse.Fail("Verification token has expired. Please request a new one.");
 
         if (!string.IsNullOrEmpty(user.PendingEmail))
@@ -312,8 +301,7 @@ public class AuthService : IAuthService
             user.PendingEmail = null;
         }
         user.IsEmailVerified = true;
-        user.EmailVerificationToken = null;
-        user.EmailVerificationTokenExpiry = null;
+        user.EmailVerification = new() { Token = null, ExpiresAt = null };
         await _userRepo.UpdateAsync(user);
         return ApiResponse.Ok();
     }
@@ -326,8 +314,7 @@ public class AuthService : IAuthService
         if (user.IsEmailVerified) return ApiResponse.Fail("Email is already verified.");
 
         var verifyToken = TokenService.NewRawToken();
-        user.EmailVerificationToken = TokenService.HashToken(verifyToken);
-        user.EmailVerificationTokenExpiry = DateTime.UtcNow.AddHours(24);
+        user.EmailVerification = new() { Token = TokenService.HashToken(verifyToken), ExpiresAt = DateTime.UtcNow.AddHours(24) };
         await _userRepo.UpdateAsync(user);
 
         await SendVerifyEmail(user, verifyToken);

@@ -39,7 +39,7 @@ public class AdminUserService : IAdminUserService
             u.AvatarPath ?? u.GoogleAvatarUrl, u.BackgroundUrl, u.Bio, u.AuthProvider, u.JoinedAt,
             u.PostCount, u.ContributionCount, u.IsBanned, u.IsDeleted, u.DeletedAt,
             u.IsEmailVerified, u.PendingEmail, u.MustChangePassword,
-            u.LastLoginAt, u.LastLoginIp, u.FailedLoginAttempts, u.LockoutEnd);
+            u.Security.LastLoginAt, u.Security.LastLoginIp, u.Security.FailedLoginAttempts, u.Security.LockoutEnd);
         return ApiResponse<AdminUserDetailDto>.Ok(dto);
     }
 
@@ -60,8 +60,7 @@ public class AdminUserService : IAdminUserService
         user.IsBanned = !user.IsBanned;
         if (user.IsBanned)
         {
-            user.RefreshToken = null;
-            user.RefreshTokenExpiresAt = null;
+            user.Refresh = new() { Token = null, ExpiresAt = null };
         }
         await _userRepo.UpdateAsync(user);
         return ApiResponse.Ok();
@@ -73,8 +72,7 @@ public class AdminUserService : IAdminUserService
         if (user == null) return ApiResponse.Fail("User not found.");
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
         user.MustChangePassword = true;
-        user.RefreshToken = null;
-        user.RefreshTokenExpiresAt = null;
+        user.Refresh = new() { Token = null, ExpiresAt = null };
         await _userRepo.UpdateAsync(user);
         return ApiResponse.Ok();
     }
