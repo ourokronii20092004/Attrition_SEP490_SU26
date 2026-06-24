@@ -15,7 +15,7 @@ MonoBehaviour:
   baseHP: 100
   baseMana: 100
   baseStamina: 100
-  baseAD: 10
+  baseAD: 1000
   baseAP: 10
   baseDEF: 10
   baseRES: 10

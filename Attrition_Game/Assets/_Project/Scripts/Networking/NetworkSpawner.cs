@@ -63,12 +63,17 @@ public class NetworkSpawner : MonoBehaviour
         else
             spawnPos = new Vector3(UnityEngine.Random.Range(-2f, 2f), 48f, 0);
 
-        // [TỐI ƯU LOAD] Nếu chơi Solo, nạp vị trí checkpoint trực tiếp từ lúc mới spawn
-        // để nhân vật xuất hiện thẳng tại đó thay vì bị chớp giật ở điểm xuất phát
+        // [TỐI ƯU LOAD] Solo: spawn THẲNG tại checkpoint đã lưu — NHƯNG chỉ khi checkpoint đó
+        // thuộc ĐÚNG scene hiện tại (logic Metroidvania kiểu Hollow Knight/Afterimage: bench gắn
+        // với room của nó; sang map mới thì vào ở điểm xuất phát của map đó, không nhảy về bench cũ).
+        // Coop (IsOnline) KHÔNG đọc save local — luôn dùng spawnPoints của scene để 2 máy nhất quán.
         if (!Attrition.Persistence.GameLaunch.IsOnline)
         {
             var data = Attrition.Persistence.SaveManager.LoadSlot(Attrition.Persistence.GameLaunch.SelectedSlot);
-            if (data != null && !string.IsNullOrEmpty(data.checkpointId))
+            string activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            if (data != null
+                && !string.IsNullOrEmpty(data.checkpointId)
+                && data.checkpointScene == activeScene)
             {
                 spawnPos = new Vector3(data.checkpointX, data.checkpointY, data.checkpointZ);
             }

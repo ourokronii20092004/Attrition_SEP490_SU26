@@ -30,6 +30,7 @@ namespace Attrition.Controllers
         private EnemyController _enemy;
         private EnemyStats _stats;
         private EliteEnemySkills _skills;
+        private Attrition.Gameplay.Enemy.SeveredFang.SeveredFangAI _sfAI;
         private int _maxHp;
         private bool _barShown;
         private int _lastShownHp = -1;
@@ -39,13 +40,14 @@ namespace Attrition.Controllers
             _enemy = GetComponent<EnemyController>();
             _stats = GetComponent<EnemyStats>();
             _skills = GetComponent<EliteEnemySkills>();
+            _sfAI = GetComponent<Attrition.Gameplay.Enemy.SeveredFang.SeveredFangAI>();
             _maxHp = Mathf.Max(1, _enemy.maxHealth);
 
             if (HasStateAuthority) CurrentPhase = 0;
 
-            // Hiện thanh máu boss trên máy này (qua event bus, tránh ref UI).
-            BossEvents.RaiseSpawned(bossDisplayName, _maxHp);
-            _barShown = true;
+            // KHÔNG hiện thanh máu ngay — boss có thể đặt sẵn trong scene và đứng chờ trigger.
+            // Render() sẽ hiện khi encounter thực sự bắt đầu (EncounterStarted).
+            _barShown = false;
         }
 
         public override void FixedUpdateNetwork()
@@ -76,6 +78,11 @@ namespace Attrition.Controllers
         {
             // Cập nhật thanh máu trên mọi máy (đọc networked Health).
             if (_enemy == null) return;
+
+            // Chỉ hiện thanh máu khi encounter đã bắt đầu (player đã vào phòng kích hoạt boss).
+            // Boss đặt sẵn trong scene + chờ trigger → KHÔNG hiện thanh máu trước đó.
+            bool encounterStarted = _sfAI == null || _sfAI.EncounterStarted;
+            if (!encounterStarted) return;
 
             if (!_barShown)
             {

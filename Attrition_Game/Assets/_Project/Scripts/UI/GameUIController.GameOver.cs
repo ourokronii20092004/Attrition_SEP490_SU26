@@ -42,9 +42,15 @@ namespace Attrition.UI
             _gameOverShown = true;
             float survived = Time.time - _runStartTime;
             SetText("go-time", $"{Mathf.FloorToInt(survived / 60f)}:{Mathf.FloorToInt(survived % 60f):00}");
-            if (_stats != null) SetText("go-level", _stats.Level.ToString());
+            // _stats có thể trỏ tới object đã despawn / chưa Spawned() (vd sau respawn) → đọc Level
+            // sẽ ném InvalidOperationException. Chỉ đọc khi NetworkObject còn hợp lệ.
+            if (_stats != null && _stats.Object != null && _stats.Object.IsValid)
+                SetText("go-level", _stats.Level.ToString());
 
-            int alive = FindObjectsByType<PlayerController>(FindObjectsSortMode.None).Count(p => !p.IsDead);
+            // Chỉ đếm player có NetworkObject hợp lệ (đã Spawned, chưa despawn) — đọc IsDead trên
+            // object chưa/đã hết Spawned sẽ ném InvalidOperationException.
+            int alive = FindObjectsByType<PlayerController>(FindObjectsSortMode.None)
+                .Count(p => p.Object != null && p.Object.IsValid && !p.IsDead);
             SetText("go-subtitle", alive == 0 ? "Both flames have been extinguished." : "The flame has been extinguished.");
             ShowOverlay(Overlay.GameOver);
         }

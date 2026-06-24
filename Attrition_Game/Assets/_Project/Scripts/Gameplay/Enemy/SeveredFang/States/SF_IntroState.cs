@@ -30,9 +30,9 @@ namespace Attrition.Gameplay.Enemy.SeveredFang.States
             if (_dialogueStarted) return;
 
             _walkTime += ai.Runner.DeltaTime;
-            
-            // Walk khoảng 2 giây rồi dừng lại nói chuyện
-            if (_walkTime >= 2f)
+
+            // Walk ngắn (~0.8s) rồi dừng lại nói chuyện — vào trận nhanh hơn, đỡ lê thê.
+            if (_walkTime >= 0.8f)
             {
                 ai.StopMovement();
                 ai.CurrentState = EnemyState.Patrol;

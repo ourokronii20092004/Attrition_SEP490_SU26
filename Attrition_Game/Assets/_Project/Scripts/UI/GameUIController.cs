@@ -109,6 +109,20 @@ namespace Attrition.UI
 
         private void Update()
         {
+            // Bound player có thể despawn (respawn / đổi scene) → object cũ invalid. Huỷ bind để
+            // TryBindLocalPlayer gắn lại vào player mới (tránh đọc Networked trên object đã chết).
+            if (_isBound && (_controller == null || _controller.Object == null || !_controller.Object.IsValid))
+            {
+                // Gỡ handler khỏi object cũ trước khi rebind (tránh double-subscribe / leak).
+                if (_stats != null)
+                {
+                    _stats.OnStatsChanged -= RefreshCharacterPanel;
+                    _stats.OnStatsChanged -= RefreshAllocPoints;
+                }
+                if (_inventory != null) _inventory.OnInventoryChanged -= RefreshInventory;
+                _isBound = false;
+            }
+
             // Không polling thô: chỉ tìm player cho đến khi bind thành công, sau đó tin vào sự kiện.
             if (!_isBound) TryBindLocalPlayer();
             if (_isBound) UpdateHud();
