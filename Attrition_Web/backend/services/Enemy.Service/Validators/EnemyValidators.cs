@@ -15,7 +15,7 @@ public static class EnemyTiers
 /// <summary>Shared stat-field validation rules applied to both Create and Update requests.</summary>
 internal static class EnemyStatRules
 {
-    public static void ApplyStatRules<T>(AbstractValidator<T> v,
+    public static void ApplyTo<T>(AbstractValidator<T> v,
         System.Linq.Expressions.Expression<Func<T, string>> name,
         System.Linq.Expressions.Expression<Func<T, string>> tier,
         System.Linq.Expressions.Expression<Func<T, int>> hp,
@@ -25,8 +25,7 @@ internal static class EnemyStatRules
         System.Linq.Expressions.Expression<Func<T, int>> res,
         System.Linq.Expressions.Expression<Func<T, float>> attackSpeed,
         System.Linq.Expressions.Expression<Func<T, int>> expReward,
-        System.Linq.Expressions.Expression<Func<T, int>> goldReward,
-        System.Linq.Expressions.Expression<Func<T, List<LootEntryDto>?>> lootTable)
+        System.Linq.Expressions.Expression<Func<T, int>> goldReward)
     {
         v.RuleFor(name).NotEmpty().MaximumLength(100);
         v.RuleFor(tier).NotEmpty().Must(t => EnemyTiers.All.Contains(t))
@@ -39,10 +38,8 @@ internal static class EnemyStatRules
         v.RuleFor(attackSpeed).GreaterThan(0);
         v.RuleFor(expReward).GreaterThanOrEqualTo(0);
         v.RuleFor(goldReward).GreaterThanOrEqualTo(0);
-        v.RuleFor(lootTable).Must(l => l == null || l.Count <= 100)
-            .WithMessage("Loot table cannot exceed 100 entries.");
-        v.RuleForEach(lootTable).SetValidator(new LootEntryDtoValidator());
     }
+
 }
 
 public class EnemyCreateRequestValidator : AbstractValidator<EnemyCreateRequest>
@@ -50,10 +47,13 @@ public class EnemyCreateRequestValidator : AbstractValidator<EnemyCreateRequest>
     public EnemyCreateRequestValidator()
     {
         RuleFor(x => x.EnemyId).NotEmpty().MaximumLength(64);
-        EnemyStatRules.ApplyStatRules(this,
+        EnemyStatRules.ApplyTo(this,
             x => x.Name, x => x.Tier, x => x.Hp, x => x.Ad, x => x.Ap,
             x => x.Def, x => x.Res, x => x.AttackSpeed, x => x.ExpReward,
-            x => x.GoldReward, x => x.LootTable);
+            x => x.GoldReward);
+        RuleFor(x => x.LootTable).Must(l => l == null || l.Count <= 100)
+            .WithMessage("Loot table cannot exceed 100 entries.");
+        RuleForEach(x => x.LootTable).SetValidator(new LootEntryDtoValidator());
     }
 }
 
@@ -61,10 +61,13 @@ public class EnemyUpdateRequestValidator : AbstractValidator<EnemyUpdateRequest>
 {
     public EnemyUpdateRequestValidator()
     {
-        EnemyStatRules.ApplyStatRules(this,
+        EnemyStatRules.ApplyTo(this,
             x => x.Name, x => x.Tier, x => x.Hp, x => x.Ad, x => x.Ap,
             x => x.Def, x => x.Res, x => x.AttackSpeed, x => x.ExpReward,
-            x => x.GoldReward, x => x.LootTable);
+            x => x.GoldReward);
+        RuleFor(x => x.LootTable).Must(l => l == null || l.Count <= 100)
+            .WithMessage("Loot table cannot exceed 100 entries.");
+        RuleForEach(x => x.LootTable).SetValidator(new LootEntryDtoValidator());
     }
 }
 
