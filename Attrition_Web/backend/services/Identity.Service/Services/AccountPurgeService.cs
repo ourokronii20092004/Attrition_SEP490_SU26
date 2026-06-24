@@ -62,10 +62,8 @@ public class AccountPurgeService : BackgroundService
             user.BackgroundUrl = null;
             user.GoogleId = null;
             user.GoogleAvatarUrl = null;
-            user.RefreshToken = null;
-            user.RefreshTokenExpiresAt = null;
-            user.DeletionConfirmToken = null;
-            user.DeletionConfirmTokenExpiry = null;
+            user.Refresh = new() { Token = null, ExpiresAt = null };
+            user.DeletionConfirm = new() { Token = null, ExpiresAt = null };
             await userRepo.UpdateAsync(user);
         }
 

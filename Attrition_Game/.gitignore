@@ -128,9 +128,11 @@ InitTestScene*.unity*
 .gradle/
 
 # ---- Secrets (KHÔNG commit) ----
-# X-Internal-Key của game ↔ backend. Nạp runtime; mỗi máy host tự đặt file này.
-/[Aa]ssets/StreamingAssets/internal_key.txt
-/[Aa]ssets/StreamingAssets/internal_key.txt.meta
+# Gateway / web base URL override cho DEV (mỗi máy tự trỏ server riêng). Release bake sẵn trong build.
+/[Aa]ssets/StreamingAssets/api_base_url.txt
+/[Aa]ssets/StreamingAssets/api_base_url.txt.meta
+/[Aa]ssets/StreamingAssets/web_base_url.txt
+/[Aa]ssets/StreamingAssets/web_base_url.txt.meta
 
 # ---- Misc project files ----
 Temp.txt

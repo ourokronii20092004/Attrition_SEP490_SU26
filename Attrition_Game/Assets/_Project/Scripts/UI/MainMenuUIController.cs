@@ -61,6 +61,9 @@ namespace Attrition.UI
             _root = _uiDocument.rootVisualElement;
             if (_root == null) return;
 
+            if (LocalAuthServer.Instance != null)
+                LocalAuthServer.Instance.OnTokenReceived.AddListener(HandleGoogleTokenReceived);
+
             if (_audioSource == null) _audioSource = GetComponent<AudioSource>();
             if (_audioSource == null) _audioSource = gameObject.AddComponent<AudioSource>();
 
@@ -90,6 +93,19 @@ namespace Attrition.UI
             LoadSavesFromDisk();
 
             ShowScreen("main-menu");
+
+            // Client vừa bị đưa về menu do mất host → hiện thông báo (đọc 1 lần rồi xoá).
+            if (!string.IsNullOrEmpty(Attrition.Persistence.CoopSession.HostLeftMessage))
+            {
+                ShowSlotWarning(Attrition.Persistence.CoopSession.HostLeftMessage);
+                Attrition.Persistence.CoopSession.HostLeftMessage = null;
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (LocalAuthServer.Instance != null)
+                LocalAuthServer.Instance.OnTokenReceived.RemoveListener(HandleGoogleTokenReceived);
         }
 
         private void ShowScreen(string screenName)
@@ -122,6 +138,7 @@ namespace Attrition.UI
                 logoutBtn.RegisterCallback<ClickEvent>(evt =>
                 {
                     PlayClickSound();
+                    if (APIManager.Instance != null) APIManager.Instance.ClearTokens();
                     PlayerPrefs.DeleteKey("SavedUserId");
                     PlayerPrefs.Save();
                     _isLoggedIn = false;
@@ -528,14 +545,13 @@ namespace Attrition.UI
                         return;
                     }
 
-                    // Chặn dùng chéo chế độ: save Solo không mở ở Coop và ngược lại.
-                    // _isOnlineMode = coop (host hoặc client join); ngược lại = solo.
-                    var wantMode = _isOnlineMode ? LaunchMode.Coop : LaunchMode.Solo;
-                    if (!SaveManager.IsSlotCompatible(_selectedSaveSlot, wantMode))
+                    // Chặn dùng chéo chế độ CHỈ áp dụng cho SOLO (save = file JSON local có originMode).
+                    // COOP dùng character từ SERVER (character_session), KHÔNG có file local tương ứng —
+                    // check IsSlotCompatible (đọc file local) sẽ báo nhầm "thuộc Solo" cho nhân vật coop.
+                    // Nhân vật coop luôn hợp lệ cho coop, nên bỏ qua check ở nhánh online.
+                    if (!_isOnlineMode && !SaveManager.IsSlotCompatible(_selectedSaveSlot, LaunchMode.Solo))
                     {
-                        var origin = _isOnlineMode ? "Solo" : "Co-op";
-                        var target = _isOnlineMode ? "Co-op" : "Solo";
-                        ShowSlotWarning($"This save belongs to {origin} mode and cannot be played in {target}. Pick another slot or create a new character.");
+                        ShowSlotWarning("This save belongs to Co-op mode and cannot be played in Solo. Pick another slot or create a new character.");
                         return;
                     }
 
@@ -952,6 +968,69 @@ namespace Attrition.UI
                     ShowScreen("main-menu");
                 });
             }
+
+            var googleBtn = _root.Q<Button>("btn-login-google");
+            if (googleBtn != null)
+            {
+                googleBtn.RegisterCallback<PointerEnterEvent>(evt => PlayHoverSound());
+                googleBtn.RegisterCallback<ClickEvent>(evt =>
+                {
+                    PlayClickSound();
+                    
+                    if (loginError != null) loginError.style.display = DisplayStyle.Flex;
+                    if (errorText != null)
+                    {
+                        errorText.text = "Waiting for browser login...";
+                        errorText.style.color = new StyleColor(Color.white);
+                    }
+
+                    if (LocalAuthServer.Instance != null)
+                        LocalAuthServer.Instance.StartListening();
+
+                    Application.OpenURL(APIManager.Instance.WebLoginUrl);
+                });
+            }
+        }
+
+        private void HandleGoogleTokenReceived(string token, string refreshToken)
+        {
+            var loginError = _root.Q<VisualElement>("login-error");
+            var errorText = _root.Q<Label>("login-error-text");
+
+            if (loginError != null) loginError.style.display = DisplayStyle.Flex;
+            if (errorText != null)
+            {
+                errorText.text = "Authenticating Google Token...";
+                errorText.style.color = new StyleColor(Color.white);
+            }
+
+            if (APIManager.Instance == null)
+            {
+                var apiObj = new GameObject("APIManager");
+                apiObj.AddComponent<APIManager>();
+            }
+
+            StartCoroutine(APIManager.Instance.LoginWithToken(token, refreshToken, (userId) => {
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    PlayerPrefs.SetString("SavedUserId", userId);
+                    PlayerPrefs.Save();
+                    _isLoggedIn = true;
+                    _currentUserId = userId;
+                    UpdateGlobalProfileVisibility();
+                    
+                    if (loginError != null) loginError.style.display = DisplayStyle.None;
+                    ShowScreen("host-join");
+                }
+                else
+                {
+                    if (errorText != null) 
+                    {
+                        errorText.style.color = new StyleColor(new Color(0.86f, 0.39f, 0.39f));
+                        errorText.text = "⚠ Google Login failed. Please try again.";
+                    }
+                }
+            }));
         }
 
         // =================================================================
@@ -1045,10 +1124,12 @@ namespace Attrition.UI
         {
             var launcher = Attrition.Networking.NetworkLauncher.Instance;
 
-            // Fallback: Instance có thể bị null nếu Fusion Shutdown hủy GO bất ngờ.
-            // Tìm bằng type để khôi phục; nếu không tìm thấy mới báo lỗi.
+            // Fallback: Instance có thể null nếu Fusion Shutdown hủy GO. Tìm lại bằng type trong scene
+            // (scene Menu có sẵn 1 NetworkLauncher đã gán lobbyPlayerPrefab qua Inspector).
+            // KHÔNG tạo runtime mới: launcher tạo bằng code thiếu lobbyPlayerPrefab → host không spawn
+            // được LobbyPlayer. Nếu cả 2 cách đều null nghĩa là scene Menu chưa load lại đúng.
             if (launcher == null)
-                launcher = FindFirstObjectByType<Attrition.Networking.NetworkLauncher>();
+                launcher = FindFirstObjectByType<Attrition.Networking.NetworkLauncher>(FindObjectsInactive.Include);
 
             if (launcher != null)
             {
@@ -1086,14 +1167,13 @@ namespace Attrition.UI
             GameLaunch.CharacterId = _characterIds != null && _selectedSaveSlot < _characterIds.Length
                 ? (_characterIds[_selectedSaveSlot] ?? "") : "";
 
-            // Tên player = USERNAME tài khoản (Postgres, vd "PlayerOne"), KHÔNG phải tên save slot.
-            // Save slot chỉ là tên file save/load. Fallback: tên nhân vật slot, rồi "Wanderer".
-            string playerName = APIManager.Instance != null ? APIManager.Instance.Username : null;
-            if (string.IsNullOrEmpty(playerName))
-            {
-                var slot = _saveSlots != null && _selectedSaveSlot < _saveSlots.Length ? _saveSlots[_selectedSaveSlot] : null;
-                if (slot != null && !string.IsNullOrEmpty(slot.characterName)) playerName = slot.characterName;
-            }
+            // Tên hiển thị trong game = TÊN NHÂN VẬT đã chọn (slot), KHÔNG phải username tài khoản.
+            // Mỗi nhân vật có tên riêng; nhiều nhân vật cùng 1 tài khoản phải hiện đúng tên của mình.
+            // Fallback: username tài khoản, rồi "Wanderer".
+            string playerName = null;
+            var slot = _saveSlots != null && _selectedSaveSlot < _saveSlots.Length ? _saveSlots[_selectedSaveSlot] : null;
+            if (slot != null && !string.IsNullOrEmpty(slot.characterName)) playerName = slot.characterName;
+            if (string.IsNullOrEmpty(playerName) && APIManager.Instance != null) playerName = APIManager.Instance.Username;
             if (!string.IsNullOrEmpty(playerName)) GameLaunch.CharacterName = playerName;
         }
 
@@ -1239,7 +1319,7 @@ namespace Attrition.UI
                 var icon = new Label("⚔");
                 icon.AddToClassList("session-empty-icon");
                 emptyState.Add(icon);
-                var text = new Label("NO JOURNEYS YET\nCreate a new journey to begin your adventure.");
+                var text = new Label("NO JOURNEYS YET\nPress Continue to start a new adventure.");
                 text.AddToClassList("session-empty-text");
                 emptyState.Add(text);
                 container.Add(emptyState);

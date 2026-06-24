@@ -25,12 +25,41 @@ public class IdentityDbContext : DbContext
             e.Property(u => u.JoinedAt).HasDefaultValueSql("NOW()");
             e.Property(u => u.IsBanned).HasDefaultValue(false);
             e.Property(u => u.MustChangePassword).HasDefaultValue(false);
-            e.Property(u => u.FailedLoginAttempts).HasDefaultValue(0);
             e.Property(u => u.IsEmailVerified).HasDefaultValue(false);
             e.Property(u => u.NotifyOnReply).HasDefaultValue(true);
             e.Property(u => u.NotifyOnMention).HasDefaultValue(true);
-            e.HasIndex(u => u.PasswordResetToken).HasFilter("\"PasswordResetToken\" IS NOT NULL");
-            e.HasIndex(u => u.EmailVerificationToken).HasFilter("\"EmailVerificationToken\" IS NOT NULL");
+
+            // Owned value objects — columns stay on the Users table with explicit names
+            // to match the existing schema (zero-migration change).
+            e.OwnsOne(u => u.Refresh, b =>
+            {
+                b.Property(t => t.Token).HasColumnName("RefreshToken");
+                b.Property(t => t.ExpiresAt).HasColumnName("RefreshTokenExpiresAt");
+            });
+            e.OwnsOne(u => u.EmailVerification, b =>
+            {
+                b.Property(t => t.Token).HasColumnName("EmailVerificationToken");
+                b.Property(t => t.ExpiresAt).HasColumnName("EmailVerificationTokenExpiry");
+                b.HasIndex(t => t.Token).HasFilter("\"EmailVerificationToken\" IS NOT NULL");
+            });
+            e.OwnsOne(u => u.PasswordReset, b =>
+            {
+                b.Property(t => t.Token).HasColumnName("PasswordResetToken");
+                b.Property(t => t.ExpiresAt).HasColumnName("PasswordResetTokenExpiry");
+                b.HasIndex(t => t.Token).HasFilter("\"PasswordResetToken\" IS NOT NULL");
+            });
+            e.OwnsOne(u => u.DeletionConfirm, b =>
+            {
+                b.Property(t => t.Token).HasColumnName("DeletionConfirmToken");
+                b.Property(t => t.ExpiresAt).HasColumnName("DeletionConfirmTokenExpiry");
+            });
+            e.OwnsOne(u => u.Security, b =>
+            {
+                b.Property(s => s.LastLoginAt).HasColumnName("LastLoginAt");
+                b.Property(s => s.LastLoginIp).HasColumnName("LastLoginIp");
+                b.Property(s => s.FailedLoginAttempts).HasColumnName("FailedLoginAttempts").HasDefaultValue(0);
+                b.Property(s => s.LockoutEnd).HasColumnName("LockoutEnd");
+            });
         });
 
         modelBuilder.Entity<Notification>(e =>

@@ -9,12 +9,24 @@ public class APIManager : MonoBehaviour
 {
     public static APIManager Instance;
     
-    private string baseUrl = "http://localhost:8080/api";
+    [Tooltip("Base URL gateway mặc định (production). Dev có thể override qua biến môi trường " +
+             "ATTRITION_API_BASE_URL hoặc StreamingAssets/api_base_url.txt — KHÔNG cần build lại.")]
+    [SerializeField] private string baseUrl = "https://attrition.io.vn/api";
     /// <summary>Base URL gateway (đọc-only) để các provider khác (EnemyStatProvider) dùng chung, tránh lệch port.</summary>
     public string BaseUrl => baseUrl;
+
+    [Tooltip("Base URL web frontend (cho Google login mở trình duyệt). Override qua " +
+             "ATTRITION_WEB_URL hoặc StreamingAssets/web_base_url.txt.")]
+    [SerializeField] private string webUrl = "https://attrition.io.vn";
+    /// <summary>URL trang login web kèm client=unity, để mở trình duyệt cho Google login.</summary>
+    public string WebLoginUrl => $"{webUrl}/login?client=unity";
     public string AccessToken { get; private set; }
+    /// <summary>Refresh token (sống 7 ngày) để xin access token mới khi hết hạn — persist qua PlayerPrefs.</summary>
+    public string RefreshToken { get; private set; }
     /// <summary>Username tài khoản đã đăng nhập (từ Postgres). Dùng làm tên player hiển thị.</summary>
     public string Username { get; private set; }
+
+    private const string RefreshTokenPrefKey = "AttritionRefreshToken";
 
     void Awake()
     {
@@ -23,40 +35,114 @@ public class APIManager : MonoBehaviour
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
-        LoadInternalKey();
+        LoadBaseUrl();
+        LoadWebUrl();
+        RefreshToken = PlayerPrefs.GetString(RefreshTokenPrefKey, null);
     }
 
     /// <summary>
-    /// Nạp X-Internal-Key lúc chạy (KHÔNG hardcode trong source / không commit lên git).
-    /// Thứ tự ưu tiên:
-    ///   1. Biến môi trường ATTRITION_INTERNAL_KEY — tiện cho Editor/dev.
-    ///   2. File StreamingAssets/internal_key.txt — ship theo build máy host, đã gitignore.
-    ///   3. Giá trị field Inspector (fallback; để trống khi build thật).
-    /// Key phải KHỚP INTERNAL_API_KEY của backend (.env) thì các call internal mới qua (không 401).
+    /// Override baseUrl lúc chạy để 2 máy ở 2 nơi dùng chung 1 build mà vẫn trỏ đúng gateway.
+    /// Thứ tự ưu tiên: 1) env ATTRITION_API_BASE_URL  2) StreamingAssets/api_base_url.txt  3) field Inspector.
     /// </summary>
-    private void LoadInternalKey()
+    private void LoadBaseUrl()
     {
-        var env = System.Environment.GetEnvironmentVariable("ATTRITION_INTERNAL_KEY");
-        if (!string.IsNullOrWhiteSpace(env)) { InternalKey = env.Trim(); return; }
+        var env = System.Environment.GetEnvironmentVariable("ATTRITION_API_BASE_URL");
+        if (!string.IsNullOrWhiteSpace(env)) { baseUrl = env.Trim().TrimEnd('/'); return; }
 
         try
         {
-            string path = System.IO.Path.Combine(Application.streamingAssetsPath, "internal_key.txt");
+            string path = System.IO.Path.Combine(Application.streamingAssetsPath, "api_base_url.txt");
             if (System.IO.File.Exists(path))
             {
                 string fromFile = System.IO.File.ReadAllText(path).Trim();
-                if (!string.IsNullOrWhiteSpace(fromFile)) { InternalKey = fromFile; return; }
+                if (!string.IsNullOrWhiteSpace(fromFile)) { baseUrl = fromFile.TrimEnd('/'); return; }
             }
         }
         catch (System.Exception e)
         {
-            Debug.LogWarning($"[APIManager] Đọc internal_key.txt lỗi: {e.Message}");
+            Debug.LogWarning($"[APIManager] Đọc api_base_url.txt lỗi: {e.Message}");
         }
 
-        if (string.IsNullOrWhiteSpace(InternalKey))
-            Debug.LogWarning("[APIManager] InternalKey trống — set biến môi trường ATTRITION_INTERNAL_KEY " +
-                             "hoặc tạo Assets/StreamingAssets/internal_key.txt. Call internal sẽ bị 401.");
+        Debug.Log($"[APIManager] baseUrl = {baseUrl} (mặc định/Inspector).");
     }
+
+    /// <summary>Override webUrl (frontend) tương tự baseUrl: env ATTRITION_WEB_URL hoặc StreamingAssets/web_base_url.txt.</summary>
+    private void LoadWebUrl()
+    {
+        var env = System.Environment.GetEnvironmentVariable("ATTRITION_WEB_URL");
+        if (!string.IsNullOrWhiteSpace(env)) { webUrl = env.Trim().TrimEnd('/'); return; }
+
+        try
+        {
+            string path = System.IO.Path.Combine(Application.streamingAssetsPath, "web_base_url.txt");
+            if (System.IO.File.Exists(path))
+            {
+                string fromFile = System.IO.File.ReadAllText(path).Trim();
+                if (!string.IsNullOrWhiteSpace(fromFile)) { webUrl = fromFile.TrimEnd('/'); return; }
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"[APIManager] Đọc web_base_url.txt lỗi: {e.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Lưu cặp token sau khi đăng nhập thành công. Refresh token persist xuống PlayerPrefs để host
+    /// mở lại game / phiên dài không phải login lại (access token sống ngắn, refresh sống 7 ngày).
+    /// </summary>
+    private void StoreTokens(string accessToken, string refreshToken)
+    {
+        AccessToken = accessToken;
+        if (!string.IsNullOrEmpty(refreshToken))
+        {
+            RefreshToken = refreshToken;
+            PlayerPrefs.SetString(RefreshTokenPrefKey, refreshToken);
+            PlayerPrefs.Save();
+        }
+    }
+
+    /// <summary>Xoá token khỏi RAM + đĩa (logout).</summary>
+    public void ClearTokens()
+    {
+        AccessToken = null;
+        RefreshToken = null;
+        PlayerPrefs.DeleteKey(RefreshTokenPrefKey);
+        PlayerPrefs.Save();
+    }
+
+    /// <summary>
+    /// Xin access token mới từ refresh token (POST /Auth/refresh). callback(true) nếu đổi được.
+    /// Dùng khi access token hết hạn giữa phiên (tránh mất save lúc quit phiên dài).
+    /// </summary>
+    public IEnumerator RefreshAccessToken(System.Action<bool> callback)
+    {
+        if (string.IsNullOrEmpty(RefreshToken)) { callback?.Invoke(false); yield break; }
+
+        string json = JsonConvert.SerializeObject(new { RefreshToken });
+        using (UnityWebRequest request = new UnityWebRequest($"{baseUrl}/Auth/refresh", "POST"))
+        {
+            request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
+            request.downloadHandler = new DownloadHandlerBuffer();
+            request.SetRequestHeader("Content-Type", "application/json");
+
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                var resp = JsonConvert.DeserializeObject<ApiResponse<AuthResponseData>>(request.downloadHandler.text);
+                if (resp != null && resp.success && resp.data != null)
+                {
+                    StoreTokens(resp.data.accessToken, resp.data.refreshToken);
+                    callback?.Invoke(true);
+                    yield break;
+                }
+            }
+            Debug.LogWarning("[APIManager] RefreshAccessToken thất bại — cần login lại.");
+            callback?.Invoke(false);
+        }
+    }
+
     [System.Serializable]
     
     public class UserDto
@@ -101,7 +187,7 @@ public class APIManager : MonoBehaviour
                 if (response.success && response.data != null && response.data.user != null)
                 {
                     string userId = response.data.user.id;
-                    AccessToken = response.data.accessToken;
+                    StoreTokens(response.data.accessToken, response.data.refreshToken);
                     Username = response.data.user.username;
                     callback?.Invoke(userId);
                 }
@@ -114,6 +200,43 @@ public class APIManager : MonoBehaviour
             else
             {
                 Debug.LogError("Login Fail: " + request.error);
+                callback?.Invoke(null);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Đăng nhập bằng token nhận từ Google flow (redirect về localhost:52000). accessToken bắt buộc;
+    /// refreshToken có thể rỗng (web cũ chưa gửi) → khi đó host login Google phải login lại lúc hết hạn.
+    /// Có refreshToken → persist như login email/password, phiên sống dai.
+    /// </summary>
+    public IEnumerator LoginWithToken(string token, string refreshToken, System.Action<string> callback)
+    {
+        StoreTokens(token, refreshToken);
+
+        using (UnityWebRequest request = UnityWebRequest.Get($"{baseUrl}/Auth/me"))
+        {
+            request.SetRequestHeader("Authorization", "Bearer " + token);
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                var response = JsonConvert.DeserializeObject<ApiResponse<UserDto>>(request.downloadHandler.text);
+                if (response.success && response.data != null)
+                {
+                    string userId = response.data.id;
+                    Username = response.data.username;
+                    callback?.Invoke(userId);
+                }
+                else
+                {
+                    Debug.LogError("Token Login Fail: " + response.error);
+                    callback?.Invoke(null);
+                }
+            }
+            else
+            {
+                Debug.LogError("Token Login Fail: " + request.error);
                 callback?.Invoke(null);
             }
         }
@@ -187,31 +310,6 @@ public class APIManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// HOST đọc character detail của BẤT KỲ player nào (kể cả client) qua X-Internal-Key — bỏ qua
-    /// ownership guard của endpoint JWT. Dùng để host nạp đồ cho nhân vật client trong coop.
-    /// </summary>
-    public IEnumerator GetCharacterDetailInternal(string characterId, System.Action<CharacterDetailDto> callback)
-    {
-        using (UnityWebRequest request = UnityWebRequest.Get($"{baseUrl}/internal/characters/{characterId}"))
-        {
-            request.SetRequestHeader("X-Internal-Key", InternalKey);
-
-            yield return request.SendWebRequest();
-
-            if (request.result == UnityWebRequest.Result.Success)
-            {
-                var response = JsonConvert.DeserializeObject<ApiResponse<CharacterDetailDto>>(request.downloadHandler.text);
-                callback?.Invoke(response?.data);
-            }
-            else
-            {
-                Debug.LogError("GetCharacterDetailInternal Fail: " + request.error + " | " + request.downloadHandler.text);
-                callback?.Invoke(null);
-            }
-        }
-    }
-
     public IEnumerator GetCharacters(System.Action<System.Collections.Generic.List<CharacterSummaryDto>> callback)
     {
         using (UnityWebRequest request = UnityWebRequest.Get($"{baseUrl}/characters"))
@@ -256,7 +354,8 @@ public class APIManager : MonoBehaviour
     }
 
     // ─── SAVE ONLINE: post snapshot tiến trình lên server (Postgres) ───
-    // Khớp SnapshotIngestRequest của web. Guard bằng X-Internal-Key (game server tin cậy).
+    // Khớp SnapshotIngestRequest của web. Xác thực bằng JWT host — server lấy OwnerId từ token,
+    // nên chỉ snapshot được nhân vật của CHÍNH host (client progress nằm ở character_session).
     [System.Serializable]
     public class SnapshotIngestRequest
     {
@@ -277,20 +376,17 @@ public class APIManager : MonoBehaviour
         public string questsJson;    // JSON tiến trình quest world-state (host gom, null = không đổi)
     }
 
-    [Tooltip("Khóa nội bộ khớp với web (X-Internal-Key). ĐỂ TRỐNG khi build thật — nạp qua " +
-             "ATTRITION_INTERNAL_KEY (env) hoặc StreamingAssets/internal_key.txt. Chỉ điền tạm khi test Editor.")]
-    public string InternalKey = "";
-
     public IEnumerator PostSnapshot(SnapshotIngestRequest req, System.Action<bool> callback)
     {
         string json = JsonConvert.SerializeObject(req);
-        using (UnityWebRequest request = new UnityWebRequest($"{baseUrl}/internal/characters/snapshot", "POST"))
+        using (UnityWebRequest request = new UnityWebRequest($"{baseUrl}/characters/snapshot", "POST"))
         {
             byte[] body = Encoding.UTF8.GetBytes(json);
             request.uploadHandler = new UploadHandlerRaw(body);
             request.downloadHandler = new DownloadHandlerBuffer();
             request.SetRequestHeader("Content-Type", "application/json");
-            request.SetRequestHeader("X-Internal-Key", InternalKey);
+            if (!string.IsNullOrEmpty(AccessToken))
+                request.SetRequestHeader("Authorization", $"Bearer {AccessToken}");
 
             yield return request.SendWebRequest();
 
@@ -300,7 +396,7 @@ public class APIManager : MonoBehaviour
         }
     }
 
-    // ─── SESSIONS (room bền) — internal API, guard X-Internal-Key ───
+    // ─── SESSIONS (room bền) — JWT host, guard ownership ở server ───
     // Khớp DTO của Character.Service. ASP.NET serialize PascalCase → camelCase nên field ở đây
     // để camelCase. Model-binding của ASP.NET case-insensitive nên request gửi camelCase vẫn khớp.
 
@@ -400,29 +496,29 @@ public class APIManager : MonoBehaviour
 
     /// <summary>Host tạo phòng mới (hoặc reopen nếu gửi roomCode đã có của mình). Trả room đầy đủ.</summary>
     public IEnumerator CreateOrReopenSession(CreateSessionRequest req, System.Action<SessionDetailDto> callback)
-        => PostSession("internal/sessions", req, callback);
+        => PostSession("sessions", req, callback);
 
     /// <summary>Host cập nhật playtime/scene của phòng khi save/quit.</summary>
     public IEnumerator UpdateSessionMeta(UpdateSessionRequest req, System.Action<SessionDetailDto> callback)
-        => PostSession("internal/sessions/meta", req, callback);
+        => PostSession("sessions/meta", req, callback);
 
     /// <summary>Host lưu tiến trình 1 player trong phòng (upsert theo characterId+sessionId).</summary>
     public IEnumerator SaveCharacterSession(SaveCharacterSessionRequest req, System.Action<bool> callback)
-        => PostSessionOk("internal/sessions/character", req, callback);
+        => PostSessionOk("sessions/character", req, callback);
 
     /// <summary>Host lưu tiến trình quest của phòng (upsert theo sessionId+eventId).</summary>
     public IEnumerator SaveWorldState(SaveWorldStateRequest req, System.Action<bool> callback)
-        => PostSessionOk("internal/sessions/world-state", req, callback);
+        => PostSessionOk("sessions/world-state", req, callback);
 
     /// <summary>Host đọc full room theo id (gồm tiến trình mọi player + quest) để load hành trình đã lưu.</summary>
     public IEnumerator GetSession(string sessionId, System.Action<SessionDetailDto> callback)
-        => GetSessionInternal($"internal/sessions/{sessionId}", callback);
+        => GetSessionInternal($"sessions/{sessionId}", callback);
 
     /// <summary>Client tra phòng theo mã host chia sẻ, để join.</summary>
     public IEnumerator GetSessionByCode(string roomCode, System.Action<SessionDetailDto> callback)
-        => GetSessionInternal($"internal/sessions/by-code/{UnityWebRequest.EscapeURL(roomCode)}", callback);
+        => GetSessionInternal($"sessions/by-code/{UnityWebRequest.EscapeURL(roomCode)}", callback);
 
-    // ─── helpers nội bộ cho session ───
+    // ─── helpers nội bộ cho session (JWT host) ───
     private IEnumerator PostSession(string path, object req, System.Action<SessionDetailDto> callback)
     {
         string json = JsonConvert.SerializeObject(req);
@@ -431,7 +527,8 @@ public class APIManager : MonoBehaviour
             request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
             request.downloadHandler = new DownloadHandlerBuffer();
             request.SetRequestHeader("Content-Type", "application/json");
-            request.SetRequestHeader("X-Internal-Key", InternalKey);
+            if (!string.IsNullOrEmpty(AccessToken))
+                request.SetRequestHeader("Authorization", $"Bearer {AccessToken}");
 
             yield return request.SendWebRequest();
 
@@ -456,7 +553,8 @@ public class APIManager : MonoBehaviour
             request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
             request.downloadHandler = new DownloadHandlerBuffer();
             request.SetRequestHeader("Content-Type", "application/json");
-            request.SetRequestHeader("X-Internal-Key", InternalKey);
+            if (!string.IsNullOrEmpty(AccessToken))
+                request.SetRequestHeader("Authorization", $"Bearer {AccessToken}");
 
             yield return request.SendWebRequest();
 
@@ -470,7 +568,8 @@ public class APIManager : MonoBehaviour
     {
         using (UnityWebRequest request = UnityWebRequest.Get($"{baseUrl}/{path}"))
         {
-            request.SetRequestHeader("X-Internal-Key", InternalKey);
+            if (!string.IsNullOrEmpty(AccessToken))
+                request.SetRequestHeader("Authorization", $"Bearer {AccessToken}");
 
             yield return request.SendWebRequest();
 
@@ -528,14 +627,15 @@ public class APIManager : MonoBehaviour
         }
     }
 
-    // ─── DELETE SESSION (internal, X-Internal-Key) ───
+    // ─── DELETE SESSION (JWT host, guard ownership ở server) ───
 
     /// <summary>Host deletes a room entirely.</summary>
     public IEnumerator DeleteSession(string sessionId, System.Action<bool> callback)
     {
-        using (UnityWebRequest request = UnityWebRequest.Delete($"{baseUrl}/internal/sessions/{sessionId}"))
+        using (UnityWebRequest request = UnityWebRequest.Delete($"{baseUrl}/sessions/{sessionId}"))
         {
-            request.SetRequestHeader("X-Internal-Key", InternalKey);
+            if (!string.IsNullOrEmpty(AccessToken))
+                request.SetRequestHeader("Authorization", $"Bearer {AccessToken}");
 
             yield return request.SendWebRequest();
 

@@ -10,6 +10,9 @@ public interface ISessionService
     Task<SessionDetailDto?> GetDetailAsync(Guid sessionId);
     Task<SessionDetailDto?> GetByRoomCodeAsync(string roomCode);
 
+    // Ownership guard helper: the owner of a room, or null if the room doesn't exist.
+    Task<Guid?> GetOwnerIdAsync(Guid sessionId);
+
     // Game-client ingestion (internal). Create-or-reopen a room with a fixed unique code.
     Task<ApiResponse<SessionDetailDto>> CreateOrReopenAsync(CreateSessionRequest request);
     Task<ApiResponse<SessionDetailDto>> UpdateMetaAsync(UpdateSessionRequest request);

@@ -40,8 +40,11 @@ namespace Attrition.Controllers
             _enemy = GetComponent<EnemyController>();
             _stats = GetComponent<EnemyStats>();
             _skills = GetComponent<EliteEnemySkills>();
+
             _sfAI = GetComponent<Attrition.Gameplay.Enemy.SeveredFang.SeveredFangAI>();
-            _maxHp = Mathf.Max(1, _enemy.maxHealth);
+
+            _maxHp = _stats != null && _stats.MaxHP > 0 ? _stats.MaxHP : Mathf.Max(1, _enemy.maxHealth);
+
 
             if (HasStateAuthority) CurrentPhase = 0;
 
@@ -83,6 +86,13 @@ namespace Attrition.Controllers
             // Boss đặt sẵn trong scene + chờ trigger → KHÔNG hiện thanh máu trước đó.
             bool encounterStarted = _sfAI == null || _sfAI.EncounterStarted;
             if (!encounterStarted) return;
+            // MaxHP networked có thể tới SAU Spawned() trên client → refresh khi đã có giá trị thật,
+            // tránh thanh máu boss tính theo _maxHp=1 (fallback) làm kẹt đầy.
+            if (_stats != null && _stats.MaxHP > 0 && _maxHp != _stats.MaxHP)
+            {
+                _maxHp = _stats.MaxHP;
+                _lastShownHp = -1; // ép phát lại HpChanged với mẫu số đúng
+            }
 
             if (!_barShown)
             {

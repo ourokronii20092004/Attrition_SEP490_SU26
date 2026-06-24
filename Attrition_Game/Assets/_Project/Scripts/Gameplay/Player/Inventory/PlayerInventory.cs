@@ -158,7 +158,7 @@ namespace Attrition.Gameplay.Player.Inventory
         }
 
         /// <summary>
-        /// Host fetch session detail (GET /internal/sessions/{id}) MỘT LẦN, đổ inventoryJson từng
+        /// Host fetch session detail (GET /sessions/{id}, JWT host) MỘT LẦN, đổ inventoryJson từng
         /// character vào GameLaunch.SessionInventoryByChar và quest world-state vào CoopQuestsJson.
         /// Các PlayerInventory sau đọc thẳng từ cache (không gọi API lại). Nếu chưa có SessionId
         /// (chưa tạo room server) → bỏ qua, mọi người sẽ seed tân thủ.

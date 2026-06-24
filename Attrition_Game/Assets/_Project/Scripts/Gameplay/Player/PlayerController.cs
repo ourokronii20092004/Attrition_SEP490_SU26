@@ -32,41 +32,33 @@ public class PlayerController : NetworkBehaviour, IDamageable
     [SerializeField] private Rigidbody2D rb;
     [SerializeField] private LayerMask groundLayer;
 
-    [Header("---- ADVANCED MOVEMENT ----")]
-    [Tooltip("Bật để Dash có I-Frames (không nhận sát thương khi đang lướt)")]
-    public bool hasShadowDash = false;
-    [SerializeField] private float dashDuration = 0.2f;
-    [SerializeField] private float dashCooldownTime = 0.8f;
-    [SerializeField] private float crouchSpeedMultiplier = 0.4f;
-    [SerializeField] private float variableJumpCutMultiplier = 0.5f;
-    [SerializeField] private int maxJumps = 2;
+    [Header("---- MOVEMENT CONFIG ----")]
+    [Tooltip("SO chứa toàn bộ cấu hình vật lý và di chuyển")]
+    [SerializeField] private Attrition.Data.MovementConfigSO moveConfig;
 
-    [Header("---- SLIDE ----")]
-    [SerializeField] private float slideDuration = 0.5f;
-    [SerializeField] private float slideCooldownTime = 1f;
+    private bool hasShadowDash => moveConfig != null ? moveConfig.hasShadowDash : false;
+    private float dashDuration => moveConfig != null ? moveConfig.dashDuration : 0.2f;
+    private float dashCooldownTime => moveConfig != null ? moveConfig.dashCooldownTime : 0.8f;
+    private float crouchSpeedMultiplier => moveConfig != null ? moveConfig.crouchSpeedMultiplier : 0.4f;
+    private float variableJumpCutMultiplier => moveConfig != null ? moveConfig.variableJumpCutMultiplier : 0.5f;
+    private int maxJumps => moveConfig != null ? moveConfig.maxJumps : 2;
 
-    [Header("---- HITBOX RESIZING (CROUCH/SLIDE) ----")]
+    private float slideDuration => moveConfig != null ? moveConfig.slideDuration : 0.5f;
+    private float slideCooldownTime => moveConfig != null ? moveConfig.slideCooldownTime : 1f;
+
     [SerializeField] private Collider2D playerCollider;
-    [SerializeField] private Vector2 standSize = new Vector2(1f, 2f);
-    [SerializeField] private Vector2 standOffset = new Vector2(0f, 0f);
-    [SerializeField] private Vector2 crouchSize = new Vector2(1f, 1f);
-    [SerializeField] private Vector2 crouchOffset = new Vector2(0f, -0.5f);
+    private Vector2 standSize => moveConfig != null ? moveConfig.standSize : new Vector2(1f, 2f);
+    private Vector2 standOffset => moveConfig != null ? moveConfig.standOffset : new Vector2(0f, 0f);
+    private Vector2 crouchSize => moveConfig != null ? moveConfig.crouchSize : new Vector2(1f, 1f);
+    private Vector2 crouchOffset => moveConfig != null ? moveConfig.crouchOffset : new Vector2(0f, -0.5f);
 
-    [Header("---- HOLLOW KNIGHT GRAVITY ----")]
-    [Tooltip("Trọng lực mặc định khi đi trên mặt đất hoặc bay lên")]
-    [SerializeField] private float normalGravity = 2f;
-    [Tooltip("Trọng lực khi rơi xuống (càng cao rơi càng nhanh, Hollow Knight ~4-5)")]
-    [SerializeField] private float fallGravity = 4.5f;
-    [Tooltip("Tốc độ rơi tối đa (giới hạn để không rơi quá nhanh)")]
-    [SerializeField] private float maxFallSpeed = -25f;
+    private float normalGravity => moveConfig != null ? moveConfig.normalGravity : 2f;
+    private float fallGravity => moveConfig != null ? moveConfig.fallGravity : 4.5f;
+    private float maxFallSpeed => moveConfig != null ? moveConfig.maxFallSpeed : -25f;
 
-    [Header("---- KNOCKBACK (KHI PLAYER BỊ ĐÁNH) ----")]
-    [Tooltip("Lực đẩy lùi khi bị quái đánh (set 0 để không bị knockback)")]
-    [SerializeField] private float knockbackForceOverride = 6f;
-    [Tooltip("Thời gian bị khựng không điều khiển được sau khi bị đánh (giây)")]
-    [SerializeField] private float knockbackDuration = 0.25f;
-    [Tooltip("Thời gian bất tử sau khi bị đánh (giây)")]
-    [SerializeField] private float invincibleDuration = 0.8f;
+    private float knockbackForceOverride => moveConfig != null ? moveConfig.knockbackForceOverride : 6f;
+    private float knockbackDuration => moveConfig != null ? moveConfig.knockbackDuration : 0.25f;
+    private float invincibleDuration => moveConfig != null ? moveConfig.invincibleDuration : 0.8f;
 
     [Header("---- STATE ----")]
     [Networked] public int currentHP { get; set; }

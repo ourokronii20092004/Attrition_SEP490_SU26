@@ -163,7 +163,7 @@ SpriteRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 3204480812468917802, guid: 0a1f8a85df257174e8103af5a44c099e, type: 3}
-  m_Color: {r: 0.91027504, g: 0.9150943, b: 0.22014059, a: 1}
+  m_Color: {r: 0.96981126, g: 0.95340043, b: 0.1884727, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -231,25 +231,8 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
-  hasShadowDash: 0
-  dashDuration: 0.2
-  dashCooldownTime: 1
-  crouchSpeedMultiplier: 0.4
-  variableJumpCutMultiplier: 0.5
-  maxJumps: 2
-  slideDuration: 0.2
-  slideCooldownTime: 1
+  moveConfig: {fileID: 11400000, guid: e1c10e21360f8a04ca18c7d850e67b84, type: 2}
   playerCollider: {fileID: 7161810634740937689}
-  standSize: {x: 1, y: 2}
-  standOffset: {x: 0, y: -0.1}
-  crouchSize: {x: 1.5, y: 1.2}
-  crouchOffset: {x: 0, y: -0.32}
-  normalGravity: 2
-  fallGravity: 4.5
-  maxFallSpeed: -25
-  knockbackForceOverride: 6
-  knockbackDuration: 0.5
-  invincibleDuration: 0.8
   _currentHP: 0
   _isDeadNetworked:
     _value: 0
@@ -297,9 +280,6 @@ MonoBehaviour:
     m_Bits: 768
   normalAttackType: 0
   chargeAttackType: 0
-  chargeThreshold: 0.2
-  normalAttackCooldown: 0.5
-  chargeAttackCooldown: 0.5
   _IsAttacking:
     _value: 0
   _IsChargingAttack:
@@ -332,7 +312,7 @@ MonoBehaviour:
   m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
-  SortKey: 3361078075
+  SortKey: 2080620094
   ObjectInterest: 1
   Flags: 262145
   NestedObjects: []
@@ -389,8 +369,6 @@ MonoBehaviour:
   _CurrentStamina: 0
   _Level: 0
   _AllocatedPoints: 
-  dashStaminaCost: 20
-  staminaRegenPerSecond: 10
 --- !u!114 &2638378353840522064
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -403,12 +381,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d96ea3fb12f0367408c523d831813a40, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Player.PotionSystem
-  healthPotion: {fileID: 0}
-  manaPotion: {fileID: 0}
-  startingHealthCharges: 3
-  startingManaCharges: 3
-  hardMaxHealthCharges: 8
-  hardMaxManaCharges: 8
+  healthPotion: {fileID: 11400000, guid: b02e9098a861c6a47bb30fd4d981fc3d, type: 2}
+  manaPotion: {fileID: 11400000, guid: 5fedd98fe7c124348b6c2fb3510fcc4f, type: 2}
+  configSO: {fileID: 11400000, guid: c1da399d79959f342b24a15cc80cd708, type: 2}
   _MaxHealthCharges: 0
   _MaxManaCharges: 0
   _HealthCharges: 0
@@ -425,17 +400,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f596a13e5a40d64c9ec58fbe993bd5b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Player.PlayerProgression
-  baseExp: 100
-  perLevelExp: 50
-  maxLevel: 21
-  statPointsPerLevel: 5
-  hpPerPoint: 5
-  manaPerPoint: 5
-  staminaPerPoint: 0
-  adPerPoint: 1
-  apPerPoint: 1
-  defPerPoint: 1
-  resPerPoint: 1
+  levelingConfig: {fileID: 11400000, guid: c15502d0f44b51844858fd9daf295c25, type: 2}
   _Level: 0
   _CurrentExp: 0
 --- !u!114 &-5924329882642562811
