@@ -29,6 +29,12 @@ public class EnemyContactDamage : MonoBehaviour
     private void OnTriggerStay2D(Collider2D other)
     {
         if (Time.time - lastContactTime < contactCooldown) return;
+
+        // NetworkObject của parent có thể CHƯA Spawned (boss đặt sẵn scene, frame đầu) → đọc IsDead
+        // sẽ ném InvalidOperationException. Bỏ qua cho tới khi parent hợp lệ.
+        var parentNo = parentDamageable as Fusion.NetworkBehaviour;
+        if (parentNo != null && (parentNo.Object == null || !parentNo.Object.IsValid)) return;
+
         if (parentDamageable != null && parentDamageable.IsDead) return;
 
         PlayerController player = other.GetComponentInParent<PlayerController>();

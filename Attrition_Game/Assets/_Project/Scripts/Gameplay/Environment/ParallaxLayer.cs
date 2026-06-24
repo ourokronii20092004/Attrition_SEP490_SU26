@@ -56,7 +56,13 @@ namespace Attrition.Gameplay.Environment
 
         private void LateUpdate()
         {
-            if (_cam == null) return;
+            // Camera có thể chưa tồn tại lúc Start (Cinemachine/player spawn muộn qua mạng) → thử lấy lại.
+            if (_cam == null)
+            {
+                var c = Camera.main != null ? Camera.main : FindAnyObjectByType<Camera>();
+                if (c != null) _cam = c.transform;
+                if (_cam == null) return;
+            }
 
             // Parallax offset
             // parallaxFactor: 0 = xa nhất (cùng tốc độ camera), 1 = gần nhất (như mặt đất)

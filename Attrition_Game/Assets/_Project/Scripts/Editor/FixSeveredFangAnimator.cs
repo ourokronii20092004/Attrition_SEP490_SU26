@@ -135,7 +135,54 @@ public class FixSeveredFangAnimator
 
         EditorUtility.SetDirty(controller);
         AssetDatabase.SaveAssets();
+
+        // Dọn transition mồ côi do việc gán lại mảng transitions ở trên để lại (sub-asset không bị
+        // destroy). Bỏ bước này → file tích rác → cửa sổ Animator ném Edge.WakeUp NullReference.
+        CleanOrphanTransitions(controller, path);
+
         Debug.Log("SeveredFang Animator Controller fixed successfully!");
+    }
+
+    /// <summary>Destroy mọi AnimatorStateTransition/AnimatorTransition không còn được tham chiếu trong controller.</summary>
+    private static void CleanOrphanTransitions(AnimatorController controller, string path)
+    {
+        var referenced = new System.Collections.Generic.HashSet<Object>();
+        foreach (var layer in controller.layers)
+            CollectTransitions(layer.stateMachine, referenced);
+
+        int removed = 0;
+        foreach (var obj in AssetDatabase.LoadAllAssetsAtPath(path))
+        {
+            if (obj == null) continue;
+            if (!(obj is AnimatorStateTransition || obj is AnimatorTransition)) continue;
+            if (referenced.Contains(obj)) continue;
+            Object.DestroyImmediate(obj, true);
+            removed++;
+        }
+
+        if (removed > 0)
+        {
+            EditorUtility.SetDirty(controller);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
+            Debug.Log($"[FixSeveredFangAnimator] Dọn {removed} transition mồ côi.");
+        }
+    }
+
+    private static void CollectTransitions(AnimatorStateMachine sm, System.Collections.Generic.HashSet<Object> referenced)
+    {
+        if (sm == null) return;
+        foreach (var t in sm.anyStateTransitions) if (t != null) referenced.Add(t);
+        foreach (var t in sm.entryTransitions) if (t != null) referenced.Add(t);
+        foreach (var cs in sm.states)
+            if (cs.state != null)
+                foreach (var t in cs.state.transitions) if (t != null) referenced.Add(t);
+        foreach (var csm in sm.stateMachines)
+            if (csm.stateMachine != null)
+            {
+                foreach (var t in sm.GetStateMachineTransitions(csm.stateMachine)) if (t != null) referenced.Add(t);
+                CollectTransitions(csm.stateMachine, referenced);
+            }
     }
 
     private static void AddParameter(AnimatorController controller, string name, AnimatorControllerParameterType type)

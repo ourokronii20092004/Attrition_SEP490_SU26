@@ -21,6 +21,8 @@ public class PlayerController : NetworkBehaviour, IDamageable
     [SerializeField] private PlayerStats statsComp;
     [Tooltip("Tùy chọn: hệ thống bình HP/Mana. Bỏ trống = không có bình (prefab cũ).")]
     [SerializeField] private PotionSystem potionComp;
+    // Túi đồ — host quét để biết đã mở khoá double jump chưa (cache, không bắt buộc gán Inspector).
+    private Attrition.Gameplay.Player.Inventory.PlayerInventory _inventory;
 
     // Checkpoint đang đứng trong vùng (local, không cần [Networked] — chỉ dùng để gate input R).
     private Attrition.Gameplay.World.Checkpoint _currentCheckpoint;
@@ -70,6 +72,9 @@ public class PlayerController : NetworkBehaviour, IDamageable
     [Networked] public NetworkBool IsDashing { get; set; }
     [Networked] public NetworkBool IsSliding { get; set; }
     [Networked] public int JumpCount { get; set; }
+
+    /// <summary>Đã mở khoá double jump chưa (sở hữu accessory AbilityGrant=DoubleJump). Host set, sync xuống client.</summary>
+    [Networked] public NetworkBool HasDoubleJump { get; set; }
 
     [Networked] private NetworkButtons _buttonsPrev { get; set; }
     [Networked] private TickTimer _dashTimer { get; set; }
@@ -130,6 +135,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
         if (statsComp == null) statsComp = GetComponent<PlayerStats>();
         if (statsComp != null) maxHP = statsComp.MaxHP;
         if (potionComp == null) potionComp = GetComponent<PotionSystem>();
+        if (_inventory == null) _inventory = GetComponent<Attrition.Gameplay.Player.Inventory.PlayerInventory>();
         // statsComp tự init CurrentHP=MaxHP trong Spawned của nó. Chỉ tự init khi KHÔNG có statsComp.
         if (HasStateAuthority && statsComp == null) currentHP = maxHP;
 
@@ -189,6 +195,10 @@ public class PlayerController : NetworkBehaviour, IDamageable
 
             // Hồi stamina theo thời gian (concept: 10/s). Null-safe nếu chưa gán statsComp.
             if (statsComp != null) statsComp.RegenStamina(Runner.DeltaTime);
+
+            // Cập nhật cờ mở khoá double jump theo túi đồ (sở hữu Feather Charm). Host tính, sync proxy.
+            if (_inventory != null)
+                HasDoubleJump = _inventory.HasAbility(Attrition.Data.GrantedAbility.DoubleJump);
         }
         else if (!HasInputAuthority)
         {
@@ -364,7 +374,10 @@ public class PlayerController : NetworkBehaviour, IDamageable
                 // --- JUMP LOGIC ---
                 if (pressed.IsSet(MyButtons.Jump) && !IsCrouching && !combatComp.IsHoldingAttack)
                 {
-                    if (IsGrounded || JumpCount < maxJumps)
+                    // Số lần nhảy tối đa: luôn 1 (nhảy đất); +1 nếu đã mở khoá double jump (nhặt Feather Charm).
+                    // Vẫn kẹp theo maxJumps cấu hình trên prefab (mặc định 2).
+                    int effectiveMaxJumps = Mathf.Min(maxJumps, HasDoubleJump ? 2 : 1);
+                    if (IsGrounded || JumpCount < effectiveMaxJumps)
                     {
                         rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
                         rb.position = new Vector2(rb.position.x, rb.position.y + 0.05f);

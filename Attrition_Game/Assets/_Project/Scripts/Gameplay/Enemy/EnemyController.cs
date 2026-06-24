@@ -45,6 +45,10 @@ namespace Attrition.Controllers
         [HideInInspector][Networked] public NetworkBool IsKnockbackActive { get; set; }
         [HideInInspector][Networked] public NetworkBool IsAwaitingRevive { get; set; }
 
+        /// <summary>Khi true: KHÔNG tự despawn sau khi chết (để bên ngoài — vd BossGateController — điều khiển
+        /// thời điểm biến mất, vd sau khi thoại kết thúc). Mặc định false (despawn theo timer như thường).</summary>
+        [HideInInspector][Networked] public NetworkBool HoldDespawn { get; set; }
+
         [Networked] private TickTimer knockbackTimer { get; set; }
         [Networked] private TickTimer poiseRecoveryTimer { get; set; }
         [Networked] private TickTimer reviveTimer { get; set; }
@@ -131,6 +135,8 @@ namespace Attrition.Controllers
 
             if (isDeadNetworked)
             {
+                // HoldDespawn: chờ bên ngoài (BossGateController) ra lệnh biến mất (sau thoại). Không tự despawn.
+                if (HoldDespawn) return;
                 if (despawnTimer.Expired(Runner))
                 {
                     despawnTimer = TickTimer.None;
@@ -306,8 +312,7 @@ namespace Attrition.Controllers
         }
 
         private void DieFinal()
-        {
-            isDeadNetworked = true;
+        {            isDeadNetworked = true;
             combatComp.IsAttacking = false;
             IsKnockbackActive = false;
 
@@ -335,6 +340,13 @@ namespace Attrition.Controllers
                 ? animationComp.GetClipLength(deathClipName, despawnFallback)
                 : despawnFallback;
             despawnTimer = TickTimer.CreateFromSeconds(Runner, deathDur);
+        }
+
+        /// <summary>Host ra lệnh boss biến mất NGAY (dùng khi HoldDespawn=true và chuỗi thoại đã xong).</summary>
+        public void ForceDespawnNow()
+        {
+            if (!HasStateAuthority) return;
+            if (Object != null && Object.IsValid) Runner.Despawn(Object);
         }
 
         /// <summary>

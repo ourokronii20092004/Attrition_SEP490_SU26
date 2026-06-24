@@ -11,6 +11,9 @@ GameObject:
   - component: {fileID: 3341264440995585192}
   - component: {fileID: 2060783505368840487}
   - component: {fileID: 2776667186256979645}
+  - component: {fileID: -5901255051125483915}
+  - component: {fileID: -5573355841722827816}
+  - component: {fileID: 7399782059139034702}
   m_Layer: 0
   m_Name: FireBall_SeveredFang
   m_TagString: Untagged
@@ -114,3 +117,59 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &-5901255051125483915
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7292029621612509755}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 441113954
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: -5573355841722827816}
+  - {fileID: 7399782059139034702}
+  ForceRemoteRenderTimeframe: 0
+--- !u!114 &-5573355841722827816
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7292029621612509755}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 158639473, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkTransform
+  _stateAuthorityChangeErrorCorrectionDelta: 0
+  SyncScale: 0
+  SyncParent: 0
+  _autoAOIOverride: 1
+  DisableSharedModeInterpolation: 0
+--- !u!114 &7399782059139034702
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7292029621612509755}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e9a8e912ca0577438e34a241ac792be, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::EnemyProjectile
+  speed: 10
+  lifetime: 3
+  hitLayer:
+    serializedVersion: 2
+    m_Bits: 192
+  hitboxRadius: 0.2
+  rotationOffset: 0
