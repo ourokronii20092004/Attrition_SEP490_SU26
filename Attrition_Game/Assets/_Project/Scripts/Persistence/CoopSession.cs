@@ -17,6 +17,12 @@ namespace Attrition.Persistence
         /// <summary>Thông điệp hiện trên overlay Waiting.</summary>
         public static string WaitingMessage = "WAITING FOR PLAYER...";
 
+        /// <summary>
+        /// Set khi client bị đưa về menu do mất host (host quit/crash). Main menu đọc 1 lần để hiện
+        /// thông báo rồi xoá. Null = không có gì để báo.
+        /// </summary>
+        public static string HostLeftMessage;
+
         public static void BeginWaiting(string message = null)
         {
             WaitingForPlayer = true;
