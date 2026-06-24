@@ -47,4 +47,17 @@ public class CharacterController : ControllerBase
         var response = await _service.DeleteAsync(id, userId, _user.IsAdmin);
         return response.Success ? Ok(response) : BadRequest(response);
     }
+
+    /// <summary>
+    /// The game client posts a character status snapshot on save/quit. Authenticated with the
+    /// player's JWT — the owner is taken from the token, so a caller can only snapshot their own
+    /// character (host snapshots itself; client progress lives in character_session, not here).
+    /// </summary>
+    [HttpPost("snapshot")]
+    public async Task<IActionResult> Snapshot([FromBody] SnapshotIngestRequest request)
+    {
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        var result = await _service.IngestSnapshotAsync(request with { OwnerId = userId });
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
 }

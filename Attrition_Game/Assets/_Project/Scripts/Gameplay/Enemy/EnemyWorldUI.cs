@@ -23,6 +23,7 @@ namespace Attrition.Gameplay.Enemy
         [SerializeField] private Vector2 barSize = new Vector2(1.2f, 0.14f);
 
         private EnemyController _enemy;
+        private EnemyStats _stats;
         private Transform _barRoot;
         private Transform _fill;
         private Transform _trailFill;
@@ -34,8 +35,20 @@ namespace Attrition.Gameplay.Enemy
         private void Awake()
         {
             _enemy = GetComponent<EnemyController>();
+            _stats = GetComponent<EnemyStats>();
             BuildBar();
             BuildNameLabel();
+        }
+
+        /// <summary>
+        /// MaxHP để tính tỉ lệ thanh máu. EnemyController.maxHealth KHÔNG networked nên trên client
+        /// luôn = 1 (default) → thanh máu client kẹt đầy. EnemyStats.MaxHP là [Networked] → đồng bộ
+        /// đúng cả 2 máy. Ưu tiên MaxHP networked, fallback maxHealth (prefab cũ / chưa có stats).
+        /// </summary>
+        private int MaxHpForBar()
+        {
+            if (_stats != null && _stats.MaxHP > 0) return _stats.MaxHP;
+            return Mathf.Max(1, _enemy.maxHealth);
         }
 
         private void BuildNameLabel()
@@ -136,7 +149,7 @@ namespace Attrition.Gameplay.Enemy
         {
             if (!_everDamaged || _enemy == null || _fill == null) return;
 
-            int max = Mathf.Max(1, _enemy.maxHealth);
+            int max = MaxHpForBar();
             float target = Mathf.Clamp01((float)_enemy.CurrentHealth / max);
             
             _shownFraction = target;

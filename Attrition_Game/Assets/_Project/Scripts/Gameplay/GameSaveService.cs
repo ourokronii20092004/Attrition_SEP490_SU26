@@ -144,6 +144,28 @@ namespace Attrition.Gameplay.Persistence
                 yield break;
             }
 
+            // Access token sống ngắn (15 phút) → phiên coop dài có thể hết hạn giữa chừng, làm save
+            // lúc quit bị 401 (mất tiến trình đúng lúc quan trọng). Refresh chủ động trước khi save
+            // nếu còn refresh token. Thất bại (refresh token hết hạn 7 ngày / mất mạng) → báo người
+            // chơi đăng nhập lại, KHÔNG cố save tiếp (chắc chắn 401).
+            if (!string.IsNullOrEmpty(APIManager.Instance.RefreshToken))
+            {
+                bool refreshed = false;
+                yield return APIManager.Instance.RefreshAccessToken(ok => refreshed = ok);
+                if (!refreshed)
+                {
+                    Debug.LogWarning("[Save:ONLINE] Refresh token hết hạn — không lưu được.");
+                    // Xóa token chết để màn menu không tưởng nhầm còn đăng nhập (access cũ vẫn nằm RAM).
+                    APIManager.Instance.ClearTokens();
+                    Attrition.Controllers.SaveNotifyEvents.RaiseSessionExpired(
+                        "Session expired. Returning to menu — please log in again.");
+                    yield break;
+                }
+            }
+
+            // Theo dõi kết quả mọi call để báo người chơi 1 lần ở cuối (tránh spam toast mỗi player).
+            bool anyFailed = false;
+
             // Quest world-state là của host → gom 1 lần, gắn vào nhân vật host.
             string questsJson = Attrition.Gameplay.NPC.NetworkNPC.CaptureAllJson();
 
@@ -167,29 +189,35 @@ namespace Attrition.Gameplay.Persistence
 
                 string invJson = inv != null ? inv.ExportJson() : null;
 
-                var req = new APIManager.SnapshotIngestRequest
+                // SNAPSHOT (bảng characters global) CHỈ cho nhân vật HOST. Snapshot dùng JWT host →
+                // server lấy OwnerId từ token, host không ghi được global của client. Tiến trình client
+                // nằm trọn trong character_session (đẩy bên dưới). Đúng mô hình DST host-authoritative.
+                if (isHostOwnPlayer)
                 {
-                    ownerId = ownerId,
-                    characterId = string.IsNullOrEmpty(charId) ? null : charId,
-                    name = string.IsNullOrEmpty(player.DisplayName.Value) ? "Wanderer" : player.DisplayName.Value,
-                    archetype = "default",
-                    level = prog != null ? prog.Level : stats.Level,
-                    hp = stats.CurrentHP,
-                    maxHp = stats.MaxHP,
-                    gold = 0,
-                    isAlive = !player.IsDead,
-                    roomCode = GameLaunch.RoomCode,
-                    eventType = evt.ToString().ToLowerInvariant(),
-                    playtimeSeconds = TotalPlaytimeSeconds,
-                    inventoryJson = invJson,
-                    // Quest world-state chỉ gắn vào nhân vật host (1 lần), client gửi null.
-                    questsJson = isHostOwnPlayer ? questsJson : null
-                };
+                    var req = new APIManager.SnapshotIngestRequest
+                    {
+                        ownerId = ownerId,
+                        characterId = string.IsNullOrEmpty(charId) ? null : charId,
+                        name = string.IsNullOrEmpty(player.DisplayName.Value) ? "Wanderer" : player.DisplayName.Value,
+                        archetype = "default",
+                        level = prog != null ? prog.Level : stats.Level,
+                        hp = stats.CurrentHP,
+                        maxHp = stats.MaxHP,
+                        gold = 0,
+                        isAlive = !player.IsDead,
+                        roomCode = GameLaunch.RoomCode,
+                        eventType = evt.ToString().ToLowerInvariant(),
+                        playtimeSeconds = TotalPlaytimeSeconds,
+                        inventoryJson = invJson,
+                        questsJson = questsJson
+                    };
 
-                yield return APIManager.Instance.PostSnapshot(req, ok =>
-                {
-                    Debug.Log($"[Save:ONLINE] {ownerId} ({evt}) → {(ok ? "OK" : "FAILED")}");
-                });
+                    yield return APIManager.Instance.PostSnapshot(req, ok =>
+                    {
+                        if (!ok) anyFailed = true;
+                        Debug.Log($"[Save:ONLINE] host {ownerId} ({evt}) → {(ok ? "OK" : "FAILED")}");
+                    });
+                }
 
                 // PER-ROOM: ngoài snapshot (lịch sử theo character), đẩy tiến trình đầy đủ vào
                 // character_session theo (charId, SessionId) — stat/điểm cộng/bình/vị trí/đồ của
@@ -226,6 +254,7 @@ namespace Attrition.Gameplay.Persistence
 
                     yield return APIManager.Instance.SaveCharacterSession(csReq, ok =>
                     {
+                        if (!ok) anyFailed = true;
                         Debug.Log($"[Save:ROOM] {charId}@{GameLaunch.SessionId} ({evt}) → {(ok ? "OK" : "FAILED")}");
                     });
                 }
@@ -240,8 +269,16 @@ namespace Attrition.Gameplay.Persistence
                     playTimeSeconds = TotalPlaytimeSeconds,
                     currentScene = GameLaunch.GameplayScene
                 };
-                yield return APIManager.Instance.UpdateSessionMeta(metaReq, _ => { });
+                yield return APIManager.Instance.UpdateSessionMeta(metaReq, ok => { if (ok == null) anyFailed = true; });
             }
+
+            // Báo người chơi 1 lần: thành công hết → toast xanh; có call hỏng → toast đỏ (data đoạn
+            // này chưa lên server, nên người chơi biết để kiểm tra mạng / thử lại).
+            if (anyFailed)
+                Attrition.Controllers.SaveNotifyEvents.RaiseFailed(
+                    "Failed to save progress. Check your connection — your latest progress may not be saved.");
+            else
+                Attrition.Controllers.SaveNotifyEvents.RaiseOk("Progress saved.");
         }
 
         private int[] CaptureAllocated(PlayerStats stats)

@@ -26,3 +26,10 @@ MonoBehaviour:
   doubleJumpForce: 8
   attackSpeed: 1
   chargeDamageMultiplier: 1.5
+  normalAttackCooldown: 0.5
+  chargeAttackCooldown: 0.5
+  chargeThreshold: 0.2
+  dashStaminaCost: 20
+  staminaRegenPerSecond: 10
+  normalAttackStaminaCost: 10
+  chargeAttackStaminaCost: 15

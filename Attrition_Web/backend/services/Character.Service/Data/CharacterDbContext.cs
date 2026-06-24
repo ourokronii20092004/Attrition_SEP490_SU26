@@ -64,7 +64,29 @@ public class CharacterDbContext : DbContext
             e.Property(x => x.AllocatedPointsJson).HasColumnType("jsonb");
             e.Property(x => x.InventoryJson).HasColumnType("jsonb");
             e.Property(x => x.EquipmentJson).HasColumnType("jsonb");
-            e.Property(x => x.LastRestPointId).HasMaxLength(50);
+
+            // Owned value objects — columns stay on character_session with explicit names
+            // to match the existing schema (zero-migration change).
+            e.OwnsOne(x => x.Vitals, b =>
+            {
+                b.Property(v => v.MaxHp).HasColumnName("MaxHp");
+                b.Property(v => v.CurrentHp).HasColumnName("CurrentHp");
+                b.Property(v => v.MaxMana).HasColumnName("MaxMana");
+                b.Property(v => v.CurrentMana).HasColumnName("CurrentMana");
+                b.Property(v => v.MaxStamina).HasColumnName("MaxStamina");
+            });
+            e.OwnsOne(x => x.Combat, b =>
+            {
+                b.Property(c => c.AttackSpeed).HasColumnName("AttackSpeed");
+                b.Property(c => c.PotionMaxFlasks).HasColumnName("PotionMaxFlasks");
+            });
+            e.OwnsOne(x => x.Position, b =>
+            {
+                b.Property(p => p.PosX).HasColumnName("PosX");
+                b.Property(p => p.PosY).HasColumnName("PosY");
+                b.Property(p => p.LastRestPointId).HasColumnName("LastRestPointId").HasMaxLength(50);
+            });
+
             e.HasOne(x => x.Session)
                 .WithMany(s => s.Characters)
                 .HasForeignKey(x => x.SessionId)

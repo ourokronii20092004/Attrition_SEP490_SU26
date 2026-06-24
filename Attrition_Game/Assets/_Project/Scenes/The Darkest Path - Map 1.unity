@@ -180,7 +180,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5492ca1c914ef364eae4c4373bd20149, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::APIManager
-  InternalKey: 8f3c1d9e7b2a4f6c0d5e8a1b3c7f9e2d4a6b8c0e1f3a5b7c9d2e4f6a8b0c1d3e
+  baseUrl: https://attrition.io.vn/api
+  webUrl: https://attrition.io.vn
 --- !u!114 &43364781
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -196,6 +197,7 @@ MonoBehaviour:
   emailInputField: {fileID: 0}
   passwordInputField: {fileID: 0}
   loginButton: {fileID: 0}
+  googleLoginButton: {fileID: 0}
   statusText: {fileID: 0}
   loginPanel: {fileID: 0}
   lobbyPanel: {fileID: 0}
@@ -1175,7 +1177,7 @@ MonoBehaviour:
   playerPrefab:
     RawGuidValue: 231d0d7375d868a43b49c56a5920b23d
   player1Prefab:
-    RawGuidValue: 675bb2fa6f9b2b64c8464acccc6bdd9f
+    RawGuidValue: dbe5b89c4047d0042a9412d5d70f8b36
   spawnPoints:
   - {fileID: 229396525}
   fallbackEnemyPrefab:

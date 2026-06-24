@@ -40,6 +40,15 @@ public class ForumDbContext : DbContext
             e.HasKey(p => p.Id);
             e.HasIndex(p => p.ThreadId);
             e.HasIndex(p => p.ParentPostId);
+
+            e.OwnsOne(p => p.Moderation, b =>
+            {
+                b.Property(m => m.IsRemoved).HasColumnName("IsRemoved");
+                b.Property(m => m.Reason).HasColumnName("RemovedReason");
+                b.Property(m => m.ByUserId).HasColumnName("RemovedByUserId");
+                b.Property(m => m.ByName).HasColumnName("RemovedByName");
+                b.Property(m => m.At).HasColumnName("RemovedAt");
+            });
         });
 
         modelBuilder.Entity<ForumReaction>(e =>
