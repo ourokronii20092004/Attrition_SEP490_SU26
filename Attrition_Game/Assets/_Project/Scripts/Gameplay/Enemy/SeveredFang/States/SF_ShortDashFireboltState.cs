@@ -44,9 +44,13 @@ namespace Attrition.Gameplay.Enemy.SeveredFang.States
                 ai.StopMovement();
                 _fireboltSpawned = true;
 
-                // Bắn luôn theo hướng lướt ngang, không ngắm kĩ như Sheathe
-                Vector2 spawnPos = (Vector2)ai.transform.position + new Vector2(ai.AttackLockedFacingDir * 0.8f, 1f);
-                Vector2 fireDir = new Vector2(ai.AttackLockedFacingDir, 0).normalized;
+                // Spawn ngang thân boss (offset Y nhỏ), NGẮM về phía player để không bay vượt đầu.
+                Vector2 spawnPos = (Vector2)ai.transform.position + new Vector2(ai.AttackLockedFacingDir * 0.8f, 0.3f);
+                Vector2 fireDir;
+                if (ai.PlayerTarget != null)
+                    fireDir = ((Vector2)ai.PlayerTarget.position - spawnPos).normalized;
+                else
+                    fireDir = new Vector2(ai.AttackLockedFacingDir, 0f).normalized;
 
                 ai.SpawnFireBolt(spawnPos, fireDir, ai.shortDashFireboltDamage, ai.shortDashFireboltSpeed);
             }

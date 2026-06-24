@@ -31,6 +31,11 @@ namespace Attrition.Gameplay.Combat
                 if (speed > 0f) spear.speed = speed;
                 spear.Init(dir, damage, knockback, type);
             }
+
+            // Đòn nổ AoE đứng yên (FireExplosion): không bay, quét vùng tròn gây damage.
+            var aoe = obj.GetComponent<Attrition.Gameplay.Enemy.EnemyAoEDamage>();
+            if (aoe != null)
+                aoe.Init(damage, type);
         }
     }
 }

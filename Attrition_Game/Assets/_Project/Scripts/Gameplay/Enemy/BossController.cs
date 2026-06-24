@@ -30,6 +30,7 @@ namespace Attrition.Controllers
         private EnemyController _enemy;
         private EnemyStats _stats;
         private EliteEnemySkills _skills;
+        private Attrition.Gameplay.Enemy.SeveredFang.SeveredFangAI _sfAI;
         private int _maxHp;
         private bool _barShown;
         private int _lastShownHp = -1;
@@ -39,15 +40,17 @@ namespace Attrition.Controllers
             _enemy = GetComponent<EnemyController>();
             _stats = GetComponent<EnemyStats>();
             _skills = GetComponent<EliteEnemySkills>();
-            // MaxHP: ưu tiên EnemyStats.MaxHP ([Networked], đồng bộ client) vì EnemyController.maxHealth
-            // không networked → client đọc = 1, làm thanh máu boss kẹt đầy. Fallback maxHealth nếu chưa có stats.
+
+            _sfAI = GetComponent<Attrition.Gameplay.Enemy.SeveredFang.SeveredFangAI>();
+
             _maxHp = _stats != null && _stats.MaxHP > 0 ? _stats.MaxHP : Mathf.Max(1, _enemy.maxHealth);
+
 
             if (HasStateAuthority) CurrentPhase = 0;
 
-            // Hiện thanh máu boss trên máy này (qua event bus, tránh ref UI).
-            BossEvents.RaiseSpawned(bossDisplayName, _maxHp);
-            _barShown = true;
+            // KHÔNG hiện thanh máu ngay — boss có thể đặt sẵn trong scene và đứng chờ trigger.
+            // Render() sẽ hiện khi encounter thực sự bắt đầu (EncounterStarted).
+            _barShown = false;
         }
 
         public override void FixedUpdateNetwork()
@@ -79,6 +82,10 @@ namespace Attrition.Controllers
             // Cập nhật thanh máu trên mọi máy (đọc networked Health).
             if (_enemy == null) return;
 
+            // Chỉ hiện thanh máu khi encounter đã bắt đầu (player đã vào phòng kích hoạt boss).
+            // Boss đặt sẵn trong scene + chờ trigger → KHÔNG hiện thanh máu trước đó.
+            bool encounterStarted = _sfAI == null || _sfAI.EncounterStarted;
+            if (!encounterStarted) return;
             // MaxHP networked có thể tới SAU Spawned() trên client → refresh khi đã có giá trị thật,
             // tránh thanh máu boss tính theo _maxHp=1 (fallback) làm kẹt đầy.
             if (_stats != null && _stats.MaxHP > 0 && _maxHp != _stats.MaxHP)

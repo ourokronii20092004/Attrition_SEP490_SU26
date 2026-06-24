@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 6878223054791991599}
   - component: {fileID: -5986236319507781920}
   - component: {fileID: -7585572097640582254}
-  - component: {fileID: -5464147412354491438}
+  - component: {fileID: 7775648307661249717}
   m_Layer: 0
   m_Name: FireExplosion
   m_TagString: Untagged
@@ -152,9 +152,9 @@ MonoBehaviour:
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: -5986236319507781920}
-  - {fileID: -5464147412354491438}
+  - {fileID: 7775648307661249717}
   ForceRemoteRenderTimeframe: 0
---- !u!114 &-5464147412354491438
+--- !u!114 &7775648307661249717
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -163,13 +163,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 9169168764482939328}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8e9a8e912ca0577438e34a241ac792be, type: 3}
+  m_Script: {fileID: 11500000, guid: 74a99cace1041f948b8261823d6d61df, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Attrition.Gameplay::EnemyProjectile
-  speed: 10
-  lifetime: 3
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Enemy.EnemyAoEDamage
   hitLayer:
     serializedVersion: 2
     m_Bits: 128
-  hitboxRadius: 0.2
-  rotationOffset: 0
+  radius: 1.34
+  lifetime: 2
+  damageDelay: 0.05
+  knockbackForce: 4

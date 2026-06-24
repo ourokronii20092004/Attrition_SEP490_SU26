@@ -32,6 +32,13 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
         [Tooltip("Prefab đạn lửa (ném ra từ tay).")]
         [SerializeField] private NetworkPrefabRef fireBoltPrefab;
 
+        [Header("---- TARGETING (COOP) ----")]
+        [Tooltip("Coop: boss bám 1 player trong khoảng thời gian này (giây) rồi mới xét lại ai gần nhất. " +
+                 "Tránh đổi mục tiêu liên tục khi 2 player ra-vào tầm. Solo bỏ qua (chỉ 1 player).")]
+        [SerializeField] private float targetRetargetInterval = 4f;
+
+        private float _retargetCooldown;
+
         [Header("---- SKILL 1: DASH EXPLOSION ----")]
         [Tooltip("Tốc độ lướt (units/sec).")]
         public float dashSpeed = 18f;
@@ -81,6 +88,10 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
         [Networked] public TickTimer BossTimer { get; set; }
         [Networked] public TickTimer SkillCooldownTimer { get; set; }
         [Networked] public int BossPhaseIndex { get; set; }
+
+        /// <summary>Đã bắt đầu encounter chưa (player đã kích hoạt trigger). Networked → client cũng biết.
+        /// Dùng để gate thanh máu boss (chỉ hiện khi đã vào phòng đánh).</summary>
+        [Networked] public NetworkBool EncounterStarted { get; set; }
 
         // ═══════════════════════════════════════════════════════════════
         // STATE MACHINE
@@ -152,6 +163,8 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
             }
             else
             {
+                // Không cần trigger → encounter coi như bắt đầu ngay (thanh máu hiện luôn).
+                if (HasStateAuthority) EncounterStarted = true;
                 ChangeState(IdleState);
             }
         }
@@ -160,6 +173,7 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
         {
             if (!HasStateAuthority || !waitForTrigger) return;
             waitForTrigger = false;
+            EncounterStarted = true;
             ChangeState(IntroState);
         }
 
@@ -221,7 +235,53 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
         /// <summary>Tìm player gần nhất. Kết quả lưu vào PlayerTarget.</summary>
         public void DetectPlayer()
         {
-            FindPlayer();
+            // SOLO (hoặc chỉ 1 player) → dùng logic base (bám player duy nhất).
+            if (Attrition.Persistence.GameLaunch.Mode != Attrition.Persistence.LaunchMode.Coop)
+            {
+                FindPlayer();
+                return;
+            }
+
+            // COOP: bám mục tiêu hiện tại trong targetRetargetInterval giây, rồi mới xét lại AI GẦN NHẤT.
+            // Tránh đổi mục tiêu liên tục khi 2 player ra-vào tầm.
+            _retargetCooldown -= Runner.DeltaTime;
+
+            bool currentValid = playerTarget != null
+                && Vector2.Distance(transform.position, playerTarget.position) <= viewRadius * 1.05f;
+
+            // Còn trong thời gian khoá mục tiêu VÀ mục tiêu hiện tại còn hợp lệ → giữ nguyên.
+            if (currentValid && _retargetCooldown > 0f) return;
+
+            // Hết thời gian khoá (hoặc mất mục tiêu) → chọn lại player GẦN NHẤT trong tầm.
+            Transform nearest = FindNearestPlayer();
+            if (nearest != null)
+            {
+                playerTarget = nearest;
+                _retargetCooldown = targetRetargetInterval; // khoá mục tiêu mới trong N giây
+            }
+            else
+            {
+                playerTarget = null; // không còn ai trong tầm
+            }
+        }
+
+        /// <summary>Quét MỌI player còn sống trong viewRadius, trả về người GẦN boss nhất (null nếu không có).</summary>
+        private Transform FindNearestPlayer()
+        {
+            Transform best = null;
+            float bestDist = float.MaxValue;
+            foreach (var pr in Runner.ActivePlayers)
+            {
+                var pObj = Runner.GetPlayerObject(pr);
+                if (pObj == null) continue;
+                var pc = pObj.GetComponent<PlayerController>();
+                if (pc == null || pc.IsDead) continue;
+
+                float d = Vector2.Distance(transform.position, pObj.transform.position);
+                if (d > viewRadius) continue;
+                if (d < bestDist) { bestDist = d; best = pObj.transform; }
+            }
+            return best;
         }
 
         /// <summary>Cập nhật hướng nhìn về phía player.</summary>
@@ -229,7 +289,11 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
         {
             if (playerTarget == null) return;
             float xDiff = playerTarget.position.x - transform.position.x;
-            if (Mathf.Abs(xDiff) > facingDeadZone)
+            // Dead zone RỘNG cho boss (thân to): khi player đứng đè/giữa boss, xDiff dao động quanh 0
+            // → KHÔNG lật hướng (tránh boss xoay liên tục 2 bên). Chỉ đổi hướng khi player thật sự
+            // lệch hẳn sang một bên.
+            float bossDeadZone = Mathf.Max(facingDeadZone, 1.2f);
+            if (Mathf.Abs(xDiff) > bossDeadZone)
             {
                 NetFacingDir = xDiff > 0 ? 1f : -1f;
                 AttackLockedFacingDir = NetFacingDir;

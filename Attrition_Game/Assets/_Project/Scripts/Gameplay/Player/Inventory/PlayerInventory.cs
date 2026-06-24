@@ -703,6 +703,42 @@ namespace Attrition.Gameplay.Player.Inventory
         }
 
         // ═══════════════════════════════════════════
+        //  ABILITY GRANTS (double jump, shadow dash…)
+        // ═══════════════════════════════════════════
+
+        /// <summary>
+        /// Có SỞ HỮU 1 accessory dạng AbilityGrant cấp kỹ năng `ability` không?
+        /// Theo concept (AccessorySO): chỉ cần sở hữu trong túi là tự áp dụng — KHÔNG cần trang bị.
+        /// Quét cả 3 lưới túi + ô accessory đang đeo (phòng khi item nằm trong slot đeo).
+        /// </summary>
+        public bool HasAbility(GrantedAbility ability)
+        {
+            if (ability == GrantedAbility.None || _db == null) return false;
+
+            if (GridHasAbility(EquipmentSlots, ability)) return true;
+            if (GridHasAbility(AccessorySlots, ability)) return true;
+            if (GridHasAbility(MaterialSlots, ability)) return true;
+            if (SlotHasAbility(EquippedAccessory, ability)) return true;
+            return false;
+        }
+
+        private bool GridHasAbility(NetworkArray<InventorySlot> grid, GrantedAbility ability)
+        {
+            for (int i = 0; i < grid.Length; i++)
+                if (SlotHasAbility(grid.Get(i), ability)) return true;
+            return false;
+        }
+
+        private bool SlotHasAbility(InventorySlot slot, GrantedAbility ability)
+        {
+            if (slot.IsEmpty) return false;
+            var acc = _db.GetItem(slot.ItemIndex) as AccessorySO;
+            return acc != null
+                && acc.kind == AccessoryKind.AbilityGrant
+                && acc.grantedAbility == ability;
+        }
+
+        // ═══════════════════════════════════════════
         //  LOCAL SAVE / LOAD (BR-46)
         // ═══════════════════════════════════════════
 
