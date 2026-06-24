@@ -257,7 +257,9 @@ public class PlayerController : NetworkBehaviour, IDamageable
         }
 
         // --- DIALOGUE & TRANSITION LOCK: khóa di chuyển ---
-        if (HasInputAuthority && (Attrition.Persistence.DialogueState.IsActive || Attrition.Gameplay.Environment.SceneFader.IsTransitioning))
+        if (HasInputAuthority && (Attrition.Persistence.DialogueState.IsActive
+                                  || Attrition.Gameplay.Environment.SceneFader.IsTransitioning
+                                  || Attrition.Gameplay.Environment.WorldMapController.IsOpen))
         {
             rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
             IsMoving = false;

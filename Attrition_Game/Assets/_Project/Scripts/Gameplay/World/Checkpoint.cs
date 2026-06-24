@@ -56,12 +56,20 @@ namespace Attrition.Gameplay.World
             if (Attrition.Persistence.GameLaunch.IsOnline) return;
 
             var data = Attrition.Persistence.SaveManager.LoadSlot(Attrition.Persistence.GameLaunch.SelectedSlot);
-            if (data == null || string.IsNullOrEmpty(data.checkpointId)) return;
+            if (data == null) return;
 
-            if (data.checkpointId == DisplayName)
+            // Nạp toàn bộ trạng thái bản đồ (fog + mọi checkpoint đã khám phá) vào WorldMapState 1 lần.
+            Attrition.Gameplay.Environment.WorldMapState.LoadFrom(data);
+
+            // Checkpoint này đã khám phá (đã rest trước đây)? → bật beacon để fast-travel + world map thấy.
+            // Hỗ trợ CẢ list mới (discoveredCheckpoints) lẫn field cũ (checkpointId) cho save cũ.
+            bool discovered = Attrition.Gameplay.Environment.WorldMapState.IsCheckpointDiscovered(DisplayName)
+                              || data.checkpointId == DisplayName;
+            if (discovered)
             {
                 HasBeenActivated = true;
                 RespawnPosition = RestPoint;
+                Attrition.Gameplay.Environment.WorldMapState.MarkCheckpointDiscovered(DisplayName);
             }
         }
 
@@ -96,6 +104,9 @@ namespace Attrition.Gameplay.World
 
             RespawnPosition = RestPoint;
             HasBeenActivated = true;
+
+            // Đánh dấu đã khám phá (cho World Map + fast-travel cross-map nhớ qua các phiên).
+            Attrition.Gameplay.Environment.WorldMapState.MarkCheckpointDiscovered(DisplayName);
 
             // Lưu tiến trình tại mốc tới checkpoint (host/single). Solo → local JSON; online → snapshot.
             var saver = Attrition.Gameplay.Persistence.GameSaveService.EnsureExists();
@@ -142,6 +153,9 @@ namespace Attrition.Gameplay.World
 
             RespawnPosition = RestPoint;
             HasBeenActivated = true;
+
+            // Đánh dấu đã khám phá (World Map + fast-travel nhớ qua phiên).
+            Attrition.Gameplay.Environment.WorldMapState.MarkCheckpointDiscovered(DisplayName);
 
             // LƯU game SAU khi đã hồi đầy máu và bình (quan trọng: đè lên file save cũ để nhớ 100% HP)
             var saver = Attrition.Gameplay.Persistence.GameSaveService.EnsureExists();

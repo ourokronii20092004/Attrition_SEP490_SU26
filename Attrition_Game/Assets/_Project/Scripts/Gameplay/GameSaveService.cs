@@ -126,6 +126,9 @@ namespace Attrition.Gameplay.Persistence
             data.originMode = GameLaunch.Mode.ToString();
             data.lastSavedUnix = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
+            // Bản đồ tổng: ghi fog đã xua + checkpoint đã khám phá vào save (lưu vĩnh viễn).
+            Attrition.Gameplay.Environment.WorldMapState.WriteTo(data);
+
             SaveManager.SaveSlot(slot, data);
             Debug.Log($"[Save:LOCAL] slot {slot} ({evt}) Lv{data.level} HP{data.currentHP} @{data.checkpointId}");
         }

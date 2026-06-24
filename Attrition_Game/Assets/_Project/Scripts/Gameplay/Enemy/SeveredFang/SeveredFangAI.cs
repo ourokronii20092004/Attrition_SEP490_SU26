@@ -48,6 +48,8 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
         public int dashExplosionCount = 4;
         [Tooltip("Khoảng cách (giây) giữa mỗi vụ nổ trên đường lướt.")]
         public float dashExplosionInterval = 0.1f;
+        [Tooltip("Khoảng cách (units) giữa 2 vụ nổ liên tiếp — đủ rộng để player đứng né vào khe. 0 = dùng interval thời gian.")]
+        public float dashExplosionSpacing = 3f;
         [Tooltip("Sát thương mỗi vụ nổ FireExplosion.")]
         public int dashExplosionDamage = 20;
 
@@ -311,10 +313,12 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
         // HELPER — Spawn hiệu ứng / đạn
         // ═══════════════════════════════════════════════════════════════
 
-        /// <summary>Spawn FireExplosion tại vị trí chỉ định.</summary>
+        /// <summary>Spawn FireExplosion tại vị trí chỉ định. Việc HẠ XUỐNG MẶT ĐẤT do EnemyAoEDamage.Spawned()
+        /// tự xử lý (raycast trên Fusion physics scene) — tránh nổ lơ lửng do NetworkTransform ghi đè.</summary>
         public void SpawnFireExplosion(Vector2 position, int damage)
         {
             if (!HasStateAuthority || !fireExplosionPrefab.IsValid) return;
+
             Runner.Spawn(fireExplosionPrefab, position, Quaternion.identity, null, (runner, obj) =>
             {
                 Attrition.Gameplay.Combat.ProjectileInitializer.Init(

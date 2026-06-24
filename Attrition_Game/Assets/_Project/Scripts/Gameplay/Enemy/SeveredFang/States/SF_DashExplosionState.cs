@@ -15,6 +15,8 @@ namespace Attrition.Gameplay.Enemy.SeveredFang.States
         private float _elapsedTime;
         private float _nextExplosionTime;
         private bool _attackAnimPlayed;
+        private float _lastExplosionX;     // vị trí X vụ nổ gần nhất (cho chế độ theo khoảng cách)
+        private bool _hasFirstExplosion;
         
         // Cache to prevent GC alloc lag and duplicate hits
         private Collider2D[] _hitResults = new Collider2D[5];
@@ -27,6 +29,7 @@ namespace Attrition.Gameplay.Enemy.SeveredFang.States
             _elapsedTime = 0f;
             _nextExplosionTime = 0f;
             _attackAnimPlayed = false;
+            _hasFirstExplosion = false;
             ai.DashExplosionSpawned = 0;
             _hitTargets.Clear();
 
@@ -92,14 +95,28 @@ namespace Attrition.Gameplay.Enemy.SeveredFang.States
                     }
                 }
 
-                // Spawn FireExplosion theo interval
-                if (_elapsedTime >= _nextExplosionTime && ai.DashExplosionSpawned < ai.dashExplosionCount)
+                // Spawn FireExplosion — theo KHOẢNG CÁCH (để có khe trống cho player né) nếu spacing>0,
+                // ngược lại theo thời gian (interval) như cũ.
+                bool shouldSpawn;
+                if (ai.dashExplosionSpacing > 0.01f)
+                {
+                    shouldSpawn = !_hasFirstExplosion
+                        || Mathf.Abs(ai.transform.position.x - _lastExplosionX) >= ai.dashExplosionSpacing;
+                }
+                else
+                {
+                    shouldSpawn = _elapsedTime >= _nextExplosionTime;
+                }
+
+                if (shouldSpawn && ai.DashExplosionSpawned < ai.dashExplosionCount)
                 {
                     Vector2 explosionPos = (Vector2)ai.transform.position
                         + new Vector2(-ai.DashDirectionX * 0.5f, 0f); // Spawn hơi lùi phía sau
-                    ai.SpawnFireExplosion(explosionPos, ai.dashExplosionDamage);
+                    ai.SpawnFireExplosion(explosionPos, ai.dashExplosionDamage); // tự hạ xuống mặt đất
                     ai.DashExplosionSpawned++;
                     _nextExplosionTime = _elapsedTime + ai.dashExplosionInterval;
+                    _lastExplosionX = ai.transform.position.x;
+                    _hasFirstExplosion = true;
                 }
             }
             else
