@@ -34,32 +34,22 @@ public class User
     // Deletion is distinct from ban: a deleted account is anonymized/tombstoned, not punished.
     public bool IsDeleted { get; set; } = false;
     public DateTime? DeletedAt { get; set; }
-    // Pending email-confirmed deletion (PROB-4): set when the user requests deletion; cleared on
-    // confirm (→ IsDeleted) or if they change their mind. The soft-deleted account keeps its PII
-    // for a 90-day recovery window, after which a purge job tombstones it.
-    public string? DeletionConfirmToken { get; set; }
-    public DateTime? DeletionConfirmTokenExpiry { get; set; }
     public bool MustChangePassword { get; set; } = false;
-    public DateTime? LastLoginAt { get; set; }
-    public string? LastLoginIp { get; set; }
-    public int FailedLoginAttempts { get; set; } = 0;
-    public DateTime? LockoutEnd { get; set; }
-
-    // Verification & Recovery
-    public bool IsEmailVerified { get; set; } = false;
-    public string? EmailVerificationToken { get; set; }
-    public DateTime? EmailVerificationTokenExpiry { get; set; }
-    public string? PendingEmail { get; set; }
-    public string? PasswordResetToken { get; set; }
-    public DateTime? PasswordResetTokenExpiry { get; set; }
 
     // Preferences
     public bool NotifyOnReply { get; set; } = true;
     public bool NotifyOnMention { get; set; } = true;
 
-    // Tokens
-    public string? RefreshToken { get; set; }
-    public DateTime? RefreshTokenExpiresAt { get; set; }
+    // Verification & Recovery (owned value objects — stored as columns on this table)
+    public string? PendingEmail { get; set; }
+    public bool IsEmailVerified { get; set; } = false;
+    public TokenPair Refresh { get; set; } = new();
+    public TokenPair EmailVerification { get; set; } = new();
+    public TokenPair PasswordReset { get; set; } = new();
+    public TokenPair DeletionConfirm { get; set; } = new();
+
+    // Login security (owned value object)
+    public LoginSecurity Security { get; set; } = new();
 
     // Timestamps
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
