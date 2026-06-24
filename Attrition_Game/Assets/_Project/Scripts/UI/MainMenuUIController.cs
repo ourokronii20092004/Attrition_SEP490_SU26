@@ -131,6 +131,7 @@ namespace Attrition.UI
                 logoutBtn.RegisterCallback<ClickEvent>(evt =>
                 {
                     PlayClickSound();
+                    if (APIManager.Instance != null) APIManager.Instance.ClearTokens();
                     PlayerPrefs.DeleteKey("SavedUserId");
                     PlayerPrefs.Save();
                     _isLoggedIn = false;
@@ -980,12 +981,12 @@ namespace Attrition.UI
                     if (LocalAuthServer.Instance != null)
                         LocalAuthServer.Instance.StartListening();
 
-                    Application.OpenURL("http://localhost:3000/login?client=unity");
+                    Application.OpenURL(APIManager.Instance.WebLoginUrl);
                 });
             }
         }
 
-        private void HandleGoogleTokenReceived(string token)
+        private void HandleGoogleTokenReceived(string token, string refreshToken)
         {
             var loginError = _root.Q<VisualElement>("login-error");
             var errorText = _root.Q<Label>("login-error-text");
@@ -1003,7 +1004,7 @@ namespace Attrition.UI
                 apiObj.AddComponent<APIManager>();
             }
 
-            StartCoroutine(APIManager.Instance.LoginWithToken(token, (userId) => {
+            StartCoroutine(APIManager.Instance.LoginWithToken(token, refreshToken, (userId) => {
                 if (!string.IsNullOrEmpty(userId))
                 {
                     PlayerPrefs.SetString("SavedUserId", userId);
