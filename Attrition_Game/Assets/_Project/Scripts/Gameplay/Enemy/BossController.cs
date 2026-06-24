@@ -39,7 +39,9 @@ namespace Attrition.Controllers
             _enemy = GetComponent<EnemyController>();
             _stats = GetComponent<EnemyStats>();
             _skills = GetComponent<EliteEnemySkills>();
-            _maxHp = Mathf.Max(1, _enemy.maxHealth);
+            // MaxHP: ưu tiên EnemyStats.MaxHP ([Networked], đồng bộ client) vì EnemyController.maxHealth
+            // không networked → client đọc = 1, làm thanh máu boss kẹt đầy. Fallback maxHealth nếu chưa có stats.
+            _maxHp = _stats != null && _stats.MaxHP > 0 ? _stats.MaxHP : Mathf.Max(1, _enemy.maxHealth);
 
             if (HasStateAuthority) CurrentPhase = 0;
 
@@ -76,6 +78,14 @@ namespace Attrition.Controllers
         {
             // Cập nhật thanh máu trên mọi máy (đọc networked Health).
             if (_enemy == null) return;
+
+            // MaxHP networked có thể tới SAU Spawned() trên client → refresh khi đã có giá trị thật,
+            // tránh thanh máu boss tính theo _maxHp=1 (fallback) làm kẹt đầy.
+            if (_stats != null && _stats.MaxHP > 0 && _maxHp != _stats.MaxHP)
+            {
+                _maxHp = _stats.MaxHP;
+                _lastShownHp = -1; // ép phát lại HpChanged với mẫu số đúng
+            }
 
             if (!_barShown)
             {

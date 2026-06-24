@@ -350,9 +350,51 @@ namespace Attrition.Networking
 
         public void OnInput(NetworkRunner runner, NetworkInput input) { }
         public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
-        public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason) { }
+
+        // ─── Mất kết nối / host tắt phòng → client KHÔNG đứng kẹt trong scene gameplay ───
+
+        /// <summary>
+        /// Host shutdown phòng (BeginGameplay xong host Quit, hoặc host crash) → client nhận shutdown.
+        /// Đưa client về main menu thay vì kẹt lại trong scene gameplay với lỗi.
+        /// Chỉ xử lý phía CLIENT (host tự điều hướng bằng nút Quit của mình).
+        /// </summary>
+        public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
+        {
+            bool wasClient = runner != null && !runner.IsServer;
+            CleanupAndReturnToMenuIfClient(wasClient, $"shutdown ({shutdownReason})");
+        }
+
+        /// <summary>Client mất kết nối tới host (host crash / mạng đứt) → về menu.</summary>
+        public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason)
+        {
+            CleanupAndReturnToMenuIfClient(true, $"disconnected ({reason})");
+        }
+
+        private bool _returningToMenu;
+
+        private void CleanupAndReturnToMenuIfClient(bool isClient, string why)
+        {
+            // Chỉ client mới auto-về-menu. Tránh gọi 2 lần (shutdown + disconnect cùng bắn).
+            if (!isClient || _returningToMenu) return;
+            // Đang ở menu rồi (lobby join lỗi) → không điều hướng, để UI báo lỗi tại chỗ.
+            if (_phase != Phase.Gameplay) return;
+
+            _returningToMenu = true;
+            Debug.LogWarning($"[NetworkLauncher] Client mất host ({why}) → về Main Menu.");
+
+            Attrition.Persistence.CoopSession.Reset();
+            Attrition.Persistence.GameLaunch.ClearSessionInventoryCache();
+            _phase = Phase.Idle;
+            _gameplaySpawned = false;
+            Attrition.Persistence.CoopSession.HostLeftMessage =
+                "The host left the game. You've been returned to the menu.";
+
+            // Runner đã/đang tắt → chỉ cần load lại scene menu trên luồng chính.
+            UnityEngine.SceneManagement.SceneManager.LoadScene("Main_Menu_UI");
+            _returningToMenu = false;
+        }
+
         public void OnConnectedToServer(NetworkRunner runner) { }
-        public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason) { }
         public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] payload) { }
         public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason) { }
         public void OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message) { }
