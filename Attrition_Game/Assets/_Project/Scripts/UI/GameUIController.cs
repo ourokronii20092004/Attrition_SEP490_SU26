@@ -117,6 +117,7 @@ namespace Attrition.UI
             if (!_isBound) TryBindLocalPlayer();
             if (_isBound) UpdateHud();
 
+            UpdateLoadingWarmup();
             UpdateWaitingOverlay();
 
             CheckGameOver();
@@ -201,9 +202,35 @@ namespace Attrition.UI
                 RefreshCharacterPanel();
                 RefreshInventory();
 
-                // Player của máy này đã sẵn sàng → ẩn màn loading.
-                if (_overlay == Overlay.Loading) ShowOverlay(Overlay.None);
+                // Player bind xong NHƯNG tài nguyên khác (enemy networked, vật thể scene) có thể chưa
+                // sync/khởi tạo xong trên client → ẩn loading ngay sẽ thấy lag/giật + quái pop-in.
+                // Bắt đầu warmup: ẩn loading sau khi qua giai đoạn này (xem UpdateLoadingWarmup).
+                _bindTime = Time.unscaledTime;
                 break;
+            }
+        }
+
+        // Loading warmup: giữ màn loading thêm sau khi bind để client kịp sync tài nguyên + frame ổn
+        // định, tránh lag/pop-in lúc vừa vào. Solo cũng qua warmup nhưng rất nhanh (đã load tại chỗ).
+        private float _bindTime = -1f;
+        private bool _loadingHidden;
+        [Tooltip("Số giây giữ màn loading sau khi player bind, để client sync xong tài nguyên.")]
+        [SerializeField] private float loadingWarmupSeconds = 1.5f;
+
+        private void UpdateLoadingWarmup()
+        {
+            if (_loadingHidden || !_isBound || _bindTime < 0f) return;
+            if (_overlay != Overlay.Loading) { _loadingHidden = true; return; }
+
+            // Chờ đủ warmup VÀ (coop) quái đã spawn trên máy này — dấu hiệu scene gameplay đã sync.
+            bool warmedUp = Time.unscaledTime - _bindTime >= loadingWarmupSeconds;
+            bool enemiesReady = FindObjectsByType<Attrition.Controllers.EnemyController>(FindObjectsSortMode.None).Length > 0
+                                || Attrition.Persistence.GameLaunch.Mode == Attrition.Persistence.LaunchMode.Solo;
+
+            if (warmedUp && enemiesReady)
+            {
+                ShowOverlay(Overlay.None);
+                _loadingHidden = true;
             }
         }
     }
