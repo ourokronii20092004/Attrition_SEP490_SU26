@@ -28,6 +28,12 @@ public class SessionRepository : ISessionRepository
             .Include(s => s.Characters)
             .FirstOrDefaultAsync(s => s.RoomCode == roomCode);
 
+    public async Task<Guid?> GetOwnerIdAsync(Guid sessionId) =>
+        await _context.Sessions
+            .Where(s => s.Id == sessionId)
+            .Select(s => (Guid?)s.OwnerId)
+            .FirstOrDefaultAsync();
+
     public async Task<SessionEntity> AddAsync(SessionEntity session)
     {
         _context.Sessions.Add(session);

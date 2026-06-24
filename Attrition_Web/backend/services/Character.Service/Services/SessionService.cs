@@ -32,6 +32,8 @@ public class SessionService : ISessionService
         return await GetDetailAsync(session.Id);
     }
 
+    public Task<Guid?> GetOwnerIdAsync(Guid sessionId) => _repo.GetOwnerIdAsync(sessionId);
+
     public async Task<ApiResponse<SessionDetailDto>> CreateOrReopenAsync(CreateSessionRequest request)
     {
         if (request.OwnerId == Guid.Empty)
