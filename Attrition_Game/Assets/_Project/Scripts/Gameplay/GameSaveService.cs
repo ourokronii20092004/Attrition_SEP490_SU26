@@ -108,6 +108,7 @@ namespace Attrition.Gameplay.Persistence
             if (checkpointPos.HasValue)
             {
                 data.checkpointId = checkpointId ?? data.checkpointId;
+                data.checkpointScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
                 data.checkpointX = checkpointPos.Value.x;
                 data.checkpointY = checkpointPos.Value.y;
                 data.checkpointZ = checkpointPos.Value.z;

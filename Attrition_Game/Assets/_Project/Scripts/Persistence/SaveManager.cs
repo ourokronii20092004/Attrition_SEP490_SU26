@@ -37,6 +37,7 @@ namespace Attrition.Persistence
         public int currentHP;
         public int currentMana;
         public string checkpointId;       // checkpoint cuối đã rest
+        public string checkpointScene;    // scene chứa checkpoint cuối (Metroidvania: chỉ spawn tại đây nếu đúng scene)
         public float checkpointX;
         public float checkpointY;
         public float checkpointZ;
