@@ -12,6 +12,9 @@ public interface ISessionRepository
 
     Task<SessionEntity?> GetByRoomCodeAsync(string roomCode);
 
+    // Light owner lookup for the ownership guard — no Includes. Null if the room doesn't exist.
+    Task<Guid?> GetOwnerIdAsync(Guid sessionId);
+
     Task<SessionEntity> AddAsync(SessionEntity session);
     Task UpdateAsync(SessionEntity session);
 

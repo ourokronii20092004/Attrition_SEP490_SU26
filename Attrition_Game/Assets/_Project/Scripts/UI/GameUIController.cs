@@ -87,6 +87,8 @@ namespace Attrition.UI
             Attrition.Controllers.BossEvents.OnBossSpawned += ShowBossBar;
             Attrition.Controllers.BossEvents.OnBossHpChanged += UpdateBossBar;
             Attrition.Controllers.BossEvents.OnBossDespawned += HideBossBar;
+
+            HookSaveToast();
         }
 
         private void OnDisable()
@@ -105,6 +107,8 @@ namespace Attrition.UI
             Attrition.Controllers.BossEvents.OnBossSpawned -= ShowBossBar;
             Attrition.Controllers.BossEvents.OnBossHpChanged -= UpdateBossBar;
             Attrition.Controllers.BossEvents.OnBossDespawned -= HideBossBar;
+
+            UnhookSaveToast();
         }
 
         private void Update()
