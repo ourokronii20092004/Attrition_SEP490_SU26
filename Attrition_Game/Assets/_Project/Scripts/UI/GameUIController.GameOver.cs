@@ -25,16 +25,24 @@ namespace Attrition.UI
         private void CheckGameOver()
         {
             if (_gameOverShown || _overlay == Overlay.Loading) return;
-            var players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
-            if (players.Length == 0) return;
+            // Đang rời trận (Quit/back menu) → runner tắt, không xét game over nữa.
+            if (_controller == null || _controller.Object == null || !_controller.Object.Runner.IsRunning) return;
 
+            var players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+
+            // CHỈ xét player có NetworkObject hợp lệ. Khi back menu, player bị despawn (Object invalid)
+            // → nếu không lọc, vòng lặp "continue" qua hết invalid rồi rơi xuống ShowGameOver NHẦM
+            // (tưởng cả 2 chết). Phải có ÍT NHẤT 1 player valid VÀ tất cả valid đều chết mới là over.
+            int validCount = 0;
+            bool allDead = true;
             foreach (var p in players)
             {
                 if (p.Object == null || !p.Object.IsValid) continue;
-                if (!p.IsDead) return; // còn ai sống → chưa over (BR-27)
+                validCount++;
+                if (!p.IsDead) { allDead = false; break; }
             }
 
-            ShowGameOver();
+            if (validCount > 0 && allDead) ShowGameOver(); // BR-27: cả 2 (mọi player sống) đều chết
         }
 
         private void ShowGameOver()

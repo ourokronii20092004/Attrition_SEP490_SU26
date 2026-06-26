@@ -89,6 +89,7 @@ namespace Attrition.UI
             Attrition.Controllers.BossEvents.OnBossDespawned += HideBossBar;
 
             HookSaveToast();
+            Attrition.Controllers.CoopFeedbackEvents.OnTravelLoading += OnCoopTravelLoading;
         }
 
         private void OnDisable()
@@ -109,6 +110,7 @@ namespace Attrition.UI
             Attrition.Controllers.BossEvents.OnBossDespawned -= HideBossBar;
 
             UnhookSaveToast();
+            Attrition.Controllers.CoopFeedbackEvents.OnTravelLoading -= OnCoopTravelLoading;
         }
 
         private void Update()
@@ -169,7 +171,10 @@ namespace Attrition.UI
 
         private void UpdateWaitingOverlay()
         {
-            bool waiting = Attrition.Persistence.CoopSession.WaitingForPlayer;
+            // Chỉ hiện overlay Waiting khi KHÔNG có overlay nào đang mở. Nếu host mở Pause (ESC) để
+            // Quit, ẩn Waiting đi — nếu không Waiting render đè lên Pause, host bấm ESC mà không thao
+            // tác được nút nào. Waiting tự hiện lại khi host đóng Pause (vẫn còn chờ client).
+            bool waiting = Attrition.Persistence.CoopSession.WaitingForPlayer && _overlay == Overlay.None;
             if (waiting == _waitingShown) return;
             _waitingShown = waiting;
 

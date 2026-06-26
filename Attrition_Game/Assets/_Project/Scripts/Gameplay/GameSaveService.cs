@@ -147,23 +147,13 @@ namespace Attrition.Gameplay.Persistence
                 yield break;
             }
 
-            // Access token sống ngắn (15 phút) → phiên coop dài có thể hết hạn giữa chừng, làm save
-            // lúc quit bị 401 (mất tiến trình đúng lúc quan trọng). Refresh chủ động trước khi save
-            // nếu còn refresh token. Thất bại (refresh token hết hạn 7 ngày / mất mạng) → báo người
-            // chơi đăng nhập lại, KHÔNG cố save tiếp (chắc chắn 401).
+            // Access token sống ngắn (15 phút). Nếu CÒN refresh token, thử refresh CHỦ ĐỘNG để token
+            // tươi trước khi lưu (phiên dài). NHƯNG refresh fail KHÔNG được chặn save — access token
+            // hiện tại có thể vẫn sống → vẫn thử lưu bình thường. Chỉ khi chính các call lưu trả lỗi
+            // mới báo người chơi. (Tránh regression: refresh trục trặc làm chết toàn bộ save.)
             if (!string.IsNullOrEmpty(APIManager.Instance.RefreshToken))
             {
-                bool refreshed = false;
-                yield return APIManager.Instance.RefreshAccessToken(ok => refreshed = ok);
-                if (!refreshed)
-                {
-                    Debug.LogWarning("[Save:ONLINE] Refresh token hết hạn — không lưu được.");
-                    // Xóa token chết để màn menu không tưởng nhầm còn đăng nhập (access cũ vẫn nằm RAM).
-                    APIManager.Instance.ClearTokens();
-                    Attrition.Controllers.SaveNotifyEvents.RaiseSessionExpired(
-                        "Session expired. Returning to menu — please log in again.");
-                    yield break;
-                }
+                yield return APIManager.Instance.RefreshAccessToken(_ => { });
             }
 
             // Theo dõi kết quả mọi call để báo người chơi 1 lần ở cuối (tránh spam toast mỗi player).

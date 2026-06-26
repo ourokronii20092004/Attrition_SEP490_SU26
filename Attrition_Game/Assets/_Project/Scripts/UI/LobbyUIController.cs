@@ -146,14 +146,10 @@ namespace Attrition.UI
 
         private void FillLocalPlayerCard(string nameElement, string levelElement)
         {
+            // Tên/level từ GameLaunch (character server đã chọn), KHÔNG đọc save slot LOCAL: ParrelSync
+            // 2 clone chung thư mục save → cùng slot → cùng tên. Coop character nằm trên server.
             string charName = string.IsNullOrEmpty(GameLaunch.CharacterName) ? "Wanderer" : GameLaunch.CharacterName;
-            int level = 1;
-            var slot = SaveManager.LoadSlot(GameLaunch.SelectedSlot);
-            if (slot != null)
-            {
-                if (!string.IsNullOrEmpty(slot.characterName)) charName = slot.characterName;
-                level = Mathf.Max(1, slot.level);
-            }
+            int level = Mathf.Max(1, GameLaunch.CharacterLevel);
             SetText(nameElement, charName);
             SetText(levelElement, $"LEVEL {level}");
 

@@ -1175,6 +1175,7 @@ namespace Attrition.UI
             if (slot != null && !string.IsNullOrEmpty(slot.characterName)) playerName = slot.characterName;
             if (string.IsNullOrEmpty(playerName) && APIManager.Instance != null) playerName = APIManager.Instance.Username;
             if (!string.IsNullOrEmpty(playerName)) GameLaunch.CharacterName = playerName;
+            GameLaunch.CharacterLevel = slot != null ? Mathf.Max(1, slot.level) : 1;
         }
 
         /// <summary>

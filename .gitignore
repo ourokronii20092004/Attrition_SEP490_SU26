@@ -150,3 +150,10 @@ uploads/
 # Vercel
 # =============================================
 .vercel
+
+# =============================================
+# ParrelSync clones (test coop nhieu acc 1 may)
+# =============================================
+Attrition_Game_clone_*/
+*_clone_*/
+.ParrelSyncArguments
