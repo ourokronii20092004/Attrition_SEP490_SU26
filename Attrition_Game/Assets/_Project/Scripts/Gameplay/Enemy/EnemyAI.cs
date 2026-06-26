@@ -190,6 +190,11 @@ public class EnemyAI : NetworkBehaviour
         statsComp = GetComponent<EnemyStats>();
         startPosition = transform.position;
 
+        // Client physics = ForwardOnly (đặt ở NetworkLauncher) → Fusion muốn DỰ ĐOÁN physics của
+        // enemy trên client. Nếu object không được đánh dấu IsSimulated, Fusion spam cảnh báo mỗi
+        // frame + enemy giật trên client. Đánh dấu để client simulate mượt (host vẫn là nguồn chân lý).
+        if (Object != null) Runner.SetIsSimulated(Object, true);
+
         // Tính vị trí ngủ
         if (enableSleep)
         {

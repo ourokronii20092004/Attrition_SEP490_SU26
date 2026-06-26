@@ -155,6 +155,18 @@ namespace Attrition.Gameplay.Player.Inventory
             }
 
             SeedStartingItems(); // chỉ seed nếu túi vẫn trống sau khi nạp từ session
+
+            // Spawn ĐÚNG checkpoint đã lưu của session: host (StateAuthority trên player này) teleport
+            // tới vị trí rest đã lưu nếu thuộc scene hiện tại. Làm SAU EnsureSessionLoaded để chắc
+            // chắn cache vị trí đã có. Chưa rest / scene khác → giữ nguyên spawnPoint mặc định.
+            if (HasStateAuthority && !string.IsNullOrEmpty(charId)
+                && Attrition.Persistence.GameLaunch.SessionRestPosByChar.TryGetValue(charId, out var rest)
+                && rest.scene == UnityEngine.SceneManagement.SceneManager.GetActiveScene().name
+                && (rest.x != 0f || rest.y != 0f))
+            {
+                var pc = GetComponent<PlayerController>();
+                if (pc != null) pc.TeleportTo(new Vector3(rest.x, rest.y, 0f));
+            }
         }
 
         /// <summary>
@@ -186,6 +198,9 @@ namespace Attrition.Gameplay.Player.Inventory
                         {
                             if (cs == null || string.IsNullOrEmpty(cs.characterId)) continue;
                             Attrition.Persistence.GameLaunch.SessionInventoryByChar[cs.characterId] = cs.inventoryJson;
+                            // Cache vị trí rest đã lưu (theo scene của room) để spawn đúng checkpoint.
+                            Attrition.Persistence.GameLaunch.SessionRestPosByChar[cs.characterId] =
+                                (cs.posX, cs.posY, detail.currentScene);
                         }
                     }
 

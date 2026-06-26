@@ -145,6 +145,12 @@ public class PlayerController : NetworkBehaviour, IDamageable
         if (rb == null) rb = GetComponent<Rigidbody2D>();
         if (playerCollider == null) playerCollider = GetComponent<Collider2D>();
 
+        // Client physics = ForwardOnly. Player của CHÍNH client (InputAuthority) cần được simulate để
+        // di chuyển/nhảy PREDICT mượt — nếu không, vị trí chỉ nội suy từ snapshot host (~30Hz), camera
+        // follow sẽ giật khi nhảy (vận tốc Y đổi nhanh). Đánh dấu simulate cho mọi peer điều khiển nó.
+        if (Object != null && (HasInputAuthority || HasStateAuthority))
+            Runner.SetIsSimulated(Object, true);
+
         // Tắt va chạm vật lý giữa Player và Enemy để Player đi xuyên qua được
         // CHỈ dùng Collider-based (không dùng IgnoreLayerCollision vì nó chặn cả trigger → ContactDamage không hoạt động)
         IgnoreAllEnemyColliders();
@@ -626,6 +632,15 @@ public class PlayerController : NetworkBehaviour, IDamageable
     {
         var players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
         foreach (var p in players) p.TeleportTo(destination);
+        // Báo CẢ HAI máy hiện thanh load (người không bấm cũng bị teleport → tránh giật, không loading).
+        RpcTravelLoading();
+    }
+
+    /// <summary>Host báo mọi peer hiện thanh load fast-travel đồng bộ.</summary>
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RpcTravelLoading()
+    {
+        Attrition.Controllers.CoopFeedbackEvents.RaiseTravelLoading("Travelling...");
     }
 
     /// <summary>Resume sau Game Over: host hồi sinh mọi player tại checkpoint đã kích hoạt + reset quái.</summary>

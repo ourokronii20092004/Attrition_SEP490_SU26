@@ -351,7 +351,10 @@ MonoBehaviour:
   reviveDelaySeconds: 5
   deathClipName: 
   despawnFallback: 1.5
-  lootItemIds: []
+  lootItemIds:
+  - leather_boots
+  - leather_chest
+  - leather_helm
   normalDropChance: 0.35
   droppedItemPrefab:
     RawGuidValue: 00000000000000000000000000000000
@@ -364,6 +367,8 @@ MonoBehaviour:
   _IsKnockbackActive:
     _value: 0
   _IsAwaitingRevive:
+    _value: 0
+  _HoldDespawn:
     _value: 0
   maxHealth: 10
   statsComp: {fileID: 0}
