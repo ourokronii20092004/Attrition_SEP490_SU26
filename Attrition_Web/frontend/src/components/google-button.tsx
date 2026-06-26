@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/providers";
 import { Button } from "@/components/ui/button";
 import { GOOGLE_CLIENT_ID } from "@/lib/config";
 import { ApiError } from "@/lib/api/client";
+
+const UNITY_CLIENT_KEY = "attrition_unity_client";
 
 function tryParseError(body: string): string {
   try {
@@ -27,6 +29,22 @@ export function GoogleButton({ label = "Continue with Google" }: { label?: strin
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Game mở web với ?client=unity. Lưu cờ này NGAY khi trang load — không đọc searchParams trong
+  // callback GSI (closure có thể stale, hoặc query bị GSI/điều hướng làm rớt → mất ý định "về game").
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (new URLSearchParams(window.location.search).get("client") === "unity") {
+      sessionStorage.setItem(UNITY_CLIENT_KEY, "1");
+    }
+  }, []);
+
+  const isUnityClient = () => {
+    if (searchParams.get("client") === "unity") return true;
+    if (typeof window === "undefined") return false;
+    if (new URLSearchParams(window.location.search).get("client") === "unity") return true;
+    return sessionStorage.getItem(UNITY_CLIENT_KEY) === "1";
+  };
+
   const handleGoogle = () => {
     if (!GOOGLE_CLIENT_ID || typeof window === "undefined") return;
     const google = (window as unknown as { google?: any }).google;
@@ -38,11 +56,11 @@ export function GoogleButton({ label = "Continue with Google" }: { label?: strin
         setLoading(true);
         try {
           const authData = await loginWithGoogle(response.credential);
-          const isUnityClient = searchParams.get("client") === "unity";
-          
-          if (isUnityClient && authData?.accessToken) {
+
+          if (isUnityClient() && authData?.accessToken) {
             // Gửi cả refresh token về game (localhost:52000) để host login Google cũng persist
             // được phiên như login email/password — tránh phải đăng nhập lại sau 15 phút.
+            sessionStorage.removeItem(UNITY_CLIENT_KEY);
             const params = new URLSearchParams({ token: authData.accessToken });
             if (authData.refreshToken) params.set("refresh", authData.refreshToken);
             window.location.href = `http://localhost:52000/?${params.toString()}`;
