@@ -123,6 +123,8 @@ namespace Attrition.Gameplay.World
             if (AnyEnemyAggressive()) return false;
 
             // 1) Hồi đầy + refill bình + DỊCH CHUYỂN mọi player về điểm rest.
+            // Loading "Resting..." bắn về CẢ HAI máy ngay khi rest hợp lệ (trước teleport) để không giật.
+            RpcRestTeleportLoading();
             foreach (var pc in FindObjectsByType<PlayerController>(FindObjectsSortMode.None))
             {
                 if (pc == null) continue;
@@ -175,7 +177,16 @@ namespace Attrition.Gameplay.World
         [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
         private void RpcOnRested()
         {
+            // Dùng chung cho CẢ F (activate+save) lẫn nút Rest → chỉ bật beacon, KHÔNG hiện loading.
+            // Loading "Resting..." chỉ bắn riêng từ DoRest (nút Rest thật) qua RpcRestTeleportLoading.
             if (activeVisual != null) activeVisual.SetActive(true);
+        }
+
+        /// <summary>Chỉ nút REST (DoRest) bắn: mọi máy hiện thanh load "Resting..." + sắp bị teleport.</summary>
+        [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+        private void RpcRestTeleportLoading()
+        {
+            Attrition.Controllers.CoopFeedbackEvents.RaiseTravelLoading("Resting...");
         }
     }
 }

@@ -95,16 +95,30 @@ public class EnemyAnimation : NetworkBehaviour
 
     public void UpdateSpeed(float speed)
     {
-        if (anim != null) anim.SetFloat("Speed", speed);
+        if (anim != null && HasParam("Speed")) anim.SetFloat("Speed", speed);
     }
 
     public void UpdateAirState(float velocityY, bool isGrounded)
     {
-        if (anim != null)
+        if (anim == null) return;
+        // Nhiều quái KHÔNG có param bay (VelocityY/IsGrounded) → SetFloat/SetBool sẽ spam log lỗi
+        // mỗi Render frame (gây giật). Chỉ set khi animator THẬT SỰ có param đó. try/catch không
+        // chặn được vì Unity log trước khi ném.
+        if (HasParam("VelocityY")) anim.SetFloat("VelocityY", velocityY);
+        if (HasParam("IsGrounded")) anim.SetBool("IsGrounded", isGrounded);
+    }
+
+    // Cache tên param của animator để tránh set param không tồn tại (spam log + tốn hiệu năng).
+    private System.Collections.Generic.HashSet<string> _params;
+    private bool HasParam(string name)
+    {
+        if (anim == null) return false;
+        if (_params == null)
         {
-            try { anim.SetFloat("VelocityY", velocityY); } catch { }
-            try { anim.SetBool("IsGrounded", isGrounded); } catch { }
+            _params = new System.Collections.Generic.HashSet<string>();
+            foreach (var p in anim.parameters) _params.Add(p.name);
         }
+        return _params.Contains(name);
     }
 
     public void FaceDirection(float dirX)

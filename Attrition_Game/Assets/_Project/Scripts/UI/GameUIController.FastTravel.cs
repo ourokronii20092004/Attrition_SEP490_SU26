@@ -177,7 +177,9 @@ namespace Attrition.UI
             if (_controller == null) return;
             _controller.RequestRestAtCheckpoint();
             ShowOverlay(Overlay.None);
-            StartCoroutine(FastTravelLoadingRoutine("Resting..."));
+            // KHÔNG chạy loading local ở đây: host bắn CoopFeedbackEvents.OnTravelLoading về CẢ HAI máy
+            // (kể cả máy này) khi rest thành công → OnCoopTravelLoading lo thanh load đồng bộ. Chạy ở
+            // đây nữa sẽ double trên máy bấm, và rest có thể bị từ chối (còn quái) mà vẫn hiện loading.
         }
 
         private void OpenTravelMenu()
@@ -232,9 +234,15 @@ namespace Attrition.UI
         private void TeleportToSelected()
         {
             if (_ftSelected == null || _controller == null) return;
-            string dest = _ftSelected.DisplayName;
             _controller.RpcRequestFastTravel(_ftSelected.RespawnPosition);
-            StartCoroutine(FastTravelLoadingRoutine(dest));
+            ShowOverlay(Overlay.None);
+            // Loading do host bắn về cả 2 máy (OnCoopTravelLoading), không chạy local ở đây.
+        }
+
+        /// <summary>Host bắn event này về MỌI máy khi rest/fast-travel thành công → thanh load đồng bộ.</summary>
+        private void OnCoopTravelLoading(string label)
+        {
+            StartCoroutine(FastTravelLoadingRoutine(label));
         }
 
         private System.Collections.IEnumerator FastTravelLoadingRoutine(string dest)
