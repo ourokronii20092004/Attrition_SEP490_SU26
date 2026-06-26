@@ -26,18 +26,14 @@ namespace Attrition.Networking
         {
             if (!HasInputAuthority) return; // chỉ chủ sở hữu local gửi identity của mình
 
-            // Tên hiển thị lobby = TÊN NHÂN VẬT của save slot người chơi đặt (không phải username account).
-            int level = 1;
-            string name = null;
-            var slot = Attrition.Persistence.SaveManager.LoadSlot(Attrition.Persistence.GameLaunch.SelectedSlot);
-            if (slot != null)
-            {
-                level = Mathf.Max(1, slot.level);
-                if (!string.IsNullOrEmpty(slot.characterName)) name = slot.characterName;
-            }
-            if (string.IsNullOrEmpty(name)) name = Attrition.Persistence.GameLaunch.CharacterName;
+            // Tên hiển thị lobby = TÊN NHÂN VẬT đã chọn cho coop (GameLaunch.CharacterName, set từ
+            // character server lúc chọn slot). KHÔNG đọc save slot LOCAL: ParrelSync 2 clone chung
+            // thư mục save → cùng slot → cùng tên. Coop character nằm trên server, mỗi peer có tên riêng.
+            string name = Attrition.Persistence.GameLaunch.CharacterName;
             if (string.IsNullOrEmpty(name)) name = "Wanderer";
             if (name.Length > 16) name = name.Substring(0, 16);
+
+            int level = Mathf.Max(1, Attrition.Persistence.GameLaunch.CharacterLevel);
 
             if (HasStateAuthority)
             {

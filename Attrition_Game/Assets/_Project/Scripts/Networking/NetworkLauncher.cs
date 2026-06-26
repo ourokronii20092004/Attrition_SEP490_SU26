@@ -271,19 +271,15 @@ namespace Attrition.Networking
                 if (newObj != null)
                 {
                     _runner.SetPlayerObject(player, newObj);
-                    Debug.Log($"[NetworkLauncher] Spawn LobbyPlayer OK cho {player}");
                 }
-                else if (!_spawnAttempted)
-                {
-                    Debug.LogError($"[NetworkLauncher] Spawn trả về null cho {player}. Có thể Prefab chưa được đăng ký trong Fusion.");
-                    _spawnAttempted = true;
-                }
+                // null = sai simulation phase (gọi từ Update) → KHÔNG log lỗi: callback OnPlayerJoined
+                // hoặc Update frame sau sẽ retry thành công. Chỉ là timing bình thường của Fusion 2.
             }
             catch (System.Exception ex)
             {
                 if (!_spawnAttempted)
                 {
-                    Debug.LogError($"[NetworkLauncher] Exception khi spawn: {ex}");
+                    Debug.LogError($"[NetworkLauncher] Exception khi spawn LobbyPlayer: {ex.Message}");
                     _spawnAttempted = true;
                 }
             }
@@ -376,16 +372,19 @@ namespace Attrition.Networking
         {
             // Chỉ client mới auto-về-menu. Tránh gọi 2 lần (shutdown + disconnect cùng bắn).
             if (!isClient || _returningToMenu) return;
-            // Đang ở menu rồi (lobby join lỗi) → không điều hướng, để UI báo lỗi tại chỗ.
-            if (_phase != Phase.Gameplay) return;
+            // Mất host ở BẤT KỲ phiên coop nào — phòng chờ (Lobby) HOẶC trong game (Gameplay). Idle =
+            // chưa vào phiên (đang ở menu) → để UI báo lỗi tại chỗ, không điều hướng.
+            if (_phase != Phase.Gameplay && _phase != Phase.Lobby) return;
 
             _returningToMenu = true;
             Debug.LogWarning($"[NetworkLauncher] Client mất host ({why}) → về Main Menu.");
 
             Attrition.Persistence.CoopSession.Reset();
             Attrition.Persistence.GameLaunch.ClearSessionInventoryCache();
+            Attrition.Persistence.GamePause.IsPaused = false;
             _phase = Phase.Idle;
             _gameplaySpawned = false;
+            _starting = false;
             Attrition.Persistence.CoopSession.HostLeftMessage =
                 "The host left the game. You've been returned to the menu.";
 

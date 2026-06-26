@@ -25,8 +25,10 @@ namespace Attrition.Persistence
         public static string OwnerId = "";
         /// <summary>CharacterId trên server (nếu đã có). Rỗng = server tự resolve theo (owner, name).</summary>
         public static string CharacterId = "";
-        /// <summary>Tên nhân vật đang chơi (dùng cho snapshot online + hiển thị).</summary>
+        /// <summary>Tên nhân vật đang chơi (dùng cho snapshot online + hiển thị). Coop: tên CHARACTER server.</summary>
         public static string CharacterName = "";
+        /// <summary>Level nhân vật đang chọn (hiển thị thẻ lobby coop). 0 = chưa biết → mặc định 1.</summary>
+        public static int CharacterLevel = 1;
         /// <summary>Mã phòng coop hiện tại (đính kèm snapshot online).</summary>
         public static string RoomCode = "";
         /// <summary>
@@ -56,6 +58,14 @@ namespace Attrition.Persistence
         public static readonly System.Collections.Generic.Dictionary<string, string> SessionInventoryByChar
             = new System.Collections.Generic.Dictionary<string, string>();
 
+        /// <summary>
+        /// Vị trí rest đã lưu của mỗi nhân vật trong SESSION (host fetch khi vào game): characterId →
+        /// (posX, posY, scene). NetworkSpawner đọc để spawn coop ĐÚNG checkpoint đã lưu thay vì điểm
+        /// gốc. Không có key / scene khác = chưa rest trong scene này → dùng spawnPoint mặc định.
+        /// </summary>
+        public static readonly System.Collections.Generic.Dictionary<string, (float x, float y, string scene)> SessionRestPosByChar
+            = new System.Collections.Generic.Dictionary<string, (float, float, string)>();
+
         /// <summary>True khi MỘT PlayerInventory đã bắt đầu fetch session (chặn fetch trùng).</summary>
         public static bool SessionInventoryFetchStarted = false;
 
@@ -66,6 +76,7 @@ namespace Attrition.Persistence
         public static void ClearSessionInventoryCache()
         {
             SessionInventoryByChar.Clear();
+            SessionRestPosByChar.Clear();
             SessionInventoryFetchStarted = false;
             SessionInventoryLoaded = false;
             CoopQuestsJson = "";
