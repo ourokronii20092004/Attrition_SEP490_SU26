@@ -22,6 +22,15 @@ namespace Attrition.Gameplay.Environment
         [Tooltip("Mượt hoá chuyển (0 = bám Y tức thì, lớn hơn = trễ mượt). Đơn vị: tốc độ alpha/giây.")]
         [SerializeField] private float smoothSpeed = 6f;
 
+        [Header("---- PHẠM VI ROOM (tùy chọn) ----")]
+        [Tooltip("TOÀN SCENE: cả map chia 2 tầng theo Y (dưới underY = hầm, trên surfaceY = mặt đất). " +
+                 "Bật cái này → CHỈ CẦN 1 component cho cả scene, áp background theo Y ở MỌI NƠI " +
+                 "(teleport/đi tới room nào cũng đúng). Bỏ qua roomBounds + dải X.")]
+        [SerializeField] private bool wholeScene = true;
+        [Tooltip("(Chỉ khi TẮT wholeScene) Collider phủ CẢ ROOM mà background này áp dụng. " +
+                 "Bỏ trống = dùng dải X của collider vùng chuyển tiếp.")]
+        [SerializeField] private Collider2D roomBounds;
+
         [Header("---- MỐC ĐỘ CAO (Y world-space) ----")]
         [Tooltip("Đặt 2 mốc Y RÕ RÀNG thay vì dùng cạnh collider. Bật để fade chuẩn 0↔1.\n" +
                  "TẮT = dùng đáy/đỉnh collider (dễ lệch nếu nền đất không trùng đáy collider).")]
@@ -34,6 +43,7 @@ namespace Attrition.Gameplay.Environment
         private Collider2D _zone;
         private Transform _localPlayer;
         private float _blend; // 0 = hoàn toàn Under, 1 = hoàn toàn Surface
+        private bool _initialSnapped;  // đã chốt blend ban đầu theo player thật chưa
 
         private void Awake()
         {
@@ -41,24 +51,26 @@ namespace Attrition.Gameplay.Environment
             _zone.isTrigger = true;
         }
 
-        private void OnTriggerEnter2D(Collider2D other)
-        {
-            if (!other.CompareTag("Player")) return;
-            var pc = other.GetComponentInParent<PlayerController>();
-            if (pc == null || !pc.HasInputAuthority) return; // chỉ player local
-            _localPlayer = pc.transform;
-            if (backgroundUnder != null) backgroundUnder.SetActive(true);
-            if (backgroundSurface != null) backgroundSurface.SetActive(true);
-        }
-
         private void Start()
         {
-            // Khởi tạo NGAY theo vị trí Y thật của player (player có thể spawn TRÊN MẶT ĐẤT, ngoài vùng
-            // trigger → trước đây _blend=0 nên hiện nhầm Under). Tìm local player + chốt blend đúng từ đầu.
             TryFindLocalPlayer();
-            _blend = ComputeTargetBlend();
-            if (backgroundUnder != null) backgroundUnder.SetActive(true);
-            if (backgroundSurface != null) backgroundSurface.SetActive(true);
+            InitialSnapIfReady();
+        }
+
+        // Chốt blend ban đầu theo VỊ TRÍ Y THẬT của player (dù trong hay ngoài vùng), 1 lần khi đã có
+        // player → load ở mặt đất hiện surface, ở dưới hiện under. Player networked có thể spawn muộn
+        // nên gọi lại trong LateUpdate tới khi thành công.
+        private void InitialSnapIfReady()
+        {
+            if (_initialSnapped || _localPlayer == null) return;
+            // Mới vào game: chỉ chốt khi player THUỘC phạm vi room này (tránh áp background room này khi
+            // player đang ở room khác). Ngoài scope → chờ, snap khi player vào (qua LateUpdate).
+            if (!PlayerInScope()) { _initialSnapped = true; return; }
+            float t = ComputeTargetBlend();
+            _blend = t >= 0.5f ? 1f : 0f;
+            ApplyAlpha(backgroundUnder, 1f - _blend);
+            ApplyAlpha(backgroundSurface, _blend);
+            _initialSnapped = true;
         }
 
         private void TryFindLocalPlayer()
@@ -70,10 +82,31 @@ namespace Attrition.Gameplay.Environment
             }
         }
 
+        // CHỈ tác động khi player local nằm trong DẢI X của vùng (cùng "cột" với khu này) — bất kể Y.
+        // Như vậy: teleport lên mặt đất (cùng X, Y cao) vẫn đổi đúng; sang room khác (khác X) thì không.
+        // Player có thuộc PHẠM VI background này không?
+        //  - Có roomBounds → player nằm trong room đó (X+Y) → áp dụng (teleport tới đâu trong room cũng đúng).
+        //  - Không → fallback: cùng DẢI X của vùng chuyển tiếp nhỏ.
+        private bool PlayerInScope()
+        {
+            if (_localPlayer == null) return false;
+            if (wholeScene) return true;                 // toàn scene: áp theo Y ở mọi nơi
+            if (roomBounds != null)
+                return roomBounds.OverlapPoint(_localPlayer.position);
+            if (_zone == null) return false;
+            var b = _zone.bounds;
+            float x = _localPlayer.position.x;
+            return x >= b.min.x && x <= b.max.x;
+        }
+
         private void LateUpdate()
         {
-            // Luôn bám player local (kể cả khi chưa từng vào trigger) → blend chuẩn theo độ cao ngay từ đầu.
             TryFindLocalPlayer();
+            if (!_initialSnapped) { InitialSnapIfReady(); return; } // chờ player spawn để chốt đúng tầng
+
+            // Chỉ xử lý khi player thuộc phạm vi background này. Ngoài → không đụng (room/khu khác lo).
+            if (!PlayerInScope()) return;
+
             float target = ComputeTargetBlend();
             _blend = smoothSpeed > 0.01f
                 ? Mathf.MoveTowards(_blend, target, smoothSpeed * Time.deltaTime)
