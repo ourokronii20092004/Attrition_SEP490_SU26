@@ -17,11 +17,18 @@ namespace Attrition.Gameplay.Environment
     /// </summary>
     public class WorldMapController : MonoBehaviour
     {
+        [Header("---- ICON (tùy chọn, bỏ trống = tự sinh hình tròn) ----")]
+        [Tooltip("Sprite điểm Teleport (checkpoint) trên map. Bỏ trống = chấm tròn vàng tự vẽ.")]
+        [SerializeField] private Sprite teleIcon;
+        [Tooltip("Sprite ĐẦU player hiện trên map. Bỏ trống = chấm tròn trắng tự vẽ.")]
+        [SerializeField] private Sprite playerIcon;
+
         // px hiển thị cho mỗi 1 world-unit ở zoom = 1. Toàn bộ map-space nhân hệ số này.
         private const float PixelsPerUnit = 3f;
         // Dải cuộn cho phép quanh mức "15 ô" (baseZoom): thu nhỏ tối đa 0.6×, phóng to tối đa 2×.
         private const float ZoomOutLimit = 0.6f, ZoomInLimit = 2f;
         private float _baseZoom = 1f;   // mức zoom chuẩn (thấy ~15 ô/bên), tính trong CenterOnPlayer
+        private static Sprite _circleSprite;  // hình tròn tự sinh (cache) dùng khi không gán icon
 
         private Canvas _canvas;
         private GameObject _panel;
@@ -273,15 +280,54 @@ namespace Attrition.Gameplay.Environment
         private Texture2D BuildFogTexture(MapDataSO map)
         {
             var grid = map.FogGridSize();
-            var tex = new Texture2D(grid.x, grid.y, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point };
-            var px = new Color[grid.x * grid.y];
-            Color fog = new Color(0.22f, 0.22f, 0.26f, 1f);   // XÁM ĐỤC che HẲN cấu trúc chỗ chưa đi
-            for (int y = 0; y < grid.y; y++)
-                for (int x = 0; x < grid.x; x++)
-                    px[y * grid.x + x] = WorldMapState.IsFogVisited(map.sceneName, x, y) ? Color.clear : fog;
+            // Upscale: mỗi ô fog = SUPER pixel → có chỗ để blur cho mép mượt (không còn ô vuông sắc).
+            const int SUPER = 6;
+            int w = grid.x * SUPER, h = grid.y * SUPER;
+
+            // 1) Alpha thô theo ô: chưa đi = 1 (che), đã đi = 0 (rõ). Trải đều ra super-grid.
+            float[] a = new float[w * h];
+            for (int gy = 0; gy < grid.y; gy++)
+                for (int gx = 0; gx < grid.x; gx++)
+                {
+                    float v = WorldMapState.IsFogVisited(map.sceneName, gx, gy) ? 0f : 1f;
+                    for (int iy = 0; iy < SUPER; iy++)
+                        for (int ix = 0; ix < SUPER; ix++)
+                            a[(gy * SUPER + iy) * w + (gx * SUPER + ix)] = v;
+                }
+
+            // 2) Box blur vài lần → mép sương chuyển mềm thay vì cạnh vuông.
+            a = BoxBlur(a, w, h, 2);
+            a = BoxBlur(a, w, h, 2);
+
+            // 3) Đổ màu xám đục, alpha theo giá trị đã blur.
+            var tex = new Texture2D(w, h, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear };
+            var px = new Color[w * h];
+            Color fog = new Color(0.22f, 0.22f, 0.26f, 1f);
+            for (int i = 0; i < px.Length; i++)
+                px[i] = new Color(fog.r, fog.g, fog.b, a[i]);
             tex.SetPixels(px);
             tex.Apply();
             return tex;
+        }
+
+        // Box blur ngang+dọc bán kính r (lấy trung bình lân cận) — làm mềm mép sương.
+        private static float[] BoxBlur(float[] src, int w, int h, int r)
+        {
+            var dst = new float[w * h];
+            for (int y = 0; y < h; y++)
+                for (int x = 0; x < w; x++)
+                {
+                    float sum = 0f; int n = 0;
+                    for (int dy = -r; dy <= r; dy++)
+                        for (int dx = -r; dx <= r; dx++)
+                        {
+                            int nx = x + dx, ny = y + dy;
+                            if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+                            sum += src[ny * w + nx]; n++;
+                        }
+                    dst[y * w + x] = n > 0 ? sum / n : src[y * w + x];
+                }
+            return dst;
         }
 
         private void DrawMarker(MapDataSO map, MapDataSO.CheckpointMarker cp)
@@ -294,9 +340,10 @@ namespace Attrition.Gameplay.Environment
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
             rt.pivot = new Vector2(0.5f, 0.5f);
             rt.anchoredPosition = MapToContent(map, cp.worldPos);
-            rt.sizeDelta = new Vector2(14, 14);
+            rt.sizeDelta = new Vector2(20, 20);
             var img = mk.AddComponent<Image>();
-            img.color = new Color(1f, 0.8f, 0.2f, 1f);
+            img.sprite = teleIcon != null ? teleIcon : CircleSprite();
+            img.color = teleIcon != null ? Color.white : new Color(1f, 0.78f, 0.2f, 1f); // vàng nếu dùng chấm mặc định
             _constantScale.Add(mk);   // giữ kích thước màn hình không đổi khi zoom
 
             var capCp = cp; var capMap = map;
@@ -320,12 +367,23 @@ namespace Attrition.Gameplay.Environment
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
             rt.pivot = new Vector2(0.5f, 0.5f);
             rt.anchoredPosition = MapToContent(map, player.position);
-            rt.sizeDelta = new Vector2(18, 18);
+            rt.sizeDelta = new Vector2(26, 26);
             var img = dotGo.AddComponent<Image>();
+            // Ưu tiên playerIcon gán Inspector → nếu trống, lấy SPRITE ĐẦU của player (SpriteRenderer) →
+            // cuối cùng chấm tròn trắng tự sinh.
+            Sprite head = playerIcon != null ? playerIcon : GetPlayerSprite(player);
+            img.sprite = head != null ? head : CircleSprite();
             img.color = Color.white; img.raycastTarget = false;
+            img.preserveAspect = true;
             _playerDot = rt;
             _spawned.Add(dotGo);
             _constantScale.Add(dotGo);   // chấm player giữ kích thước màn hình khi zoom
+        }
+
+        private static Sprite GetPlayerSprite(Transform player)
+        {
+            var sr = player.GetComponentInChildren<SpriteRenderer>();
+            return sr != null ? sr.sprite : null;
         }
 
         private void SelectMarker(MapDataSO map, MapDataSO.CheckpointMarker cp)
@@ -365,28 +423,63 @@ namespace Attrition.Gameplay.Environment
             return null;
         }
 
+        // Hình tròn mềm tự sinh (anti-alias mép) — dùng cho marker/player khi không gán icon.
+        private static Sprite CircleSprite()
+        {
+            if (_circleSprite != null) return _circleSprite;
+            const int S = 64; float r = S * 0.5f;
+            var tex = new Texture2D(S, S, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear };
+            var px = new Color[S * S];
+            for (int y = 0; y < S; y++)
+                for (int x = 0; x < S; x++)
+                {
+                    float d = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(r, r));
+                    float a = Mathf.Clamp01((r - d) / 1.5f); // mép mượt 1.5px
+                    px[y * S + x] = new Color(1f, 1f, 1f, a);
+                }
+            tex.SetPixels(px); tex.Apply();
+            _circleSprite = Sprite.Create(tex, new Rect(0, 0, S, S), new Vector2(0.5f, 0.5f));
+            return _circleSprite;
+        }
+
         // ─────────────── TRAVEL (solo + coop) ───────────────
         private void DoTravel()
         {
-            if (_selected == null || _selectedMap == null) return;
+            if (_selected == null || _selectedMap == null)
+            {
+                Debug.LogWarning("[WorldMap] TRAVEL: chưa chọn checkpoint nào.");
+                return;
+            }
             var cp = _selected.Value;
-            string targetScene = _selectedMap.sceneName;
-            string currentScene = SceneManager.GetActiveScene().name;
             SetOpen(false);
 
-            if (targetScene == currentScene)
+            // ROBUST: nếu checkpoint đích THỰC SỰ tồn tại trong scene đang chạy (khớp DisplayName) →
+            // teleport CÙNG SCENE, bất kể chuỗi sceneName trong MapData có khớp hay không (tránh bug
+            // tên scene lệch khiến travel cùng-scene bị hiểu nhầm là cross-scene → reload sai).
+            var here = FindCheckpointInScene(cp.checkpointId);
+            if (here != null)
             {
                 var local = FindLocalController();
-                if (local != null) local.RpcRequestFastTravel(cp.worldPos);
+                if (local != null) local.RpcRequestFastTravel(here.transform.position);
+                else Debug.LogWarning("[WorldMap] TRAVEL: không tìm thấy local PlayerController.");
+                return;
             }
-            else
-            {
-                WorldMapState.PendingTravelScene = targetScene;
-                WorldMapState.PendingTravelCheckpointId = cp.checkpointId;
-                var launcher = FindFirstObjectByType<Attrition.Networking.NetworkLauncher>();
-                if (launcher != null) launcher.BeginGameplay(targetScene);
-                else Debug.LogWarning("[WorldMap] Không tìm thấy NetworkLauncher để load scene.");
-            }
+
+            // Khác scene → đặt pending + load scene đích.
+            string targetScene = _selectedMap.sceneName;
+            WorldMapState.PendingTravelScene = targetScene;
+            WorldMapState.PendingTravelCheckpointId = cp.checkpointId;
+            var launcher = FindFirstObjectByType<Attrition.Networking.NetworkLauncher>();
+            if (launcher != null) launcher.BeginGameplay(targetScene);
+            else Debug.LogWarning("[WorldMap] TRAVEL: không tìm thấy NetworkLauncher để load scene '" + targetScene + "'.");
+        }
+
+        private Attrition.Gameplay.World.Checkpoint FindCheckpointInScene(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return null;
+            foreach (var cp in FindObjectsByType<Attrition.Gameplay.World.Checkpoint>(FindObjectsSortMode.None))
+                if (cp != null && cp.DisplayName == id) return cp;
+            return null;
         }
 
         private PlayerController FindLocalController()
