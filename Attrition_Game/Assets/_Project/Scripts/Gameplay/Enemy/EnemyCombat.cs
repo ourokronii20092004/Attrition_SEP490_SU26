@@ -213,7 +213,17 @@ public class EnemyCombat : NetworkBehaviour
 
     // cfg.damage: có statsComp → coi là HỆ SỐ × AD/AP; không → giữ raw cũ.
     private int RawDamage(int configDamage, Attrition.Core.DamageType type)
-        => statsComp != null ? configDamage * (type == Attrition.Core.DamageType.Magic ? statsComp.AP : statsComp.AD) : configDamage;
+    {
+        // Lazy-resolve: prefab để trống statsComp → nếu Spawned() chưa gán kịp, AD/AP sẽ bị bỏ
+        // qua và quái chỉ gây configDamage (vd 1). Tự lấy lại tại điểm đọc để không lọt.
+        if (statsComp == null) statsComp = GetComponent<Attrition.Gameplay.Enemy.EnemyStats>();
+        if (statsComp == null)
+        {
+            Debug.LogWarning($"[EnemyCombat] {gameObject.name} thiếu EnemyStats → dùng raw configDamage={configDamage}, KHÔNG nhân AD/AP.");
+            return configDamage;
+        }
+        return configDamage * (type == Attrition.Core.DamageType.Magic ? statsComp.AP : statsComp.AD);
+    }
 
     public override void FixedUpdateNetwork()
     {
@@ -588,6 +598,11 @@ public class EnemyCombat : NetworkBehaviour
     {
         if (attackPoint == null) return;
 
+        // Gây sát thương là host-authoritative. Animation event chạy trên MỌI máy; nếu client cũng
+        // chạy nhánh melee thì nó đọc AD/AP [Networked] có thể chưa sync (=0) → gửi TakeDamage(0) →
+        // host clamp Max(1, 0-DEF)=1 → "quái chỉ gây 1 damage". Chặn tại đây để chỉ host tính.
+        if (!HasStateAuthority) return;
+
         AttackConfig cfg = GetConfig(CurrentAttackIndex);
 
         if (isRanged)
@@ -597,8 +612,6 @@ public class EnemyCombat : NetworkBehaviour
                 Debug.LogWarning("Chưa gắn Projectile Prefab hoặc Spawn Point cho " + gameObject.name);
                 return;
             }
-            
-            if (!HasStateAuthority) return;
 
             Vector2 shootDir = transform.localScale.x > 0 ? Vector2.right : Vector2.left;
             Collider2D[] rangeResults = new Collider2D[5];
