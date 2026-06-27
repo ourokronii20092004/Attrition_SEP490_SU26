@@ -494,7 +494,7 @@ MonoBehaviour:
   leapHeight: 3
   leapDuration: 0.6
   animationComp: {fileID: 843391670382955850}
-  statsComp: {fileID: 0}
+  statsComp: {fileID: 3869510277349045078}
   attackPoint: {fileID: 5298256571562199258}
   playerLayer:
     serializedVersion: 2

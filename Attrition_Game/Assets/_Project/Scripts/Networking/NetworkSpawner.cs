@@ -98,8 +98,18 @@ public class NetworkSpawner : MonoBehaviour
 
     private System.Collections.IEnumerator PrefetchThenSpawn()
     {
-        var provider = Attrition.Persistence.EnemyStatProvider.Ensure();
-        yield return provider.PrefetchAll();
+        // Solo/offline: KHÔNG fetch override từ web → cache rỗng → EnemyStats dùng default SO.
+        // Chỉ online (coop, đã login) mới đắp override admin sửa trên web lên SO.
+        if (Attrition.Persistence.GameLaunch.IsOnline)
+        {
+            var provider = Attrition.Persistence.EnemyStatProvider.Ensure();
+            yield return provider.PrefetchAll();
+        }
+        else if (Attrition.Persistence.EnemyStatProvider.Instance != null)
+        {
+            // Singleton sống sót từ phiên coop trước → xóa override để solo dùng default SO.
+            Attrition.Persistence.EnemyStatProvider.Instance.ClearOverrides();
+        }
         SpawnAllEnemies();
     }
 
