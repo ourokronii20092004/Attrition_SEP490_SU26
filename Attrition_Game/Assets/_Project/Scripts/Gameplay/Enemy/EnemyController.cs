@@ -350,57 +350,95 @@ namespace Attrition.Controllers
         }
 
         /// <summary>
+        /// Loot hiệu lực: ưu tiên cấu hình admin trên WEB (qua EnemyStatProvider theo enemyId);
+        /// rỗng/offline → fallback lootItemIds + normalDropChance trong SO. Trả list rule đã chuẩn hoá.
+        /// </summary>
+        private System.Collections.Generic.List<Attrition.Systems.LootRule> ResolveLootRules(string enemyId)
+        {
+            var prov = Attrition.Persistence.EnemyStatProvider.Instance;
+            var ov = prov != null ? prov.GetOverride(enemyId) : null;
+            if (ov != null && ov.loot != null && ov.loot.Count > 0)
+                return ov.loot;
+
+            // Fallback: SO local (solo/offline hoặc web chưa cấu hình loot cho quái này).
+            if (lootItemIds == null || lootItemIds.Length == 0) return null;
+            var list = new System.Collections.Generic.List<Attrition.Systems.LootRule>(lootItemIds.Length);
+            foreach (var id in lootItemIds)
+            {
+                if (string.IsNullOrEmpty(id)) continue;
+                list.Add(new Attrition.Systems.LootRule
+                {
+                    itemId = id, dropChance = normalDropChance, minQty = 1, maxQty = 1
+                });
+            }
+            return list.Count > 0 ? list : null;
+        }
+
+        /// <summary>
         /// Thưởng vật phẩm khi chết (host).
-        ///  - NORMAL: rơi 1 item ra thế giới theo normalDropChance (player tự nhặt).
+        ///  - NORMAL: rơi 1 item ra thế giới theo dropChance của rule (player tự nhặt).
         ///  - ELITE/BOSS: thêm THẲNG vào kho mọi player (instanced BR-33), CHỈ 1 lần — respawn sau rest không cho nữa.
         /// </summary>
         private void GrantLoot()
         {
-            if (!HasStateAuthority || lootItemIds == null || lootItemIds.Length == 0) return;
+            if (!HasStateAuthority) return;
             var db = Attrition.Data.ItemDatabaseSO.Instance;
             if (db == null) return;
 
             var tier = statsComp != null ? statsComp.Tier : Attrition.Data.EnemyTier.Normal;
             string enemyId = statsComp != null ? statsComp.EnemyId : name;
 
+            var rules = ResolveLootRules(enemyId);
+            if (rules == null || rules.Count == 0) return;
+
             if (tier == Attrition.Data.EnemyTier.Normal)
             {
-                // Quái thường: roll tỉ lệ, rơi 1 item ngẫu nhiên ra thế giới.
-                if (Random.value > normalDropChance) return;
-                string id = lootItemIds[Random.Range(0, lootItemIds.Length)];
-                int idx = db.GetIndex(id);
-                if (idx < 0 || !droppedItemPrefab.IsValid) return;
-
-                Vector3 pos = transform.position + new Vector3(Random.Range(-0.5f, 0.5f), 0.5f, 0f);
-                Runner.Spawn(droppedItemPrefab, pos, Quaternion.identity, null, (r, obj) =>
+                // Quái thường: roll từng rule, rơi item ra thế giới theo dropChance riêng của rule.
+                if (!droppedItemPrefab.IsValid) return;
+                foreach (var rule in rules)
                 {
-                    var d = obj.GetComponent<Attrition.Gameplay.World.DroppedItem>();
-                    if (d != null)
+                    if (Random.value > rule.dropChance) continue;
+                    int idx = db.GetIndex(rule.itemId);
+                    if (idx < 0) continue;
+                    int qty = Random.Range(rule.minQty, rule.maxQty + 1);
+                    if (qty <= 0) continue;
+
+                    Vector3 pos = transform.position + new Vector3(Random.Range(-0.5f, 0.5f), 0.5f, 0f);
+                    int idxCopy = idx, qtyCopy = qty;
+                    Runner.Spawn(droppedItemPrefab, pos, Quaternion.identity, null, (r, obj) =>
                     {
-                        d.ItemIndex = idx;
-                        d.Amount = 1;
-                        // PlayerRef.None = không ai bị cooldown → ai cũng nhặt ngay (item rơi từ quái).
-                        d.InitDrop(Fusion.PlayerRef.None, r.Tick);
-                    }
-                });
+                        var d = obj.GetComponent<Attrition.Gameplay.World.DroppedItem>();
+                        if (d != null)
+                        {
+                            d.ItemIndex = idxCopy;
+                            d.Amount = qtyCopy;
+                            d.InitDrop(Fusion.PlayerRef.None, r.Tick);
+                        }
+                    });
+                }
             }
             else
             {
-                // Elite/Boss: chỉ thưởng 1 lần/chỗ. Respawn sau rest → không cho lại.
+                // Elite/Boss: chỉ thưởng 1 lần/chỗ. Respawn sau rest → không cho lại. Roll theo dropChance;
+                // rule dropChance>=1 (hoặc admin để 1.0) = chắc chắn cho.
                 if (EnemyLootTracker.AlreadyLooted(enemyId, _spawnPos)) return;
                 EnemyLootTracker.MarkLooted(enemyId, _spawnPos);
 
                 var players = FindObjectsByType<Attrition.Gameplay.Player.Inventory.PlayerInventory>(FindObjectsSortMode.None);
-                foreach (var id in lootItemIds)
+                var granted = new System.Collections.Generic.List<string>();
+                foreach (var rule in rules)
                 {
-                    int idx = db.GetIndex(id);
+                    if (Random.value > rule.dropChance) continue;
+                    int idx = db.GetIndex(rule.itemId);
                     if (idx < 0) continue;
+                    int qty = Random.Range(rule.minQty, rule.maxQty + 1);
+                    if (qty <= 0) continue;
                     foreach (var inv in players)
-                        if (inv != null) inv.TryAddItem(idx, 1); // instanced cho từng player
+                        if (inv != null) inv.TryAddItem(idx, qty); // instanced cho từng player
+                    granted.Add(rule.itemId);
                 }
 
-                // Fire reward popup trên tất cả client (Elite/Boss loot → "Congratulations!")
-                RpcNotifyEliteBossLoot(lootItemIds);
+                if (granted.Count > 0) RpcNotifyEliteBossLoot(granted.ToArray());
             }
         }
 

@@ -156,24 +156,36 @@ public class LocalAuthServer : MonoBehaviour
                 <html lang='vi'>
                 <head>
                     <meta charset='UTF-8'>
-                    <title>Đăng nhập thành công</title>
+                    <meta name='viewport' content='width=device-width, initial-scale=1'>
+                    <title>Attrition — Đăng nhập thành công</title>
                     <style>
-                        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #1a1a2e; color: #e94560; }
-                        .container { text-align: center; background: rgba(255, 255, 255, 0.1); padding: 40px; border-radius: 12px; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); backdrop-filter: blur(5px); border: 1px solid rgba(255, 255, 255, 0.3); }
-                        h1 { margin-top: 0; }
-                        p { color: #f5f5f5; }
+                        :root { --bg:#070b09; --surface:#0d1310; --border:#2a352e; --fg:#e7efe9; --fg-muted:#93a39a; --accent:#38e8a0; --accent-fg:#04130c; }
+                        * { box-sizing: border-box; }
+                        body { font-family: 'Plus Jakarta Sans', 'Segoe UI', Tahoma, sans-serif; display:flex; justify-content:center; align-items:center; min-height:100vh; margin:0; background:var(--bg); color:var(--fg); overflow:hidden; }
+                        .glow { position:fixed; left:50%; top:38%; width:420px; height:420px; transform:translate(-50%,-50%); background:var(--accent); opacity:0.14; filter:blur(120px); border-radius:50%; pointer-events:none; }
+                        .card { position:relative; text-align:center; background:var(--surface); padding:48px 40px; border-radius:18px; border:1px solid var(--border); box-shadow:0 0 60px -12px rgba(56,232,160,0.35); max-width:380px; animation:rise .5s cubic-bezier(.2,.8,.2,1); }
+                        @keyframes rise { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
+                        .badge { width:64px; height:64px; margin:0 auto 22px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; box-shadow:0 0 28px -4px var(--accent); }
+                        .badge svg { width:32px; height:32px; stroke:var(--accent-fg); stroke-width:3; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+                        .badge svg path { stroke-dasharray:24; stroke-dashoffset:24; animation:draw .5s .3s forwards ease-out; }
+                        @keyframes draw { to { stroke-dashoffset:0; } }
+                        h1 { margin:0 0 10px; font-size:1.55rem; letter-spacing:-0.02em; }
+                        .brand { color:var(--accent); font-weight:700; letter-spacing:0.18em; font-size:0.72rem; text-transform:uppercase; margin-bottom:18px; }
+                        p { color:var(--fg-muted); line-height:1.6; margin:0; font-size:0.95rem; }
+                        .hint { margin-top:24px; font-size:0.8rem; color:var(--fg-muted); opacity:0.7; }
                     </style>
                 </head>
                 <body>
-                    <div class='container'>
-                        <h1>Đăng Nhập Thành Công!</h1>
-                        <p>Trò chơi đã nhận được tín hiệu. Bạn có thể đóng tab này lại và quay lại trò chơi.</p>
+                    <div class='glow'></div>
+                    <div class='card'>
+                        <div class='brand'>ATTRITION</div>
+                        <div class='badge'><svg viewBox='0 0 24 24'><path d='M5 13l4 4L19 7'/></svg></div>
+                        <h1>Đăng nhập thành công</h1>
+                        <p>Trò chơi đã nhận được tín hiệu. Bạn có thể đóng tab này và quay lại Attrition để tiếp tục.</p>
+                        <div class='hint'>Tab sẽ tự đóng sau giây lát…</div>
                     </div>
                     <script>
-                        // Cố gắng tự động đóng tab sau 2 giây
-                        setTimeout(() => {
-                            window.close();
-                        }, 2000);
+                        setTimeout(() => { window.close(); }, 2000);
                     </script>
                 </body>
                 </html>";

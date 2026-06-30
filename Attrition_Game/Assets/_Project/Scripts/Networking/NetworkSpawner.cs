@@ -98,9 +98,52 @@ public class NetworkSpawner : MonoBehaviour
 
     private System.Collections.IEnumerator PrefetchThenSpawn()
     {
-        var provider = Attrition.Persistence.EnemyStatProvider.Ensure();
-        yield return provider.PrefetchAll();
+        var enemyProvider = Attrition.Persistence.EnemyStatProvider.Ensure();
+        var itemProvider = Attrition.Persistence.ItemConfigProvider.Ensure();
+
+        // Hỏi version gộp (enemy + item) 1 request, rồi mỗi provider chỉ tải bundle phần nào đổi.
+        string enemyVersion = null, itemVersion = null;
+        bool gotVersions = false;
+        yield return FetchConfigVersions(enemyProvider.baseUrl, (ev, iv) =>
+        {
+            enemyVersion = ev; itemVersion = iv; gotVersions = true;
+        });
+
+        if (gotVersions)
+        {
+            yield return enemyProvider.PrefetchBundle(enemyVersion);
+            yield return itemProvider.PrefetchBundle(itemVersion);
+        }
+        else
+        {
+            // Không lấy được version gộp (mạng/parse lỗi) → fallback mỗi provider tự xử như cũ.
+            yield return enemyProvider.PrefetchAll();
+            yield return itemProvider.PrefetchAll();
+        }
+
         SpawnAllEnemies();
+    }
+
+    /// <summary>Gọi GET /api/gameconfig/versions lấy version gộp enemy+item. baseUrl rỗng → bỏ qua.</summary>
+    private System.Collections.IEnumerator FetchConfigVersions(string baseUrl, System.Action<string, string> onGot)
+    {
+        if (string.IsNullOrEmpty(baseUrl)) yield break;
+        using (var req = UnityEngine.Networking.UnityWebRequest.Get($"{baseUrl}/gameconfig/versions"))
+        {
+            req.timeout = 3;
+            yield return req.SendWebRequest();
+            if (req.result != UnityEngine.Networking.UnityWebRequest.Result.Success) yield break;
+            try
+            {
+                var resp = Newtonsoft.Json.JsonConvert.DeserializeObject<Attrition.Persistence.Dtos.ApiResponse<Attrition.Persistence.Dtos.GameConfigVersionsDto>>(req.downloadHandler.text);
+                if (resp != null && resp.Success && resp.Data != null)
+                    onGot(resp.Data.EnemyVersion, resp.Data.ItemVersion);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"[NetworkSpawner] gameconfig/versions parse fail: {e.Message}");
+            }
+        }
     }
 
     private void SpawnAllEnemies()

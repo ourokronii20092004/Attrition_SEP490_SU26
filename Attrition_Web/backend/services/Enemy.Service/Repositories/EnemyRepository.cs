@@ -45,4 +45,16 @@ public class EnemyRepository : Repository<EnemyEntity>, IEnemyRepository
     }
 
     public Task SaveTrackedAsync() => _context.SaveChangesAsync();
+
+    public async Task<(DateTime? maxUpdatedAt, int count)> GetVersionInfoAsync()
+    {
+        // 1 round-trip: count + max(UpdatedAt). Bảng rỗng → (null, 0).
+        var count = await _context.Enemies.CountAsync();
+        if (count == 0) return (null, 0);
+        var max = await _context.Enemies.MaxAsync(e => (DateTime?)e.UpdatedAt);
+        return (max, count);
+    }
+
+    public async Task<List<EnemyEntity>> GetAllForBundleAsync() =>
+        await _context.Enemies.Include(e => e.LootTable).OrderBy(e => e.EnemyId).ToListAsync();
 }
