@@ -22,8 +22,25 @@ namespace Attrition.Gameplay.Environment
             GetComponent<Collider2D>().isTrigger = true;
         }
 
+        private void OnTriggerStay2D(Collider2D other)
+        {
+            // Dùng Stay (không phải Enter) để bắt cả trường hợp player SPAWN SẴN trong zone sau khi
+            // load scene — lúc đó Enter đã fire mất trong lúc đang fade. Guard _currentArea chống spam.
+            TryShow(other);
+        }
+
         private void OnTriggerEnter2D(Collider2D other)
         {
+            TryShow(other);
+        }
+
+        private void TryShow(Collider2D other)
+        {
+            // KHÔNG hiện tên khu ngay khi vừa load scene (player spawn sẵn trong zone / đang fade).
+            // timeSinceLevelLoad tự reset =0 mỗi lần load scene mới → chờ scene ổn định rồi mới hiện.
+            if (Time.timeSinceLevelLoad < LoadGrace) return;
+            if (Attrition.Gameplay.Environment.SceneFader.IsTransitioning) return;
+
             if (!other.CompareTag("Player")) return;
             var pc = other.GetComponentInParent<PlayerController>();
             if (pc == null || !pc.HasInputAuthority) return; // chỉ player local
@@ -32,6 +49,8 @@ namespace Attrition.Gameplay.Environment
             _currentArea = areaName;
             AreaNameBanner.Show(areaName);
         }
+
+        private const float LoadGrace = 1.2f;
 
         private void OnDrawGizmos()
         {

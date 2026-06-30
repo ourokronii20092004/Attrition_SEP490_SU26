@@ -229,5 +229,13 @@ namespace Attrition.Persistence
             if (string.IsNullOrEmpty(enemyId)) return null;
             return _cache.TryGetValue(enemyId, out var o) ? o : null;
         }
+
+        /// <summary>Xóa cache override (gọi khi vào solo/offline để Instance singleton không giữ override
+        /// của phiên coop trước → đảm bảo solo luôn dùng default SO).</summary>
+        public void ClearOverrides()
+        {
+            _cache.Clear();
+            _ready = false;
+        }
     }
 }
