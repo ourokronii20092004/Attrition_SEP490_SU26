@@ -32,7 +32,7 @@ namespace Attrition.Systems
             {
                 // BR-20: Max HP is scaled up by exactly 50%
                 hp = Mathf.RoundToInt(hp * 1.5f);
-                
+
                 // BR-22: Enemy stagger resistance (Poise) is increased by exactly 50%
                 poise = Mathf.RoundToInt(poise * 1.5f);
             }
@@ -61,5 +61,21 @@ namespace Attrition.Systems
         public int? def;
         public int? res;
         public int? poise;
+
+        /// <summary>
+        /// Bảng rơi đồ admin cấu hình trên web (null/rỗng = không override, dùng lootItemIds trong SO).
+        /// Mỗi rule: itemId (= ItemName trên web, khớp ItemSO.itemId) + tỉ lệ + số lượng min/max.
+        /// EnemyController đọc khi quái chết để rơi/thưởng theo cấu hình web.
+        /// </summary>
+        public System.Collections.Generic.List<LootRule> loot;
+    }
+
+    /// <summary>1 dòng loot từ web đã chuẩn hoá cho game dùng (itemId khớp ItemDatabase).</summary>
+    public struct LootRule
+    {
+        public string itemId;     // = LootEntryDto.ItemName (khớp ItemSO.itemId)
+        public float dropChance;  // 0..1
+        public int minQty;
+        public int maxQty;
     }
 }
