@@ -12,7 +12,12 @@ namespace Enemy.Service.Controllers;
 public class EnemyController : ControllerBase
 {
     private readonly IEnemyService _service;
-    public EnemyController(IEnemyService service) => _service = service;
+    private readonly IItemService _itemService;
+    public EnemyController(IEnemyService service, IItemService itemService)
+    {
+        _service = service;
+        _itemService = itemService;
+    }
 
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] string? tier = null, [FromQuery] string? search = null)
@@ -30,6 +35,26 @@ public class EnemyController : ControllerBase
             ? NotFound(ApiResponse.Fail("Enemy not found."))
             : Ok(ApiResponse<EnemyResponse>.Ok(enemy));
     }
+
+    /// <summary>Game gọi để biết config có đổi không (nhẹ). So với version đã cache để khỏi tải full.</summary>
+    [HttpGet("/api/gameconfig/version")]
+    public async Task<IActionResult> ConfigVersion()
+        => Ok(ApiResponse<GameConfigVersion>.Ok(await _service.GetConfigVersionAsync()));
+
+    /// <summary>Game gọi 1 lần lấy version gộp cả enemy + item, rồi chỉ tải bundle phần nào đổi.</summary>
+    [HttpGet("/api/gameconfig/versions")]
+    public async Task<IActionResult> ConfigVersions()
+    {
+        var enemy = await _service.GetConfigVersionAsync();
+        var (itemVersion, itemCount) = await _itemService.GetVersionInfoAsync();
+        return Ok(ApiResponse<GameConfigVersions>.Ok(
+            new GameConfigVersions(enemy.Version, enemy.Count, itemVersion, itemCount)));
+    }
+
+    /// <summary>Game tải 1 cục config (enemy + loot) khi version đổi.</summary>
+    [HttpGet("/api/gameconfig")]
+    public async Task<IActionResult> ConfigBundle()
+        => Ok(ApiResponse<GameConfigBundle>.Ok(await _service.GetConfigBundleAsync()));
 
     [Authorize(Roles = Roles.Admin)]
     [HttpPost]

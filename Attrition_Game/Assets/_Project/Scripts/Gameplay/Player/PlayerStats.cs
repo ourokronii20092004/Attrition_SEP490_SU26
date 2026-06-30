@@ -208,7 +208,7 @@ namespace Attrition.Gameplay.Player
         {
             if (_sheet == null) return;
             _sheet.SetLevel(level);
-            _sheet.RebuildGear(equipped, damageAccessories);
+            _sheet.RebuildGear(equipped, damageAccessories, BuildItemModifierOverrides(equipped, damageAccessories));
             if (HasStateAuthority)
             {
                 Level = level;
@@ -216,6 +216,34 @@ namespace Attrition.Gameplay.Player
                 CurrentMana = Mathf.Min(CurrentMana <= 0 ? MaxMana : CurrentMana, MaxMana);
             }
             OnStatsChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// Gom modifiers item admin sửa trên web (ItemConfigProvider) thành map itemId → StatModifier[]
+        /// cho StatSheet, CHỈ cho các món đang mặc. Null nếu provider chưa sẵn/offline → dùng SO mặc định.
+        /// </summary>
+        private System.Collections.Generic.Dictionary<string, StatModifier[]> BuildItemModifierOverrides(
+            EquipmentSO[] equipped, AccessorySO[] damageAccessories)
+        {
+            var prov = Attrition.Persistence.ItemConfigProvider.Instance;
+            if (prov == null || !prov.IsReady) return null;
+
+            var map = new System.Collections.Generic.Dictionary<string, StatModifier[]>();
+            void TryAdd(string itemId)
+            {
+                if (string.IsNullOrEmpty(itemId) || map.ContainsKey(itemId)) return;
+                var ov = prov.GetOverride(itemId);
+                if (ov?.modifiers == null) return;
+                var mods = new System.Collections.Generic.List<StatModifier>();
+                foreach (var (stat, amount) in ov.modifiers)
+                    if (System.Enum.TryParse<Attrition.Core.StatType>(stat, out var st))
+                        mods.Add(new StatModifier { stat = st, amount = amount });
+                if (mods.Count > 0) map[itemId] = mods.ToArray();
+            }
+
+            if (equipped != null) foreach (var e in equipped) if (e != null) TryAdd(e.itemId);
+            if (damageAccessories != null) foreach (var a in damageAccessories) if (a != null) TryAdd(a.itemId);
+            return map.Count > 0 ? map : null;
         }
 
         /// <summary>Sát thương phòng thủ-aware lên 1 mục tiêu. Dùng DamageCalculator chung.</summary>

@@ -26,6 +26,7 @@ namespace Attrition.Persistence
 
         private readonly Dictionary<string, EnemyStatOverride> _cache = new();
         private bool _ready;
+        private string _loadedVersion; // version của bundle đã tải trong phiên (so để khỏi tải lại)
 
         public bool IsReady => _ready;
 
@@ -74,13 +75,12 @@ namespace Attrition.Persistence
         }
 
         /// <summary>
-        /// Host gọi 1 lần khi vào scene: tải TOÀN BỘ bestiary trong 1 request (GET /api/enemies)
-        /// → cache override theo enemyId. Khỏi cần biết scene có quái gì (tránh đọc component
-        /// Gameplay → không tạo vòng lặp assembly). baseUrl rỗng = bỏ qua, dùng default SO (offline).
+        /// Host gọi 1 lần khi vào scene. Tối ưu: hỏi version trước (GET /api/gameconfig/version);
+        /// nếu KHỚP version đã cache trong phiên → KHỎI tải lại (dùng _cache đang có). Khác/chưa có
+        /// → tải full bundle (GET /api/gameconfig) 1 request. baseUrl rỗng = offline, dùng default SO.
         /// </summary>
         public IEnumerator PrefetchAll(Action onDone = null)
         {
-            _cache.Clear();
             if (string.IsNullOrEmpty(baseUrl))
             {
                 _ready = true;
@@ -88,28 +88,76 @@ namespace Attrition.Persistence
                 yield break;
             }
 
-            string url = $"{baseUrl}/enemies";
+            // 1) Hỏi version (nhẹ). Nếu trùng version đã có VÀ cache còn dữ liệu → bỏ qua tải full.
+            string remoteVersion = null;
+            using (var vreq = UnityWebRequest.Get($"{baseUrl}/gameconfig/version"))
+            {
+                vreq.timeout = 3;
+                yield return vreq.SendWebRequest();
+                if (vreq.result == UnityWebRequest.Result.Success)
+                {
+                    try
+                    {
+                        var vr = JsonConvert.DeserializeObject<ApiResponse<GameConfigVersionDto>>(vreq.downloadHandler.text);
+                        if (vr != null && vr.Success && vr.Data != null) remoteVersion = vr.Data.Version;
+                    }
+                    catch { /* parse fail → coi như không lấy được version, tải full bên dưới */ }
+                }
+            }
+
+            yield return PrefetchBundle(remoteVersion, onDone);
+        }
+
+        /// <summary>
+        /// Tải bundle khi đã biết trước version (NetworkSpawner gọi version gộp enemy+item 1 lần).
+        /// remoteVersion null/khác cache → tải full /api/gameconfig; trùng + cache còn data → bỏ qua.
+        /// baseUrl rỗng = offline, dùng default SO.
+        /// </summary>
+        public IEnumerator PrefetchBundle(string remoteVersion, Action onDone = null)
+        {
+            if (string.IsNullOrEmpty(baseUrl))
+            {
+                _ready = true;
+                onDone?.Invoke();
+                yield break;
+            }
+
+            if (!string.IsNullOrEmpty(remoteVersion) && remoteVersion == _loadedVersion && _cache.Count > 0)
+            {
+                // Web không đổi từ lần tải trước trong phiên → giữ nguyên cache, khỏi tải.
+                _ready = true;
+                onDone?.Invoke();
+                yield break;
+            }
+
+            // Tải full bundle.
+            string url = $"{baseUrl}/gameconfig";
             using (var req = UnityWebRequest.Get(url))
             {
-                req.timeout = 3; // Tối đa 3 giây — nếu API không chạy thì fail nhanh, dùng default SO.
+                req.timeout = 5;
                 yield return req.SendWebRequest();
                 if (req.result != UnityWebRequest.Result.Success)
                 {
-                    Debug.LogWarning($"[EnemyStatProvider] PrefetchAll: {req.error} — dùng default SO.");
+                    Debug.LogWarning($"[EnemyStatProvider] gameconfig: {req.error} — giữ cache cũ / default SO.");
                 }
                 else
                 {
                     try
                     {
-                        var resp = JsonConvert.DeserializeObject<ApiResponse<List<EnemyResponseDto>>>(req.downloadHandler.text);
+                        var resp = JsonConvert.DeserializeObject<ApiResponse<GameConfigBundleDto>>(req.downloadHandler.text);
                         if (resp != null && resp.Success && resp.Data != null)
-                            foreach (var d in resp.Data)
-                                if (d != null && !string.IsNullOrEmpty(d.EnemyId))
-                                    _cache[d.EnemyId] = ToOverride(d);
+                        {
+                            _cache.Clear();
+                            if (resp.Data.Enemies != null)
+                                foreach (var d in resp.Data.Enemies)
+                                    if (d != null && !string.IsNullOrEmpty(d.EnemyId))
+                                        _cache[d.EnemyId] = ToOverride(d);
+                            _loadedVersion = resp.Data.Version;
+                        }
                     }
                     catch (Exception e)
                     {
-                        Debug.LogWarning($"[EnemyStatProvider] PrefetchAll parse fail: {e.Message}");
+                        Debug.LogWarning($"[EnemyStatProvider] gameconfig parse fail: {e.Message}");
                     }
                 }
             }
@@ -143,20 +191,51 @@ namespace Attrition.Persistence
             }
         }
 
-        private static EnemyStatOverride ToOverride(EnemyResponseDto d) => new()
+        private static EnemyStatOverride ToOverride(EnemyResponseDto d)
         {
-            maxHP = d.Hp,
-            ad = d.Ad,
-            ap = d.Ap,
-            def = d.Def,
-            res = d.Res,
-        };
+            var ov = new EnemyStatOverride
+            {
+                maxHP = d.Hp,
+                ad = d.Ad,
+                ap = d.Ap,
+                def = d.Def,
+                res = d.Res,
+            };
+
+            // Bảng rơi đồ admin cấu hình trên web → chuẩn hoá thành LootRule cho game.
+            // ItemName trên web = itemId trong ItemDatabase. Bỏ rule rỗng / tỉ lệ <= 0.
+            if (d.LootTable != null && d.LootTable.Count > 0)
+            {
+                ov.loot = new List<LootRule>();
+                foreach (var e in d.LootTable)
+                {
+                    if (e == null || string.IsNullOrEmpty(e.ItemName) || e.DropChance <= 0f) continue;
+                    ov.loot.Add(new LootRule
+                    {
+                        itemId = e.ItemName,
+                        dropChance = Mathf.Clamp01(e.DropChance),
+                        minQty = Mathf.Max(1, e.MinQty),
+                        maxQty = Mathf.Max(Mathf.Max(1, e.MinQty), e.MaxQty),
+                    });
+                }
+            }
+
+            return ov;
+        }
 
         /// <summary>Lấy override đã cache (null = không có, dùng default SO). Gọi đồng bộ lúc spawn.</summary>
         public EnemyStatOverride GetOverride(string enemyId)
         {
             if (string.IsNullOrEmpty(enemyId)) return null;
             return _cache.TryGetValue(enemyId, out var o) ? o : null;
+        }
+
+        /// <summary>Xóa cache override (gọi khi vào solo/offline để Instance singleton không giữ override
+        /// của phiên coop trước → đảm bảo solo luôn dùng default SO).</summary>
+        public void ClearOverrides()
+        {
+            _cache.Clear();
+            _ready = false;
         }
     }
 }

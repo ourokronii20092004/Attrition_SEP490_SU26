@@ -15,7 +15,7 @@ MonoBehaviour:
   enemyId: axe_demon
   tier: 0
   maxHP: 40
-  ad: 100
+  ad: 50
   ap: 0
   def: 4
   res: 0
