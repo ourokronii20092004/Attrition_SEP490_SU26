@@ -35,7 +35,11 @@ public class EnemyService : IEnemyService
         return enemy == null ? null : ToResponse(enemy);
     }
 
-    private Task InvalidateAsync() => _cache.RemoveByPrefixAsync("list:");
+    private async Task InvalidateAsync()
+    {
+        await _cache.RemoveByPrefixAsync("list:");
+        await _cache.RemoveAsync("bundle:all"); // bundle game cũng phải tươi khi admin sửa
+    }
 
     public async Task<ApiResponse<EnemyResponse>> CreateAsync(EnemyCreateRequest request)
     {
@@ -121,6 +125,28 @@ public class EnemyService : IEnemyService
     }
 
     public Task<int> CountAsync() => _repo.CountAsync();
+
+    // Version = MAX(UpdatedAt) ISO-8601 + count. Count vào version để xoá quái cũng đổi version
+    // (xoá không làm MAX(UpdatedAt) tăng). Bảng rỗng → "0".
+    private static string BuildVersion(DateTime? maxUpdatedAt, int count) =>
+        maxUpdatedAt is null ? "0" : $"{maxUpdatedAt:O}|{count}";
+
+    public async Task<GameConfigVersion> GetConfigVersionAsync()
+    {
+        var (max, count) = await _repo.GetVersionInfoAsync();
+        return new GameConfigVersion(BuildVersion(max, count), count);
+    }
+
+    public async Task<GameConfigBundle> GetConfigBundleAsync()
+    {
+        // Cache cả bundle: read-heavy, chỉ đổi khi admin sửa (Invalidate xoá prefix "list:" + "bundle").
+        return await _cache.GetOrSetAsync("bundle:all", async () =>
+        {
+            var (max, count) = await _repo.GetVersionInfoAsync();
+            var enemies = await _repo.GetAllForBundleAsync();
+            return new GameConfigBundle(BuildVersion(max, count), enemies.Count, enemies.Select(ToResponse).ToList());
+        }, TimeSpan.FromMinutes(10));
+    }
 
     private static List<EnemyLootEntry> MapLoot(List<LootEntryDto>? loot) =>
         loot?.Select(l => new EnemyLootEntry

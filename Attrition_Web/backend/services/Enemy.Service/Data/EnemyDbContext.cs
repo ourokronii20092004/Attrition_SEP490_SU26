@@ -8,6 +8,7 @@ public class EnemyDbContext : DbContext
     public EnemyDbContext(DbContextOptions<EnemyDbContext> options) : base(options) { }
 
     public DbSet<EnemyEntity> Enemies => Set<EnemyEntity>();
+    public DbSet<ItemEntity> Items => Set<ItemEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -32,6 +33,28 @@ public class EnemyDbContext : DbContext
                 b.HasKey("Id");
                 b.Property(l => l.ItemName).HasMaxLength(100);
                 b.Property(l => l.Rarity).HasMaxLength(50);
+            });
+        });
+
+        modelBuilder.Entity<ItemEntity>(e =>
+        {
+            e.ToTable("items");
+            e.HasKey(x => x.ItemId);
+            e.Property(x => x.ItemId).HasMaxLength(64);
+            e.Property(x => x.Name).HasMaxLength(100);
+            e.Property(x => x.Category).HasMaxLength(30);
+            e.Property(x => x.Rarity).HasMaxLength(50);
+            e.Property(x => x.IconKey).HasMaxLength(100);
+            e.HasIndex(x => x.Category);
+
+            // Owned collection → enemy.item_modifiers, shadow FK to item.
+            e.OwnsMany(x => x.Modifiers, b =>
+            {
+                b.ToTable("item_modifiers");
+                b.WithOwner().HasForeignKey("ItemId");
+                b.Property<int>("Id");
+                b.HasKey("Id");
+                b.Property(m => m.Stat).HasMaxLength(30);
             });
         });
     }

@@ -26,6 +26,8 @@ builder.Services.AddDbWarmup();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IEnemyRepository, EnemyRepository>();
 builder.Services.AddScoped<IEnemyService, EnemyService>();
+builder.Services.AddScoped<IItemRepository, ItemRepository>();
+builder.Services.AddScoped<IItemService, ItemService>();
 builder.Services.AddAttritionCache(builder.Configuration, "enemy");
 
 builder.Services.AddAttritionJwtAuth(builder.Configuration);
@@ -39,7 +41,12 @@ builder.Services.AddAttritionSwagger("Enemy.Service");
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
-    await scope.ServiceProvider.GetRequiredService<EnemyDbContext>().Database.MigrateAsync();
+{
+    var db = scope.ServiceProvider.GetRequiredService<EnemyDbContext>();
+    await db.Database.MigrateAsync();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    await Enemy.Service.Data.EnemyItemSeeder.SeedAsync(db, logger);
+}
 
 app.UseAttritionPipeline();
 app.Run();

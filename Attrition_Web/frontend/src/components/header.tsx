@@ -18,6 +18,8 @@ const SearchModal = dynamic(() => import("./search-modal").then((m) => m.SearchM
 const NAV_LINKS = [
   { href: "/wiki", label: "Wiki" },
   { href: "/bestiary", label: "Bestiary" },
+  { href: "/items", label: "Items" },
+  { href: "/world", label: "World" },
   { href: "/forum", label: "Forum" },
   { href: "/music", label: "Music" },
   { href: "/gallery", label: "Gallery" },
