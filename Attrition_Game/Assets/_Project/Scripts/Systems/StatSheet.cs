@@ -71,16 +71,29 @@ namespace Attrition.Systems
         public IReadOnlyDictionary<StatType, int> Allocated => _allocated;
 
         // ─── Trang bị / accessory: rebuild toàn bộ gear flat mỗi lần đổi đồ ───
-        public void RebuildGear(IEnumerable<EquipmentSO> equipped, IEnumerable<AccessorySO> damageAccessories)
+        // overrideByItemId: modifiers admin sửa trên web (key = itemId). Có key → DÙNG modifiers web
+        // thay cho SO (caller resolve từ ItemConfigProvider; null = không có web, dùng SO mặc định).
+        public void RebuildGear(IEnumerable<EquipmentSO> equipped, IEnumerable<AccessorySO> damageAccessories,
+            IReadOnlyDictionary<string, StatModifier[]> overrideByItemId = null)
         {
             _gearFlat.Clear();
             if (equipped != null)
                 foreach (var e in equipped)
-                    if (e != null) AddModifiers(e.modifiers);
+                    if (e != null) AddModifiers(ResolveMods(e.itemId, e.modifiers, overrideByItemId));
 
             if (damageAccessories != null)
                 foreach (var a in damageAccessories)
-                    if (a != null && a.kind == AccessoryKind.DamageEffect) AddModifiers(a.modifiers);
+                    if (a != null && a.kind == AccessoryKind.DamageEffect)
+                        AddModifiers(ResolveMods(a.itemId, a.modifiers, overrideByItemId));
+        }
+
+        private static StatModifier[] ResolveMods(string itemId, StatModifier[] soMods,
+            IReadOnlyDictionary<string, StatModifier[]> overrideByItemId)
+        {
+            if (!string.IsNullOrEmpty(itemId) && overrideByItemId != null
+                && overrideByItemId.TryGetValue(itemId, out var ov) && ov != null)
+                return ov; // web override thắng default SO
+            return soMods;
         }
 
         private void AddModifiers(StatModifier[] mods)

@@ -46,4 +46,31 @@ namespace Attrition.Persistence.Dtos
         public short MinQty;
         public short MaxQty;
     }
+
+    /// <summary>Khớp Enemy.Service GameConfigVersion (GET /api/gameconfig/version) — nhẹ, chỉ so version.</summary>
+    [Serializable]
+    public class GameConfigVersionDto
+    {
+        public string Version;
+        public int Count;
+    }
+
+    /// <summary>Khớp Enemy.Service GameConfigVersions (GET /api/gameconfig/versions) — version gộp enemy + item.</summary>
+    [Serializable]
+    public class GameConfigVersionsDto
+    {
+        public string EnemyVersion;
+        public int EnemyCount;
+        public string ItemVersion;
+        public int ItemCount;
+    }
+
+    /// <summary>Khớp Enemy.Service GameConfigBundle (GET /api/gameconfig) — cục config game tải 1 lần.</summary>
+    [Serializable]
+    public class GameConfigBundleDto
+    {
+        public string Version;
+        public int Count;
+        public List<EnemyResponseDto> Enemies;
+    }
 }

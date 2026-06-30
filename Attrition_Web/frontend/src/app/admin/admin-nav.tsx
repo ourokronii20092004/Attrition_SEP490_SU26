@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard, Users, BookOpen, MessagesSquare, Skull, Image as ImageIcon, Music, Gamepad2, Flag,
+  LayoutDashboard, Users, BookOpen, MessagesSquare, Skull, Image as ImageIcon, Music, Gamepad2, Flag, Gem,
 } from "lucide-react";
 
 type NavItem = { href: string; label: string; icon: React.ComponentType<{ size?: number; className?: string }>; exact?: boolean; children?: { href: string; label: string }[] };
@@ -39,6 +39,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Game Content",
     items: [
       { href: "/admin/enemies", label: "Enemies", icon: Skull },
+      { href: "/admin/items", label: "Items", icon: Gem },
       { href: "/admin/assets", label: "Assets", icon: ImageIcon },
       { href: "/admin/music", label: "Music", icon: Music, children: [
         { href: "/admin/music/albums", label: "Albums" },

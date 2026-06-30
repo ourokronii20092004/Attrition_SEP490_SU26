@@ -212,6 +212,50 @@ export interface EnemyUpdateRequest {
   lootTable?: LootEntryDto[];
 }
 
+// ─── Item config (admin-editable, game downloads) ───────────────────────────────
+
+export interface ItemModifierDto {
+  stat: string;
+  amount: number;
+}
+
+export interface ItemResponse {
+  itemId: string;
+  name: string;
+  category: string;
+  rarity: string;
+  iconKey: string | null;
+  description: string | null;
+  maxStack: number;
+  isKeyItem: boolean;
+  createdAt: string;
+  updatedAt: string;
+  modifiers: ItemModifierDto[];
+}
+
+export interface ItemCreateRequest {
+  itemId: string;
+  name: string;
+  category: string;
+  rarity: string;
+  iconKey?: string | null;
+  description?: string | null;
+  maxStack: number;
+  isKeyItem: boolean;
+  modifiers?: ItemModifierDto[];
+}
+
+export interface ItemUpdateRequest {
+  name: string;
+  category: string;
+  rarity: string;
+  iconKey?: string | null;
+  description?: string | null;
+  maxStack: number;
+  isKeyItem: boolean;
+  modifiers?: ItemModifierDto[];
+}
+
 // ─── Wiki Service ─────────────────────────────────────────────────────────────
 
 export interface WikiCategoryDto {

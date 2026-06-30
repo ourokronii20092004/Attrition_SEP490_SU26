@@ -59,3 +59,18 @@ public record EnemyUpdateRequest(
 
 // Summary projection used by Search aggregator.
 public record EnemySummaryDto(string EnemyId, string Name, string Tier);
+
+/// <summary>
+/// Cục config gộp cho GAME tải 1 lần trước trận. Version = MAX(UpdatedAt) toàn bảng enemy
+/// (ISO-8601). Game cache version; lần sau chỉ tải lại bundle khi version đổi (admin sửa web).
+/// </summary>
+public record GameConfigBundle(string Version, int Count, List<EnemyResponse> Enemies);
+
+/// <summary>Chỉ trả version (nhẹ) để game so trước khi quyết định tải full bundle.</summary>
+public record GameConfigVersion(string Version, int Count);
+
+/// <summary>
+/// Version gộp cho cả enemy + item trong 1 request (GET /api/gameconfig/versions). Game so
+/// 1 lần rồi chỉ tải lại bundle (/api/gameconfig hoặc /api/itemconfig) của phần nào đổi.
+/// </summary>
+public record GameConfigVersions(string EnemyVersion, int EnemyCount, string ItemVersion, int ItemCount);
