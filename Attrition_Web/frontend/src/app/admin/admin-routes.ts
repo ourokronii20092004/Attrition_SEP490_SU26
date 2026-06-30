@@ -12,6 +12,7 @@ export const ADMIN_ROUTES: { href: string; label: string }[] = [
   { href: "/admin/forum/threads", label: "Forum · Threads" },
   { href: "/admin/forum/categories", label: "Forum · Categories" },
   { href: "/admin/enemies", label: "Enemies" },
+  { href: "/admin/items", label: "Items" },
   { href: "/admin/assets", label: "Assets" },
   { href: "/admin/music", label: "Music" },
   { href: "/admin/music/albums", label: "Music · Albums" },

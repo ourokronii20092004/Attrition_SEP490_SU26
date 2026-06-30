@@ -9,6 +9,12 @@ public interface IEnemyRepository : IRepository<EnemyEntity>
     Task<List<EnemyEntity>> GetAllWithLootAsync(string? tier, string? search);
     Task<List<EnemyEntity>> SearchAsync(string query, int limit);
 
+    /// <summary>(MAX UpdatedAt, count) toàn bảng — dùng làm version cho game config bundle.</summary>
+    Task<(DateTime? maxUpdatedAt, int count)> GetVersionInfoAsync();
+
+    /// <summary>Toàn bộ enemy + loot (không filter, không Take) cho bundle game tải về.</summary>
+    Task<List<EnemyEntity>> GetAllForBundleAsync();
+
     // Persists changes to an already-tracked enemy graph (including owned-loot add/remove),
     // letting EF change-tracking drive the diff instead of forcing the root to Modified.
     Task SaveTrackedAsync();

@@ -12,4 +12,10 @@ public interface IEnemyService
     Task<ApiResponse> DeleteAsync(string enemyId);
     Task<List<EnemySummaryDto>> SearchAsync(string query, int limit);
     Task<int> CountAsync();
+
+    /// <summary>Version (MAX UpdatedAt) + count — game so trước khi tải full bundle.</summary>
+    Task<GameConfigVersion> GetConfigVersionAsync();
+
+    /// <summary>Cục config gộp (enemy + loot) cho game tải 1 lần.</summary>
+    Task<GameConfigBundle> GetConfigBundleAsync();
 }
