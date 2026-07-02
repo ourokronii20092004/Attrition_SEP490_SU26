@@ -23,6 +23,7 @@ export function AudioPlayer() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const playRecorded = useRef<number | null>(null);
   const wasPlaying = useRef(false);
+  const loadedTrackId = useRef<number | null>(null);
 
   const [scrubbing, setScrubbing] = useState(false);
   const [scrubValue, setScrubValue] = useState(0);
@@ -32,17 +33,30 @@ export function AudioPlayer() {
 
   const { isFavorite, toggle: toggleFav, canFavorite } = useFavorites();
 
-  // Source load + play/pause; clear src when the player is closed so nothing plays detached.
+  // ── Effect 1: load the audio source ONLY when the track actually changes. ──
+  // We key off the track id (not audio.src, which resolves to an absolute URL and never
+  // string-equals a relative stream path — the old comparison reloaded on every render,
+  // resetting playback to 0 on each play/pause and scrub).
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
     if (!currentTrack) {
       audio.pause(); audio.removeAttribute("src"); audio.load();
+      loadedTrackId.current = null;
       playRecorded.current = null;
       return;
     }
-    const src = getStreamUrl(currentTrack.trackId);
-    if (audio.src !== src) { audio.src = src; audio.load(); }
+    if (loadedTrackId.current !== currentTrack.trackId) {
+      audio.src = getStreamUrl(currentTrack.trackId);
+      audio.load();
+      loadedTrackId.current = currentTrack.trackId;
+    }
+  }, [currentTrack]);
+
+  // ── Effect 2: play / pause the already-loaded element (never reloads the source). ──
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !currentTrack) return;
     if (isPlaying && !scrubbing) {
       audio.play().catch(() => {});
       if (playRecorded.current !== currentTrack.trackId) {
@@ -58,6 +72,18 @@ export function AudioPlayer() {
     const audio = audioRef.current;
     if (audio) audio.volume = muted ? 0 : volume;
   }, [volume, muted]);
+
+  // Store-driven seeks: some actions (prev/next in repeat-one, "restart current") only zero the
+  // store's `progress` without touching the element. When progress is reset to ~0 but the audio
+  // is still mid-track, snap the element back so the two don't drift out of sync.
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || scrubbing) return;
+    if (progress === 0 && audio.currentTime > 0.5) {
+      audio.currentTime = 0;
+      if (isPlaying) audio.play().catch(() => {});
+    }
+  }, [progress, scrubbing, isPlaying]);
 
   // Keyboard: space toggles play, Esc collapses the expanded view.
   useEffect(() => {
@@ -75,6 +101,17 @@ export function AudioPlayer() {
   const onLoadedMetadata = () => {
     const audio = audioRef.current;
     if (audio) setDuration(audio.duration);
+  };
+  // On track end: repeat-one replays the same element from 0 (the store's `next` only zeroes
+  // progress for that mode and would otherwise leave the audio stopped). Everything else advances.
+  const onEnded = () => {
+    const audio = audioRef.current;
+    if (repeat === "one" && audio) {
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+      return;
+    }
+    next();
   };
 
   const beginScrub = (v: number) => { wasPlaying.current = isPlaying; setScrubbing(true); setScrubValue(v); audioRef.current?.pause(); };
@@ -96,7 +133,7 @@ export function AudioPlayer() {
 
   return (
     <>
-      <audio ref={audioRef} onTimeUpdate={onTimeUpdate} onLoadedMetadata={onLoadedMetadata} onEnded={next} hidden />
+      <audio ref={audioRef} onTimeUpdate={onTimeUpdate} onLoadedMetadata={onLoadedMetadata} onEnded={onEnded} hidden />
 
       {currentTrack && expanded && (
         <NowPlaying
@@ -113,7 +150,7 @@ export function AudioPlayer() {
       <QueuePanel open={queueOpen} onClose={() => setQueueOpen(false)} />
 
       {currentTrack && (
-        <div className="glass fixed inset-x-0 bottom-0 z-[200] border-x-0 border-b-0 motion-safe:animate-rise-in">
+        <div className="fixed inset-x-0 bottom-0 z-[200] border-t border-border bg-surface shadow-[var(--shadow-lg)] motion-safe:animate-rise-in">
           <div className="mx-auto grid h-[5.25rem] max-w-7xl grid-cols-[1fr_auto_1fr] items-center gap-4 px-3 sm:px-6">
             {/* ── Left: track identity ── */}
             <div className="flex min-w-0 items-center gap-3">

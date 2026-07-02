@@ -24,7 +24,8 @@ export default function SettingsPage() {
     <PageShell size="md">
       <PageTitle>Settings</PageTitle>
       <div className="space-y-6">
-        {/* Avatar lives on the profile page; theme lives in the navbar — not duplicated here (UIBD-6). */}
+        {/* Bio, avatar, and cover live on the profile page; theme lives in the navbar — this
+            section is notification prefs only (UIBD-6). */}
         <ProfileSection user={user} setUser={setUser} />
         <PasswordSection />
         <EmailSection user={user} refreshUser={refreshUser} />

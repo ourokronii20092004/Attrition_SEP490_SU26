@@ -175,6 +175,7 @@ export interface EnemyResponse {
   createdAt: string;
   updatedAt: string;
   lootTable: LootEntryDto[];
+  imageUrl: string | null;
 }
 
 export interface EnemyCreateRequest {
@@ -193,6 +194,7 @@ export interface EnemyCreateRequest {
   goldReward: number;
   lore?: string;
   lootTable?: LootEntryDto[];
+  imageUrl?: string | null;
 }
 
 export interface EnemyUpdateRequest {
@@ -210,6 +212,7 @@ export interface EnemyUpdateRequest {
   goldReward: number;
   lore?: string;
   lootTable?: LootEntryDto[];
+  imageUrl?: string | null;
 }
 
 // ─── Item config (admin-editable, game downloads) ───────────────────────────────
@@ -231,6 +234,7 @@ export interface ItemResponse {
   createdAt: string;
   updatedAt: string;
   modifiers: ItemModifierDto[];
+  imageUrl: string | null;
 }
 
 export interface ItemCreateRequest {
@@ -243,6 +247,7 @@ export interface ItemCreateRequest {
   maxStack: number;
   isKeyItem: boolean;
   modifiers?: ItemModifierDto[];
+  imageUrl?: string | null;
 }
 
 export interface ItemUpdateRequest {
@@ -254,6 +259,7 @@ export interface ItemUpdateRequest {
   maxStack: number;
   isKeyItem: boolean;
   modifiers?: ItemModifierDto[];
+  imageUrl?: string | null;
 }
 
 // ─── Wiki Service ─────────────────────────────────────────────────────────────
@@ -478,6 +484,10 @@ export interface AdminUserReportDto {
   reason: string;
   status: string;
   createdAt: string;
+  actionTaken: string | null;
+  moderatorNote: string | null;
+  resolvedByName: string | null;
+  resolvedAt: string | null;
 }
 
 export interface RemovePostRequest {
@@ -499,6 +509,8 @@ export interface AssetDto {
   uploadedBy: string | null;
   uploadedAt: string;
   updatedAt: string | null;
+  sourceType: string | null;
+  sourceId: string | null;
 }
 
 export interface UpdateAssetReq {
@@ -744,6 +756,9 @@ export interface CharacterDetailDto {
   createdAt: string;
   updatedAt: string;
   snapshots: SnapshotDto[];
+  inventoryJson: string | null;
+  equipmentJson: string | null;
+  questsJson: string | null;
 }
 
 export interface AdminCharacterDto {

@@ -17,6 +17,10 @@ public class ItemEntity
     public string? IconKey { get; set; }
     public string? Description { get; set; }
 
+    // Admin-uploaded artwork URL (synced to the Assets gallery). Distinct from IconKey, which the
+    // game client uses for its own sprite lookup.
+    public string? ImageUrl { get; set; }
+
     // Stacking + key-item (BR-41/42/45 trong game).
     public int MaxStack { get; set; } = 1;
     public bool IsKeyItem { get; set; }

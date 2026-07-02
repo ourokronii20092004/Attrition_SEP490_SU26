@@ -16,6 +16,7 @@ import { PageLoader } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatDate } from "@/lib/format-date";
 import { qk } from "@/lib/query-keys";
+import { useAdminPageLabel } from "@/lib/hooks/use-admin-page-label";
 
 function StatusBadge({ detail }: { detail: { isDeleted: boolean; isBanned: boolean } }) {
   if (detail.isDeleted) return <span className="rounded-full bg-surface-2 px-2.5 py-0.5 text-xs font-medium text-fg-subtle">Deleted</span>;
@@ -50,6 +51,8 @@ export default function AdminUserDetailPage() {
       return res.success ? res.data : null;
     },
   });
+
+  useAdminPageLabel(detail ? `Users · ${detail.username}` : null);
 
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: qk.admin.userDetail(params.id) });
@@ -156,9 +159,6 @@ function UserDetailView({ detail, isSelf, onBan, onDelete, onResetPw, onRole, pe
             )}
           </div>
           <p className="mt-0.5 text-sm text-fg-muted">@{detail.username}</p>
-          <Link href={`/u/${encodeURIComponent(detail.username)}`} className="mt-1 inline-block text-xs text-accent hover:underline">
-            View public profile →
-          </Link>
         </div>
       </div>
 

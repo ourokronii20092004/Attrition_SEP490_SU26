@@ -39,7 +39,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
       {children}
       {opts && (
         <div
-          className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm motion-safe:animate-fade-in"
+          className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-black/80 p-4 motion-safe:animate-fade-in"
           role="alertdialog"
           aria-modal="true"
           aria-labelledby="confirm-title"

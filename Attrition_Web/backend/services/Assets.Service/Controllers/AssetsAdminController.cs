@@ -33,10 +33,12 @@ public class AssetsAdminController : ControllerBase
         [FromForm] string assetType,
         [FromForm] string? title = null,
         [FromForm] string? description = null,
-        [FromForm] string? tags = null)
+        [FromForm] string? tags = null,
+        [FromForm] string? sourceType = null,
+        [FromForm] string? sourceId = null)
     {
         var result = await _assets.UploadAssetAsync(file, assetType, title, description, tags,
-            _user.UserId!.Value, _user.Username ?? "Unknown");
+            _user.UserId!.Value, _user.Username ?? "Unknown", sourceType, sourceId);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { PageLoader } from "@/components/ui/spinner";
 import { AdminPageHeader, AdminFilterBar, AdminTable, AdminRow } from "@/components/admin/admin-table";
+import { Pagination } from "@/components/ui/pagination";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { qk } from "@/lib/query-keys";
 import type { AssetDto } from "@/lib/types";
@@ -114,11 +115,7 @@ export default function AdminAssetsPage() {
       )}
 
       {totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-center gap-2">
-          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1} className="rounded-md border border-border px-3 py-1 text-sm text-fg-muted disabled:opacity-50">Prev</button>
-          <span className="text-sm text-fg-muted">{page} / {totalPages}</span>
-          <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages} className="rounded-md border border-border px-3 py-1 text-sm text-fg-muted disabled:opacity-50">Next</button>
-        </div>
+        <Pagination page={page} totalPages={totalPages} onChange={setPage} compact />
       )}
     </div>
   );

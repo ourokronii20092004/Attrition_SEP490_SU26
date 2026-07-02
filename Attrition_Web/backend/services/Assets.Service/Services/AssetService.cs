@@ -51,7 +51,8 @@ public class AssetService : IAssetService
     }
 
     public async Task<ApiResponse<AssetDto>> UploadAssetAsync(IFormFile file, string assetType,
-        string? title, string? description, string? tags, Guid userId, string userName)
+        string? title, string? description, string? tags, Guid userId, string userName,
+        string? sourceType = null, string? sourceId = null)
     {
         if (file == null || file.Length == 0)
             return ApiResponse<AssetDto>.Fail("File is empty.");
@@ -88,8 +89,10 @@ public class AssetService : IAssetService
         string storedPath;
         await using (var stream = file.OpenReadStream())
         {
-            if (!await ContentMatchesExtensionAsync(stream, ext))
-                return ApiResponse<AssetDto>.Fail("File content does not match its extension.");
+            var (matches, detected) = await ContentMatchesExtensionAsync(stream, ext);
+            if (!matches)
+                return ApiResponse<AssetDto>.Fail(
+                    $"File content does not match its extension. Expected a {ExpectedLabel(ext)} (from the '{ext}' extension), but the file's contents look like {detected}.");
             stream.Position = 0;
             storedPath = await _storage.SaveAsync(subfolder, fileName, stream);
         }
@@ -104,6 +107,8 @@ public class AssetService : IAssetService
             Title = title,
             Description = description,
             Tags = tags,
+            SourceType = sourceType,
+            SourceId = sourceId,
             UploadedById = userId,
             UploadedByName = userName
         };
@@ -137,8 +142,10 @@ public class AssetService : IAssetService
 
         var fileName = $"{Guid.NewGuid()}{ext}";
         await using var stream = file.OpenReadStream();
-        if (!await ContentMatchesExtensionAsync(stream, ext))
-            return ApiResponse<string>.Fail("File content does not match its extension.");
+        var (matches, detected) = await ContentMatchesExtensionAsync(stream, ext);
+        if (!matches)
+            return ApiResponse<string>.Fail(
+                $"File content does not match its extension. Expected a {ExpectedLabel(ext)} (from the '{ext}' extension), but the file's contents look like {detected}.");
         stream.Position = 0;
         // Stored under inline/ (not the gallery) — no Asset row, just the public URL.
         var url = await _storage.SaveAsync("inline", fileName, stream);
@@ -174,18 +181,21 @@ public class AssetService : IAssetService
 
     // Validate the file's leading bytes against its claimed extension. Text formats (.txt/.md) have no
     // reliable signature, so they pass; binary formats must match a known magic-byte signature.
-    private static async Task<bool> ContentMatchesExtensionAsync(Stream stream, string ext)
+    // Returns (matches, detectedLabel) so the caller can report what was expected vs. what arrived.
+    private static async Task<(bool Matches, string Detected)> ContentMatchesExtensionAsync(Stream stream, string ext)
     {
-        if (ext is ".txt" or ".md") return true;
+        if (ext is ".txt" or ".md") return (true, "text");
 
         var header = new byte[12];
         stream.Position = 0;
         var read = await stream.ReadAsync(header.AsMemory(0, header.Length));
-        if (read < 4) return false;
+        if (read < 4) return (false, "empty or truncated file");
 
         bool StartsWith(params byte[] sig) => header.Take(sig.Length).SequenceEqual(sig);
 
-        return ext switch
+        var detected = DetectFormat(header);
+
+        var matches = ext switch
         {
             ".jpg" or ".jpeg" => StartsWith(0xFF, 0xD8, 0xFF),
             ".png" => StartsWith(0x89, 0x50, 0x4E, 0x47),
@@ -197,7 +207,39 @@ public class AssetService : IAssetService
             ".docx" => StartsWith(0x50, 0x4B, 0x03, 0x04),
             _ => false
         };
+        return (matches, detected);
     }
+
+    // Best-effort identification of a file's real type from its leading bytes, for error messages.
+    private static string DetectFormat(byte[] header)
+    {
+        bool At(int i, params byte[] sig) => header.Length >= i + sig.Length
+            && header.Skip(i).Take(sig.Length).SequenceEqual(sig);
+
+        if (At(0, 0xFF, 0xD8, 0xFF)) return "JPEG image";
+        if (At(0, 0x89, 0x50, 0x4E, 0x47)) return "PNG image";
+        if (At(0, 0x47, 0x49, 0x46, 0x38)) return "GIF image";
+        if (At(0, 0x52, 0x49, 0x46, 0x46) && At(8, 0x57, 0x45, 0x42, 0x50)) return "WebP image";
+        if (At(0, 0x25, 0x50, 0x44, 0x46)) return "PDF document";
+        if (At(0, 0xD0, 0xCF, 0x11, 0xE0)) return "legacy Office document (.doc/.xls)";
+        if (At(0, 0x50, 0x4B, 0x03, 0x04)) return "ZIP archive or .docx/.xlsx";
+        if (At(0, 0x42, 0x4D)) return "BMP image";
+        if (At(0, 0x49, 0x49, 0x2A, 0x00) || At(0, 0x4D, 0x4D, 0x00, 0x2A)) return "TIFF image";
+        return "an unrecognized format";
+    }
+
+    // Human-readable name for the format an extension is supposed to carry (for error messages).
+    private static string ExpectedLabel(string ext) => ext switch
+    {
+        ".jpg" or ".jpeg" => "JPEG image",
+        ".png" => "PNG image",
+        ".gif" => "GIF image",
+        ".webp" => "WebP image",
+        ".pdf" => "PDF document",
+        ".doc" => "Word document",
+        ".docx" => "Word (.docx) document",
+        _ => $"{ext.TrimStart('.').ToUpperInvariant()} file"
+    };
 
     private static string ResolveMime(string ext) => ext switch
     {
@@ -215,5 +257,6 @@ public class AssetService : IAssetService
 
     private static AssetDto ToDto(Asset a) => new(
         a.Id, a.FileName, a.FilePath, a.AssetType, a.MimeType, a.FileSize,
-        a.Title, a.Description, a.Tags, a.UploadedByName ?? "Unknown", a.UploadedAt, a.UpdatedAt);
+        a.Title, a.Description, a.Tags, a.UploadedByName ?? "Unknown", a.UploadedAt, a.UpdatedAt,
+        a.SourceType, a.SourceId);
 }

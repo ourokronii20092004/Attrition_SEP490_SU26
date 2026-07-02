@@ -79,4 +79,7 @@ public record AdminResetPasswordRequest(string NewPassword);
 public record ReportUserRequest(string Reason);
 public record AdminUserReportDto(
     Guid Id, Guid ReportedUserId, string ReportedUserName, string ReporterName,
-    string Reason, string Status, DateTime CreatedAt);
+    string Reason, string Status, DateTime CreatedAt,
+    string? ActionTaken, string? ModeratorNote, string? ResolvedByName, DateTime? ResolvedAt);
+// Resolve a report, optionally banning the reported user in the same step.
+public record ResolveReportRequest(bool BanUser, string? Note);
