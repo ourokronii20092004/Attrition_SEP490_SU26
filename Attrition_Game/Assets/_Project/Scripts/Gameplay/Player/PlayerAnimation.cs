@@ -98,6 +98,20 @@ public class PlayerAnimation : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// Reset animator khi hồi sinh: bật lại speed (có thể =0 do charge attack dở), tắt cờ IsDead ngay
+    /// (không đợi Render tick kế) và bật lại SpriteRenderer. Tránh sprite kẹt ở tư thế xác nằm.
+    /// </summary>
+    public void ResetForRevive()
+    {
+        if (anim != null)
+        {
+            anim.speed = 1f;
+            anim.SetBool("IsDead", false);
+        }
+        if (sr != null) sr.enabled = true;
+    }
+
     /// <summary>Phát animation cast skill. element = (int)SkillElement (Fire/Wood/Earth/Thunder/Thrust).</summary>
     public void PlaySkillCast(int element)
     {
