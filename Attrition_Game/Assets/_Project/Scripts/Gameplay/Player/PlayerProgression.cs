@@ -67,5 +67,15 @@ namespace Attrition.Gameplay.Player
             // PlayerStats áp level mới → mở thêm điểm tự cộng (Option 2) và cập nhật MaxHP/Mana.
             if (_stats != null) _stats.SetLevelFromProgression(Level);
         }
+
+        /// <summary>
+        /// Khi chết: mất thanh EXP đang tích dồn cho cấp kế tiếp (CurrentExp về 0), GIỮ NGUYÊN Level
+        /// và mọi điểm cộng đã có. Chỉ host. Không reset nếu đã ở max level (CurrentExp vốn = 0).
+        /// </summary>
+        public void ResetExpProgressOnDeath()
+        {
+            if (!HasStateAuthority) return;
+            CurrentExp = 0;
+        }
     }
 }
