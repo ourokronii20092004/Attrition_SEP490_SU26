@@ -42,10 +42,25 @@ public class AuthController : ControllerBase
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
+    /// <summary>
+    /// Resolve the real client IP. The ingress chain is Cloudflare → nginx → gateway → here, so
+    /// HttpContext.Connection.RemoteIpAddress is the proxy's container IP. Cloudflare sets
+    /// CF-Connecting-IP with the true client address; nginx/gateway forward it. Fall back to the
+    /// first X-Forwarded-For hop, then the raw connection IP.
+    /// </summary>
+    private string? ClientIp()
+    {
+        var cf = Request.Headers["CF-Connecting-IP"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(cf)) return cf.Trim();
+        var xff = Request.Headers["X-Forwarded-For"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(xff)) return xff.Split(',')[0].Trim();
+        return HttpContext.Connection.RemoteIpAddress?.ToString();
+    }
+
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequest request)
     {
-        var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var ip = ClientIp();
         var result = await _auth.LoginAsync(request, ip);
         if (result.Success && result.Data is not null) SetAuthCookies(result.Data);
         return result.Success ? Ok(result) : Unauthorized(result);
@@ -54,7 +69,7 @@ public class AuthController : ControllerBase
     [HttpPost("google")]
     public async Task<IActionResult> GoogleLogin(GoogleAuthRequest request)
     {
-        var result = await _auth.GoogleLoginAsync(request);
+        var result = await _auth.GoogleLoginAsync(request, ClientIp());
         if (result.Success && result.Data is not null) SetAuthCookies(result.Data);
         return result.Success ? Ok(result) : BadRequest(result);
     }

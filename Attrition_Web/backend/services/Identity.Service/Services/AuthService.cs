@@ -136,7 +136,7 @@ public class AuthService : IAuthService
         return ApiResponse<AuthResponse>.Ok(new AuthResponse(accessToken, refreshToken, TokenService.MapToDto(user)));
     }
 
-    public async Task<ApiResponse<AuthResponse>> GoogleLoginAsync(GoogleAuthRequest request)
+    public async Task<ApiResponse<AuthResponse>> GoogleLoginAsync(GoogleAuthRequest request, string? ip = null)
     {
         try
         {
@@ -196,6 +196,7 @@ public class AuthService : IAuthService
                 return ApiResponse<AuthResponse>.Fail("Account is suspended.");
 
             user.Security.LastLoginAt = DateTime.UtcNow;
+            user.Security.LastLoginIp = ip;
             var (accessToken, refreshToken) = _tokens.GenerateTokens(user);
             user.Refresh = new() { Token = TokenService.HashToken(refreshToken), ExpiresAt = DateTime.UtcNow.AddDays(_tokens.RefreshExpiryDays) };
             await _userRepo.UpdateAsync(user);

@@ -47,9 +47,15 @@ export function ProfileBanner({ profile, isOwner, onEdited }: EditProps) {
   if (!bg && !isOwner) return null;
 
   return (
-    <div className="relative -mx-4 -mt-8 mb-6 h-48 overflow-hidden bg-surface-2 sm:rounded-2xl">
-      {bg && <img src={bg} alt="" className="h-full w-full object-cover" />}
-      <div className="absolute inset-0 bg-gradient-to-t from-bg to-transparent" />
+    <div className="relative -mx-4 -mt-8 h-56 overflow-hidden bg-surface-2 sm:-mx-8 sm:h-64 sm:rounded-b-2xl">
+      {bg ? (
+        <img src={bg} alt="" className="h-full w-full object-cover" />
+      ) : (
+        // No cover set (owner view): a subtle corruption-tinted placeholder instead of dead space.
+        <div className="h-full w-full bg-gradient-to-br from-surface-2 via-surface to-accent-soft/40" />
+      )}
+      {/* Bottom-only scrim so the avatar/name below stay legible without washing out the image. */}
+      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-bg to-transparent" />
       {isOwner && (
         <div className="absolute right-3 top-3 flex gap-2">
           <button
@@ -167,5 +173,70 @@ export function ProfileName({ profile, isOwner, onEdited }: EditProps) {
         </button>
       )}
     </h1>
+  );
+}
+
+/** Bio with inline owner editing. Public viewers see the text (or nothing); owners get a textarea. */
+export function ProfileBio({ profile, isOwner, onEdited }: EditProps) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(profile.bio ?? "");
+  const [busy, setBusy] = useState(false);
+  const { toast } = useToast();
+
+  const save = async () => {
+    setBusy(true);
+    try {
+      await accountApi.updateProfile({ bio: value.trim() });
+      setEditing(false);
+      await onEdited();
+      toast("Bio updated.", "success");
+    } catch {
+      toast("Failed to update bio. Please try again.", "error");
+    } finally { setBusy(false); }
+  };
+
+  if (editing) {
+    return (
+      <div className="mt-6">
+        <textarea
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          rows={4}
+          maxLength={500}
+          autoFocus
+          placeholder="Tell the archive who you are…"
+          className="w-full resize-y rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm leading-relaxed text-fg outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent"
+        />
+        <div className="mt-2 flex items-center gap-2">
+          <button onClick={save} disabled={busy} className="inline-flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-xs font-semibold text-accent-fg transition-[filter] hover:brightness-105 disabled:opacity-50">
+            <Check size={14} /> {busy ? "Saving…" : "Save"}
+          </button>
+          <button onClick={() => { setEditing(false); setValue(profile.bio ?? ""); }} className="rounded-md border border-border px-3 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:text-fg">
+            Cancel
+          </button>
+          <span className="ml-auto text-[11px] tabular-nums text-fg-subtle">{value.length}/500</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile.bio) {
+    if (!isOwner) return null;
+    return (
+      <button onClick={() => setEditing(true)} className="mt-6 inline-flex items-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-2 text-sm text-fg-subtle transition-colors hover:border-accent/50 hover:text-fg">
+        <Pencil size={14} /> Add a bio
+      </button>
+    );
+  }
+
+  return (
+    <div className="group relative mt-6">
+      <p className="whitespace-pre-wrap leading-relaxed text-fg-muted">{profile.bio}</p>
+      {isOwner && (
+        <button onClick={() => setEditing(true)} className="absolute -right-1 -top-1 text-fg-subtle opacity-0 transition-opacity hover:text-accent group-hover:opacity-100" aria-label="Edit bio">
+          <Pencil size={15} />
+        </button>
+      )}
+    </div>
   );
 }

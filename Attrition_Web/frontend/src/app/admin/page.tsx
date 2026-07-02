@@ -3,7 +3,10 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import {
+  ArrowRight, Users, BookOpen, FileClock, MessagesSquare, MessageSquare, EyeOff,
+  Skull, Image as ImageIcon, Disc3, Music, Flag, Gem, Gamepad2, Keyboard,
+} from "lucide-react";
 import { adminApi } from "@/lib/api/admin";
 import { Card } from "@/components/ui/card";
 import { PageTitle } from "@/components/ui/page-title";
@@ -11,6 +14,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { qk } from "@/lib/query-keys";
 import { getLastAdminPage } from "./admin-top-bar";
 import { adminLabelFor } from "./admin-routes";
+
+type StatCard = {
+  label: string; value: number | null | undefined; href: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  highlight?: boolean;
+};
 
 export default function AdminPage() {
   const [resume, setResume] = useState<string | null>(null);
@@ -24,22 +33,39 @@ export default function AdminPage() {
   });
 
   useEffect(() => {
-    // Offer to jump back to the last non-dashboard admin page visited.
     const last = getLastAdminPage();
     if (last && last !== "/admin") setResume(last);
   }, []);
 
-  const cards = [
-    { label: "Users", value: stats?.totalUsers, href: "/admin/users" },
-    { label: "Wiki Articles", value: stats?.totalWikiArticles, href: "/admin/wiki" },
-    { label: "Pending Contributions", value: stats?.pendingContributions, href: "/admin/wiki" },
-    { label: "Forum Threads", value: stats?.totalForumThreads, href: "/admin/forum" },
-    { label: "Forum Posts", value: stats?.totalForumPosts, href: "/admin/forum" },
-    { label: "Removed Posts", value: stats?.removedPosts, href: "/admin/forum" },
-    { label: "Enemies", value: stats?.totalEnemies, href: "/admin/enemies" },
-    { label: "Assets", value: stats?.totalAssets, href: "/admin/assets" },
-    { label: "Music Albums", value: stats?.totalMusicAlbums, href: "/admin/music" },
-    { label: "Music Tracks", value: stats?.totalMusicTracks, href: "/admin/music" },
+  const groups: { title: string; cards: StatCard[] }[] = [
+    {
+      title: "Community",
+      cards: [
+        { label: "Users", value: stats?.totalUsers, href: "/admin/users", icon: Users },
+        { label: "Wiki Articles", value: stats?.totalWikiArticles, href: "/admin/wiki/articles", icon: BookOpen },
+        { label: "Pending Contributions", value: stats?.pendingContributions, href: "/admin/wiki/queue", icon: FileClock, highlight: (stats?.pendingContributions ?? 0) > 0 },
+        { label: "Forum Threads", value: stats?.totalForumThreads, href: "/admin/forum/threads", icon: MessagesSquare },
+        { label: "Forum Posts", value: stats?.totalForumPosts, href: "/admin/forum/threads", icon: MessageSquare },
+        { label: "Removed Posts", value: stats?.removedPosts, href: "/admin/forum/reports", icon: EyeOff },
+      ],
+    },
+    {
+      title: "Game Content",
+      cards: [
+        { label: "Enemies", value: stats?.totalEnemies, href: "/admin/enemies", icon: Skull },
+        { label: "Assets", value: stats?.totalAssets, href: "/admin/assets", icon: ImageIcon },
+        { label: "Music Albums", value: stats?.totalMusicAlbums, href: "/admin/music/albums", icon: Disc3 },
+        { label: "Music Tracks", value: stats?.totalMusicTracks, href: "/admin/music/tracks", icon: Music },
+      ],
+    },
+  ];
+
+  const quickActions = [
+    { label: "Review reports", href: "/admin/user-reports", icon: Flag },
+    { label: "Add enemy", href: "/admin/enemies", icon: Skull },
+    { label: "Add item", href: "/admin/items", icon: Gem },
+    { label: "Upload asset", href: "/admin/assets", icon: ImageIcon },
+    { label: "Characters", href: "/admin/characters", icon: Gamepad2 },
   ];
 
   return (
@@ -49,7 +75,7 @@ export default function AdminPage() {
       {resume && (
         <Link
           href={resume}
-          className="mb-6 flex items-center justify-between gap-3 rounded-lg border border-accent/30 bg-accent-soft px-4 py-3 text-sm transition-colors hover:border-accent/60"
+          className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-accent/30 bg-accent-soft px-4 py-3 text-sm transition-colors hover:border-accent/60"
         >
           <span className="text-fg">Resume where you left off — <span className="font-medium text-accent">{adminLabelFor(resume)}</span></span>
           <ArrowRight size={16} className="shrink-0 text-accent" />
@@ -57,25 +83,52 @@ export default function AdminPage() {
       )}
 
       {stats?.unavailableSources && stats.unavailableSources.length > 0 && (
-        <div className="mb-6 rounded-lg border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning">
+        <div className="mb-4 rounded-lg border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning">
           Unavailable services: {stats.unavailableSources.join(", ")}
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {cards.map((card) => (
-          <Card key={card.label} interactive className="p-0">
-            <Link href={card.href} className="block p-5">
-              <p className="text-sm text-fg-muted">{card.label}</p>
-              {loading ? (
-                <Skeleton className="mt-2 h-9 w-16" />
-              ) : (
-                <p className="mt-1 font-display text-3xl font-bold tabular-nums text-fg">{card.value ?? "—"}</p>
-              )}
-            </Link>
-          </Card>
+      {/* Quick actions */}
+      <div className="mb-6 flex flex-wrap gap-2">
+        {quickActions.map((a) => (
+          <Link
+            key={a.href}
+            href={a.href}
+            className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-fg-muted transition-colors hover:border-accent/50 hover:text-fg"
+          >
+            <a.icon size={15} className="text-accent" /> {a.label}
+          </Link>
         ))}
       </div>
+
+      {groups.map((group) => (
+        <div key={group.title} className="mb-6">
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-fg-subtle">{group.title}</h2>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {group.cards.map((card) => (
+              <Card key={card.label} interactive className="p-0">
+                <Link href={card.href} className="flex items-start gap-3 p-4">
+                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${card.highlight ? "bg-warning/15 text-warning" : "bg-accent-soft text-accent"}`}>
+                    <card.icon size={18} />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-xs text-fg-muted">{card.label}</p>
+                    {loading ? (
+                      <Skeleton className="mt-1.5 h-7 w-12" />
+                    ) : (
+                      <p className="mt-0.5 font-display text-2xl font-bold tabular-nums text-fg">{card.value ?? "—"}</p>
+                    )}
+                  </div>
+                </Link>
+              </Card>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      <p className="mt-2 flex items-center gap-1.5 text-xs text-fg-subtle">
+        <Keyboard size={13} /> Tip: press <kbd className="rounded border border-border bg-surface-2 px-1">?</kbd> for keyboard shortcuts, <kbd className="rounded border border-border bg-surface-2 px-1">⌘K</kbd> to search.
+      </p>
     </div>
   );
 }

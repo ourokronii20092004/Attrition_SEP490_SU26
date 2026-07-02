@@ -8,7 +8,7 @@ public interface IAuthService
     Task<ApiResponse<AuthResponse>> RegisterAsync(RegisterRequest request);
     Task<ApiResponse<AuthResponse>> LoginAsync(LoginRequest request, string? ip);
     Task<ApiResponse<AuthResponse>> RefreshAsync(RefreshRequest request);
-    Task<ApiResponse<AuthResponse>> GoogleLoginAsync(GoogleAuthRequest request);
+    Task<ApiResponse<AuthResponse>> GoogleLoginAsync(GoogleAuthRequest request, string? ip = null);
     Task<ApiResponse<UserDto>> GetCurrentUserAsync(Guid userId);
     Task<ApiResponse<SessionStatusDto>> CheckSessionAsync(Guid userId);
     Task<ApiResponse> ChangePasswordAsync(Guid userId, ChangePasswordRequest request);
@@ -40,7 +40,7 @@ public interface IAccountService
 
 public interface IAdminUserService
 {
-    Task<PaginatedResponse<UserListItem>> ListUsersAsync(int page, int pageSize, string? search, string? sort);
+    Task<PaginatedResponse<UserListItem>> ListUsersAsync(int page, int pageSize, string? search, string? sort, string? status);
     Task<ApiResponse<AdminUserDetailDto>> GetUserDetailAsync(Guid userId);
     Task<ApiResponse> ChangeRoleAsync(Guid userId, string role);
     Task<ApiResponse> ToggleBanAsync(Guid userId);

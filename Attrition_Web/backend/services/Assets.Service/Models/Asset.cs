@@ -12,6 +12,12 @@ public class Asset
     public string? Description { get; set; }
     public string? Tags { get; set; }
 
+    // Optional link back to the entity this asset depicts (e.g. an enemy sprite or item icon),
+    // so game-content images surface in the gallery and can be traced to their source.
+    // SourceType: enemy | item | null (general gallery asset).
+    public string? SourceType { get; set; }
+    public string? SourceId { get; set; }
+
     // Uploader ref: plain Guid + denormalized name (no cross-schema FK).
     public Guid? UploadedById { get; set; }
     public string? UploadedByName { get; set; }

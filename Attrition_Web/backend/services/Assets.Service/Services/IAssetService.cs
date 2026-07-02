@@ -8,7 +8,8 @@ public interface IAssetService
     Task<AssetDto?> GetAssetAsync(Guid assetId);
     Task<PaginatedResponse<AssetDto>> ListAssetsAsync(int page, int pageSize, string? assetType, string? search);
     Task<ApiResponse<AssetDto>> UploadAssetAsync(Microsoft.AspNetCore.Http.IFormFile file, string assetType,
-        string? title, string? description, string? tags, Guid userId, string userName);
+        string? title, string? description, string? tags, Guid userId, string userName,
+        string? sourceType = null, string? sourceId = null);
     /// <summary>Lightweight image upload for inline use (forum posts): validates + stores, returns the
     /// public URL only — no Asset DB row, no gallery entry.</summary>
     Task<ApiResponse<string>> UploadInlineImageAsync(Microsoft.AspNetCore.Http.IFormFile file);

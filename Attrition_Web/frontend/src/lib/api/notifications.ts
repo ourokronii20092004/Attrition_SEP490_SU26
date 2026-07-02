@@ -1,9 +1,18 @@
 import { apiFetch } from "./client";
-import type { ApiResponse, NotificationDto } from "../types";
+import type { ApiResponse, NotificationDto, PaginatedResponse } from "../types";
 
 export const notificationsApi = {
   list: (limit = 20) =>
     apiFetch<ApiResponse<NotificationDto[]>>(`/api/notifications?limit=${limit}`),
+
+  listPaged: (params?: { page?: number; pageSize?: number; unreadOnly?: boolean }) => {
+    const sp = new URLSearchParams();
+    if (params?.page) sp.set("page", String(params.page));
+    if (params?.pageSize) sp.set("pageSize", String(params.pageSize));
+    if (params?.unreadOnly) sp.set("unreadOnly", "true");
+    const qs = sp.toString();
+    return apiFetch<ApiResponse<PaginatedResponse<NotificationDto>>>(`/api/notifications/paged${qs ? `?${qs}` : ""}`);
+  },
 
   unreadCount: () =>
     apiFetch<ApiResponse<number>>("/api/notifications/unread-count"),

@@ -53,7 +53,7 @@ export function Modal({ open, onClose, title, children, size = "md", dirty = fal
 
   return (
     <div
-      className="fixed inset-0 z-[var(--z-modal)] flex items-start justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-sm motion-safe:animate-fade-in sm:p-8"
+      className="fixed inset-0 z-[var(--z-modal)] flex items-start justify-center overflow-y-auto bg-black/80 p-4 motion-safe:animate-fade-in sm:p-8"
       role="dialog"
       aria-modal="true"
       aria-label={title}

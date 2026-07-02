@@ -83,7 +83,9 @@ public class MusicController : ControllerBase
         return PhysicalFile(filePath, "application/octet-stream", fileName);
     }
 
-    [Authorize]
+    // Anonymous: every listen should count, not just authenticated users. The frontend audio
+    // player POSTs here once per track at playback start (deduped client-side).
+    [AllowAnonymous]
     [HttpPost("tracks/{id:int}/play")]
     public async Task<IActionResult> IncrementPlay(int id)
     {
