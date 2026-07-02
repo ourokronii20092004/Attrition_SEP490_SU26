@@ -183,9 +183,16 @@ public class PlayerController : NetworkBehaviour, IDamageable
     public override void FixedUpdateNetwork()
     {
         // SOLO pause: đóng băng player (Fusion bỏ qua Time.timeScale).
+        // Phải zero CẢ gravityScale — chỉ zero velocity thì trọng lực vẫn áp giữa các physics step
+        // khiến nhân vật rơi từ từ khi mở Inventory/Menu lúc đang trên không. Unpause: logic thường
+        // tự set lại gravityScale mỗi tick (fast-fall/normal) nên không cần lưu giá trị cũ.
         if (Attrition.Persistence.GamePause.IsPaused)
         {
-            if (rb != null) rb.linearVelocity = Vector2.zero;
+            if (rb != null)
+            {
+                rb.linearVelocity = Vector2.zero;
+                rb.gravityScale = 0f;
+            }
             return;
         }
 
@@ -572,9 +579,70 @@ public class PlayerController : NetworkBehaviour, IDamageable
         StartCoroutine(InvincibleCoroutine());
     }
 
+    /// <summary>
+    /// Hồi sinh đầy đủ player tại 1 vị trí: clear cờ chết → bật lại physics/collider → teleport →
+    /// hồi đầy HP/Mana/Stamina + refill bình → reset thanh EXP → bất tử tạm. Chỉ host.
+    /// Gom mọi bước theo đúng thứ tự để tránh bug respawn (xuyên đất/bay, âm HP, không uống bình).
+    /// </summary>
+    public void ReviveAndRestore(Vector3 spawn)
+    {
+        if (!HasStateAuthority) return;
+
+        isDeadNetworked = false;
+        RPC_RestorePhysicsAfterRevive();
+        TeleportTo(spawn);
+
+        if (statsComp != null) statsComp.ReviveFull();
+        if (potionComp != null) potionComp.RefillAll();
+
+        // Chết mất thanh EXP đang tích (progress tới cấp kế), KHÔNG mất level đã lên.
+        var prog = GetComponent<PlayerProgression>();
+        if (prog != null) prog.ResetExpProgressOnDeath();
+
+        GrantReviveInvincibility(3.0f); // BR-18
+    }
+
+    /// <summary>
+    /// Hồi sinh tại chỗ (đồng đội cứu bằng bình): clear cờ chết + bật lại physics/collider + set HP.
+    /// Không teleport, không refill bình. Chỉ host. Khôi phục physics để tránh xác Kinematic/collider-off
+    /// gây rơi xuyên đất hoặc đứng cứng giữa trời sau khi sống lại.
+    /// </summary>
+    public void ReviveInPlace(int hp)
+    {
+        if (!HasStateAuthority) return;
+        isDeadNetworked = false;
+        RPC_RestorePhysicsAfterRevive();
+        if (statsComp != null) statsComp.CurrentHP = Mathf.Max(1, hp);
+        else HP = Mathf.Max(1, hp);
+        GrantReviveInvincibility(3.0f); // BR-18
+    }
+
     private void Die()
     {
         isDeadNetworked = true;
+    }
+
+    /// <summary>
+    /// Hồi sinh: bật lại physics/collider đã tắt khi chết (xác nằm đất set Kinematic + disable collider).
+    /// Phải chạy trên MỌI peer (bodyType/collider là state local, không [Networked]) nên gọi qua RPC.
+    /// Không khôi phục → bug "rơi xuyên đất / bay đứng giữa trời" sau respawn.
+    /// </summary>
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_RestorePhysicsAfterRevive()
+    {
+        if (rb != null)
+        {
+            rb.bodyType = RigidbodyType2D.Dynamic;
+            rb.linearVelocity = Vector2.zero;
+            rb.gravityScale = normalGravity;
+        }
+        Collider2D col = GetComponent<Collider2D>();
+        if (col != null) col.enabled = true;
+
+        // Reset animator: chết bật state "Player_Death" + có thể còn anim.speed=0 (charge attack dở).
+        // Không reset → sprite kẹt ở tư thế nằm/xác dù logic đã sống lại. IsDead=false được Render đẩy
+        // mỗi frame, nhưng anim.speed phải tự tay bật lại.
+        if (animationComp != null) animationComp.ResetForRevive();
     }
 
     /// <summary>Dịch chuyển player về vị trí (vd điểm rest). Set cả rb lẫn NetworkPosition để sync. Chỉ host.</summary>
@@ -647,24 +715,40 @@ public class PlayerController : NetworkBehaviour, IDamageable
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
     public void RpcRequestRespawnAll()
     {
-        var checkpoints = FindObjectsByType<Attrition.Gameplay.World.Checkpoint>(FindObjectsSortMode.None);
-        var active = checkpoints.FirstOrDefault(cp => cp.HasBeenActivated);
-        Vector3 spawn = active != null ? active.RespawnPosition : Vector3.zero;
+        // Hồi sinh tại checkpoint REST/SAVE gần nhất (MostRecentlyActivated), không phải checkpoint
+        // activated đầu danh sách. Fallback: checkpoint activated bất kỳ → gốc scene.
+        var recent = Attrition.Gameplay.World.Checkpoint.MostRecentlyActivated;
+        Vector3 spawn;
+        if (recent != null && recent.HasBeenActivated)
+        {
+            spawn = recent.RespawnPosition;
+        }
+        else
+        {
+            var checkpoints = FindObjectsByType<Attrition.Gameplay.World.Checkpoint>(FindObjectsSortMode.None);
+            var active = checkpoints.FirstOrDefault(cp => cp.HasBeenActivated);
+            spawn = active != null ? active.RespawnPosition : Vector3.zero;
+        }
 
         var players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
         foreach (var p in players)
         {
-            p.isDeadNetworked = false;
-            p.TeleportTo(spawn);
-            var st = p.GetComponent<PlayerStats>();
-            if (st != null) st.RestoreFull();
-            var pot = p.GetComponent<PotionSystem>();
-            if (pot != null) pot.RefillAll();
-            p.GrantReviveInvincibility(3.0f); // BR-18
+            p.ReviveAndRestore(spawn);
         }
 
         var spawner = FindFirstObjectByType<NetworkSpawner>();
-        if (spawner != null) spawner.RespawnConfiguredEnemies();
+        if (spawner != null)
+        {
+            // Despawn quái còn sống (trừ boss) TRƯỚC khi spawn lại → tránh nhân đôi.
+            foreach (var enemy in FindObjectsByType<Attrition.Controllers.EnemyController>(FindObjectsSortMode.None))
+            {
+                if (enemy == null) continue;
+                var es = enemy.GetComponent<Attrition.Gameplay.Enemy.EnemyStats>();
+                if (es != null && es.Tier == Attrition.Data.EnemyTier.Boss) continue; // boss: bỏ qua
+                spawner.DespawnObject(enemy.Object);
+            }
+            spawner.RespawnConfiguredEnemies();
+        }
     }
 
     IEnumerator InvincibleCoroutine()
