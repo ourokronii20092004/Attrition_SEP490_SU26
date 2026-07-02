@@ -200,6 +200,8 @@ public class NetworkSpawner : MonoBehaviour
 
     /// <summary>
     /// Spawn lại toàn bộ quái theo config (public để Checkpoint gọi khi Rest).
+    /// KHÔNG tự despawn — caller phải dọn quái cũ trước (qua DespawnObject) để tránh nhân đôi.
+    /// NetworkSpawner cố ý không reference assembly Gameplay/Controllers nên không tự lọc boss được.
     /// Lưu ý: chỉ spawn những gì khai báo trong enemySpawnConfigs — BOSS nên đặt riêng
     /// trong scene (không cho vào config) để Rest không hồi sinh boss.
     /// </summary>
