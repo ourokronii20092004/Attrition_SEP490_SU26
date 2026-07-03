@@ -40,6 +40,13 @@ namespace Attrition.Gameplay.World
         [Networked] public Vector3 RespawnPosition { get; set; }
         [Networked] public NetworkBool HasBeenActivated { get; set; }
 
+        /// <summary>
+        /// Checkpoint được rest/activate GẦN NHẤT (host-side). Respawn sau Game Over dùng cái này thay vì
+        /// "checkpoint activated đầu tiên trong scene" — nếu không, đã activate nhiều điểm sẽ hồi sinh
+        /// nhầm về điểm đầu danh sách thay vì điểm save gần nhất.
+        /// </summary>
+        public static Checkpoint MostRecentlyActivated { get; private set; }
+
         private Vector3 RestPoint => respawnPoint != null ? respawnPoint.position : transform.position;
 
         public override void Spawned()
@@ -70,6 +77,9 @@ namespace Attrition.Gameplay.World
                 HasBeenActivated = true;
                 RespawnPosition = RestPoint;
                 Attrition.Gameplay.Environment.WorldMapState.MarkCheckpointDiscovered(DisplayName);
+
+                // Checkpoint khớp đúng cái save gần nhất → đặt làm điểm hồi sinh hiện hành.
+                if (data.checkpointId == DisplayName) MostRecentlyActivated = this;
             }
         }
 
@@ -104,6 +114,7 @@ namespace Attrition.Gameplay.World
 
             RespawnPosition = RestPoint;
             HasBeenActivated = true;
+            MostRecentlyActivated = this;
 
             // Đánh dấu đã khám phá (cho World Map + fast-travel cross-map nhớ qua các phiên).
             Attrition.Gameplay.Environment.WorldMapState.MarkCheckpointDiscovered(DisplayName);
@@ -155,6 +166,9 @@ namespace Attrition.Gameplay.World
 
             RespawnPosition = RestPoint;
             HasBeenActivated = true;
+
+            // Rest gần nhất → điểm hồi sinh hiện hành cho Game Over respawn.
+            MostRecentlyActivated = this;
 
             // Đánh dấu đã khám phá (World Map + fast-travel nhớ qua phiên).
             Attrition.Gameplay.Environment.WorldMapState.MarkCheckpointDiscovered(DisplayName);

@@ -105,21 +105,10 @@ namespace Attrition.Gameplay.Player
                 // Consume 1 flask
                 if (_myPotions.TryUseHealthPotion())
                 {
-                    target.isDeadNetworked = false;
-                    
                     var targetStats = target.GetComponent<PlayerStats>();
-                    if (targetStats != null)
-                    {
-                        // Revive with half HP or something, rules didn't strictly say, assume MaxHP / 2
-                        targetStats.CurrentHP = targetStats.MaxHP / 2;
-                    }
-                    else
-                    {
-                        target.HP = target.maxHP / 2;
-                    }
-
-                    // BR-18: 3.0s invincibility on revive
-                    target.GrantReviveInvincibility(3.0f);
+                    int reviveHp = targetStats != null ? targetStats.MaxHP / 2 : target.maxHP / 2;
+                    // Khôi phục cờ chết + physics + HP trong 1 path chung (tránh xác Kinematic/collider-off).
+                    target.ReviveInPlace(reviveHp);
                 }
             }
             CancelRevive();
