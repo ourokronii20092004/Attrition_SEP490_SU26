@@ -405,6 +405,16 @@ public class WikiService : IWikiService
     public Task<int> CountArticlesAsync() => _wikiRepo.CountAsync(a => a.Status == ArticleStatus.Published);
     public Task<int> CountPendingContributionsAsync() => _contributionRepo.CountAsync(c => c.Status == ContributionStatus.Pending);
 
+    // A user's wiki contributions = published articles they authored (admins) + suggested edits of
+    // theirs that were approved (regular users, who can't author articles directly). This is what
+    // the profile "Wiki contributions" stat shows, so approving an edit makes the count go up.
+    public async Task<int> CountUserContributionsAsync(Guid userId)
+    {
+        var authored = await _wikiRepo.CountAsync(a => a.CreatedById == userId && a.Status == ArticleStatus.Published);
+        var approvedEdits = await _contributionRepo.CountAsync(c => c.ContributorId == userId && c.Status == ContributionStatus.Approved);
+        return authored + approvedEdits;
+    }
+
     private static WikiRevisionDto ToRevisionDto(WikiRevision r) =>
         new(r.Id, r.ArticleId, r.Content, r.EditedByName, r.EditedAt, r.ChangeNote);
 }

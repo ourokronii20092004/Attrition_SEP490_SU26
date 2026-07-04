@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { SearchX } from "lucide-react";
+import { SearchX, AlertTriangle } from "lucide-react";
 import { searchApi } from "@/lib/api/search";
 import { PageShell } from "@/components/ui/page-shell";
 import { PageTitle, SectionTitle } from "@/components/ui/page-title";
@@ -41,6 +41,13 @@ function SearchContent() {
       <PageTitle description={q ? <>Results for <span className="text-fg">&ldquo;{q}&rdquo;</span></> : undefined}>
         Search
       </PageTitle>
+
+      {!loading && results && results.degradedSources.length > 0 && (
+        <div className="mb-6 flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning">
+          <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+          <span>Some sources ({results.degradedSources.join(", ")}) are temporarily unavailable, so results may be incomplete.</span>
+        </div>
+      )}
 
       {loading && <SkeletonList rows={5} />}
 

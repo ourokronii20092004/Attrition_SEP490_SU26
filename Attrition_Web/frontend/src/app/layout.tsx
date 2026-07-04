@@ -7,6 +7,8 @@ import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { AppFrame } from "@/components/app-frame";
+import { ForcePasswordChange } from "@/components/force-password-change";
+import { AuthTransition } from "@/components/auth-transition";
 import { SITE_NAME, SITE_TAGLINE } from "@/lib/config";
 
 export const metadata: Metadata = {
@@ -18,6 +20,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" data-theme="dark" data-accent="corruption" suppressHydrationWarning>
       <body className="font-sans antialiased">
+        {/* Apply the saved theme before first paint so nothing (incl. the boot splash) flashes the
+            default dark/corruption theme before ThemeProvider's effects run. Mirrors the keys in
+            theme-provider.tsx. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){try{var r=document.documentElement;r.setAttribute('data-theme',localStorage.getItem('attrition:themeMode')||'dark');r.setAttribute('data-accent',localStorage.getItem('attrition:themeAccent')||'corruption');}catch(e){}})();",
+          }}
+        />
         <Providers>
           <a
             href="#main-content"
@@ -26,6 +37,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             Skip to content
           </a>
           <AppFrame>{children}</AppFrame>
+          <ForcePasswordChange />
+          <AuthTransition />
         </Providers>
       </body>
     </html>

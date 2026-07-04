@@ -38,6 +38,15 @@ builder.Services.AddHttpClient<Forum.Service.Clients.NotificationClient>(c =>
     c.Timeout = TimeSpan.FromSeconds(3);
 }).AddTransientRetry();
 
+// Internal client to resolve current author avatars from Identity on read (posts store only the
+// author's name at write time). Same base address/guard as the notification client.
+builder.Services.AddHttpClient<Forum.Service.Clients.IdentityClient>(c =>
+{
+    c.BaseAddress = new Uri(builder.Configuration["Services:Identity"]
+        ?? throw new InvalidOperationException("Services:Identity not configured"));
+    c.Timeout = TimeSpan.FromSeconds(3);
+}).AddTransientRetry();
+
 builder.Services.AddAttritionJwtAuth(builder.Configuration);
 
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();

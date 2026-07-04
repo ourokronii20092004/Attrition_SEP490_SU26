@@ -202,6 +202,11 @@ body::after {
 .animate-pulse-glow { animation: pulse-glow 3.2s ease-in-out infinite; }
 .animate-float { animation: float-bob 5s ease-in-out infinite; }
 
+/* A status spinner must actually spin — it conveys progress, not decoration. Force it even under
+   prefers-reduced-motion (whose global reset zeroes animation-duration); the class selector's
+   higher specificity + !important wins over that universal reset. */
+.animate-spin-always { animation: spin 0.8s linear infinite !important; }
+
 /* Static premium accent gradient on the headline's second line (no looping sweep). */
 .sheen {
   background: linear-gradient(120deg, var(--color-fg) 0%, color-mix(in srgb, var(--color-accent) 75%, var(--color-fg)) 55%, var(--color-accent) 100%);

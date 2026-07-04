@@ -164,6 +164,48 @@ public class MusicController : ControllerBase
         };
     }
 
+    [Authorize]
+    [HttpGet("playlists/{id:guid}")]
+    public async Task<IActionResult> GetPlaylist(Guid id)
+    {
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        var (result, playlist) = await _playlists.GetPlaylistWithTracksAsync(userId, id);
+        return result switch
+        {
+            PlaylistOpResult.Ok => Ok(ApiResponse<PlaylistDetailDto>.Ok(playlist!)),
+            PlaylistOpResult.NotFound => NotFound(ApiResponse.Fail("Playlist not found.")),
+            _ => StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Fail("You do not have access to this playlist."))
+        };
+    }
+
+    [Authorize]
+    [HttpPut("playlists/{id:guid}/reorder")]
+    public async Task<IActionResult> ReorderPlaylist(Guid id, [FromBody] ReorderPlaylistReq req)
+    {
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        var result = await _playlists.ReorderPlaylistAsync(userId, id, req.TrackIds ?? new());
+        return result switch
+        {
+            PlaylistOpResult.Ok => Ok(ApiResponse.Ok()),
+            PlaylistOpResult.NotFound => NotFound(ApiResponse.Fail("Playlist not found.")),
+            _ => StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Fail("You do not own this playlist."))
+        };
+    }
+
+    [Authorize]
+    [HttpDelete("playlists/{id:guid}")]
+    public async Task<IActionResult> DeletePlaylist(Guid id)
+    {
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        var result = await _playlists.DeletePlaylistAsync(userId, id);
+        return result switch
+        {
+            PlaylistOpResult.Ok => Ok(ApiResponse.Ok()),
+            PlaylistOpResult.NotFound => NotFound(ApiResponse.Fail("Playlist not found.")),
+            _ => StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Fail("You do not own this playlist."))
+        };
+    }
+
     // ─── Admin: albums ───
     [Authorize(Roles = Roles.Admin)]
     [HttpPost("albums")]

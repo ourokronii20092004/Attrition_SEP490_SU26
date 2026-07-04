@@ -69,20 +69,54 @@ public class PlaylistService : IPlaylistService
 {
     private readonly IRepository<MusicPlaylist> _playlistRepo;
     private readonly IRepository<PlaylistTrack> _playlistTrackRepo;
+    private readonly IRepository<MusicTrack> _trackRepo;
+    private readonly IRepository<MusicAlbum> _albumRepo;
 
-    public PlaylistService(IRepository<MusicPlaylist> playlistRepo, IRepository<PlaylistTrack> playlistTrackRepo)
+    public PlaylistService(IRepository<MusicPlaylist> playlistRepo, IRepository<PlaylistTrack> playlistTrackRepo,
+        IRepository<MusicTrack> trackRepo, IRepository<MusicAlbum> albumRepo)
     {
         _playlistRepo = playlistRepo;
         _playlistTrackRepo = playlistTrackRepo;
+        _trackRepo = trackRepo;
+        _albumRepo = albumRepo;
     }
 
     public async Task<IEnumerable<PlaylistDto>> GetPlaylistsAsync(Guid userId)
     {
-        var playlists = await _playlistRepo.ListAsync(p => p.UserId == userId);
+        var playlists = await _playlistRepo.ListAsync(p => p.UserId == userId, q => q.OrderByDescending(p => p.UpdatedAt));
         return playlists.Select(ToDto);
     }
 
     public Task<MusicPlaylist?> GetPlaylistAsync(Guid id) => _playlistRepo.GetByIdAsync(id);
+
+    public async Task<(PlaylistOpResult result, PlaylistDetailDto? playlist)> GetPlaylistWithTracksAsync(Guid userId, Guid playlistId)
+    {
+        var playlist = await _playlistRepo.GetByIdAsync(playlistId);
+        if (playlist == null) return (PlaylistOpResult.NotFound, null);
+        if (playlist.UserId != userId && !playlist.IsPublic) return (PlaylistOpResult.Forbidden, null);
+
+        // Ordered link rows → hydrate track + album details, preserving playlist order.
+        var links = await _playlistTrackRepo.ListAsync(pt => pt.PlaylistId == playlistId,
+            q => q.OrderBy(pt => pt.Position).ThenBy(pt => pt.AddedAt));
+        var trackIds = links.Select(l => l.TrackId).ToList();
+        var tracks = (await _trackRepo.ListAsync(t => trackIds.Contains(t.TrackId))).ToDictionary(t => t.TrackId);
+        var albumIds = tracks.Values.Select(t => t.AlbumId).Distinct().ToList();
+        var albums = (await _albumRepo.ListAsync(a => albumIds.Contains(a.AlbumId))).ToDictionary(a => a.AlbumId);
+
+        var trackDtos = new List<MusicTrackDto>();
+        foreach (var link in links)
+        {
+            if (!tracks.TryGetValue(link.TrackId, out var t)) continue; // track deleted since it was added
+            albums.TryGetValue(t.AlbumId, out var album);
+            trackDtos.Add(new MusicTrackDto(t.TrackId, t.AlbumId, t.Title, t.Slug, t.TrackNumber, t.Artists,
+                t.Duration, t.Genre, t.CoverPath, t.PlayCount, t.IsFeatured, t.FileSize ?? 0,
+                album?.Title, album?.CoverPath));
+        }
+
+        var dto = new PlaylistDetailDto(playlist.PlaylistId, playlist.Title, playlist.Description, playlist.IsPublic,
+            playlist.TrackCount, playlist.CreatedAt, playlist.UpdatedAt, trackDtos);
+        return (PlaylistOpResult.Ok, dto);
+    }
 
     public async Task<PlaylistDto> CreatePlaylistAsync(Guid userId, string name, string? description)
     {
@@ -99,10 +133,16 @@ public class PlaylistService : IPlaylistService
         var playlist = await _playlistRepo.GetByIdAsync(playlistId);
         if (playlist == null) return PlaylistOpResult.NotFound;
         if (playlist.UserId != userId) return PlaylistOpResult.Forbidden;
+        // Don't store links to tracks that don't exist (there's no FK on TrackId).
+        if (await _trackRepo.GetByIdAsync(trackId) == null) return PlaylistOpResult.NotFound;
 
         var (existing, _) = await _playlistTrackRepo.GetPagedAsync(1, 1, pt => pt.PlaylistId == playlistId && pt.TrackId == trackId);
         if (existing.Count > 0) return PlaylistOpResult.Ok;
-        await _playlistTrackRepo.AddAsync(new PlaylistTrack { PlaylistId = playlistId, TrackId = trackId });
+
+        // Append after the current last track (positions are 0-based).
+        var current = await _playlistTrackRepo.ListAsync(pt => pt.PlaylistId == playlistId);
+        var nextPos = current.Select(pt => pt.Position).DefaultIfEmpty(-1).Max() + 1;
+        await _playlistTrackRepo.AddAsync(new PlaylistTrack { PlaylistId = playlistId, TrackId = trackId, Position = nextPos });
         await SyncTrackCountAsync(playlist, playlistId);
         return PlaylistOpResult.Ok;
     }
@@ -125,6 +165,46 @@ public class PlaylistService : IPlaylistService
         if (pt == null) return PlaylistOpResult.NotFound;
         await _playlistTrackRepo.DeleteAsync(pt);
         await SyncTrackCountAsync(playlist, playlistId);
+        return PlaylistOpResult.Ok;
+    }
+
+    public async Task<PlaylistOpResult> ReorderPlaylistAsync(Guid userId, Guid playlistId, IReadOnlyList<int> trackIds)
+    {
+        var playlist = await _playlistRepo.GetByIdAsync(playlistId);
+        if (playlist == null) return PlaylistOpResult.NotFound;
+        if (playlist.UserId != userId) return PlaylistOpResult.Forbidden;
+
+        var links = (await _playlistTrackRepo.ListAsync(pt => pt.PlaylistId == playlistId)).ToList();
+        var byTrack = links.ToDictionary(l => l.TrackId);
+        var pos = 0;
+        // Apply the requested order first…
+        foreach (var trackId in trackIds)
+        {
+            if (byTrack.TryGetValue(trackId, out var link))
+            {
+                link.Position = pos++;
+                await _playlistTrackRepo.UpdateAsync(link);
+            }
+        }
+        // …then append any links the client didn't include, keeping their prior relative order.
+        foreach (var link in links.Where(l => !trackIds.Contains(l.TrackId)).OrderBy(l => l.Position))
+        {
+            link.Position = pos++;
+            await _playlistTrackRepo.UpdateAsync(link);
+        }
+
+        playlist.UpdatedAt = DateTime.UtcNow;
+        await _playlistRepo.UpdateAsync(playlist);
+        return PlaylistOpResult.Ok;
+    }
+
+    public async Task<PlaylistOpResult> DeletePlaylistAsync(Guid userId, Guid playlistId)
+    {
+        var playlist = await _playlistRepo.GetByIdAsync(playlistId);
+        if (playlist == null) return PlaylistOpResult.NotFound;
+        if (playlist.UserId != userId) return PlaylistOpResult.Forbidden;
+        // PlaylistTrack rows cascade-delete via the FK configured in MusicDbContext.
+        await _playlistRepo.DeleteAsync(playlist);
         return PlaylistOpResult.Ok;
     }
 }

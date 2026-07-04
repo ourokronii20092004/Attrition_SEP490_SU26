@@ -36,6 +36,8 @@ export interface UserDto {
   pendingEmail: string | null;
   notifyOnReply: boolean;
   notifyOnMention: boolean;
+  hasPassword: boolean;
+  isGoogleLinked: boolean;
 }
 
 export interface AuthResponse {
@@ -536,6 +538,7 @@ export interface MusicAlbumDto {
   trackCount: number;
   totalDuration: number;
   createdAt: string;
+  sortOrder: number;
 }
 
 export interface MusicTrackDto {
@@ -662,6 +665,21 @@ export interface CreatePlaylistReq {
 
 export interface AddTrackToPlaylistReq {
   trackId: number;
+}
+
+export interface ReorderPlaylistReq {
+  trackIds: number[];
+}
+
+export interface PlaylistDetailDto {
+  playlistId: string;
+  title: string;
+  description: string | null;
+  isPublic: boolean;
+  trackCount: number;
+  createdAt: string;
+  updatedAt: string;
+  tracks: MusicTrackDto[];
 }
 
 // ─── Search Service ───────────────────────────────────────────────────────────

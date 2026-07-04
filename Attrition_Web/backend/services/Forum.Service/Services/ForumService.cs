@@ -21,6 +21,7 @@ public class ForumService : IForumService
     private readonly IRepository<PostReport> _reportRepo;
     private readonly ICacheService _cache;
     private readonly NotificationClient _notify;
+    private readonly IdentityClient _identity;
 
     public ForumService(
         IForumRepository threadRepo,
@@ -30,7 +31,8 @@ public class ForumService : IForumService
         IRepository<ThreadSubscription> subRepo,
         IRepository<PostReport> reportRepo,
         ICacheService cache,
-        NotificationClient notify)
+        NotificationClient notify,
+        IdentityClient identity)
     {
         _threadRepo = threadRepo;
         _categoryRepo = categoryRepo;
@@ -40,6 +42,7 @@ public class ForumService : IForumService
         _reportRepo = reportRepo;
         _cache = cache;
         _notify = notify;
+        _identity = identity;
     }
 
     // @username tokens to notify (letters/digits/underscore — matching the username rule).
@@ -113,9 +116,12 @@ public class ForumService : IForumService
         var (items, total) = await _threadRepo.GetPagedAsync(page, pageSize, filter,
             q => q.OrderByDescending(t => t.IsPinned).ThenByDescending(t => t.LastReplyAt));
 
+        // Avatars aren't stored on the post; resolve them fresh from Identity (best-effort).
+        var avatars = await _identity.ResolveUsersAsync(items.Select(t => t.AuthorId).ToList());
         var dtos = items.Select(t => new ForumThreadListDto(t.Id, t.Title, t.AuthorId,
-            t.AuthorName ?? "Unknown", t.AuthorAvatar, t.IsPinned, t.IsLocked, t.ReplyCount,
-            t.CreatedAt, t.LastReplyAt)).ToList();
+            t.AuthorName ?? "Unknown",
+            avatars.GetValueOrDefault(t.AuthorId)?.AvatarUrl ?? t.AuthorAvatar,
+            t.IsPinned, t.IsLocked, t.ReplyCount, t.CreatedAt, t.LastReplyAt)).ToList();
 
         return new PaginatedResponse<ForumThreadListDto>(dtos, total, page, pageSize);
     }
@@ -166,12 +172,14 @@ public class ForumService : IForumService
 
         var postIds = posts.Select(p => p.Id).ToList();
         var reactions = await _reactionRepo.ListAsync(r => postIds.Contains(r.PostId));
+        // Avatars aren't stored on the post; resolve them fresh from Identity (best-effort).
+        var avatars = await _identity.ResolveUsersAsync(posts.Select(p => p.AuthorId).ToList());
 
         var items = posts.Select(p =>
         {
             var postReactions = reactions.Where(r => r.PostId == p.Id).ToList();
             return new ForumPostDto(p.Id, p.ThreadId, p.ParentPostId, p.Depth, p.AuthorId, p.AuthorName ?? "Unknown",
-                p.AuthorAvatar, p.AuthorRole, p.Content, ParseAttachments(p.Attachments), p.CreatedAt, p.UpdatedAt,
+                avatars.GetValueOrDefault(p.AuthorId)?.AvatarUrl ?? p.AuthorAvatar, p.AuthorRole, p.Content, ParseAttachments(p.Attachments), p.CreatedAt, p.UpdatedAt,
                 postReactions.Count(r => r.ReactionType == ReactionType.Like),
                 postReactions.Count(r => r.ReactionType == ReactionType.Dislike),
                 currentUserId.HasValue ? postReactions.FirstOrDefault(r => r.UserId == currentUserId.Value)?.ReactionType : null);

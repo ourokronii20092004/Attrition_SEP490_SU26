@@ -9,6 +9,7 @@ import { PageShell } from "@/components/ui/page-shell";
 import { PageTitle } from "@/components/ui/page-title";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Avatar } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { SkeletonList } from "@/components/ui/skeleton";
@@ -109,6 +110,7 @@ export default function ForumPage() {
             {threads.items.map((thread, i) => (
               <Card key={thread.id} interactive style={{ "--i": i } as React.CSSProperties} className="p-0">
                 <Link href={`/forum/${thread.id}`} className="group flex items-center gap-4 p-4">
+                  <Avatar src={thread.authorAvatar} name={thread.authorName} size="md" />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       {thread.isPinned && (

@@ -6,6 +6,7 @@ const SIZES = {
   md: "h-10 w-10 text-sm",
   lg: "h-16 w-16 text-lg",
   xl: "h-24 w-24 text-2xl",
+  "2xl": "h-28 w-28 text-3xl sm:h-32 sm:w-32 sm:text-4xl",
 } as const;
 
 interface AvatarProps {
