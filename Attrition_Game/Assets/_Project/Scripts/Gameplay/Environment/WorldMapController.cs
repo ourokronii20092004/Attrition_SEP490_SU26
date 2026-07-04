@@ -460,7 +460,7 @@ namespace Attrition.Gameplay.Environment
             if (here != null)
             {
                 var local = FindLocalController();
-                if (local != null) local.RpcRequestFastTravel(here.transform.position);
+                if (local != null) local.RpcRequestFastTravelToCheckpoint(here.transform.position, cp.checkpointId);
                 else Debug.LogWarning("[WorldMap] TRAVEL: không tìm thấy local PlayerController.");
                 return;
             }
