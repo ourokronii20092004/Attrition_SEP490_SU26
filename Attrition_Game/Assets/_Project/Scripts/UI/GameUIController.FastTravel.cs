@@ -234,7 +234,7 @@ namespace Attrition.UI
         private void TeleportToSelected()
         {
             if (_ftSelected == null || _controller == null) return;
-            _controller.RpcRequestFastTravel(_ftSelected.RespawnPosition);
+            _controller.RpcRequestFastTravelToCheckpoint(_ftSelected.RespawnPosition, _ftSelected.DisplayName);
             ShowOverlay(Overlay.None);
             // Loading do host bắn về cả 2 máy (OnCoopTravelLoading), không chạy local ở đây.
         }

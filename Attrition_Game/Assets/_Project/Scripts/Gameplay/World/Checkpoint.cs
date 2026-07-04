@@ -45,7 +45,7 @@ namespace Attrition.Gameplay.World
         /// "checkpoint activated đầu tiên trong scene" — nếu không, đã activate nhiều điểm sẽ hồi sinh
         /// nhầm về điểm đầu danh sách thay vì điểm save gần nhất.
         /// </summary>
-        public static Checkpoint MostRecentlyActivated { get; private set; }
+        public static Checkpoint MostRecentlyActivated { get; internal set; }
 
         private Vector3 RestPoint => respawnPoint != null ? respawnPoint.position : transform.position;
 
