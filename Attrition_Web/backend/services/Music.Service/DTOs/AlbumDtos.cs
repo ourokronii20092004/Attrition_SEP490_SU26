@@ -15,7 +15,7 @@ public record CreateAlbumRequest(
 public record MusicAlbumDto(
     int AlbumId, string Title, string Slug, List<string> Artists, string? Description,
     string? CoverPath, bool IsCoverUserDefined, DateTime? ReleaseDate, string AlbumType, string? Genre,
-    int TrackCount, int TotalDuration, DateTime CreatedAt
+    int TrackCount, int TotalDuration, DateTime CreatedAt, int SortOrder = 0
 );
 
 public record AlbumDetailDto(

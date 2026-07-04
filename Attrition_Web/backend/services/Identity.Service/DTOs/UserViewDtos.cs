@@ -20,7 +20,9 @@ public record UserDto(
     bool IsEmailVerified,
     string? PendingEmail,
     bool NotifyOnReply,
-    bool NotifyOnMention
+    bool NotifyOnMention,
+    bool HasPassword,
+    bool IsGoogleLinked
 );
 
 public record UserListItem(Guid Id, string Username, string Role, bool IsBanned, bool IsDeleted, DateTime JoinedAt);

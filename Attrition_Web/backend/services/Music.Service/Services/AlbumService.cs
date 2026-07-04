@@ -29,13 +29,14 @@ public class AlbumService : IAlbumService
     public async Task<IEnumerable<MusicAlbumDto>> GetAlbumsAsync()
     {
         var albums = await _albumRepo.GetAllAsync();
-        return albums.OrderByDescending(a => a.CreatedAt).Select(ToDto);
+        // Admin-controlled SortOrder wins (lower = earlier); newest-first breaks ties.
+        return albums.OrderBy(a => a.SortOrder).ThenByDescending(a => a.CreatedAt).Select(ToDto);
     }
 
     public async Task<PaginatedResponse<MusicAlbumDto>> GetAlbumsPagedAsync(int page, int pageSize)
     {
         var (items, total) = await _albumRepo.GetPagedAsync(page, pageSize, null,
-            q => q.OrderByDescending(a => a.CreatedAt));
+            q => q.OrderBy(a => a.SortOrder).ThenByDescending(a => a.CreatedAt));
         return new PaginatedResponse<MusicAlbumDto>(items.Select(ToDto).ToList(), total, page, pageSize);
     }
 
@@ -100,7 +101,7 @@ public class AlbumService : IAlbumService
 
     private static MusicAlbumDto ToDto(MusicAlbum a) => new(
         a.AlbumId, a.Title, a.Slug, a.Artists, a.Description, a.CoverPath, a.IsCoverUserDefined,
-        a.ReleaseDate, a.AlbumType, a.Genre, a.TrackCount, a.TotalDuration, a.CreatedAt);
+        a.ReleaseDate, a.AlbumType, a.Genre, a.TrackCount, a.TotalDuration, a.CreatedAt, a.SortOrder);
 
     public async Task<bool> DeleteAlbumAsync(int id)
     {

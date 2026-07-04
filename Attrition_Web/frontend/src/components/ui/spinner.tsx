@@ -2,7 +2,9 @@ import { clsx } from "clsx";
 import { Loader2 } from "lucide-react";
 
 export function Spinner({ className }: { className?: string }) {
-  return <Loader2 className={clsx("animate-spin text-accent", className)} />;
+  // animate-spin-always keeps it turning even under prefers-reduced-motion (a spinner is a status
+  // indicator). See globals.css.
+  return <Loader2 className={clsx("animate-spin-always text-accent", className)} />;
 }
 
 export function PageLoader() {

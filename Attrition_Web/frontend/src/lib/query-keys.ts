@@ -36,6 +36,8 @@ export const qk = {
       page === undefined ? (["music", "albums"] as const) : (["music", "albums", page] as const),
     album: (id: string) => ["album", id] as const,
     favorites: () => ["music", "favorites"] as const,
+    playlists: () => ["music", "playlists"] as const,
+    playlist: (id: string) => ["music", "playlist", id] as const,
   },
 
   assets: {
@@ -50,6 +52,8 @@ export const qk = {
 
   search: (q: string) => ["search", q] as const,
   profile: (username: string) => ["profile", username] as const,
+  // Live-derived forum/wiki counts for a profile (the Identity DB counters aren't maintained).
+  profileCounts: (userId: string) => ["profile", "counts", userId] as const,
 
   admin: {
     stats: () => ["admin", "stats"] as const,

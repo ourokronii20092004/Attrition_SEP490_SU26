@@ -22,24 +22,8 @@ const QUOTES: { line: string; attribution: string }[] = [
     attribution: "Ren · the cathedral",
   },
   {
-    line: "Don't freeze. A self assembled out of rules, in a place that wanted him to have none.",
-    attribution: "Ren · the descent",
-  },
-  {
-    line: "You take the false hope and you leave the true one standing.",
-    attribution: "Ren · the cathedral",
-  },
-  {
     line: "Memory moves. Memory is a living thing carrying a dead one forward... A thing that can't leave you was never really with you in the first place. It's just held.",
     attribution: "Ren · the archive",
-  },
-  {
-    line: "To choose an ending is not to lose.",
-    attribution: "Iris · the throne",
-  },
-  {
-    line: "You are allowed to have failed at the impossible thing and to have done the real thing anyway.",
-    attribution: "Maren · the throne",
   },
   {
     line: "A yes from someone who didn't want the other thing is just a man with nowhere to go, dressed up as a hero.",

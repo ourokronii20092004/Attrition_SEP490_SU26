@@ -54,15 +54,13 @@ export function AudioPlayer() {
   }, [currentTrack]);
 
   // ── Effect 2: play / pause the already-loaded element (never reloads the source). ──
+  // Play counts are NOT recorded here — a listen only counts after 10s of playback (see
+  // maybeRecordPlay), not the instant a track starts.
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !currentTrack) return;
     if (isPlaying && !scrubbing) {
       audio.play().catch(() => {});
-      if (playRecorded.current !== currentTrack.trackId) {
-        musicApi.recordPlay(currentTrack.trackId).catch(() => {});
-        playRecorded.current = currentTrack.trackId;
-      }
     } else if (!isPlaying) {
       audio.pause();
     }
@@ -94,9 +92,25 @@ export function AudioPlayer() {
     return () => window.removeEventListener("keydown", onKey);
   }, [expanded]);
 
+  // A play counts once the listener reaches 10s of the track — or, for tracks shorter than 10s,
+  // once they're essentially finished. Deduped per track via playRecorded, so scrubbing back and
+  // forth or repeat-one can't inflate the count.
+  const maybeRecordPlay = () => {
+    const audio = audioRef.current;
+    const track = currentTrack;
+    if (!audio || !track || playRecorded.current === track.trackId) return;
+    const dur = audio.duration;
+    const threshold = Number.isFinite(dur) && dur > 0 && dur < 10 ? Math.max(0.1, dur - 0.5) : 10;
+    if (audio.currentTime >= threshold) {
+      musicApi.recordPlay(track.trackId).catch(() => {});
+      playRecorded.current = track.trackId;
+    }
+  };
+
   const onTimeUpdate = () => {
     const audio = audioRef.current;
     if (audio && !scrubbing) setProgress(audio.currentTime);
+    maybeRecordPlay();
   };
   const onLoadedMetadata = () => {
     const audio = audioRef.current;
@@ -106,6 +120,7 @@ export function AudioPlayer() {
   // progress for that mode and would otherwise leave the audio stopped). Everything else advances.
   const onEnded = () => {
     const audio = audioRef.current;
+    maybeRecordPlay(); // count short tracks that finish before hitting the 10s mark
     if (repeat === "one" && audio) {
       audio.currentTime = 0;
       audio.play().catch(() => {});

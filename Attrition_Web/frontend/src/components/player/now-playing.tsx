@@ -2,6 +2,7 @@
 
 import { ChevronDown, Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1, Heart, ListMusic, Volume2, VolumeX } from "lucide-react";
 import { resolveMediaUrl } from "@/lib/api/media";
+import { AddToPlaylistButton } from "@/components/player/add-to-playlist-button";
 import type { MusicTrackDto } from "@/lib/types";
 import type { RepeatMode } from "@/lib/stores/audio-store";
 import { formatDuration as fmt } from "@/lib/format-duration";
@@ -65,11 +66,15 @@ export function NowPlaying(p: NowPlayingProps) {
               <h1 className="truncate font-display text-2xl font-bold text-fg">{p.track.title}</h1>
               <p className="truncate text-fg-muted">{p.track.artists?.join(", ") || p.track.albumTitle}</p>
             </div>
-            {p.canFavorite && (
-              <button onClick={p.onLike} className={`shrink-0 transition-colors ${p.liked ? "text-accent" : "text-fg-muted hover:text-fg"}`} aria-label={p.liked ? "Unlike" : "Like"}>
-                <Heart size={24} fill={p.liked ? "currentColor" : "none"} />
-              </button>
-            )}
+            <div className="flex shrink-0 items-center gap-3">
+              <AddToPlaylistButton trackId={p.track.trackId} iconSize={22}
+                className="text-fg-muted transition-colors hover:text-fg" />
+              {p.canFavorite && (
+                <button onClick={p.onLike} className={`transition-colors ${p.liked ? "text-accent" : "text-fg-muted hover:text-fg"}`} aria-label={p.liked ? "Unlike" : "Like"}>
+                  <Heart size={24} fill={p.liked ? "currentColor" : "none"} />
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Seek */}
