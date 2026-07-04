@@ -13,7 +13,8 @@ public record ItemResponse(
     bool IsKeyItem,
     DateTime CreatedAt,
     DateTime UpdatedAt,
-    List<ItemModifierDto> Modifiers
+    List<ItemModifierDto> Modifiers,
+    string? ImageUrl = null
 );
 
 public record ItemCreateRequest(
@@ -25,7 +26,8 @@ public record ItemCreateRequest(
     string? Description,
     int MaxStack,
     bool IsKeyItem,
-    List<ItemModifierDto>? Modifiers
+    List<ItemModifierDto>? Modifiers,
+    string? ImageUrl = null
 );
 
 public record ItemUpdateRequest(
@@ -36,7 +38,8 @@ public record ItemUpdateRequest(
     string? Description,
     int MaxStack,
     bool IsKeyItem,
-    List<ItemModifierDto>? Modifiers
+    List<ItemModifierDto>? Modifiers,
+    string? ImageUrl = null
 );
 
 /// <summary>Cục item config gộp cho GAME tải 1 lần. Version = MAX(UpdatedAt)|count (giống enemy).</summary>

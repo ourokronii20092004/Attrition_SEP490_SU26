@@ -21,10 +21,57 @@ export const ADMIN_ROUTES: { href: string; label: string }[] = [
   { href: "/admin/account", label: "My Account" },
 ];
 
-/** Best-effort label for an admin path (falls back to a title-cased last segment). */
+const LABEL_CACHE_KEY = "attrition:admin:pageLabels";
+/** Fired when a dynamic page registers its human label, so the top-bar can re-render. */
+export const ADMIN_LABEL_EVENT = "attrition:admin:label";
+
+const GUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const isOpaqueId = (seg: string) => GUID_RE.test(seg) || /^\d+$/.test(seg);
+
+function readCache(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  try {
+    return JSON.parse(localStorage.getItem(LABEL_CACHE_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Detail pages call this once the entity name is known so the breadcrumb and recent-pages
+ * chips show e.g. "Users · alice" instead of a raw GUID. The label is cached in localStorage
+ * and a window event nudges the top-bar to re-read it.
+ */
+export function setAdminPageLabel(path: string, label: string) {
+  if (typeof window === "undefined") return;
+  const cache = readCache();
+  if (cache[path] === label) return;
+  cache[path] = label;
+  // Cap the cache so it can't grow unbounded.
+  const entries = Object.entries(cache);
+  if (entries.length > 50) {
+    for (const [k] of entries.slice(0, entries.length - 50)) delete cache[k];
+  }
+  localStorage.setItem(LABEL_CACHE_KEY, JSON.stringify(cache));
+  window.dispatchEvent(new CustomEvent(ADMIN_LABEL_EVENT));
+}
+
+/** Best-effort label for an admin path. Order: cached entity name → static route → derived. */
 export function adminLabelFor(path: string): string {
+  const cached = readCache()[path];
+  if (cached) return cached;
+
   const exact = ADMIN_ROUTES.find((r) => r.href === path);
   if (exact) return exact.label;
-  const seg = path.split("/").filter(Boolean).pop() ?? "";
-  return seg.charAt(0).toUpperCase() + seg.slice(1);
+
+  // Dynamic detail route (e.g. /admin/users/<guid>): derive "<Parent> · Detail" rather than
+  // surfacing an unreadable GUID/numeric id.
+  const segs = path.split("/").filter(Boolean);
+  const last = segs[segs.length - 1] ?? "";
+  if (isOpaqueId(last) && segs.length > 1) {
+    const parent = "/" + segs.slice(0, -1).join("/");
+    const parentLabel = ADMIN_ROUTES.find((r) => r.href === parent)?.label;
+    if (parentLabel) return `${parentLabel} · Detail`;
+  }
+  return last.charAt(0).toUpperCase() + last.slice(1);
 }

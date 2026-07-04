@@ -1,3 +1,4 @@
+using BuildingBlocks.Authentication;
 using BuildingBlocks.Contracts;
 using Identity.Service.DTOs;
 using Identity.Service.Services;
@@ -13,7 +14,12 @@ namespace Identity.Service.Controllers;
 public class AdminUserReportsController : ControllerBase
 {
     private readonly IUserReportService _reports;
-    public AdminUserReportsController(IUserReportService reports) => _reports = reports;
+    private readonly ICurrentUser _user;
+    public AdminUserReportsController(IUserReportService reports, ICurrentUser user)
+    {
+        _reports = reports;
+        _user = user;
+    }
 
     [HttpGet]
     public async Task<IActionResult> List([FromQuery] string status = "Pending",
@@ -24,16 +30,16 @@ public class AdminUserReportsController : ControllerBase
     }
 
     [HttpPut("{id:guid}/resolve")]
-    public async Task<IActionResult> Resolve(Guid id)
+    public async Task<IActionResult> Resolve(Guid id, [FromBody] ResolveReportRequest? req = null)
     {
-        var result = await _reports.ResolveAsync(id);
+        var result = await _reports.ResolveAsync(id, req?.BanUser ?? false, req?.Note, _user.Username);
         return result.Success ? Ok(result) : NotFound(result);
     }
 
     [HttpPut("{id:guid}/dismiss")]
     public async Task<IActionResult> Dismiss(Guid id)
     {
-        var result = await _reports.DismissAsync(id);
+        var result = await _reports.DismissAsync(id, _user.Username);
         return result.Success ? Ok(result) : NotFound(result);
     }
 }

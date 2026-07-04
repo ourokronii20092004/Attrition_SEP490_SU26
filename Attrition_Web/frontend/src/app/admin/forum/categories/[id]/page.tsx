@@ -12,6 +12,7 @@ import { PageLoader } from "@/components/ui/spinner";
 import { formatDate } from "@/lib/format-date";
 import { qk } from "@/lib/query-keys";
 import { Pager } from "../../_components/Pager";
+import { useAdminPageLabel } from "@/lib/hooks/use-admin-page-label";
 
 export default function AdminCategoryThreadsPage() {
   const { user } = useAuth();
@@ -30,7 +31,9 @@ export default function AdminCategoryThreadsPage() {
       return res.success ? res.data ?? [] : [];
     },
   });
-  const categorySlug = categories.find((c) => c.id === categoryId)?.slug;
+  const category = categories.find((c) => c.id === categoryId);
+  const categorySlug = category?.slug;
+  useAdminPageLabel(category ? `Forum · ${category.name}` : null);
 
   const { data, isPending: loading } = useQuery({
     queryKey: qk.forum.threads({ categoryId, page }),
@@ -73,10 +76,10 @@ export default function AdminCategoryThreadsPage() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <Link href="/admin/forum" className="inline-flex items-center gap-1.5 text-sm text-fg-muted transition-colors hover:text-fg">
-        <ArrowLeft size={16} /> Forum Management
+      <Link href="/admin/forum/categories" className="inline-flex items-center gap-1.5 text-sm text-fg-muted transition-colors hover:text-fg">
+        <ArrowLeft size={16} /> Categories
       </Link>
-      <h1 className="mt-4 font-display text-3xl font-bold text-fg">Category Threads</h1>
+      <h1 className="mt-4 font-display text-3xl font-bold text-fg">{category?.name ?? "Category Threads"}</h1>
 
       {loading ? (
         <PageLoader />

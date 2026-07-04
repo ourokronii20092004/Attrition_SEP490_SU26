@@ -83,7 +83,9 @@ public class MusicController : ControllerBase
         return PhysicalFile(filePath, "application/octet-stream", fileName);
     }
 
-    [Authorize]
+    // Anonymous: every listen should count, not just authenticated users. The frontend audio
+    // player POSTs here once per track at playback start (deduped client-side).
+    [AllowAnonymous]
     [HttpPost("tracks/{id:int}/play")]
     public async Task<IActionResult> IncrementPlay(int id)
     {
@@ -158,6 +160,48 @@ public class MusicController : ControllerBase
         {
             PlaylistOpResult.Ok => Ok(ApiResponse.Ok()),
             PlaylistOpResult.NotFound => NotFound(ApiResponse.Fail("Playlist or track not found.")),
+            _ => StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Fail("You do not own this playlist."))
+        };
+    }
+
+    [Authorize]
+    [HttpGet("playlists/{id:guid}")]
+    public async Task<IActionResult> GetPlaylist(Guid id)
+    {
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        var (result, playlist) = await _playlists.GetPlaylistWithTracksAsync(userId, id);
+        return result switch
+        {
+            PlaylistOpResult.Ok => Ok(ApiResponse<PlaylistDetailDto>.Ok(playlist!)),
+            PlaylistOpResult.NotFound => NotFound(ApiResponse.Fail("Playlist not found.")),
+            _ => StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Fail("You do not have access to this playlist."))
+        };
+    }
+
+    [Authorize]
+    [HttpPut("playlists/{id:guid}/reorder")]
+    public async Task<IActionResult> ReorderPlaylist(Guid id, [FromBody] ReorderPlaylistReq req)
+    {
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        var result = await _playlists.ReorderPlaylistAsync(userId, id, req.TrackIds ?? new());
+        return result switch
+        {
+            PlaylistOpResult.Ok => Ok(ApiResponse.Ok()),
+            PlaylistOpResult.NotFound => NotFound(ApiResponse.Fail("Playlist not found.")),
+            _ => StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Fail("You do not own this playlist."))
+        };
+    }
+
+    [Authorize]
+    [HttpDelete("playlists/{id:guid}")]
+    public async Task<IActionResult> DeletePlaylist(Guid id)
+    {
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        var result = await _playlists.DeletePlaylistAsync(userId, id);
+        return result switch
+        {
+            PlaylistOpResult.Ok => Ok(ApiResponse.Ok()),
+            PlaylistOpResult.NotFound => NotFound(ApiResponse.Fail("Playlist not found.")),
             _ => StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Fail("You do not own this playlist."))
         };
     }

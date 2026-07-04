@@ -25,13 +25,15 @@ export const assetsApi = {
     return apiFetch<ApiResponse<PaginatedResponse<AssetDto>>>(`/api/admin/assets${qs ? `?${qs}` : ""}`);
   },
 
-  create: (file: File, data: { assetType: string; title?: string; description?: string; tags?: string }) => {
+  create: (file: File, data: { assetType: string; title?: string; description?: string; tags?: string; sourceType?: string; sourceId?: string }) => {
     const form = new FormData();
     form.append("file", file);
     form.append("assetType", data.assetType);
     if (data.title) form.append("title", data.title);
     if (data.description) form.append("description", data.description);
     if (data.tags) form.append("tags", data.tags);
+    if (data.sourceType) form.append("sourceType", data.sourceType);
+    if (data.sourceId) form.append("sourceId", data.sourceId);
     return apiFetch<ApiResponse<AssetDto>>("/api/admin/assets", { method: "POST", body: form });
   },
 

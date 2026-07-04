@@ -51,6 +51,12 @@ namespace Assets.Service.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("SourceId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SourceType")
+                        .HasColumnType("text");
+
                     b.Property<string>("Tags")
                         .HasColumnType("text");
 

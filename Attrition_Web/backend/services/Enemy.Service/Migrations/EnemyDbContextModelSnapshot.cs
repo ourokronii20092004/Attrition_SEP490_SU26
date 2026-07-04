@@ -55,6 +55,9 @@ namespace Enemy.Service.Migrations
                     b.Property<int>("Hp")
                         .HasColumnType("integer");
 
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("text");
+
                     b.Property<bool>("IsRanged")
                         .HasColumnType("boolean");
 
@@ -107,6 +110,9 @@ namespace Enemy.Service.Migrations
                     b.Property<string>("IconKey")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("text");
 
                     b.Property<bool>("IsKeyItem")
                         .HasColumnType("boolean");

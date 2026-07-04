@@ -19,7 +19,8 @@ public record EnemyResponse(
     string? Lore,
     DateTime CreatedAt,
     DateTime UpdatedAt,
-    List<LootEntryDto> LootTable
+    List<LootEntryDto> LootTable,
+    string? ImageUrl = null
 );
 
 public record EnemyCreateRequest(
@@ -37,7 +38,8 @@ public record EnemyCreateRequest(
     int ExpReward,
     int GoldReward,
     string? Lore,
-    List<LootEntryDto>? LootTable
+    List<LootEntryDto>? LootTable,
+    string? ImageUrl = null
 );
 
 public record EnemyUpdateRequest(
@@ -54,7 +56,8 @@ public record EnemyUpdateRequest(
     int ExpReward,
     int GoldReward,
     string? Lore,
-    List<LootEntryDto>? LootTable
+    List<LootEntryDto>? LootTable,
+    string? ImageUrl = null
 );
 
 // Summary projection used by Search aggregator.

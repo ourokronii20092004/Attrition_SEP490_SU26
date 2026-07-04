@@ -54,6 +54,7 @@ public class ItemService : IItemService
             Rarity = request.Rarity,
             IconKey = request.IconKey,
             Description = request.Description is null ? null : ContentSanitizer.Sanitize(request.Description),
+            ImageUrl = request.ImageUrl,
             MaxStack = request.MaxStack,
             IsKeyItem = request.IsKeyItem,
             Modifiers = MapModifiers(request.Modifiers)
@@ -75,6 +76,7 @@ public class ItemService : IItemService
         item.Rarity = request.Rarity;
         item.IconKey = request.IconKey;
         item.Description = request.Description is null ? null : ContentSanitizer.Sanitize(request.Description);
+        item.ImageUrl = request.ImageUrl;
         item.MaxStack = request.MaxStack;
         item.IsKeyItem = request.IsKeyItem;
         item.UpdatedAt = DateTime.UtcNow;
@@ -127,5 +129,6 @@ public class ItemService : IItemService
     private static ItemResponse ToResponse(ItemEntity i) => new(
         i.ItemId, i.Name, i.Category, i.Rarity, i.IconKey, i.Description,
         i.MaxStack, i.IsKeyItem, i.CreatedAt, i.UpdatedAt,
-        i.Modifiers.Select(m => new ItemModifierDto(m.Stat, m.Amount)).ToList());
+        i.Modifiers.Select(m => new ItemModifierDto(m.Stat, m.Amount)).ToList(),
+        i.ImageUrl);
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -34,10 +34,18 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [retryIn, setRetryIn] = useState(0); // rate-limit countdown (seconds)
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
+
+  // Tick the rate-limit countdown down to zero.
+  useEffect(() => {
+    if (retryIn <= 0) return;
+    const id = setInterval(() => setRetryIn((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(id);
+  }, [retryIn]);
 
   const onSubmit = async (data: FormData) => {
     setError("");
@@ -49,7 +57,10 @@ function LoginForm() {
       if (loggedIn?.role === "Admin") router.push("/admin");
       else router.push(redirect || "/");
     } catch (e) {
-      if (e instanceof ApiError) {
+      if (e instanceof ApiError && e.status === 429) {
+        // Rate limited — show a countdown, not the generic credentials error.
+        setRetryIn(e.retryAfter && e.retryAfter > 0 ? e.retryAfter : 60);
+      } else if (e instanceof ApiError) {
         const body = tryParseError(e.body);
         setError(body || "Invalid username or password");
       } else {
@@ -67,11 +78,15 @@ function LoginForm() {
         <h1 className="font-display text-3xl font-bold tracking-tight text-fg">Sign In</h1>
         <p className="mt-2 text-fg-muted">Welcome back to Attrition.</p>
 
-        {error && (
+        {retryIn > 0 ? (
+          <div className="mt-4 rounded-lg border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning" role="alert">
+            Too many attempts. Try again in {retryIn}s.
+          </div>
+        ) : error ? (
           <div className="mt-4 rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger" role="alert">
             {error}
           </div>
-        )}
+        ) : null}
 
         <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
           <Input label="Username" type="text" autoComplete="username" {...register("username")} error={errors.username?.message} />
@@ -83,7 +98,7 @@ function LoginForm() {
             </Link>
           </div>
 
-          <Button type="submit" loading={loading} className="w-full">
+          <Button type="submit" loading={loading} disabled={retryIn > 0} className="w-full">
             Sign In
           </Button>
         </form>

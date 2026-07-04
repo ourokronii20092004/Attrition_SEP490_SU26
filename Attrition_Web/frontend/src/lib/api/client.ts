@@ -58,6 +58,8 @@ export class ApiError extends Error {
   constructor(
     public status: number,
     public body: string,
+    /** Seconds to wait before retrying, from the Retry-After header on a 429. */
+    public retryAfter?: number,
   ) {
     super(`API ${status}: ${body}`);
     this.name = "ApiError";
@@ -115,7 +117,9 @@ export async function apiFetch<T>(
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new ApiError(res.status, text);
+    const ra = res.headers.get("Retry-After");
+    const retryAfter = ra && /^\d+$/.test(ra) ? parseInt(ra, 10) : undefined;
+    throw new ApiError(res.status, text, retryAfter);
   }
 
   const contentType = res.headers.get("content-type") ?? "";

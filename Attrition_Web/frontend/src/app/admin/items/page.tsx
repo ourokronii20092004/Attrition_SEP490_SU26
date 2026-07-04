@@ -5,8 +5,10 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Gem } from "lucide-react";
 import { useAuth, useConfirm } from "@/lib/providers";
 import { itemsApi } from "@/lib/api/items";
+import { resolveMediaUrl } from "@/lib/api/media";
 import { parseApiError } from "@/lib/api/parse-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +16,10 @@ import { Select } from "@/components/ui/select";
 import { Modal } from "@/components/ui/modal";
 import { PageLoader } from "@/components/ui/spinner";
 import { AdminPageHeader, AdminFilterBar, AdminTable, AdminRow } from "@/components/admin/admin-table";
+import { AssetImageField } from "@/components/admin/asset-image-field";
+import { Pagination } from "@/components/ui/pagination";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
+import { useClientPagination } from "@/lib/hooks/use-client-pagination";
 import { qk } from "@/lib/query-keys";
 import type { ItemResponse, ItemCreateRequest, ItemUpdateRequest } from "@/lib/types";
 
@@ -53,14 +58,15 @@ export default function AdminItemsPage() {
     deleteMutation.mutate(id);
   };
 
-  if (!user || user.role !== "Admin") return null;
-  if (loading) return <PageLoader />;
-
   const filtered = items.filter((i) => {
     if (categoryFilter !== "all" && i.category !== categoryFilter) return false;
     if (search && !i.name.toLowerCase().includes(search) && !i.itemId.toLowerCase().includes(search)) return false;
     return true;
   });
+  const { page, setPage, totalPages, paged } = useClientPagination(filtered, 20);
+
+  if (!user || user.role !== "Admin") return null;
+  if (loading) return <PageLoader />;
 
   return (
     <div>
@@ -88,6 +94,7 @@ export default function AdminItemsPage() {
 
       <AdminTable
         columns={[
+          { key: "img", label: "" },
           { key: "name", label: "Name" },
           { key: "category", label: "Category" },
           { key: "rarity", label: "Rarity" },
@@ -96,8 +103,16 @@ export default function AdminItemsPage() {
         ]}
         empty={filtered.length === 0}
       >
-        {filtered.map((i) => (
+        {paged.map((i) => (
           <AdminRow key={i.itemId} onClick={() => { setEditing(i); setShowForm(true); }}>
+            <td className="px-3 py-2">
+              {i.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={resolveMediaUrl(i.imageUrl) ?? ""} alt="" className="h-9 w-9 rounded object-cover" />
+              ) : (
+                <div className="flex h-9 w-9 items-center justify-center rounded bg-surface-2 text-fg-subtle"><Gem size={15} /></div>
+              )}
+            </td>
             <td className="px-3 py-2 font-medium text-fg">{i.name}</td>
             <td className="px-3 py-2 text-fg-muted">{i.category}</td>
             <td className="px-3 py-2 text-fg-muted">{i.rarity}</td>
@@ -111,6 +126,7 @@ export default function AdminItemsPage() {
           </AdminRow>
         ))}
       </AdminTable>
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} compact />
     </div>
   );
 }
@@ -129,6 +145,7 @@ const itemSchema = z.object({
   rarity: z.string().min(1),
   iconKey: z.string().nullable(),
   description: z.string(),
+  imageUrl: z.string().nullable(),
   maxStack: z.coerce.number().int().min(1),
   isKeyItem: z.boolean(),
   modifiers: z.array(modifierSchema),
@@ -142,6 +159,7 @@ function ItemForm({ initial, onDone, onCancel, onDirtyChange }: { initial: ItemR
   const {
     register, handleSubmit, control,
     formState: { errors, isSubmitting, isDirty },
+    watch, setValue,
   } = useForm<ItemFormValues>({
     resolver: zodResolver(itemSchema),
     defaultValues: {
@@ -151,6 +169,7 @@ function ItemForm({ initial, onDone, onCancel, onDirtyChange }: { initial: ItemR
       rarity: initial?.rarity ?? "Common",
       iconKey: initial?.iconKey ?? null,
       description: initial?.description ?? "",
+      imageUrl: initial?.imageUrl ?? null,
       maxStack: initial?.maxStack ?? 1,
       isKeyItem: initial?.isKeyItem ?? false,
       modifiers: initial?.modifiers ?? [],
@@ -180,6 +199,13 @@ function ItemForm({ initial, onDone, onCancel, onDirtyChange }: { initial: ItemR
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       {error && <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>}
+      <AssetImageField
+        value={watch("imageUrl")}
+        onChange={(url) => setValue("imageUrl", url, { shouldDirty: true })}
+        sourceType="item"
+        sourceId={initial?.itemId}
+        label="Item image"
+      />
       <div className="grid gap-3 sm:grid-cols-2">
         {!initial && <Input label="Item ID" error={errors.itemId?.message} {...register("itemId")} />}
         <Input label="Name" error={errors.name?.message} {...register("name")} />

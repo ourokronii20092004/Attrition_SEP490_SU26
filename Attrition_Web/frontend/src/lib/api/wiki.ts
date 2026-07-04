@@ -32,6 +32,10 @@ export const wikiApi = {
   getArticle: (slug: string) =>
     apiFetch<ApiResponse<WikiArticleDto>>(`/api/wiki/articles/${encodeURIComponent(slug)}`, { auth: false }),
 
+  // A user's total wiki contributions (authored articles + approved suggested edits).
+  getUserContributionCount: (userId: string) =>
+    apiFetch<ApiResponse<number>>(`/api/wiki/users/${userId}/contribution-count`, { auth: false }),
+
   getRevisions: (articleId: string) =>
     apiFetch<ApiResponse<WikiRevisionDto[]>>(`/api/wiki/articles/${articleId}/revisions`, { auth: false }),
 
