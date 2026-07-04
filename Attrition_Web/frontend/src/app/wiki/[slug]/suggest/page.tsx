@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { MarkdownContent } from "@/components/post-content";
 import { qk } from "@/lib/query-keys";
 
 const schema = z.object({
@@ -30,10 +31,12 @@ export default function SuggestEditPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [error, setError] = useState("");
+  const [tab, setTab] = useState<"edit" | "preview">("edit");
 
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
+  const suggestedContent = watch("suggestedContent") ?? "";
 
   const { data: article, isPending } = useQuery({
     queryKey: qk.wiki.article(params.slug),
@@ -106,12 +109,37 @@ export default function SuggestEditPage() {
       <Card className="mt-6 p-5 sm:p-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-fg-muted">Content (Markdown)</label>
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-medium text-fg-muted">Content (Markdown)</label>
+              <div className="inline-flex rounded-lg border border-border p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setTab("edit")}
+                  className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${tab === "edit" ? "bg-accent text-accent-fg" : "text-fg-muted hover:text-fg"}`}
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTab("preview")}
+                  className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${tab === "preview" ? "bg-accent text-accent-fg" : "text-fg-muted hover:text-fg"}`}
+                >
+                  Preview
+                </button>
+              </div>
+            </div>
             <textarea
               {...register("suggestedContent")}
               rows={20}
-              className="w-full resize-y rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-fg outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent"
+              className={`w-full resize-y rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-fg outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent ${tab === "preview" ? "hidden" : ""}`}
             />
+            {tab === "preview" && (
+              <div className="min-h-[20rem] rounded-lg border border-border bg-surface-2 p-4">
+                {suggestedContent.trim()
+                  ? <MarkdownContent content={suggestedContent} />
+                  : <p className="text-sm text-fg-subtle">Nothing to preview yet.</p>}
+              </div>
+            )}
             {errors.suggestedContent && <p className="text-xs text-danger">{errors.suggestedContent.message}</p>}
           </div>
           <Input label="Change Note" {...register("changeNote")} error={errors.changeNote?.message} placeholder="Briefly describe your changes" />

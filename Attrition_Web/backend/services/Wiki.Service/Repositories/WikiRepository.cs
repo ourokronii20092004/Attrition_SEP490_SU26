@@ -30,8 +30,10 @@ public class WikiRepository : Repository<WikiArticle>, IWikiRepository
     public async Task<WikiCategory?> GetCategoryByIdAsync(int id) =>
         await _context.WikiCategories.FindAsync(id);
 
+    // Count ALL articles (any status) — the delete guard must also block on drafts, otherwise a
+    // category holding only unpublished articles reports 0 and gets deleted, orphaning them.
     public async Task<int> CountArticlesInCategoryAsync(int categoryId) =>
-        await _context.WikiArticles.CountAsync(a => a.CategoryId == categoryId && a.Status == ArticleStatus.Published);
+        await _context.WikiArticles.CountAsync(a => a.CategoryId == categoryId);
 
     public async Task<Dictionary<int, int>> CountPublishedArticlesByCategoryAsync() =>
         await _context.WikiArticles

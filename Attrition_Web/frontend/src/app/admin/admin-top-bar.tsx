@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
-import { ChevronRight, Clock, Search } from "lucide-react";
-import { adminLabelFor } from "./admin-routes";
+import { ChevronRight, Clock, Search, Keyboard } from "lucide-react";
+import { adminLabelFor, ADMIN_LABEL_EVENT } from "./admin-routes";
 
 // Lazy-load the search modal so its code stays out of the admin shell's initial bundle.
 const SearchModal = dynamic(() => import("@/components/search-modal").then((m) => m.SearchModal), { ssr: false });
@@ -28,6 +28,8 @@ export function AdminTopBar() {
   const pathname = usePathname();
   const [recent, setRecent] = useState<string[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
+  // Bumped when a detail page registers its human label, so breadcrumb/chips re-resolve.
+  const [labelTick, setLabelTick] = useState(0);
 
   useEffect(() => {
     if (!pathname.startsWith("/admin")) return;
@@ -37,6 +39,13 @@ export function AdminTopBar() {
     localStorage.setItem(RECENT_KEY, JSON.stringify(next));
     setRecent(next);
   }, [pathname]);
+
+  // Re-render when a dynamic page resolves its label (GUID → entity name).
+  useEffect(() => {
+    const onLabel = () => setLabelTick((t) => t + 1);
+    window.addEventListener(ADMIN_LABEL_EVENT, onLabel);
+    return () => window.removeEventListener(ADMIN_LABEL_EVENT, onLabel);
+  }, []);
 
   // Global admin search hotkey: Cmd/Ctrl+K, matching the public site.
   useEffect(() => {
@@ -51,13 +60,15 @@ export function AdminTopBar() {
   }, []);
 
   // Breadcrumb segments: always start at Dashboard, then the current page (if deeper).
+  // labelTick is read so the breadcrumb re-resolves once a detail page registers its name.
+  void labelTick;
   const crumbs: { href: string; label: string }[] = [{ href: "/admin", label: "Dashboard" }];
   if (pathname !== "/admin") crumbs.push({ href: pathname, label: adminLabelFor(pathname) });
 
   const recentOthers = recent.filter((p) => p !== pathname).slice(0, 4);
 
   return (
-    <div className="sticky top-0 z-[150] flex flex-wrap items-center justify-between gap-3 border-b border-border bg-surface/80 px-4 py-2.5 backdrop-blur sm:px-6 lg:px-8">
+    <div className="sticky top-0 z-[150] flex flex-wrap items-center justify-between gap-3 border-b border-border bg-surface px-4 py-2.5 sm:px-6 lg:px-8">
       <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-sm">
         {crumbs.map((c, i) => (
           <span key={c.href} className="flex items-center gap-1">
@@ -94,6 +105,14 @@ export function AdminTopBar() {
         >
           <Search size={13} /> Search
           <kbd className="hidden rounded border border-border bg-surface px-1 py-0.5 text-[10px] font-medium text-fg-subtle sm:inline">⌘K</kbd>
+        </button>
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent("attrition:admin:help"))}
+          className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border bg-surface-2 text-fg-muted transition-colors hover:border-accent/50 hover:text-fg"
+          aria-label="Keyboard shortcuts"
+          title="Keyboard shortcuts (?)"
+        >
+          <Keyboard size={14} />
         </button>
       </div>
 

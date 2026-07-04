@@ -44,6 +44,7 @@ public class AccountService : IAccountService
         }
         if (request.NotifyOnReply.HasValue) user.NotifyOnReply = request.NotifyOnReply.Value;
         if (request.NotifyOnMention.HasValue) user.NotifyOnMention = request.NotifyOnMention.Value;
+        user.UpdatedAt = DateTime.UtcNow;
         await _userRepo.UpdateAsync(user);
 
         return ApiResponse<UserDto>.Ok(TokenService.MapToDto(user));
@@ -55,6 +56,7 @@ public class AccountService : IAccountService
         if (user == null) return ApiResponse.Fail("User not found.");
         user.ThemeMode = themeMode;
         user.ThemeAccent = themeAccent;
+        user.UpdatedAt = DateTime.UtcNow;
         await _userRepo.UpdateAsync(user);
         return ApiResponse.Ok();
     }
@@ -69,6 +71,7 @@ public class AccountService : IAccountService
 
         var previous = user.AvatarPath;
         user.AvatarPath = path;
+        user.UpdatedAt = DateTime.UtcNow;
         await _userRepo.UpdateAsync(user);
         await _files.DeleteAsync(previous);   // remove the replaced file so it can't be served stale
         return ApiResponse<string>.Ok(path!);
@@ -81,6 +84,7 @@ public class AccountService : IAccountService
         {
             var previous = user.AvatarPath;
             user.AvatarPath = null;
+            user.UpdatedAt = DateTime.UtcNow;
             await _userRepo.UpdateAsync(user);
             await _files.DeleteAsync(previous);
         }
@@ -97,6 +101,7 @@ public class AccountService : IAccountService
 
         var previous = user.BackgroundUrl;
         user.BackgroundUrl = path;
+        user.UpdatedAt = DateTime.UtcNow;
         await _userRepo.UpdateAsync(user);
         await _files.DeleteAsync(previous);
         return ApiResponse<string>.Ok(path!);
@@ -109,6 +114,7 @@ public class AccountService : IAccountService
         {
             var previous = user.BackgroundUrl;
             user.BackgroundUrl = null;
+            user.UpdatedAt = DateTime.UtcNow;
             await _userRepo.UpdateAsync(user);
             await _files.DeleteAsync(previous);
         }

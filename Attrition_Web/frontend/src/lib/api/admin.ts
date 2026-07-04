@@ -6,12 +6,13 @@ export const adminApi = {
     apiFetch<ApiResponse<AdminStatsDto>>("/api/admin/stats"),
 
   // User management
-  getUsers: (params?: { page?: number; pageSize?: number; search?: string; sort?: string }) => {
+  getUsers: (params?: { page?: number; pageSize?: number; search?: string; sort?: string; status?: string }) => {
     const sp = new URLSearchParams();
     if (params?.page) sp.set("page", String(params.page));
     if (params?.pageSize) sp.set("pageSize", String(params.pageSize));
     if (params?.search) sp.set("search", params.search);
     if (params?.sort) sp.set("sort", params.sort);
+    if (params?.status && params.status !== "all") sp.set("status", params.status);
     const qs = sp.toString();
     return apiFetch<ApiResponse<PaginatedResponse<UserListItem>>>(`/api/admin/users${qs ? `?${qs}` : ""}`);
   },

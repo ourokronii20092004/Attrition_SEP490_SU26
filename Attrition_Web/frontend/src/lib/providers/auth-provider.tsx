@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useCallback, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { authApi } from "@/lib/api/auth";
 import { charactersApi } from "@/lib/api/characters";
 import { ApiError } from "@/lib/api/client";
@@ -12,6 +12,8 @@ interface AuthState {
 }
 
 interface AuthContextValue extends AuthState {
+  /** True only during a login/logout transition — drives the full-screen auth loader. */
+  transitioning: boolean;
   login: (data: LoginRequest) => Promise<UserDto | null>;
   register: (data: RegisterRequest) => Promise<UserDto | null>;
   loginWithGoogle: (idToken: string) => Promise<AuthResponse | null>;
@@ -24,6 +26,21 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({ user: null, loading: true });
+
+  // The full-screen loader is shown ONLY during an explicit login/logout, never on ordinary page
+  // loads. It's kept up briefly after the action to cover the ensuing navigation/re-render.
+  const [transitioning, setTransitioning] = useState(false);
+  const transitionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const beginTransition = useCallback(() => {
+    if (transitionTimer.current) clearTimeout(transitionTimer.current);
+    setTransitioning(true);
+  }, []);
+  const endTransition = useCallback((delayMs = 900) => {
+    if (transitionTimer.current) clearTimeout(transitionTimer.current);
+    if (delayMs <= 0) { setTransitioning(false); return; }
+    transitionTimer.current = setTimeout(() => setTransitioning(false), delayMs);
+  }, []);
 
   useEffect(() => {
     // Auth lives in HttpOnly cookies now — we can't read them, so ask the server who we are.
@@ -68,36 +85,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [state.user]);
 
   const login = useCallback(async (data: LoginRequest) => {
-    const res = await authApi.login(data);
-    if (res.success && res.data) {
-      setState({ user: res.data.user, loading: false });
-      return res.data.user;
+    beginTransition();
+    try {
+      const res = await authApi.login(data);
+      if (res.success && res.data) {
+        setState({ user: res.data.user, loading: false });
+        endTransition(); // keep the loader up briefly to cover the post-login redirect
+        return res.data.user;
+      }
+      endTransition(0);
+      return null;
+    } catch (e) {
+      endTransition(0); // drop the loader immediately so the form can show the error
+      throw e;
     }
-    return null;
-  }, []);
+  }, [beginTransition, endTransition]);
 
   const register = useCallback(async (data: RegisterRequest) => {
-    const res = await authApi.register(data);
-    if (res.success && res.data) {
-      setState({ user: res.data.user, loading: false });
-      return res.data.user;
+    beginTransition();
+    try {
+      const res = await authApi.register(data);
+      if (res.success && res.data) {
+        setState({ user: res.data.user, loading: false });
+        endTransition();
+        return res.data.user;
+      }
+      endTransition(0);
+      return null;
+    } catch (e) {
+      endTransition(0);
+      throw e;
     }
-    return null;
-  }, []);
+  }, [beginTransition, endTransition]);
 
   const loginWithGoogle = useCallback(async (idToken: string) => {
-    const res = await authApi.google({ code: idToken, redirectUri: window.location.origin });
-    if (res.success && res.data) {
-      setState({ user: res.data.user, loading: false });
-      return res.data;
+    beginTransition();
+    try {
+      const res = await authApi.google({ code: idToken, redirectUri: window.location.origin });
+      if (res.success && res.data) {
+        setState({ user: res.data.user, loading: false });
+        endTransition();
+        return res.data;
+      }
+      endTransition(0);
+      return null;
+    } catch (e) {
+      endTransition(0);
+      throw e;
     }
-    return null;
-  }, []);
+  }, [beginTransition, endTransition]);
 
   const logout = useCallback(() => {
+    beginTransition();
     authApi.logout().catch(() => {});
     setState({ user: null, loading: false });
-  }, []);
+    endTransition();
+  }, [beginTransition, endTransition]);
 
   const refreshUser = useCallback(async () => {
     const res = await authApi.me();
@@ -111,7 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ ...state, login, register, loginWithGoogle, logout, refreshUser, setUser }}>
+    <AuthContext.Provider value={{ ...state, transitioning, login, register, loginWithGoogle, logout, refreshUser, setUser }}>
       {children}
     </AuthContext.Provider>
   );

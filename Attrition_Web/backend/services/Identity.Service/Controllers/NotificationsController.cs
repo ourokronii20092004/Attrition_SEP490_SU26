@@ -29,6 +29,15 @@ public class NotificationsController : ControllerBase
         return Ok(ApiResponse<List<NotificationDto>>.Ok(await _notifications.ListAsync(userId, limit)));
     }
 
+    [HttpGet("paged")]
+    public async Task<IActionResult> ListPaged([FromQuery] int page = 1, [FromQuery] int pageSize = 20,
+        [FromQuery] bool unreadOnly = false)
+    {
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        return Ok(ApiResponse<PaginatedResponse<NotificationDto>>.Ok(
+            await _notifications.ListPagedAsync(userId, page, pageSize, unreadOnly)));
+    }
+
     [HttpGet("unread-count")]
     public async Task<IActionResult> UnreadCount()
     {

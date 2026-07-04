@@ -22,9 +22,9 @@ public class AdminUsersController : ControllerBase
 
     [HttpGet]
     public async Task<IActionResult> List([FromQuery] int page = 1, [FromQuery] int pageSize = 20,
-        [FromQuery] string? search = null, [FromQuery] string? sort = null)
+        [FromQuery] string? search = null, [FromQuery] string? sort = null, [FromQuery] string? status = null)
     {
-        var result = await _admin.ListUsersAsync(page, pageSize, search, sort);
+        var result = await _admin.ListUsersAsync(page, pageSize, search, sort, status);
         return Ok(ApiResponse<PaginatedResponse<DTOs.UserListItem>>.Ok(result));
     }
 

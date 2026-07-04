@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { Music as MusicIcon, Heart } from "lucide-react";
+import { Music as MusicIcon, Heart, ListMusic } from "lucide-react";
 import { musicApi } from "@/lib/api/music";
 import { resolveMediaUrl } from "@/lib/api/media";
 import { useAuth } from "@/lib/providers";
@@ -38,12 +38,20 @@ export default function MusicPage() {
       <div className="flex items-start justify-between gap-4">
         <PageTitle description="Original soundtrack of the Attrition universe.">Music</PageTitle>
         {user && (
-          <Link
-            href="/music/favorites"
-            className="mt-1 inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border-strong px-3 py-1.5 text-sm text-fg-muted transition-colors hover:border-accent/60 hover:text-fg"
-          >
-            <Heart size={15} /> Favorites
-          </Link>
+          <div className="mt-1 flex shrink-0 items-center gap-2">
+            <Link
+              href="/music/favorites"
+              className="inline-flex items-center gap-1.5 rounded-md border border-border-strong px-3 py-1.5 text-sm text-fg-muted transition-colors hover:border-accent/60 hover:text-fg"
+            >
+              <Heart size={15} /> Favorites
+            </Link>
+            <Link
+              href="/music/playlists"
+              className="inline-flex items-center gap-1.5 rounded-md border border-border-strong px-3 py-1.5 text-sm text-fg-muted transition-colors hover:border-accent/60 hover:text-fg"
+            >
+              <ListMusic size={15} /> Playlists
+            </Link>
+          </div>
         )}
       </div>
 

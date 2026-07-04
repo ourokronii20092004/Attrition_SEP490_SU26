@@ -42,6 +42,11 @@ public class WikiController : ControllerBase
             : Ok(ApiResponse<WikiArticleDto>.Ok(article));
     }
 
+    // Public: a user's total wiki contributions (authored articles + approved edits) for their profile.
+    [HttpGet("users/{userId:guid}/contribution-count")]
+    public async Task<IActionResult> UserContributionCount(Guid userId)
+        => Ok(ApiResponse<int>.Ok(await _wiki.CountUserContributionsAsync(userId)));
+
     [Authorize(Roles = Roles.Admin)]
     [HttpGet("articles/{id:guid}/revisions")]
     public async Task<IActionResult> GetRevisions(Guid id)

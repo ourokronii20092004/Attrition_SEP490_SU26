@@ -6,8 +6,11 @@ import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft, Mail, Shield, Ban, Trash2, KeyRound, CheckCircle2, XCircle, Clock, MapPin, MessageSquare, FileText,
+  Lock, AlertTriangle,
 } from "lucide-react";
 import { adminApi } from "@/lib/api/admin";
+import { forumApi } from "@/lib/api/forum";
+import { wikiApi } from "@/lib/api/wiki";
 import { useAuth, useToast, useConfirm } from "@/lib/providers";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -16,6 +19,7 @@ import { PageLoader } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatDate } from "@/lib/format-date";
 import { qk } from "@/lib/query-keys";
+import { useAdminPageLabel } from "@/lib/hooks/use-admin-page-label";
 
 function StatusBadge({ detail }: { detail: { isDeleted: boolean; isBanned: boolean } }) {
   if (detail.isDeleted) return <span className="rounded-full bg-surface-2 px-2.5 py-0.5 text-xs font-medium text-fg-subtle">Deleted</span>;
@@ -50,6 +54,26 @@ export default function AdminUserDetailPage() {
       return res.success ? res.data : null;
     },
   });
+
+  // Forum posts / wiki contributions: the Identity DB counters aren't maintained (always 0), so
+  // derive them live from the author-filtered endpoints — same source (and query cache) as the
+  // public /u/[username] profile page, so the two views always agree.
+  const { data: counts, isLoading: countsLoading } = useQuery({
+    queryKey: qk.profileCounts(detail?.id ?? ""),
+    enabled: !!detail?.id,
+    queryFn: async () => {
+      const [threads, contributions] = await Promise.all([
+        forumApi.getThreads({ authorId: detail!.id, page: 1, pageSize: 1 }),
+        wikiApi.getUserContributionCount(detail!.id),
+      ]);
+      return {
+        posts: threads.success ? threads.data.totalCount : 0,
+        contributions: contributions.success ? contributions.data : 0,
+      };
+    },
+  });
+
+  useAdminPageLabel(detail ? `Users · ${detail.username}` : null);
 
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: qk.admin.userDetail(params.id) });
@@ -126,15 +150,18 @@ export default function AdminUserDetailPage() {
 
   return <UserDetailView
     detail={detail} isSelf={isSelf}
+    counts={counts} countsLoading={countsLoading}
     onBan={onBan} onDelete={onDelete} onResetPw={onResetPw}
     onRole={(r) => roleMutation.mutate(r)}
     pending={{ ban: banMutation.isPending, del: deleteMutation.isPending, pw: resetPwMutation.isPending }}
   />;
 }
 
-function UserDetailView({ detail, isSelf, onBan, onDelete, onResetPw, onRole, pending }: {
+function UserDetailView({ detail, isSelf, counts, countsLoading, onBan, onDelete, onResetPw, onRole, pending }: {
   detail: import("@/lib/types").AdminUserDetailDto;
   isSelf: boolean;
+  counts?: { posts: number; contributions: number };
+  countsLoading: boolean;
   onBan: () => void; onDelete: () => void; onResetPw: () => void;
   onRole: (role: string) => void;
   pending: { ban: boolean; del: boolean; pw: boolean };
@@ -156,9 +183,6 @@ function UserDetailView({ detail, isSelf, onBan, onDelete, onResetPw, onRole, pe
             )}
           </div>
           <p className="mt-0.5 text-sm text-fg-muted">@{detail.username}</p>
-          <Link href={`/u/${encodeURIComponent(detail.username)}`} className="mt-1 inline-block text-xs text-accent hover:underline">
-            View public profile →
-          </Link>
         </div>
       </div>
 
@@ -173,8 +197,16 @@ function UserDetailView({ detail, isSelf, onBan, onDelete, onResetPw, onRole, pe
             <Field icon={Clock} label="Joined" value={formatDate(detail.joinedAt)} />
             <Field icon={Clock} label="Last login" value={detail.lastLoginAt ? formatDate(detail.lastLoginAt) : <span className="text-fg-subtle">Never</span>} />
             <Field icon={MapPin} label="Last login IP" value={detail.lastLoginIp ?? <span className="text-fg-subtle">—</span>} />
-            <Field icon={MessageSquare} label="Forum posts" value={detail.postCount} />
-            <Field icon={FileText} label="Wiki contributions" value={detail.contributionCount} />
+            <Field icon={AlertTriangle} label="Failed logins" value={detail.failedLoginAttempts} />
+            <Field icon={Lock} label="Lockout"
+              value={detail.lockoutEnd && new Date(detail.lockoutEnd) > new Date()
+                ? `Locked until ${formatDate(detail.lockoutEnd)}`
+                : <span className="text-fg-subtle">Not locked</span>} />
+            <Field icon={KeyRound} label="Must change password" value={detail.mustChangePassword ? "Yes" : "No"} />
+            <Field icon={MessageSquare} label="Forum threads"
+              value={countsLoading ? <span className="text-fg-subtle">…</span> : (counts?.posts ?? 0)} />
+            <Field icon={FileText} label="Wiki contributions"
+              value={countsLoading ? <span className="text-fg-subtle">…</span> : (counts?.contributions ?? 0)} />
           </dl>
           {detail.bio && (
             <div className="mt-4 border-t border-border pt-3">

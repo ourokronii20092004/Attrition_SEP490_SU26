@@ -93,7 +93,15 @@ services:
       Jwt__AccessTokenExpiryMinutes: ${JWT_ACCESS_TOKEN_EXPIRY_MINUTES:-15}
       Jwt__RefreshTokenExpiryDays: ${JWT_REFRESH_TOKEN_EXPIRY_DAYS:-7}
       Authentication__Google__ClientId: ${GOOGLE_CLIENT_ID:-}
+      Authentication__Google__ClientSecret: ${GOOGLE_CLIENT_SECRET:-}
+      # Where Google sends users back after they pick an account. Leave blank in prod (the API is
+      # same-origin as the web app, so it's derived as {APP_CLIENT_URL}/api/auth/google/callback).
+      # For local dev the browser hits the gateway directly, so set GOOGLE_REDIRECT_URI in .env to
+      # http://localhost:8080/api/auth/google/callback. Whatever it resolves to MUST be listed under
+      # the OAuth client's "Authorized redirect URIs" in the Google Cloud console.
+      Authentication__Google__RedirectUri: ${GOOGLE_REDIRECT_URI:-}
       App__ClientUrl: ${APP_CLIENT_URL:-http://localhost:3000}
+      App__GameClientUrl: ${GAME_CLIENT_URL:-http://localhost:52000}
       Seed__Admin__Username: ${ADMIN_USERNAME:-}
       Seed__Admin__Password: ${ADMIN_PASSWORD:-}
       Seed__Admin__Email: ${ADMIN_EMAIL:-}

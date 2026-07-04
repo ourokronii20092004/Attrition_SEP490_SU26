@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { PageLoader } from "@/components/ui/spinner";
 import { AdminPageHeader, AdminFilterBar, AdminTable, AdminRow } from "@/components/admin/admin-table";
+import { Pagination } from "@/components/ui/pagination";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
+import { useClientPagination } from "@/lib/hooks/use-client-pagination";
 import { qk } from "@/lib/query-keys";
 import { TrackUploadFlow } from "../track-upload-flow";
 
@@ -61,8 +63,6 @@ export default function AdminTracksPage() {
     deleteMutation.mutate(id);
   };
 
-  if (!user || user.role !== "Admin") return null;
-
   const filtered = tracks.filter((t) => {
     if (search && !t.title.toLowerCase().includes(search) && !t.artists.join(" ").toLowerCase().includes(search)) return false;
     if (albumFilter !== "all" && String(t.albumId) !== albumFilter) return false;
@@ -70,6 +70,9 @@ export default function AdminTracksPage() {
     if (featuredFilter === "normal" && t.isFeatured) return false;
     return true;
   });
+  const { page, setPage, totalPages, paged } = useClientPagination(filtered, 20);
+
+  if (!user || user.role !== "Admin") return null;
 
   return (
     <div>
@@ -108,7 +111,7 @@ export default function AdminTracksPage() {
           ]}
           empty={filtered.length === 0}
         >
-          {filtered.map((t) => (
+          {paged.map((t) => (
             <AdminRow key={t.trackId}>
               <td className="px-3 py-2">
                 <span className="font-medium text-fg">{t.title}</span>
@@ -125,6 +128,7 @@ export default function AdminTracksPage() {
           ))}
         </AdminTable>
       )}
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} compact />
     </div>
   );
 }
