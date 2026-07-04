@@ -694,7 +694,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
         StartCoroutine(InvincibleCoroutine());
     }
 
-    /// <summary>Client/host yêu cầu Fast Travel. Host dịch chuyển TẤT CẢ player (giữ chung khung camera coop).</summary>
+    /// <summary>Client/host yêu cầu Fast Travel (không save — dùng cho room transition).</summary>
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
     public void RpcRequestFastTravel(Vector3 destination)
     {
@@ -702,6 +702,35 @@ public class PlayerController : NetworkBehaviour, IDamageable
         foreach (var p in players) p.TeleportTo(destination);
         // Báo CẢ HAI máy hiện thanh load (người không bấm cũng bị teleport → tránh giật, không loading).
         RpcTravelLoading();
+    }
+
+    /// <summary>
+    /// Client/host yêu cầu Fast Travel ĐẾN checkpoint CỤ THỂ. Sau khi teleport xong, host LƯU lại
+    /// checkpoint đó (solo + coop) để khi out ra vào lại → spawn đúng chỗ đã teleport gần nhất.
+    /// </summary>
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    public void RpcRequestFastTravelToCheckpoint(Vector3 destination, string checkpointName)
+    {
+        var players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+        foreach (var p in players) p.TeleportTo(destination);
+        RpcTravelLoading();
+
+        // Cập nhật MostRecentlyActivated → respawn / Game Over hồi sinh đúng checkpoint mới.
+        var checkpoints = FindObjectsByType<Attrition.Gameplay.World.Checkpoint>(FindObjectsSortMode.None);
+        foreach (var cp in checkpoints)
+        {
+            if (cp != null && cp.DisplayName == checkpointName)
+            {
+                Attrition.Gameplay.World.Checkpoint.MostRecentlyActivated = cp;
+                break;
+            }
+        }
+
+        // LƯU tiến trình: solo → local JSON, coop → server. Ghi đè checkpoint đã lưu bằng
+        // checkpoint mới teleport để lần sau vào game spawn đúng chỗ này.
+        var saver = Attrition.Gameplay.Persistence.GameSaveService.EnsureExists();
+        saver.Save(Attrition.Gameplay.Persistence.GameSaveService.SaveEvent.Rest,
+                   checkpointName, destination);
     }
 
     /// <summary>Host báo mọi peer hiện thanh load fast-travel đồng bộ.</summary>
