@@ -28,12 +28,17 @@ public class AuthController : ControllerBase
     private TimeSpan RefreshTtl =>
         TimeSpan.FromDays(double.TryParse(_config["Jwt:RefreshTokenExpiryDays"], out var d) ? d : 7);
 
-    /// <summary>Sets the auth + CSRF cookies for a web client after a successful auth.</summary>
-    private void SetAuthCookies(AuthResponse data)
+    /// <summary>Sets the auth + CSRF cookies for a web client after a successful auth. When
+    /// <paramref name="persistent"/> is false ("remember me" off) they are session cookies.</summary>
+    private void SetAuthCookies(AuthResponse data, bool persistent)
     {
         var csrf = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
-        AuthCookies.SetAuth(Response, data.AccessToken, data.RefreshToken, AccessTtl, RefreshTtl, csrf);
+        AuthCookies.SetAuth(Response, data.AccessToken, data.RefreshToken, AccessTtl, RefreshTtl, csrf, persistent);
     }
+
+    /// <summary>The persistence the user last chose, read from the remember marker so token
+    /// refreshes keep session logins as session cookies. Defaults to persistent when unknown.</summary>
+    private bool RememberedPersistent() => Request.Cookies[AuthCookies.Remember] != "0";
 
     // ─── Google OAuth 2.0 authorization-code (redirect) flow helpers ───
     private const string GoogleStateCookie = "google_oauth_state";
@@ -63,7 +68,10 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Register(RegisterRequest request)
     {
         var result = await _auth.RegisterAsync(request);
-        if (result.Success && result.Data is not null) SetAuthCookies(result.Data);
+        // Intentionally NO SetAuthCookies here: a new account must verify its email before it can
+        // sign in (see the gate in LoginAsync). The client sends the user to the "verify your email"
+        // screen instead of logging them straight in. (Tokens still ride in the body for the game
+        // client, which manages its own session.)
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
@@ -87,7 +95,7 @@ public class AuthController : ControllerBase
     {
         var ip = ClientIp();
         var result = await _auth.LoginAsync(request, ip);
-        if (result.Success && result.Data is not null) SetAuthCookies(result.Data);
+        if (result.Success && result.Data is not null) SetAuthCookies(result.Data, request.RememberMe);
         return result.Success ? Ok(result) : Unauthorized(result);
     }
 
@@ -95,7 +103,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> GoogleLogin(GoogleAuthRequest request)
     {
         var result = await _auth.GoogleLoginAsync(request, ClientIp());
-        if (result.Success && result.Data is not null) SetAuthCookies(result.Data);
+        if (result.Success && result.Data is not null) SetAuthCookies(result.Data, true);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
@@ -193,7 +201,7 @@ public class AuthController : ControllerBase
         if (!result.Success || result.Data is null)
             return Redirect(Fail("google_failed"));
 
-        SetAuthCookies(result.Data);
+        SetAuthCookies(result.Data, true);
 
         if (isUnity)
         {
@@ -232,7 +240,7 @@ public class AuthController : ControllerBase
         var cookieToken = Request.Cookies[AuthCookies.RefreshToken];
         var effective = !string.IsNullOrEmpty(cookieToken) ? new RefreshRequest(cookieToken) : request;
         var result = await _auth.RefreshAsync(effective);
-        if (result.Success && result.Data is not null) SetAuthCookies(result.Data);
+        if (result.Success && result.Data is not null) SetAuthCookies(result.Data, RememberedPersistent());
         else if (!string.IsNullOrEmpty(cookieToken)) AuthCookies.Clear(Response);
         return result.Success ? Ok(result) : Unauthorized(result);
     }
@@ -275,6 +283,16 @@ public class AuthController : ControllerBase
         if (!result.Success) return NotFound(result);
         if (result.Data!.IsBanned)
             return StatusCode(StatusCodes.Status403Forbidden, ApiResponse<SessionStatusDto>.Fail("Account is banned."));
+
+        // Revoked session? A password change / reset bumps TokensValidAfter; any token minted before
+        // it (its "sat" claim) is dead. 401 so the SPA's session poll signs this device out.
+        if (result.Data.TokensValidAfter is { } cutoff)
+        {
+            var satClaim = User.FindFirst("sat")?.Value;
+            if (long.TryParse(satClaim, out var sat)
+                && sat < new DateTimeOffset(DateTime.SpecifyKind(cutoff, DateTimeKind.Utc)).ToUnixTimeSeconds())
+                return Unauthorized(ApiResponse<SessionStatusDto>.Fail("Your session has ended. Please sign in again."));
+        }
         return Ok(result);
     }
 
@@ -284,6 +302,9 @@ public class AuthController : ControllerBase
     {
         if (this.RequireUserId(_user, out var userId) is { } error) return error;
         var result = await _auth.ChangePasswordAsync(userId, request);
+        // Swap in the freshly-minted session cookies so this device stays signed in after the change
+        // (other devices are invalidated server-side), preserving the chosen "remember me" persistence.
+        if (result.Success && result.Data is not null) SetAuthCookies(result.Data, RememberedPersistent());
         return result.Success ? Ok(result) : BadRequest(result);
     }
 

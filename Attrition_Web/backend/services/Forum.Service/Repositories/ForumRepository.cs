@@ -108,4 +108,25 @@ public class ForumRepository : Repository<ForumThread>, IForumRepository
             .FirstOrDefaultAsync();
         return post is null ? null : (post.Id, post.Content);
     }
+
+    public async Task<(List<UserReplyRow> Items, int Total)> GetUserRepliesAsync(Guid userId, int page, int pageSize)
+    {
+        // "Replies" = the user's non-removed posts that aren't the opening post of their thread. A
+        // post is the opener iff no earlier non-removed post exists in the same thread; so a reply
+        // is any post that HAS an earlier non-removed sibling. Wiki-comment threads are excluded —
+        // they're article comments reached via the wiki, not forum posts.
+        var query =
+            from p in _context.ForumPosts
+            join t in _context.ForumThreads on p.ThreadId equals t.Id
+            where p.AuthorId == userId
+                && !p.Moderation.IsRemoved
+                && t.WikiArticleId == null
+                && _context.ForumPosts.Any(q => q.ThreadId == p.ThreadId && !q.Moderation.IsRemoved && q.CreatedAt < p.CreatedAt)
+            orderby p.CreatedAt descending
+            select new UserReplyRow(p.Id, t.Id, t.Title, p.Content, p.CreatedAt);
+
+        var total = await query.CountAsync();
+        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        return (items, total);
+    }
 }

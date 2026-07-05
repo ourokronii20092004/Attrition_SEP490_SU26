@@ -60,7 +60,8 @@ export default function AdminUsersPage() {
 
   const roleMutation = useMutation({
     mutationFn: ({ userId, role }: { userId: string; role: string }) => adminApi.setUserRole(userId, role),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: qk.admin.users() }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: qk.admin.users() }); toast("Role updated.", "success"); },
+    onError: () => toast("Failed to update role.", "error"),
   });
 
   const deleteMutation = useMutation({
@@ -89,6 +90,21 @@ export default function AdminUsersPage() {
       danger: true,
     });
     if (ok) deleteMutation.mutate(u.id);
+  };
+
+  // Promoting to admin (or revoking it) is a big deal — confirm before changing anyone's role.
+  const onChangeRole = async (u: UserListItem, role: string) => {
+    if (role === u.role) return;
+    const toAdmin = role === "Admin";
+    const ok = await confirm({
+      title: toAdmin ? "Make this user an admin?" : "Revoke admin access?",
+      message: toAdmin
+        ? `Grant @${u.username} full admin access? Admins can manage every user, post, and setting.`
+        : `Change @${u.username} back to a regular user?`,
+      confirmLabel: toAdmin ? "Make admin" : "Change to User",
+      danger: toAdmin,
+    });
+    if (ok) roleMutation.mutate({ userId: u.id, role });
   };
 
   // Status filter is sent to the backend; rows are already filtered server-side.
@@ -127,7 +143,7 @@ export default function AdminUsersPage() {
                 <select
                   value={u.role}
                   onClick={(e) => e.stopPropagation()}
-                  onChange={(e) => { e.stopPropagation(); roleMutation.mutate({ userId: u.id, role: e.target.value }); }}
+                  onChange={(e) => { e.stopPropagation(); onChangeRole(u, e.target.value); }}
                   className="rounded border border-border bg-surface-2 px-1.5 py-0.5 text-xs text-fg disabled:opacity-50"
                   disabled={u.id === me.id || u.isDeleted}
                 >

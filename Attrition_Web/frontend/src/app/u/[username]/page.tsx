@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { MessagesSquare, BookOpen, CalendarDays, Shield, Clock, UserX } from "lucide-react";
+import { MessagesSquare, BookOpen, CalendarDays, Shield, Clock, UserX, BarChart3, ScrollText } from "lucide-react";
 import { useAuth } from "@/lib/providers";
 import { accountApi } from "@/lib/api/account";
 import { forumApi } from "@/lib/api/forum";
@@ -69,59 +69,69 @@ export default function ProfilePage() {
   // Owner sees their own live auth record (so edits reflect instantly); everyone else sees the
   // PII-free public profile. Only non-sensitive fields are rendered below either way.
   const display = isOwner && user ? user : profile;
-  // Stats come from the public profile record (getProfile), which resolves live counts server-side.
-  // The owner's live `user` object carries stale stored counters, so always read stats from `profile`.
-  const t = tenure(profile.joinedAt);
+  const t = tenure(display.joinedAt);
 
   return (
     <PageShell size="lg">
       <div className="mb-5"><BackButton label="Back" fallbackHref="/" /></div>
 
-      {/* Cover banner — inset to content width with all corners rounded, so it reads as its own panel. */}
-      <ProfileBanner profile={display} isOwner={isOwner} onEdited={onEdited} />
+      {/* ── Hero ──────────────────────────────────────────────────────────────
+          The cover banner stays fully visible as its own panel; only the avatar
+          straddles its lower-left edge. Identity text lives below the banner on the
+          page itself, so nothing large ever covers the background art. */}
+      <section className="animate-rise-in">
+        <ProfileBanner profile={display} isOwner={isOwner} onEdited={onEdited} />
 
-      {/* Identity dossier — rests just over the banner's lower edge (light overlap keeps the cover visible);
-          the avatar straddles the seam. */}
-      <section className="relative z-10 -mt-4 rounded-card border border-border bg-surface/80 p-6 shadow-[var(--shadow-glow)] backdrop-blur sm:-mt-4 sm:p-8">
-        <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-end sm:gap-6">
-          <div className="-mt-20 sm:-mt-24">
+        <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:gap-6 sm:px-2">
+          <div className="-mt-16 shrink-0 self-center sm:-mt-20 sm:self-auto">
             <ProfileAvatar profile={display} isOwner={isOwner} onEdited={onEdited} />
           </div>
 
-          <div className="min-w-0 flex-1 text-center sm:text-left">
+          <div className="min-w-0 flex-1 text-center sm:pb-1 sm:text-left">
             <ProfileName profile={display} isOwner={isOwner} onEdited={onEdited} />
             <p className="mt-1 font-mono text-sm text-fg-muted">@{display.username}</p>
 
             <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
               <RoleBadge role={display.role} />
               <MetaChip icon={CalendarDays}>Joined {formatDate(display.joinedAt)}</MetaChip>
-              {display.authProvider && <MetaChip icon={Shield}>{display.authProvider}</MetaChip>}
             </div>
           </div>
 
           {!isOwner && user && (
-            <div className="flex w-full justify-center sm:w-auto sm:justify-end">
+            <div className="flex justify-center sm:block sm:pb-1">
               <ReportUserButton userId={display.id} username={display.username} />
             </div>
           )}
         </div>
-
-        <div className="mt-6">
-          <ProfileBio profile={display} isOwner={isOwner} onEdited={onEdited} />
-        </div>
       </section>
 
-      {/* Record stats — forum/wiki counts are fetched live (see the counts query above). */}
-      <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard icon={MessagesSquare} value={counts?.posts ?? 0} loading={countsLoading} label="Forum threads" hint="discussions started" />
-        <StatCard icon={BookOpen} value={counts?.contributions ?? 0} loading={countsLoading} label="Wiki contributions" hint="articles & approved edits" />
-        <StatCard icon={Clock} value={t.value} unit={t.unit} label="In the archive" hint={`since ${formatDate(display.joinedAt)}`} />
-      </div>
+      {/* ── Body: sticky dossier sidebar + activity ─────────────────────────── */}
+      <div className="mt-8 grid grid-cols-1 gap-6 lg:mt-10 lg:grid-cols-[19rem_1fr] lg:gap-8">
+        <aside className="stagger space-y-5 lg:sticky lg:top-24 lg:self-start">
+          {(display.bio || isOwner) && (
+            <Panel label="Field note" icon={ScrollText}>
+              <ProfileBio profile={display} isOwner={isOwner} onEdited={onEdited} />
+            </Panel>
+          )}
 
-      <ProfileActivity userId={display.id} username={display.username} />
+          <Panel label="Record" icon={BarChart3}>
+            <ul className="-my-1">
+              <StatRow icon={MessagesSquare} label="Forum threads" hint="discussions started" value={counts?.posts ?? 0} loading={countsLoading} />
+              <StatRow icon={BookOpen} label="Wiki contributions" hint="articles & approved edits" value={counts?.contributions ?? 0} loading={countsLoading} />
+              <StatRow icon={Clock} label="In the archive" value={t.value} unit={t.unit} hint={`since ${formatDate(display.joinedAt)}`} last />
+            </ul>
+          </Panel>
+        </aside>
+
+        <div className="min-w-0">
+          <ProfileActivity userId={display.id} username={display.username} />
+        </div>
+      </div>
     </PageShell>
   );
 }
+
+/* ── Building blocks ─────────────────────────────────────────────────────── */
 
 function RoleBadge({ role }: { role: string }) {
   const admin = role === "Admin";
@@ -144,29 +154,46 @@ function MetaChip({ icon: Icon, children }: { icon: React.ComponentType<{ size?:
   );
 }
 
-function StatCard({ icon: Icon, value, unit, label, hint, loading }: {
-  icon: React.ComponentType<{ size?: number; className?: string }>;
-  value: number; unit?: string; label: string; hint?: string; loading?: boolean;
+/** Labeled dossier panel — mono caption + hairline, translucent surface. */
+function Panel({ label, icon: Icon, children }: {
+  label: string; icon: React.ComponentType<{ size?: number; className?: string }>; children: React.ReactNode;
 }) {
   return (
-    <div className="group relative overflow-hidden rounded-card border border-border bg-surface p-5 transition-[transform,border-color,box-shadow] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 hover:border-accent/50 hover:shadow-[var(--shadow-glow)]">
-      <span aria-hidden className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-accent/10 opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100" />
-      <span className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border bg-surface-2 text-fg-subtle transition-colors duration-300 group-hover:border-accent/40 group-hover:text-accent">
-        <Icon size={18} />
+    <section className="rounded-card border border-border bg-surface/70 p-5 backdrop-blur">
+      <div className="mb-4 flex items-center gap-2 border-b border-border pb-3">
+        <Icon size={13} className="text-accent" />
+        <h2 className="font-mono text-[11px] uppercase tracking-[0.25em] text-fg-subtle">{label}</h2>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/** One line of the record sheet: icon chip, label + hint, big tabular value on the right. */
+function StatRow({ icon: Icon, label, hint, value, unit, loading, last }: {
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  label: string; hint?: string; value: number; unit?: string; loading?: boolean; last?: boolean;
+}) {
+  return (
+    <li className={`group flex items-center gap-3.5 py-3.5 ${last ? "" : "border-b border-border"}`}>
+      <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-surface-2 text-fg-subtle transition-colors group-hover:border-accent/40 group-hover:text-accent">
+        <Icon size={16} />
       </span>
-      <p className="mt-4 font-display text-3xl font-bold leading-none tabular-nums text-fg">
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-medium text-fg">{label}</span>
+        {hint && <span className="block truncate text-xs text-fg-subtle">{hint}</span>}
+      </span>
+      <span className="font-display text-2xl font-bold leading-none tabular-nums text-fg">
         {loading ? (
-          <span className="skeleton inline-block h-7 w-14 rounded align-middle" aria-hidden />
+          <span className="skeleton inline-block h-6 w-10 rounded align-middle" aria-hidden />
         ) : (
           <>
             {value.toLocaleString()}
-            {unit && <span className="ml-1.5 text-lg font-semibold text-fg-muted">{unit}</span>}
+            {unit && <span className="ml-1 text-sm font-semibold text-fg-muted">{unit}</span>}
           </>
         )}
-      </p>
-      <p className="mt-2 text-sm font-medium text-fg">{label}</p>
-      {hint && <p className="mt-0.5 text-xs text-fg-subtle">{hint}</p>}
-    </div>
+      </span>
+    </li>
   );
 }
 
@@ -183,24 +210,24 @@ function ProfileSkeleton() {
   return (
     <PageShell size="lg">
       <div className="mb-5"><Skeleton className="h-5 w-16" /></div>
-      <Skeleton className="h-56 w-full rounded-2xl sm:h-72" />
-      <div className="relative z-10 -mt-4 rounded-card border border-border bg-surface/80 p-6 backdrop-blur sm:-mt-4 sm:p-8">
-        <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-end sm:gap-6">
-          <Skeleton className="-mt-20 h-28 w-28 rounded-full sm:-mt-24 sm:h-32 sm:w-32" />
-          <div className="flex-1 space-y-3">
-            <Skeleton className="mx-auto h-9 w-56 sm:mx-0" />
-            <Skeleton className="mx-auto h-4 w-32 sm:mx-0" />
-            <Skeleton className="mx-auto h-6 w-64 sm:mx-0" />
-          </div>
+      <Skeleton className="h-60 w-full rounded-3xl sm:h-80" />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:gap-6 sm:px-2">
+        <Skeleton className="-mt-16 h-28 w-28 self-center rounded-full sm:-mt-20 sm:h-32 sm:w-32 sm:self-auto" />
+        <div className="flex-1 space-y-3 pb-1 text-center sm:text-left">
+          <Skeleton className="mx-auto h-9 w-56 sm:mx-0" />
+          <Skeleton className="mx-auto h-4 w-32 sm:mx-0" />
+          <Skeleton className="mx-auto h-6 w-64 sm:mx-0" />
         </div>
-        <Skeleton className="mt-6 h-24 w-full" />
       </div>
-      <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {[0, 1, 2].map((i) => <Skeleton key={i} className="h-32 w-full rounded-card" />)}
-      </div>
-      <div className="mt-12 space-y-3">
-        <Skeleton className="h-9 w-48" />
-        {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-[4.25rem] w-full rounded-card" />)}
+      <div className="mt-8 grid grid-cols-1 gap-6 lg:mt-10 lg:grid-cols-[19rem_1fr] lg:gap-8">
+        <div className="space-y-5">
+          <Skeleton className="h-40 w-full rounded-card" />
+          <Skeleton className="h-56 w-full rounded-card" />
+        </div>
+        <div className="space-y-3">
+          <Skeleton className="h-9 w-48" />
+          {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-[4.25rem] w-full rounded-card" />)}
+        </div>
       </div>
     </PageShell>
   );

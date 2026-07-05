@@ -14,6 +14,9 @@ public static class AuthCookies
     /// <summary>Non-HttpOnly, readable by JS for the double-submit CSRF check.</summary>
     public const string Csrf = "attrition_csrf";
     public const string CsrfHeader = "X-CSRF";
+    /// <summary>Records the "remember me" choice ("1" persistent, "0" session) so token refreshes
+    /// can keep the same cookie persistence.</summary>
+    public const string Remember = "attrition_remember";
 
     private static bool IsProd =>
         !string.Equals(
@@ -21,15 +24,20 @@ public static class AuthCookies
             "Development", StringComparison.OrdinalIgnoreCase);
 
     public static void SetAuth(HttpResponse res, string accessToken, string refreshToken,
-        TimeSpan accessTtl, TimeSpan refreshTtl, string csrf)
+        TimeSpan accessTtl, TimeSpan refreshTtl, string csrf, bool persistent)
     {
+        // "Remember me" off → omit MaxAge so these become session cookies the browser drops on close,
+        // ending the session. On → they persist for the token lifetimes.
+        TimeSpan? accessMaxAge = persistent ? accessTtl : null;
+        TimeSpan? longMaxAge = persistent ? refreshTtl : null;
+
         res.Cookies.Append(AccessToken, accessToken, new CookieOptions
         {
             HttpOnly = true,
             Secure = IsProd,
             SameSite = SameSiteMode.Lax,
             Path = "/",
-            MaxAge = accessTtl,
+            MaxAge = accessMaxAge,
         });
         // Refresh cookie is only ever sent to the refresh endpoint, shrinking its exposure.
         res.Cookies.Append(RefreshToken, refreshToken, new CookieOptions
@@ -38,7 +46,7 @@ public static class AuthCookies
             Secure = IsProd,
             SameSite = SameSiteMode.Lax,
             Path = "/api/auth/refresh",
-            MaxAge = refreshTtl,
+            MaxAge = longMaxAge,
         });
         // Readable by JS so the SPA can echo it back in the X-CSRF header (double-submit).
         res.Cookies.Append(Csrf, csrf, new CookieOptions
@@ -47,7 +55,16 @@ public static class AuthCookies
             Secure = IsProd,
             SameSite = SameSiteMode.Lax,
             Path = "/",
-            MaxAge = refreshTtl,
+            MaxAge = longMaxAge,
+        });
+        // Persistence marker so /refresh can re-issue cookies with the same lifetime the user chose.
+        res.Cookies.Append(Remember, persistent ? "1" : "0", new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = IsProd,
+            SameSite = SameSiteMode.Lax,
+            Path = "/",
+            MaxAge = longMaxAge,
         });
     }
 
@@ -56,5 +73,6 @@ public static class AuthCookies
         res.Cookies.Delete(AccessToken, new CookieOptions { Path = "/" });
         res.Cookies.Delete(RefreshToken, new CookieOptions { Path = "/api/auth/refresh" });
         res.Cookies.Delete(Csrf, new CookieOptions { Path = "/" });
+        res.Cookies.Delete(Remember, new CookieOptions { Path = "/" });
     }
 }

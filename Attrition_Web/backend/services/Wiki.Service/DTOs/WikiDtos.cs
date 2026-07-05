@@ -19,6 +19,11 @@ public record WikiContributionDto(
     Guid Id, Guid ArticleId, string ArticleTitle, string ArticleSlug, string ContributorName,
     string SuggestedContent, string CurrentContent, string? ChangeNote, string Status, DateTime SubmittedAt);
 
+// One entry in a user's public wiki contribution history: an article they authored (admins) or a
+// suggested edit of theirs that was approved (regular users). Kind = "Authored" | "Edited".
+public record UserWikiContributionDto(
+    Guid ArticleId, string ArticleTitle, string ArticleSlug, string Kind, string? ChangeNote, DateTime At);
+
 public record ReviewContributionRequest(string Status); // Approved | Rejected
 
 // Admin/category management
