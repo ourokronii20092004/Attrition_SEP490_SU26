@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Camera, Pencil, Check, X, ImagePlus, Trash2, Quote } from "lucide-react";
+import { Camera, Pencil, Check, X, ImagePlus, Trash2 } from "lucide-react";
 import { accountApi } from "@/lib/api/account";
 import { resolveMediaUrl } from "@/lib/api/media";
 import { useToast } from "@/lib/providers";
@@ -49,7 +49,7 @@ export function ProfileBanner({ profile, isOwner, onEdited }: EditProps) {
   };
 
   return (
-    <div className="relative h-56 w-full overflow-hidden rounded-2xl bg-surface-2 sm:h-72">
+    <div className="group relative h-60 w-full overflow-hidden rounded-3xl border border-border bg-surface-2 sm:h-80">
       {bg ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={bg} alt="" className="h-full w-full object-cover" />
@@ -62,9 +62,13 @@ export function ProfileBanner({ profile, isOwner, onEdited }: EditProps) {
         </div>
       )}
 
-      {/* Top hairline + bottom scrim keep the overlapping identity card legible. */}
+      {/* Top hairline + bottom scrim keep the straddling avatar and page seam legible. */}
       <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/40 to-transparent" />
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-bg to-transparent" />
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-bg/90 to-transparent" />
+
+      {/* Archive-scan registration marks — thin corner brackets that frame the record. */}
+      <span aria-hidden className="pointer-events-none absolute left-3 top-3 h-5 w-5 rounded-tl-lg border-l border-t border-accent/25 sm:left-4 sm:top-4" />
+      <span aria-hidden className="pointer-events-none absolute bottom-3 right-3 h-5 w-5 rounded-br-lg border-b border-r border-accent/25 sm:bottom-4 sm:right-4" />
 
       {isOwner && (
         <div className="absolute right-3 top-3 flex gap-2">
@@ -248,13 +252,11 @@ export function ProfileBio({ profile, isOwner, onEdited }: EditProps) {
   }
 
   return (
-    <div className="group relative overflow-hidden rounded-card border border-border bg-surface-2/40 p-5">
-      <span aria-hidden className="absolute inset-y-0 left-0 w-0.5 bg-gradient-to-b from-accent/70 via-accent/30 to-transparent" />
-      <Quote size={15} aria-hidden className="mb-2 text-accent/60" />
-      <p className="whitespace-pre-wrap leading-relaxed text-fg-muted">{profile.bio}</p>
+    <div className="group relative">
+      <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-fg-muted">{profile.bio}</p>
       {isOwner && (
-        <button onClick={() => setEditing(true)} className="absolute right-3 top-3 text-fg-subtle opacity-0 transition-opacity hover:text-accent group-hover:opacity-100" aria-label="Edit bio">
-          <Pencil size={15} />
+        <button onClick={() => setEditing(true)} className="mt-3 inline-flex items-center gap-1.5 text-xs text-fg-subtle transition-colors hover:text-accent" aria-label="Edit bio">
+          <Pencil size={13} /> Edit
         </button>
       )}
     </div>

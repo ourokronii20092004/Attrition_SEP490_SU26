@@ -16,6 +16,10 @@ function googleErrorMessage(code: string): string {
       return "Google sign-in isn't available right now.";
     case "google_unavailable":
       return "Google sign-in is temporarily unavailable. Please try again shortly.";
+    case "google_state":
+      return "Your Google sign-in session expired. Please try again.";
+    case "google_failed":
+      return "We couldn't complete Google sign-in. Please try again.";
     default:
       return "Google sign-in failed. Please try again.";
   }
@@ -62,6 +66,16 @@ export function GoogleButton({ label = "Continue with Google" }: { label?: strin
     return () => clearInterval(id);
   }, [retryIn]);
 
+  // If the user leaves for Google and hits the browser Back button, the page is often restored from
+  // the back-forward cache with React state frozen — leaving the redirect overlay stuck forever.
+  // `pageshow` fires on that restore (persisted=true) and on normal loads; clear the overlay so the
+  // button works again.
+  useEffect(() => {
+    const onPageShow = () => setRedirecting(false);
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
+
   const isUnityClient = () => {
     if (searchParams.get("client") === "unity") return true;
     if (typeof window === "undefined") return false;
@@ -72,6 +86,12 @@ export function GoogleButton({ label = "Continue with Google" }: { label?: strin
   const handleGoogle = () => {
     if (!GOOGLE_CLIENT_ID || typeof window === "undefined" || retryIn > 0) return;
     setError("");
+    // Network parity with the email/password forms: if we're offline the redirect would just fail
+    // (and leave the overlay stuck), so bail out early with a clear message instead.
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      setError("You appear to be offline. Check your connection and try again.");
+      return;
+    }
     // Show the loader BEFORE leaving for Google — the account chooser is Google's own page, so this
     // is the only moment we can give in-app feedback. The brief delay lets the overlay paint first.
     setRedirecting(true);

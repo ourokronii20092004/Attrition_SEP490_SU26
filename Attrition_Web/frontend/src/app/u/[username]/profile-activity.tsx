@@ -3,23 +3,34 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { clsx } from "clsx";
-import { MessagesSquare, BookOpen, ArrowRight } from "lucide-react";
+import { MessagesSquare, BookOpen, ArrowRight, Reply } from "lucide-react";
 import { forumApi } from "@/lib/api/forum";
 import { wikiApi } from "@/lib/api/wiki";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { RelativeTime } from "@/components/ui/relative-time";
-import type { ForumThreadListDto, WikiArticleListDto } from "@/lib/types";
+import type { ForumThreadListDto, UserWikiContributionDto, UserReplyDto } from "@/lib/types";
 
 const PAGE_SIZE = 5;
-type Tab = "threads" | "articles";
+type Tab = "threads" | "replies" | "articles";
+
+/** Flatten markdown to a one-line plain-text preview for a reply snippet (drop images/links/marks). */
+function plainSnippet(md: string, max = 160): string {
+  const text = md
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")      // images
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")     // links -> their text
+    .replace(/[#>*_`~]/g, " ")                    // markdown punctuation
+    .replace(/\s+/g, " ")
+    .trim();
+  return text.length > max ? `${text.slice(0, max).trimEnd()}…` : text;
+}
 
 export function ProfileActivity({ userId, username }: { userId: string; username: string }) {
   const [tab, setTab] = useState<Tab>("threads");
 
   return (
-    <section className="mt-12">
+    <section>
       <div className="mb-5 flex flex-col gap-4 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-accent">Activity</p>
@@ -27,10 +38,13 @@ export function ProfileActivity({ userId, username }: { userId: string; username
         </div>
         <div className="inline-flex self-start rounded-lg border border-border bg-surface-2/60 p-1 sm:self-auto">
           <SegTab active={tab === "threads"} onClick={() => setTab("threads")} icon={MessagesSquare}>Threads</SegTab>
+          <SegTab active={tab === "replies"} onClick={() => setTab("replies")} icon={Reply}>Replies</SegTab>
           <SegTab active={tab === "articles"} onClick={() => setTab("articles")} icon={BookOpen}>Wiki</SegTab>
         </div>
       </div>
-      {tab === "threads" ? <ThreadsList userId={userId} username={username} /> : <ArticlesList userId={userId} username={username} />}
+      {tab === "threads" && <ThreadsList userId={userId} username={username} />}
+      {tab === "replies" && <RepliesList userId={userId} username={username} />}
+      {tab === "articles" && <ContributionsList userId={userId} username={username} />}
     </section>
   );
 }
@@ -138,8 +152,10 @@ function ThreadsList({ userId, username }: { userId: string; username: string })
   );
 }
 
-function ArticlesList({ userId, username }: { userId: string; username: string }) {
-  const [items, setItems] = useState<WikiArticleListDto[]>([]);
+/** A user's forum replies (Twitter-style): posts they made that aren't a thread's opening post.
+ * Server-paginated; each row previews the reply text and links to it in-thread (#post-…). */
+function RepliesList({ userId, username }: { userId: string; username: string }) {
+  const [items, setItems] = useState<UserReplyDto[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -147,7 +163,7 @@ function ArticlesList({ userId, username }: { userId: string; username: string }
   useEffect(() => {
     let ignore = false;
     setLoading(true);
-    wikiApi.getArticles({ authorId: userId, page, pageSize: PAGE_SIZE })
+    forumApi.getUserReplies(userId, { page, pageSize: PAGE_SIZE })
       .then((res) => { if (!ignore && res.success) { setItems(res.data.items); setTotal(res.data.totalCount); } })
       .finally(() => { if (!ignore) setLoading(false); });
     return () => { ignore = true; };
@@ -155,24 +171,66 @@ function ArticlesList({ userId, username }: { userId: string; username: string }
 
   if (loading) return <RowsSkeleton />;
   if (!items.length) {
-    return <EmptyState icon={BookOpen} title="No wiki contributions yet" description={`@${username} hasn't authored any articles.`} />;
+    return <EmptyState icon={Reply} title="No replies yet" description={`@${username} hasn't replied to any discussions.`} />;
   }
 
   return (
     <>
       <div className="space-y-2">
-        {items.map((a, i) => (
+        {items.map((r, i) => (
           <ActivityRow
-            key={a.id}
+            key={r.postId}
             index={(page - 1) * PAGE_SIZE + i + 1}
-            href={`/wiki/${a.slug}`}
-            icon={BookOpen}
-            title={a.title}
-            meta={<>Updated <RelativeTime iso={a.updatedAt} /></>}
+            href={`/forum/${r.threadId}#post-${r.postId}`}
+            icon={Reply}
+            title={plainSnippet(r.content) || "(image or attachment)"}
+            meta={<>in “{r.threadTitle}” · <RelativeTime iso={r.createdAt} />{r.likeCount > 0 ? ` · ${r.likeCount} ${r.likeCount === 1 ? "like" : "likes"}` : ""}</>}
           />
         ))}
       </div>
       <Pager page={page} total={total} onPage={setPage} />
+    </>
+  );
+}
+
+/** A user's wiki contribution history: approved suggested edits (what regular users do) plus any
+ * articles they authored (admins). The endpoint returns the full list; we page it client-side. */
+function ContributionsList({ userId, username }: { userId: string; username: string }) {
+  const [items, setItems] = useState<UserWikiContributionDto[]>([]);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let ignore = false;
+    setLoading(true);
+    wikiApi.getUserContributions(userId)
+      .then((res) => { if (!ignore && res.success) setItems(res.data ?? []); })
+      .finally(() => { if (!ignore) setLoading(false); });
+    return () => { ignore = true; };
+  }, [userId]);
+
+  if (loading) return <RowsSkeleton />;
+  if (!items.length) {
+    return <EmptyState icon={BookOpen} title="No wiki contributions yet" description={`@${username} hasn't contributed to the wiki yet.`} />;
+  }
+
+  const pageItems = items.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  return (
+    <>
+      <div className="space-y-2">
+        {pageItems.map((c, i) => (
+          <ActivityRow
+            key={(page - 1) * PAGE_SIZE + i}
+            index={(page - 1) * PAGE_SIZE + i + 1}
+            href={`/wiki/${c.articleSlug}`}
+            icon={BookOpen}
+            title={c.articleTitle}
+            meta={<>{c.kind === "Authored" ? "Authored article" : "Suggested edit"}{c.changeNote ? ` · ${c.changeNote}` : ""} · <RelativeTime iso={c.at} /></>}
+          />
+        ))}
+      </div>
+      <Pager page={page} total={items.length} onPage={setPage} />
     </>
   );
 }

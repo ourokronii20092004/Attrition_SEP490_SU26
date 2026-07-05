@@ -59,6 +59,7 @@ public class IdentityDbContext : DbContext
                 b.Property(s => s.LastLoginIp).HasColumnName("LastLoginIp");
                 b.Property(s => s.FailedLoginAttempts).HasColumnName("FailedLoginAttempts").HasDefaultValue(0);
                 b.Property(s => s.LockoutEnd).HasColumnName("LockoutEnd");
+                b.Property(s => s.TokensValidAfter).HasColumnName("TokensValidAfter");
             });
         });
 

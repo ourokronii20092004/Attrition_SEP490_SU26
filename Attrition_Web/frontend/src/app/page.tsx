@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, BookOpen, Skull, Gem, MessagesSquare, Music, Images, Shield, Heart, Flame, Library, Crown, ScrollText } from "lucide-react";
+import { ArrowRight, BookOpen, Skull, Gem, MessagesSquare, Music, Images, Shield, Heart, Flame, Library, Crown, Download } from "lucide-react";
 import { SITE_NAME } from "@/lib/config";
 import { Reveal } from "@/components/ui/reveal";
 import { HeroCta } from "./hero-cta";
@@ -180,67 +180,93 @@ export default function HomePage() {
         </div>
       </Reveal>
 
-      {/* ─── Closing CTA ─── */}
-      {/* ─── Closing: descent CTA + Enter the Story ─── */}
-      <Reveal as="section" className="mx-auto flex max-w-6xl flex-col gap-6 px-5 py-24 sm:px-8">
-        <div className="relative overflow-hidden rounded-card border border-border bg-surface px-6 py-12 text-center sm:px-12 sm:py-14">
-          <span aria-hidden className="pointer-events-none absolute left-1/2 top-0 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/10 blur-[100px]" />
-          <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-accent/30 to-transparent" />
+      {/* ─── Closing CTA — the download-first finale ─── */}
+      <Reveal as="section" className="mx-auto max-w-6xl px-5 py-24 sm:px-8">
+        <div className="relative overflow-hidden rounded-2xl border border-border bg-surface px-6 py-14 text-center sm:px-12 sm:py-20">
+          <span aria-hidden className="pointer-events-none absolute left-1/2 top-0 h-72 w-72 -translate-x-1/2 -translate-y-1/3 rounded-full bg-accent/12 blur-[110px]" />
+          <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/40 to-transparent" />
+          <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-accent/20 to-transparent" />
 
           <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-accent">What do you do with a world that won&rsquo;t die?</p>
-          <h2 className="mt-4 font-display text-3xl font-bold tracking-tight text-balance text-fg sm:text-4xl">
-            Track your own descent.
+          <h2 className="mt-4 font-display text-4xl font-extrabold tracking-tight text-balance text-fg sm:text-5xl">
+            Descend into Eldravir.
           </h2>
           <p className="mx-auto mt-4 max-w-xl leading-relaxed text-fg-muted">
-            Sign in to follow your characters across runs — their progression, their inventory, and
-            the moment each one fell to the Corruption.
+            The world won&rsquo;t end on its own. Take up the leash, read the dead, and see how far
+            down you get before the Corruption reads you back.
           </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+
+          <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href="/download"
+              className="group inline-flex items-center gap-2.5 rounded-md bg-accent px-7 py-3.5 text-sm font-semibold uppercase tracking-[0.15em] text-accent-fg shadow-[0_0_0_1px_color-mix(in_srgb,var(--color-accent)_45%,transparent)] transition-[filter,box-shadow,transform] duration-200 hover:brightness-105 hover:shadow-[var(--shadow-glow)] active:scale-[0.97]"
+            >
+              <Download size={17} className="transition-transform duration-200 group-hover:-translate-y-0.5" />
+              Download the game
+            </Link>
             <Link
               href="/characters"
-              className="group inline-flex items-center gap-2 rounded-md bg-accent px-6 py-3 text-sm font-semibold uppercase tracking-[0.15em] text-accent-fg transition-[filter,box-shadow] hover:brightness-105 hover:shadow-[var(--shadow-glow)]"
+              className="group inline-flex items-center gap-2 rounded-md border border-border-strong px-6 py-3.5 text-sm font-semibold uppercase tracking-[0.15em] text-fg transition-colors hover:border-accent hover:text-accent"
             >
               Your characters
               <ArrowRight size={16} className="transition-transform duration-200 group-hover:translate-x-1" />
             </Link>
-            <Link
-              href="/story"
-              className="inline-flex items-center gap-2 rounded-md border border-border-strong px-6 py-3 text-sm font-semibold uppercase tracking-[0.15em] text-fg transition-colors hover:border-accent hover:text-accent"
-            >
-              Read the lore
-            </Link>
           </div>
+          <p className="mt-5 font-mono text-[11px] uppercase tracking-[0.2em] text-fg-subtle">
+            Windows · Free · 2-player co-op
+          </p>
         </div>
+      </Reveal>
 
-        <Link
-          href="/story"
-          className="group relative flex flex-col items-start gap-6 overflow-hidden rounded-card border border-border bg-surface p-8 transition-[border-color,box-shadow] duration-300 hover:border-accent/60 hover:shadow-[var(--shadow-glow)] sm:flex-row sm:items-center sm:justify-between sm:p-10"
-        >
-          <span aria-hidden className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-accent/10 opacity-0 blur-[80px] transition-opacity duration-500 group-hover:opacity-100" />
-          <div className="relative flex items-start gap-5">
-            <span className="mt-1 inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-md border border-border bg-surface-2 text-fg-subtle transition-colors duration-300 group-hover:border-accent/40 group-hover:text-accent">
-              <ScrollText size={22} />
-            </span>
-            <div>
-              <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-accent">The Lore of Eldravir</p>
-              <h2 className="mt-2 font-display text-2xl font-bold tracking-tight text-fg sm:text-3xl">Enter the Story</h2>
-              <p className="mt-2 max-w-xl text-sm leading-relaxed text-fg-muted">
-                The dead world, its five fallen pillars, the god who guards the breach, and the
-                living man sent down to read it all — fully cross-linked.
-              </p>
+      {/* ─── The Lore of Eldravir — a full standalone feature panel, set well clear of the CTA ─── */}
+      <Reveal as="section" className="mx-auto max-w-6xl px-5 pb-28 pt-10 sm:px-8">
+        <div className="relative overflow-hidden rounded-2xl border border-border bg-surface p-8 sm:p-12 lg:p-16">
+          {/* Same flat-surface + accent-glow + hairline treatment the rest of the site's panels use. */}
+          <span aria-hidden className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-accent/10 blur-[120px]" />
+          <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/30 to-transparent" />
+
+          <div className="relative max-w-3xl">
+            <p className="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.35em] text-accent">
+              <span aria-hidden className="h-px w-8 bg-accent/60" /> The Lore of Eldravir
+            </p>
+            <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight text-fg sm:text-5xl lg:text-6xl">
+              Enter the Story
+            </h2>
+            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-fg-muted">
+              The dead world, its five fallen pillars, the god who guards the breach, and the living
+              man sent down to read it all — a fully cross-linked codex of everything Eldravir was
+              before the Corruption kept it from ending.
+            </p>
+
+            <ul className="mt-8 flex flex-wrap gap-3">
+              {[
+                { n: "7", l: "strata to descend" },
+                { n: "5", l: "fallen pillars" },
+                { n: "17", l: "chapters" },
+              ].map(({ n, l }) => (
+                <li key={l} className="inline-flex items-baseline gap-2 rounded-full border border-border bg-surface-2/70 px-4 py-2 backdrop-blur">
+                  <span className="font-display text-lg font-bold tabular-nums text-fg">{n}</span>
+                  <span className="text-xs uppercase tracking-[0.15em] text-fg-muted">{l}</span>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-9 flex flex-wrap items-center gap-3">
+              <Link
+                href="/story"
+                className="group inline-flex items-center gap-2 rounded-md bg-accent px-7 py-3.5 text-sm font-semibold uppercase tracking-[0.15em] text-accent-fg shadow-[0_0_0_1px_color-mix(in_srgb,var(--color-accent)_45%,transparent)] transition-[filter,box-shadow] duration-200 hover:brightness-105 hover:shadow-[var(--shadow-glow)]"
+              >
+                Explore the story
+                <ArrowRight size={16} className="transition-transform duration-200 group-hover:translate-x-1" />
+              </Link>
+              <Link
+                href="/story/read"
+                className="group inline-flex items-center gap-2 rounded-md border border-border-strong px-6 py-3.5 text-sm font-semibold uppercase tracking-[0.15em] text-fg transition-colors hover:border-accent hover:text-accent"
+              >
+                <BookOpen size={16} /> Read the manuscript
+              </Link>
             </div>
           </div>
-          <div className="relative flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center">
-            <span className="inline-flex items-center justify-center gap-2 rounded-md bg-accent px-6 py-3 text-sm font-semibold uppercase tracking-[0.15em] text-accent-fg transition-[filter] duration-300 group-hover:brightness-105">
-              Explore <ArrowRight size={16} className="transition-transform duration-200 group-hover:translate-x-1" />
-            </span>
-          </div>
-        </Link>
-        <div className="text-center sm:text-right">
-          <Link href="/story/read" className="group inline-flex items-center gap-2 text-sm font-medium text-fg-muted transition-colors hover:text-accent">
-            <BookOpen size={15} /> Or read the full manuscript — 17 chapters
-            <ArrowRight size={14} className="transition-transform duration-200 group-hover:translate-x-1" />
-          </Link>
         </div>
       </Reveal>
     </div>

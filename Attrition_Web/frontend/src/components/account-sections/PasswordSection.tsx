@@ -22,6 +22,7 @@ export function PasswordSection() {
   const hasPassword = user?.hasPassword ?? true;
 
   const change = async () => {
+    if (newPw !== confirm) { setMsg("The new passwords don't match."); toast("The new passwords don't match.", "error"); return; }
     setSaving(true);
     setMsg("");
     try {
@@ -29,7 +30,8 @@ export function PasswordSection() {
       setMsg("Password updated");
       setCurrent("");
       setNewPw("");
-      toast("Password updated.", "success");
+      setConfirm("");
+      toast("Password updated. A confirmation email has been sent.", "success");
     } catch (err) {
       const m = parseApiError(err, "Failed to update password");
       setMsg(m);
@@ -77,8 +79,10 @@ export function PasswordSection() {
       <div className="space-y-3">
         <Input label="Current Password" type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} />
         <Input label="New Password" type="password" autoComplete="new-password" value={newPw} onChange={(e) => setNewPw(e.target.value)} />
+        <Input label="Repeat New Password" type="password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
         {msg && <p className="text-sm text-fg-muted">{msg}</p>}
-        <Button onClick={change} loading={saving} disabled={!current || !newPw}>Change Password</Button>
+        <p className="text-xs text-fg-subtle">For your security, we&apos;ll email a confirmation to your address after the change.</p>
+        <Button onClick={change} loading={saving} disabled={!current || !newPw || !confirm}>Change Password</Button>
       </div>
     </SettingsCard>
   );

@@ -15,7 +15,7 @@ const MENTION = /(@[a-zA-Z0-9_]+)/g;
  */
 export function PostContent({ content, className }: { content: string; className?: string }) {
   return (
-    <div className={className ?? "whitespace-pre-wrap text-sm leading-relaxed text-fg"}>
+    <div className={className ?? "whitespace-pre-wrap break-words text-sm leading-relaxed text-fg"}>
       {content.split(MENTION).map((part, i) => {
         if (i % 2 === 1) {
           const username = part.slice(1); // drop the leading @

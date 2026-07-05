@@ -12,6 +12,11 @@ public record ForumPostDto(Guid Id, Guid ThreadId, Guid? ParentPostId, int Depth
     string AuthorRole, string Content, IReadOnlyList<string> Attachments, DateTime CreatedAt, DateTime? UpdatedAt,
     int LikeCount, int DislikeCount, string? CurrentUserReaction);
 
+// A user's forum reply for their public profile (Twitter-style "Replies" tab): one of their posts
+// that isn't a thread's opening post, carrying just enough thread context to link + preview it.
+public record UserReplyDto(Guid PostId, Guid ThreadId, string ThreadTitle, string Content, DateTime CreatedAt,
+    int LikeCount, int DislikeCount);
+
 public record CreateThreadRequest(int CategoryId, string Title, string Content);
 public record CreatePostRequest(string Content, Guid? ParentPostId = null, List<string>? Attachments = null);
 public record UpdatePostRequest(string Content);

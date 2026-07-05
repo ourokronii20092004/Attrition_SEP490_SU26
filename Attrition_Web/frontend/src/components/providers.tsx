@@ -5,13 +5,14 @@ import { QueryProvider, AuthProvider, ThemeProvider, ToastProvider, ConfirmProvi
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryProvider>
-      <AuthProvider>
-        <ThemeProvider>
-          <ToastProvider>
+      {/* ToastProvider wraps AuthProvider so auth can surface toasts (e.g. "session expired"). */}
+      <ToastProvider>
+        <AuthProvider>
+          <ThemeProvider>
             <ConfirmProvider>{children}</ConfirmProvider>
-          </ToastProvider>
-        </ThemeProvider>
-      </AuthProvider>
+          </ThemeProvider>
+        </AuthProvider>
+      </ToastProvider>
     </QueryProvider>
   );
 }

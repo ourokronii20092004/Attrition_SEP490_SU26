@@ -321,6 +321,16 @@ export interface WikiContributionDto {
   submittedAt: string;
 }
 
+// One entry in a user's public wiki contribution history: an authored article or an approved edit.
+export interface UserWikiContributionDto {
+  articleId: string;
+  articleTitle: string;
+  articleSlug: string;
+  kind: string; // "Authored" | "Edited"
+  changeNote: string | null;
+  at: string;
+}
+
 export interface CreateArticleRequest {
   title: string;
   categoryId: number;
@@ -402,6 +412,18 @@ export interface ForumPostDto {
   likeCount: number;
   dislikeCount: number;
   currentUserReaction: string | null;
+}
+
+// A user's forum reply for their public profile ("Replies" tab): one of their posts that isn't a
+// thread's opening post, with just enough thread context to preview + link it.
+export interface UserReplyDto {
+  postId: string;
+  threadId: string;
+  threadTitle: string;
+  content: string;
+  createdAt: string;
+  likeCount: number;
+  dislikeCount: number;
 }
 
 export interface CreateThreadRequest {
