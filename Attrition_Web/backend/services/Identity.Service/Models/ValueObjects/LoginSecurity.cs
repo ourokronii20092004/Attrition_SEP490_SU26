@@ -10,4 +10,11 @@ public class LoginSecurity
     public string? LastLoginIp { get; set; }
     public int FailedLoginAttempts { get; set; }
     public DateTime? LockoutEnd { get; set; }
+
+    /// <summary>
+    /// Cutoff for session validity: any access token whose "sat" (session-issued-at) claim predates
+    /// this instant is treated as revoked. Bumped to UtcNow on password change / reset so other
+    /// devices are signed out. Null means "never invalidated" (all tokens valid).
+    /// </summary>
+    public DateTime? TokensValidAfter { get; set; }
 }

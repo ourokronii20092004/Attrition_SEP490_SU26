@@ -22,7 +22,7 @@ const QUOTES: { line: string; attribution: string }[] = [
     attribution: "Ren · the cathedral",
   },
   {
-    line: "Memory moves. Memory is a living thing carrying a dead one forward... A thing that can't leave you was never really with you in the first place. It's just held.",
+    line: "Memory moves. Memory is a living thing carrying a dead one forward... A thing that can't leave you was never really with you in the first place.",
     attribution: "Ren · the archive",
   },
   {

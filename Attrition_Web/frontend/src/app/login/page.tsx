@@ -12,9 +12,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GoogleButton } from "@/components/google-button";
 import { ApiError } from "@/lib/api/client";
+import { parseApiError } from "@/lib/api/parse-error";
 
 const schema = z.object({
-  username: z.string().min(1, "Username is required"),
+  username: z.string().trim().min(1, "Username is required"),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -61,10 +62,11 @@ function LoginForm() {
         // Rate limited — show a countdown, not the generic credentials error.
         setRetryIn(e.retryAfter && e.retryAfter > 0 ? e.retryAfter : 60);
       } else if (e instanceof ApiError) {
-        const body = tryParseError(e.body);
-        setError(body || "Invalid username or password");
+        // 5xx is on us; 4xx carries an actionable reason (bad credentials, unverified email, …).
+        if (e.status >= 500) setError("Something went wrong on our end. Please try again in a moment.");
+        else setError(parseApiError(e, "Invalid username or password."));
       } else {
-        setError("Something went wrong");
+        setError("We couldn't reach the server. Check your internet connection and try again.");
       }
     } finally {
       setLoading(false);
@@ -88,7 +90,7 @@ function LoginForm() {
           </div>
         ) : null}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4" noValidate>
           <Input label="Username" type="text" autoComplete="username" {...register("username")} error={errors.username?.message} />
           <Input label="Password" type="password" autoComplete="current-password" {...register("password")} error={errors.password?.message} />
 
@@ -112,13 +114,4 @@ function LoginForm() {
       </div>
     </div>
   );
-}
-
-function tryParseError(body: string): string {
-  try {
-    const json = JSON.parse(body);
-    return json.error || json.message || "";
-  } catch {
-    return body;
-  }
 }

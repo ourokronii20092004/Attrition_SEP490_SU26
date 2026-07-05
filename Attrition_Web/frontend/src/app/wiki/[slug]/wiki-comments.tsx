@@ -15,7 +15,8 @@ import { SkeletonList } from "@/components/ui/skeleton";
 import { RelativeTime } from "@/components/ui/relative-time";
 import { MarkdownContent } from "@/components/post-content";
 import { qk } from "@/lib/query-keys";
-import type { ForumPostDto } from "@/lib/types";
+import { makeOptimisticPost, addPostToPage, replacePostInPage, applyReactionToPage } from "@/lib/forum-cache";
+import type { ForumPostDto, PaginatedResponse } from "@/lib/types";
 
 type PostNode = ForumPostDto & { children: PostNode[] };
 
@@ -54,6 +55,8 @@ export function WikiComments({ articleId, articleTitle }: { articleId: string; a
   const { data: posts, isPending } = useQuery({
     queryKey: postsKey,
     enabled: !!threadId,
+    // Briefly fresh so an optimistically-added comment isn't refetched away if the read side lags.
+    staleTime: 30_000,
     queryFn: async () => {
       const res = await forumApi.getPosts(threadId!, { page: 1, pageSize: limit });
       return res.success ? res.data : null;
@@ -69,16 +72,39 @@ export function WikiComments({ articleId, articleTitle }: { articleId: string; a
 
   const replyMutation = useMutation({
     mutationFn: async ({ content, parentPostId }: { content: string; parentPostId: string | null }) => {
-      await forumApi.createPost(threadId!, { content, parentPostId, attachments: [] });
+      const res = await forumApi.createPost(threadId!, { content, parentPostId, attachments: [] });
+      return res.success ? res.data : null;
     },
-    onSuccess: invalidate,
-    onError: () => toast("Failed to post comment. Please try again.", "error"),
+    // Show the comment instantly; swap in the server's real one on success; roll back on failure.
+    onMutate: async ({ content, parentPostId }) => {
+      await queryClient.cancelQueries({ queryKey: postsKey });
+      const prev = queryClient.getQueryData<PaginatedResponse<ForumPostDto>>(postsKey);
+      const optimistic = makeOptimisticPost({ threadId: threadId ?? "", content, parentPostId, user });
+      queryClient.setQueryData<PaginatedResponse<ForumPostDto>>(postsKey, (old) => addPostToPage(old, optimistic));
+      return { prev, tempId: optimistic.id };
+    },
+    onSuccess: (realPost, _vars, ctx) => {
+      if (realPost && ctx) {
+        queryClient.setQueryData<PaginatedResponse<ForumPostDto>>(postsKey, (old) => replacePostInPage(old, ctx.tempId, realPost));
+      }
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(postsKey, ctx.prev);
+      toast("Failed to post comment. Please try again.", "error");
+    },
   });
 
   const reactMutation = useMutation({
     mutationFn: async ({ postId, type }: { postId: string; type: "like" | "dislike" }) => {
       await forumApi.react(postId, { reactionType: type });
     },
+    onMutate: async ({ postId, type }) => {
+      await queryClient.cancelQueries({ queryKey: postsKey });
+      const prev = queryClient.getQueryData<PaginatedResponse<ForumPostDto>>(postsKey);
+      queryClient.setQueryData<PaginatedResponse<ForumPostDto>>(postsKey, (old) => applyReactionToPage(old, postId, type));
+      return { prev };
+    },
+    onError: (_e, _v, ctx) => { if (ctx?.prev) queryClient.setQueryData(postsKey, ctx.prev); },
     onSettled: invalidate,
   });
 

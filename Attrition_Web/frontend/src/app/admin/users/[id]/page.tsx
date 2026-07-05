@@ -148,11 +148,26 @@ export default function AdminUserDetailPage() {
     resetPwMutation.mutate(pw);
   };
 
+  // Confirm before granting/revoking admin — it's a privilege change, not a routine edit.
+  const onRole = async (role: string) => {
+    if (role === detail.role) return;
+    const toAdmin = role === "Admin";
+    const ok = await confirm({
+      title: toAdmin ? "Make this user an admin?" : "Revoke admin access?",
+      message: toAdmin
+        ? `Grant @${detail.username} full admin access? Admins can manage every user, post, and setting.`
+        : `Change @${detail.username} back to a regular user?`,
+      confirmLabel: toAdmin ? "Make admin" : "Change to User",
+      danger: toAdmin,
+    });
+    if (ok) roleMutation.mutate(role);
+  };
+
   return <UserDetailView
     detail={detail} isSelf={isSelf}
     counts={counts} countsLoading={countsLoading}
     onBan={onBan} onDelete={onDelete} onResetPw={onResetPw}
-    onRole={(r) => roleMutation.mutate(r)}
+    onRole={onRole}
     pending={{ ban: banMutation.isPending, del: deleteMutation.isPending, pw: resetPwMutation.isPending }}
   />;
 }

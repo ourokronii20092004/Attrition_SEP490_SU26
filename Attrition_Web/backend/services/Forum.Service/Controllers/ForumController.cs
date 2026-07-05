@@ -50,6 +50,12 @@ public class ForumController : ControllerBase
         => Ok(ApiResponse<PaginatedResponse<ForumThreadListDto>>.Ok(
             await _forum.GetThreadsAsync(category, search, page, pageSize, authorId)));
 
+    // A user's forum replies (public — powers the profile "Replies" tab). Anonymous reads are fine.
+    [HttpGet("users/{userId:guid}/replies")]
+    public async Task<IActionResult> GetUserReplies(Guid userId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        => Ok(ApiResponse<PaginatedResponse<UserReplyDto>>.Ok(
+            await _forum.GetUserRepliesAsync(userId, page, pageSize)));
+
     [HttpGet("threads/{id:guid}")]
     public async Task<IActionResult> GetThread(Guid id)
     {

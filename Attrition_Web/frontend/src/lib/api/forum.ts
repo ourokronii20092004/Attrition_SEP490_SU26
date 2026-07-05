@@ -16,6 +16,7 @@ import type {
   ReportPostReq,
   RemovePostRequest,
   ForumCategoryRequest,
+  UserReplyDto,
 } from "../types";
 
 export const forumApi = {
@@ -36,6 +37,15 @@ export const forumApi = {
   getThread: (id: string) =>
     apiFetch<ApiResponse<ForumThreadDto>>(`/api/forum/threads/${id}`, { auth: false }),
 
+  // A user's forum replies (public) — powers the profile "Replies" tab.
+  getUserReplies: (userId: string, params?: { page?: number; pageSize?: number }) => {
+    const sp = new URLSearchParams();
+    if (params?.page) sp.set("page", String(params.page));
+    if (params?.pageSize) sp.set("pageSize", String(params.pageSize));
+    const qs = sp.toString();
+    return apiFetch<ApiResponse<PaginatedResponse<UserReplyDto>>>(`/api/forum/users/${userId}/replies${qs ? `?${qs}` : ""}`, { auth: false });
+  },
+
   // QOLF-3b: resolve (creating on first view) the comment thread for a wiki article.
   getWikiThread: (articleId: string, title: string) =>
     apiFetch<ApiResponse<ForumThreadDto>>(`/api/forum/wiki-thread/${articleId}?title=${encodeURIComponent(title)}`, { auth: false }),
@@ -48,8 +58,9 @@ export const forumApi = {
     return apiFetch<ApiResponse<PaginatedResponse<ForumPostDto>>>(`/api/forum/threads/${threadId}/posts${qs ? `?${qs}` : ""}`);
   },
 
+  // Returns the new thread's id (a GUID string) in `data` — not the full thread object.
   createThread: (data: CreateThreadRequest) =>
-    apiFetch<ApiResponse<ForumThreadDto>>("/api/forum/threads", { method: "POST", body: data }),
+    apiFetch<ApiResponse<string>>("/api/forum/threads", { method: "POST", body: data }),
 
   createPost: (threadId: string, data: CreatePostRequest) =>
     apiFetch<ApiResponse<ForumPostDto>>(`/api/forum/threads/${threadId}/posts`, { method: "POST", body: data }),

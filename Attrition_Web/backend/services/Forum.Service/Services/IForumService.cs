@@ -14,6 +14,8 @@ public interface IForumService
     // QOLF-3b: resolve (creating if needed) the comment thread for a wiki article.
     Task<ApiResponse<ForumThreadDto>> GetOrCreateWikiThreadAsync(Guid articleId, string articleTitle);
     Task<PaginatedResponse<ForumPostDto>> GetPostsAsync(Guid threadId, int page, int pageSize, Guid? currentUserId);
+    // A user's forum replies for their public profile (excludes thread-opening posts).
+    Task<PaginatedResponse<UserReplyDto>> GetUserRepliesAsync(Guid userId, int page, int pageSize);
 
     Task<ApiResponse<Guid>> CreateThreadAsync(CreateThreadRequest request, Author author);
     Task<ApiResponse> CreatePostAsync(Guid threadId, CreatePostRequest request, Author author);
