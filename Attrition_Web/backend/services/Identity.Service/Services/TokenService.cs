@@ -30,7 +30,11 @@ public sealed class TokenService
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new("username", user.Username),
             new(ClaimTypes.Role, user.Role),
-            new("email_verified", user.IsEmailVerified ? "true" : "false")
+            new("email_verified", user.IsEmailVerified ? "true" : "false"),
+            // Session-issued-at (unix seconds). Lets the identity service invalidate tokens minted
+            // before a password change / forced logout (compared against Security.TokensValidAfter),
+            // without a per-request DB lookup on every service. Custom name so it isn't remapped.
+            new("sat", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString())
         };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Secret"]!));

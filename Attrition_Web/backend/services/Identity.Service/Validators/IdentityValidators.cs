@@ -9,8 +9,9 @@ public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
     public RegisterRequestValidator()
     {
         RuleFor(x => x.Username)
-            .NotEmpty().Length(3, 30)
-            .Matches("^[a-zA-Z0-9_]+$").WithMessage("Username may only contain letters, numbers, and underscores.");
+            .NotEmpty().WithMessage("Username is required.")
+            .Length(3, 30).WithMessage("Username must be 3–30 characters.")
+            .Matches("^[a-z0-9_]+$").WithMessage("Username may only contain lowercase letters, numbers, and underscores (no spaces or symbols).");
         RuleFor(x => x.Password)
             .NotEmpty().MinimumLength(8)
             .Matches("[A-Z]").WithMessage("Password must contain an uppercase letter.")

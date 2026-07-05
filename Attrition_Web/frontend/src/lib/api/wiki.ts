@@ -7,6 +7,7 @@ import type {
   WikiArticleListDto,
   WikiRevisionDto,
   WikiContributionDto,
+  UserWikiContributionDto,
   CreateArticleRequest,
   UpdateArticleRequest,
   SuggestEditRequest,
@@ -35,6 +36,10 @@ export const wikiApi = {
   // A user's total wiki contributions (authored articles + approved suggested edits).
   getUserContributionCount: (userId: string) =>
     apiFetch<ApiResponse<number>>(`/api/wiki/users/${userId}/contribution-count`, { auth: false }),
+
+  // A user's wiki contribution history (authored articles + approved edits) for their profile.
+  getUserContributions: (userId: string) =>
+    apiFetch<ApiResponse<UserWikiContributionDto[]>>(`/api/wiki/users/${userId}/contributions`, { auth: false }),
 
   getRevisions: (articleId: string) =>
     apiFetch<ApiResponse<WikiRevisionDto[]>>(`/api/wiki/articles/${articleId}/revisions`, { auth: false }),

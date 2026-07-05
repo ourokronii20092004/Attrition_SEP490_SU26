@@ -29,6 +29,9 @@ export const qk = {
     thread: (id: string) => ["forum", "thread", id] as const,
     posts: (threadId: string) => ["forum", "posts", threadId] as const,
     postsPage: (threadId: string, page: number) => ["forum", "posts", threadId, page] as const,
+    // The thread page's windowed posts query (grows by page size on "load more"). Centralized so
+    // thread-create seeding can target the exact key the thread page reads.
+    postsWindow: (threadId: string, limit: number) => ["forum", "posts", threadId, "w", limit] as const,
   },
 
   music: {

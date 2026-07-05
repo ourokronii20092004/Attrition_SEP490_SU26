@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -32,6 +32,7 @@ export default function NewThreadPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [error, setError] = useState("");
   const [showPreview, setShowPreview] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -82,8 +83,11 @@ export default function NewThreadPage() {
       return res;
     },
     onSuccess: (res) => {
-      if (res.success && res.data) {
-        router.push(`/forum/${res.data.id}`);
+      if (res.success) {
+        // Land on the forum list after posting. (`res.data` is the new thread's id if we ever want
+        // to open it directly instead.) Refresh the list so the new thread shows up there.
+        queryClient.invalidateQueries({ queryKey: qk.forum.threads() });
+        router.push("/forum");
       }
     },
     onError: () => {

@@ -188,6 +188,22 @@ public class ForumService : IForumService
         return new PaginatedResponse<ForumPostDto>(items, total, page, pageSize);
     }
 
+    public async Task<PaginatedResponse<UserReplyDto>> GetUserRepliesAsync(Guid userId, int page, int pageSize)
+    {
+        var (rows, total) = await _threadRepo.GetUserRepliesAsync(userId, page, pageSize);
+
+        // Reaction counts are resolved here (same pattern as GetPostsAsync) rather than in the query.
+        var postIds = rows.Select(r => r.PostId).ToList();
+        var reactions = await _reactionRepo.ListAsync(r => postIds.Contains(r.PostId));
+
+        var items = rows.Select(r => new UserReplyDto(
+            r.PostId, r.ThreadId, r.ThreadTitle, r.Content, r.CreatedAt,
+            reactions.Count(x => x.PostId == r.PostId && x.ReactionType == ReactionType.Like),
+            reactions.Count(x => x.PostId == r.PostId && x.ReactionType == ReactionType.Dislike))).ToList();
+
+        return new PaginatedResponse<UserReplyDto>(items, total, page, pageSize);
+    }
+
     public async Task<ApiResponse<Guid>> CreateThreadAsync(CreateThreadRequest request, Author author)
     {
         var category = await _threadRepo.GetCategoryByIdAsync(request.CategoryId);

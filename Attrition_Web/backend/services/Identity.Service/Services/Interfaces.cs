@@ -12,7 +12,9 @@ public interface IAuthService
     Task<ApiResponse<AuthResponse>> GoogleCodeExchangeAsync(string code, string redirectUri, string? ip = null);
     Task<ApiResponse<UserDto>> GetCurrentUserAsync(Guid userId);
     Task<ApiResponse<SessionStatusDto>> CheckSessionAsync(Guid userId);
-    Task<ApiResponse> ChangePasswordAsync(Guid userId, ChangePasswordRequest request);
+    // Returns a freshly-minted session for the caller so the device that changed the password stays
+    // signed in while every other device is invalidated (Security.TokensValidAfter is bumped).
+    Task<ApiResponse<AuthResponse>> ChangePasswordAsync(Guid userId, ChangePasswordRequest request);
     Task<ApiResponse> LogoutAsync(Guid userId);
     Task<ApiResponse> ForgotPasswordAsync(ForgotPasswordRequest request);
     Task<ApiResponse> ResetPasswordAsync(ResetPasswordRequest request);

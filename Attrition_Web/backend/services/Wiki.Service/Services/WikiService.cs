@@ -415,6 +415,35 @@ public class WikiService : IWikiService
         return authored + approvedEdits;
     }
 
+    // Mirrors CountUserContributionsAsync but returns the actual history: published articles the user
+    // authored, plus their approved suggested edits — merged and sorted newest-first. This backs the
+    // profile "Wiki" activity tab (regular users only ever have approved edits, never authored articles).
+    public async Task<List<UserWikiContributionDto>> GetUserContributionsAsync(Guid userId)
+    {
+        var items = new List<UserWikiContributionDto>();
+
+        var authored = await _wikiRepo.ListAsync(a => a.CreatedById == userId && a.Status == ArticleStatus.Published);
+        foreach (var a in authored)
+            items.Add(new UserWikiContributionDto(a.Id, a.Title, a.Slug, "Authored", null, a.CreatedAt));
+
+        var approvedEdits = await _contributionRepo.ListAsync(
+            c => c.ContributorId == userId && c.Status == ContributionStatus.Approved);
+        if (approvedEdits.Count > 0)
+        {
+            var articleIds = approvedEdits.Select(c => c.ArticleId).Distinct().ToList();
+            var articles = (await _wikiRepo.ListAsync(a => articleIds.Contains(a.Id))).ToDictionary(a => a.Id);
+            foreach (var c in approvedEdits)
+            {
+                // Skip edits whose target article was since deleted.
+                if (!articles.TryGetValue(c.ArticleId, out var article)) continue;
+                items.Add(new UserWikiContributionDto(
+                    article.Id, article.Title, article.Slug, "Edited", c.ChangeNote, c.ReviewedAt ?? c.SubmittedAt));
+            }
+        }
+
+        return items.OrderByDescending(i => i.At).ToList();
+    }
+
     private static WikiRevisionDto ToRevisionDto(WikiRevision r) =>
         new(r.Id, r.ArticleId, r.Content, r.EditedByName, r.EditedAt, r.ChangeNote);
 }
