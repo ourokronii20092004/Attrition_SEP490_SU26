@@ -32,6 +32,16 @@
                 </ui:VisualElement>
             </ui:VisualElement>
 
+            <!-- Coop ping (top-right): độ trễ mạng tới peer, chỉ hiện khi chơi coop -->
+            <ui:VisualElement name="hud-ping" class="hidden">
+                <ui:VisualElement name="hud-ping-dot"/>
+                <ui:Label name="hud-ping-label" text="-- ms"/>
+            </ui:VisualElement>
+            <!-- FPS (top-right, dưới ping): khung hình/giây để chẩn giật. Luôn hiện. -->
+            <ui:VisualElement name="hud-fps">
+                <ui:Label name="hud-fps-label" text="-- FPS"/>
+            </ui:VisualElement>
+
             <!-- Boss bar -->
             <ui:VisualElement name="hud-boss" class="hidden">
                 <ui:Label name="hud-boss-name" text="LORD CINDER"/>

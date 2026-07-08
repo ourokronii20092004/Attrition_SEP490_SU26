@@ -36,6 +36,11 @@ public class PlayerController : NetworkBehaviour, IDamageable
     [Tooltip("SO chứa toàn bộ cấu hình vật lý và di chuyển")]
     [SerializeField] private Attrition.Data.MovementConfigSO moveConfig;
 
+    [Header("---- COOP SMOOTHING ----")]
+    [Tooltip("Child chứa Sprite + Animator (Interpolation Target). Gán để NetworkRigidbody2D nội suy " +
+             "phần nhìn riêng, tránh giật do prediction trên client. Bỏ trống = dùng root (giật như cũ).")]
+    [SerializeField] private Transform visualRoot;
+
     private bool hasShadowDash => moveConfig != null ? moveConfig.hasShadowDash : false;
     private float dashDuration => moveConfig != null ? moveConfig.dashDuration : 0.2f;
     private float dashCooldownTime => moveConfig != null ? moveConfig.dashCooldownTime : 0.8f;
@@ -151,11 +156,23 @@ public class PlayerController : NetworkBehaviour, IDamageable
         if (Object != null && (HasInputAuthority || HasStateAuthority))
             Runner.SetIsSimulated(Object, true);
 
+        // Interpolation Target CHỈ cho PROXY (player của peer khác) — tách visual khỏi physics giật
+        // để proxy mượt. TUYỆT ĐỐI KHÔNG set cho local player (HasInputAuthority): local player chạy
+        // client prediction, root di chuyển TỨC THÌ theo input; nếu nội suy visual thì visual + camera
+        // bị kéo trễ lại → cảm giác input lag/trôi dù FPS cao. Local player render thẳng ở predicted.
+        if (visualRoot != null && !HasInputAuthority)
+        {
+            var nrb = GetComponent<Fusion.Addons.Physics.NetworkRigidbody2D>();
+            if (nrb != null) nrb.SetInterpolationTarget(visualRoot);
+        }
+
         // Tắt va chạm vật lý giữa Player và Enemy để Player đi xuyên qua được
         // CHỈ dùng Collider-based (không dùng IgnoreLayerCollision vì nó chặn cả trigger → ContactDamage không hoạt động)
         IgnoreAllEnemyColliders();
 
-        // Set camera to follow local player
+        // Camera của LOCAL player follow ROOT (transform), KHÔNG follow visualRoot. Root là vị trí
+        // predicted bám input tức thì; visualRoot với local player không bị nội suy (xem trên) nên
+        // hai cái trùng nhau — nhưng follow thẳng root để chắc chắn camera không bao giờ trễ input.
         if (HasInputAuthority)
         {
             var cam = FindAnyObjectByType<CinemachineCamera>();
@@ -215,10 +232,11 @@ public class PlayerController : NetworkBehaviour, IDamageable
         }
         else if (!HasInputAuthority)
         {
-            // Proxy: ép vị trí và velocity từ server, bỏ qua toàn bộ physics logic
-            rb.position = NetworkPosition;
-            rb.linearVelocity = NetworkVelocity;
-            rb.gravityScale = NetworkGravityScale;
+            // Proxy (player của peer khác): KHÔNG đụng vào rb ở đây. Prefab đã có NetworkRigidbody2D
+            // (Fusion.Addons.Physics) — nó TỰ ĐỘNG đồng bộ + NỘI SUY rigidbody cho proxy trong Render,
+            // mượt như host. Trước đây code còn tự set rb.position = NetworkPosition mỗi tick → ĐÁNH NHAU
+            // với NetworkRigidbody2D (hai bên cùng ghi vị trí) nên giật. Giờ chỉ việc return, nhường
+            // hoàn toàn cho addon xử lý chuyển động proxy.
             return;
         }
 
@@ -482,11 +500,64 @@ public class PlayerController : NetworkBehaviour, IDamageable
 
     public override void Render()
     {
+        // Vị trí proxy do NetworkRigidbody2D (addon) tự nội suy — KHÔNG tự set rb.position ở đây nữa
+        // (từng gây giật vì đánh nhau với addon). Render chỉ còn lo animation.
         animationComp.UpdateAnimations(
             IsMoving, IsGrounded, isDeadNetworked, NetworkVelocityY, IsFacingRight,
             IsCrouching, IsDashing, combatComp.IsChargingAttack,
             combatComp.IsAttacking, IsSliding
         );
+
+        UpdateMovementSfx();
+    }
+
+    // ─── SFX di chuyển: chạy trong Render (1 lần/frame, mọi máy) bằng cách so sánh state trước/sau. ───
+    private bool _sfxWasGrounded = true;
+    private int _sfxPrevJumpCount;
+    private float _sfxNextStep;
+    private bool _sfxWasDashing;
+    private int _sfxPrevHealthCharges;
+    private int _sfxPrevManaCharges;
+
+    private void UpdateMovementSfx()
+    {
+        if (isDeadNetworked) return;
+        var sfx = Attrition.Systems.GameSfx.Instance;
+
+        // JUMP: JumpCount tăng lên = vừa bật nhảy (gồm cả double jump).
+        if (JumpCount > _sfxPrevJumpCount) sfx.PlayJump();
+        _sfxPrevJumpCount = JumpCount;
+
+        // LAND: chuyển từ trên-không sang chạm-đất.
+        if (IsGrounded && !_sfxWasGrounded) sfx.PlayLand();
+        _sfxWasGrounded = IsGrounded;
+
+        // DASH: cờ IsDashing bật lên = vừa bắt đầu lướt.
+        if (IsDashing && !_sfxWasDashing) sfx.PlayDash();
+        _sfxWasDashing = IsDashing;
+
+        // POTION: số bình giảm = vừa uống (HP hoặc Mana). Networked nên nghe được trên mọi máy.
+        if (potionComp != null)
+        {
+            if (potionComp.HealthCharges < _sfxPrevHealthCharges || potionComp.ManaCharges < _sfxPrevManaCharges)
+                sfx.PlayPotion();
+            _sfxPrevHealthCharges = potionComp.HealthCharges;
+            _sfxPrevManaCharges = potionComp.ManaCharges;
+        }
+
+        // FOOTSTEP: đang đi trên đất → phát nhịp đều (không áp cho dash/slide/crouch).
+        if (IsGrounded && IsMoving && !IsDashing && !IsSliding && !IsCrouching)
+        {
+            if (Time.time >= _sfxNextStep)
+            {
+                sfx.PlayStep();
+                _sfxNextStep = Time.time + 0.32f; // ~nhịp chạy
+            }
+        }
+        else
+        {
+            _sfxNextStep = 0f; // dừng đi → bước kế phát ngay khi đi lại
+        }
     }
 
     private void CheckGround()

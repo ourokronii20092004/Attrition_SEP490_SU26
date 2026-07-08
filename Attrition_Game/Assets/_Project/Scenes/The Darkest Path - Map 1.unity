@@ -996,7 +996,7 @@ MonoBehaviour:
   IgnoreTimeScale: 0
   WorldUpOverride: {fileID: 0}
   ChannelMask: -1
-  UpdateMethod: 2
+  UpdateMethod: 1
   BlendUpdateMethod: 1
   LensModeOverride:
     Enabled: 0
@@ -1457,7 +1457,7 @@ MonoBehaviour:
   playerPrefab:
     RawGuidValue: 231d0d7375d868a43b49c56a5920b23d
   player1Prefab:
-    RawGuidValue: dbe5b89c4047d0042a9412d5d70f8b36
+    RawGuidValue: 346d4282725d4e74a87c5d2085212179
   spawnPoints:
   - {fileID: 229396525}
   fallbackEnemyPrefab:
@@ -216660,9 +216660,9 @@ MonoBehaviour:
       Offset: {x: 0, y: 0}
   CenterOnActivate: 1
   TargetOffset: {x: 0, y: 0, z: 0}
-  Damping: {x: 1, y: 0.5, z: 1}
+  Damping: {x: 0.15, y: 0.2, z: 0}
   Lookahead:
-    Enabled: 1
+    Enabled: 0
     Time: 0.1
     Smoothing: 0
     IgnoreY: 0
