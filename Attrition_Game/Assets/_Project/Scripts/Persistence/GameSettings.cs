@@ -146,6 +146,9 @@ namespace Attrition.Persistence
             EnsureLoaded();
             AudioListener.volume = MasterVolume;
             QualitySettings.vSyncCount = VSync ? 1 : 0;
+            // Đẩy hệ số âm lượng SFX xuống GameSfx (Systems). Chiều Persistence→Systems là hợp lệ
+            // (Persistence đã tham chiếu Systems); KHÔNG để GameSfx đọc ngược lên đây (circular dep).
+            Attrition.Systems.GameSfx.SfxVolume = SfxVolume;
         }
     }
 }
