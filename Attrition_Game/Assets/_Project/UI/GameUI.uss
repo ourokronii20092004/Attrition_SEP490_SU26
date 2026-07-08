@@ -152,6 +152,44 @@
 
 .hud-slot-empty { opacity: 0.4; }
 
+/* --- Coop ping (top-right) --- */
+#hud-ping {
+    position: absolute;
+    right: 20px; top: 16px;
+    flex-direction: row;
+    align-items: center;
+}
+#hud-ping-dot {
+    width: 8px; height: 8px;
+    border-radius: 4px;
+    margin-right: 7px;
+    background-color: rgb(64, 200, 96);
+}
+#hud-ping-label {
+    color: #ebdcb1;
+    font-size: 12px;
+    -unity-font-style: bold;
+}
+.ping-good { background-color: rgb(64, 200, 96); }
+.ping-ok { background-color: rgb(200, 160, 64); }
+.ping-bad { background-color: rgb(200, 64, 64); }
+
+/* --- FPS counter (top-right, below ping) --- */
+#hud-fps {
+    position: absolute;
+    right: 20px; top: 40px;
+    flex-direction: row;
+    align-items: center;
+}
+#hud-fps-label {
+    color: #ebdcb1;
+    font-size: 12px;
+    -unity-font-style: bold;
+}
+.fps-good { color: rgb(120, 220, 140); }
+.fps-ok { color: rgb(220, 190, 110); }
+.fps-bad { color: rgb(230, 120, 120); }
+
 /* --- Boss bar (bottom center) --- */
 #hud-boss {
     position: absolute;

@@ -95,7 +95,10 @@ public class PlayerCombat : NetworkBehaviour
 
                     attackCooldown = TickTimer.CreateFromSeconds(Runner, chargeAttackCooldown / CurrentAttackSpeed);
 
-                    if (Runner.IsForward)
+                    // Chỉ InputAuthority (máy sở hữu player) được gửi RPC nguồn InputAuthority. Trên
+                    // host, host là StateAuthority của player CLIENT nhưng không phải InputAuthority
+                    // → thiếu guard này host sẽ cố gửi và Fusion chặn ("not allowed to send this RPC").
+                    if (Runner.IsForward && Object.HasInputAuthority)
                     {
                         if (isCrouching)
                             RPC_PlayCrouchAttack(CurrentAttackSpeed);
@@ -119,7 +122,7 @@ public class PlayerCombat : NetworkBehaviour
             {
                 // Stamina đã được trừ lúc kích hoạt Charge
                 IsChargingAttack = false;
-                if (Runner.IsForward) RPC_ReleaseChargeAttack();
+                if (Runner.IsForward && Object.HasInputAuthority) RPC_ReleaseChargeAttack();
             }
             else
             {
@@ -133,7 +136,7 @@ public class PlayerCombat : NetworkBehaviour
 
                         attackCooldown = TickTimer.CreateFromSeconds(Runner, normalAttackCooldown / CurrentAttackSpeed);
 
-                        if (Runner.IsForward)
+                        if (Runner.IsForward && Object.HasInputAuthority)
                         {
                             if (isCrouching)
                                 RPC_PlayCrouchAttack(CurrentAttackSpeed);
@@ -184,11 +187,15 @@ public class PlayerCombat : NetworkBehaviour
 
     public void TriggerAttackDamage()
     {
+        // SFX vung kiếm thường — phát ngay tại animation event nên khớp đúng khung vung.
+        Attrition.Systems.GameSfx.Instance.PlayAttack();
         DealDamage(NormalAttackRaw, normalAttackType);
     }
 
     public void TriggerChargeAttackDamage()
     {
+        // SFX đòn gồng — clip khác đòn thường.
+        Attrition.Systems.GameSfx.Instance.PlayCharge();
         DealDamage(ChargeAttackRaw, chargeAttackType);
     }
 
@@ -198,9 +205,13 @@ public class PlayerCombat : NetworkBehaviour
         ? Mathf.RoundToInt((chargeAttackType == Attrition.Core.DamageType.Magic ? statsComp.AP : statsComp.AD) * statsComp.ChargeDamageMultiplier)
         : 2;
 
+    private bool _hitSomething;
+
     private void DealDamage(int damage, Attrition.Core.DamageType type)
     {
         if (attackPoint == null) return;
+
+        _hitSomething = false;
 
         // Xác định hướng Player đang nhìn dựa vào vị trí attackPoint
         Vector2 facingDir = attackPoint.localPosition.x >= 0 ? Vector2.right : Vector2.left;
@@ -228,8 +239,12 @@ public class PlayerCombat : NetworkBehaviour
                 Vector2 pushDir = new Vector2(dirToTarget.x, 0.5f).normalized;
                 float force = damage >= ChargeAttackRaw ? 8f : 5f;
                 dmg.TakeDamage(damage, pushDir, force, type);
+                _hitSomething = true;
             }
         }
+
+        // SFX chém TRÚNG quái — chỉ phát khi thực sự có mục tiêu dính đòn (clip khác tiếng vung kiếm).
+        if (_hitSomething) Attrition.Systems.GameSfx.Instance.PlayHit();
     }
 
     public void FinishAttack()

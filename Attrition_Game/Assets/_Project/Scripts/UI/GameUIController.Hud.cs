@@ -73,6 +73,106 @@ namespace Attrition.UI
 
             UpdateHudSkillIcon();
             UpdateRestPrompt();
+            UpdatePing();
+        }
+
+        private float _nextPingTime;
+
+        /// <summary>
+        /// Ping coop (góc trên phải): RTT tới peer, cập nhật mỗi giây. Chỉ hiện khi chơi coop —
+        /// solo không có mạng nên ẩn hẳn. Chấm đổi màu: xanh (mượt) / vàng (chấp nhận) / đỏ (giật).
+        /// </summary>
+        private void UpdatePing()
+        {
+            var ping = _root.Q<VisualElement>("hud-ping");
+            if (ping == null) return;
+
+            var runner = Attrition.Networking.NetworkLauncher.Instance?.Runner;
+            bool coop = Attrition.Persistence.GameLaunch.Mode == Attrition.Persistence.LaunchMode.Coop
+                        && runner != null && runner.IsRunning;
+            if (!coop)
+            {
+                SetVisible(ping, false);
+                return;
+            }
+            SetVisible(ping, true);
+
+            if (Time.unscaledTime < _nextPingTime) return;
+            _nextPingTime = Time.unscaledTime + 1f;
+
+            // GetPlayerRtt trả RTT (giây) → ms. Trong hosted mode, CLIENT chỉ có kết nối tới server
+            // (host) nên GetPlayerRtt(peer khác) trả 0 — phải đo tới server bằng PlayerRef.None.
+            // HOST là server, PlayerRef.None = chính nó (0) nên host đo RTT tới client đang kết nối.
+            int ms = -1;
+            if (runner.IsServer)
+            {
+                foreach (var p in runner.ActivePlayers)
+                {
+                    if (p == runner.LocalPlayer) continue;
+                    ms = Mathf.RoundToInt((float)runner.GetPlayerRtt(p) * 1000f);
+                    break;
+                }
+            }
+            else
+            {
+                ms = Mathf.RoundToInt((float)runner.GetPlayerRtt(Fusion.PlayerRef.None) * 1000f);
+            }
+
+            var dot = _root.Q<VisualElement>("hud-ping-dot");
+            if (ms < 0)
+            {
+                SetText("hud-ping-label", "-- ms");
+                SetPingClass(dot, "ping-bad");
+                return;
+            }
+
+            SetText("hud-ping-label", $"{ms} ms");
+            SetPingClass(dot, ms <= 80 ? "ping-good" : ms <= 160 ? "ping-ok" : "ping-bad");
+        }
+
+        private float _fpsAccum;
+        private int _fpsFrames;
+        private float _nextFpsTime;
+
+        /// <summary>
+        /// FPS (góc trên phải, dưới ping): trung bình mỗi 0.5s cho ổn định (không nhảy loạn mỗi frame).
+        /// Dùng unscaledDeltaTime để đo đúng cả khi pause. Đổi màu: xanh ≥50, vàng ≥30, đỏ &lt;30.
+        /// </summary>
+        private void UpdateFps()
+        {
+            var fps = _root.Q<VisualElement>("hud-fps");
+            if (fps == null) return;
+
+            _fpsAccum += Time.unscaledDeltaTime;
+            _fpsFrames++;
+
+            if (Time.unscaledTime < _nextFpsTime) return;
+            _nextFpsTime = Time.unscaledTime + 0.5f;
+
+            int val = (_fpsAccum > 0f && _fpsFrames > 0)
+                ? Mathf.RoundToInt(_fpsFrames / _fpsAccum)
+                : 0;
+            _fpsAccum = 0f;
+            _fpsFrames = 0;
+
+            SetText("hud-fps-label", $"{val} FPS");
+            var label = _root.Q<Label>("hud-fps-label");
+            if (label != null)
+            {
+                label.RemoveFromClassList("fps-good");
+                label.RemoveFromClassList("fps-ok");
+                label.RemoveFromClassList("fps-bad");
+                label.AddToClassList(val >= 50 ? "fps-good" : val >= 30 ? "fps-ok" : "fps-bad");
+            }
+        }
+
+        private void SetPingClass(VisualElement dot, string cls)
+        {
+            if (dot == null) return;
+            dot.RemoveFromClassList("ping-good");
+            dot.RemoveFromClassList("ping-ok");
+            dot.RemoveFromClassList("ping-bad");
+            dot.AddToClassList(cls);
         }
 
         private bool _flaskIconsApplied;
