@@ -215873,6 +215873,106 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21320d8d90fd8e443ad56709acc2dcb7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Enemy.SeveredFang.SeveredFangAI
+--- !u!1 &1218260239
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1218260241}
+  - component: {fileID: 1218260240}
+  m_Layer: 0
+  m_Name: GameSfx
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1218260240
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1218260239}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe281845add595f4e9a8a0d4bad4e786, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Systems::Attrition.Systems.GameSfx
+  attack:
+    clips:
+    - {fileID: 8300000, guid: e6816ad8f5d63c849afb3f7d0315db7a, type: 3}
+    volume: 1
+    pitch: 1
+    pitchVariance: 0
+    delay: 0
+  charge:
+    clips:
+    - {fileID: 8300000, guid: a58617c4a3a59264fbc4362a513a0979, type: 3}
+    volume: 1
+    pitch: 1
+    pitchVariance: 0
+    delay: 0
+  hit:
+    clips: []
+    volume: 1
+    pitch: 1
+    pitchVariance: 0
+    delay: 0
+  jump:
+    clips:
+    - {fileID: 8300000, guid: 3d4f0f3802cdf874ab20f7846e95a2ea, type: 3}
+    volume: 1
+    pitch: 1
+    pitchVariance: 0
+    delay: 0
+  land:
+    clips:
+    - {fileID: 8300000, guid: ad5ce541fe4779340a7e67bd9cb850e2, type: 3}
+    volume: 1
+    pitch: 1
+    pitchVariance: 0
+    delay: 0
+  dash:
+    clips:
+    - {fileID: 8300000, guid: 4a536306527ea744fb8549561c0fc155, type: 3}
+    volume: 1
+    pitch: 2.01
+    pitchVariance: 0
+    delay: 0
+  step:
+    clips:
+    - {fileID: 8300000, guid: 5c80a931096d343449fa137caae9ceb6, type: 3}
+    - {fileID: 8300000, guid: 1b8991eda7889e24eb77a7aa2ee80129, type: 3}
+    volume: 1
+    pitch: 1
+    pitchVariance: 0
+    delay: 0
+  potion:
+    clips:
+    - {fileID: 8300000, guid: eef69514673b0c54da9d705eeecda0ad, type: 3}
+    volume: 1
+    pitch: 1
+    pitchVariance: 0
+    delay: 0
+--- !u!4 &1218260241
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1218260239}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 359.38345, y: 73.562614, z: -0.13279696}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1296330191
 GameObject:
   m_ObjectHideFlags: 0
@@ -224374,6 +224474,7 @@ SceneRoots:
   - {fileID: 669054119}
   - {fileID: 160711123}
   - {fileID: 1599484867}
+  - {fileID: 1218260241}
   - {fileID: 1422641352}
   - {fileID: 43364782}
   - {fileID: 393270120}
