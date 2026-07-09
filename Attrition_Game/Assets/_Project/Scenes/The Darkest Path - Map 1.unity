@@ -215937,8 +215937,7 @@ MonoBehaviour:
     pitchVariance: 0
     delay: 0
   dash:
-    clips:
-    - {fileID: 8300000, guid: 4a536306527ea744fb8549561c0fc155, type: 3}
+    clips: []
     volume: 1
     pitch: 2.01
     pitchVariance: 0
