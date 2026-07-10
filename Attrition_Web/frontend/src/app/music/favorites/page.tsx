@@ -12,6 +12,8 @@ import { PageShell } from "@/components/ui/page-shell";
 import { Button } from "@/components/ui/button";
 import { SkeletonList } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Pagination } from "@/components/ui/pagination";
+import { useClientPagination } from "@/lib/hooks/use-client-pagination";
 import { qk } from "@/lib/query-keys";
 import type { MusicTrackDto, FavoriteTrackDto } from "@/lib/types";
 
@@ -52,6 +54,8 @@ export default function FavoritesPage() {
     await toggle(trackId);
     queryClient.invalidateQueries({ queryKey: qk.music.favorites() });
   };
+
+  const { page, setPage, totalPages, paged } = useClientPagination(favorites, 25);
 
   if (!user) {
     return (
@@ -95,7 +99,7 @@ export default function FavoritesPage() {
         />
       ) : (
         <div className="mt-6 space-y-0.5">
-          {favorites.map((f) => {
+          {paged.map((f) => {
             const track = toPlayable(f);
             const active = currentTrack?.trackId === f.trackId;
             return (
@@ -128,6 +132,7 @@ export default function FavoritesPage() {
               </div>
             );
           })}
+          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
         </div>
       )}
     </PageShell>

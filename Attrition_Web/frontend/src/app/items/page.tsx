@@ -12,6 +12,8 @@ import { Select } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { SkeletonGrid } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Pagination } from "@/components/ui/pagination";
+import { useClientPagination } from "@/lib/hooks/use-client-pagination";
 import { qk } from "@/lib/query-keys";
 
 // Thứ bậc hiếm + màu hiển thị (khớp tone accent của site).
@@ -90,6 +92,8 @@ export default function ItemsPage() {
     ...RARITY_ORDER.map((r) => ({ value: r, label: r })),
   ];
 
+  const { page, setPage, totalPages, paged } = useClientPagination(items, 12);
+
   return (
     <PageShell>
       <PageTitle description="Every item that drops across the Attrition world, and what hunts you for it.">
@@ -127,7 +131,7 @@ export default function ItemsPage() {
         />
       ) : (
         <div className="stagger mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {items.map((item, i) => (
+          {paged.map((item, i) => (
             <Card key={item.itemName} style={{ "--i": i } as React.CSSProperties} className="p-5">
               <div className="flex items-center justify-between gap-2">
                 <h3 className="truncate font-display text-lg font-semibold text-fg">{item.itemName}</h3>
@@ -152,6 +156,9 @@ export default function ItemsPage() {
             </Card>
           ))}
         </div>
+      )}
+      {!isPending && items.length > 0 && (
+        <Pagination page={page} totalPages={totalPages} onChange={setPage} />
       )}
     </PageShell>
   );

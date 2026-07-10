@@ -19,6 +19,10 @@ public class EnemyEntity
     // Lore — new field supporting FE-W-03 ("lore descriptions").
     public string? Lore { get; set; }
 
+    // Admin-uploaded artwork URL (synced to the Assets gallery on upload). Distinct from loot
+    // IconKey, which the game client uses for its own sprite lookup.
+    public string? ImageUrl { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

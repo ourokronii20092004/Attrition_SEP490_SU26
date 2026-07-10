@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { Search, Skull } from "lucide-react";
 import { enemiesApi } from "@/lib/api/enemies";
+import { resolveMediaUrl } from "@/lib/api/media";
 import { PageShell } from "@/components/ui/page-shell";
 import { PageTitle } from "@/components/ui/page-title";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,8 @@ import { Card } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
 import { SkeletonGrid } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Pagination } from "@/components/ui/pagination";
+import { useClientPagination } from "@/lib/hooks/use-client-pagination";
 import { ENEMY_TIERS, TIER_COLOR } from "@/lib/enemy-tiers";
 import { qk } from "@/lib/query-keys";
 
@@ -33,6 +36,8 @@ export default function BestiaryPage() {
     { value: "", label: "All Tiers" },
     ...TIERS.map((t) => ({ value: t, label: t })),
   ];
+
+  const { page, setPage, totalPages, paged } = useClientPagination(enemies, 12);
 
   return (
     <PageShell>
@@ -73,28 +78,39 @@ export default function BestiaryPage() {
         />
       ) : (
         <div className="stagger mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {enemies.map((enemy, i) => (
-            <Card key={enemy.enemyId} interactive style={{ "--i": i } as React.CSSProperties} className="p-0">
-              <Link href={`/bestiary/${enemy.enemyId}`} className="group block p-5">
-                <div className="flex items-center justify-between gap-2">
-                  <h3 className="truncate font-display text-lg font-semibold text-fg transition-colors group-hover:text-accent">
-                    {enemy.name}
-                  </h3>
-                  <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${TIER_COLOR[enemy.tier] ?? "text-fg-muted bg-surface-3"}`}>
-                    {enemy.tier}
-                  </span>
-                </div>
-                <p className="mt-1 text-xs text-fg-muted">{enemy.spawnBiome}</p>
-                <div className="mt-4 grid grid-cols-4 gap-2 border-t border-border pt-3 text-center">
-                  <Stat label="HP" value={enemy.hp} />
-                  <Stat label="AD" value={enemy.ad} />
-                  <Stat label="DEF" value={enemy.def} />
-                  <Stat label="SPD" value={enemy.attackSpeed} />
+          {paged.map((enemy, i) => (
+            <Card key={enemy.enemyId} interactive style={{ "--i": i } as React.CSSProperties} className="overflow-hidden p-0">
+              <Link href={`/bestiary/${enemy.enemyId}`} className="group block">
+                {enemy.imageUrl && (
+                  <div className="aspect-[16/9] w-full overflow-hidden bg-surface-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={resolveMediaUrl(enemy.imageUrl) ?? ""} alt="" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                  </div>
+                )}
+                <div className="p-5">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="truncate font-display text-lg font-semibold text-fg transition-colors group-hover:text-accent">
+                      {enemy.name}
+                    </h3>
+                    <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${TIER_COLOR[enemy.tier] ?? "text-fg-muted bg-surface-3"}`}>
+                      {enemy.tier}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-fg-muted">{enemy.spawnBiome}</p>
+                  <div className="mt-4 grid grid-cols-4 gap-2 border-t border-border pt-3 text-center">
+                    <Stat label="HP" value={enemy.hp} />
+                    <Stat label="AD" value={enemy.ad} />
+                    <Stat label="DEF" value={enemy.def} />
+                    <Stat label="SPD" value={enemy.attackSpeed} />
+                  </div>
                 </div>
               </Link>
             </Card>
           ))}
         </div>
+      )}
+      {!isPending && enemies.length > 0 && (
+        <Pagination page={page} totalPages={totalPages} onChange={setPage} />
       )}
     </PageShell>
   );

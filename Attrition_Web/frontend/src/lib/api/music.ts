@@ -10,6 +10,7 @@ import type {
   FavoriteTrackDto,
   ScanTrackResponse,
   MusicPlaylist,
+  PlaylistDetailDto,
   CreateAlbumRequest,
   UpdateTrackRequest,
   CreatePlaylistReq,
@@ -61,14 +62,23 @@ export const musicApi = {
   getPlaylists: () =>
     apiFetch<ApiResponse<MusicPlaylist[]>>("/api/music/playlists"),
 
+  getPlaylist: (playlistId: string) =>
+    apiFetch<ApiResponse<PlaylistDetailDto>>(`/api/music/playlists/${playlistId}`),
+
   createPlaylist: (data: CreatePlaylistReq) =>
     apiFetch<ApiResponse<MusicPlaylist>>("/api/music/playlists", { method: "POST", body: data }),
+
+  deletePlaylist: (playlistId: string) =>
+    apiFetch<ApiResponse<void>>(`/api/music/playlists/${playlistId}`, { method: "DELETE" }),
 
   addTrackToPlaylist: (playlistId: string, data: AddTrackToPlaylistReq) =>
     apiFetch<ApiResponse<void>>(`/api/music/playlists/${playlistId}/tracks`, { method: "POST", body: data }),
 
   removeTrackFromPlaylist: (playlistId: string, trackId: number) =>
     apiFetch<ApiResponse<void>>(`/api/music/playlists/${playlistId}/tracks/${trackId}`, { method: "DELETE" }),
+
+  reorderPlaylist: (playlistId: string, trackIds: number[]) =>
+    apiFetch<ApiResponse<void>>(`/api/music/playlists/${playlistId}/reorder`, { method: "PUT", body: { trackIds } }),
 
   // Admin: albums
   createAlbum: (data: CreateAlbumRequest) =>

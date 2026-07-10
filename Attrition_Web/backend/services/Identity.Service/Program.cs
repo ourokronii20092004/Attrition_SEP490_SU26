@@ -41,6 +41,8 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped(typeof(BuildingBlocks.Persistence.IRepository<>), typeof(BuildingBlocks.Persistence.Repository<>));
 
 builder.Services.AddSingleton<TokenService>();
+// Used by AuthService to POST the Google OAuth authorization-code -> token exchange.
+builder.Services.AddHttpClient();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IAdminUserService, AdminUserService>();

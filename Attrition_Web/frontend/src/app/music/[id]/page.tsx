@@ -9,6 +9,7 @@ import { musicApi, getDownloadUrl } from "@/lib/api/music";
 import { resolveMediaUrl } from "@/lib/api/media";
 import { useAudioStore } from "@/lib/stores/audio-store";
 import { useFavorites } from "@/components/player/use-favorites";
+import { AddToPlaylistButton } from "@/components/player/add-to-playlist-button";
 import { PageShell } from "@/components/ui/page-shell";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -174,6 +175,10 @@ export default function AlbumPage() {
                   <Heart size={15} className={fav ? "fill-current" : ""} />
                 </button>
               )}
+              <AddToPlaylistButton
+                trackId={track.trackId}
+                className="shrink-0 rounded-md p-1.5 text-fg-subtle opacity-0 transition-all hover:bg-surface-3 hover:text-fg group-hover:opacity-100"
+              />
               <span className="shrink-0 text-xs tabular-nums text-fg-subtle">{formatDuration(track.duration)}</span>
               <a
                 href={getDownloadUrl(track.trackId)}

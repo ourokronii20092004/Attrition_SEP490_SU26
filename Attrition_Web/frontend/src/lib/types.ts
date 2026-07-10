@@ -36,6 +36,8 @@ export interface UserDto {
   pendingEmail: string | null;
   notifyOnReply: boolean;
   notifyOnMention: boolean;
+  hasPassword: boolean;
+  isGoogleLinked: boolean;
 }
 
 export interface AuthResponse {
@@ -175,6 +177,7 @@ export interface EnemyResponse {
   createdAt: string;
   updatedAt: string;
   lootTable: LootEntryDto[];
+  imageUrl: string | null;
 }
 
 export interface EnemyCreateRequest {
@@ -193,6 +196,7 @@ export interface EnemyCreateRequest {
   goldReward: number;
   lore?: string;
   lootTable?: LootEntryDto[];
+  imageUrl?: string | null;
 }
 
 export interface EnemyUpdateRequest {
@@ -210,6 +214,7 @@ export interface EnemyUpdateRequest {
   goldReward: number;
   lore?: string;
   lootTable?: LootEntryDto[];
+  imageUrl?: string | null;
 }
 
 // ─── Item config (admin-editable, game downloads) ───────────────────────────────
@@ -231,6 +236,7 @@ export interface ItemResponse {
   createdAt: string;
   updatedAt: string;
   modifiers: ItemModifierDto[];
+  imageUrl: string | null;
 }
 
 export interface ItemCreateRequest {
@@ -243,6 +249,7 @@ export interface ItemCreateRequest {
   maxStack: number;
   isKeyItem: boolean;
   modifiers?: ItemModifierDto[];
+  imageUrl?: string | null;
 }
 
 export interface ItemUpdateRequest {
@@ -254,6 +261,7 @@ export interface ItemUpdateRequest {
   maxStack: number;
   isKeyItem: boolean;
   modifiers?: ItemModifierDto[];
+  imageUrl?: string | null;
 }
 
 // ─── Wiki Service ─────────────────────────────────────────────────────────────
@@ -311,6 +319,16 @@ export interface WikiContributionDto {
   changeNote: string | null;
   status: "Pending" | "Approved" | "Rejected";
   submittedAt: string;
+}
+
+// One entry in a user's public wiki contribution history: an authored article or an approved edit.
+export interface UserWikiContributionDto {
+  articleId: string;
+  articleTitle: string;
+  articleSlug: string;
+  kind: string; // "Authored" | "Edited"
+  changeNote: string | null;
+  at: string;
 }
 
 export interface CreateArticleRequest {
@@ -396,6 +414,18 @@ export interface ForumPostDto {
   currentUserReaction: string | null;
 }
 
+// A user's forum reply for their public profile ("Replies" tab): one of their posts that isn't a
+// thread's opening post, with just enough thread context to preview + link it.
+export interface UserReplyDto {
+  postId: string;
+  threadId: string;
+  threadTitle: string;
+  content: string;
+  createdAt: string;
+  likeCount: number;
+  dislikeCount: number;
+}
+
 export interface CreateThreadRequest {
   categoryId: number;
   title: string;
@@ -478,6 +508,10 @@ export interface AdminUserReportDto {
   reason: string;
   status: string;
   createdAt: string;
+  actionTaken: string | null;
+  moderatorNote: string | null;
+  resolvedByName: string | null;
+  resolvedAt: string | null;
 }
 
 export interface RemovePostRequest {
@@ -499,6 +533,8 @@ export interface AssetDto {
   uploadedBy: string | null;
   uploadedAt: string;
   updatedAt: string | null;
+  sourceType: string | null;
+  sourceId: string | null;
 }
 
 export interface UpdateAssetReq {
@@ -524,6 +560,7 @@ export interface MusicAlbumDto {
   trackCount: number;
   totalDuration: number;
   createdAt: string;
+  sortOrder: number;
 }
 
 export interface MusicTrackDto {
@@ -652,6 +689,21 @@ export interface AddTrackToPlaylistReq {
   trackId: number;
 }
 
+export interface ReorderPlaylistReq {
+  trackIds: number[];
+}
+
+export interface PlaylistDetailDto {
+  playlistId: string;
+  title: string;
+  description: string | null;
+  isPublic: boolean;
+  trackCount: number;
+  createdAt: string;
+  updatedAt: string;
+  tracks: MusicTrackDto[];
+}
+
 // ─── Search Service ───────────────────────────────────────────────────────────
 
 export interface SearchWikiResultDto {
@@ -744,6 +796,9 @@ export interface CharacterDetailDto {
   createdAt: string;
   updatedAt: string;
   snapshots: SnapshotDto[];
+  inventoryJson: string | null;
+  equipmentJson: string | null;
+  questsJson: string | null;
 }
 
 export interface AdminCharacterDto {

@@ -3,11 +3,13 @@
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { ArrowLeft, History, PencilLine } from "lucide-react";
+import { History, PencilLine } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { wikiApi } from "@/lib/api/wiki";
 import { PageShell } from "@/components/ui/page-shell";
+import { BackButton } from "@/components/ui/back-button";
+import { Reveal } from "@/components/ui/reveal";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -58,39 +60,34 @@ export default function WikiArticlePage() {
 
   return (
     <PageShell size="md">
-      <Link
-        href="/wiki"
-        className="inline-flex items-center gap-1.5 text-sm text-fg-muted transition-colors hover:text-fg"
-      >
-        <ArrowLeft size={16} /> Wiki
-      </Link>
+      <BackButton href="/wiki" label="Wiki" />
 
-      <div className="mt-4 flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <h1 className="font-display text-3xl font-bold tracking-tight text-balance text-fg sm:text-4xl">
-            {article.title}
-          </h1>
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-fg-muted">
-            <span className="rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-medium text-accent">
-              {article.categorySlug}
-            </span>
-            <span>by {article.authorName ?? "Unknown"}</span>
-            <span className="text-fg-subtle">&middot;</span>
-            <span>Updated {formatDate(article.updatedAt)}</span>
+      <Reveal className="mt-6">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-accent">{article.categorySlug}</p>
+            <h1 className="mt-3 font-display text-4xl font-bold tracking-tight text-balance text-fg sm:text-5xl">
+              {article.title}
+            </h1>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-fg-muted">
+              <span>by {article.authorName ?? "Unknown"}</span>
+              <span className="text-fg-subtle">&middot;</span>
+              <span>Updated {formatDate(article.updatedAt)}</span>
+            </div>
           </div>
+          {user && (
+            <Link href={`/wiki/${params.slug}/suggest`} className="shrink-0">
+              <Button variant="secondary" size="sm">
+                <PencilLine size={15} className="mr-1.5" /> Suggest Edit
+              </Button>
+            </Link>
+          )}
         </div>
-        {user && (
-          <Link href={`/wiki/${params.slug}/suggest`} className="shrink-0">
-            <Button variant="secondary" size="sm">
-              <PencilLine size={15} className="mr-1.5" /> Suggest Edit
-            </Button>
-          </Link>
-        )}
-      </div>
 
-      <article className="prose-content mt-8 border-t border-border pt-8">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{article.content}</ReactMarkdown>
-      </article>
+        <article className="prose-content mt-8 border-t border-border pt-8">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{article.content}</ReactMarkdown>
+        </article>
+      </Reveal>
 
       <div className="mt-10 border-t border-border pt-4">
         <Link

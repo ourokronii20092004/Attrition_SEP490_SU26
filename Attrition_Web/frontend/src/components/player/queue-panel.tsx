@@ -15,8 +15,8 @@ export function QueuePanel({ open, onClose }: { open: boolean; onClose: () => vo
 
   return (
     <>
-      <div className="fixed inset-0 z-[290] bg-black/40 backdrop-blur-sm motion-safe:animate-fade-in" onClick={onClose} aria-hidden />
-      <aside className="glass fixed bottom-24 right-4 top-20 z-[300] flex w-[22rem] max-w-[calc(100vw-2rem)] flex-col rounded-2xl p-4 shadow-[var(--shadow-lg)] motion-safe:animate-rise-in">
+      <div className="fixed inset-0 z-[290] bg-black/60 motion-safe:animate-fade-in" onClick={onClose} aria-hidden />
+      <aside className="card fixed bottom-24 right-4 top-20 z-[300] flex w-[22rem] max-w-[calc(100vw-2rem)] flex-col rounded-2xl p-4 shadow-[var(--shadow-lg)] motion-safe:animate-rise-in">
         <div className="flex items-center justify-between">
           <h2 className="font-display text-lg font-bold text-fg">Queue</h2>
           <button onClick={onClose} className="text-fg-muted transition-colors hover:text-fg" aria-label="Close queue"><X size={18} /></button>

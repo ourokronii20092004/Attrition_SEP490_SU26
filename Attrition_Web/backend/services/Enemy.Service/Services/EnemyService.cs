@@ -63,6 +63,7 @@ public class EnemyService : IEnemyService
             ExpReward = request.ExpReward,
             GoldReward = request.GoldReward,
             Lore = request.Lore is null ? null : ContentSanitizer.Sanitize(request.Lore),
+            ImageUrl = request.ImageUrl,
             LootTable = MapLoot(request.LootTable)
         };
 
@@ -92,6 +93,7 @@ public class EnemyService : IEnemyService
         enemy.ExpReward = request.ExpReward;
         enemy.GoldReward = request.GoldReward;
         enemy.Lore = request.Lore is null ? null : ContentSanitizer.Sanitize(request.Lore);
+        enemy.ImageUrl = request.ImageUrl;
         enemy.UpdatedAt = DateTime.UtcNow;
 
         // Replace loot wholesale — owned collection, so clearing + re-adding is the clean path.
@@ -162,5 +164,6 @@ public class EnemyService : IEnemyService
     private static EnemyResponse ToResponse(EnemyEntity e) => new(
         e.EnemyId, e.Name, e.Tier, e.SpawnBiome, e.Hp, e.Ad, e.Ap, e.Def, e.Res,
         e.AttackSpeed, e.IsRanged, e.ExpReward, e.GoldReward, e.Lore, e.CreatedAt, e.UpdatedAt,
-        e.LootTable.Select(l => new LootEntryDto(l.ItemName, l.Rarity, l.IconKey, l.DropChance, l.MinQty, l.MaxQty)).ToList());
+        e.LootTable.Select(l => new LootEntryDto(l.ItemName, l.Rarity, l.IconKey, l.DropChance, l.MinQty, l.MaxQty)).ToList(),
+        e.ImageUrl);
 }

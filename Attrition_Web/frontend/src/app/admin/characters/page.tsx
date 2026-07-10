@@ -1,24 +1,38 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Heart, Coins, MapPin, ChevronDown, ChevronRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { Heart, MapPin, Clock, Gamepad2 } from "lucide-react";
 import { charactersApi } from "@/lib/api/characters";
 import { useAuth } from "@/lib/providers";
 import { PageLoader } from "@/components/ui/spinner";
-import { SnapshotTimeline } from "@/components/snapshot-timeline";
-import { formatDateTime } from "@/lib/format-date";
+import { AdminPageHeader, AdminFilterBar, AdminTable, AdminRow } from "@/components/admin/admin-table";
+import { Pagination } from "@/components/ui/pagination";
+import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
+import { formatDate } from "@/lib/format-date";
 import { qk } from "@/lib/query-keys";
-import type { AdminCharacterDto, SnapshotDto } from "@/lib/types";
+import type { AdminCharacterDto } from "@/lib/types";
+
+const STATUSES = [
+  { value: "all", label: "All statuses" },
+  { value: "alive", label: "Alive" },
+  { value: "dead", label: "Dead" },
+];
 
 export default function AdminCharactersPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [archetype, setArchetype] = useState("all");
+  const [status, setStatus] = useState("all");
+  const search = useDebouncedValue(searchInput.trim().toLowerCase(), 250);
 
   const { data, isPending: loading } = useQuery({
     queryKey: qk.admin.characters(page),
     enabled: user?.role === "Admin",
+    placeholderData: keepPreviousData,
     queryFn: async () => {
       const res = await charactersApi.getAll({ page, pageSize: 30 });
       return res.success ? res.data : null;
@@ -30,113 +44,89 @@ export default function AdminCharactersPage() {
   const totalCount = data?.totalCount ?? 0;
 
   if (!user || user.role !== "Admin") return null;
-  if (loading) return <PageLoader />;
+  if (loading && !data) return <PageLoader />;
 
-  // Client-side search filters the current page only (the backend has no character search yet).
-  const filtered = search.trim()
-    ? characters.filter((c) =>
-        c.name.toLowerCase().includes(search.toLowerCase()) ||
-        (c.ownerUsername ?? c.ownerId).toLowerCase().includes(search.toLowerCase()))
-    : characters;
+  // Archetypes present on the current page, for the dropdown.
+  const archetypes = Array.from(new Set(characters.map((c) => c.archetype))).sort();
 
-  return (
-    <div className="mx-auto max-w-5xl">
-      <h1 className="font-display text-3xl font-bold text-fg">Character Status</h1>
-      <p className="mt-2 text-fg-muted">All players&apos; characters across the game ({totalCount})</p>
-
-      <input
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search this page by character or owner..."
-        className="mt-6 w-full max-w-sm rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-fg outline-none placeholder:text-fg-subtle focus:border-accent"
-      />
-
-      <div className="mt-4 space-y-2">
-        {filtered.map((c) => (
-          <AdminCharacterRow key={c.id} character={c} />
-        ))}
-        {filtered.length === 0 && <p className="py-8 text-center text-fg-muted">No characters found.</p>}
-      </div>
-
-      {totalPages > 1 && (
-        <div className="mt-6 flex items-center justify-center gap-3">
-          <button
-            disabled={page <= 1}
-            onClick={() => setPage(page - 1)}
-            className="rounded-md border border-border bg-surface-2 px-3 py-1.5 text-sm text-fg disabled:opacity-50"
-          >
-            Previous
-          </button>
-          <span className="text-sm text-fg-muted">Page {page} of {totalPages}</span>
-          <button
-            disabled={page >= totalPages}
-            onClick={() => setPage(page + 1)}
-            className="rounded-md border border-border bg-surface-2 px-3 py-1.5 text-sm text-fg disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function AdminCharacterRow({ character }: { character: AdminCharacterDto }) {
-  const [expanded, setExpanded] = useState(false);
-  const snap = character.latestSnapshot;
-
-  const { data: detail, isFetching: loadingDetail } = useQuery({
-    queryKey: qk.admin.character(character.id),
-    enabled: expanded,
-    queryFn: async () => {
-      const res = await charactersApi.getAdmin(character.id);
-      return res.success ? res.data : null;
-    },
+  // Filters apply to the current page (backend has no character search/filter yet).
+  const filtered = characters.filter((c) => {
+    if (archetype !== "all" && c.archetype !== archetype) return false;
+    if (status === "alive" && !(c.latestSnapshot?.isAlive ?? false)) return false;
+    if (status === "dead" && (c.latestSnapshot?.isAlive ?? true)) return false;
+    if (search && !c.name.toLowerCase().includes(search) && !(c.ownerUsername ?? c.ownerId).toLowerCase().includes(search)) return false;
+    return true;
   });
 
-  const toggle = () => setExpanded((v) => !v);
-
   return (
-    <div className="card overflow-hidden">
-      <button onClick={toggle} className="flex w-full items-center gap-4 p-4 text-left transition hover:bg-surface-2">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <h3 className="truncate font-medium text-fg">{character.name}</h3>
-            <span className="rounded bg-surface-3 px-2 py-0.5 text-xs text-fg-muted">{character.archetype}</span>
-            {snap && (
-              <span className={`rounded px-2 py-0.5 text-xs ${snap.isAlive ? "bg-success/10 text-success" : "bg-danger/10 text-danger"}`}>
-                {snap.isAlive ? "Alive" : "Dead"}
-              </span>
-            )}
-          </div>
-          <p className="mt-0.5 text-xs text-fg-subtle">owner: {character.ownerUsername ?? character.ownerId}</p>
-          {snap && <AdminStatLine snap={snap} />}
-        </div>
-        {expanded ? <ChevronDown size={18} className="text-fg-subtle" /> : <ChevronRight size={18} className="text-fg-subtle" />}
-      </button>
+    <div>
+      <AdminPageHeader title="Characters" />
+      <p className="mt-1 text-sm text-fg-muted">All players&apos; characters across the game ({totalCount}).</p>
+      <AdminFilterBar
+        search={searchInput}
+        onSearch={setSearchInput}
+        searchPlaceholder="Search this page by character or owner…"
+        filters={[
+          { value: status, onChange: setStatus, ariaLabel: "Filter by status", options: STATUSES },
+          {
+            value: archetype, onChange: setArchetype, ariaLabel: "Filter by archetype",
+            options: [{ value: "all", label: "All archetypes" }, ...archetypes.map((a) => ({ value: a, label: a }))],
+          },
+        ]}
+      />
 
-      {expanded && (
-        <div className="border-t border-border bg-surface-2/40 px-4 py-3">
-          <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-fg-subtle">History</h4>
-          {loadingDetail ? (
-            <p className="py-4 text-center text-sm text-fg-muted">Loading...</p>
-          ) : (
-            <SnapshotTimeline snapshots={detail?.snapshots ?? []} />
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
+      <AdminTable
+        columns={[
+          { key: "name", label: "Character" },
+          { key: "owner", label: "Owner" },
+          { key: "status", label: "Status" },
+          { key: "stats", label: "Snapshot" },
+          { key: "updated", label: "Updated", align: "right" },
+        ]}
+        empty={filtered.length === 0}
+      >
+        {filtered.map((c) => (
+          <AdminRow key={c.id} onClick={() => router.push(`/admin/characters/${c.id}`)}>
+            <td className="px-3 py-2">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent">
+                  <Gamepad2 size={15} />
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-fg">{c.name}</p>
+                  <p className="truncate text-xs text-fg-subtle">{c.archetype}</p>
+                </div>
+              </div>
+            </td>
+            <td className="px-3 py-2 text-fg-muted">{c.ownerUsername ?? <span className="text-fg-subtle">{c.ownerId.slice(0, 8)}…</span>}</td>
+            <td className="px-3 py-2">
+              {c.latestSnapshot ? (
+                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${c.latestSnapshot.isAlive ? "bg-success/10 text-success" : "bg-danger/10 text-danger"}`}>
+                  {c.latestSnapshot.isAlive ? "Alive" : "Dead"}
+                </span>
+              ) : (
+                <span className="text-xs text-fg-subtle">No data</span>
+              )}
+            </td>
+            <td className="px-3 py-2">
+              {c.latestSnapshot ? (
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-fg-muted">
+                  <span className="font-medium text-fg">Lv.{c.latestSnapshot.level}</span>
+                  <span className="flex items-center gap-1"><Heart size={11} /> {c.latestSnapshot.hp}/{c.latestSnapshot.maxHp}</span>
+                  {c.latestSnapshot.roomCode && <span className="flex items-center gap-1"><MapPin size={11} /> {c.latestSnapshot.roomCode}</span>}
+                </div>
+              ) : (
+                <span className="text-xs text-fg-subtle">—</span>
+              )}
+            </td>
+            <td className="px-3 py-2 text-right text-xs text-fg-subtle">
+              <span className="inline-flex items-center gap-1"><Clock size={11} /> {formatDate(c.updatedAt)}</span>
+            </td>
+          </AdminRow>
+        ))}
+      </AdminTable>
 
-function AdminStatLine({ snap }: { snap: SnapshotDto }) {
-  return (
-    <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-fg-muted">
-      <span>Lv.{snap.level}</span>
-      <span className="flex items-center gap-1"><Heart size={12} /> {snap.hp}/{snap.maxHp}</span>
-      <span className="flex items-center gap-1"><Coins size={12} /> {snap.gold}</span>
-      {snap.roomCode && <span className="flex items-center gap-1"><MapPin size={12} /> {snap.roomCode}</span>}
-      <span className="text-fg-subtle">{formatDateTime(snap.capturedAt)}</span>
+      {totalPages > 1 && <Pagination page={page} totalPages={totalPages} onChange={setPage} compact />}
     </div>
   );
 }

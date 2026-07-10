@@ -133,6 +133,9 @@ namespace Attrition.UI
             if (!_isBound) TryBindLocalPlayer();
             if (_isBound) UpdateHud();
 
+            // FPS chạy mỗi frame (kể cả chưa bind player) để đo cả lúc loading — dùng chẩn giật.
+            UpdateFps();
+
             UpdateLoadingWarmup();
             UpdateWaitingOverlay();
 

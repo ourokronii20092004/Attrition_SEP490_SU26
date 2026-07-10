@@ -3,14 +3,18 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
+import { Eye, Ban, ShieldCheck, Trash2 } from "lucide-react";
 import { adminApi } from "@/lib/api/admin";
-import { useAuth } from "@/lib/providers";
+import { useAuth, useConfirm, useToast } from "@/lib/providers";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 import { PageLoader } from "@/components/ui/spinner";
 import { AdminPageHeader, AdminFilterBar, AdminTable, AdminRow } from "@/components/admin/admin-table";
+import { Pagination } from "@/components/ui/pagination";
 import { formatDate } from "@/lib/format-date";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { qk } from "@/lib/query-keys";
+import type { UserListItem } from "@/lib/types";
 
 const SORTS = [
   { value: "newest", label: "Newest" },
@@ -28,6 +32,8 @@ export default function AdminUsersPage() {
   const { user: me } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const confirm = useConfirm();
+  const { toast } = useToast();
   const [page, setPage] = useState(1);
   const [searchInput, setSearchInput] = useState("");
   const [sort, setSort] = useState("newest");
@@ -35,11 +41,11 @@ export default function AdminUsersPage() {
   const search = useDebouncedValue(searchInput.trim(), 300);
 
   const { data: users, isPending: loading } = useQuery({
-    queryKey: qk.admin.users({ page, search, sort }),
+    queryKey: qk.admin.users({ page, search, sort, status }),
     enabled: me?.role === "Admin",
     placeholderData: keepPreviousData,
     queryFn: async () => {
-      const res = await adminApi.getUsers({ page, pageSize: 20, search: search || undefined, sort });
+      const res = await adminApi.getUsers({ page, pageSize: 20, search: search || undefined, sort, status });
       return res.success ? res.data : null;
     },
   });
@@ -48,23 +54,61 @@ export default function AdminUsersPage() {
 
   const toggleBanMutation = useMutation({
     mutationFn: (userId: string) => adminApi.toggleBan(userId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: qk.admin.users() }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: qk.admin.users() }); toast("Ban status updated.", "success"); },
+    onError: () => toast("Failed to update ban status.", "error"),
   });
 
   const roleMutation = useMutation({
     mutationFn: ({ userId, role }: { userId: string; role: string }) => adminApi.setUserRole(userId, role),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: qk.admin.users() }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: qk.admin.users() }); toast("Role updated.", "success"); },
+    onError: () => toast("Failed to update role.", "error"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (userId: string) => adminApi.deleteUser(userId),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: qk.admin.users() }); toast("User deleted.", "success"); },
+    onError: () => toast("Failed to delete user.", "error"),
   });
 
   if (!me || me.role !== "Admin") return null;
 
-  // Status filter is applied client-side over the current page (backend filters by search+sort).
-  const rows = (users?.items ?? []).filter((u) => {
-    if (status === "active") return !u.isBanned && !u.isDeleted;
-    if (status === "banned") return u.isBanned;
-    if (status === "deleted") return u.isDeleted;
-    return true;
-  });
+  const onToggleBan = async (u: UserListItem) => {
+    const ok = await confirm({
+      title: u.isBanned ? "Unban user?" : "Ban user?",
+      message: u.isBanned ? `Restore access for @${u.username}?` : `Ban @${u.username}? They'll be signed out and blocked from signing in.`,
+      confirmLabel: u.isBanned ? "Unban" : "Ban",
+      danger: !u.isBanned,
+    });
+    if (ok) toggleBanMutation.mutate(u.id);
+  };
+
+  const onDelete = async (u: UserListItem) => {
+    const ok = await confirm({
+      title: "Delete user?",
+      message: `Permanently delete @${u.username}? This cannot be undone.`,
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (ok) deleteMutation.mutate(u.id);
+  };
+
+  // Promoting to admin (or revoking it) is a big deal — confirm before changing anyone's role.
+  const onChangeRole = async (u: UserListItem, role: string) => {
+    if (role === u.role) return;
+    const toAdmin = role === "Admin";
+    const ok = await confirm({
+      title: toAdmin ? "Make this user an admin?" : "Revoke admin access?",
+      message: toAdmin
+        ? `Grant @${u.username} full admin access? Admins can manage every user, post, and setting.`
+        : `Change @${u.username} back to a regular user?`,
+      confirmLabel: toAdmin ? "Make admin" : "Change to User",
+      danger: toAdmin,
+    });
+    if (ok) roleMutation.mutate({ userId: u.id, role });
+  };
+
+  // Status filter is sent to the backend; rows are already filtered server-side.
+  const rows = users?.items ?? [];
 
   return (
     <div>
@@ -74,7 +118,7 @@ export default function AdminUsersPage() {
         onSearch={(v) => { setSearchInput(v); setPage(1); }}
         searchPlaceholder="Search by username…"
         filters={[
-          { value: status, onChange: setStatus, ariaLabel: "Filter by status", options: STATUSES },
+          { value: status, onChange: (v) => { setStatus(v); setPage(1); }, ariaLabel: "Filter by status", options: STATUSES },
           { value: sort, onChange: (v) => { setSort(v); setPage(1); }, ariaLabel: "Sort", options: SORTS },
         ]}
       />
@@ -99,7 +143,7 @@ export default function AdminUsersPage() {
                 <select
                   value={u.role}
                   onClick={(e) => e.stopPropagation()}
-                  onChange={(e) => { e.stopPropagation(); roleMutation.mutate({ userId: u.id, role: e.target.value }); }}
+                  onChange={(e) => { e.stopPropagation(); onChangeRole(u, e.target.value); }}
                   className="rounded border border-border bg-surface-2 px-1.5 py-0.5 text-xs text-fg disabled:opacity-50"
                   disabled={u.id === me.id || u.isDeleted}
                 >
@@ -118,15 +162,35 @@ export default function AdminUsersPage() {
               </td>
               <td className="px-3 py-2 text-fg-muted">{formatDate(u.joinedAt)}</td>
               <td className="px-3 py-2 text-right">
-                {u.id !== me.id && !u.isDeleted && (
-                  <Button
-                    variant={u.isBanned ? "secondary" : "danger"}
+                <div className="flex items-center justify-end gap-0.5">
+                  <IconButton
+                    label="View user"
                     size="sm"
-                    onClick={(e) => { e.stopPropagation(); toggleBanMutation.mutate(u.id); }}
+                    onClick={(e) => { e.stopPropagation(); router.push(`/admin/users/${u.id}`); }}
                   >
-                    {u.isBanned ? "Unban" : "Ban"}
-                  </Button>
-                )}
+                    <Eye size={15} />
+                  </IconButton>
+                  {u.id !== me.id && !u.isDeleted && (
+                    <>
+                      <IconButton
+                        label={u.isBanned ? "Unban user" : "Ban user"}
+                        size="sm"
+                        variant={u.isBanned ? "ghost" : "danger"}
+                        onClick={(e) => { e.stopPropagation(); onToggleBan(u); }}
+                      >
+                        {u.isBanned ? <ShieldCheck size={15} /> : <Ban size={15} />}
+                      </IconButton>
+                      <IconButton
+                        label="Delete user"
+                        size="sm"
+                        variant="danger"
+                        onClick={(e) => { e.stopPropagation(); onDelete(u); }}
+                      >
+                        <Trash2 size={15} />
+                      </IconButton>
+                    </>
+                  )}
+                </div>
               </td>
             </AdminRow>
           ))}
@@ -134,11 +198,7 @@ export default function AdminUsersPage() {
       )}
 
       {totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-center gap-2">
-          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1} className="rounded-md border border-border px-3 py-1 text-sm text-fg-muted disabled:opacity-50">Prev</button>
-          <span className="text-sm text-fg-muted">{page} / {totalPages}</span>
-          <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages} className="rounded-md border border-border px-3 py-1 text-sm text-fg-muted disabled:opacity-50">Next</button>
-        </div>
+        <Pagination page={page} totalPages={totalPages} onChange={setPage} compact />
       )}
     </div>
   );

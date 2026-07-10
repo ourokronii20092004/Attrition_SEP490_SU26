@@ -13,7 +13,6 @@ export function SnapshotTimeline({ snapshots }: { snapshots: SnapshotDto[] }) {
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
             <span className="font-medium text-fg">Lv.{s.level}</span>
             <span className="text-fg-muted">HP {s.hp}/{s.maxHp}</span>
-            <span className="text-fg-muted">{s.gold}g</span>
             {s.roomCode && <span className="text-fg-muted">{s.roomCode}</span>}
             <span className="rounded bg-surface-3 px-1.5 py-0.5 text-fg-subtle">{s.eventType}</span>
             <span className="text-fg-subtle">{formatPlaytime(s.playtimeSeconds)}</span>

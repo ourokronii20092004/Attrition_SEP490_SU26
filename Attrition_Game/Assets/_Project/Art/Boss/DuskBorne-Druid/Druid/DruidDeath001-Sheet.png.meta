@@ -73,7 +73,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 1
+    filterMode: 0
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -87,7 +87,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 100
+  spritePixelsToUnits: 16
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -140,11 +140,11 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 49
-        y: 47
+        y: 48
         width: 33
-        height: 48
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        height: 47
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -162,11 +162,11 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 178
-        y: 46
+        y: 47
         width: 32
-        height: 46
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        height: 45
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -184,11 +184,11 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 304
-        y: 47
+        y: 48
         width: 34
-        height: 47
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        height: 46
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -202,37 +202,15 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: DruidDeath001-Sheet_3
-      rect:
-        serializedVersion: 2
-        x: 433
-        y: 67
-        width: 10
-        height: 17
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 7e12ba5e6cb6cfaf0800000000000000
-      internalID: -361295368095587865
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
       name: DruidDeath001-Sheet_4
       rect:
         serializedVersion: 2
-        x: 435
-        y: 54
-        width: 26
-        height: 41
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 433
+        y: 55
+        width: 31
+        height: 40
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -246,37 +224,15 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: DruidDeath001-Sheet_5
-      rect:
-        serializedVersion: 2
-        x: 562
-        y: 72
-        width: 9
-        height: 17
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 7f2ff834678fbd580800000000000000
-      internalID: -8801167859942165769
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
       name: DruidDeath001-Sheet_6
       rect:
         serializedVersion: 2
-        x: 566
-        y: 65
-        width: 34
-        height: 31
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 562
+        y: 60
+        width: 38
+        height: 36
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -294,11 +250,11 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 693
-        y: 73
-        width: 20
-        height: 29
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        y: 74
+        width: 29
+        height: 28
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -312,37 +268,15 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: DruidDeath001-Sheet_8
-      rect:
-        serializedVersion: 2
-        x: 712
-        y: 76
-        width: 10
-        height: 10
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 8a1078439c07ca5a0800000000000000
-      internalID: -6508703351985208920
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
       name: DruidDeath001-Sheet_9
       rect:
         serializedVersion: 2
         x: 822
-        y: 82
+        y: 83
         width: 25
-        height: 19
+        height: 18
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -355,77 +289,11 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
-    - serializedVersion: 2
-      name: DruidDeath001-Sheet_10
-      rect:
-        serializedVersion: 2
-        x: 455
-        y: 58
-        width: 9
-        height: 15
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 7ffc27411762677f0800000000000000
-      internalID: -615262031973265417
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: DruidDeath001-Sheet_11
-      rect:
-        serializedVersion: 2
-        x: 565
-        y: 59
-        width: 7
-        height: 7
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: dc87f39955177c9d0800000000000000
-      internalID: -2754108034656536371
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: DruidDeath001-Sheet_12
-      rect:
-        serializedVersion: 2
-        x: 581
-        y: 61
-        width: 8
-        height: 8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: cc955bd4980e75e60800000000000000
-      internalID: 7951070547464772044
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
     outline: []
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: d70e347a3930ad14cb8659e6a8e449cc
     internalID: 0
     vertices: []
     indices: 

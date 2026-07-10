@@ -5,5 +5,6 @@ export { ProfileSection } from "./ProfileSection";
 export { AvatarSection } from "./AvatarSection";
 export { ThemeSection } from "./ThemeSection";
 export { PasswordSection } from "./PasswordSection";
+export { ConnectionsSection } from "./ConnectionsSection";
 export { EmailSection } from "./EmailSection";
 export { DangerSection } from "./DangerSection";

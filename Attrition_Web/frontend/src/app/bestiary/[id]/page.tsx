@@ -3,9 +3,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Crosshair } from "lucide-react";
+import { Crosshair } from "lucide-react";
 import { enemiesApi } from "@/lib/api/enemies";
+import { resolveMediaUrl } from "@/lib/api/media";
 import { PageShell } from "@/components/ui/page-shell";
+import { BackButton } from "@/components/ui/back-button";
+import { Reveal } from "@/components/ui/reveal";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -51,24 +54,31 @@ export default function EnemyDetailPage() {
 
   return (
     <PageShell>
-      <Link href="/bestiary" className="inline-flex items-center gap-1.5 text-sm text-fg-muted transition-colors hover:text-fg">
-        <ArrowLeft size={16} /> Bestiary
-      </Link>
+      <BackButton href="/bestiary" label="Bestiary" />
 
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        <h1 className="font-display text-3xl font-bold tracking-tight text-fg sm:text-4xl">{enemy.name}</h1>
-        <span className={`rounded-full px-3 py-1 text-sm font-medium ${TIER_COLOR[enemy.tier] ?? "text-fg-muted bg-surface-3"}`}>
-          {enemy.tier}
-        </span>
-      </div>
-      <p className="mt-2 flex items-center gap-2 text-fg-muted">
-        {enemy.spawnBiome}
-        {enemy.isRanged && (
-          <span className="inline-flex items-center gap-1 text-info"><Crosshair size={14} /> Ranged</span>
+      <Reveal className="mt-6">
+        {enemy.imageUrl && (
+          <div className="aspect-[21/9] w-full overflow-hidden rounded-xl border border-border bg-surface-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={resolveMediaUrl(enemy.imageUrl) ?? ""} alt={enemy.name} className="h-full w-full object-cover" />
+          </div>
         )}
-      </p>
 
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <p className={`${enemy.imageUrl ? "mt-6" : ""} font-mono text-[11px] uppercase tracking-[0.3em] text-accent`}>
+          {enemy.spawnBiome || "Bestiary"}
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <h1 className="font-display text-4xl font-bold tracking-tight text-fg sm:text-5xl">{enemy.name}</h1>
+          <span className={`rounded-full px-3 py-1 text-sm font-medium ${TIER_COLOR[enemy.tier] ?? "text-fg-muted bg-surface-3"}`}>
+            {enemy.tier}
+          </span>
+          {enemy.isRanged && (
+            <span className="inline-flex items-center gap-1 text-sm text-info"><Crosshair size={14} /> Ranged</span>
+          )}
+        </div>
+      </Reveal>
+
+      <Reveal delay={1} className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="HP" value={enemy.hp} />
         <Stat label="AD" value={enemy.ad} />
         <Stat label="AP" value={enemy.ap} />
@@ -77,18 +87,18 @@ export default function EnemyDetailPage() {
         <Stat label="ATK SPD" value={enemy.attackSpeed} />
         <Stat label="EXP" value={enemy.expReward} />
         <Stat label="Gold" value={enemy.goldReward} />
-      </div>
+      </Reveal>
 
       {enemy.lore && (
-        <div className="mt-8">
-          <h2 className="font-display text-xl font-semibold text-fg">Lore</h2>
-          <p className="mt-2 leading-relaxed text-fg-muted">{enemy.lore}</p>
-        </div>
+        <Reveal as="section" className="mt-10">
+          <h2 className="font-display text-sm font-semibold uppercase tracking-[0.25em] text-fg-muted">Lore</h2>
+          <p className="mt-3 leading-relaxed text-fg-muted">{enemy.lore}</p>
+        </Reveal>
       )}
 
       {enemy.lootTable.length > 0 && (
-        <div className="mt-8">
-          <h2 className="font-display text-xl font-semibold text-fg">Loot Table</h2>
+        <Reveal as="section" className="mt-10">
+          <h2 className="font-display text-sm font-semibold uppercase tracking-[0.25em] text-fg-muted">Loot Table</h2>
           <Card className="mt-3 overflow-hidden p-0">
             <table className="w-full text-sm">
               <thead>
@@ -111,7 +121,7 @@ export default function EnemyDetailPage() {
               </tbody>
             </table>
           </Card>
-        </div>
+        </Reveal>
       )}
     </PageShell>
   );

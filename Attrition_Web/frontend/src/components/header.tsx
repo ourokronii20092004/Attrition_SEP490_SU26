@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Search, Menu, X, User, LogOut, Shield, Gamepad2, Settings as SettingsIcon } from "lucide-react";
+import { Search, Menu, X, User, LogOut, Shield, Gamepad2, Settings as SettingsIcon, ListMusic, Heart } from "lucide-react";
 import { useAuth } from "@/lib/providers";
 import { SITE_NAME } from "@/lib/config";
 import { Avatar } from "@/components/ui/avatar";
@@ -113,6 +113,12 @@ export function Header() {
                         </MenuLink>
                         <MenuLink href="/characters" icon={Gamepad2} onClick={() => setUserMenuOpen(false)}>
                           Characters
+                        </MenuLink>
+                        <MenuLink href="/music/playlists" icon={ListMusic} onClick={() => setUserMenuOpen(false)}>
+                          Playlists
+                        </MenuLink>
+                        <MenuLink href="/music/favorites" icon={Heart} onClick={() => setUserMenuOpen(false)}>
+                          Liked Songs
                         </MenuLink>
                         <MenuLink href="/settings" icon={SettingsIcon} onClick={() => setUserMenuOpen(false)}>
                           Settings

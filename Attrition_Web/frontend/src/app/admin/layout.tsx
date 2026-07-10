@@ -3,17 +3,30 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Menu, X, Shield, User, LogOut } from "lucide-react";
-import { useAuth } from "@/lib/providers";
+import { Menu, X, Shield, LogOut } from "lucide-react";
+import { useAuth, useConfirm } from "@/lib/providers";
 import { Avatar } from "@/components/ui/avatar";
 import { PageLoader } from "@/components/ui/spinner";
 import { AdminNav } from "./admin-nav";
 import { AdminTopBar } from "./admin-top-bar";
+import { AdminHotkeys } from "./admin-hotkeys";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
+  const confirm = useConfirm();
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const handleLogout = async () => {
+    const ok = await confirm({
+      title: "Sign out?",
+      message: "You'll be returned to the homepage and need to sign in again to access the admin area.",
+      confirmLabel: "Sign out",
+    });
+    if (!ok) return;
+    logout();
+    router.push("/");
+  };
 
   // Single guard for the whole admin section (replaces per-page role checks).
   if (loading) return <PageLoader />;
@@ -38,20 +51,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="flex min-h-dvh bg-bg">
+      <AdminHotkeys />
       {/* Desktop sidebar */}
       <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-border bg-surface/50 p-4 lg:flex">
         <AdminSidebarHeader />
         <div className="mt-6 flex-1 overflow-y-auto">
           <AdminNav />
         </div>
-        <AdminAccountBlock user={user} logout={logout} />
+        <AdminAccountBlock user={user} onLogout={handleLogout} />
       </aside>
 
       {/* Mobile drawer */}
       {drawerOpen && (
         <div className="fixed inset-0 z-[300] lg:hidden">
-          <div className="absolute inset-0 bg-bg/70 backdrop-blur-sm" onClick={() => setDrawerOpen(false)} aria-hidden />
-          <aside className="glass absolute left-0 top-0 flex h-full w-72 flex-col p-4 motion-safe:animate-fade-in">
+          <div className="absolute inset-0 bg-black/80" onClick={() => setDrawerOpen(false)} aria-hidden />
+          <aside className="absolute left-0 top-0 flex h-full w-72 flex-col border-r border-border bg-surface p-4 motion-safe:animate-fade-in">
             <div className="flex items-center justify-between">
               <AdminSidebarHeader />
               <button onClick={() => setDrawerOpen(false)} className="text-fg-muted hover:text-fg" aria-label="Close menu">
@@ -61,7 +75,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="mt-6 flex-1 overflow-y-auto">
               <AdminNav onNavigate={() => setDrawerOpen(false)} />
             </div>
-            <AdminAccountBlock user={user} logout={logout} onNavigate={() => setDrawerOpen(false)} />
+            <AdminAccountBlock user={user} onLogout={handleLogout} onNavigate={() => setDrawerOpen(false)} />
           </aside>
         </div>
       )}
@@ -94,9 +108,9 @@ function AdminSidebarHeader() {
   );
 }
 
-function AdminAccountBlock({ user, logout, onNavigate }: {
+function AdminAccountBlock({ user, onLogout, onNavigate }: {
   user: { username: string; displayName: string | null; avatarUrl: string | null };
-  logout: () => void;
+  onLogout: () => void;
   onNavigate?: () => void;
 }) {
   return (
@@ -112,16 +126,9 @@ function AdminAccountBlock({ user, logout, onNavigate }: {
           <p className="truncate text-xs text-fg-muted">@{user.username}</p>
         </div>
       </Link>
-      <div className="mt-1 space-y-0.5">
-        <Link
-          href="/admin/account"
-          onClick={onNavigate}
-          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
-        >
-          <User size={16} /> Account
-        </Link>
+      <div className="mt-1">
         <button
-          onClick={() => { logout(); onNavigate?.(); }}
+          onClick={() => { onNavigate?.(); onLogout(); }}
           className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-danger transition-colors hover:bg-danger/10"
         >
           <LogOut size={16} /> Sign Out

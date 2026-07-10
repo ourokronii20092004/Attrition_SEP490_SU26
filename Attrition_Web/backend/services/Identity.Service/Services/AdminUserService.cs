@@ -10,7 +10,7 @@ public class AdminUserService : IAdminUserService
 
     public AdminUserService(IUserRepository userRepo) => _userRepo = userRepo;
 
-    public async Task<PaginatedResponse<UserListItem>> ListUsersAsync(int page, int pageSize, string? search, string? sort)
+    public async Task<PaginatedResponse<UserListItem>> ListUsersAsync(int page, int pageSize, string? search, string? sort, string? status)
     {
         Func<IQueryable<Models.User>, IOrderedQueryable<Models.User>> orderBy = sort switch
         {
@@ -19,12 +19,15 @@ public class AdminUserService : IAdminUserService
             _ => q => q.OrderByDescending(u => u.JoinedAt)
         };
 
-        var (items, total) = await _userRepo.GetPagedAsync(
-            page, pageSize,
-            filter: string.IsNullOrWhiteSpace(search)
-                ? null
-                : u => u.Username.ToLower().Contains(search.ToLower()),
-            orderBy: orderBy);
+        var s = string.IsNullOrWhiteSpace(search) ? null : search.ToLower();
+        System.Linq.Expressions.Expression<Func<Models.User, bool>>? filter = u =>
+            (s == null || u.Username.ToLower().Contains(s)) &&
+            (status == "active" ? (!u.IsBanned && !u.IsDeleted)
+                : status == "banned" ? u.IsBanned
+                : status == "deleted" ? u.IsDeleted
+                : true);
+
+        var (items, total) = await _userRepo.GetPagedAsync(page, pageSize, filter: filter, orderBy: orderBy);
 
         var dtos = items.Select(u => new UserListItem(u.Id, u.Username, u.Role, u.IsBanned, u.IsDeleted, u.JoinedAt)).ToList();
         return new PaginatedResponse<UserListItem>(dtos, total, page, pageSize);
