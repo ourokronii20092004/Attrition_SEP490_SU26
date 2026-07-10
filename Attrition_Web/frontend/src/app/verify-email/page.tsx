@@ -31,12 +31,15 @@ function AuthCard({ children }: { children: React.ReactNode }) {
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
-  const { user } = useAuth();
+  const justRegistered = searchParams.get("registered") === "1";
+  const { user, refreshUser } = useAuth();
   const [status, setStatus] = useState<"verifying" | "success" | "error" | "idle">(token ? "verifying" : "idle");
 
   const verifyMutation = useMutation({
     mutationFn: async (t: string) => authApi.verifyEmail({ token: t }),
-    onSuccess: () => setStatus("success"),
+    // Refresh the cached user so the site-wide "verify your email" banner clears immediately for a
+    // signed-in user (no-op / harmless 401 when verifying while logged out).
+    onSuccess: async () => { setStatus("success"); try { await refreshUser(); } catch { /* not signed in */ } },
     onError: () => setStatus("error"),
   });
 
@@ -96,8 +99,19 @@ function VerifyEmailContent() {
       <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-accent-soft text-accent">
         <Mail size={26} />
       </span>
-      <h1 className="mt-4 font-display text-3xl font-bold tracking-tight text-fg">Verify Your Email</h1>
-      <p className="mt-3 text-fg-muted">Check your inbox for a verification link.</p>
+      <h1 className="mt-4 font-display text-3xl font-bold tracking-tight text-fg">
+        {justRegistered ? "Almost There" : "Verify Your Email"}
+      </h1>
+      <p className="mt-3 text-fg-muted">
+        {justRegistered
+          ? "Your account was created. Check your inbox for a verification link, then sign in."
+          : "Check your inbox for a verification link."}
+      </p>
+      {justRegistered && (
+        <Link href="/login" className="mt-6 inline-block font-medium text-accent transition-opacity hover:opacity-80">
+          Go to sign in
+        </Link>
+      )}
       {user && (
         <Button onClick={handleResend} loading={resending} className="mx-auto mt-6">
           Resend Verification Email

@@ -36,6 +36,11 @@ public class PlayerController : NetworkBehaviour, IDamageable
     [Tooltip("SO chứa toàn bộ cấu hình vật lý và di chuyển")]
     [SerializeField] private Attrition.Data.MovementConfigSO moveConfig;
 
+    [Header("---- COOP SMOOTHING ----")]
+    [Tooltip("Child chứa Sprite + Animator (Interpolation Target). Gán để NetworkRigidbody2D nội suy " +
+             "phần nhìn riêng, tránh giật do prediction trên client. Bỏ trống = dùng root (giật như cũ).")]
+    [SerializeField] private Transform visualRoot;
+
     private bool hasShadowDash => moveConfig != null ? moveConfig.hasShadowDash : false;
     private float dashDuration => moveConfig != null ? moveConfig.dashDuration : 0.2f;
     private float dashCooldownTime => moveConfig != null ? moveConfig.dashCooldownTime : 0.8f;
@@ -151,11 +156,23 @@ public class PlayerController : NetworkBehaviour, IDamageable
         if (Object != null && (HasInputAuthority || HasStateAuthority))
             Runner.SetIsSimulated(Object, true);
 
+        // Interpolation Target CHỈ cho PROXY (player của peer khác) — tách visual khỏi physics giật
+        // để proxy mượt. TUYỆT ĐỐI KHÔNG set cho local player (HasInputAuthority): local player chạy
+        // client prediction, root di chuyển TỨC THÌ theo input; nếu nội suy visual thì visual + camera
+        // bị kéo trễ lại → cảm giác input lag/trôi dù FPS cao. Local player render thẳng ở predicted.
+        if (visualRoot != null && !HasInputAuthority)
+        {
+            var nrb = GetComponent<Fusion.Addons.Physics.NetworkRigidbody2D>();
+            if (nrb != null) nrb.SetInterpolationTarget(visualRoot);
+        }
+
         // Tắt va chạm vật lý giữa Player và Enemy để Player đi xuyên qua được
         // CHỈ dùng Collider-based (không dùng IgnoreLayerCollision vì nó chặn cả trigger → ContactDamage không hoạt động)
         IgnoreAllEnemyColliders();
 
-        // Set camera to follow local player
+        // Camera của LOCAL player follow ROOT (transform), KHÔNG follow visualRoot. Root là vị trí
+        // predicted bám input tức thì; visualRoot với local player không bị nội suy (xem trên) nên
+        // hai cái trùng nhau — nhưng follow thẳng root để chắc chắn camera không bao giờ trễ input.
         if (HasInputAuthority)
         {
             var cam = FindAnyObjectByType<CinemachineCamera>();
@@ -183,9 +200,16 @@ public class PlayerController : NetworkBehaviour, IDamageable
     public override void FixedUpdateNetwork()
     {
         // SOLO pause: đóng băng player (Fusion bỏ qua Time.timeScale).
+        // Phải zero CẢ gravityScale — chỉ zero velocity thì trọng lực vẫn áp giữa các physics step
+        // khiến nhân vật rơi từ từ khi mở Inventory/Menu lúc đang trên không. Unpause: logic thường
+        // tự set lại gravityScale mỗi tick (fast-fall/normal) nên không cần lưu giá trị cũ.
         if (Attrition.Persistence.GamePause.IsPaused)
         {
-            if (rb != null) rb.linearVelocity = Vector2.zero;
+            if (rb != null)
+            {
+                rb.linearVelocity = Vector2.zero;
+                rb.gravityScale = 0f;
+            }
             return;
         }
 
@@ -208,10 +232,11 @@ public class PlayerController : NetworkBehaviour, IDamageable
         }
         else if (!HasInputAuthority)
         {
-            // Proxy: ép vị trí và velocity từ server, bỏ qua toàn bộ physics logic
-            rb.position = NetworkPosition;
-            rb.linearVelocity = NetworkVelocity;
-            rb.gravityScale = NetworkGravityScale;
+            // Proxy (player của peer khác): KHÔNG đụng vào rb ở đây. Prefab đã có NetworkRigidbody2D
+            // (Fusion.Addons.Physics) — nó TỰ ĐỘNG đồng bộ + NỘI SUY rigidbody cho proxy trong Render,
+            // mượt như host. Trước đây code còn tự set rb.position = NetworkPosition mỗi tick → ĐÁNH NHAU
+            // với NetworkRigidbody2D (hai bên cùng ghi vị trí) nên giật. Giờ chỉ việc return, nhường
+            // hoàn toàn cho addon xử lý chuyển động proxy.
             return;
         }
 
@@ -475,11 +500,64 @@ public class PlayerController : NetworkBehaviour, IDamageable
 
     public override void Render()
     {
+        // Vị trí proxy do NetworkRigidbody2D (addon) tự nội suy — KHÔNG tự set rb.position ở đây nữa
+        // (từng gây giật vì đánh nhau với addon). Render chỉ còn lo animation.
         animationComp.UpdateAnimations(
             IsMoving, IsGrounded, isDeadNetworked, NetworkVelocityY, IsFacingRight,
             IsCrouching, IsDashing, combatComp.IsChargingAttack,
             combatComp.IsAttacking, IsSliding
         );
+
+        UpdateMovementSfx();
+    }
+
+    // ─── SFX di chuyển: chạy trong Render (1 lần/frame, mọi máy) bằng cách so sánh state trước/sau. ───
+    private bool _sfxWasGrounded = true;
+    private int _sfxPrevJumpCount;
+    private float _sfxNextStep;
+    private bool _sfxWasDashing;
+    private int _sfxPrevHealthCharges;
+    private int _sfxPrevManaCharges;
+
+    private void UpdateMovementSfx()
+    {
+        if (isDeadNetworked) return;
+        var sfx = Attrition.Systems.GameSfx.Instance;
+
+        // JUMP: JumpCount tăng lên = vừa bật nhảy (gồm cả double jump).
+        if (JumpCount > _sfxPrevJumpCount) sfx.PlayJump();
+        _sfxPrevJumpCount = JumpCount;
+
+        // LAND: chuyển từ trên-không sang chạm-đất.
+        if (IsGrounded && !_sfxWasGrounded) sfx.PlayLand();
+        _sfxWasGrounded = IsGrounded;
+
+        // DASH: cờ IsDashing bật lên = vừa bắt đầu lướt.
+        if (IsDashing && !_sfxWasDashing) sfx.PlayDash();
+        _sfxWasDashing = IsDashing;
+
+        // POTION: số bình giảm = vừa uống (HP hoặc Mana). Networked nên nghe được trên mọi máy.
+        if (potionComp != null)
+        {
+            if (potionComp.HealthCharges < _sfxPrevHealthCharges || potionComp.ManaCharges < _sfxPrevManaCharges)
+                sfx.PlayPotion();
+            _sfxPrevHealthCharges = potionComp.HealthCharges;
+            _sfxPrevManaCharges = potionComp.ManaCharges;
+        }
+
+        // FOOTSTEP: đang đi trên đất → phát nhịp đều (không áp cho dash/slide/crouch).
+        if (IsGrounded && IsMoving && !IsDashing && !IsSliding && !IsCrouching)
+        {
+            if (Time.time >= _sfxNextStep)
+            {
+                sfx.PlayStep();
+                _sfxNextStep = Time.time + 0.32f; // ~nhịp chạy
+            }
+        }
+        else
+        {
+            _sfxNextStep = 0f; // dừng đi → bước kế phát ngay khi đi lại
+        }
     }
 
     private void CheckGround()
@@ -572,9 +650,70 @@ public class PlayerController : NetworkBehaviour, IDamageable
         StartCoroutine(InvincibleCoroutine());
     }
 
+    /// <summary>
+    /// Hồi sinh đầy đủ player tại 1 vị trí: clear cờ chết → bật lại physics/collider → teleport →
+    /// hồi đầy HP/Mana/Stamina + refill bình → reset thanh EXP → bất tử tạm. Chỉ host.
+    /// Gom mọi bước theo đúng thứ tự để tránh bug respawn (xuyên đất/bay, âm HP, không uống bình).
+    /// </summary>
+    public void ReviveAndRestore(Vector3 spawn)
+    {
+        if (!HasStateAuthority) return;
+
+        isDeadNetworked = false;
+        RPC_RestorePhysicsAfterRevive();
+        TeleportTo(spawn);
+
+        if (statsComp != null) statsComp.ReviveFull();
+        if (potionComp != null) potionComp.RefillAll();
+
+        // Chết mất thanh EXP đang tích (progress tới cấp kế), KHÔNG mất level đã lên.
+        var prog = GetComponent<PlayerProgression>();
+        if (prog != null) prog.ResetExpProgressOnDeath();
+
+        GrantReviveInvincibility(3.0f); // BR-18
+    }
+
+    /// <summary>
+    /// Hồi sinh tại chỗ (đồng đội cứu bằng bình): clear cờ chết + bật lại physics/collider + set HP.
+    /// Không teleport, không refill bình. Chỉ host. Khôi phục physics để tránh xác Kinematic/collider-off
+    /// gây rơi xuyên đất hoặc đứng cứng giữa trời sau khi sống lại.
+    /// </summary>
+    public void ReviveInPlace(int hp)
+    {
+        if (!HasStateAuthority) return;
+        isDeadNetworked = false;
+        RPC_RestorePhysicsAfterRevive();
+        if (statsComp != null) statsComp.CurrentHP = Mathf.Max(1, hp);
+        else HP = Mathf.Max(1, hp);
+        GrantReviveInvincibility(3.0f); // BR-18
+    }
+
     private void Die()
     {
         isDeadNetworked = true;
+    }
+
+    /// <summary>
+    /// Hồi sinh: bật lại physics/collider đã tắt khi chết (xác nằm đất set Kinematic + disable collider).
+    /// Phải chạy trên MỌI peer (bodyType/collider là state local, không [Networked]) nên gọi qua RPC.
+    /// Không khôi phục → bug "rơi xuyên đất / bay đứng giữa trời" sau respawn.
+    /// </summary>
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_RestorePhysicsAfterRevive()
+    {
+        if (rb != null)
+        {
+            rb.bodyType = RigidbodyType2D.Dynamic;
+            rb.linearVelocity = Vector2.zero;
+            rb.gravityScale = normalGravity;
+        }
+        Collider2D col = GetComponent<Collider2D>();
+        if (col != null) col.enabled = true;
+
+        // Reset animator: chết bật state "Player_Death" + có thể còn anim.speed=0 (charge attack dở).
+        // Không reset → sprite kẹt ở tư thế nằm/xác dù logic đã sống lại. IsDead=false được Render đẩy
+        // mỗi frame, nhưng anim.speed phải tự tay bật lại.
+        if (animationComp != null) animationComp.ResetForRevive();
     }
 
     /// <summary>Dịch chuyển player về vị trí (vd điểm rest). Set cả rb lẫn NetworkPosition để sync. Chỉ host.</summary>
@@ -626,7 +765,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
         StartCoroutine(InvincibleCoroutine());
     }
 
-    /// <summary>Client/host yêu cầu Fast Travel. Host dịch chuyển TẤT CẢ player (giữ chung khung camera coop).</summary>
+    /// <summary>Client/host yêu cầu Fast Travel (không save — dùng cho room transition).</summary>
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
     public void RpcRequestFastTravel(Vector3 destination)
     {
@@ -634,6 +773,35 @@ public class PlayerController : NetworkBehaviour, IDamageable
         foreach (var p in players) p.TeleportTo(destination);
         // Báo CẢ HAI máy hiện thanh load (người không bấm cũng bị teleport → tránh giật, không loading).
         RpcTravelLoading();
+    }
+
+    /// <summary>
+    /// Client/host yêu cầu Fast Travel ĐẾN checkpoint CỤ THỂ. Sau khi teleport xong, host LƯU lại
+    /// checkpoint đó (solo + coop) để khi out ra vào lại → spawn đúng chỗ đã teleport gần nhất.
+    /// </summary>
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    public void RpcRequestFastTravelToCheckpoint(Vector3 destination, string checkpointName)
+    {
+        var players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+        foreach (var p in players) p.TeleportTo(destination);
+        RpcTravelLoading();
+
+        // Cập nhật MostRecentlyActivated → respawn / Game Over hồi sinh đúng checkpoint mới.
+        var checkpoints = FindObjectsByType<Attrition.Gameplay.World.Checkpoint>(FindObjectsSortMode.None);
+        foreach (var cp in checkpoints)
+        {
+            if (cp != null && cp.DisplayName == checkpointName)
+            {
+                Attrition.Gameplay.World.Checkpoint.MostRecentlyActivated = cp;
+                break;
+            }
+        }
+
+        // LƯU tiến trình: solo → local JSON, coop → server. Ghi đè checkpoint đã lưu bằng
+        // checkpoint mới teleport để lần sau vào game spawn đúng chỗ này.
+        var saver = Attrition.Gameplay.Persistence.GameSaveService.EnsureExists();
+        saver.Save(Attrition.Gameplay.Persistence.GameSaveService.SaveEvent.Rest,
+                   checkpointName, destination);
     }
 
     /// <summary>Host báo mọi peer hiện thanh load fast-travel đồng bộ.</summary>
@@ -647,24 +815,40 @@ public class PlayerController : NetworkBehaviour, IDamageable
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
     public void RpcRequestRespawnAll()
     {
-        var checkpoints = FindObjectsByType<Attrition.Gameplay.World.Checkpoint>(FindObjectsSortMode.None);
-        var active = checkpoints.FirstOrDefault(cp => cp.HasBeenActivated);
-        Vector3 spawn = active != null ? active.RespawnPosition : Vector3.zero;
+        // Hồi sinh tại checkpoint REST/SAVE gần nhất (MostRecentlyActivated), không phải checkpoint
+        // activated đầu danh sách. Fallback: checkpoint activated bất kỳ → gốc scene.
+        var recent = Attrition.Gameplay.World.Checkpoint.MostRecentlyActivated;
+        Vector3 spawn;
+        if (recent != null && recent.HasBeenActivated)
+        {
+            spawn = recent.RespawnPosition;
+        }
+        else
+        {
+            var checkpoints = FindObjectsByType<Attrition.Gameplay.World.Checkpoint>(FindObjectsSortMode.None);
+            var active = checkpoints.FirstOrDefault(cp => cp.HasBeenActivated);
+            spawn = active != null ? active.RespawnPosition : Vector3.zero;
+        }
 
         var players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
         foreach (var p in players)
         {
-            p.isDeadNetworked = false;
-            p.TeleportTo(spawn);
-            var st = p.GetComponent<PlayerStats>();
-            if (st != null) st.RestoreFull();
-            var pot = p.GetComponent<PotionSystem>();
-            if (pot != null) pot.RefillAll();
-            p.GrantReviveInvincibility(3.0f); // BR-18
+            p.ReviveAndRestore(spawn);
         }
 
         var spawner = FindFirstObjectByType<NetworkSpawner>();
-        if (spawner != null) spawner.RespawnConfiguredEnemies();
+        if (spawner != null)
+        {
+            // Despawn quái còn sống (trừ boss) TRƯỚC khi spawn lại → tránh nhân đôi.
+            foreach (var enemy in FindObjectsByType<Attrition.Controllers.EnemyController>(FindObjectsSortMode.None))
+            {
+                if (enemy == null) continue;
+                var es = enemy.GetComponent<Attrition.Gameplay.Enemy.EnemyStats>();
+                if (es != null && es.Tier == Attrition.Data.EnemyTier.Boss) continue; // boss: bỏ qua
+                spawner.DespawnObject(enemy.Object);
+            }
+            spawner.RespawnConfiguredEnemies();
+        }
     }
 
     IEnumerator InvincibleCoroutine()

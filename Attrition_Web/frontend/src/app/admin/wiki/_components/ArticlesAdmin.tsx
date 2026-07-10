@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { PageLoader } from "@/components/ui/spinner";
 import { AdminPageHeader, AdminFilterBar, AdminTable, AdminRow } from "@/components/admin/admin-table";
+import { Pagination } from "@/components/ui/pagination";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
+import { useClientPagination } from "@/lib/hooks/use-client-pagination";
 import { formatDate } from "@/lib/format-date";
 import { qk } from "@/lib/query-keys";
 import type { WikiArticleListDto } from "@/lib/types";
@@ -51,13 +53,14 @@ export function ArticlesAdmin() {
     removeMutation.mutate(id);
   };
 
-  if (articlesLoading || categoriesLoading) return <PageLoader />;
-
   const filtered = articles.filter((a) => {
     if (categoryFilter !== "all" && a.categorySlug !== categoryFilter) return false;
     if (search && !a.title.toLowerCase().includes(search)) return false;
     return true;
   });
+  const { page, setPage, totalPages, paged } = useClientPagination(filtered, 20);
+
+  if (articlesLoading || categoriesLoading) return <PageLoader />;
 
   return (
     <div>
@@ -101,7 +104,7 @@ export function ArticlesAdmin() {
         ]}
         empty={filtered.length === 0}
       >
-        {filtered.map((a) => (
+        {paged.map((a) => (
           <AdminRow key={a.id} onClick={() => setEditing(a)}>
             <td className="px-3 py-2 font-medium text-fg">{a.title}</td>
             <td className="px-3 py-2 text-fg-muted">{a.categorySlug}</td>
@@ -115,6 +118,7 @@ export function ArticlesAdmin() {
           </AdminRow>
         ))}
       </AdminTable>
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} compact />
     </div>
   );
 }

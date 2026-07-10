@@ -5,8 +5,10 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Skull } from "lucide-react";
 import { useAuth, useConfirm } from "@/lib/providers";
 import { enemiesApi } from "@/lib/api/enemies";
+import { resolveMediaUrl } from "@/lib/api/media";
 import { parseApiError } from "@/lib/api/parse-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +16,10 @@ import { Select } from "@/components/ui/select";
 import { Modal } from "@/components/ui/modal";
 import { PageLoader } from "@/components/ui/spinner";
 import { AdminPageHeader, AdminFilterBar, AdminTable, AdminRow } from "@/components/admin/admin-table";
+import { AssetImageField } from "@/components/admin/asset-image-field";
+import { Pagination } from "@/components/ui/pagination";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
+import { useClientPagination } from "@/lib/hooks/use-client-pagination";
 import { ENEMY_TIERS } from "@/lib/enemy-tiers";
 import { qk } from "@/lib/query-keys";
 import type { EnemyResponse, EnemyCreateRequest, EnemyUpdateRequest } from "@/lib/types";
@@ -51,14 +56,15 @@ export default function AdminEnemiesPage() {
     deleteMutation.mutate(id);
   };
 
-  if (!user || user.role !== "Admin") return null;
-  if (loading) return <PageLoader />;
-
   const filtered = enemies.filter((e) => {
     if (tierFilter !== "all" && e.tier !== tierFilter) return false;
     if (search && !e.name.toLowerCase().includes(search) && !(e.spawnBiome ?? "").toLowerCase().includes(search)) return false;
     return true;
   });
+  const { page, setPage, totalPages, paged } = useClientPagination(filtered, 20);
+
+  if (!user || user.role !== "Admin") return null;
+  if (loading) return <PageLoader />;
 
   return (
     <div>
@@ -86,6 +92,7 @@ export default function AdminEnemiesPage() {
 
       <AdminTable
         columns={[
+          { key: "img", label: "" },
           { key: "name", label: "Name" },
           { key: "tier", label: "Tier" },
           { key: "biome", label: "Biome" },
@@ -94,8 +101,16 @@ export default function AdminEnemiesPage() {
         ]}
         empty={filtered.length === 0}
       >
-        {filtered.map((e) => (
+        {paged.map((e) => (
           <AdminRow key={e.enemyId} onClick={() => { setEditing(e); setShowForm(true); }}>
+            <td className="px-3 py-2">
+              {e.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={resolveMediaUrl(e.imageUrl) ?? ""} alt="" className="h-9 w-9 rounded object-cover" />
+              ) : (
+                <div className="flex h-9 w-9 items-center justify-center rounded bg-surface-2 text-fg-subtle"><Skull size={15} /></div>
+              )}
+            </td>
             <td className="px-3 py-2 font-medium text-fg">{e.name}</td>
             <td className="px-3 py-2 text-fg-muted">{e.tier}</td>
             <td className="px-3 py-2 text-fg-muted">{e.spawnBiome || "—"}</td>
@@ -109,6 +124,7 @@ export default function AdminEnemiesPage() {
           </AdminRow>
         ))}
       </AdminTable>
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} compact />
     </div>
   );
 }
@@ -139,6 +155,7 @@ const enemySchema = z.object({
   expReward: z.coerce.number().int().min(0),
   goldReward: z.coerce.number().int().min(0),
   lore: z.string(),
+  imageUrl: z.string().nullable(),
   lootTable: z.array(lootSchema),
 });
 
@@ -150,6 +167,7 @@ function EnemyForm({ initial, onDone, onCancel, onDirtyChange }: { initial: Enem
   const {
     register, handleSubmit, control,
     formState: { errors, isSubmitting, isDirty },
+    watch, setValue,
   } = useForm<EnemyFormValues>({
     resolver: zodResolver(enemySchema),
     defaultValues: {
@@ -167,6 +185,7 @@ function EnemyForm({ initial, onDone, onCancel, onDirtyChange }: { initial: Enem
       expReward: initial?.expReward ?? 10,
       goldReward: initial?.goldReward ?? 5,
       lore: initial?.lore ?? "",
+      imageUrl: initial?.imageUrl ?? null,
       lootTable: initial?.lootTable ?? [],
     },
   });
@@ -195,6 +214,13 @@ function EnemyForm({ initial, onDone, onCancel, onDirtyChange }: { initial: Enem
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       {error && <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>}
+      <AssetImageField
+        value={watch("imageUrl")}
+        onChange={(url) => setValue("imageUrl", url, { shouldDirty: true })}
+        sourceType="enemy"
+        sourceId={initial?.enemyId}
+        label="Enemy image"
+      />
       <div className="grid gap-3 sm:grid-cols-2">
         {!initial && <Input label="Enemy ID" error={errors.enemyId?.message} {...register("enemyId")} />}
         <Input label="Name" error={errors.name?.message} {...register("name")} />

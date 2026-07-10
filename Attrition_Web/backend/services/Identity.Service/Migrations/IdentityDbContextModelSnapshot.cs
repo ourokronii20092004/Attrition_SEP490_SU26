@@ -86,28 +86,11 @@ namespace Identity.Service.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("DeletionConfirmToken")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("DeletionConfirmTokenExpiry")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("DisplayName")
                         .HasColumnType("text");
 
                     b.Property<string>("Email")
                         .HasColumnType("text");
-
-                    b.Property<string>("EmailVerificationToken")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("EmailVerificationTokenExpiry")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("FailedLoginAttempts")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0);
 
                     b.Property<string>("GoogleAvatarUrl")
                         .HasColumnType("text");
@@ -133,15 +116,6 @@ namespace Identity.Service.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasDefaultValueSql("NOW()");
 
-                    b.Property<DateTime?>("LastLoginAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("LastLoginIp")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("LockoutEnd")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<bool>("MustChangePassword")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -160,23 +134,11 @@ namespace Identity.Service.Migrations
                     b.Property<string>("PasswordHash")
                         .HasColumnType("text");
 
-                    b.Property<string>("PasswordResetToken")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("PasswordResetTokenExpiry")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("PendingEmail")
                         .HasColumnType("text");
 
                     b.Property<int>("PostCount")
                         .HasColumnType("integer");
-
-                    b.Property<string>("RefreshToken")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("RefreshTokenExpiresAt")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Role")
                         .IsRequired()
@@ -204,14 +166,8 @@ namespace Identity.Service.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.HasIndex("EmailVerificationToken")
-                        .HasFilter("\"EmailVerificationToken\" IS NOT NULL");
-
                     b.HasIndex("GoogleId")
                         .IsUnique();
-
-                    b.HasIndex("PasswordResetToken")
-                        .HasFilter("\"PasswordResetToken\" IS NOT NULL");
 
                     b.HasIndex("Username")
                         .IsUnique();
@@ -225,8 +181,14 @@ namespace Identity.Service.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("ActionTaken")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ModeratorNote")
+                        .HasColumnType("text");
 
                     b.Property<string>("Reason")
                         .IsRequired()
@@ -244,6 +206,12 @@ namespace Identity.Service.Migrations
                     b.Property<string>("ReporterName")
                         .HasColumnType("text");
 
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ResolvedByName")
+                        .HasColumnType("text");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("text");
@@ -255,6 +223,149 @@ namespace Identity.Service.Migrations
                     b.HasIndex("Status", "CreatedAt");
 
                     b.ToTable("UserReports", "identity");
+                });
+
+            modelBuilder.Entity("Identity.Service.Models.User", b =>
+                {
+                    b.OwnsOne("Identity.Service.Models.LoginSecurity", "Security", b1 =>
+                        {
+                            b1.Property<Guid>("UserId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<int>("FailedLoginAttempts")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("integer")
+                                .HasDefaultValue(0)
+                                .HasColumnName("FailedLoginAttempts");
+
+                            b1.Property<DateTime?>("LastLoginAt")
+                                .HasColumnType("timestamp with time zone")
+                                .HasColumnName("LastLoginAt");
+
+                            b1.Property<string>("LastLoginIp")
+                                .HasColumnType("text")
+                                .HasColumnName("LastLoginIp");
+
+                            b1.Property<DateTime?>("LockoutEnd")
+                                .HasColumnType("timestamp with time zone")
+                                .HasColumnName("LockoutEnd");
+
+                            b1.Property<DateTime?>("TokensValidAfter")
+                                .HasColumnType("timestamp with time zone")
+                                .HasColumnName("TokensValidAfter");
+
+                            b1.HasKey("UserId");
+
+                            b1.ToTable("Users", "identity");
+
+                            b1.WithOwner()
+                                .HasForeignKey("UserId");
+                        });
+
+                    b.OwnsOne("Identity.Service.Models.TokenPair", "DeletionConfirm", b1 =>
+                        {
+                            b1.Property<Guid>("UserId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime?>("ExpiresAt")
+                                .HasColumnType("timestamp with time zone")
+                                .HasColumnName("DeletionConfirmTokenExpiry");
+
+                            b1.Property<string>("Token")
+                                .HasColumnType("text")
+                                .HasColumnName("DeletionConfirmToken");
+
+                            b1.HasKey("UserId");
+
+                            b1.ToTable("Users", "identity");
+
+                            b1.WithOwner()
+                                .HasForeignKey("UserId");
+                        });
+
+                    b.OwnsOne("Identity.Service.Models.TokenPair", "EmailVerification", b1 =>
+                        {
+                            b1.Property<Guid>("UserId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime?>("ExpiresAt")
+                                .HasColumnType("timestamp with time zone")
+                                .HasColumnName("EmailVerificationTokenExpiry");
+
+                            b1.Property<string>("Token")
+                                .HasColumnType("text")
+                                .HasColumnName("EmailVerificationToken");
+
+                            b1.HasKey("UserId");
+
+                            b1.HasIndex("Token")
+                                .HasFilter("\"EmailVerificationToken\" IS NOT NULL");
+
+                            b1.ToTable("Users", "identity");
+
+                            b1.WithOwner()
+                                .HasForeignKey("UserId");
+                        });
+
+                    b.OwnsOne("Identity.Service.Models.TokenPair", "PasswordReset", b1 =>
+                        {
+                            b1.Property<Guid>("UserId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime?>("ExpiresAt")
+                                .HasColumnType("timestamp with time zone")
+                                .HasColumnName("PasswordResetTokenExpiry");
+
+                            b1.Property<string>("Token")
+                                .HasColumnType("text")
+                                .HasColumnName("PasswordResetToken");
+
+                            b1.HasKey("UserId");
+
+                            b1.HasIndex("Token")
+                                .HasFilter("\"PasswordResetToken\" IS NOT NULL");
+
+                            b1.ToTable("Users", "identity");
+
+                            b1.WithOwner()
+                                .HasForeignKey("UserId");
+                        });
+
+                    b.OwnsOne("Identity.Service.Models.TokenPair", "Refresh", b1 =>
+                        {
+                            b1.Property<Guid>("UserId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime?>("ExpiresAt")
+                                .HasColumnType("timestamp with time zone")
+                                .HasColumnName("RefreshTokenExpiresAt");
+
+                            b1.Property<string>("Token")
+                                .HasColumnType("text")
+                                .HasColumnName("RefreshToken");
+
+                            b1.HasKey("UserId");
+
+                            b1.ToTable("Users", "identity");
+
+                            b1.WithOwner()
+                                .HasForeignKey("UserId");
+                        });
+
+                    b.Navigation("DeletionConfirm")
+                        .IsRequired();
+
+                    b.Navigation("EmailVerification")
+                        .IsRequired();
+
+                    b.Navigation("PasswordReset")
+                        .IsRequired();
+
+                    b.Navigation("Refresh")
+                        .IsRequired();
+
+                    b.Navigation("Security")
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

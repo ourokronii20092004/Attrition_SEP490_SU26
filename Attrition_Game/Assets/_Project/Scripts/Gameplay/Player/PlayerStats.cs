@@ -314,5 +314,19 @@ namespace Attrition.Gameplay.Player
             CurrentMana = MaxMana;
             CurrentStamina = MaxStamina;
         }
+
+        /// <summary>
+        /// Hồi sinh từ trạng thái chết: hồi đầy HP/Mana/Stamina KHÔNG guard CurrentHP<=0.
+        /// RestoreFull bị guard nên không dùng được cho respawn — gọi nó khi HP âm sẽ không hồi,
+        /// để lại HP âm khiến bình máu (chặn khi CurrentHP<=0) vĩnh viễn vô dụng. Chỉ host.
+        /// </summary>
+        public void ReviveFull()
+        {
+            if (!HasStateAuthority) return;
+            CurrentHP = MaxHP;
+            CurrentMana = MaxMana;
+            CurrentStamina = MaxStamina;
+            OnStatsChanged?.Invoke();
+        }
     }
 }

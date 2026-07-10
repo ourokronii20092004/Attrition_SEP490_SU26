@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Toggle } from "@/components/ui/toggle";
 import { ImageCropper } from "@/components/image-cropper";
 import { PageLoader } from "@/components/ui/spinner";
+import { resolveMediaUrl } from "@/lib/api/media";
+import { parseApiError } from "@/lib/api/parse-error";
 import { Sun, Moon } from "lucide-react";
 
 /** Compact panel used across the admin account grid — tighter than the user SettingsCard. */
@@ -38,9 +40,14 @@ export default function AdminAccountPage() {
   const [cropFile, setCropFile] = useState<File | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
+  // Cover image
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [uploadingCover, setUploadingCover] = useState(false);
+
   // Password
   const [curPw, setCurPw] = useState("");
   const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
   const [savingPw, setSavingPw] = useState(false);
 
   // Email
@@ -82,13 +89,27 @@ export default function AdminAccountPage() {
     catch { toast("Failed to remove avatar.", "error"); }
   };
 
+  const onCoverCropped = async (file: File) => {
+    setCoverFile(null);
+    setUploadingCover(true);
+    try { await accountApi.uploadBackground(file); await refreshUser(); toast("Cover updated.", "success"); }
+    catch { toast("Failed to upload cover.", "error"); }
+    setUploadingCover(false);
+  };
+
+  const removeCover = async () => {
+    try { await accountApi.deleteBackground(); await refreshUser(); toast("Cover removed.", "success"); }
+    catch { toast("Failed to remove cover.", "error"); }
+  };
+
   const savePassword = async () => {
+    if (newPw !== confirmPw) { toast("The new passwords don't match.", "error"); return; }
     setSavingPw(true);
     try {
       await authApi.changePassword({ currentPassword: curPw, newPassword: newPw });
-      setCurPw(""); setNewPw("");
-      toast("Password updated.", "success");
-    } catch { toast("Failed to update password.", "error"); }
+      setCurPw(""); setNewPw(""); setConfirmPw("");
+      toast("Password updated. A confirmation email has been sent.", "success");
+    } catch (err) { toast(parseApiError(err, "Failed to update password."), "error"); }
     setSavingPw(false);
   };
 
@@ -102,6 +123,8 @@ export default function AdminAccountPage() {
     } catch { toast("Failed to update email.", "error"); }
     setSavingEmail(false);
   };
+
+  const coverUrl = resolveMediaUrl(user.backgroundUrl);
 
   return (
     <div>
@@ -123,6 +146,31 @@ export default function AdminAccountPage() {
           </label>
           {user.avatarUrl && <button onClick={removeAvatar} className="text-sm text-danger transition-opacity hover:opacity-80">Remove</button>}
         </div>
+      </div>
+
+      {/* Cover image — the admin's public-profile banner. (Regular users set this on their profile
+          page; admins get it here since they work out of the dashboard.) */}
+      <div className="mt-4 rounded-lg border border-border bg-surface/50 p-4">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-fg-subtle">Cover image</h2>
+        <div className="relative mt-3 h-40 w-full overflow-hidden rounded-lg border border-border bg-surface-2 sm:h-48">
+          {coverUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={coverUrl} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-surface-2 via-surface to-accent-soft/40" />
+          )}
+          <div className="absolute right-3 top-3 flex gap-2">
+            <label className="glass inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-fg shadow-sm transition-colors hover:text-accent">
+              {uploadingCover ? "Saving…" : coverUrl ? "Change cover" : "Add cover"}
+              <input type="file" accept="image/*" className="hidden" disabled={uploadingCover}
+                onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) setCoverFile(f); }} />
+            </label>
+            {coverUrl && (
+              <button onClick={removeCover} className="glass inline-flex items-center rounded-lg px-2.5 py-1.5 text-xs text-danger shadow-sm transition-opacity hover:opacity-80">Remove</button>
+            )}
+          </div>
+        </div>
+        <p className="mt-2 text-xs text-fg-subtle">Displayed on your public profile. A wide (16:6) image works best.</p>
       </div>
 
       {/* Dense 2-column grid — everything visible without scrolling on a normal screen */}
@@ -169,7 +217,9 @@ export default function AdminAccountPage() {
           <div className="space-y-3">
             <Input type="password" autoComplete="current-password" placeholder="Current password" value={curPw} onChange={(e) => setCurPw(e.target.value)} />
             <Input type="password" autoComplete="new-password" placeholder="New password" value={newPw} onChange={(e) => setNewPw(e.target.value)} />
-            <Button size="sm" onClick={savePassword} loading={savingPw} disabled={!curPw || !newPw}>Change Password</Button>
+            <Input type="password" autoComplete="new-password" placeholder="Repeat new password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} />
+            <p className="text-xs text-fg-subtle">A confirmation email is sent after the change.</p>
+            <Button size="sm" onClick={savePassword} loading={savingPw} disabled={!curPw || !newPw || !confirmPw}>Change Password</Button>
           </div>
         </Panel>
 
@@ -190,6 +240,9 @@ export default function AdminAccountPage() {
 
       {cropFile && (
         <ImageCropper file={cropFile} aspect={1} round onCancel={() => setCropFile(null)} onCropped={onCropped} />
+      )}
+      {coverFile && (
+        <ImageCropper file={coverFile} aspect={16 / 6} onCancel={() => setCoverFile(null)} onCropped={onCoverCropped} />
       )}
     </div>
   );

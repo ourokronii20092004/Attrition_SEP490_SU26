@@ -1,41 +1,79 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useAuth } from "@/lib/providers";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { GOOGLE_CLIENT_ID } from "@/lib/config";
-import { ApiError } from "@/lib/api/client";
+import { LoadingScreen } from "@/components/ui/loading-screen";
+import { API_BASE, GOOGLE_CLIENT_ID } from "@/lib/config";
 
 const UNITY_CLIENT_KEY = "attrition_unity_client";
 
-function tryParseError(body: string): string {
-  try {
-    const json = JSON.parse(body);
-    return json.error || json.message || "";
-  } catch {
-    return body;
+function googleErrorMessage(code: string): string {
+  switch (code) {
+    case "google_denied":
+      return "Google sign-in was cancelled.";
+    case "google_unconfigured":
+      return "Google sign-in isn't available right now.";
+    case "google_unavailable":
+      return "Google sign-in is temporarily unavailable. Please try again shortly.";
+    case "google_state":
+      return "Your Google sign-in session expired. Please try again.";
+    case "google_failed":
+      return "We couldn't complete Google sign-in. Please try again.";
+    default:
+      return "Google sign-in failed. Please try again.";
   }
 }
 
 /**
- * "Continue with Google" — shared by login and register. Owns the GIS script,
- * the divider, the prompt flow, and its own error/loading state.
+ * "Continue with Google" — shared by login and register. Uses a full-page redirect into the
+ * server-side OAuth code flow (GET /api/auth/google/start) instead of a popup / One-Tap prompt, so
+ * browsers that block third-party sign-in popups (notably Edge) can't break login. The server does
+ * the Google round-trip, sets the session cookies, then redirects back here (or to the game host).
  */
 export function GoogleButton({ label = "Continue with Google" }: { label?: string }) {
-  const { loginWithGoogle } = useAuth();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [retryIn, setRetryIn] = useState(0); // rate-limit countdown (seconds)
+  const [redirecting, setRedirecting] = useState(false);
 
-  // Game mở web với ?client=unity. Lưu cờ này NGAY khi trang load — không đọc searchParams trong
-  // callback GSI (closure có thể stale, hoặc query bị GSI/điều hướng làm rớt → mất ý định "về game").
+  // Game mở web với ?client=unity. Lưu cờ này NGAY khi trang load để giữ ý định "về game" kể cả khi
+  // query bị rớt trước lúc người dùng bấm nút.
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (new URLSearchParams(window.location.search).get("client") === "unity") {
       sessionStorage.setItem(UNITY_CLIENT_KEY, "1");
     }
+  }, []);
+
+  // Surface a failure bounced back from the server-side OAuth callback (?auth_error=...).
+  // Rate limits get a live countdown instead of a static message.
+  useEffect(() => {
+    const code = searchParams.get("auth_error");
+    if (!code) return;
+    if (code === "rate_limited") {
+      const secs = parseInt(searchParams.get("retry") ?? "", 10);
+      setRetryIn(Number.isFinite(secs) && secs > 0 ? secs : 60);
+    } else {
+      setError(googleErrorMessage(code));
+    }
+  }, [searchParams]);
+
+  // Tick the rate-limit countdown down to zero.
+  useEffect(() => {
+    if (retryIn <= 0) return;
+    const id = setInterval(() => setRetryIn((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(id);
+  }, [retryIn]);
+
+  // If the user leaves for Google and hits the browser Back button, the page is often restored from
+  // the back-forward cache with React state frozen — leaving the redirect overlay stuck forever.
+  // `pageshow` fires on that restore (persisted=true) and on normal loads; clear the overlay so the
+  // button works again.
+  useEffect(() => {
+    const onPageShow = () => setRedirecting(false);
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
   }, []);
 
   const isUnityClient = () => {
@@ -46,49 +84,44 @@ export function GoogleButton({ label = "Continue with Google" }: { label?: strin
   };
 
   const handleGoogle = () => {
-    if (!GOOGLE_CLIENT_ID || typeof window === "undefined") return;
-    const google = (window as unknown as { google?: any }).google;
-    if (!google?.accounts?.id) return;
-    google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: async (response: { credential: string }) => {
-        setError("");
-        setLoading(true);
-        try {
-          const authData = await loginWithGoogle(response.credential);
-
-          if (isUnityClient() && authData?.accessToken) {
-            // Gửi cả refresh token về game (localhost:52000) để host login Google cũng persist
-            // được phiên như login email/password — tránh phải đăng nhập lại sau 15 phút.
-            sessionStorage.removeItem(UNITY_CLIENT_KEY);
-            const params = new URLSearchParams({ token: authData.accessToken });
-            if (authData.refreshToken) params.set("refresh", authData.refreshToken);
-            window.location.href = `http://localhost:52000/?${params.toString()}`;
-          } else {
-            router.push("/");
-          }
-        } catch (e) {
-          setError(e instanceof ApiError ? tryParseError(e.body) || "Google sign-in failed" : "Google sign-in failed");
-        } finally {
-          setLoading(false);
-        }
-      },
-    });
-    google.accounts.id.prompt();
+    if (!GOOGLE_CLIENT_ID || typeof window === "undefined" || retryIn > 0) return;
+    setError("");
+    // Network parity with the email/password forms: if we're offline the redirect would just fail
+    // (and leave the overlay stuck), so bail out early with a clear message instead.
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      setError("You appear to be offline. Check your connection and try again.");
+      return;
+    }
+    // Show the loader BEFORE leaving for Google — the account chooser is Google's own page, so this
+    // is the only moment we can give in-app feedback. The brief delay lets the overlay paint first.
+    setRedirecting(true);
+    const url = `${API_BASE}/api/auth/google/start${isUnityClient() ? "?client=unity" : ""}`;
+    window.setTimeout(() => { window.location.href = url; }, 150);
   };
 
   return (
     <div>
+      {redirecting && <LoadingScreen fullscreen />}
       <div className="my-6 flex items-center gap-3">
         <div className="h-px flex-1 bg-border" />
         <span className="text-xs uppercase tracking-[0.2em] text-fg-subtle">or</span>
         <div className="h-px flex-1 bg-border" />
       </div>
       {error && <p className="mb-3 text-sm text-danger" role="alert">{error}</p>}
-      <Button variant="secondary" className="w-full" onClick={handleGoogle} loading={loading} disabled={!GOOGLE_CLIENT_ID}>
+      {retryIn > 0 && (
+        <p className="mb-3 text-sm text-warning" role="alert">
+          Too many attempts. Try again in {retryIn}s.
+        </p>
+      )}
+      <Button
+        variant="secondary"
+        className="w-full"
+        onClick={handleGoogle}
+        loading={redirecting}
+        disabled={!GOOGLE_CLIENT_ID || retryIn > 0}
+      >
         <GoogleGlyph /> {label}
       </Button>
-      {GOOGLE_CLIENT_ID && <script src="https://accounts.google.com/gsi/client" async defer />}
     </div>
   );
 }

@@ -15,6 +15,7 @@ import { RelativeTime } from "@/components/ui/relative-time";
 import { PostContent } from "@/components/post-content";
 import { resolveMediaUrl } from "@/lib/api/media";
 import { qk } from "@/lib/query-keys";
+import { useAdminPageLabel } from "@/lib/hooks/use-admin-page-label";
 
 // getPosts (public endpoint) filters out removed posts server-side, so this flat moderation list
 // never receives IsRemoved posts. Restore is therefore not offered here — only Remove.
@@ -28,6 +29,16 @@ export default function AdminThreadPostsPage() {
   const confirm = useConfirm();
   const { toast } = useToast();
   const [reply, setReply] = useState("");
+
+  const { data: thread } = useQuery({
+    queryKey: qk.forum.thread(threadId),
+    enabled: user?.role === "Admin" && !!threadId,
+    queryFn: async () => {
+      const res = await forumApi.getThread(threadId);
+      return res.success ? res.data : null;
+    },
+  });
+  useAdminPageLabel(thread ? `Threads · ${thread.title}` : null);
 
   const { data, isPending: loading } = useQuery({
     queryKey: qk.forum.posts(threadId),
@@ -69,10 +80,10 @@ export default function AdminThreadPostsPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <Link href="/admin/forum" className="inline-flex items-center gap-1.5 text-sm text-fg-muted transition-colors hover:text-fg">
-        <ArrowLeft size={16} /> Forum Management
+      <Link href="/admin/forum/threads" className="inline-flex items-center gap-1.5 text-sm text-fg-muted transition-colors hover:text-fg">
+        <ArrowLeft size={16} /> Threads
       </Link>
-      <h1 className="mt-4 font-display text-3xl font-bold text-fg">Thread Posts</h1>
+      <h1 className="mt-4 font-display text-3xl font-bold text-fg">{thread?.title ?? "Thread Posts"}</h1>
 
       {loading ? (
         <PageLoader />

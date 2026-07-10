@@ -42,12 +42,22 @@ public class WikiController : ControllerBase
             : Ok(ApiResponse<WikiArticleDto>.Ok(article));
     }
 
-    [Authorize(Roles = Roles.Admin)]
+    // Public: a user's total wiki contributions (authored articles + approved edits) for their profile.
+    [HttpGet("users/{userId:guid}/contribution-count")]
+    public async Task<IActionResult> UserContributionCount(Guid userId)
+        => Ok(ApiResponse<int>.Ok(await _wiki.CountUserContributionsAsync(userId)));
+
+    // Public: a user's wiki contribution history (authored articles + approved edits) for their profile.
+    [HttpGet("users/{userId:guid}/contributions")]
+    public async Task<IActionResult> UserContributions(Guid userId)
+        => Ok(ApiResponse<List<UserWikiContributionDto>>.Ok(await _wiki.GetUserContributionsAsync(userId)));
+
+    // Revision history of a published article is public information (same as the article itself),
+    // so anyone can view it — not just admins.
     [HttpGet("articles/{id:guid}/revisions")]
     public async Task<IActionResult> GetRevisions(Guid id)
         => Ok(ApiResponse<List<WikiRevisionDto>>.Ok(await _wiki.GetRevisionsAsync(id)));
 
-    [Authorize(Roles = Roles.Admin)]
     [HttpGet("articles/{id:guid}/revisions/{revisionId:guid}")]
     public async Task<IActionResult> GetRevision(Guid id, Guid revisionId)
     {

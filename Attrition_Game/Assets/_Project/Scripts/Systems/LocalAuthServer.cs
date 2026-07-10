@@ -153,11 +153,11 @@ public class LocalAuthServer : MonoBehaviour
         {
             string html = @"
                 <!DOCTYPE html>
-                <html lang='vi'>
+                <html lang='en'>
                 <head>
                     <meta charset='UTF-8'>
                     <meta name='viewport' content='width=device-width, initial-scale=1'>
-                    <title>Attrition — Đăng nhập thành công</title>
+                    <title>Attrition — Sign-in successful</title>
                     <style>
                         :root { --bg:#070b09; --surface:#0d1310; --border:#2a352e; --fg:#e7efe9; --fg-muted:#93a39a; --accent:#38e8a0; --accent-fg:#04130c; }
                         * { box-sizing: border-box; }
@@ -180,9 +180,9 @@ public class LocalAuthServer : MonoBehaviour
                     <div class='card'>
                         <div class='brand'>ATTRITION</div>
                         <div class='badge'><svg viewBox='0 0 24 24'><path d='M5 13l4 4L19 7'/></svg></div>
-                        <h1>Đăng nhập thành công</h1>
-                        <p>Trò chơi đã nhận được tín hiệu. Bạn có thể đóng tab này và quay lại Attrition để tiếp tục.</p>
-                        <div class='hint'>Tab sẽ tự đóng sau giây lát…</div>
+                        <h1>Sign-in successful</h1>
+                        <p>The game has received your login. You can close this tab and return to Attrition to continue.</p>
+                        <div class='hint'>This tab will close automatically…</div>
                     </div>
                     <script>
                         setTimeout(() => { window.close(); }, 2000);

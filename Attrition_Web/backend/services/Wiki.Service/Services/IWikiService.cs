@@ -27,4 +27,8 @@ public interface IWikiService
     Task<List<WikiSearchResultDto>> SearchAsync(string query, int limit);
     Task<int> CountArticlesAsync();
     Task<int> CountPendingContributionsAsync();
+    // Per-user contribution tally for profile stats: published articles authored + approved edits.
+    Task<int> CountUserContributionsAsync(Guid userId);
+    // A user's wiki contribution history (for their public profile): authored articles + approved edits.
+    Task<List<UserWikiContributionDto>> GetUserContributionsAsync(Guid userId);
 }

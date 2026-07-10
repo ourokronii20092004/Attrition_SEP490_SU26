@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Heart, Coins, MapPin, Clock, ChevronDown, Gamepad2 } from "lucide-react";
+import { Heart, MapPin, Clock, ChevronDown, Gamepad2, Backpack } from "lucide-react";
 import { charactersApi } from "@/lib/api/characters";
 import { useAuth } from "@/lib/providers";
 import { PageShell } from "@/components/ui/page-shell";
@@ -12,7 +12,10 @@ import { Card } from "@/components/ui/card";
 import { SkeletonList } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SnapshotTimeline } from "@/components/snapshot-timeline";
+import { InventoryView } from "@/components/inventory-view";
 import { RelativeTime } from "@/components/ui/relative-time";
+import { Pagination } from "@/components/ui/pagination";
+import { useClientPagination } from "@/lib/hooks/use-client-pagination";
 import { qk } from "@/lib/query-keys";
 import type { CharacterSummaryDto, SnapshotDto } from "@/lib/types";
 
@@ -34,6 +37,8 @@ export default function CharactersPage() {
     },
   });
 
+  const { page, setPage, totalPages, paged } = useClientPagination(characters, 10);
+
   if (!user && !authLoading) return null;
 
   return (
@@ -50,11 +55,12 @@ export default function CharactersPage() {
         />
       ) : (
         <div className="stagger space-y-3">
-          {characters.map((c, i) => (
+          {paged.map((c, i) => (
             <div key={c.id} style={{ "--i": i } as React.CSSProperties}>
               <CharacterCard character={c} />
             </div>
           ))}
+          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
         </div>
       )}
     </PageShell>
@@ -103,7 +109,13 @@ function CharacterCard({ character }: { character: CharacterSummaryDto }) {
 
       {expanded && (
         <div className="border-t border-border bg-surface-2/40 px-4 py-3">
-          <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-fg-subtle">History</h4>
+          <h4 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-fg-subtle"><Backpack size={12} /> Inventory</h4>
+          {loadingDetail ? (
+            <p className="py-4 text-center text-sm text-fg-muted">Loading...</p>
+          ) : (
+            <InventoryView json={detail?.inventoryJson} />
+          )}
+          <h4 className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wider text-fg-subtle">History</h4>
           {loadingDetail ? (
             <p className="py-4 text-center text-sm text-fg-muted">Loading...</p>
           ) : (
@@ -120,7 +132,6 @@ function StatLine({ snap }: { snap: SnapshotDto }) {
     <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-fg-muted">
       <span>Lv.{snap.level}</span>
       <span className="flex items-center gap-1"><Heart size={12} /> {snap.hp}/{snap.maxHp}</span>
-      <span className="flex items-center gap-1"><Coins size={12} /> {snap.gold}</span>
       {snap.roomCode && <span className="flex items-center gap-1"><MapPin size={12} /> {snap.roomCode}</span>}
       <span className="flex items-center gap-1"><Clock size={12} /> <RelativeTime iso={snap.capturedAt} /></span>
     </div>

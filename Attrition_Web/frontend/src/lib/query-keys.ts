@@ -29,6 +29,9 @@ export const qk = {
     thread: (id: string) => ["forum", "thread", id] as const,
     posts: (threadId: string) => ["forum", "posts", threadId] as const,
     postsPage: (threadId: string, page: number) => ["forum", "posts", threadId, page] as const,
+    // The thread page's windowed posts query (grows by page size on "load more"). Centralized so
+    // thread-create seeding can target the exact key the thread page reads.
+    postsWindow: (threadId: string, limit: number) => ["forum", "posts", threadId, "w", limit] as const,
   },
 
   music: {
@@ -36,6 +39,8 @@ export const qk = {
       page === undefined ? (["music", "albums"] as const) : (["music", "albums", page] as const),
     album: (id: string) => ["album", id] as const,
     favorites: () => ["music", "favorites"] as const,
+    playlists: () => ["music", "playlists"] as const,
+    playlist: (id: string) => ["music", "playlist", id] as const,
   },
 
   assets: {
@@ -50,6 +55,8 @@ export const qk = {
 
   search: (q: string) => ["search", q] as const,
   profile: (username: string) => ["profile", username] as const,
+  // Live-derived forum/wiki counts for a profile (the Identity DB counters aren't maintained).
+  profileCounts: (userId: string) => ["profile", "counts", userId] as const,
 
   admin: {
     stats: () => ["admin", "stats"] as const,

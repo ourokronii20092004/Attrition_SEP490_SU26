@@ -1,16 +1,23 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Search, X, CornerDownLeft, LayoutDashboard } from "lucide-react";
+import { Search, X, CornerDownLeft, LayoutDashboard, Clock, ArrowRight } from "lucide-react";
 import { searchApi } from "@/lib/api/search";
 import { ADMIN_ROUTES } from "@/app/admin/admin-routes";
-import type { GlobalSearchResponse, SearchWikiResultDto, SearchUserResultDto, SearchPostResultDto, SearchEnemyResultDto, SearchSuggestionDto } from "@/lib/types";
+import {
+  SEARCH_SCOPES, PUBLIC_PAGES, parseQuery, backendScope, matchPages, type SearchScope,
+} from "@/lib/search-config";
+import { useRecentSearches } from "./use-recent-searches";
+import type { GlobalSearchResponse, SearchSuggestionDto } from "@/lib/types";
 
 const ADMIN_RECENT_KEY = "attrition:admin:recent";
+// Minimum characters before we hit the search API. 1 so a single letter/number already searches.
+const MIN_QUERY = 1;
 
 export function SearchModal({ onClose, adminMode = false }: { onClose: () => void; adminMode?: boolean }) {
   const [query, setQuery] = useState("");
+  const [activeScope, setActiveScope] = useState<SearchScope | null>(null);
   const [results, setResults] = useState<GlobalSearchResponse | null>(null);
   const [suggestions, setSuggestions] = useState<SearchSuggestionDto[]>([]);
   const [loading, setLoading] = useState(false);
@@ -18,114 +25,189 @@ export function SearchModal({ onClose, adminMode = false }: { onClose: () => voi
   const router = useRouter();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const suggestRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { recent, add: addRecent, remove: removeRecent, clear: clearRecent } = useRecentSearches();
 
-  // Admin global search also navigates between admin pages. Build a page list filtered by the
-  // query; when empty, fall back to recently-visited admin pages (browser-style suggestions).
-  const adminPages = (() => {
+  // The effective scope is whichever chip is active, OR a prefix typed into the box
+  // ("wiki:foo"). Typed prefix wins so power users keep that path; chips are the fast path.
+  const parsed = useMemo(() => parseQuery(query), [query]);
+  const effectiveScope = parsed.scope ?? activeScope;
+  const term = parsed.scope ? parsed.term : query.trim();
+
+  // Pages matched locally (instant) — the registry covers routes the API can't reach.
+  const pageMatches = useMemo(() => {
+    if (effectiveScope && effectiveScope.id !== "pages") return [];
+    return matchPages(term, term ? 6 : PUBLIC_PAGES.length);
+  }, [term, effectiveScope]);
+
+  // Admin page jump-list (admin modal only).
+  const adminPages = useMemo(() => {
     if (!adminMode) return [];
-    const q = query.trim().toLowerCase();
+    const q = term.toLowerCase();
     if (q.length === 0) {
-      let recent: string[] = [];
-      try { recent = JSON.parse(typeof window !== "undefined" ? localStorage.getItem(ADMIN_RECENT_KEY) || "[]" : "[]"); } catch { /* ignore */ }
-      return ADMIN_ROUTES.filter((r) => recent.includes(r.href)).slice(0, 5);
+      let recentHrefs: string[] = [];
+      try { recentHrefs = JSON.parse(typeof window !== "undefined" ? localStorage.getItem(ADMIN_RECENT_KEY) || "[]" : "[]"); } catch { /* ignore */ }
+      return ADMIN_ROUTES.filter((r) => recentHrefs.includes(r.href)).slice(0, 5);
     }
     return ADMIN_ROUTES.filter((r) => r.label.toLowerCase().includes(q) || r.href.includes(q)).slice(0, 6);
-  })();
+  }, [adminMode, term]);
 
   useEffect(() => {
     inputRef.current?.focus();
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [onClose]);
 
-  const doSearch = useCallback((q: string) => {
-    if (q.trim().length < 2) {
-      setResults(null);
-      return;
-    }
+  const doSearch = useCallback((q: string, scope: SearchScope | null) => {
+    if (q.trim().length < MIN_QUERY) { setResults(null); return; }
+    // If the scope only filters pages (no API kind), skip the API call entirely.
+    if (scope && !scope.kind) { setResults(null); setLoading(false); return; }
     setLoading(true);
-    searchApi
-      .search(q.trim())
-      .then((res) => {
-        if (res.success) setResults(res.data);
-      })
+    const prefixed = backendScope(scope) ? `${backendScope(scope)}:${q.trim()}` : q.trim();
+    searchApi.search(prefixed)
+      .then((res) => { if (res.success) setResults(res.data); })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
-  const doSuggest = useCallback((q: string) => {
-    if (q.trim().length < 2) { setSuggestions([]); return; }
-    searchApi.suggest(q.trim())
+  const doSuggest = useCallback((q: string, scope: SearchScope | null) => {
+    if (q.trim().length < MIN_QUERY || (scope && !scope.kind)) { setSuggestions([]); return; }
+    const prefixed = backendScope(scope) ? `${backendScope(scope)}:${q.trim()}` : q.trim();
+    searchApi.suggest(prefixed)
       .then((res) => { if (res.success) setSuggestions(res.data); })
       .catch(() => {});
   }, []);
 
-  const handleChange = (val: string) => {
-    setQuery(val);
+  // Re-run whenever the query OR the active chip changes.
+  useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (suggestRef.current) clearTimeout(suggestRef.current);
-    // Suggestions feel instant (150ms); the heavier full result set follows (300ms).
-    suggestRef.current = setTimeout(() => doSuggest(val), 150);
-    debounceRef.current = setTimeout(() => doSearch(val), 300);
-  };
+    if (term.length < MIN_QUERY) { setResults(null); setSuggestions([]); return; }
+    suggestRef.current = setTimeout(() => doSuggest(term, effectiveScope), 150);
+    debounceRef.current = setTimeout(() => doSearch(term, effectiveScope), 300);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      if (suggestRef.current) clearTimeout(suggestRef.current);
+    };
+  }, [term, effectiveScope, doSearch, doSuggest]);
 
   const navigate = (url: string) => {
+    if (term.length >= MIN_QUERY) addRecent(term);
     onClose();
     router.push(url);
   };
 
-  const hasResults = results && (results.wiki.length || results.users.length || results.posts.length || results.enemies.length);
+  const runRecent = (t: string) => { setActiveScope(null); setQuery(t); inputRef.current?.focus(); };
+
+  const filtered = useMemo(() => filterResults(results, effectiveScope), [results, effectiveScope]);
+  const hasResults = !!filtered && (filtered.wiki.length + filtered.users.length + filtered.posts.length + filtered.enemies.length) > 0;
   const hasAdminPages = adminMode && adminPages.length > 0;
+  const isEmpty = term.length < MIN_QUERY;
 
   return (
     <div
-      className="fixed inset-0 z-[300] flex items-start justify-center bg-bg/70 pt-[15vh] backdrop-blur-sm motion-safe:animate-fade-in"
+      className="fixed inset-0 z-[300] flex items-start justify-center bg-black/80 px-4 pt-[10vh] motion-safe:animate-fade-in"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label="Site search"
     >
       <div
-        className="glass w-full max-w-lg origin-top rounded-2xl p-4 shadow-[var(--shadow-lg)] motion-safe:animate-rise-in"
+        className="card flex max-h-[78vh] w-full max-w-2xl origin-top flex-col rounded-2xl shadow-[var(--shadow-lg)] motion-safe:animate-rise-in"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center gap-3 border-b border-border pb-3">
-          <Search size={18} className="text-fg-muted" />
+        {/* Input row */}
+        <div className="flex items-center gap-3 px-5 pt-5">
+          <Search size={20} className="shrink-0 text-fg-muted" />
           <input
             ref={inputRef}
             value={query}
-            onChange={(e) => handleChange(e.target.value)}
-            placeholder={adminMode ? "Search pages, users, content…" : "Search wiki, users, forum, enemies..."}
-            className="flex-1 bg-transparent text-fg outline-none placeholder:text-fg-subtle"
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={effectiveScope ? `Search ${effectiveScope.label.toLowerCase()}…` : (adminMode ? "Search pages, users, content…" : "Search everything…")}
+            className="flex-1 bg-transparent text-lg text-fg outline-none placeholder:text-fg-subtle"
           />
-          <kbd className="hidden rounded border border-border bg-surface-2 px-1.5 py-0.5 text-[10px] font-medium text-fg-subtle sm:inline">
-            ESC
-          </kbd>
+          <kbd className="hidden rounded border border-border bg-surface-2 px-1.5 py-0.5 text-[10px] font-medium text-fg-subtle sm:inline">ESC</kbd>
           <button onClick={onClose} className="text-fg-muted transition-colors hover:text-fg" aria-label="Close search">
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
 
-        <div className="mt-3 max-h-80 overflow-y-auto">
-          {loading && suggestions.length === 0 && <p className="py-4 text-center text-sm text-fg-muted">Searching...</p>}
+        {/* Scope chips — the fast path: click instead of typing a prefix */}
+        <div className="flex flex-wrap items-center gap-1.5 border-b border-border px-5 pb-3 pt-3">
+          <ScopeChip active={effectiveScope === null} onClick={() => { setActiveScope(null); if (parsed.scope) setQuery(term); }}>
+            All
+          </ScopeChip>
+          {SEARCH_SCOPES.map((s) => {
+            const Icon = s.icon;
+            const active = effectiveScope?.id === s.id;
+            return (
+              <ScopeChip key={s.id} active={active} onClick={() => { setActiveScope(active ? null : s); if (parsed.scope) setQuery(term); inputRef.current?.focus(); }}>
+                <Icon size={13} /> {s.label}
+              </ScopeChip>
+            );
+          })}
+        </div>
 
-          {/* Admin global search: jump to admin pages (filtered, or recents when empty). */}
-          {hasAdminPages && !hasResults && (
+        {/* Results / empty-state */}
+        <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
+          {/* ── EMPTY STATE: recent searches + browse pages ── */}
+          {isEmpty && !hasAdminPages && (
+            <div className="space-y-4">
+              {recent.length > 0 && (
+                <div>
+                  <div className="mb-1.5 flex items-center justify-between px-2">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-fg-subtle">Recent</h3>
+                    <button onClick={clearRecent} className="text-[11px] text-fg-subtle transition-colors hover:text-accent">Clear</button>
+                  </div>
+                  <div className="space-y-0.5">
+                    {recent.map((t) => (
+                      <div key={t} className="group flex items-center rounded-md transition-colors hover:bg-surface-2">
+                        <button onClick={() => runRecent(t)} className="flex min-w-0 flex-1 items-center gap-2.5 px-3 py-2 text-left text-sm">
+                          <Clock size={14} className="shrink-0 text-fg-subtle" />
+                          <span className="flex-1 truncate text-fg">{t}</span>
+                        </button>
+                        <button onClick={() => removeRecent(t)} className="px-2.5 text-fg-subtle opacity-0 transition-opacity hover:text-danger group-hover:opacity-100" aria-label={`Remove ${t}`}>
+                          <X size={13} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <h3 className="mb-1.5 px-2 text-xs font-semibold uppercase tracking-wider text-fg-subtle">Browse</h3>
+                <div className="grid grid-cols-2 gap-1 sm:grid-cols-3">
+                  {PUBLIC_PAGES.map((p) => {
+                    const Icon = p.icon;
+                    return (
+                      <button
+                        key={p.href}
+                        onClick={() => navigate(p.href)}
+                        className="group flex items-center gap-2.5 rounded-lg border border-border bg-surface px-3 py-2.5 text-left transition-colors hover:border-accent/50 hover:bg-surface-2"
+                      >
+                        <Icon size={15} className="shrink-0 text-fg-subtle transition-colors group-hover:text-accent" />
+                        <span className="truncate text-sm text-fg">{p.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {loading && !hasResults && !isEmpty && <p className="py-6 text-center text-sm text-fg-muted">Searching…</p>}
+
+          {/* Admin page jump-list */}
+          {hasAdminPages && (
             <div className="mb-2">
-              <h3 className="mb-1 text-xs font-semibold uppercase tracking-wider text-fg-subtle">
-                {query.trim().length === 0 ? "Recent pages" : "Pages"}
+              <h3 className="mb-1 px-2 text-xs font-semibold uppercase tracking-wider text-fg-subtle">
+                {isEmpty ? "Recent pages" : "Pages"}
               </h3>
               <div className="space-y-0.5">
                 {adminPages.map((p) => (
-                  <button
-                    key={p.href}
-                    onClick={() => navigate(p.href)}
-                    className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm transition-colors hover:bg-surface-2"
-                  >
-                    <LayoutDashboard size={13} className="shrink-0 text-fg-subtle" />
+                  <button key={p.href} onClick={() => navigate(p.href)} className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-surface-2">
+                    <LayoutDashboard size={14} className="shrink-0 text-fg-subtle" />
                     <span className="flex-1 truncate text-fg">{p.label}</span>
                     <span className="shrink-0 text-[10px] uppercase tracking-wider text-fg-subtle">admin</span>
                   </button>
@@ -134,16 +216,28 @@ export function SearchModal({ onClose, adminMode = false }: { onClose: () => voi
             </div>
           )}
 
-          {/* Quick suggestions: appear fast (150ms) while the full result set loads. */}
-          {suggestions.length > 0 && !hasResults && (
+          {/* Matched public pages (live, local) */}
+          {!isEmpty && pageMatches.length > 0 && (
+            <SearchSection title="Pages">
+              {pageMatches.map((p) => {
+                const Icon = p.icon;
+                return (
+                  <button key={p.href} onClick={() => navigate(p.href)} className="group flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-colors hover:bg-surface-2">
+                    <Icon size={15} className="shrink-0 text-fg-subtle transition-colors group-hover:text-accent" />
+                    <span className="flex-1 truncate text-sm text-fg group-hover:text-accent">{p.label}</span>
+                    <ArrowRight size={13} className="shrink-0 text-fg-subtle opacity-0 transition-opacity group-hover:opacity-100" />
+                  </button>
+                );
+              })}
+            </SearchSection>
+          )}
+
+          {/* Quick suggestions while full results load */}
+          {!isEmpty && suggestions.length > 0 && !hasResults && (effectiveScope?.kind || !effectiveScope) && (
             <div className="space-y-0.5">
               {suggestions.map((s, i) => (
-                <button
-                  key={`${s.url}-${i}`}
-                  onClick={() => navigate(s.url)}
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm transition-colors hover:bg-surface-2"
-                >
-                  <CornerDownLeft size={13} className="shrink-0 text-fg-subtle" />
+                <button key={`${s.url}-${i}`} onClick={() => navigate(s.url)} className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-surface-2">
+                  <CornerDownLeft size={14} className="shrink-0 text-fg-subtle" />
                   <span className="flex-1 truncate text-fg">{s.label}</span>
                   <span className="shrink-0 text-[10px] uppercase tracking-wider text-fg-subtle">{s.type}</span>
                 </button>
@@ -151,42 +245,37 @@ export function SearchModal({ onClose, adminMode = false }: { onClose: () => voi
             </div>
           )}
 
-          {!loading && query.trim().length < 2 && !hasAdminPages && (
-            <p className="px-1 py-3 text-xs text-fg-subtle">
-              Tip: prefix to narrow your search — <span className="text-fg-muted">wiki:</span>, <span className="text-fg-muted">enemy:</span>, <span className="text-fg-muted">forum:</span>, <span className="text-fg-muted">user:</span>
-            </p>
+          {!loading && !isEmpty && !hasResults && pageMatches.length === 0 && !hasAdminPages && (
+            <p className="py-6 text-center text-sm text-fg-muted">No results for &ldquo;{term}&rdquo;.</p>
           )}
 
-          {!loading && query.trim().length >= 2 && !hasResults && !hasAdminPages && (
-            <p className="py-4 text-center text-sm text-fg-muted">No results found.</p>
-          )}
-
-          {!loading && hasResults && (
+          {/* Full results */}
+          {!loading && hasResults && filtered && (
             <div className="space-y-3">
-              {results.wiki.length > 0 && (
+              {filtered.wiki.length > 0 && (
                 <SearchSection title="Wiki">
-                  {results.wiki.map((item) => (
+                  {filtered.wiki.map((item) => (
                     <SearchItem key={item.id} label={item.title} sub={item.categorySlug} onClick={() => navigate(`/wiki/${item.slug}`)} />
                   ))}
                 </SearchSection>
               )}
-              {results.enemies.length > 0 && (
-                <SearchSection title="Enemies">
-                  {results.enemies.map((item) => (
+              {filtered.enemies.length > 0 && (
+                <SearchSection title="Bestiary">
+                  {filtered.enemies.map((item) => (
                     <SearchItem key={item.enemyId} label={item.name} sub={item.tier} onClick={() => navigate(`/bestiary/${item.enemyId}`)} />
                   ))}
                 </SearchSection>
               )}
-              {results.posts.length > 0 && (
+              {filtered.posts.length > 0 && (
                 <SearchSection title="Forum">
-                  {results.posts.map((item) => (
+                  {filtered.posts.map((item) => (
                     <SearchItem key={item.id} label={item.threadTitle} sub={item.snippet} onClick={() => navigate(`/forum/${item.threadId}`)} />
                   ))}
                 </SearchSection>
               )}
-              {results.users.length > 0 && (
+              {filtered.users.length > 0 && (
                 <SearchSection title="Users">
-                  {results.users.map((item) => (
+                  {filtered.users.map((item) => (
                     <SearchItem key={item.id} label={item.displayName ?? item.username} sub={`@${item.username}`} onClick={() => navigate(adminMode ? `/admin/users/${item.id}` : `/u/${item.username}`)} />
                   ))}
                 </SearchSection>
@@ -199,10 +288,38 @@ export function SearchModal({ onClose, adminMode = false }: { onClose: () => voi
   );
 }
 
+function ScopeChip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+        active
+          ? "border-accent bg-accent-soft text-accent"
+          : "border-border text-fg-muted hover:border-border-strong hover:text-fg"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+/** Narrow API results to a single kind when a kind-bearing scope is active; else pass through. */
+function filterResults(results: GlobalSearchResponse | null, scope: SearchScope | null): GlobalSearchResponse | null {
+  if (!results) return null;
+  if (!scope || !scope.kind) return results;
+  return {
+    ...results,
+    wiki: scope.kind === "wiki" ? results.wiki : [],
+    enemies: scope.kind === "enemy" ? results.enemies : [],
+    posts: scope.kind === "forum" ? results.posts : [],
+    users: scope.kind === "user" ? results.users : [],
+  };
+}
+
 function SearchSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h3 className="mb-1 text-xs font-semibold uppercase tracking-wider text-fg-subtle">{title}</h3>
+      <h3 className="mb-1 px-2 text-xs font-semibold uppercase tracking-wider text-fg-subtle">{title}</h3>
       {children}
     </div>
   );
@@ -210,12 +327,10 @@ function SearchSection({ title, children }: { title: string; children: React.Rea
 
 function SearchItem({ label, sub, onClick }: { label: string; sub: string; onClick: () => void }) {
   return (
-    <button
-      onClick={onClick}
-      className="group block w-full rounded-lg px-3 py-2 text-left transition-colors hover:bg-surface-2"
-    >
+    <button onClick={onClick} className="group block w-full rounded-lg px-3 py-2 text-left transition-colors hover:bg-surface-2">
       <p className="text-sm font-medium text-fg transition-colors group-hover:text-accent">{label}</p>
-      <p className="line-clamp-1 text-xs text-fg-muted">{sub}</p>
+      {sub && <p className="line-clamp-1 text-xs text-fg-muted">{sub}</p>}
     </button>
   );
 }
+

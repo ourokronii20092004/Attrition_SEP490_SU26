@@ -12,7 +12,9 @@ public record AssetDto(
     string? Tags,
     string? UploadedBy,
     DateTime UploadedAt,
-    DateTime? UpdatedAt
+    DateTime? UpdatedAt,
+    string? SourceType = null,
+    string? SourceId = null
 );
 
 public record UpdateAssetReq(string? Title, string? Description, string? Tags, string? AssetType);

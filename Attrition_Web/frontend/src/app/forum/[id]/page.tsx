@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { ArrowLeft, ThumbsUp, ThumbsDown, Flag, Lock, Reply, ImagePlus, Eye, Pencil } from "lucide-react";
+import { clsx } from "clsx";
+import { ArrowLeft, ThumbsUp, ThumbsDown, Flag, Lock, Reply, ImagePlus, Eye, Pencil, MessageSquare, Trash2 } from "lucide-react";
 import { forumApi } from "@/lib/api/forum";
 import { assetsApi } from "@/lib/api/assets";
-import { useAuth, useToast } from "@/lib/providers";
+import { useAuth, useToast, useConfirm } from "@/lib/providers";
 import { PageShell } from "@/components/ui/page-shell";
 import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
@@ -17,7 +18,8 @@ import { RelativeTime } from "@/components/ui/relative-time";
 import { MarkdownContent } from "@/components/post-content";
 import { resolveMediaUrl } from "@/lib/api/media";
 import { qk } from "@/lib/query-keys";
-import type { ForumPostDto } from "@/lib/types";
+import { makeOptimisticPost, addPostToPage, replacePostInPage, removePostFromPage } from "@/lib/forum-cache";
+import type { ForumPostDto, ForumThreadDto, PaginatedResponse } from "@/lib/types";
 
 type PostNode = ForumPostDto & { children: PostNode[] };
 
@@ -52,8 +54,10 @@ const REPLY_PAGE_SIZE = 50;
 
 export default function ThreadPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const { user } = useAuth();
   const { toast } = useToast();
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const [actionError, setActionError] = useState("");
   // Reply window grows by REPLY_PAGE_SIZE on "load more"; the key carries it so React Query
@@ -63,16 +67,20 @@ export default function ThreadPage() {
   const { data: thread } = useQuery({
     queryKey: qk.forum.thread(params.id),
     enabled: !!params.id,
+    // Keep briefly fresh so a just-created thread (seeded into cache on redirect) isn't instantly
+    // refetched into a blank "ghost" if the read side lags behind the write.
+    staleTime: 30_000,
     queryFn: async () => {
       const res = await forumApi.getThread(params.id);
       return res.success ? res.data : null;
     },
   });
 
-  const postsKey = [...qk.forum.posts(params.id), "w", limit] as const;
+  const postsKey = qk.forum.postsWindow(params.id, limit);
   const { data: posts, isPending } = useQuery({
     queryKey: postsKey,
     enabled: !!params.id,
+    staleTime: 30_000,
     queryFn: async () => {
       const res = await forumApi.getPosts(params.id, { page: 1, pageSize: limit });
       return res.success ? res.data : null;
@@ -106,10 +114,28 @@ export default function ThreadPage() {
   // Per-post reply: parentPostId null = top-level reply to the thread.
   const replyMutation = useMutation({
     mutationFn: async ({ content, parentPostId, attachments }: { content: string; parentPostId: string | null; attachments: string[] }) => {
-      await forumApi.createPost(params.id, { content, parentPostId, attachments });
+      const res = await forumApi.createPost(params.id, { content, parentPostId, attachments });
+      return res.success ? res.data : null;
     },
-    onSuccess: invalidatePosts,
-    onError: () => setActionError("Failed to post reply. Please try again."),
+    // Show the reply the instant it's submitted; swap in the server's real post on success (so it
+    // keeps its true id for reactions), or roll it back if the request fails. No refetch on settle,
+    // so a lagging read side can't make the just-posted reply vanish.
+    onMutate: async ({ content, parentPostId, attachments }) => {
+      await queryClient.cancelQueries({ queryKey: postsKey });
+      const prev = queryClient.getQueryData<PaginatedResponse<ForumPostDto>>(postsKey);
+      const optimistic = makeOptimisticPost({ threadId: params.id, content, parentPostId, attachments, user });
+      queryClient.setQueryData<PaginatedResponse<ForumPostDto>>(postsKey, (old) => addPostToPage(old, optimistic));
+      return { prev, tempId: optimistic.id };
+    },
+    onSuccess: (realPost, _vars, ctx) => {
+      if (realPost && ctx) {
+        queryClient.setQueryData<PaginatedResponse<ForumPostDto>>(postsKey, (old) => replacePostInPage(old, ctx.tempId, realPost));
+      }
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(postsKey, ctx.prev);
+      setActionError("Failed to post reply. Please try again.");
+    },
   });
 
   const reactMutation = useMutation({
@@ -153,18 +179,78 @@ export default function ThreadPage() {
     onError: () => toast("Failed to submit report. Please try again.", "error"),
   });
 
+  // Delete a post the current user owns. Optimistically drop it (children re-parent to top-level,
+  // same as the server), roll back on failure.
+  const deleteMutation = useMutation({
+    mutationFn: async (postId: string) => {
+      const res = await forumApi.deletePost(postId);
+      if (!res.success) throw new Error(res.error ?? "Failed to delete");
+    },
+    onMutate: async (postId) => {
+      await queryClient.cancelQueries({ queryKey: postsKey });
+      const prev = queryClient.getQueryData<PaginatedResponse<ForumPostDto>>(postsKey);
+      queryClient.setQueryData<PaginatedResponse<ForumPostDto>>(postsKey, (old) => removePostFromPage(old, postId));
+      return { prev };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(postsKey, ctx.prev);
+      toast("Couldn't delete your post. Please try again.", "error");
+    },
+  });
+
   const handleReport = (postId: string) => {
     const reason = window.prompt("Why are you reporting this post?");
     if (!reason?.trim()) return;
     reportMutation.mutate({ postId, reason: reason.trim() });
   };
 
+  const handleDelete = async (postId: string) => {
+    const ok = await confirm({
+      title: "Delete this reply?",
+      message: "This permanently removes your reply. This can't be undone.",
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (ok) { setActionError(""); deleteMutation.mutate(postId); }
+  };
+
+  // Deleting the original post removes just that post — replies stay (they mirror the separate
+  // forum-post records and aren't cascaded). Since the post being viewed is gone, return to the
+  // forum list and refresh it rather than leaving the author on a now-headless thread.
+  const handleDeleteOriginalPost = async () => {
+    if (!originalPost) return;
+    const ok = await confirm({
+      title: "Delete this post?",
+      message: "This permanently removes your original post. Existing replies stay on the thread. This can't be undone.",
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (!ok) return;
+    try {
+      const res = await forumApi.deletePost(originalPost.id);
+      if (!res.success) throw new Error(res.error ?? "Failed to delete");
+      toast("Your post was deleted.", "success");
+      queryClient.invalidateQueries({ queryKey: qk.forum.threads() });
+      queryClient.invalidateQueries({ queryKey: qk.forum.posts(params.id) });
+      router.push("/forum");
+    } catch {
+      toast("Couldn't delete your post. Please try again.", "error");
+    }
+  };
+
+  // Reacting needs an account. Rather than firing a doomed 401, send anonymous users to sign in
+  // (returning them to this thread afterwards).
+  const handleReact = (postId: string, type: "like" | "dislike") => {
+    if (!user) { router.push(`/login?redirect=/forum/${params.id}`); return; }
+    setActionError("");
+    reactMutation.mutate({ postId, type });
+  };
+
   if (isPending && !thread) {
     return (
       <PageShell size="lg">
         <Skeleton className="h-4 w-16" />
-        <Skeleton className="mt-4 h-9 w-2/3" />
-        <SkeletonList rows={4} className="mt-6" />
+        <ThreadPostSkeleton />
       </PageShell>
     );
   }
@@ -177,123 +263,223 @@ export default function ThreadPage() {
         <ArrowLeft size={16} /> Forum
       </Link>
 
-      {thread && (
-        <div className="mt-4">
-          <h1 className="font-display text-2xl font-bold tracking-tight text-balance text-fg sm:text-3xl">
-            {thread.title}
-          </h1>
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-fg-muted">
-            <span className="rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-medium text-accent">
-              {thread.categorySlug}
-            </span>
-            <span>by {thread.authorName}</span>
-            <span className="text-fg-subtle">&middot;</span>
-            <span>{thread.replyCount} replies</span>
+      {isPending ? (
+        <ThreadPostSkeleton />
+      ) : (
+        <>
+          {/* The thread's opening post — a self-contained "post" card (title + body + actions all
+              inside), styled like a social feed post rather than a comment. */}
+          {originalPost && thread && (
+            <ThreadPost
+              post={originalPost}
+              thread={thread}
+              replyCount={totalReplies}
+              canReport={!!user}
+              canDelete={!!user && originalPost.authorId === user.id}
+              onReact={(type) => handleReact(originalPost.id, type)}
+              onReport={() => handleReport(originalPost.id)}
+              onDelete={handleDeleteOriginalPost}
+            />
+          )}
+
+          {actionError && <p className="mt-4 text-sm text-danger">{actionError}</p>}
+
+          {/* Compose box sits directly beneath the post — not buried under every reply. */}
+          {canReply ? (
+            <Card className="mt-5 p-4">
+              <ReplyBox
+                label="Write a reply"
+                placeholder="Share your thoughts…"
+                loading={replyMutation.isPending}
+                onSubmit={(content, attachments) => replyMutation.mutate({ content, parentPostId: null, attachments })}
+              />
+            </Card>
+          ) : thread?.isLocked ? (
+            <p className="mt-5 flex items-center justify-center gap-2 rounded-lg border border-border bg-surface-2 px-4 py-3 text-center text-sm text-fg-muted">
+              <Lock size={14} /> This thread is locked. New replies are disabled.
+            </p>
+          ) : !user ? (
+            <p className="mt-5 rounded-lg border border-border bg-surface-2 px-4 py-3 text-center text-sm text-fg-muted">
+              <Link href={`/login?redirect=/forum/${params.id}`} className="font-medium text-accent hover:underline">Sign in</Link>{" "}
+              to join the discussion.
+            </p>
+          ) : null}
+
+          {/* Replies stay in the compact comment style, below the post. */}
+          <div className="mt-8">
+            <h2 className="font-display text-lg font-semibold tracking-tight text-fg">
+              {totalReplies} {totalReplies === 1 ? "Reply" : "Replies"}
+            </h2>
+            <div className="mt-4 space-y-3">
+              {tree.map((node) => (
+                <PostNodeView
+                  key={node.id}
+                  node={node}
+                  canReply={canReply}
+                  showReport={!!user}
+                  currentUserId={user?.id}
+                  onReact={handleReact}
+                  onReport={handleReport}
+                  onReply={(content, parentPostId, attachments) => replyMutation.mutate({ content, parentPostId, attachments })}
+                  onDelete={handleDelete}
+                  replying={replyMutation.isPending}
+                />
+              ))}
+              {tree.length === 0 && (
+                <p className="rounded-lg border border-dashed border-border py-10 text-center text-sm text-fg-muted">
+                  No replies yet. Be the first to respond.
+                </p>
+              )}
+            </div>
+
+            {hasMore && (
+              <div className="mt-4 flex justify-center">
+                <Button variant="secondary" size="sm" onClick={() => setLimit((n) => n + REPLY_PAGE_SIZE)}>
+                  Load more replies ({totalReplies - loadedReplies} left)
+                </Button>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </PageShell>
+  );
+}
+
+/**
+ * The thread's opening post as a proper social-feed post card: byline + report on top, the thread
+ * title and full-size markdown body in the middle, and an action bar (reactions + reply count) at
+ * the bottom. Deliberately distinct from the compact reply cards below it.
+ */
+function ThreadPost({ post, thread, replyCount, canReport, canDelete, onReact, onReport, onDelete }: {
+  post: ForumPostDto;
+  thread: ForumThreadDto;
+  replyCount: number;
+  canReport: boolean;
+  canDelete: boolean;
+  onReact: (type: "like" | "dislike") => void;
+  onReport: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <Card id={`post-${post.id}`} className="mt-6 p-5 transition-shadow sm:p-7">
+      {/* Byline — author on the left, report tucked into the top-right corner. */}
+      <div className="flex items-start gap-3 sm:gap-4">
+        <Link href={`/u/${encodeURIComponent(post.authorName)}`} className="shrink-0">
+          <Avatar src={post.authorAvatar} name={post.authorName} size="lg" />
+        </Link>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+            <Link href={`/u/${encodeURIComponent(post.authorName)}`} className="font-semibold text-fg transition-colors hover:text-accent">
+              {post.authorName}
+            </Link>
+            {post.authorRole === "Admin" && (
+              <span className="rounded bg-accent-soft px-1.5 py-0.5 text-[11px] font-medium text-accent">Admin</span>
+            )}
+          </div>
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-fg-subtle">
+            <RelativeTime iso={post.createdAt} />
+            <span aria-hidden>·</span>
+            <span className="rounded-full bg-surface-2 px-2 py-0.5 font-medium text-fg-muted">{thread.categorySlug}</span>
             {thread.isLocked && (
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-fg-subtle">
-                <Lock size={12} /> Locked
-              </span>
+              <span className="inline-flex items-center gap-1 font-medium text-warning"><Lock size={11} /> Locked</span>
             )}
           </div>
         </div>
-      )}
-
-      {isPending ? (
-        <SkeletonList rows={4} className="mt-6" />
-      ) : (
-        <>
-          {/* Original post: rendered as a distinct header block (markdown), not a reply (UIBD-1). */}
-          {originalPost && (
-            <Card id={`post-${originalPost.id}`} className="mt-6 p-5 transition-shadow">
-              <div className="flex items-start gap-3">
-                <Avatar src={originalPost.authorAvatar} name={originalPost.authorName} size="md" />
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Link href={`/u/${encodeURIComponent(originalPost.authorName)}`} className="text-sm font-medium text-fg transition-colors hover:text-accent">
-                      {originalPost.authorName}
-                    </Link>
-                    {originalPost.authorRole === "Admin" && (
-                      <span className="rounded bg-accent-soft px-1.5 py-0.5 text-xs font-medium text-accent">Admin</span>
-                    )}
-                    <span className="text-[10px] uppercase tracking-wider text-fg-subtle">Original post</span>
-                    <span className="text-xs text-fg-subtle"><RelativeTime iso={originalPost.createdAt} /></span>
-                  </div>
-                  <MarkdownContent content={originalPost.content} className="prose-content mt-3 text-sm" />
-                  {originalPost.attachments.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {originalPost.attachments.map((url) => (
-                        <a key={url} href={resolveMediaUrl(url) ?? ""} target="_blank" rel="noopener noreferrer">
-                          <img src={resolveMediaUrl(url) ?? ""} alt="" className="max-h-64 rounded-lg border border-border object-cover" />
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                  <div className="mt-3 flex items-center gap-1">
-                    <button onClick={() => { setActionError(""); reactMutation.mutate({ postId: originalPost.id, type: "like" }); }}
-                      className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs transition-colors ${originalPost.currentUserReaction === "like" ? "bg-accent-soft text-accent" : "text-fg-subtle hover:bg-surface-2 hover:text-fg"}`}>
-                      <ThumbsUp size={14} /> {originalPost.likeCount}
-                    </button>
-                    <button onClick={() => { setActionError(""); reactMutation.mutate({ postId: originalPost.id, type: "dislike" }); }}
-                      className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs transition-colors ${originalPost.currentUserReaction === "dislike" ? "bg-danger/10 text-danger" : "text-fg-subtle hover:bg-surface-2 hover:text-fg"}`}>
-                      <ThumbsDown size={14} /> {originalPost.dislikeCount}
-                    </button>
-                    {!!user && (
-                      <button onClick={() => handleReport(originalPost.id)}
-                        className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-fg-subtle transition-colors hover:bg-surface-2 hover:text-warning">
-                        <Flag size={14} /> Report
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </Card>
-          )}
-
-          <div className="mt-4 space-y-3">
-            {tree.map((node) => (
-              <PostNodeView
-                key={node.id}
-                node={node}
-                canReply={canReply}
-                showReport={!!user}
-                onReact={(postId, type) => { setActionError(""); reactMutation.mutate({ postId, type }); }}
-                onReport={handleReport}
-                onReply={(content, parentPostId, attachments) => replyMutation.mutate({ content, parentPostId, attachments })}
-                replying={replyMutation.isPending}
-              />
-            ))}
-            {tree.length === 0 && <p className="py-8 text-center text-fg-muted">No replies yet. Be the first.</p>}
+        {(canReport || canDelete) && (
+          <div className="-mr-1.5 -mt-1.5 flex shrink-0 items-center gap-0.5">
+            {canReport && (
+              <button
+                onClick={onReport}
+                aria-label="Report post"
+                className="rounded-lg p-2 text-fg-subtle transition-colors hover:bg-surface-2 hover:text-warning"
+              >
+                <Flag size={16} />
+              </button>
+            )}
+            {canDelete && (
+              <button
+                onClick={onDelete}
+                aria-label="Delete post"
+                className="rounded-lg p-2 text-fg-subtle transition-colors hover:bg-surface-2 hover:text-danger"
+              >
+                <Trash2 size={16} />
+              </button>
+            )}
           </div>
+        )}
+      </div>
 
-          {hasMore && (
-            <div className="mt-4 flex justify-center">
-              <Button variant="secondary" size="sm" onClick={() => setLimit((n) => n + REPLY_PAGE_SIZE)}>
-                Load more replies ({totalReplies - loadedReplies} left)
-              </Button>
-            </div>
-          )}
-        </>
+      {/* Title + body, both inside the post card. */}
+      <h1 className="mt-4 break-words font-display text-2xl font-bold leading-tight tracking-tight text-balance text-fg sm:text-3xl">
+        {thread.title}
+      </h1>
+      <MarkdownContent content={post.content} className="prose-content mt-3" />
+
+      {post.attachments.length > 0 && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {post.attachments.map((url) => (
+            <a key={url} href={resolveMediaUrl(url) ?? ""} target="_blank" rel="noopener noreferrer">
+              <img src={resolveMediaUrl(url) ?? ""} alt="" className="max-h-80 rounded-lg border border-border object-cover" />
+            </a>
+          ))}
+        </div>
       )}
 
-      {actionError && <p className="mt-4 text-sm text-danger">{actionError}</p>}
+      {/* Action bar — reactions live down here; reply count anchored to the right. */}
+      <div className="mt-5 flex items-center gap-2 border-t border-border pt-4">
+        <VoteButton active={post.currentUserReaction === "like"} tone="accent" icon={ThumbsUp} count={post.likeCount} onClick={() => onReact("like")} label="Like" />
+        <VoteButton active={post.currentUserReaction === "dislike"} tone="danger" icon={ThumbsDown} count={post.dislikeCount} onClick={() => onReact("dislike")} label="Dislike" />
+        <span className="ml-auto inline-flex items-center gap-1.5 text-sm font-medium text-fg-muted">
+          <MessageSquare size={16} /> {replyCount}
+        </span>
+      </div>
+    </Card>
+  );
+}
 
-      {canReply && (
-        <Card className="mt-6 p-4">
-          <ReplyBox
-            label="Write a reply"
-            placeholder="Share your thoughts..."
-            loading={replyMutation.isPending}
-            onSubmit={(content, attachments) => replyMutation.mutate({ content, parentPostId: null, attachments })}
-          />
-        </Card>
+/** Pill-style reaction button for the post card's action bar. Neutral until it's the user's own
+ * active vote, when it takes the accent (like) or danger (dislike) tint. */
+function VoteButton({ active, tone, icon: Icon, count, onClick, label }: {
+  active: boolean; tone: "accent" | "danger";
+  icon: React.ComponentType<{ size?: number }>; count: number; onClick: () => void; label: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label={label}
+      aria-pressed={active}
+      className={clsx(
+        "inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
+        active
+          ? tone === "danger" ? "bg-danger/10 text-danger" : "bg-accent-soft text-accent"
+          : "bg-surface-2 text-fg-muted hover:bg-surface-3 hover:text-fg",
       )}
+    >
+      <Icon size={16} /> <span className="tabular-nums">{count}</span>
+    </button>
+  );
+}
 
-      {thread?.isLocked && (
-        <p className="mt-6 rounded-lg border border-border bg-surface-2 px-4 py-3 text-center text-sm text-fg-muted">
-          This thread is locked. New replies are disabled.
-        </p>
-      )}
-    </PageShell>
+function ThreadPostSkeleton() {
+  return (
+    <Card className="mt-6 p-5 sm:p-7">
+      <div className="flex items-center gap-4">
+        <Skeleton className="h-16 w-16 rounded-full" />
+        <div className="flex-1 space-y-2">
+          <Skeleton className="h-4 w-40" />
+          <Skeleton className="h-3 w-28" />
+        </div>
+      </div>
+      <Skeleton className="mt-5 h-8 w-3/4" />
+      <div className="mt-4 space-y-2.5">
+        {[0, 1, 2, 3].map((i) => <Skeleton key={i} className={clsx("h-4", i === 3 ? "w-1/2" : "w-full")} />)}
+      </div>
+      <div className="mt-5 flex gap-2 border-t border-border pt-4">
+        <Skeleton className="h-9 w-20 rounded-full" />
+        <Skeleton className="h-9 w-20 rounded-full" />
+      </div>
+    </Card>
   );
 }
 
@@ -371,14 +557,16 @@ function ReplyBox({ label, placeholder, loading, onSubmit, autoFocus }: {
   );
 }
 
-function PostNodeView({ node, canReply, showReport, onReact, onReport, onReply, replying }: {
-  node: PostNode; canReply: boolean; showReport: boolean;
+function PostNodeView({ node, canReply, showReport, currentUserId, onReact, onReport, onReply, onDelete, replying }: {
+  node: PostNode; canReply: boolean; showReport: boolean; currentUserId?: string;
   onReact: (postId: string, type: "like" | "dislike") => void;
   onReport: (postId: string) => void;
   onReply: (content: string, parentPostId: string, attachments: string[]) => void;
+  onDelete: (postId: string) => void;
   replying: boolean;
 }) {
   const [replyOpen, setReplyOpen] = useState(false);
+  const canDelete = !!currentUserId && node.authorId === currentUserId;
   return (
     <div>
       <Card id={`post-${node.id}`} className="p-4 transition-shadow">
@@ -427,6 +615,12 @@ function PostNodeView({ node, canReply, showReport, onReact, onReport, onReply, 
                   <Flag size={14} /> Report
                 </button>
               )}
+              {canDelete && (
+                <button onClick={() => onDelete(node.id)}
+                  className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-fg-subtle transition-colors hover:bg-surface-2 hover:text-danger">
+                  <Trash2 size={14} /> Delete
+                </button>
+              )}
             </div>
 
             {replyOpen && (
@@ -451,9 +645,11 @@ function PostNodeView({ node, canReply, showReport, onReact, onReport, onReply, 
               node={child}
               canReply={canReply}
               showReport={showReport}
+              currentUserId={currentUserId}
               onReact={onReact}
               onReport={onReport}
               onReply={onReply}
+              onDelete={onDelete}
               replying={replying}
             />
           ))}
@@ -462,5 +658,3 @@ function PostNodeView({ node, canReply, showReport, onReact, onReport, onReply, 
     </div>
   );
 }
-
-

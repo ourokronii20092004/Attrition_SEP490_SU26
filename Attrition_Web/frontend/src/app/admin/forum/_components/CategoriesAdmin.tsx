@@ -11,7 +11,9 @@ import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { PageLoader } from "@/components/ui/spinner";
 import { AdminPageHeader, AdminFilterBar, AdminTable, AdminRow } from "@/components/admin/admin-table";
+import { Pagination } from "@/components/ui/pagination";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
+import { useClientPagination } from "@/lib/hooks/use-client-pagination";
 import { qk } from "@/lib/query-keys";
 
 export function CategoriesAdmin() {
@@ -47,6 +49,7 @@ export function CategoriesAdmin() {
   const filtered = search
     ? categories.filter((c) => c.name.toLowerCase().includes(search) || c.slug.toLowerCase().includes(search))
     : categories;
+  const { page, setPage, totalPages, paged } = useClientPagination(filtered, 20);
 
   return (
     <div>
@@ -69,7 +72,7 @@ export function CategoriesAdmin() {
           ]}
           empty={filtered.length === 0}
         >
-          {filtered.map((c) => (
+          {paged.map((c) => (
             <AdminRow key={c.id} onClick={() => router.push(`/admin/forum/categories/${c.id}`)}>
               <td className="px-3 py-2 font-medium text-fg">{c.name}</td>
               <td className="px-3 py-2 tabular-nums text-fg-muted">{c.threadCount}</td>
@@ -85,6 +88,7 @@ export function CategoriesAdmin() {
           ))}
         </AdminTable>
       )}
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} compact />
     </div>
   );
 }

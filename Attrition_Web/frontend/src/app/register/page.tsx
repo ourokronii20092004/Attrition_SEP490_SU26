@@ -11,14 +11,31 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GoogleButton } from "@/components/google-button";
 import { ApiError } from "@/lib/api/client";
+import { parseApiError } from "@/lib/api/parse-error";
 
+// Mirrors the server-side policy (Identity.Service validators) so the user gets clear, specific
+// feedback BEFORE submitting instead of a generic "registration failed" from the API.
 const schema = z.object({
-  username: z.string().min(3, "At least 3 characters").max(20, "Max 20 characters"),
-  email: z.string().email("Invalid email"),
-  password: z.string().min(6, "At least 6 characters"),
+  username: z
+    .string()
+    .trim()
+    .min(3, "Username must be at least 3 characters.")
+    .max(20, "Username must be at most 20 characters.")
+    .regex(/^[a-z0-9_]+$/, "Use lowercase letters, numbers, and underscores only — no spaces or symbols."),
+  email: z.string().trim().min(1, "Email is required.").email("Enter a valid email address."),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters.")
+    .regex(/[A-Z]/, "Add at least one uppercase letter.")
+    .regex(/[a-z]/, "Add at least one lowercase letter.")
+    .regex(/[0-9]/, "Add at least one number.")
+    .regex(/[^A-Za-z0-9]/, "Add at least one special character."),
   confirmPassword: z.string(),
+  acceptTerms: z.boolean().refine((v) => v === true, {
+    message: "Please accept the Terms of Service and Privacy Policy to continue.",
+  }),
 }).refine((d) => d.password === d.confirmPassword, {
-  message: "Passwords don't match",
+  message: "Passwords don't match.",
   path: ["confirmPassword"],
 });
 
@@ -39,12 +56,16 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await registerUser({ username: data.username, email: data.email, password: data.password });
-      router.push("/");
+      // New accounts aren't signed in — they must verify their email first.
+      router.push("/verify-email?registered=1");
     } catch (e) {
       if (e instanceof ApiError) {
-        setError(tryParseError(e.body) || "Registration failed");
+        // 5xx / rate-limit are on us; 4xx are actionable by the user (show the specific reason).
+        if (e.status >= 500) setError("Something went wrong on our end. Please try again in a moment.");
+        else if (e.status === 429) setError("Too many attempts. Please wait a moment and try again.");
+        else setError(parseApiError(e, "Registration failed. Please review your details and try again."));
       } else {
-        setError("Something went wrong");
+        setError("We couldn't reach the server. Check your internet connection and try again.");
       }
     } finally {
       setLoading(false);
@@ -64,11 +85,34 @@ export default function RegisterPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
-          <Input label="Username" autoComplete="username" {...register("username")} error={errors.username?.message} />
+        <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4" noValidate>
+          <div>
+            <Input label="Username" autoComplete="username" {...register("username")} error={errors.username?.message} />
+            {!errors.username && <p className="mt-1 text-xs text-fg-subtle">Lowercase letters, numbers, and underscores.</p>}
+          </div>
           <Input label="Email" type="email" autoComplete="email" {...register("email")} error={errors.email?.message} />
-          <Input label="Password" type="password" autoComplete="new-password" {...register("password")} error={errors.password?.message} />
+          <div>
+            <Input label="Password" type="password" autoComplete="new-password" {...register("password")} error={errors.password?.message} />
+            {!errors.password && <p className="mt-1 text-xs text-fg-subtle">At least 8 characters with an uppercase, lowercase, number, and symbol.</p>}
+          </div>
           <Input label="Confirm Password" type="password" autoComplete="new-password" {...register("confirmPassword")} error={errors.confirmPassword?.message} />
+
+          <div>
+            <label className="flex items-start gap-2.5 text-sm text-fg-muted">
+              <input
+                type="checkbox"
+                {...register("acceptTerms")}
+                className="mt-0.5 h-4 w-4 shrink-0 rounded border-border-strong bg-surface-2 text-accent accent-[var(--color-accent)] focus-visible:outline-2 focus-visible:outline-accent"
+              />
+              <span>
+                I agree to the{" "}
+                <Link href="/terms" target="_blank" className="font-medium text-accent transition-opacity hover:opacity-80">Terms of Service</Link>
+                {" "}and{" "}
+                <Link href="/privacy" target="_blank" className="font-medium text-accent transition-opacity hover:opacity-80">Privacy Policy</Link>.
+              </span>
+            </label>
+            {errors.acceptTerms && <p className="mt-1 text-xs text-danger">{errors.acceptTerms.message}</p>}
+          </div>
 
           <Button type="submit" loading={loading} className="w-full">
             Create Account
@@ -84,13 +128,4 @@ export default function RegisterPage() {
       </div>
     </div>
   );
-}
-
-function tryParseError(body: string): string {
-  try {
-    const json = JSON.parse(body);
-    return json.error || json.message || "";
-  } catch {
-    return body;
-  }
 }

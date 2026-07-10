@@ -20,7 +20,9 @@ public record UserDto(
     bool IsEmailVerified,
     string? PendingEmail,
     bool NotifyOnReply,
-    bool NotifyOnMention
+    bool NotifyOnMention,
+    bool HasPassword,
+    bool IsGoogleLinked
 );
 
 public record UserListItem(Guid Id, string Username, string Role, bool IsBanned, bool IsDeleted, DateTime JoinedAt);
@@ -69,7 +71,9 @@ public record PublicProfileDto(
 public record UserSummaryDto(Guid Id, string Username, string? DisplayName, string? AvatarUrl, string Role);
 
 // ─── Session check (polled by the game client to enforce bans mid-session) ───
-public record SessionStatusDto(Guid UserId, string Username, string Role, bool IsBanned);
+// TokensValidAfter lets callers detect a revoked session: a token issued before this instant
+// (compared against its "sat" claim) has been invalidated by a password change / forced logout.
+public record SessionStatusDto(Guid UserId, string Username, string Role, bool IsBanned, DateTime? TokensValidAfter = null);
 
 // ─── Admin actions ───
 public record ChangeRoleRequest(string Role);
@@ -79,4 +83,7 @@ public record AdminResetPasswordRequest(string NewPassword);
 public record ReportUserRequest(string Reason);
 public record AdminUserReportDto(
     Guid Id, Guid ReportedUserId, string ReportedUserName, string ReporterName,
-    string Reason, string Status, DateTime CreatedAt);
+    string Reason, string Status, DateTime CreatedAt,
+    string? ActionTaken, string? ModeratorNote, string? ResolvedByName, DateTime? ResolvedAt);
+// Resolve a report, optionally banning the reported user in the same step.
+public record ResolveReportRequest(bool BanUser, string? Note);

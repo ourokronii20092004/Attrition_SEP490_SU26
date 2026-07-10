@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Mail, X } from "lucide-react";
 import { useAuth } from "@/lib/providers";
 import { authApi } from "@/lib/api/auth";
@@ -11,11 +11,19 @@ import { authApi } from "@/lib/api/auth";
  * Hidden for admins, verified users, and users with no email on file.
  */
 export function VerifyEmailBanner() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [dismissed, setDismissed] = useState(false);
   const [resending, setResending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState(false);
+
+  // If the user verifies in another tab or via the email link, re-fetch on focus so this banner
+  // disappears without a manual reload.
+  useEffect(() => {
+    const onFocus = () => { if (user && !user.isEmailVerified) refreshUser().catch(() => {}); };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [user, refreshUser]);
 
   if (!user || user.isEmailVerified || user.role === "Admin" || !user.email || dismissed) return null;
 

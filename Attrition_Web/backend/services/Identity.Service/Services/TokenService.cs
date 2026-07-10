@@ -30,7 +30,11 @@ public sealed class TokenService
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new("username", user.Username),
             new(ClaimTypes.Role, user.Role),
-            new("email_verified", user.IsEmailVerified ? "true" : "false")
+            new("email_verified", user.IsEmailVerified ? "true" : "false"),
+            // Session-issued-at (unix seconds). Lets the identity service invalidate tokens minted
+            // before a password change / forced logout (compared against Security.TokensValidAfter),
+            // without a per-request DB lookup on every service. Custom name so it isn't remapped.
+            new("sat", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString())
         };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Secret"]!));
@@ -56,7 +60,8 @@ public sealed class TokenService
         u.AvatarPath ?? u.GoogleAvatarUrl, u.BackgroundUrl,
         u.ThemeMode, u.ThemeAccent, u.Bio, u.AuthProvider, u.JoinedAt,
         u.PostCount, u.ContributionCount, u.MustChangePassword,
-        u.IsEmailVerified, u.PendingEmail, u.NotifyOnReply, u.NotifyOnMention);
+        u.IsEmailVerified, u.PendingEmail, u.NotifyOnReply, u.NotifyOnMention,
+        !string.IsNullOrEmpty(u.PasswordHash), !string.IsNullOrEmpty(u.GoogleId));
 
     public static PublicProfileDto MapToPublicProfile(User u) => new(
         u.Id, u.Username, u.DisplayName, u.Role,

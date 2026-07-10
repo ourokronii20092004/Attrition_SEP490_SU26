@@ -55,6 +55,24 @@ namespace Attrition.Gameplay.Environment
                 yield return null;
             }
 
+            // Cập nhật MostRecentlyActivated → respawn / Game Over hồi sinh đúng checkpoint mới.
+            if (!string.IsNullOrEmpty(wantId))
+            {
+                foreach (var cp in FindObjectsByType<Attrition.Gameplay.World.Checkpoint>(FindObjectsSortMode.None))
+                {
+                    if (cp != null && cp.DisplayName == wantId)
+                    {
+                        Attrition.Gameplay.World.Checkpoint.MostRecentlyActivated = cp;
+                        break;
+                    }
+                }
+
+                // LƯU checkpoint đích: solo → local JSON, coop → server.
+                var saver = Attrition.Gameplay.Persistence.GameSaveService.EnsureExists();
+                saver.Save(Attrition.Gameplay.Persistence.GameSaveService.SaveEvent.Rest,
+                           wantId, target);
+            }
+
             Clear();
         }
 

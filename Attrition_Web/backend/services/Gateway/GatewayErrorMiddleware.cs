@@ -3,8 +3,9 @@ using System.Text.Json;
 namespace Gateway;
 
 /// <summary>
-/// Gives the gateway the same <c>{ "Success": false, "Error": "..." }</c> error contract every
-/// downstream service uses. YARP emits a raw, empty-bodied 502/504 when a destination is
+/// Gives the gateway the same <c>{ "success": false, "error": "..." }</c> (camelCase, matching
+/// every downstream service and what the SPA parses) error contract. YARP emits a raw, empty-bodied
+/// 502/504 when a destination is
 /// unreachable, and the rate limiter emits an empty 429 — clients that expect the envelope choke
 /// on exactly the errors they are most likely to hit at the edge.
 ///
@@ -18,7 +19,8 @@ public sealed class GatewayErrorMiddleware
     private readonly RequestDelegate _next;
     private readonly ILogger<GatewayErrorMiddleware> _logger;
 
-    private static readonly JsonSerializerOptions Json = new() { PropertyNamingPolicy = null };
+    // camelCase, matching downstream ApiResponse and the SPA's error parsing (which reads `error`).
+    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     public GatewayErrorMiddleware(RequestDelegate next, ILogger<GatewayErrorMiddleware> logger)
     {
@@ -46,8 +48,40 @@ public sealed class GatewayErrorMiddleware
             && (context.Response.ContentLength is null or 0)
             && string.IsNullOrEmpty(context.Response.ContentType))
         {
+            // A top-level browser navigation to an auth endpoint (the Google OAuth start/callback are
+            // GETs the user lands on directly) must end on a real page, not a raw JSON body. Bounce
+            // it back to /login with an error code (+ retry seconds for rate limits) the UI can show.
+            if (IsBrowserNavigation(context) && context.Request.Path.StartsWithSegments("/api/auth"))
+            {
+                RedirectNavigationError(context, context.Response.StatusCode);
+                return;
+            }
             await WriteEnvelopeAsync(context, context.Response.StatusCode);
         }
+    }
+
+    private static bool IsBrowserNavigation(HttpContext ctx)
+    {
+        if (!HttpMethods.IsGet(ctx.Request.Method)) return false;
+        if (string.Equals(ctx.Request.Headers["Sec-Fetch-Mode"], "navigate", StringComparison.OrdinalIgnoreCase))
+            return true;
+        return ctx.Request.Headers.Accept.ToString().Contains("text/html", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static void RedirectNavigationError(HttpContext context, int status)
+    {
+        var code = status switch
+        {
+            429 => "rate_limited",
+            502 or 503 or 504 => "google_unavailable",
+            _ => "google_failed",
+        };
+        var location = $"/login?auth_error={code}";
+        var retryAfter = context.Response.Headers.RetryAfter.ToString();
+        if (status == 429 && int.TryParse(retryAfter, out var secs) && secs > 0)
+            location += $"&retry={secs}";
+        context.Response.Headers.Remove("Retry-After");
+        context.Response.Redirect(location); // sets 302 + Location (body hasn't started)
     }
 
     private static Task WriteEnvelopeAsync(HttpContext context, int status)
@@ -64,6 +98,7 @@ public sealed class GatewayErrorMiddleware
         };
         context.Response.StatusCode = status;
         context.Response.ContentType = "application/json";
-        return context.Response.WriteAsync(JsonSerializer.Serialize(new { Success = false, Error = message }, Json));
+        // Web defaults → {"success":false,"data":null,"error":"..."}, same shape as ApiResponse.
+        return context.Response.WriteAsync(JsonSerializer.Serialize(new { Success = false, Data = (object?)null, Error = message }, Json));
     }
 }

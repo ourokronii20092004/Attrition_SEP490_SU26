@@ -9,6 +9,7 @@ namespace Identity.Service.Services;
 public interface INotificationService
 {
     Task<List<NotificationDto>> ListAsync(Guid userId, int limit);
+    Task<PaginatedResponse<NotificationDto>> ListPagedAsync(Guid userId, int page, int pageSize, bool unreadOnly);
     Task<int> UnreadCountAsync(Guid userId);
     Task MarkReadAsync(Guid userId, Guid notificationId);
     Task MarkAllReadAsync(Guid userId);
@@ -33,6 +34,25 @@ public class NotificationService : INotificationService
 
     public Task<int> UnreadCountAsync(Guid userId) =>
         _db.Notifications.CountAsync(n => n.UserId == userId && !n.IsRead);
+
+    public async Task<PaginatedResponse<NotificationDto>> ListPagedAsync(Guid userId, int page, int pageSize, bool unreadOnly)
+    {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
+        var query = _db.Notifications.Where(n => n.UserId == userId);
+        if (unreadOnly) query = query.Where(n => !n.IsRead);
+
+        var total = await query.CountAsync();
+        var items = await query
+            .OrderByDescending(n => n.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(n => new NotificationDto(n.Id, n.Type, n.Message, n.Link, n.ActorName, n.IsRead, n.CreatedAt))
+            .ToListAsync();
+
+        return new PaginatedResponse<NotificationDto>(items, total, page, pageSize);
+    }
 
     public async Task MarkReadAsync(Guid userId, Guid notificationId)
     {

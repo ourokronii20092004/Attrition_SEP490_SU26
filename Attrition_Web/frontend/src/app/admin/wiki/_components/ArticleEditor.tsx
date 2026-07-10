@@ -12,6 +12,7 @@ import { parseApiError } from "@/lib/api/parse-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { MarkdownContent } from "@/components/post-content";
 import { qk } from "@/lib/query-keys";
 import type { WikiArticleListDto, WikiCategoryDto } from "@/lib/types";
 
@@ -34,6 +35,7 @@ export function ArticleEditor({ article, categories, onDone, onCancel, onDirtyCh
   onDirtyChange?: (dirty: boolean) => void;
 }) {
   const [error, setError] = useState("");
+  const [tab, setTab] = useState<"edit" | "preview">("edit");
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
 
   const {
@@ -121,7 +123,22 @@ export function ArticleEditor({ article, categories, onDone, onCancel, onDirtyCh
       )}
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <label className="block text-xs font-medium uppercase tracking-wider text-fg-muted">Content (Markdown)</label>
+          <div className="inline-flex rounded-lg border border-border p-0.5">
+            <button
+              type="button"
+              onClick={() => setTab("edit")}
+              className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${tab === "edit" ? "bg-accent text-accent-fg" : "text-fg-muted hover:text-fg"}`}
+            >
+              Edit (Markdown)
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab("preview")}
+              className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${tab === "preview" ? "bg-accent text-accent-fg" : "text-fg-muted hover:text-fg"}`}
+            >
+              Preview
+            </button>
+          </div>
           <label className="cursor-pointer rounded-md border border-border-strong px-2.5 py-1 text-xs text-fg-muted transition-colors hover:border-accent/60 hover:text-fg">
             {imgUploading ? "Uploading…" : "Insert image"}
             <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) insertImage(f); e.target.value = ""; }} />
@@ -132,8 +149,13 @@ export function ArticleEditor({ article, categories, onDone, onCancel, onDirtyCh
           ref={(el) => { contentFieldRef(el); contentRef.current = el; }}
           rows={12}
           placeholder="Write in Markdown. Use the Insert image button to upload and embed images."
-          className="w-full resize-y rounded-md border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-fg outline-none focus:border-accent"
+          className={`w-full resize-y rounded-md border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-fg outline-none focus:border-accent ${tab === "preview" ? "hidden" : ""}`}
         />
+        {tab === "preview" && (
+          <div className="min-h-[12rem] rounded-md border border-border bg-surface-2 p-4">
+            {content.trim() ? <MarkdownContent content={content} /> : <p className="text-sm text-fg-subtle">Nothing to preview yet.</p>}
+          </div>
+        )}
         {errors.content && <p className="text-xs text-danger">{errors.content.message}</p>}
         <p className="text-xs text-fg-subtle">{content.trim().length} characters (minimum 20)</p>
       </div>
