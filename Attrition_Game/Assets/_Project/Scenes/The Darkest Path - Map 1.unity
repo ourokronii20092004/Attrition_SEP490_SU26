@@ -1461,7 +1461,7 @@ MonoBehaviour:
   spawnPoints:
   - {fileID: 229396525}
   fallbackEnemyPrefab:
-    RawGuidValue: 4296abdb85f86a14ea9477f6722555f6
+    RawGuidValue: 00000000000000000000000000000000
   enemySpawnConfigs:
   - spawnPoint: {fileID: 353540671}
     spawnCount: 1
@@ -1476,7 +1476,7 @@ MonoBehaviour:
   - spawnPoint: {fileID: 89744974}
     spawnCount: 1
     overridePrefab:
-      RawGuidValue: 4296abdb85f86a14ea9477f6722555f6
+      RawGuidValue: bf45960ebf62f1149b8735f34be9967a
     biome: {fileID: 11400000, guid: d1e2f3a4b5c64758694a3b2c1d0e9f8a, type: 2}
   - spawnPoint: {fileID: 804255376}
     spawnCount: 1
@@ -1486,7 +1486,7 @@ MonoBehaviour:
   - spawnPoint: {fileID: 807296463}
     spawnCount: 1
     overridePrefab:
-      RawGuidValue: 4296abdb85f86a14ea9477f6722555f6
+      RawGuidValue: bf45960ebf62f1149b8735f34be9967a
     biome: {fileID: 11400000, guid: d1e2f3a4b5c64758694a3b2c1d0e9f8a, type: 2}
 --- !u!4 &393270120
 Transform:
@@ -2892,7 +2892,7 @@ Transform:
   m_GameObject: {fileID: 807296462}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 49.52, y: 16.85, z: 0}
+  m_LocalPosition: {x: 51.44, y: 18.26, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -215917,35 +215917,36 @@ MonoBehaviour:
     pitchVariance: 0
     delay: 0
   hit:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: af133f0e4379325408120d31dd9ea305, type: 3}
     volume: 1
     pitch: 1
     pitchVariance: 0
     delay: 0
   jump:
     clips:
-    - {fileID: 8300000, guid: 3d4f0f3802cdf874ab20f7846e95a2ea, type: 3}
+    - {fileID: 8300000, guid: 58b15e73d49c1a841957967507487856, type: 3}
     volume: 1
-    pitch: 1
+    pitch: 2
     pitchVariance: 0
     delay: 0
   land:
     clips:
     - {fileID: 8300000, guid: ad5ce541fe4779340a7e67bd9cb850e2, type: 3}
     volume: 1
-    pitch: 1
+    pitch: 2
     pitchVariance: 0
     delay: 0
   dash:
-    clips: []
-    volume: 1
-    pitch: 2.01
+    clips:
+    - {fileID: 8300000, guid: 915e4f118f750604b893470a83ca52b9, type: 3}
+    volume: 0.806
+    pitch: 1
     pitchVariance: 0
     delay: 0
   step:
     clips:
-    - {fileID: 8300000, guid: 5c80a931096d343449fa137caae9ceb6, type: 3}
-    - {fileID: 8300000, guid: 1b8991eda7889e24eb77a7aa2ee80129, type: 3}
+    - {fileID: 8300000, guid: 2eecc46ce0abb274187d84ce6e8ae85b, type: 3}
     volume: 1
     pitch: 1
     pitchVariance: 0
@@ -216430,7 +216431,7 @@ Transform:
   m_GameObject: {fileID: 1470123305}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -45.76, y: 15.93, z: 0}
+  m_LocalPosition: {x: -45.93, y: 17.43, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
