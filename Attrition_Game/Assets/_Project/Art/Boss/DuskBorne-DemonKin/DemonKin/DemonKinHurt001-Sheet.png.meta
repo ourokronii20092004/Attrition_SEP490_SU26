@@ -55,7 +55,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 1
+    filterMode: 0
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -69,7 +69,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 100
+  spritePixelsToUnits: 16
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -122,11 +122,11 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 40
-        y: 47
-        width: 41
-        height: 50
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        y: 48
+        width: 46
+        height: 48
+      alignment: 9
+      pivot: {x: 0.50000066, y: 0.51283437}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -143,12 +143,12 @@ TextureImporter:
       name: DemonKinHurt001-Sheet_1
       rect:
         serializedVersion: 2
-        x: 77
-        y: 80
-        width: 6
-        height: 6
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 164
+        y: 48
+        width: 55
+        height: 48
+      alignment: 9
+      pivot: {x: 0.4925329, y: 0.5256696}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -165,12 +165,12 @@ TextureImporter:
       name: DemonKinHurt001-Sheet_2
       rect:
         serializedVersion: 2
-        x: 163
-        y: 47
-        width: 57
-        height: 50
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 287
+        y: 48
+        width: 65
+        height: 49
+      alignment: 9
+      pivot: {x: 0.49368238, y: 0.5167638}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -187,12 +187,12 @@ TextureImporter:
       name: DemonKinHurt001-Sheet_3
       rect:
         serializedVersion: 2
-        x: 287
-        y: 47
-        width: 65
-        height: 50
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 424
+        y: 48
+        width: 41
+        height: 49
+      alignment: 9
+      pivot: {x: 0.5701264, y: 0.51257306}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -205,77 +205,11 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
-    - serializedVersion: 2
-      name: DemonKinHurt001-Sheet_4
-      rect:
-        serializedVersion: 2
-        x: 424
-        y: 47
-        width: 41
-        height: 50
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: a205d4f3d3c0f8bf0800000000000000
-      internalID: -320023591325446102
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: DemonKinHurt001-Sheet_5
-      rect:
-        serializedVersion: 2
-        x: 81
-        y: 67
-        width: 6
-        height: 6
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 80b214e4b79368280800000000000000
-      internalID: -9041476000143037688
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: DemonKinHurt001-Sheet_6
-      rect:
-        serializedVersion: 2
-        x: 39
-        y: 56
-        width: 6
-        height: 6
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: fe8e1b5ff0f2ea0b0800000000000000
-      internalID: -5715579131493488401
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
     outline: []
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: ae8a0bed8fcda444caffcc327696cca2
     internalID: 0
     vertices: []
     indices: 
@@ -283,15 +217,14 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":4.0,"y":1.0},"gridSpriteSize":{"x":128.0,"y":128.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       DemonKinHurt001-Sheet_0: -9088040108030019158
       DemonKinHurt001-Sheet_1: -5596479173145458520
       DemonKinHurt001-Sheet_2: -1828563362231321097
       DemonKinHurt001-Sheet_3: 7715381684088573855
-      DemonKinHurt001-Sheet_4: -320023591325446102
-      DemonKinHurt001-Sheet_5: -9041476000143037688
-      DemonKinHurt001-Sheet_6: -5715579131493488401
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
