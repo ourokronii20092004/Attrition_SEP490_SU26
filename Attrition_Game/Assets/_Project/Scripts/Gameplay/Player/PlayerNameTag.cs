@@ -23,7 +23,10 @@ namespace Attrition.Gameplay.Player
         public static void Attach(PlayerController player, bool isLocal)
         {
             var go = new GameObject("PlayerNameTag");
-            go.transform.SetParent(player.transform, false);
+            // Bám VisualRoot (đã nội suy mượt) thay vì root (snap 60Hz) → tên trôi cùng nhịp sprite,
+            // không giật tương đối. VisualRoot detach khi chết → nametag theo xác; reattach khi sống lại.
+            var parent = player.VisualRoot != null ? player.VisualRoot : player.transform;
+            go.transform.SetParent(parent, false);
             var tag = go.AddComponent<PlayerNameTag>();
             tag.Build(player, isLocal ? new Color(0.4f, 0.9f, 0.5f) : new Color(0.95f, 0.6f, 0.25f));
         }
@@ -65,6 +68,9 @@ namespace Attrition.Gameplay.Player
         private void Update()
         {
             if (_player == null) return;
+            // Player có thể đã despawn (shutdown/về menu) → Object null/invalid. Đọc DisplayName/HP
+            // ([Networked]) lúc đó ném InvalidOperationException. Guard trước khi đọc.
+            if (_player.Object == null || !_player.Object.IsValid) return;
 
             // Tên (đọc networked DisplayName → mọi máy thấy giống nhau)
             string nm = _player.DisplayName.Value;

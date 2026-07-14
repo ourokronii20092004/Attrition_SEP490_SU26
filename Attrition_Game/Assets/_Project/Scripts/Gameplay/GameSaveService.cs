@@ -236,6 +236,7 @@ namespace Attrition.Gameplay.Persistence
                         currentMana = stats.CurrentMana,
                         maxStamina = stats.MaxStamina,
                         potionMaxFlasks = potions != null ? potions.MaxHealthCharges : 0,
+                        potionMaxManaFlasks = potions != null ? potions.MaxManaCharges : 0,
                         attackSpeed = stats.AttackSpeed,
                         posX = pos.x,
                         posY = pos.y,
@@ -256,6 +257,10 @@ namespace Attrition.Gameplay.Persistence
             // PER-ROOM quest world-state: host đẩy meta phòng (playtime/scene) khi có SessionId.
             if (!string.IsNullOrEmpty(GameLaunch.SessionId))
             {
+                // Ghi GameLaunch.GameplayScene — nguồn DUY NHẤT đáng tin cho tên map đang chơi. KHÔNG
+                // dùng SceneManager.GetActiveScene() (coop load additive nên có thể trả menu) hay
+                // gameObject.scene (trả scene runner riêng của Fusion). Load-back (PlayerInventory) so
+                // khớp CÙNG giá trị này → luôn nhất quán, tránh "spawn về điểm gốc" do lệch tên scene.
                 var metaReq = new APIManager.UpdateSessionRequest
                 {
                     sessionId = GameLaunch.SessionId,

@@ -39,6 +39,7 @@ namespace Attrition.UI
         private PlayerInventory _inventory;
         private PlayerProgression _progression;
         private PlayerController _controller;
+        private CoopReviveSystem _revive;
 
         /// <summary>
         /// True khi đã tìm thấy local player VÀ tất cả component đã Spawned (Object.IsValid).
@@ -213,6 +214,7 @@ namespace Attrition.UI
                 _potions = p.GetComponent<PotionSystem>();
                 _inventory = inv;
                 _progression = p.GetComponent<PlayerProgression>();
+                _revive = p.GetComponent<CoopReviveSystem>();
 
                 _stats.OnStatsChanged += RefreshCharacterPanel;
                 _stats.OnStatsChanged += RefreshAllocPoints;

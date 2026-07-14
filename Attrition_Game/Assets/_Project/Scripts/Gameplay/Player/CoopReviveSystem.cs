@@ -31,6 +31,25 @@ namespace Attrition.Gameplay.Player
             _myPotions = GetComponent<PotionSystem>();
         }
 
+        // ── UI query API (chạy local trên MỌI peer, kể cả client input-authority) ──
+        // FindObjectsByType + p.IsDead (Networked) hoạt động trên proxy, nên client đọc được
+        // trạng thái đồng đội để quyết định hiện prompt "[R] HỒI SINH".
+
+        /// <summary>True khi mình còn sống, còn bình máu, VÀ có đồng đội đã chết trong bán kính.</summary>
+        public bool HasRevivableAllyNearby()
+        {
+            // Guard: Object chưa Spawned → đọc IsDead ([Networked]) sẽ ném. UI gọi mỗi frame kể cả lúc
+            // player đang spawn, nên phải kiểm tra hợp lệ trước.
+            if (_myController == null || Object == null || !Object.IsValid) return false;
+            if (_myController.IsDead) return false;
+            if (_myPotions == null || _myPotions.HealthCharges <= 0) return false;
+            return FindDeadPlayerInRadius() != null;
+        }
+
+        /// <summary>Tiến trình hồi sinh 0..1 để UI vẽ thanh fill (đọc [Networked] ReviveProgress).</summary>
+        public float ReviveFraction =>
+            reviveTimeRequired > 0f ? Mathf.Clamp01(ReviveProgress / reviveTimeRequired) : 0f;
+
         public override void FixedUpdateNetwork()
         {
             if (!HasStateAuthority) return;
@@ -102,8 +121,8 @@ namespace Attrition.Gameplay.Player
         {
             if (target != null)
             {
-                // Consume 1 flask
-                if (_myPotions.TryUseHealthPotion())
+                // Trả giá 1 bình máu NHƯNG người cứu KHÔNG được hồi máu của bình đó — chỉ mất bình.
+                if (_myPotions.TryConsumeHealthPotionNoHeal())
                 {
                     var targetStats = target.GetComponent<PlayerStats>();
                     int reviveHp = targetStats != null ? targetStats.MaxHP / 2 : target.maxHP / 2;
@@ -119,13 +138,12 @@ namespace Attrition.Gameplay.Player
             var players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
             foreach (var p in players)
             {
-                if (p != _myController && p.IsDead)
-                {
-                    if (Vector3.Distance(transform.position, p.transform.position) <= reviveRadius)
-                    {
-                        return p;
-                    }
-                }
+                if (p == _myController) continue;
+                // Guard: đọc IsDead ([Networked]) ném InvalidOperationException nếu Object chưa Spawned
+                // (player khác đang trong quá trình spawn). Bỏ qua tới khi hợp lệ.
+                if (p.Object == null || !p.Object.IsValid) continue;
+                if (p.IsDead && Vector3.Distance(transform.position, p.transform.position) <= reviveRadius)
+                    return p;
             }
             return null;
         }

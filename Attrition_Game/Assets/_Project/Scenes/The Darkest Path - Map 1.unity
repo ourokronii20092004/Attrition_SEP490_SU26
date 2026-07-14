@@ -1455,9 +1455,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkSpawner
   playerPrefab:
-    RawGuidValue: 231d0d7375d868a43b49c56a5920b23d
+    RawGuidValue: a5572bdfd0e84c640a73a2329618f198
   player1Prefab:
-    RawGuidValue: 346d4282725d4e74a87c5d2085212179
+    RawGuidValue: 231d0d7375d868a43b49c56a5920b23d
   spawnPoints:
   - {fileID: 229396525}
   fallbackEnemyPrefab:

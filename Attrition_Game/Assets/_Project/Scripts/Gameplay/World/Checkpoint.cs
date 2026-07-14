@@ -139,6 +139,16 @@ namespace Attrition.Gameplay.World
             foreach (var pc in FindObjectsByType<PlayerController>(FindObjectsSortMode.None))
             {
                 if (pc == null) continue;
+
+                // Player ĐÃ CHẾT: rest = hồi sinh hoàn toàn (clear cờ chết + bật lại physics/collider +
+                // teleport + full HP/Mana/Stamina + refill bình) qua 1 path chung ReviveAndRestore. Nếu
+                // chỉ RestoreFull như player sống thì xác vẫn nằm (isDeadNetworked=true) → không sống lại.
+                if (pc.IsDead)
+                {
+                    pc.ReviveAndRestore(RestPoint);
+                    continue;
+                }
+
                 var stats = pc.GetComponent<PlayerStats>();
                 if (stats != null)
                 {

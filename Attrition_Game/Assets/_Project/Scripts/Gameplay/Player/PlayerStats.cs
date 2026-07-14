@@ -116,6 +116,55 @@ namespace Attrition.Gameplay.Player
             OnStatsChanged?.Invoke();
         }
 
+        /// <summary>
+        /// COOP: hydrate stat từ DTO session (host fetch từ server). Đối xứng ApplyLoadedProgress của
+        /// solo nhưng nguồn là server, không phải save slot local. Gọi bởi PlayerInventory sau khi
+        /// session load xong (cache SessionStatsByChar sẵn sàng). Chỉ host (StateAuthority trên player này).
+        /// </summary>
+        public void HydrateFromCoopSession(APIManager.CharacterSessionDto cs)
+        {
+            if (!HasStateAuthority || cs == null) return;
+
+            // Level + điểm cộng
+            var prog = GetComponent<PlayerProgression>();
+            if (cs.currentLevel > 0)
+            {
+                Level = cs.currentLevel;
+                _sheet?.SetLevel(Level);
+                if (prog != null) { prog.Level = cs.currentLevel; prog.CurrentExp = cs.currentExp; }
+            }
+            if (!string.IsNullOrEmpty(cs.allocatedPointsJson))
+            {
+                try
+                {
+                    var pts = Newtonsoft.Json.JsonConvert.DeserializeObject<int[]>(cs.allocatedPointsJson);
+                    if (pts != null)
+                    {
+                        for (int i = 0; i < pts.Length && i < AllocatedPoints.Length; i++)
+                            AllocatedPoints.Set(i, pts[i]);
+                        SyncAllocatedToSheet();
+                    }
+                }
+                catch { /* JSON hỏng → bỏ qua điểm cộng, giữ mặc định */ }
+            }
+
+            // Số bình máu/mana tối đa đã mở
+            var potions = GetComponent<PotionSystem>();
+            if (potions != null)
+            {
+                if (cs.potionMaxFlasks > 0) potions.MaxHealthCharges = cs.potionMaxFlasks;
+                if (cs.potionMaxManaFlasks > 0) potions.MaxManaCharges = cs.potionMaxManaFlasks;
+                potions.HealthCharges = potions.MaxHealthCharges;
+                potions.ManaCharges = potions.MaxManaCharges;
+            }
+
+            // HP/Mana hiện tại (clamp sau khi đồ đã đắp có thể đổi MaxHP; ReviveFull/rest sẽ hồi đầy).
+            CurrentHP = cs.currentHp > 0 ? cs.currentHp : MaxHP;
+            CurrentMana = cs.currentMana > 0 ? cs.currentMana : MaxMana;
+            CurrentStamina = MaxStamina;
+            OnStatsChanged?.Invoke();
+        }
+
         /// <summary>Nạp NetworkArray điểm cộng vào StatSheet (gọi sau mỗi thay đổi level/điểm/khi spawn proxy).</summary>
         private void SyncAllocatedToSheet()
         {

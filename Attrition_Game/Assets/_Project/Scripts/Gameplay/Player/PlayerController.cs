@@ -41,6 +41,13 @@ public class PlayerController : NetworkBehaviour, IDamageable
              "phần nhìn riêng, tránh giật do prediction trên client. Bỏ trống = dùng root (giật như cũ).")]
     [SerializeField] private Transform visualRoot;
 
+    /// <summary>Transform chứa sprite (đã được NetworkRigidbody2D nội suy mượt). Nametag bám vào đây
+    /// để trôi cùng nhịp với sprite, tránh giật tương đối (root snap 60Hz còn sprite nội suy).</summary>
+    public Transform VisualRoot => visualRoot;
+
+    // Xác đã tách Visual khỏi cây networked chưa (chống rung). Idempotent guard cho Detach/Reattach.
+    private bool _corpseVisualDetached;
+
     private bool hasShadowDash => moveConfig != null ? moveConfig.hasShadowDash : false;
     private float dashDuration => moveConfig != null ? moveConfig.dashDuration : 0.2f;
     private float dashCooldownTime => moveConfig != null ? moveConfig.dashCooldownTime : 0.8f;
@@ -80,6 +87,15 @@ public class PlayerController : NetworkBehaviour, IDamageable
 
     /// <summary>Đã mở khoá double jump chưa (sở hữu accessory AbilityGrant=DoubleJump). Host set, sync xuống client.</summary>
     [Networked] public NetworkBool HasDoubleJump { get; set; }
+
+    /// <summary>Teleport chờ áp dụng TRONG FixedUpdateNetwork (in-sim). TeleportTo có thể được gọi từ
+    /// coroutine (spawn checkpoint) hoặc RPC — cả hai đều KHÔNG phải lúc an toàn để gọi
+    /// NetworkRigidbody2D.Teleport() (no-op khi chưa in-sim / ném lỗi trong RPC delivery). Nên chỉ ghi
+    /// ý định vào [Networked] này rồi FUN của host áp dụng đúng thời điểm → TeleportKey sync mọi peer,
+    /// client SNAP đúng thay vì bị client-side prediction đè lại.</summary>
+    [Networked] private Vector2 _pendingTeleportPos { get; set; }
+    [Networked] private int _pendingTeleportSeq { get; set; }
+    private int _appliedTeleportSeq;
 
     [Networked] private NetworkButtons _buttonsPrev { get; set; }
     [Networked] private TickTimer _dashTimer { get; set; }
@@ -156,11 +172,13 @@ public class PlayerController : NetworkBehaviour, IDamageable
         if (Object != null && (HasInputAuthority || HasStateAuthority))
             Runner.SetIsSimulated(Object, true);
 
-        // Interpolation Target CHỈ cho PROXY (player của peer khác) — tách visual khỏi physics giật
-        // để proxy mượt. TUYỆT ĐỐI KHÔNG set cho local player (HasInputAuthority): local player chạy
-        // client prediction, root di chuyển TỨC THÌ theo input; nếu nội suy visual thì visual + camera
-        // bị kéo trễ lại → cảm giác input lag/trôi dù FPS cao. Local player render thẳng ở predicted.
-        if (visualRoot != null && !HasInputAuthority)
+        // INTERPOLATION TARGET cho MỌI player (kể cả local). Đây là setup CHUẨN của Fusion để mượt:
+        // physics chạy 60Hz trong FixedUpdateNetwork, addon nội suy Visual giữa các tick để render mọi
+        // FPS đều mượt. NẾU KHÔNG gán target + object đang simulate (local player) → addon BỎ QUA nội
+        // suy (xem NetworkRigidbodyBase.Render: FixedUpdate + no target → return) → root nhảy từng bước
+        // 60Hz → GIẬT trên màn FPS cao (đúng lỗi "sống cũng giật nhẹ"). Local player nội suy trong
+        // predicted timeframe nên vẫn bám input, không lag cảm nhận được.
+        if (visualRoot != null)
         {
             var nrb = GetComponent<Fusion.Addons.Physics.NetworkRigidbody2D>();
             if (nrb != null) nrb.SetInterpolationTarget(visualRoot);
@@ -170,9 +188,12 @@ public class PlayerController : NetworkBehaviour, IDamageable
         // CHỈ dùng Collider-based (không dùng IgnoreLayerCollision vì nó chặn cả trigger → ContactDamage không hoạt động)
         IgnoreAllEnemyColliders();
 
-        // Camera của LOCAL player follow ROOT (transform), KHÔNG follow visualRoot. Root là vị trí
-        // predicted bám input tức thì; visualRoot với local player không bị nội suy (xem trên) nên
-        // hai cái trùng nhau — nhưng follow thẳng root để chắc chắn camera không bao giờ trễ input.
+        // Camera follow ROOT (transform), KHÔNG follow visualRoot. Lý do:
+        // - visualRoot DETACH khỏi cây khi chết (chống rung xác) → nếu camera follow nó, khi chết camera
+        //   kẹt theo xác, respawn không follow lại được (bug "camera dưới đất").
+        // - root không bao giờ detach + được teleport về checkpoint khi respawn → camera luôn theo đúng.
+        // - Nametag cũng nằm trên root → tên + camera cùng nhịp (không giật tương đối). Sprite vẫn mượt
+        //   nhờ interpolation target = visualRoot. User đã xác nhận camera-follow-root là ổn.
         if (HasInputAuthority)
         {
             var cam = FindAnyObjectByType<CinemachineCamera>();
@@ -199,6 +220,10 @@ public class PlayerController : NetworkBehaviour, IDamageable
 
     public override void FixedUpdateNetwork()
     {
+        // Áp dụng teleport đang chờ TRƯỚC mọi thứ (trên MỌI peer kể cả proxy return sớm bên dưới) để
+        // TeleportKey của NetworkRigidbody2D được set trong tick → client SNAP đúng, không bị prediction đè.
+        ApplyPendingTeleport();
+
         // SOLO pause: đóng băng player (Fusion bỏ qua Time.timeScale).
         // Phải zero CẢ gravityScale — chỉ zero velocity thì trọng lực vẫn áp giữa các physics step
         // khiến nhân vật rơi từ từ khi mở Inventory/Menu lúc đang trên không. Unpause: logic thường
@@ -232,11 +257,12 @@ public class PlayerController : NetworkBehaviour, IDamageable
         }
         else if (!HasInputAuthority)
         {
-            // Proxy (player của peer khác): KHÔNG đụng vào rb ở đây. Prefab đã có NetworkRigidbody2D
-            // (Fusion.Addons.Physics) — nó TỰ ĐỘNG đồng bộ + NỘI SUY rigidbody cho proxy trong Render,
-            // mượt như host. Trước đây code còn tự set rb.position = NetworkPosition mỗi tick → ĐÁNH NHAU
-            // với NetworkRigidbody2D (hai bên cùng ghi vị trí) nên giật. Giờ chỉ việc return, nhường
-            // hoàn toàn cho addon xử lý chuyển động proxy.
+            // Proxy (player của peer khác): addon NetworkRigidbody2D tự nội suy chuyển động.
+            // Xác chết: chỉ TÁCH Visual khi đã CHẠM ĐẤT (IsGrounded, networked). Trong lúc xác còn RƠI,
+            // giữ Visual attached để addon nội suy theo body rơi (mượt như player sống). Chạm đất =
+            // hết di chuyển → detach để đứng im tuyệt đối, không rung. Sống lại → reattach.
+            if (isDeadNetworked && IsGrounded) DetachCorpseVisual();
+            else ReattachCorpseVisual();
             return;
         }
 
@@ -254,28 +280,26 @@ public class PlayerController : NetworkBehaviour, IDamageable
 
         if (isDeadNetworked)
         {
-            // SỬA LỖI XÁC BAY: Khi chết, dừng di chuyển ngang nhưng vẫn để trọng lực kéo xuống
-            // Chỉ đóng băng hoàn toàn khi đã chạm đất
+            // XÁC CHẾT (host/local — authoritative). Cho xác RƠI xuống đất rồi mới nằm im:
             if (IsGrounded)
             {
+                // Chạm đất → đóng băng Kinematic + tách Visual (đứng im tuyệt đối, không rung). 1 lần.
                 if (rb.bodyType != RigidbodyType2D.Kinematic)
                 {
                     rb.linearVelocity = Vector2.zero;
+                    rb.gravityScale = 0f;
                     rb.bodyType = RigidbodyType2D.Kinematic;
-                    Collider2D col = GetComponent<Collider2D>();
-                    if (col != null) col.enabled = false;
+                    if (playerCollider != null) playerCollider.enabled = false;
                 }
+                DetachCorpseVisual();
             }
             else
             {
-                // Đang rơi xuống: dừng ngang, giữ trọng lực rơi tự nhiên
-                rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+                // Còn trên không → RƠI tự nhiên: dừng ngang, giữ trọng lực rơi, kẹp tốc độ rơi tối đa.
+                // Visual vẫn attached (chưa detach) để addon nội suy theo body rơi → mượt trên client.
                 rb.gravityScale = fallGravity;
-                // Giới hạn tốc độ rơi
-                if (rb.linearVelocity.y < maxFallSpeed)
-                {
-                    rb.linearVelocity = new Vector2(0f, maxFallSpeed);
-                }
+                rb.linearVelocity = new Vector2(0f, Mathf.Max(rb.linearVelocity.y, maxFallSpeed));
+                NetworkVelocityY = rb.linearVelocity.y;
             }
             return;
         }
@@ -660,7 +684,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
         if (!HasStateAuthority) return;
 
         isDeadNetworked = false;
-        RPC_RestorePhysicsAfterRevive();
+        RPC_RestorePhysicsAfterRevive(spawn, doWarp: true);
         TeleportTo(spawn);
 
         if (statsComp != null) statsComp.ReviveFull();
@@ -682,7 +706,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
     {
         if (!HasStateAuthority) return;
         isDeadNetworked = false;
-        RPC_RestorePhysicsAfterRevive();
+        RPC_RestorePhysicsAfterRevive(rb != null ? (Vector3)rb.position : transform.position, doWarp: false);
         if (statsComp != null) statsComp.CurrentHP = Mathf.Max(1, hp);
         else HP = Mathf.Max(1, hp);
         GrantReviveInvincibility(3.0f); // BR-18
@@ -699,7 +723,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
     /// Không khôi phục → bug "rơi xuyên đất / bay đứng giữa trời" sau respawn.
     /// </summary>
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RPC_RestorePhysicsAfterRevive()
+    private void RPC_RestorePhysicsAfterRevive(Vector3 warpTarget, NetworkBool doWarp)
     {
         if (rb != null)
         {
@@ -710,31 +734,110 @@ public class PlayerController : NetworkBehaviour, IDamageable
         Collider2D col = GetComponent<Collider2D>();
         if (col != null) col.enabled = true;
 
+        // Gắn lại Visual vào root + khôi phục interpolation target (lúc chết đã tách ra chống rung).
+        ReattachCorpseVisual();
+
+        // Set LẠI camera follow cho local player khi có TELEPORT (respawn checkpoint). Teleport là
+        // DEFERRED (áp trong FUN tick sau), nên KHÔNG warp ngay ở đây (transform.position còn ở chỗ chết
+        // → sai). Dùng coroutine đợi teleport áp xong rồi SNAP camera thẳng về player.
+        if (doWarp && HasInputAuthority)
+        {
+            StartCoroutine(SnapCameraAfterRespawn(warpTarget));
+        }
+
         // Reset animator: chết bật state "Player_Death" + có thể còn anim.speed=0 (charge attack dở).
         // Không reset → sprite kẹt ở tư thế nằm/xác dù logic đã sống lại. IsDead=false được Render đẩy
         // mỗi frame, nhưng anim.speed phải tự tay bật lại.
         if (animationComp != null) animationComp.ResetForRevive();
     }
 
-    /// <summary>Dịch chuyển player về vị trí (vd điểm rest). Set cả rb lẫn NetworkPosition để sync. Chỉ host.</summary>
-    public void TeleportTo(Vector3 position)
+    /// <summary>Sau respawn (teleport deferred): đợi player thực sự tới gần vị trí spawn rồi SET Follow
+    /// + SNAP camera thẳng về đó. Không dựa vào OnTargetObjectWarped (chạy trước teleport → sai delta).
+    /// Đợi vài frame cho FUN áp teleport, rồi ForceCameraPosition để camera nhảy tức thì, không kẹt/lết.</summary>
+    private System.Collections.IEnumerator SnapCameraAfterRespawn(Vector3 target)
     {
-        if (HasStateAuthority)
+        var cam = FindAnyObjectByType<CinemachineCamera>();
+        if (cam == null) yield break;
+        cam.Follow = transform;
+
+        // Đợi tối đa ~30 frame tới khi root đã teleport về gần target (teleport deferred sang FUN).
+        for (int i = 0; i < 30; i++)
         {
-            RPC_ForceTeleport(position);
+            if (Vector2.Distance(transform.position, target) < 0.5f) break;
+            yield return null;
         }
+
+        // Snap camera thẳng về player — giữ z của camera. ForceCameraPosition = API Cinemachine 3.
+        Vector3 camTarget = new Vector3(transform.position.x, transform.position.y, cam.transform.position.z);
+        cam.ForceCameraPosition(camTarget, cam.transform.rotation);
     }
 
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RPC_ForceTeleport(Vector3 position)
+    /// <summary>Chống rung XÁC CHẾT trên client: tách Visual khỏi cây networked. Chạy trên MỌI peer
+    /// (local + proxy). Visual sau khi SetParent(null) không còn cha, không phải NetworkObject, đứng
+    /// yên tại world pos → không addon nội suy / prediction nào chạm tới → tuyệt đối không rung.
+    /// Idempotent: chỉ tách 1 lần.</summary>
+    private void DetachCorpseVisual()
     {
+        if (_corpseVisualDetached || visualRoot == null) return;
+        _corpseVisualDetached = true;
+        var nrb = GetComponent<Fusion.Addons.Physics.NetworkRigidbody2D>();
+        if (nrb != null) nrb.SetInterpolationTarget(null); // addon thôi chase Visual
+        visualRoot.SetParent(null, worldPositionStays: true); // tách khỏi root networked
+    }
+
+    /// <summary>Gắn lại Visual vào root sau khi sống lại (đảo ngược DetachCorpseVisual). Reset local
+    /// transform về mặc định (detach worldPositionStays đã đổi local pos/scale) + gán lại interpolation
+    /// target. Idempotent. Chạy trên MỌI peer.</summary>
+    private void ReattachCorpseVisual()
+    {
+        if (!_corpseVisualDetached) return; // chưa tách thì thôi (tránh chạy mỗi tick cho player sống)
+        _corpseVisualDetached = false;
+        if (visualRoot != null)
+        {
+            visualRoot.SetParent(transform, worldPositionStays: false);
+            visualRoot.localPosition = Vector3.zero;
+            visualRoot.localRotation = Quaternion.identity;
+            visualRoot.localScale = Vector3.one;
+        }
+        var nrb = GetComponent<Fusion.Addons.Physics.NetworkRigidbody2D>();
+        if (nrb != null) nrb.SetInterpolationTarget(visualRoot);
+    }
+
+    /// <summary>Dịch chuyển player về vị trí (điểm rest / spawn checkpoint). Chỉ host. Ghi ý định vào
+    /// [Networked] rồi áp dụng trong FixedUpdateNetwork (xem ApplyPendingTeleport) để TeleportKey của
+    /// NetworkRigidbody2D sync đúng mọi peer — client SNAP đúng thay vì bị prediction đè.</summary>
+    public void TeleportTo(Vector3 position)
+    {
+        if (!HasStateAuthority) return;
+
+        // Set rb.position ngay để host và trường hợp chưa in-sim (spawn từ coroutine) vào đúng chỗ.
         rb.position = position;
         rb.linearVelocity = Vector2.zero;
-        if (HasStateAuthority)
+        NetworkPosition = position;
+        NetworkVelocity = Vector2.zero;
+
+        // Ghi ý định teleport (tăng seq) → FUN sẽ gọi nrb.Teleport() đúng thời điểm in-sim trên mọi
+        // peer, kể cả CLIENT đang prediction. Không gọi Teleport() trực tiếp ở đây vì có thể đang ở
+        // coroutine / RPC delivery (Teleport no-op hoặc ném lỗi).
+        _pendingTeleportPos = position;
+        _pendingTeleportSeq++;
+    }
+
+    /// <summary>Áp dụng teleport đang chờ trong FUN (in-sim). Chạy trên MỌI peer: seq đổi = có teleport
+    /// mới → gọi nrb.Teleport() (TeleportKey sync, bypass prediction).</summary>
+    private void ApplyPendingTeleport()
+    {
+        if (_appliedTeleportSeq == _pendingTeleportSeq) return;
+        _appliedTeleportSeq = _pendingTeleportSeq;
+
+        if (Object != null && Object.IsInSimulation)
         {
-            NetworkPosition = position;
-            NetworkVelocity = Vector2.zero;
+            var nrb = GetComponent<Fusion.Addons.Physics.NetworkRigidbody2D>();
+            if (nrb != null) { nrb.Teleport(_pendingTeleportPos); return; }
         }
+        // Fallback (chưa in-sim): set thẳng.
+        rb.position = _pendingTeleportPos;
+        rb.linearVelocity = Vector2.zero;
     }
 
     /// <summary>
@@ -770,7 +873,12 @@ public class PlayerController : NetworkBehaviour, IDamageable
     public void RpcRequestFastTravel(Vector3 destination)
     {
         var players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
-        foreach (var p in players) p.TeleportTo(destination);
+        foreach (var p in players)
+        {
+            // Player chết → hồi sinh đầy đủ tại đích (giống rest); còn sống → chỉ teleport.
+            if (p.IsDead) p.ReviveAndRestore(destination);
+            else p.TeleportTo(destination);
+        }
         // Báo CẢ HAI máy hiện thanh load (người không bấm cũng bị teleport → tránh giật, không loading).
         RpcTravelLoading();
     }
@@ -783,7 +891,12 @@ public class PlayerController : NetworkBehaviour, IDamageable
     public void RpcRequestFastTravelToCheckpoint(Vector3 destination, string checkpointName)
     {
         var players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
-        foreach (var p in players) p.TeleportTo(destination);
+        foreach (var p in players)
+        {
+            // Fast-travel đến checkpoint = như rest: player chết được hồi sinh full HP/Mana/bình tại đích.
+            if (p.IsDead) p.ReviveAndRestore(destination);
+            else p.TeleportTo(destination);
+        }
         RpcTravelLoading();
 
         // Cập nhật MostRecentlyActivated → respawn / Game Over hồi sinh đúng checkpoint mới.
@@ -835,6 +948,11 @@ public class PlayerController : NetworkBehaviour, IDamageable
         {
             p.ReviveAndRestore(spawn);
         }
+
+        // Bắn loading về CẢ HAI máy (giống Rest/fast-travel) — màn loading che đúng lúc camera snap về
+        // checkpoint nên không thấy cảnh camera kẹt/underground trong lúc chuyển. Camera follow lại đúng
+        // sau khi loading tắt (ReviveAndRestore đã set cam.Follow + warp).
+        RpcTravelLoading();
 
         var spawner = FindFirstObjectByType<NetworkSpawner>();
         if (spawner != null)

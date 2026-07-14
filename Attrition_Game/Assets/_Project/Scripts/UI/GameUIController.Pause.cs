@@ -27,7 +27,10 @@ namespace Attrition.UI
             saver.Save(Attrition.Gameplay.Persistence.GameSaveService.SaveEvent.Quit);
 
             var runner = _controller != null ? _controller.Runner : null;
-            if (runner != null) runner.Shutdown();
+            // destroyGameObject:false — runner AddComponent lên chính GO của NetworkLauncher (bền,
+            // DontDestroyOnLoad). Shutdown() mặc định destroyGameObject=true sẽ HỦY luôn NetworkLauncher
+            // → vào lại phòng báo "NetworkLauncher not found". Giữ GO để lần sau tái dùng.
+            if (runner != null) runner.Shutdown(destroyGameObject: false);
             SceneManager.LoadScene("Main_Menu_UI");
         }
     }

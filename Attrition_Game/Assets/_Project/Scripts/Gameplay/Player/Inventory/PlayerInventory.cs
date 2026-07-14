@@ -147,6 +147,16 @@ namespace Attrition.Gameplay.Player.Inventory
         {
             yield return EnsureSessionLoaded(isOwningPeerHere);
 
+            // Hydrate STAT coop (level/exp/điểm cộng/HP/Mana/số bình) TRƯỚC khi nạp đồ — đồ đắp lên có
+            // thể đổi MaxHP nên set CurrentHP xong ở đây rồi đồ điều chỉnh max sau là đúng thứ tự. Chỉ
+            // host (StateAuthority trên player này). Không có cache = char mới → giữ mặc định.
+            if (HasStateAuthority && !string.IsNullOrEmpty(charId)
+                && Attrition.Persistence.GameLaunch.SessionStatsByChar.TryGetValue(charId, out var statDto))
+            {
+                var st = GetComponent<PlayerStats>();
+                if (st != null) st.HydrateFromCoopSession(statDto);
+            }
+
             if (!string.IsNullOrEmpty(charId)
                 && Attrition.Persistence.GameLaunch.SessionInventoryByChar.TryGetValue(charId, out var invJson)
                 && !string.IsNullOrEmpty(invJson))
@@ -159,13 +169,42 @@ namespace Attrition.Gameplay.Player.Inventory
             // Spawn ĐÚNG checkpoint đã lưu của session: host (StateAuthority trên player này) teleport
             // tới vị trí rest đã lưu nếu thuộc scene hiện tại. Làm SAU EnsureSessionLoaded để chắc
             // chắn cache vị trí đã có. Chưa rest / scene khác → giữ nguyên spawnPoint mặc định.
-            if (HasStateAuthority && !string.IsNullOrEmpty(charId)
-                && Attrition.Persistence.GameLaunch.SessionRestPosByChar.TryGetValue(charId, out var rest)
-                && rest.scene == UnityEngine.SceneManagement.SceneManager.GetActiveScene().name
-                && (rest.x != 0f || rest.y != 0f))
+            if (HasStateAuthority && !string.IsNullOrEmpty(charId))
             {
-                var pc = GetComponent<PlayerController>();
-                if (pc != null) pc.TeleportTo(new Vector3(rest.x, rest.y, 0f));
+                // COOP: KHÔNG dùng SceneManager.GetActiveScene() (trả 'Main_Menu_UI' vì load additive)
+                // và KHÔNG dùng gameObject.scene.name (trả scene runner riêng của Fusion, vd
+                // 'NetworkLauncher_[Player:1]' trong multi-peer). Cả hai đều KHÔNG phải tên map.
+                // Nguồn duy nhất đáng tin cho "map mà room này đang chơi" là GameLaunch.GameplayScene —
+                // save cũng ghi cùng giá trị này nên so khớp luôn nhất quán.
+                string activeScene = Attrition.Persistence.GameLaunch.GameplayScene;
+                if (!Attrition.Persistence.GameLaunch.SessionRestPosByChar.TryGetValue(charId, out var rest))
+                {
+                    // Không có key = char này chưa từng rest trong session (hoặc fetch session thất bại).
+                    // Đây có thể là nguyên nhân "spawn ở điểm gốc": nếu VỪA rest xong mà vẫn log dòng này,
+                    // nghĩa là save vị trí (posX/posY) hoặc fetch session đang hỏng.
+                    Debug.Log($"[Spawn] char {charId}: không có vị trí rest đã lưu → dùng spawnPoint mặc định.");
+                }
+                else if (rest.x == 0f && rest.y == 0f)
+                {
+                    Debug.Log($"[Spawn] char {charId}: vị trí rest = (0,0) (chưa rest hợp lệ) → spawnPoint mặc định.");
+                }
+                else if (!string.IsNullOrEmpty(rest.scene) && rest.scene != activeScene)
+                {
+                    // Bench gắn với room của nó (kiểu Hollow Knight): rest ở map khác thì vào map này ở
+                    // điểm gốc. Log rõ để phân biệt với lỗi "mismatch tên scene" ngoài ý muốn.
+                    Debug.LogWarning($"[Spawn] char {charId}: scene rest '{rest.scene}' ≠ scene hiện tại "
+                                     + $"'{activeScene}' → spawnPoint mặc định (rest ở map khác).");
+                }
+                else
+                {
+                    // scene khớp HOẶC scene lưu rỗng (session cũ chưa ghi scene) → tôn trọng vị trí đã lưu.
+                    var pc = GetComponent<PlayerController>();
+                    if (pc != null)
+                    {
+                        pc.TeleportTo(new Vector3(rest.x, rest.y, 0f));
+                        Debug.Log($"[Spawn] char {charId}: teleport về checkpoint đã lưu ({rest.x:F1},{rest.y:F1}).");
+                    }
+                }
             }
         }
 
@@ -201,6 +240,9 @@ namespace Attrition.Gameplay.Player.Inventory
                             // Cache vị trí rest đã lưu (theo scene của room) để spawn đúng checkpoint.
                             Attrition.Persistence.GameLaunch.SessionRestPosByChar[cs.characterId] =
                                 (cs.posX, cs.posY, detail.currentScene);
+                            // Cache DTO stat đầy đủ (level/exp/điểm cộng/HP/Mana/số bình) để PlayerStats
+                            // hydrate stat coop khi spawn — đối xứng với solo đọc save slot.
+                            Attrition.Persistence.GameLaunch.SessionStatsByChar[cs.characterId] = cs;
                         }
                     }
 
