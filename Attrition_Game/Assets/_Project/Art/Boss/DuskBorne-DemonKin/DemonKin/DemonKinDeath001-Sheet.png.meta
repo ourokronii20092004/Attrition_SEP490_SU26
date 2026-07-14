@@ -73,7 +73,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 1
+    filterMode: 0
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -87,7 +87,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 100
+  spritePixelsToUnits: 16
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -142,9 +142,9 @@ TextureImporter:
         x: 40
         y: 47
         width: 41
-        height: 50
+        height: 49
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -165,8 +165,8 @@ TextureImporter:
         y: 46
         width: 43
         height: 50
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 9
+      pivot: {x: 0.42399454, y: 0.5072626}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -183,12 +183,12 @@ TextureImporter:
       name: DemonKinDeath001-Sheet_2
       rect:
         serializedVersion: 2
-        x: 304
-        y: 47
-        width: 36
+        x: 307
+        y: 46
+        width: 33
         height: 49
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 9
+      pivot: {x: 0.27991277, y: 0.5333487}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -206,11 +206,11 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 436
-        y: 67
-        width: 10
-        height: 17
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        y: 54
+        width: 31
+        height: 41
+      alignment: 9
+      pivot: {x: 0.30086002, y: 0.5177138}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -227,12 +227,12 @@ TextureImporter:
       name: DemonKinDeath001-Sheet_4
       rect:
         serializedVersion: 2
-        x: 438
-        y: 54
-        width: 26
-        height: 41
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 565
+        y: 59
+        width: 38
+        height: 37
+      alignment: 9
+      pivot: {x: 0.31365004, y: 0.47546366}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -249,12 +249,12 @@ TextureImporter:
       name: DemonKinDeath001-Sheet_5
       rect:
         serializedVersion: 2
-        x: 565
-        y: 72
-        width: 9
-        height: 17
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 695
+        y: 73
+        width: 30
+        height: 30
+      alignment: 9
+      pivot: {x: 0.2700114, y: 0.35474548}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -271,152 +271,20 @@ TextureImporter:
       name: DemonKinDeath001-Sheet_6
       rect:
         serializedVersion: 2
-        x: 569
-        y: 65
-        width: 34
-        height: 31
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: b5525ce91f86474f0800000000000000
-      internalID: -831924644196571813
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: DemonKinDeath001-Sheet_7
-      rect:
-        serializedVersion: 2
-        x: 696
-        y: 73
-        width: 20
-        height: 29
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: cdd2d4586a3d152c0800000000000000
-      internalID: -4444538645083509284
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: DemonKinDeath001-Sheet_8
-      rect:
-        serializedVersion: 2
-        x: 715
-        y: 76
-        width: 10
-        height: 10
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: ae437f365b9a0a160800000000000000
-      internalID: 7034809214484034794
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: DemonKinDeath001-Sheet_9
-      rect:
-        serializedVersion: 2
         x: 825
         y: 82
         width: 25
         height: 19
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 9
+      pivot: {x: 0.2385376, y: 0.41399303}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: d5477e9d2d28828c0800000000000000
-      internalID: -4023822424944970659
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: DemonKinDeath001-Sheet_10
-      rect:
-        serializedVersion: 2
-        x: 458
-        y: 58
-        width: 9
-        height: 15
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 797e040cc64308b40800000000000000
-      internalID: 5440405991550150551
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: DemonKinDeath001-Sheet_11
-      rect:
-        serializedVersion: 2
-        x: 568
-        y: 59
-        width: 7
-        height: 7
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: e28ac056022e7a410800000000000000
-      internalID: 1488406830631397422
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: DemonKinDeath001-Sheet_12
-      rect:
-        serializedVersion: 2
-        x: 584
-        y: 61
-        width: 8
-        height: 8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: c6742131b5eafe420800000000000000
-      internalID: 2661537610984474476
+      spriteID: e7e902690bca04741ba274f2dfe8d925
+      internalID: -831924644196571813
       vertices: []
       indices: 
       edges: []
@@ -425,7 +293,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: b2be05dec3484474c979eab9d700b20b
     internalID: 0
     vertices: []
     indices: 
@@ -433,21 +301,20 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceOnImport
+        value: False
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":7.0,"y":1.0},"gridSpriteSize":{"x":146.0,"y":128.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       DemonKinDeath001-Sheet_0: 6835794439221348913
       DemonKinDeath001-Sheet_1: 3631903468571393972
-      DemonKinDeath001-Sheet_10: 5440405991550150551
-      DemonKinDeath001-Sheet_11: 1488406830631397422
-      DemonKinDeath001-Sheet_12: 2661537610984474476
       DemonKinDeath001-Sheet_2: -2429732147510779885
       DemonKinDeath001-Sheet_3: 6462047082647645811
       DemonKinDeath001-Sheet_4: 5252429305095717255
       DemonKinDeath001-Sheet_5: 7897874954443247300
       DemonKinDeath001-Sheet_6: -831924644196571813
       DemonKinDeath001-Sheet_7: -4444538645083509284
-      DemonKinDeath001-Sheet_8: 7034809214484034794
-      DemonKinDeath001-Sheet_9: -4023822424944970659
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
