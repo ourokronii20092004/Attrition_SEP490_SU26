@@ -240,6 +240,41 @@
     letter-spacing: 2px;
 }
 
+/* --- Coop revive prompt (giữ R để hồi sinh đồng đội) --- */
+#hud-revive {
+    position: absolute;
+    bottom: 160px; left: 50%;
+    translate: -50% 0;
+    padding: 6px 16px;
+    background-color: rgba(8, 10, 16, 0.85);
+    border-width: 1px;
+    border-color: rgba(120, 30, 30, 0.8);
+    border-radius: 4px;
+    align-items: center;
+}
+
+#hud-revive-text {
+    color: #f0c0a0;
+    font-size: 12px;
+    letter-spacing: 2px;
+}
+
+#hud-revive-track {
+    margin-top: 5px;
+    width: 160px;
+    height: 6px;
+    background-color: rgba(0,0,0,0.7);
+    border-width: 1px;
+    border-color: rgba(120, 30, 30, 0.8);
+    overflow: hidden;
+}
+
+#hud-revive-fill {
+    height: 100%;
+    width: 0%;
+    background-color: rgb(150, 32, 32);
+}
+
 /* ===================== CHARACTER / INVENTORY ===================== */
 #inv-dim {
     background-color: rgba(4, 3, 10, 0.82);

@@ -64,7 +64,7 @@ namespace Attrition.Gameplay.Environment
             _label.fontStyle = FontStyles.SmallCaps;     // hơi "pixel/cổ" nhưng vẫn dễ đọc
             _label.characterSpacing = 8f;                // giãn chữ nhẹ cho cảm giác trang trọng
             _label.color = new Color(0.95f, 0.92f, 0.8f, 1f);
-            _label.enableWordWrapping = false;
+            _label.textWrappingMode = TextWrappingModes.NoWrap;
             _label.raycastTarget = false;
 
             // Canh giữa màn hình, hơi cao hơn tâm một chút (kiểu HK).

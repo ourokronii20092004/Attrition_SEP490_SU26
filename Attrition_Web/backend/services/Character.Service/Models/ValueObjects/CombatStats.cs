@@ -8,4 +8,5 @@ public class CombatStats
 {
     public float AttackSpeed { get; set; }
     public int PotionMaxFlasks { get; set; }
+    public int PotionMaxManaFlasks { get; set; }
 }
