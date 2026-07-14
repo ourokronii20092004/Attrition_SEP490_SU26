@@ -1,11 +1,12 @@
+using Attrition.Persistence;
+using Attrition.Systems;
+using Fusion;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
-using Attrition.Persistence;
-using Fusion;
-using System.Linq;
 
 namespace Attrition.UI
 {
@@ -631,6 +632,10 @@ namespace Attrition.UI
             }
 
             if (fill != null) fill.style.width = Length.Percent(100f);
+            if (GameBgm.Instance != null)
+            {
+                GameBgm.Instance.Stop(0.6f);
+            }
             yield return new WaitForSeconds(0.4f); // cho người chơi kịp đọc tip
             op.allowSceneActivation = true;
         }

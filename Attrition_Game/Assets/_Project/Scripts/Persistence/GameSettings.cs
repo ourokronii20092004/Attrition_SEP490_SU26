@@ -149,6 +149,8 @@ namespace Attrition.Persistence
             // Đẩy hệ số âm lượng SFX xuống GameSfx (Systems). Chiều Persistence→Systems là hợp lệ
             // (Persistence đã tham chiếu Systems); KHÔNG để GameSfx đọc ngược lên đây (circular dep).
             Attrition.Systems.GameSfx.SfxVolume = SfxVolume;
+            Attrition.Systems.GameBgm.MusicVolume = MusicVolume;
+            Attrition.Systems.GameBgm.MasterVolume = MasterVolume;
         }
     }
 }
