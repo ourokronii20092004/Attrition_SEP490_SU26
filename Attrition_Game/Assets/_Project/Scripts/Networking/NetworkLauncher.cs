@@ -118,6 +118,13 @@ namespace Attrition.Networking
             _phase = Phase.Lobby;
             _gameplaySpawned = false;
 
+            // Xoá cache session-theo-char NGAY đầu mỗi lần vào phòng. Cờ SessionInventoryFetchStarted/
+            // Loaded là STATIC → back về menu KHÔNG reset (chỉ đóng game hẳn mới reset). Nếu không clear
+            // ở đây, lần vào lại EnsureSessionLoaded thấy FetchStarted==true → early-return, dùng CACHE CŨ
+            // (bình/stat/vị trí lần trước) thay vì fetch mới từ server. Clear ở đây CHẮC CHẮN chạy mỗi
+            // lần vào phòng, không phụ thuộc timing của OnShutdown (callback async, có thể trễ).
+            Attrition.Persistence.GameLaunch.ClearSessionInventoryCache();
+
             // Photon UserId DUY NHẤT theo tài khoản. 2 clone ParrelSync chạy chung máy → chung
             // PlayerPrefs → Fusion sinh cùng 1 UserId ngẫu nhiên → Photon coi peer thứ 2 là "host
             // reconnect" và ĐÁ host ra. Gán theo OwnerId (login) để mỗi tài khoản 1 UserId riêng.
@@ -305,6 +312,13 @@ namespace Attrition.Networking
             // ranh giới assembly (Networking không ref Gameplay).
             if (_phase == Phase.Gameplay && _gameplaySpawned)
             {
+                // Client RECONNECT khi host VẪN ở room → host KHÔNG reload scene nên OnSceneLoadDone
+                // (chỗ clear cache) không chạy → cache stat/bình của lần trước còn nguyên. Clear cache +
+                // reset cờ TRƯỚC khi spawn để player mới của client chạy EnsureSessionLoaded → FETCH LẠI
+                // session từ server → hydrate bằng save MỚI NHẤT của client (bình/vị trí đã đổi). Host
+                // player đang chơi đã hydrate xong từ trước, KHÔNG spawn lại nên không bị ảnh hưởng.
+                Attrition.Persistence.GameLaunch.ClearSessionInventoryCache();
+
                 var spawner = FindFirstObjectByType<NetworkSpawner>();
                 if (spawner != null) spawner.ServerSpawnPlayer(runner, player);
 
@@ -319,6 +333,14 @@ namespace Attrition.Networking
 
             var spawner = FindFirstObjectByType<NetworkSpawner>();
             if (spawner == null) return; // scene Menu (lobby) không có NetworkSpawner → bỏ qua.
+
+            // XOÁ CACHE session TRƯỚC KHI SPAWN — điểm DETERMINISTIC: OnSceneLoadDone chạy trên host MỖI
+            // lần vào scene gameplay, ngay trước ServerSpawnPlayer → trước EnsureSessionLoaded của
+            // PlayerInventory. Các đường clear khác (OnShutdown async, StartCoopLobby early-return) không
+            // chắc chạy khi back menu rồi vào lại CÙNG phòng (cùng sessionId) → cờ static
+            // SessionInventoryFetchStarted vẫn true → dùng cache CŨ. Clear ở đây đảm bảo mỗi lần vào game
+            // đều fetch mới stat/bình/vị trí từ server. Cache chỉ sống ở máy host nên chỉ cần clear host.
+            Attrition.Persistence.GameLaunch.ClearSessionInventoryCache();
 
             // Vào scene gameplay: dọn LobbyPlayer, spawn nhân vật thật cho mọi peer + quái (một lần).
             _phase = Phase.Gameplay;
@@ -366,6 +388,13 @@ namespace Attrition.Networking
             // được EnsureRunner DestroyImmediate khi _runner == null). Không clear → vào lại phòng báo
             // "should not be reused". Chạy cho CẢ host lẫn client (cả 2 đều Shutdown rồi về menu).
             _runner = null;
+
+            // Xoá cache session-theo-char (static). Cờ SessionInventoryFetchStarted/Loaded là static nên
+            // KHÔNG tự reset khi về menu (chỉ reset khi đóng game hẳn = process mới). Không clear → lần
+            // vào lại, EnsureSessionLoaded thấy FetchStarted==true → early-return, dùng CACHE CŨ (bình/
+            // stat cũ) thay vì fetch lại từ server. Đây là lý do "đóng game thì load đúng, back menu thì
+            // giữ giá trị cũ". Clear ở đây (mọi đường Shutdown → menu, cả host lẫn client).
+            Attrition.Persistence.GameLaunch.ClearSessionInventoryCache();
 
             bool wasClient = runner != null && !runner.IsServer;
             CleanupAndReturnToMenuIfClient(wasClient, $"shutdown ({shutdownReason})");
