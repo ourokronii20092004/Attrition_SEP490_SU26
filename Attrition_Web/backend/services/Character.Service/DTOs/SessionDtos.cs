@@ -7,7 +7,7 @@ public record CharacterSessionDto(
     Guid CharacterId, Guid SessionId, short PlayerRole,
     int CurrentLevel, int CurrentExp, string? AllocatedPointsJson,
     int MaxHp, int CurrentHp, int MaxMana, int CurrentMana, int MaxStamina,
-    int PotionMaxFlasks, float AttackSpeed, float PosX, float PosY,
+    int PotionMaxFlasks, int PotionMaxManaFlasks, float AttackSpeed, float PosX, float PosY,
     string? LastRestPointId, string? InventoryJson, string? EquipmentJson,
     DateTime UpdatedAt);
 
@@ -40,7 +40,7 @@ public record SaveCharacterSessionRequest(
     Guid CharacterId, Guid SessionId, short PlayerRole,
     int CurrentLevel, int CurrentExp, string? AllocatedPointsJson,
     int MaxHp, int CurrentHp, int MaxMana, int CurrentMana, int MaxStamina,
-    int PotionMaxFlasks, float AttackSpeed, float PosX, float PosY,
+    int PotionMaxFlasks, int PotionMaxManaFlasks, float AttackSpeed, float PosX, float PosY,
     string? LastRestPointId, string? InventoryJson = null, string? EquipmentJson = null);
 
 // Host pushes world/quest progress for a room. Upsert keyed on (SessionId, EventId).

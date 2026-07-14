@@ -415,6 +415,7 @@ public class APIManager : MonoBehaviour
         public int currentMana;
         public int maxStamina;
         public int potionMaxFlasks;
+        public int potionMaxManaFlasks;
         public float attackSpeed;
         public float posX;
         public float posY;
@@ -477,6 +478,7 @@ public class APIManager : MonoBehaviour
         public int currentMana;
         public int maxStamina;
         public int potionMaxFlasks;
+        public int potionMaxManaFlasks;
         public float attackSpeed;
         public float posX;
         public float posY;

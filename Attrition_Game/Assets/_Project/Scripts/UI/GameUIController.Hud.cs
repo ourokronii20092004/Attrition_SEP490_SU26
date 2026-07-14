@@ -73,6 +73,7 @@ namespace Attrition.UI
 
             UpdateHudSkillIcon();
             UpdateRestPrompt();
+            UpdateRevivePrompt();
             UpdatePing();
         }
 
@@ -214,6 +215,25 @@ namespace Attrition.UI
             if (prompt == null || _controller == null) return;
             bool show = _controller.IsAtCheckpoint;
             SetVisible(prompt, show);
+        }
+
+        /// <summary>
+        /// Hiện gợi ý [R] HỒI SINH khi đứng gần đồng đội đã gục (chỉ coop). Thanh fill phản ánh
+        /// tiến trình giữ R. Đọc local qua CoopReviveSystem (hoạt động cả trên client input-authority).
+        /// </summary>
+        private void UpdateRevivePrompt()
+        {
+            var prompt = _root.Q<VisualElement>("hud-revive");
+            if (prompt == null) return;
+
+            bool coop = Attrition.Persistence.GameLaunch.Mode == Attrition.Persistence.LaunchMode.Coop;
+            // Hiện khi: đang trong tiến trình hồi sinh, HOẶC có đồng đội gục trong tầm + còn bình máu.
+            bool show = coop && _revive != null && _revive.Object != null && _revive.Object.IsValid
+                        && (_revive.IsReviving || _revive.HasRevivableAllyNearby());
+            SetVisible(prompt, show);
+            if (!show) return;
+
+            SetFill("hud-revive-fill", _revive.ReviveFraction, 1f);
         }
 
         // ── Boss bar API: gọi từ boss EnemyController khi aggro/đổi máu/chết ──

@@ -14,7 +14,6 @@ namespace Attrition.Gameplay.Enemy.SeveredFang.States
     {
         private float _elapsedTime;
         private float _nextExplosionTime;
-        private bool _attackAnimPlayed;
         private float _lastExplosionX;     // vị trí X vụ nổ gần nhất (cho chế độ theo khoảng cách)
         private bool _hasFirstExplosion;
         
@@ -28,7 +27,6 @@ namespace Attrition.Gameplay.Enemy.SeveredFang.States
             ai.CurrentState = EnemyState.Attacking;
             _elapsedTime = 0f;
             _nextExplosionTime = 0f;
-            _attackAnimPlayed = false;
             _hasFirstExplosion = false;
             ai.DashExplosionSpawned = 0;
             _hitTargets.Clear();
@@ -49,7 +47,6 @@ namespace Attrition.Gameplay.Enemy.SeveredFang.States
 
             // Chơi animation attack
             ai.PlayAttackAnim();
-            _attackAnimPlayed = true;
 
             // Setup contact filter
             _contactFilter = new ContactFilter2D

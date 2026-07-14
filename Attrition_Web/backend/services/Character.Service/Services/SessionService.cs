@@ -115,6 +115,7 @@ public class SessionService : ISessionService
         entity.Vitals.CurrentMana = request.CurrentMana;
         entity.Vitals.MaxStamina = request.MaxStamina;
         entity.Combat.PotionMaxFlasks = request.PotionMaxFlasks;
+        entity.Combat.PotionMaxManaFlasks = request.PotionMaxManaFlasks;
         entity.Combat.AttackSpeed = request.AttackSpeed;
         entity.Position.PosX = request.PosX;
         entity.Position.PosY = request.PosY;
@@ -200,7 +201,7 @@ public class SessionService : ISessionService
     private static CharacterSessionDto ToCharacterSessionDto(CharacterSessionEntity c) => new(
         c.CharacterId, c.SessionId, c.PlayerRole, c.CurrentLevel, c.CurrentExp, c.AllocatedPointsJson,
         c.Vitals.MaxHp, c.Vitals.CurrentHp, c.Vitals.MaxMana, c.Vitals.CurrentMana, c.Vitals.MaxStamina,
-        c.Combat.PotionMaxFlasks, c.Combat.AttackSpeed, c.Position.PosX, c.Position.PosY,
+        c.Combat.PotionMaxFlasks, c.Combat.PotionMaxManaFlasks, c.Combat.AttackSpeed, c.Position.PosX, c.Position.PosY,
         c.Position.LastRestPointId, c.InventoryJson, c.EquipmentJson, c.UpdatedAt);
 
     private static WorldStateDto ToWorldStateDto(WorldStateEntity w) => new(

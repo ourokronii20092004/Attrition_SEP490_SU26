@@ -45,7 +45,9 @@ namespace Attrition.UI
             Time.timeScale = 1f;
             // Shutdown runner (kết thúc session coop) rồi về menu — đồng nhất với Quit ở Pause/GameOver.
             var runner = _controller != null ? _controller.Runner : null;
-            if (runner != null) runner.Shutdown();
+            // destroyGameObject:false — giữ NetworkLauncher (runner nằm trên GO bền của nó) để vào lại
+            // phòng được. Xem GameUIController.Pause.OnPauseQuit.
+            if (runner != null) runner.Shutdown(destroyGameObject: false);
             SceneManager.LoadScene("Main_Menu_UI");
         }
 

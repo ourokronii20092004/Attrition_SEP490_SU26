@@ -14,6 +14,7 @@ namespace Attrition.UI
     public partial class GameUIController
     {
         private bool _gameOverShown;
+        private bool _clientWaitShown; // coop CLIENT: đang chờ host quyết định sau khi cả 2 chết
 
         private void SetupGameOverControls()
         {
@@ -24,7 +25,7 @@ namespace Attrition.UI
         /// <summary>Gọi mỗi frame trong Update — phát hiện toàn bộ player chết.</summary>
         private void CheckGameOver()
         {
-            if (_gameOverShown || _overlay == Overlay.Loading) return;
+            if (_overlay == Overlay.Loading) return;
             // Đang rời trận (Quit/back menu) → runner tắt, không xét game over nữa.
             if (_controller == null || _controller.Object == null || !_controller.Object.Runner.IsRunning) return;
 
@@ -42,12 +43,36 @@ namespace Attrition.UI
                 if (!p.IsDead) { allDead = false; break; }
             }
 
-            if (validCount > 0 && allDead) ShowGameOver(); // BR-27: cả 2 (mọi player sống) đều chết
+            bool coop = Attrition.Persistence.GameLaunch.Mode == Attrition.Persistence.LaunchMode.Coop;
+            bool isHost = _controller.Object.Runner.IsServer;
+
+            if (validCount > 0 && allDead)
+            {
+                // COOP + CLIENT: KHÔNG tự quyết. Host mới chọn (checkpoint / main menu). Client chờ.
+                if (coop && !isHost)
+                {
+                    if (!_clientWaitShown) ShowClientWaitForHost();
+                }
+                else if (!_gameOverShown) ShowGameOver(); // solo hoặc host: hiện panel có 2 lựa chọn
+            }
+            else
+            {
+                // Không còn all-dead nữa = host đã chọn respawn checkpoint → cả 2 sống lại. Client đang
+                // chờ thì tự ẩn màn chờ, trả lại HUD.
+                if (_clientWaitShown)
+                {
+                    _clientWaitShown = false;
+                    ShowOverlay(Overlay.None);
+                }
+            }
         }
 
         private void ShowGameOver()
         {
             _gameOverShown = true;
+            // Host/solo: hiện 2 nút chọn (Resume = respawn checkpoint gần nhất, Quit = về Main Menu).
+            SetVisible(_root.Q<VisualElement>("go-resume"), true);
+            SetVisible(_root.Q<VisualElement>("go-quit"), true);
             float survived = Time.time - _runStartTime;
             SetText("go-time", $"{Mathf.FloorToInt(survived / 60f)}:{Mathf.FloorToInt(survived % 60f):00}");
             // _stats có thể trỏ tới object đã despawn / chưa Spawned() (vd sau respawn) → đọc Level
@@ -63,17 +88,36 @@ namespace Attrition.UI
             ShowOverlay(Overlay.GameOver);
         }
 
+        /// <summary>COOP CLIENT: cả 2 chết → chờ HOST chọn (dùng chung màn Game Over nhưng ẩn 2 nút,
+        /// đổi phụ đề thành "Waiting for host..."). Tự ẩn khi host respawn (xem CheckGameOver).</summary>
+        private void ShowClientWaitForHost()
+        {
+            _clientWaitShown = true;
+            SetVisible(_root.Q<VisualElement>("go-resume"), false);
+            SetVisible(_root.Q<VisualElement>("go-quit"), false);
+            float survived = Time.time - _runStartTime;
+            SetText("go-time", $"{Mathf.FloorToInt(survived / 60f)}:{Mathf.FloorToInt(survived % 60f):00}");
+            SetText("go-subtitle", "Both flames have been extinguished. Waiting for host...");
+            ShowOverlay(Overlay.GameOver);
+        }
+
         private void OnResumeClicked()
         {
-            if (_controller != null) _controller.RpcRequestRespawnAll();
+            // Đóng panel Game Over TRƯỚC khi gọi RPC. Trên host, RpcRequestRespawnAll chạy ĐỒNG BỘ →
+            // RpcTravelLoading mở overlay Loading ngay; nếu ShowOverlay(None) chạy SAU sẽ đè tắt loading
+            // (giống race đã sửa ở RestHere). Đóng trước rồi request → loading giữ nguyên, che lúc camera
+            // snap về checkpoint.
             _gameOverShown = false;
             ShowOverlay(Overlay.None);
+            if (_controller != null) _controller.RpcRequestRespawnAll();
         }
 
         private void OnQuitClicked()
         {
             var runner = _controller != null ? _controller.Runner : null;
-            if (runner != null) runner.Shutdown();   // host shutdown = kết thúc session (BR-31)
+            // destroyGameObject:false — tránh hủy NetworkLauncher (runner nằm trên GO bền của nó) →
+            // giữ để vào lại phòng được. Xem chi tiết trong GameUIController.Pause.OnPauseQuit.
+            if (runner != null) runner.Shutdown(destroyGameObject: false);   // host shutdown = kết thúc session (BR-31)
             SceneManager.LoadScene("Main_Menu_UI");
         }
 

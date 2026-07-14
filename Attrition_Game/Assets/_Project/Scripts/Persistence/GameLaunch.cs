@@ -66,6 +66,15 @@ namespace Attrition.Persistence
         public static readonly System.Collections.Generic.Dictionary<string, (float x, float y, string scene)> SessionRestPosByChar
             = new System.Collections.Generic.Dictionary<string, (float, float, string)>();
 
+        /// <summary>
+        /// Stat đã lưu của mỗi nhân vật trong SESSION (host fetch khi vào game): characterId → DTO
+        /// session đầy đủ (level, exp, điểm cộng, HP/Mana, số bình máu/mana...). PlayerStats đọc để
+        /// hydrate stat cop khi spawn (đối xứng với solo đọc save slot). Không có key = char mới → seed
+        /// mặc định. Reset khi rời/đổi session.
+        /// </summary>
+        public static readonly System.Collections.Generic.Dictionary<string, APIManager.CharacterSessionDto> SessionStatsByChar
+            = new System.Collections.Generic.Dictionary<string, APIManager.CharacterSessionDto>();
+
         /// <summary>True khi MỘT PlayerInventory đã bắt đầu fetch session (chặn fetch trùng).</summary>
         public static bool SessionInventoryFetchStarted = false;
 
@@ -77,6 +86,7 @@ namespace Attrition.Persistence
         {
             SessionInventoryByChar.Clear();
             SessionRestPosByChar.Clear();
+            SessionStatsByChar.Clear();
             SessionInventoryFetchStarted = false;
             SessionInventoryLoaded = false;
             CoopQuestsJson = "";

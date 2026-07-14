@@ -79,6 +79,7 @@ public class CharacterDbContext : DbContext
             {
                 b.Property(c => c.AttackSpeed).HasColumnName("AttackSpeed");
                 b.Property(c => c.PotionMaxFlasks).HasColumnName("PotionMaxFlasks");
+                b.Property(c => c.PotionMaxManaFlasks).HasColumnName("PotionMaxManaFlasks");
             });
             e.OwnsOne(x => x.Position, b =>
             {
