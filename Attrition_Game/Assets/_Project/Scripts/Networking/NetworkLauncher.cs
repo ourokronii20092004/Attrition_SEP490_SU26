@@ -298,6 +298,11 @@ namespace Attrition.Networking
             }
 
             // Gameplay đã chạy (reconnect / join muộn): spawn 1 nhân vật gameplay cho peer này.
+            // Client reconnect KHÔNG về lobby (client join với Scene trống → tự follow scene gameplay
+            // của host qua Fusion). Spawn xong, PlayerInventory.LoadOnlineInventory (chạy khi client gửi
+            // lại identity) tự teleport nhân vật về CHECKPOINT đã lưu trong session (đọc
+            // SessionRestPosByChar cache còn trên host) — không cần xử lý checkpoint ở đây, tránh vi phạm
+            // ranh giới assembly (Networking không ref Gameplay).
             if (_phase == Phase.Gameplay && _gameplaySpawned)
             {
                 var spawner = FindFirstObjectByType<NetworkSpawner>();
@@ -356,6 +361,12 @@ namespace Attrition.Networking
         /// </summary>
         public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
         {
+            // Runner đã shutdown KHÔNG được tái dùng (Fusion: "NetworkRunner should not be reused").
+            // Clear _runner để EnsureRunner tạo runner MỚI lần vào phòng sau (component cũ trên GO sẽ
+            // được EnsureRunner DestroyImmediate khi _runner == null). Không clear → vào lại phòng báo
+            // "should not be reused". Chạy cho CẢ host lẫn client (cả 2 đều Shutdown rồi về menu).
+            _runner = null;
+
             bool wasClient = runner != null && !runner.IsServer;
             CleanupAndReturnToMenuIfClient(wasClient, $"shutdown ({shutdownReason})");
         }

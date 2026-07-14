@@ -73,6 +73,14 @@
             <ui:VisualElement name="hud-prompt" class="hidden">
                 <ui:Label name="hud-prompt-text" text="[F] CHECKPOINT"/>
             </ui:VisualElement>
+
+            <!-- Coop revive prompt: hiện khi đứng gần đồng đội đã gục (giữ R để hồi sinh) -->
+            <ui:VisualElement name="hud-revive" class="hidden">
+                <ui:Label name="hud-revive-text" text="[R] HỒI SINH ĐỒNG ĐỘI"/>
+                <ui:VisualElement name="hud-revive-track">
+                    <ui:VisualElement name="hud-revive-fill"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
         </ui:VisualElement>
 
         <!-- ==================== CHARACTER / INVENTORY ==================== -->

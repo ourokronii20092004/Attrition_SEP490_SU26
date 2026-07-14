@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6976845622161338339}
   - component: {fileID: 901072800875488117}
   - component: {fileID: 1978158679812485804}
-  - component: {fileID: 8984448836247630545}
+  - component: {fileID: 2466755029027436820}
   m_Layer: 0
   m_Name: Visual
   m_TagString: Untagged
@@ -106,7 +106,7 @@ SpriteRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 3204480812468917802, guid: 0a1f8a85df257174e8103af5a44c099e, type: 3}
-  m_Color: {r: 0.9547169, g: 0.88602525, b: 0.2575934, a: 1}
+  m_Color: {r: 0.98490566, g: 0.92519605, b: 0.19140615, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -115,7 +115,7 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!114 &8984448836247630545
+--- !u!114 &2466755029027436820
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -150,6 +150,7 @@ GameObject:
   - component: {fileID: 2044027385345098150}
   - component: {fileID: -8304798322267633763}
   - component: {fileID: 4926934666965263351}
+  - component: {fileID: 817566648311922267}
   m_Layer: 7
   m_Name: Player 1
   m_TagString: Player
@@ -199,8 +200,8 @@ Rigidbody2D:
     serializedVersion: 2
     m_Bits: 0
   m_Interpolate: 0
-  m_SleepingMode: 1
-  m_CollisionDetection: 0
+  m_SleepingMode: 0
+  m_CollisionDetection: 1
   m_Constraints: 4
 --- !u!70 &7161810634740937689
 CapsuleCollider2D:
@@ -360,7 +361,7 @@ MonoBehaviour:
   m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
-  SortKey: 138240652
+  SortKey: 3715595291
   ObjectInterest: 1
   Flags: 262145
   NestedObjects: []
@@ -374,6 +375,7 @@ MonoBehaviour:
   - {fileID: 2044027385345098150}
   - {fileID: -8304798322267633763}
   - {fileID: 4926934666965263351}
+  - {fileID: 817566648311922267}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &-9211217073537501404
 MonoBehaviour:
@@ -491,6 +493,23 @@ MonoBehaviour:
     m_Bits: 768
   _IsCasting:
     _value: 0
+--- !u!114 &817566648311922267
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6831727267532873526}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91ae08489bb250e43acaa228c77d5cbf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Player.CoopReviveSystem
+  reviveRadius: 3
+  reviveTimeRequired: 3
+  _IsReviving:
+    _value: 0
+  _ReviveProgress: 0
 --- !u!1 &7179476028545329090
 GameObject:
   m_ObjectHideFlags: 0

@@ -80,6 +80,16 @@ namespace Attrition.Gameplay.Player
             return true;
         }
 
+        /// <summary>Tiêu 1 bình máu mà KHÔNG hồi máu (dùng để trả giá hồi sinh đồng đội — người cứu chỉ
+        /// mất bình, không được hưởng lượng hồi của bình đó). Trả về true nếu đã trừ. Chỉ host.</summary>
+        public bool TryConsumeHealthPotionNoHeal()
+        {
+            if (!HasStateAuthority) return false;
+            if (HealthCharges <= 0) return false;
+            HealthCharges--;
+            return true;
+        }
+
         /// <summary>Rest tại checkpoint: hồi đầy số charge. Chỉ host.</summary>
         public void RefillAll()
         {
@@ -111,6 +121,11 @@ namespace Attrition.Gameplay.Player
                 MaxHealthCharges = newHealth;
                 MaxManaCharges = newMana;
                 RefillAll();
+
+                // Lưu ngay sau khi đổi tỷ lệ bình (host lo lưu cho mọi player). Đổi bình = 1 mốc save
+                // như rest → lần sau vào game giữ đúng số bình đã phân bổ.
+                Attrition.Gameplay.Persistence.GameSaveService.EnsureExists()
+                    .Save(Attrition.Gameplay.Persistence.GameSaveService.SaveEvent.Rest);
             }
         }
     }

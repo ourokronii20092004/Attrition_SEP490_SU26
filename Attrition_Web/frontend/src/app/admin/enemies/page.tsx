@@ -13,6 +13,7 @@ import { parseApiError } from "@/lib/api/parse-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { ItemPicker } from "@/components/ui/item-picker";
 import { Modal } from "@/components/ui/modal";
 import { PageLoader } from "@/components/ui/spinner";
 import { AdminPageHeader, AdminFilterBar, AdminTable, AdminRow } from "@/components/admin/admin-table";
@@ -260,9 +261,20 @@ function EnemyForm({ initial, onDone, onCancel, onDirtyChange }: { initial: Enem
         </div>
         {fields.map((field, i) => (
           <div key={field.id} className="grid grid-cols-6 gap-2 items-end">
-            <Input label="Item" error={errors.lootTable?.[i]?.itemName?.message} {...register(`lootTable.${i}.itemName`)} />
+            <ItemPicker
+              label="Item"
+              value={watch(`lootTable.${i}.itemName`) ?? ""}
+              error={errors.lootTable?.[i]?.itemName?.message}
+              onSelect={(it) => {
+                // Ghi itemId (= ItemSO.itemId game dùng tra) + auto-fill rarity/icon từ item DB.
+                setValue(`lootTable.${i}.itemName`, it.itemId, { shouldDirty: true, shouldValidate: true });
+                setValue(`lootTable.${i}.rarity`, it.rarity, { shouldDirty: true });
+                setValue(`lootTable.${i}.iconKey`, it.iconKey, { shouldDirty: true });
+              }}
+              onManualChange={(raw) => setValue(`lootTable.${i}.itemName`, raw, { shouldDirty: true, shouldValidate: true })}
+            />
             <Input label="Rarity" {...register(`lootTable.${i}.rarity`)} />
-            <Input label="Drop %" type="number" step="0.01" {...register(`lootTable.${i}.dropChance`)} />
+            <Input label="Drop (0-1)" type="number" step="0.01" {...register(`lootTable.${i}.dropChance`)} />
             <Input label="Min" type="number" {...register(`lootTable.${i}.minQty`)} />
             <Input label="Max" type="number" {...register(`lootTable.${i}.maxQty`)} />
             <Button type="button" size="sm" variant="danger" onClick={() => remove(i)}>X</Button>

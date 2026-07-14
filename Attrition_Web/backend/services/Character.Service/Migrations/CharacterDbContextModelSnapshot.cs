@@ -127,6 +127,9 @@ namespace Character.Service.Migrations
                     b.Property<int>("PotionMaxFlasks")
                         .HasColumnType("integer");
 
+                    b.Property<int>("PotionMaxManaFlasks")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 

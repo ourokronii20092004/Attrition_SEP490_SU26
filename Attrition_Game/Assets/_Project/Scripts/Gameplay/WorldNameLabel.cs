@@ -25,7 +25,7 @@ namespace Attrition.Gameplay
             tm.alignment = TextAlignmentOptions.Center;
             tm.color = color;
             tm.sortingOrder = 80;
-            tm.enableWordWrapping = false;
+            tm.textWrappingMode = TextWrappingModes.NoWrap;
             
             return go;
         }
