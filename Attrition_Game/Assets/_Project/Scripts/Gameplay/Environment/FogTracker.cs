@@ -26,8 +26,6 @@ namespace Attrition.Gameplay.Environment
 
         private void Start()
         {
-            _scene = SceneManager.GetActiveScene().name;
-
             // Nạp fog + checkpoint đã khám phá từ save (solo). Đảm bảo fog đúng ngay từ đầu kể cả khi
             // scene không có checkpoint nào (Checkpoint.RestoreActivatedFromSave có thể không chạy).
             // New game = save trống → WorldMapState rỗng → mọi room phủ sương. Coop: hệ online lo riêng.
@@ -40,8 +38,22 @@ namespace Attrition.Gameplay.Environment
             if (mapData == null)
             {
                 var reg = MapRegistrySO.Load();
-                if (reg != null) mapData = reg.GetByScene(_scene);
+                if (reg != null)
+                {
+                    // KHÔNG dùng SceneManager.GetActiveScene() để tra: COOP load scene ADDITIVE nên active
+                    // scene = 'Main_Menu_UI' (không phải tên map) → GetByScene fail → mapData null → fog
+                    // KHÔNG BAO GIỜ xua (toàn sương). Dùng GameLaunch.GameplayScene — nguồn đáng tin cho
+                    // map đang chơi (khớp cách WorldMapController/checkpoint xử lý coop).
+                    string mapScene = Attrition.Persistence.GameLaunch.GameplayScene;
+                    mapData = reg.GetByScene(mapScene);
+                    if (mapData == null) mapData = reg.GetByScene(SceneManager.GetActiveScene().name); // fallback solo
+                }
             }
+
+            // Khóa fog theo TÊN trong MapData (khớp WorldMapState key mà WorldMapController đọc), KHÔNG
+            // theo active scene (coop trả sai). Không có mapData → giữ tên active scene để log rõ.
+            _scene = mapData != null ? mapData.sceneName : SceneManager.GetActiveScene().name;
+
             if (mapData == null)
                 Debug.LogWarning($"[FogTracker] Không có MapData cho scene '{_scene}' — fog sẽ không ghi nhận. Hãy bake map + thêm vào MapRegistry.");
         }
