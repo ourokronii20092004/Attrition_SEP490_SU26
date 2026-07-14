@@ -3365,8 +3365,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10968247bd1ed8e4b92e173e84525a1e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Environment.WorldMapController
-  teleIcon: {fileID: 0}
+  teleIcon: {fileID: -7519012063143179805, guid: ac52d132de61451438f0b88895f39240, type: 3}
   playerIcon: {fileID: 0}
+  localPlayerIcon: {fileID: 0}
+  remotePlayerIcon: {fileID: 0}
+  playerIconSize: 30
 --- !u!114 &1003671432
 MonoBehaviour:
   m_ObjectHideFlags: 0
