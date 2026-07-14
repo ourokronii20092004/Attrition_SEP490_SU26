@@ -45,6 +45,9 @@ TagManager:
   - name: Background
     uniqueID: 631042317
     locked: 0
+  - name: Elevator
+    uniqueID: 1055798017
+    locked: 0
   - name: Decor
     uniqueID: 4235074171
     locked: 0
