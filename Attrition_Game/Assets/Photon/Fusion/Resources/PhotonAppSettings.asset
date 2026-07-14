@@ -18,8 +18,8 @@ MonoBehaviour:
     AppIdVoice: 
     AppVersion: 
     UseNameServer: 1
-    FixedRegion: 
-    Server: 
+    FixedRegion: asia
+    Server:
     Port: 0
     ProxyServer: 
     Protocol: 0
