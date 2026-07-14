@@ -249,8 +249,14 @@ namespace Attrition.Gameplay.Persistence
                     yield return APIManager.Instance.SaveCharacterSession(csReq, ok =>
                     {
                         if (!ok) anyFailed = true;
-                        Debug.Log($"[Save:ROOM] {charId}@{GameLaunch.SessionId} ({evt}) → {(ok ? "OK" : "FAILED")}");
+                        Debug.Log($"[Save:ROOM] {charId}@{GameLaunch.SessionId} ({evt}) hpFlask={csReq.potionMaxFlasks} manaFlask={csReq.potionMaxManaFlasks} → {(ok ? "OK" : "FAILED")}");
                     });
+                }
+                else
+                {
+                    // Bỏ qua per-room save → bình/stat client KHÔNG được lưu. Log rõ lý do để chẩn đoán.
+                    Debug.LogWarning($"[Save:ROOM] BỎ QUA (không lưu bình/stat): sessionId='{GameLaunch.SessionId}' charId='{charId}' isHostOwn={isHostOwnPlayer}. "
+                                     + "charId rỗng = client chưa resolve characterId server → per-room save bị skip.");
                 }
             }
 

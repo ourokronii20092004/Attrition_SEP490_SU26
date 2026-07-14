@@ -156,6 +156,12 @@ namespace Attrition.Gameplay.Player.Inventory
                 var st = GetComponent<PlayerStats>();
                 if (st != null) st.HydrateFromCoopSession(statDto);
             }
+            else if (HasStateAuthority)
+            {
+                Debug.LogWarning($"[Hydrate] KHÔNG hydrate stat: charId='{charId}' "
+                                 + $"cóCache={(!string.IsNullOrEmpty(charId) && Attrition.Persistence.GameLaunch.SessionStatsByChar.ContainsKey(charId))}. "
+                                 + "charId rỗng hoặc cache trống = stat/bình về mặc định.");
+            }
 
             if (!string.IsNullOrEmpty(charId)
                 && Attrition.Persistence.GameLaunch.SessionInventoryByChar.TryGetValue(charId, out var invJson)
@@ -225,17 +231,22 @@ namespace Attrition.Gameplay.Player.Inventory
             Attrition.Persistence.GameLaunch.SessionInventoryFetchStarted = true; // claim fetch (idempotent)
 
             string sessionId = Attrition.Persistence.GameLaunch.SessionId;
+            Debug.Log($"[SessionLoad] fetch sessionId='{sessionId}' (rỗng = chưa tạo room server → seed mặc định)");
             if (APIManager.Instance != null && !string.IsNullOrEmpty(sessionId))
             {
                 yield return APIManager.Instance.GetSession(sessionId, detail =>
                 {
-                    if (detail == null) return;
+                    if (detail == null) { Debug.LogWarning("[SessionLoad] GetSession trả null → không nạp được stat/đồ."); return; }
 
+                    int n = detail.characters != null ? detail.characters.Count : 0;
+                    Debug.Log($"[SessionLoad] session '{sessionId}' có {n} character record. "
+                              + (n == 0 ? "0 record = save chưa từng ghi cho session này → về mặc định." : ""));
                     if (detail.characters != null)
                     {
                         foreach (var cs in detail.characters)
                         {
                             if (cs == null || string.IsNullOrEmpty(cs.characterId)) continue;
+                            Debug.Log($"[SessionLoad] cache char={cs.characterId} hpFlask={cs.potionMaxFlasks} manaFlask={cs.potionMaxManaFlasks} pos=({cs.posX:F1},{cs.posY:F1})");
                             Attrition.Persistence.GameLaunch.SessionInventoryByChar[cs.characterId] = cs.inventoryJson;
                             // Cache vị trí rest đã lưu (theo scene của room) để spawn đúng checkpoint.
                             Attrition.Persistence.GameLaunch.SessionRestPosByChar[cs.characterId] =

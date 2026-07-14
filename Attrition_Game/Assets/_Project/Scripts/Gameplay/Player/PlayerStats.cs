@@ -148,14 +148,19 @@ namespace Attrition.Gameplay.Player
                 catch { /* JSON hỏng → bỏ qua điểm cộng, giữ mặc định */ }
             }
 
-            // Số bình máu/mana tối đa đã mở
+            // Số bình máu/mana tối đa đã mở. Chỉ áp khi record có tổng bình > 0 (record đã lưu hợp lệ);
+            // dùng chính giá trị server kể cả khi 1 loại = 0 (vd 5 máu / 0 mana là hợp lệ — trước đây
+            // guard 'mana > 0' làm 0 mana bị bỏ qua → giữ mặc định 2, sai). Record trống (0+0 = char
+            // chưa lưu bình) → giữ mặc định từ PotionSystem.Spawned.
             var potions = GetComponent<PotionSystem>();
-            if (potions != null)
+            if (potions != null && (cs.potionMaxFlasks + cs.potionMaxManaFlasks) > 0)
             {
-                if (cs.potionMaxFlasks > 0) potions.MaxHealthCharges = cs.potionMaxFlasks;
-                if (cs.potionMaxManaFlasks > 0) potions.MaxManaCharges = cs.potionMaxManaFlasks;
+                potions.MaxHealthCharges = cs.potionMaxFlasks;
+                potions.MaxManaCharges = cs.potionMaxManaFlasks;
                 potions.HealthCharges = potions.MaxHealthCharges;
                 potions.ManaCharges = potions.MaxManaCharges;
+                Debug.Log($"[Hydrate] char={cs.characterId} nạp từ server: hpFlask={cs.potionMaxFlasks} manaFlask={cs.potionMaxManaFlasks} "
+                          + $"→ áp Max HP={potions.MaxHealthCharges} Mana={potions.MaxManaCharges}");
             }
 
             // HP/Mana hiện tại (clamp sau khi đồ đã đắp có thể đổi MaxHP; ReviveFull/rest sẽ hồi đầy).
