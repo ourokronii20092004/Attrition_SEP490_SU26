@@ -22,31 +22,31 @@ AnimationClip:
     curve:
     - time: 0
       value: {fileID: -3970589427392028295, guid: a544287c8b3514b4a8735b9052af7dc1, type: 3}
-    - time: 0.16666667
+    - time: 0.21666667
       value: {fileID: 1188886742568398702, guid: a544287c8b3514b4a8735b9052af7dc1, type: 3}
-    - time: 0.26666668
+    - time: 0.33333334
       value: {fileID: 482797791953838701, guid: a544287c8b3514b4a8735b9052af7dc1, type: 3}
-    - time: 0.43333334
+    - time: 0.55
       value: {fileID: -5744554377020702508, guid: a544287c8b3514b4a8735b9052af7dc1, type: 3}
-    - time: 0.5833333
+    - time: 0.73333335
       value: {fileID: -6006621870850466, guid: a544287c8b3514b4a8735b9052af7dc1, type: 3}
-    - time: 0.71666664
+    - time: 0.9
       value: {fileID: -7544396562254309787, guid: a544287c8b3514b4a8735b9052af7dc1, type: 3}
-    - time: 0.85
+    - time: 1.0666667
       value: {fileID: 8528477237256036597, guid: a544287c8b3514b4a8735b9052af7dc1, type: 3}
-    - time: 0.98333335
+    - time: 1.1666666
       value: {fileID: -8376795314478499838, guid: a544287c8b3514b4a8735b9052af7dc1, type: 3}
-    - time: 1.15
+    - time: 1.3
       value: {fileID: -5739081026707015955, guid: a544287c8b3514b4a8735b9052af7dc1, type: 3}
-    - time: 1.2833333
-      value: {fileID: 4344151244158979492, guid: a544287c8b3514b4a8735b9052af7dc1, type: 3}
     - time: 1.4166666
+      value: {fileID: 4344151244158979492, guid: a544287c8b3514b4a8735b9052af7dc1, type: 3}
+    - time: 1.5166667
       value: {fileID: 2059169498478239601, guid: a544287c8b3514b4a8735b9052af7dc1, type: 3}
-    - time: 1.5666667
+    - time: 1.65
       value: {fileID: 3906155987040631856, guid: a544287c8b3514b4a8735b9052af7dc1, type: 3}
-    - time: 1.7333333
+    - time: 1.7833333
       value: {fileID: -3992399264991492348, guid: a544287c8b3514b4a8735b9052af7dc1, type: 3}
-    - time: 1.8333334
+    - time: 1.8666667
       value: {fileID: -1653630675152714288, guid: a544287c8b3514b4a8735b9052af7dc1, type: 3}
     - time: 2
       value: {fileID: -5794778844162922957, guid: a544287c8b3514b4a8735b9052af7dc1, type: 3}
