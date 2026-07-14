@@ -87,7 +87,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 100
+  spritePixelsToUnits: 16
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -144,7 +144,7 @@ TextureImporter:
         width: 27
         height: 44
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -166,7 +166,7 @@ TextureImporter:
         width: 31
         height: 44
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -188,7 +188,7 @@ TextureImporter:
         width: 31
         height: 48
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -202,37 +202,15 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: ElfDeath001-Sheet-export_3
-      rect:
-        serializedVersion: 2
-        x: 546
-        y: 68
-        width: 10
-        height: 17
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 6a1475b4c9af63e70800000000000000
-      internalID: 9094732046707147174
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
       name: ElfDeath001-Sheet-export_4
       rect:
         serializedVersion: 2
-        x: 548
+        x: 546
         y: 55
-        width: 26
+        width: 31
         height: 41
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -246,37 +224,15 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: ElfDeath001-Sheet-export_5
-      rect:
-        serializedVersion: 2
-        x: 707
-        y: 73
-        width: 9
-        height: 17
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: b4d355a3dd27a2090800000000000000
-      internalID: -8058502288734077621
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
       name: ElfDeath001-Sheet-export_6
       rect:
         serializedVersion: 2
-        x: 711
-        y: 66
-        width: 34
-        height: 31
+        x: 707
+        y: 60
+        width: 38
+        height: 37
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -295,10 +251,10 @@ TextureImporter:
         serializedVersion: 2
         x: 870
         y: 74
-        width: 20
+        width: 29
         height: 29
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -312,28 +268,6 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: ElfDeath001-Sheet-export_8
-      rect:
-        serializedVersion: 2
-        x: 889
-        y: 77
-        width: 10
-        height: 10
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: c6e3c13b8c5970be0800000000000000
-      internalID: -1511074460728541588
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
       name: ElfDeath001-Sheet-export_9
       rect:
         serializedVersion: 2
@@ -342,7 +276,7 @@ TextureImporter:
         width: 25
         height: 19
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -355,77 +289,11 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
-    - serializedVersion: 2
-      name: ElfDeath001-Sheet-export_10
-      rect:
-        serializedVersion: 2
-        x: 568
-        y: 59
-        width: 9
-        height: 15
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 3eff3f0c4dbc2a3e0800000000000000
-      internalID: -2043847166242062365
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: ElfDeath001-Sheet-export_11
-      rect:
-        serializedVersion: 2
-        x: 710
-        y: 60
-        width: 7
-        height: 7
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: faea2a1771fd9a8e0800000000000000
-      internalID: -1681567694062440785
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: ElfDeath001-Sheet-export_12
-      rect:
-        serializedVersion: 2
-        x: 726
-        y: 62
-        width: 8
-        height: 8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 718891823b2f4d640800000000000000
-      internalID: 5103971129003444247
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
     outline: []
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 292d3aeec6d97824f9c4868e8fb3ddfd
     internalID: 0
     vertices: []
     indices: 
