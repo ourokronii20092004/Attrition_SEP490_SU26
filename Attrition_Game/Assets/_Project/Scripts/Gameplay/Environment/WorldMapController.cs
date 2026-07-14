@@ -22,6 +22,12 @@ namespace Attrition.Gameplay.Environment
         [SerializeField] private Sprite teleIcon;
         [Tooltip("Sprite ĐẦU player hiện trên map. Bỏ trống = chấm tròn trắng tự vẽ.")]
         [SerializeField] private Sprite playerIcon;
+        [Tooltip("Icon cho player CỦA MÌNH (local) trên map. Bỏ trống = dùng playerIcon / sprite đầu / chấm xanh.")]
+        [SerializeField] private Sprite localPlayerIcon;
+        [Tooltip("Icon cho ĐỒNG ĐỘI (remote, coop) trên map. Bỏ trống = dùng playerIcon / sprite đầu / chấm cam.")]
+        [SerializeField] private Sprite remotePlayerIcon;
+        [Tooltip("Kích thước icon player trên map (px màn hình, giữ nguyên khi zoom). Tăng để icon to hơn.")]
+        [SerializeField] private float playerIconSize = 26f;
 
         // px hiển thị cho mỗi 1 world-unit ở zoom = 1. Toàn bộ map-space nhân hệ số này.
         private const float PixelsPerUnit = 3f;
@@ -34,7 +40,9 @@ namespace Attrition.Gameplay.Environment
         private GameObject _panel;
         private RectTransform _viewport;   // khung cắt (mask)
         private RectTransform _content;    // chứa mọi map + marker + player dot; pan/zoom ở đây
-        private RectTransform _playerDot;
+        // Icon vị trí từng player (local + đồng đội coop) + PlayerController tương ứng để cập nhật mỗi frame.
+        private readonly List<(RectTransform rt, PlayerController pc)> _playerDots = new List<(RectTransform, PlayerController)>();
+        private MapDataSO _openMap;        // map hiện hành, cache lúc mở để reposition icon khỏi tính lại mỗi frame
         private TextMeshProUGUI _title;
         private Button _travelBtn;
         private readonly List<GameObject> _spawned = new List<GameObject>();
@@ -159,6 +167,17 @@ namespace Attrition.Gameplay.Environment
             {
                 Vector2 d = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
                 _content.anchoredPosition += d * 12f;
+            }
+
+            // Cập nhật vị trí icon player MỖI FRAME → icon di chuyển real-time theo player (local + coop).
+            if (_openMap != null)
+            {
+                for (int i = 0; i < _playerDots.Count; i++)
+                {
+                    var (rt, pc) = _playerDots[i];
+                    if (rt == null || pc == null) continue;
+                    rt.anchoredPosition = MapToContent(_openMap, pc.transform.position);
+                }
             }
         }
 
@@ -353,31 +372,52 @@ namespace Attrition.Gameplay.Environment
             _spawned.Add(mk);
         }
 
+        // Vẽ icon vị trí cho MỌI player (local + đồng đội coop). Icon cập nhật mỗi frame trong Update.
         private void BuildPlayerDot()
         {
+            _playerDots.Clear();
             var map = CurrentMap();
-            var player = FindLocalPlayer();
+            _openMap = map;
             if (map == null)
-                Debug.LogWarning("[WorldMap] CurrentMap null — scene chưa có MapData trong MapRegistry → không vẽ được chấm player.");
-            if (player == null)
-                Debug.LogWarning("[WorldMap] Không tìm thấy local player → không vẽ chấm player.");
-            if (map == null || player == null) return;
+            {
+                Debug.LogWarning("[WorldMap] CurrentMap null — scene chưa có MapData trong MapRegistry → không vẽ được icon player.");
+                return;
+            }
 
-            var dotGo = NewElement("PlayerDot", _content, out var rt);
-            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
-            rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.anchoredPosition = MapToContent(map, player.position);
-            rt.sizeDelta = new Vector2(26, 26);
-            var img = dotGo.AddComponent<Image>();
-            // Ưu tiên playerIcon gán Inspector → nếu trống, lấy SPRITE ĐẦU của player (SpriteRenderer) →
-            // cuối cùng chấm tròn trắng tự sinh.
-            Sprite head = playerIcon != null ? playerIcon : GetPlayerSprite(player);
-            img.sprite = head != null ? head : CircleSprite();
-            img.color = Color.white; img.raycastTarget = false;
-            img.preserveAspect = true;
-            _playerDot = rt;
-            _spawned.Add(dotGo);
-            _constantScale.Add(dotGo);   // chấm player giữ kích thước màn hình khi zoom
+            foreach (var pc in FindObjectsByType<PlayerController>(FindObjectsSortMode.None))
+            {
+                if (pc == null) continue;
+                bool isLocal = pc.HasInputAuthority;
+
+                var dotGo = NewElement("PlayerDot", _content, out var rt);
+                rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+                rt.pivot = new Vector2(0.5f, 0.5f);
+                rt.anchoredPosition = MapToContent(map, pc.transform.position);
+                rt.sizeDelta = new Vector2(playerIconSize, playerIconSize);
+
+                var img = dotGo.AddComponent<Image>();
+                // Chọn sprite: icon theo authority (Inspector) → playerIcon chung → sprite đầu player → chấm tròn.
+                Sprite icon = isLocal ? localPlayerIcon : remotePlayerIcon;
+                if (icon == null) icon = playerIcon;
+                if (icon == null) icon = GetPlayerSprite(pc.transform);
+                if (icon != null)
+                {
+                    img.sprite = icon;
+                    img.color = Color.white;      // icon thật → giữ nguyên hình
+                }
+                else
+                {
+                    // Chưa gán icon → chấm tròn tô màu phân biệt local/remote (theo PlayerNameTag).
+                    img.sprite = CircleSprite();
+                    img.color = isLocal ? new Color(0.4f, 0.9f, 0.5f) : new Color(0.95f, 0.6f, 0.25f);
+                }
+                img.raycastTarget = false;
+                img.preserveAspect = true;
+
+                _spawned.Add(dotGo);
+                _constantScale.Add(dotGo);   // giữ kích thước màn hình khi zoom
+                _playerDots.Add((rt, pc));
+            }
         }
 
         private static Sprite GetPlayerSprite(Transform player)
