@@ -157,3 +157,13 @@ uploads/
 Attrition_Game_clone_*/
 *_clone_*/
 .ParrelSyncArguments
+Attrition_Web/backend/services/Admin.Service/Properties/launchSettings.json
+Attrition_Web/backend/services/Assets.Service/Properties/launchSettings.json
+Attrition_Web/backend/services/Character.Service/Properties/launchSettings.json
+Attrition_Web/backend/services/Enemy.Service/Properties/launchSettings.json
+Attrition_Web/backend/services/Forum.Service/Properties/launchSettings.json
+Attrition_Web/backend/services/Gateway/Properties/launchSettings.json
+Attrition_Web/backend/services/Identity.Service/Properties/launchSettings.json
+Attrition_Web/backend/services/Music.Service/Properties/launchSettings.json
+Attrition_Web/backend/services/Search.Service/Properties/launchSettings.json
+Attrition_Web/backend/services/Wiki.Service/Properties/launchSettings.json

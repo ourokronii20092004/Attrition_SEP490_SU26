@@ -1,0 +1,455 @@
+fileFormatVersion: 2
+guid: de424988e239db54b8e2c732782e0edb
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 2872485219603667635
+    second: Pixel Art Furnace and Sawmill_0
+  - first:
+      213: -8300950071754738547
+    second: Pixel Art Furnace and Sawmill_1
+  - first:
+      213: 2058993859105967790
+    second: Pixel Art Furnace and Sawmill_2
+  - first:
+      213: -1700769039237307449
+    second: Pixel Art Furnace and Sawmill_3
+  - first:
+      213: -5173645061352500339
+    second: Pixel Art Furnace and Sawmill_4
+  - first:
+      213: -2054319413448100905
+    second: Pixel Art Furnace and Sawmill_5
+  - first:
+      213: 6344427276099028103
+    second: Pixel Art Furnace and Sawmill_6
+  - first:
+      213: 760763753405307729
+    second: Pixel Art Furnace and Sawmill_7
+  - first:
+      213: 7230286855050320180
+    second: Pixel Art Furnace and Sawmill_8
+  - first:
+      213: 5433167480692301568
+    second: Pixel Art Furnace and Sawmill_9
+  - first:
+      213: -5902698002744979230
+    second: Pixel Art Furnace and Sawmill_10
+  - first:
+      213: 1140309623503846872
+    second: Pixel Art Furnace and Sawmill_11
+  - first:
+      213: -5987634173257855005
+    second: Pixel Art Furnace and Sawmill_12
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Pixel Art Furnace and Sawmill_0
+      rect:
+        serializedVersion: 2
+        x: 9
+        y: 63
+        width: 46
+        height: 65
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3ba5901961e1dd720800000000000000
+      internalID: 2872485219603667635
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pixel Art Furnace and Sawmill_1
+      rect:
+        serializedVersion: 2
+        x: 73
+        y: 63
+        width: 46
+        height: 65
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d843ecad3e91dcc80800000000000000
+      internalID: -8300950071754738547
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pixel Art Furnace and Sawmill_2
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 63
+        width: 46
+        height: 65
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eaec8be7104039c10800000000000000
+      internalID: 2058993859105967790
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pixel Art Furnace and Sawmill_3
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 63
+        width: 46
+        height: 65
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7c32743e197a568e0800000000000000
+      internalID: -1700769039237307449
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pixel Art Furnace and Sawmill_4
+      rect:
+        serializedVersion: 2
+        x: 265
+        y: 63
+        width: 46
+        height: 61
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d8351245a358338b0800000000000000
+      internalID: -5173645061352500339
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pixel Art Furnace and Sawmill_5
+      rect:
+        serializedVersion: 2
+        x: 281
+        y: 122
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7d3bc32b0679d73e0800000000000000
+      internalID: -2054319413448100905
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pixel Art Furnace and Sawmill_6
+      rect:
+        serializedVersion: 2
+        x: 329
+        y: 63
+        width: 46
+        height: 65
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7848e2f4efeeb0850800000000000000
+      internalID: 6344427276099028103
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pixel Art Furnace and Sawmill_7
+      rect:
+        serializedVersion: 2
+        x: 3
+        y: 0
+        width: 59
+        height: 55
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 15b57bf5a96ce8a00800000000000000
+      internalID: 760763753405307729
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pixel Art Furnace and Sawmill_8
+      rect:
+        serializedVersion: 2
+        x: 67
+        y: 0
+        width: 59
+        height: 55
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 43953734693275460800000000000000
+      internalID: 7230286855050320180
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pixel Art Furnace and Sawmill_9
+      rect:
+        serializedVersion: 2
+        x: 131
+        y: 0
+        width: 59
+        height: 55
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00f5edb990d766b40800000000000000
+      internalID: 5433167480692301568
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pixel Art Furnace and Sawmill_10
+      rect:
+        serializedVersion: 2
+        x: 195
+        y: 0
+        width: 59
+        height: 55
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2e05af9b077651ea0800000000000000
+      internalID: -5902698002744979230
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pixel Art Furnace and Sawmill_11
+      rect:
+        serializedVersion: 2
+        x: 259
+        y: 0
+        width: 59
+        height: 55
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8ddf7ea9f8133df00800000000000000
+      internalID: 1140309623503846872
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pixel Art Furnace and Sawmill_12
+      rect:
+        serializedVersion: 2
+        x: 323
+        y: 0
+        width: 59
+        height: 55
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3efc9f97176a7eca0800000000000000
+      internalID: -5987634173257855005
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Pixel Art Furnace and Sawmill_0: 2872485219603667635
+      Pixel Art Furnace and Sawmill_1: -8300950071754738547
+      Pixel Art Furnace and Sawmill_10: -5902698002744979230
+      Pixel Art Furnace and Sawmill_11: 1140309623503846872
+      Pixel Art Furnace and Sawmill_12: -5987634173257855005
+      Pixel Art Furnace and Sawmill_2: 2058993859105967790
+      Pixel Art Furnace and Sawmill_3: -1700769039237307449
+      Pixel Art Furnace and Sawmill_4: -5173645061352500339
+      Pixel Art Furnace and Sawmill_5: -2054319413448100905
+      Pixel Art Furnace and Sawmill_6: 6344427276099028103
+      Pixel Art Furnace and Sawmill_7: 760763753405307729
+      Pixel Art Furnace and Sawmill_8: 7230286855050320180
+      Pixel Art Furnace and Sawmill_9: 5433167480692301568
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
