@@ -32,6 +32,11 @@ namespace Attrition.Gameplay.Persistence
         {
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
+            // PERSIST qua scene: đổi map (fast-travel) không destroy + tạo lại → _basePlaytimeSeconds/
+            // _sessionStartTime giữ nguyên → playtime cộng dồn ĐÚNG. Trước đây per-scene: mỗi lần đổi map
+            // instance bị hủy + rebuild → baseline về 0 → playtime tụt sai. SetBasePlaytime vẫn nạp lại
+            // đúng khi load slot mới, nên persist an toàn.
+            DontDestroyOnLoad(gameObject);
             _sessionStartTime = Time.time;
         }
 

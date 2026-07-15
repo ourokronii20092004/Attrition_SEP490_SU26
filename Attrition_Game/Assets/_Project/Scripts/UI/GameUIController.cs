@@ -98,6 +98,9 @@ namespace Attrition.UI
             Time.timeScale = 1f; // tránh để MainMenu bị đứng hình nếu quit lúc đang pause (solo)
             Attrition.Persistence.GamePause.IsPaused = false;
             Attrition.Persistence.CoopSession.Reset();
+            // Reset cờ hội thoại (static, sống xuyên phiên). Thoát/đổi scene lúc đang mở hội thoại →
+            // IsActive kẹt true → phiên sau PlayerController đọc thấy → KHÓA di chuyển. Reset ở đây.
+            Attrition.Persistence.DialogueState.IsActive = false;
             if (_stats != null)
             {
                 _stats.OnStatsChanged -= RefreshCharacterPanel;
