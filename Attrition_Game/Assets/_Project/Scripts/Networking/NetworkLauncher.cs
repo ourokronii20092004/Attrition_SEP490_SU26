@@ -342,6 +342,9 @@ namespace Attrition.Networking
             // đều fetch mới stat/bình/vị trí từ server. Cache chỉ sống ở máy host nên chỉ cần clear host.
             Attrition.Persistence.GameLaunch.ClearSessionInventoryCache();
 
+            // (EnemyLootTracker tự reset qua SceneManager.sceneLoaded — nó ở assembly Gameplay, Networking
+            //  không ref được nên không gọi Clear() ở đây.)
+
             // Vào scene gameplay: dọn LobbyPlayer, spawn nhân vật thật cho mọi peer + quái (một lần).
             _phase = Phase.Gameplay;
             if (_gameplaySpawned) return;

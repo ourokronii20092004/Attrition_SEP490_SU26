@@ -38,9 +38,14 @@ namespace Attrition.Networking
 
         private void Start()
         {
-            // Coop: NetworkLauncher (object bền từ Menu) đã giữ runner + sẽ tự spawn player/quái
-            // ở OnSceneLoadDone. Không làm gì ở đây.
-            if (skipIfRunnerExists && FindFirstObjectByType<NetworkRunner>() != null)
+            // Coop: NetworkLauncher (object bền từ Menu) đã giữ runner ĐANG CHẠY + sẽ tự spawn player/
+            // quái ở OnSceneLoadDone. Không làm gì ở đây.
+            // QUAN TRỌNG: phải check runner ĐANG CHẠY (IsRunning), KHÔNG chỉ tồn tại. Solo back menu gọi
+            // runner.Shutdown(destroyGameObject:false) → component NetworkRunner vẫn nằm trên GO bền
+            // (đã tắt, chưa Destroy). Nếu chỉ check != null thì lần vào solo THỨ 2, FindFirstObjectByType
+            // thấy runner cũ đã tắt → return sớm → KHÔNG StartSinglePlayer → treo màn loading.
+            var existingRunner = FindFirstObjectByType<NetworkRunner>();
+            if (skipIfRunnerExists && existingRunner != null && existingRunner.IsRunning)
                 return;
 
             if (GameLaunch.Mode == LaunchMode.Solo)
