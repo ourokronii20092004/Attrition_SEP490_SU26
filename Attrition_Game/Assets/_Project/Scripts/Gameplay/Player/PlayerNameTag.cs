@@ -14,6 +14,7 @@ namespace Attrition.Gameplay.Player
         private const float BarW = 1.1f, BarH = 0.14f;
 
         private PlayerController _player;
+        private PlayerStats _stats;   // cache để đọc MaxHP live (mẫu số thanh máu)
         private TextMeshPro _nameText;
         private Transform _fill;
         private Transform _trailFill;
@@ -76,8 +77,12 @@ namespace Attrition.Gameplay.Player
             string nm = _player.DisplayName.Value;
             if (_nameText != null && _nameText.text != nm) _nameText.text = nm;
 
-            // Thanh máu
-            int max = Mathf.Max(1, _player.maxHP);
+            // Thanh máu. Đọc MaxHP LIVE từ PlayerStats (đã tính cấp/điểm/đồ) — KHÔNG dùng _player.maxHP
+            // (field cache 1 lần lúc Spawned, không cập nhật khi MaxHP đổi → mẫu số sai sau khi mặc đồ/
+            // lên cấp). _stats resolve 1 lần rồi cache tham chiếu.
+            if (_stats == null) _stats = _player.GetComponent<PlayerStats>();
+            int maxHp = _stats != null ? _stats.MaxHP : _player.maxHP;
+            int max = Mathf.Max(1, maxHp);
             float target = Mathf.Clamp01((float)_player.HP / max);
             _shown = target;
             _trail = Mathf.MoveTowards(_trail, target, Time.deltaTime * 1.5f);

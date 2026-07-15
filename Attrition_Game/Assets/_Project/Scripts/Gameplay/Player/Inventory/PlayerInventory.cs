@@ -58,6 +58,11 @@ namespace Attrition.Gameplay.Player.Inventory
         [Tooltip("String id của item phát cho nhân vật mới (vd: iron_helm, skill_fire). Chỉ host seed, chỉ khi túi đang trống. Để TEST: mặc định phát sẵn vài món.")]
         [SerializeField] private string[] startingItemIds = new string[0];
 
+        // Checksum inventory (client) để phát hiện networked slot đổi trong Render → rebuild gear + refresh UI.
+        // CLIENT không chạy NotifyChanged/RebuildAndApplyGear (host-only) nên nếu không tự phát hiện, icon
+        // grid + chỉ số gear (MaxHP/DEF...) của client KHÔNG BAO GIỜ cập nhật khi host sync đồ xuống.
+        private int _lastInvChecksum = int.MinValue;
+
         public override void Spawned()
         {
             _stats = GetComponent<PlayerStats>();
@@ -100,6 +105,40 @@ namespace Attrition.Gameplay.Player.Inventory
                 {
                     RpcSetOwnerIdentity(PackGuid(ownerId) + PackGuid(charId));
                 }
+            }
+        }
+
+        // CLIENT: phát hiện networked inventory đổi (host sync xuống) rồi rebuild gear + refresh UI. Host
+        // đã tự làm qua NotifyChanged khi thao tác; client KHÔNG có trigger đó nên tự dò checksum mỗi frame.
+        public override void Render()
+        {
+            if (HasStateAuthority || _db == null) return; // host tự xử lý; chỉ client cần dò.
+
+            int sum = ComputeInventoryChecksum();
+            if (sum == _lastInvChecksum) return;
+            _lastInvChecksum = sum;
+
+            // Slot đã đổi → dựng lại chỉ số theo đồ đang mặc (MaxHP/DEF...) + báo UI vẽ lại icon grid.
+            RebuildAndApplyGear();
+            OnInventoryChanged?.Invoke();
+        }
+
+        // Tổng hợp trạng thái mọi ô + 6 slot mặc thành 1 số để so đổi (rẻ, ~70 ô).
+        private int ComputeInventoryChecksum()
+        {
+            unchecked
+            {
+                int h = 17;
+                for (int i = 0; i < EquipmentSlots.Length; i++) { var s = EquipmentSlots.Get(i); h = h * 31 + s.ItemIndex; h = h * 31 + s.Amount; }
+                for (int i = 0; i < AccessorySlots.Length; i++) { var s = AccessorySlots.Get(i); h = h * 31 + s.ItemIndex; h = h * 31 + s.Amount; }
+                for (int i = 0; i < MaterialSlots.Length; i++) { var s = MaterialSlots.Get(i); h = h * 31 + s.ItemIndex; h = h * 31 + s.Amount; }
+                h = h * 31 + EquippedHead.ItemIndex;
+                h = h * 31 + EquippedChest.ItemIndex;
+                h = h * 31 + EquippedLegs.ItemIndex;
+                h = h * 31 + EquippedBoots.ItemIndex;
+                h = h * 31 + EquippedSkill.ItemIndex;
+                h = h * 31 + EquippedAccessory.ItemIndex;
+                return h;
             }
         }
 

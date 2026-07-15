@@ -394,7 +394,12 @@ namespace Attrition.Controllers
             if (tier == Attrition.Data.EnemyTier.Normal)
             {
                 // Quái thường: roll từng rule, rơi item ra thế giới theo dropChance riêng của rule.
-                if (!droppedItemPrefab.IsValid) return;
+                // Prefab DroppedItem: ưu tiên field riêng trên enemy (nếu ai đó gán), nếu trống thì dùng
+                // prefab CHUNG từ NetworkSpawner (gán 1 lần) → không cần gán từng enemy. DroppedItem tự
+                // đổi icon theo item nên 1 prefab dùng cho mọi vật phẩm.
+                var dropPrefab = droppedItemPrefab.IsValid ? droppedItemPrefab
+                                                           : NetworkSpawner.SharedDroppedItemPrefab;
+                if (!dropPrefab.IsValid) return;
                 foreach (var rule in rules)
                 {
                     if (Random.value > rule.dropChance) continue;
@@ -405,7 +410,7 @@ namespace Attrition.Controllers
 
                     Vector3 pos = transform.position + new Vector3(Random.Range(-0.5f, 0.5f), 0.5f, 0f);
                     int idxCopy = idx, qtyCopy = qty;
-                    Runner.Spawn(droppedItemPrefab, pos, Quaternion.identity, null, (r, obj) =>
+                    Runner.Spawn(dropPrefab, pos, Quaternion.identity, null, (r, obj) =>
                     {
                         var d = obj.GetComponent<Attrition.Gameplay.World.DroppedItem>();
                         if (d != null)
