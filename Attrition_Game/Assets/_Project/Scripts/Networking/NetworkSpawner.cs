@@ -35,8 +35,23 @@ public class NetworkSpawner : MonoBehaviour
     public NetworkPrefabRef fallbackEnemyPrefab;
     public EnemySpawnConfig[] enemySpawnConfigs;
 
+    [Header("Loot")]
+    [Tooltip("Prefab CHUNG cho vật phẩm rơi ra thế giới (DroppedItem). Gán 1 LẦN ở đây — mọi quái " +
+             "Normal tự dùng cái này để rơi đồ, KHÔNG cần gán droppedItemPrefab trên từng enemy prefab. " +
+             "DroppedItem tự đổi icon theo item nên 1 prefab dùng cho mọi item.")]
+    public NetworkPrefabRef droppedItemPrefab;
+
+    /// <summary>Prefab DroppedItem dùng chung — EnemyController đọc khi field riêng trống. Set ở Spawned.</summary>
+    public static NetworkPrefabRef SharedDroppedItemPrefab { get; private set; }
+
     private NetworkRunner _runner;
     private bool _hasSpawnedEnemies;
+
+    private void Awake()
+    {
+        // Đăng ký prefab DroppedItem chung để EnemyController dùng khi field riêng trống.
+        if (droppedItemPrefab.IsValid) SharedDroppedItemPrefab = droppedItemPrefab;
+    }
 
     /// <summary>Runner đang dùng (lấy từ NetworkLauncher). Null nếu chưa khởi tạo.</summary>
     private NetworkRunner Runner

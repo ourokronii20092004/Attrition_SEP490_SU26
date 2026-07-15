@@ -184,6 +184,25 @@ namespace Attrition.Gameplay.Player
         /// <summary>Số điểm chưa tiêu (đọc từ sheet). 0 nếu chưa có SO.</summary>
         public int UnspentPoints => _sheet?.UnspentPoints ?? 0;
 
+        // CLIENT: Level + AllocatedPoints là [Networked] nhưng StatSheet (_level, _allocated) chỉ được
+        // đồng bộ trong path host-only (TryAllocatePoint/SetLevelFromProgression) hoặc 1 lần lúc Spawned.
+        // → client cộng điểm / lên cấp thì MaxHP/DEF/UnspentPoints KHÔNG cập nhật. Dò đổi mỗi frame ở
+        // client rồi re-load sheet (đối xứng PlayerInventory.Render). Host tự xử lý nên bỏ qua.
+        private int _lastStatChecksum = int.MinValue;
+
+        public override void Render()
+        {
+            if (HasStateAuthority || _sheet == null) return;
+
+            int sum = Level * 397;
+            for (int i = 0; i < AllocatedPoints.Length; i++) sum = sum * 31 + AllocatedPoints.Get(i);
+            if (sum == _lastStatChecksum) return;
+            _lastStatChecksum = sum;
+
+            _sheet.SetLevel(Level);       // cấp đổi → UnspentPoints + scale theo cấp đúng
+            SyncAllocatedToSheet();       // điểm cộng đổi → MaxHP/DEF/AD... đúng + OnStatsChanged refresh UI
+        }
+
         /// <summary>Cộng 1 điểm vào stat (Option 2). Chỉ host; clamp theo điểm còn lại. Trả false nếu hết điểm.</summary>
         public bool TryAllocatePoint(Attrition.Core.StatType stat)
         {
@@ -261,13 +280,20 @@ namespace Attrition.Gameplay.Player
         public void ApplyLoadout(int level, EquipmentSO[] equipped, AccessorySO[] damageAccessories)
         {
             if (_sheet == null) return;
+            // Lưu Max CŨ trước khi dựng lại gear để tính DELTA khi đồ đổi max.
+            int oldMaxHp = MaxHP, oldMaxMana = MaxMana;
             _sheet.SetLevel(level);
             _sheet.RebuildGear(equipped, damageAccessories, BuildItemModifierOverrides(equipped, damageAccessories));
             if (HasStateAuthority)
             {
                 Level = level;
-                CurrentHP = Mathf.Min(CurrentHP <= 0 ? MaxHP : CurrentHP, MaxHP);
-                CurrentMana = Mathf.Min(CurrentMana <= 0 ? MaxMana : CurrentMana, MaxMana);
+                // CỘNG delta max vào current: mặc đồ +HP thì current tăng ĐÚNG lượng đó (full→full = 110/110,
+                // đang thương 50/100 + đồ +10 → 60/110, không tự hồi phần thiếu). Tháo đồ giảm max thì
+                // current giảm theo rồi clamp. CurrentHP<=0 (chưa init) → set đầy.
+                if (CurrentHP <= 0) CurrentHP = MaxHP;
+                else CurrentHP = Mathf.Clamp(CurrentHP + (MaxHP - oldMaxHp), 1, MaxHP);
+                if (CurrentMana <= 0) CurrentMana = MaxMana;
+                else CurrentMana = Mathf.Clamp(CurrentMana + (MaxMana - oldMaxMana), 0, MaxMana);
             }
             OnStatsChanged?.Invoke();
         }
