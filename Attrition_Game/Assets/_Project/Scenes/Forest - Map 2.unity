@@ -129,7 +129,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1877040695794275239, guid: 00c5a4f58bd48284f97affb82c96b2df, type: 3}
       propertyPath: m_Name
-      value: Checkpoint_3
+      value: Checkpoint_03
       objectReference: {fileID: 0}
     - target: {fileID: 4532775707390572016, guid: 00c5a4f58bd48284f97affb82c96b2df, type: 3}
       propertyPath: SortKey
@@ -494,6 +494,53 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 150.58792, y: 41.99711}
   m_EdgeRadius: 0
+--- !u!1 &256430761
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 256430762}
+  - component: {fileID: 256430763}
+  m_Layer: 0
+  m_Name: SceneMusicController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &256430762
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 256430761}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -74, y: 94, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1091702829}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &256430763
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 256430761}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec903fb882f23da49903a647f0a48beb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Systems::Attrition.Systems.SceneMusicController
+  sceneBgmClip: {fileID: 8300000, guid: 35fd19b60ca429546b57ea89cae1bf92, type: 3}
+  volume: 0.7
+  fadeDuration: 0.8
 --- !u!1 &305351273
 GameObject:
   m_ObjectHideFlags: 0
@@ -3460,7 +3507,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1877040695794275239, guid: 00c5a4f58bd48284f97affb82c96b2df, type: 3}
       propertyPath: m_Name
-      value: Checkpoint_1
+      value: Checkpoint_01
       objectReference: {fileID: 0}
     - target: {fileID: 4532775707390572016, guid: 00c5a4f58bd48284f97affb82c96b2df, type: 3}
       propertyPath: SortKey
@@ -3575,7 +3622,7 @@ Transform:
   m_GameObject: {fileID: 430801354}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -70.1, y: 6.79, z: 0}
+  m_LocalPosition: {x: -70.1, y: 6.08, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -19742,6 +19789,7 @@ Transform:
   - {fileID: 438279705}
   - {fileID: 1551618697}
   - {fileID: 1403857689}
+  - {fileID: 256430762}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1114242034
@@ -19909,7 +19957,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1188292120}
   m_Layer: 0
-  m_Name: RoomLogic_3
+  m_Name: RoomLogic_03
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -20691,7 +20739,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1466551331}
   m_Layer: 0
-  m_Name: RoomLogic_2
+  m_Name: RoomLogic_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -160390,7 +160438,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2021568635}
   m_Layer: 0
-  m_Name: RoomLogic_4
+  m_Name: RoomLogic_04
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -160553,7 +160601,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1877040695794275239, guid: 00c5a4f58bd48284f97affb82c96b2df, type: 3}
       propertyPath: m_Name
-      value: Checkpoint_2
+      value: Checkpoint_02
       objectReference: {fileID: 0}
     - target: {fileID: 4532775707390572016, guid: 00c5a4f58bd48284f97affb82c96b2df, type: 3}
       propertyPath: SortKey
@@ -160619,7 +160667,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2119993151}
   m_Layer: 0
-  m_Name: RoomLogic_5
+  m_Name: RoomLogic_05
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
