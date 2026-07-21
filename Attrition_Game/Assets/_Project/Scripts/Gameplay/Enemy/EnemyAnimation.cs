@@ -71,7 +71,6 @@ public class EnemyAnimation : NetworkBehaviour
         if (telegraphRenderer != null && !on) telegraphRenderer.color = _baseColor;
     }
 
-    // ─── CLIP LENGTH CACHE ───
     // Cho phép đồng bộ duration (chết/hồi sinh/đánh/skill) theo đúng độ dài animation.
     private System.Collections.Generic.Dictionary<string, float> _clipLengths;
 
@@ -143,7 +142,6 @@ public class EnemyAnimation : NetworkBehaviour
         }
     }
 
-    // ─── ANIMATION EVENT: Đóng băng / Rã đông ───
     // Đặt FreezeAnimation() làm Animation Event ở frame muốn giữ lại.
     // Code sẽ gọi UnfreezeAnimation() khi dash/leap xong để tiếp tục animation.
 
@@ -205,7 +203,6 @@ public class EnemyAnimation : NetworkBehaviour
         anim.SetTrigger("Resurrect");
     }
 
-    // ─── SLEEP / WAKEUP (Bat-type enemies) ───
     public void PlaySleep()
     {
         if (anim != null)
@@ -224,13 +221,11 @@ public class EnemyAnimation : NetworkBehaviour
         }
     }
 
-    // ─── JUMP / EVADE ───
     public void PlayJump()
     {
         if (anim != null) anim.SetTrigger("Jump");
     }
 
-    // ─── SKILL (Elite — Undead) ───
     public void PlaySkill(int skillIndex)
     {
         if (anim != null)
@@ -240,19 +235,16 @@ public class EnemyAnimation : NetworkBehaviour
         }
     }
 
-    // ─── SUMMON (Elite — Undead) ───
     public void PlaySummon()
     {
         if (anim != null) anim.SetTrigger("Summon");
     }
 
-    // ─── APPEAR (Summon Of Undead) ───
     public void PlayAppear()
     {
         if (anim != null) anim.SetTrigger("Appear");
     }
 
-    // ─── HEALING (Elite only) ───
     public void PlayHealing()
     {
         if (anim != null)

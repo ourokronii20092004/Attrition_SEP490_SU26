@@ -21,7 +21,6 @@ namespace Attrition.UI
         private UIDocument _uiDocument;
         private VisualElement _root;
 
-        // ===== Screens =====
         private VisualElement _mainMenuScreen;
         private VisualElement _saveSelectionScreen;
         private VisualElement _loginScreen;
@@ -29,7 +28,6 @@ namespace Attrition.UI
         private VisualElement _settingsScreen;
         private VisualElement _sessionSelectionScreen;
 
-        // ===== State =====
         private string _currentScreen = "main-menu";
         private string _previousScreen = "main-menu";
         private int _selectedSaveSlot = 0;
@@ -43,16 +41,13 @@ namespace Attrition.UI
         private SaveSlotData[] _saveSlots;
         private string[] _characterIds = new string[SaveManager.SlotCount];
 
-        // ===== Session Selection =====
         private System.Collections.Generic.List<APIManager.SessionSummaryDto> _cachedSessions;
         private int _selectedSessionIndex = -1; // -1 = "New Journey"
         private string _sessionIdToDelete;
 
-        // ===== Particles =====
         private List<Button> _menuButtons = new List<Button>();
         private Dictionary<Button, Coroutine> _particleCoroutines = new Dictionary<Button, Coroutine>();
 
-        // ===== Settings =====
         private string _activeSettingsTab = "gameplay";
         private readonly string[] _settingsTabNames = { "gameplay", "graphics", "audio", "controls" };
 
@@ -196,9 +191,6 @@ namespace Attrition.UI
             }
         }
 
-        // =================================================================
-        // MAIN MENU
-        // =================================================================
         private void SetupMainMenu()
         {
             var buttons = _mainMenuScreen?.Query<Button>(className: "menu-button").ToList();
@@ -257,9 +249,6 @@ namespace Attrition.UI
             }
         }
 
-        // =================================================================
-        // SAVE SELECTION (REAL DATA)
-        // =================================================================
         private void LoadSavesFromDisk()
         {
             if (_saveSlots == null) _saveSlots = new SaveSlotData[SaveManager.SlotCount];
@@ -588,7 +577,6 @@ namespace Attrition.UI
                         // SOLO cục bộ: lưu ý định + load thẳng scene gameplay (không cần login/mạng).
                         GameLaunch.Mode = LaunchMode.Solo;
                         GameLaunch.SelectedSlot = _selectedSaveSlot;
-                        Debug.Log($"[MainMenu] Bắt đầu SOLO, slot {_selectedSaveSlot} → scene {GameLaunch.GameplayScene}");
                         StartCoroutine(LoadGameplaySceneAsync(GameLaunch.GameplayScene));
                     }
                 });
@@ -643,9 +631,7 @@ namespace Attrition.UI
             op.allowSceneActivation = true;
         }
 
-        // =================================================================
         // NAME ENTRY (tạo nhân vật mới — BR-02/03/04)
-        // =================================================================
         private void SetupNameEntry()
         {
             var confirm = _root.Q<Button>("btn-name-confirm");
@@ -908,9 +894,6 @@ namespace Attrition.UI
             if (title != null) title.text = titleText;
         }
 
-        // =================================================================
-        // LOGIN SCREEN (REAL API)
-        // =================================================================
         private void SetupLogin()
         {
             var loginError = _root.Q<VisualElement>("login-error");
@@ -945,7 +928,6 @@ namespace Attrition.UI
 
                     if (APIManager.Instance == null)
                     {
-                        Debug.Log("APIManager not found in scene. Creating one automatically.");
                         var apiObj = new GameObject("APIManager");
                         apiObj.AddComponent<APIManager>();
                     }
@@ -1050,9 +1032,6 @@ namespace Attrition.UI
             }));
         }
 
-        // =================================================================
-        // HOST OR JOIN SCREEN
-        // =================================================================
         private void SetupHostJoin()
         {
             var hostBtn = _root.Q<Button>("btn-host-game");
@@ -1219,7 +1198,6 @@ namespace Attrition.UI
                 if (session != null)
                 {
                     GameLaunch.SessionId = session.id;
-                    Debug.Log($"[Session] Host room sẵn sàng: id={session.id} code={session.roomCode}");
                 }
                 else
                 {
@@ -1229,9 +1207,6 @@ namespace Attrition.UI
             }));
         }
 
-        // =================================================================
-        // SESSION SELECTION (HOST ONLY)
-        // =================================================================
 
         private void SetupSessionSelection()
         {
@@ -1269,7 +1244,6 @@ namespace Attrition.UI
                 });
             }
 
-            // Reset overlay buttons
             var resetCancel = _root.Q<Button>("btn-reset-cancel");
             if (resetCancel != null)
             {
@@ -1295,9 +1269,7 @@ namespace Attrition.UI
                     {
                         StartCoroutine(APIManager.Instance.DeleteSession(_sessionIdToDelete, success =>
                         {
-                            if (success)
-                                Debug.Log($"[Session] Delete thành công: {_sessionIdToDelete}");
-                            else
+                            if (!success)
                                 ShowSlotWarning("Failed to delete session.");
                             LoadSessionsFromServer(); // refresh list
                         }));
@@ -1517,9 +1489,6 @@ namespace Attrition.UI
             return "";
         }
 
-        // =================================================================
-        // SETTINGS (UNCHANGED)
-        // =================================================================
         private void SetupSettings()
         {
             foreach (var tabName in _settingsTabNames)

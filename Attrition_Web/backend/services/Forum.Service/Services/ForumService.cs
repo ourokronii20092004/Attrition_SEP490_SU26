@@ -399,7 +399,6 @@ public class ForumService : IForumService
         return new ApiResponse(true, "Post reported successfully.");
     }
 
-    // ─── Moderation ───
     public async Task<ApiResponse> TogglePinAsync(Guid threadId)
     {
         var thread = await _threadRepo.GetByIdAsync(threadId);
@@ -523,7 +522,6 @@ public class ForumService : IForumService
         return ApiResponse.Ok();
     }
 
-    // ─── Category management ───
     public async Task<ApiResponse<int>> CreateCategoryAsync(ForumCategoryRequest request)
     {
         var slug = SlugHelper.GenerateSlug(request.Name);
@@ -584,7 +582,6 @@ public class ForumService : IForumService
         return ApiResponse.Ok();
     }
 
-    // ─── Aggregator support ───
     public async Task<List<ForumPostSearchDto>> SearchAsync(string query, int limit)
     {
         var threads = await _threadRepo.SearchThreadsAsync(query, limit);
