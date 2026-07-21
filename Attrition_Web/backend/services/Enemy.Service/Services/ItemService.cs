@@ -42,6 +42,9 @@ public class ItemService : IItemService
 
     public async Task<ApiResponse<ItemResponse>> CreateAsync(ItemCreateRequest request)
     {
+        if (request.Category == "Skill")
+            return ApiResponse<ItemResponse>.Fail("Skills must be created by Unity sync.");
+
         var existing = await _repo.GetByIdAsync(request.ItemId);
         if (existing != null)
             return ApiResponse<ItemResponse>.Fail($"Item '{request.ItemId}' already exists.");
@@ -71,6 +74,9 @@ public class ItemService : IItemService
         var item = await _repo.GetWithModifiersAsync(itemId);
         if (item == null) return ApiResponse<ItemResponse>.Fail("Item not found.");
 
+        if (item.Category == "Skill")
+            return ApiResponse<ItemResponse>.Fail("Skills must be managed through the Skills endpoint.");
+
         item.Name = request.Name;
         item.Category = request.Category;
         item.Rarity = request.Rarity;
@@ -96,6 +102,7 @@ public class ItemService : IItemService
     {
         var item = await _repo.GetByIdAsync(itemId);
         if (item == null) return ApiResponse.Fail("Item not found.");
+        if (item.Category == "Skill") return ApiResponse.Fail("Skills cannot be deleted through the Items endpoint.");
         await _repo.DeleteAsync(item);
         await InvalidateAsync();
         return ApiResponse.Ok();

@@ -7,7 +7,7 @@ public interface ISkillService
 {
     Task<List<SkillResponse>> GetAllAsync();
     Task<SkillResponse?> GetByIdAsync(string skillId);
-    Task<ApiResponse<SkillResponse>> UpdateAsync(string skillId, SkillConfigDto request);
+    Task<ApiResponse<SkillResponse>> UpdateAsync(string skillId, SkillUpdateRequest request);
     Task<SkillConfigBundle> GetConfigBundleAsync();
     Task<(string version, int count)> GetVersionInfoAsync();
 }

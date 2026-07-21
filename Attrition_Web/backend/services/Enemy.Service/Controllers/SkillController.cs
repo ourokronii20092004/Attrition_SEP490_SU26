@@ -30,7 +30,7 @@ public class SkillController : ControllerBase
 
     [Authorize(Roles = Roles.Admin)]
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(string id, [FromBody] SkillConfigDto request)
+    public async Task<IActionResult> Update(string id, [FromBody] SkillUpdateRequest request)
     {
         if (!string.Equals(id, request.SkillId, StringComparison.Ordinal))
             return BadRequest(ApiResponse.Fail("Route ID must match SkillId."));
