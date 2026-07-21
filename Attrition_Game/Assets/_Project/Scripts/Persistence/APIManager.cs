@@ -212,8 +212,6 @@ public class APIManager : MonoBehaviour
     /// </summary>
     public IEnumerator LoginWithToken(string token, string refreshToken, System.Action<string> callback)
     {
-        StoreTokens(token, refreshToken);
-
         using (UnityWebRequest request = UnityWebRequest.Get($"{baseUrl}/Auth/me"))
         {
             request.SetRequestHeader("Authorization", "Bearer " + token);
@@ -224,6 +222,7 @@ public class APIManager : MonoBehaviour
                 var response = JsonConvert.DeserializeObject<ApiResponse<UserDto>>(request.downloadHandler.text);
                 if (response.success && response.data != null)
                 {
+                    StoreTokens(token, refreshToken);
                     string userId = response.data.id;
                     Username = response.data.username;
                     callback?.Invoke(userId);

@@ -97,6 +97,7 @@ namespace Attrition.Systems
         {
             if (_instance != null && _instance != this) { Destroy(gameObject); return; }
             _instance = this;
+            transform.SetParent(null, true);
             DontDestroyOnLoad(gameObject);
 
             _source = GetComponent<AudioSource>();
