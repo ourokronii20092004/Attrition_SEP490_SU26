@@ -161,7 +161,6 @@ public class SessionService : ISessionService
         return ApiResponse.Ok();
     }
 
-    // ─── room code ───
     // Fixed per room: generated once at creation and never changes, so a host can re-open the
     // same journey and invite the same friend back with the same code.
     private const string CodeAlphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no O/0/I/1 to avoid confusion
@@ -186,7 +185,6 @@ public class SessionService : ISessionService
         });
     }
 
-    // ─── mapping ───
     private static SessionSummaryDto ToSummary(SessionEntity s) => new(
         s.Id, s.OwnerId, s.RoomCode, s.Name, s.IsMultiplayer,
         s.PlayTimeSeconds, s.CurrentScene, s.CreatedAt, s.UpdatedAt, s.LastPlayedAt,

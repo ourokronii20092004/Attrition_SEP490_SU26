@@ -1,6 +1,5 @@
 namespace Character.Service.DTOs;
 
-// ─── Snapshot views ───
 public record SnapshotDto(
     int Level, int Hp, int MaxHp, int Gold, bool IsAlive,
     string? RoomCode, string EventType, int PlaytimeSeconds, DateTime CapturedAt);
@@ -21,7 +20,6 @@ public record AdminCharacterDto(
     Guid Id, Guid OwnerId, string? OwnerUsername, string Name, string Archetype,
     DateTime UpdatedAt, SnapshotDto? LatestSnapshot);
 
-// ─── Game-client ingestion (internal, X-Internal-Key) ───
 public record SnapshotIngestRequest(
     Guid OwnerId, Guid? CharacterId, string Name, string Archetype,
     int Level, int Hp, int MaxHp, int Gold, bool IsAlive,

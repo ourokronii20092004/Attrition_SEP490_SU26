@@ -51,7 +51,6 @@ public class SessionRepository : ISessionRepository
     public async Task<bool> RoomCodeIsFreeAsync(string roomCode) =>
         !await _context.Sessions.AnyAsync(s => s.RoomCode == roomCode);
 
-    // ─── character_session upsert/read ───
 
     public async Task<CharacterSessionEntity?> GetCharacterSessionAsync(Guid characterId, Guid sessionId) =>
         await _context.CharacterSessions
@@ -68,7 +67,6 @@ public class SessionRepository : ISessionRepository
         await _context.SaveChangesAsync();
     }
 
-    // ─── world_state upsert ───
 
     public async Task<WorldStateEntity?> GetWorldStateAsync(Guid sessionId, string eventId) =>
         await _context.WorldStates

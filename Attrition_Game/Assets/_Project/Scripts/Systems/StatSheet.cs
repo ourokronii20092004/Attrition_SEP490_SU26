@@ -70,7 +70,6 @@ namespace Attrition.Systems
 
         public IReadOnlyDictionary<StatType, int> Allocated => _allocated;
 
-        // ─── Trang bị / accessory: rebuild toàn bộ gear flat mỗi lần đổi đồ ───
         // overrideByItemId: modifiers admin sửa trên web (key = itemId). Có key → DÙNG modifiers web
         // thay cho SO (caller resolve từ ItemConfigProvider; null = không có web, dùng SO mặc định).
         public void RebuildGear(IEnumerable<EquipmentSO> equipped, IEnumerable<AccessorySO> damageAccessories,

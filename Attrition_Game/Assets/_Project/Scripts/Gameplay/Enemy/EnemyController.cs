@@ -202,9 +202,7 @@ namespace Attrition.Controllers
             int def = statsComp != null ? statsComp.DEF : 0;
             int res = statsComp != null ? statsComp.RES : 0;
             int taken = Attrition.Core.DamageCalculator.Compute((Attrition.Core.DamageType)type, damage, def, res);
-            int hpBefore = Health;
             Health -= taken;
-            Debug.Log($"[EnemyController] {gameObject.name} bị đánh: rawDmg={damage}, DEF={def}, taken={taken}, HP: {hpBefore}→{Health}/{maxHealth}");
             aiComp.ForceFacePlayer();
 
             if (Health <= 0)
@@ -510,9 +508,7 @@ namespace Attrition.Controllers
             return (players != null && players.Length > 1) ? statsComp.Poise * 1.5f : statsComp.Poise;
         }
 
-        // ═══════════════════════════════════════════════════════════════
         // IGNORE PLAYER COLLIDERS — Đảm bảo Player đi xuyên qua quái
-        // ═══════════════════════════════════════════════════════════════
 
         private void IgnoreAllPlayerColliders()
         {

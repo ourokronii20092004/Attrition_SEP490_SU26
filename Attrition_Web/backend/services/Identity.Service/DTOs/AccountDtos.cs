@@ -1,6 +1,5 @@
 namespace Identity.Service.DTOs;
 
-// ─── Account requests ───
 public record UpdateProfileRequest(string? Bio, string? Email, bool? NotifyOnReply, bool? NotifyOnMention, string? DisplayName);
 public record UpdateThemeRequest(string ThemeMode, string ThemeAccent);
 public record SetPasswordRequest(string NewPassword);

@@ -45,7 +45,6 @@ namespace Attrition.Gameplay.Environment
         {
             if (!HasStateAuthority || boss == null) return;
 
-            // ── BOSS VỪA CHẾT → khởi động chuỗi chết (1 lần) ──
             if (!DeathStarted && boss.IsDead)
             {
                 DeathStarted = true;
@@ -56,7 +55,6 @@ namespace Attrition.Gameplay.Environment
 
             if (DeathStarted) return;
 
-            // ── VÀO TRẬN → đóng cửa lối vào (1 lần) ──
             if (!EntrySealed && entryDoor != null && bossAI != null && !bossAI.waitForTrigger)
             {
                 EntrySealed = true;

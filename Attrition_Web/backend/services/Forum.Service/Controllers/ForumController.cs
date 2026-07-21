@@ -167,7 +167,6 @@ public class ForumController : ControllerBase
         return result.Success ? Ok(result) : MapWriteFailure(result);
     }
 
-    // ─── Inline moderation (Admin) ───
     [Authorize(Roles = Roles.Admin)]
     [HttpPut("threads/{id:guid}/pin")]
     public async Task<IActionResult> TogglePin(Guid id)
@@ -192,7 +191,6 @@ public class ForumController : ControllerBase
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
-    // ─── Category management (Admin) ───
     [Authorize(Roles = Roles.Admin)]
     [HttpPost("categories")]
     public async Task<IActionResult> CreateCategory(ForumCategoryRequest request)

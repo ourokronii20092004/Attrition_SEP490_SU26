@@ -72,7 +72,6 @@ public class NetworkInputHandler : MonoBehaviour, INetworkRunnerCallbacks
 
         input.Set(data);
 
-        // Reset one-shot flags
         _jumpPressed = false;
         _attackPressed = false;
         _dashPressed = false;

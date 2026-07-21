@@ -159,8 +159,6 @@ namespace Attrition.Gameplay.Player
                 potions.MaxManaCharges = cs.potionMaxManaFlasks;
                 potions.HealthCharges = potions.MaxHealthCharges;
                 potions.ManaCharges = potions.MaxManaCharges;
-                Debug.Log($"[Hydrate] char={cs.characterId} nạp từ server: hpFlask={cs.potionMaxFlasks} manaFlask={cs.potionMaxManaFlasks} "
-                          + $"→ áp Max HP={potions.MaxHealthCharges} Mana={potions.MaxManaCharges}");
             }
 
             // HP/Mana hiện tại (clamp sau khi đồ đã đắp có thể đổi MaxHP; ReviveFull/rest sẽ hồi đầy).
@@ -234,7 +232,6 @@ namespace Attrition.Gameplay.Player
                 _sheet = new StatSheet(baseStats, leveling);
         }
 
-        // ─── Chỉ số gộp (đọc từ sheet, fallback nếu chưa có SO) ───
         public int MaxHP => _sheet?.MaxHP ?? FallbackHP;
         public int MaxMana => _sheet?.MaxMana ?? FallbackMana;
         public int MaxStamina => _sheet != null ? _sheet.MaxStamina : FallbackStamina;
@@ -333,7 +330,6 @@ namespace Attrition.Gameplay.Player
             return DamageCalculator.Compute(type, raw, targetDef, targetRes);
         }
 
-        // ─── STAMINA (chỉ host/state-authority được phép sửa) ───
 
         public bool HasStamina(float amount) => CurrentStamina >= amount;
 
@@ -357,7 +353,6 @@ namespace Attrition.Gameplay.Player
             CurrentStamina = Mathf.Min(MaxStamina, CurrentStamina + StaminaRegenPerSecond * deltaTime);
         }
 
-        // ─── HỒI HP / MANA (chỉ host) ───
 
         /// <summary>Hồi HP, clamp về MaxHP. Bỏ qua nếu đã chết. Chỉ chạy trên state authority.</summary>
         public void RestoreHP(int amount)

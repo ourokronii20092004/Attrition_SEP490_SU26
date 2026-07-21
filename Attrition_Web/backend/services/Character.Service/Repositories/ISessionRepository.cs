@@ -21,11 +21,9 @@ public interface ISessionRepository
     // True if no room currently uses this code (codes are fixed & unique per room).
     Task<bool> RoomCodeIsFreeAsync(string roomCode);
 
-    // ─── character_session upsert/read ───
     Task<CharacterSessionEntity?> GetCharacterSessionAsync(Guid characterId, Guid sessionId);
     Task UpsertCharacterSessionAsync(CharacterSessionEntity entity);
 
-    // ─── world_state upsert ───
     Task<WorldStateEntity?> GetWorldStateAsync(Guid sessionId, string eventId);
     Task UpsertWorldStateAsync(WorldStateEntity entity);
 

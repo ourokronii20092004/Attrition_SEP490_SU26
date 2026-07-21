@@ -1,9 +1,7 @@
-// ─────────────────────────────────────────────────────────────────────────────
 // Eldravir story network — the lore of Attrition, structured for the /story pages.
 // Source: the Eldravir manuscript + worldbuilding notes. Content here is the
 // premise/setting and character truths; ending specifics are flagged `spoiler`
 // so the UI can gate them behind a reveal.
-// ─────────────────────────────────────────────────────────────────────────────
 
 export type StoryCategory = "character" | "world" | "concept" | "stratum";
 
@@ -31,7 +29,6 @@ export interface StoryEntry {
 export const LOGLINE =
   "A living man, last of a dead world, is hired by a god to walk down through the five strata of his world's failure — meeting each of the five who could not let it end — and at the bottom must choose what to do with a world that won't die.";
 
-// ─── Characters ──────────────────────────────────────────────────────────────
 const CHARACTERS: StoryEntry[] = [
   {
     slug: "ren",
@@ -157,7 +154,6 @@ const CHARACTERS: StoryEntry[] = [
   },
 ];
 
-// ─── World ───────────────────────────────────────────────────────────────────
 const WORLD: StoryEntry[] = [
   {
     slug: "eldravir",
@@ -237,7 +233,6 @@ const WORLD: StoryEntry[] = [
   },
 ];
 
-// ─── Concepts ────────────────────────────────────────────────────────────────
 const CONCEPTS: StoryEntry[] = [
   {
     slug: "the-rules",
@@ -292,7 +287,6 @@ const CONCEPTS: StoryEntry[] = [
   },
 ];
 
-// ─── Strata (the descent) ────────────────────────────────────────────────────
 const STRATA: StoryEntry[] = [
   {
     slug: "the-square",

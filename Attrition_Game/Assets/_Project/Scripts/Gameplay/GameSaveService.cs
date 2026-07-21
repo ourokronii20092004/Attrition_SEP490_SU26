@@ -90,7 +90,6 @@ namespace Attrition.Gameplay.Persistence
             SaveLocal(evt, stats, prog, potions, player, checkpointId, checkpointPos);
         }
 
-        // ─────────────────────────────── LOCAL (solo) ───────────────────────────────
         private void SaveLocal(SaveEvent evt, PlayerStats stats, PlayerProgression prog,
                                PotionSystem potions, PlayerController player,
                                string checkpointId, Vector3? checkpointPos)
@@ -135,10 +134,8 @@ namespace Attrition.Gameplay.Persistence
             Attrition.Gameplay.Environment.WorldMapState.WriteTo(data);
 
             SaveManager.SaveSlot(slot, data);
-            Debug.Log($"[Save:LOCAL] slot {slot} ({evt}) Lv{data.level} HP{data.currentHP} @{data.checkpointId}");
         }
 
-        // ─────────────────────────────── ONLINE (coop) ──────────────────────────────
         /// <summary>
         /// Host-authoritative: HOST lưu hộ MỌI player (host + client) lên server, mỗi người theo
         /// character của CHÍNH HỌ (OwnerUserId/OwnerCharacterId networked trên PlayerInventory).
@@ -213,7 +210,6 @@ namespace Attrition.Gameplay.Persistence
                     yield return APIManager.Instance.PostSnapshot(req, ok =>
                     {
                         if (!ok) anyFailed = true;
-                        Debug.Log($"[Save:ONLINE] host {ownerId} ({evt}) → {(ok ? "OK" : "FAILED")}");
                     });
                 }
 
@@ -254,7 +250,6 @@ namespace Attrition.Gameplay.Persistence
                     yield return APIManager.Instance.SaveCharacterSession(csReq, ok =>
                     {
                         if (!ok) anyFailed = true;
-                        Debug.Log($"[Save:ROOM] {charId}@{GameLaunch.SessionId} ({evt}) hpFlask={csReq.potionMaxFlasks} manaFlask={csReq.potionMaxManaFlasks} → {(ok ? "OK" : "FAILED")}");
                     });
                 }
                 else
