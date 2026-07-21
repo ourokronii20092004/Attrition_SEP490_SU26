@@ -102,11 +102,13 @@ namespace Attrition.Persistence
                         var resp = JsonConvert.DeserializeObject<ApiResponse<ItemConfigBundleDto>>(req.downloadHandler.text);
                         if (resp != null && resp.Success && resp.Data != null && resp.Data.Version != _loadedVersion)
                         {
-                            _cache.Clear();
+                            var next = new Dictionary<string, ItemConfigOverride>(StringComparer.Ordinal);
                             if (resp.Data.Items != null)
                                 foreach (var d in resp.Data.Items)
-                                    if (d != null && !string.IsNullOrEmpty(d.ItemId))
-                                        _cache[d.ItemId] = ToOverride(d);
+                                    if (d != null && !string.IsNullOrEmpty(d.ItemId) && d.MaxStack > 0 && !next.ContainsKey(d.ItemId))
+                                        next.Add(d.ItemId, ToOverride(d));
+                            _cache.Clear();
+                            foreach (var pair in next) _cache.Add(pair.Key, pair.Value);
                             _loadedVersion = resp.Data.Version;
                         }
                     }

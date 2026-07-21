@@ -40,17 +40,31 @@ internal static class EnemyStatRules
         v.RuleFor(goldReward).GreaterThanOrEqualTo(0);
     }
 
+    public static void ApplyUnityOverrideTo<T>(AbstractValidator<T> v,
+        System.Linq.Expressions.Expression<Func<T, int>> poise,
+        System.Linq.Expressions.Expression<Func<T, float>> recovery,
+        System.Linq.Expressions.Expression<Func<T, float>> patrol,
+        System.Linq.Expressions.Expression<Func<T, float>> chase)
+    {
+        v.RuleFor(poise).GreaterThanOrEqualTo(0);
+        v.RuleFor(recovery).Must(x => float.IsFinite(x) && x >= 0);
+        v.RuleFor(patrol).Must(x => float.IsFinite(x) && x >= 0);
+        v.RuleFor(chase).Must(x => float.IsFinite(x) && x >= 0);
+    }
+
 }
 
 public class EnemyCreateRequestValidator : AbstractValidator<EnemyCreateRequest>
 {
     public EnemyCreateRequestValidator()
     {
-        RuleFor(x => x.EnemyId).NotEmpty().MaximumLength(64);
+        RuleFor(x => x.EnemyId).NotEmpty().Must(GameDataRules.IsStableId);
+        RuleFor(x => x.ImageUrl).Must(GameDataRules.IsOwnedImage);
         EnemyStatRules.ApplyTo(this,
             x => x.Name, x => x.Tier, x => x.Hp, x => x.Ad, x => x.Ap,
             x => x.Def, x => x.Res, x => x.AttackSpeed, x => x.ExpReward,
             x => x.GoldReward);
+        EnemyStatRules.ApplyUnityOverrideTo(this, x => x.Poise, x => x.PoiseRecoveryTime, x => x.PatrolSpeed, x => x.ChaseSpeed);
         RuleFor(x => x.LootTable).Must(l => l == null || l.Count <= 100)
             .WithMessage("Loot table cannot exceed 100 entries.");
         RuleForEach(x => x.LootTable).SetValidator(new LootEntryDtoValidator());
@@ -61,10 +75,12 @@ public class EnemyUpdateRequestValidator : AbstractValidator<EnemyUpdateRequest>
 {
     public EnemyUpdateRequestValidator()
     {
+        RuleFor(x => x.ImageUrl).Must(GameDataRules.IsOwnedImage);
         EnemyStatRules.ApplyTo(this,
             x => x.Name, x => x.Tier, x => x.Hp, x => x.Ad, x => x.Ap,
             x => x.Def, x => x.Res, x => x.AttackSpeed, x => x.ExpReward,
             x => x.GoldReward);
+        EnemyStatRules.ApplyUnityOverrideTo(this, x => x.Poise, x => x.PoiseRecoveryTime, x => x.PatrolSpeed, x => x.ChaseSpeed);
         RuleFor(x => x.LootTable).Must(l => l == null || l.Count <= 100)
             .WithMessage("Loot table cannot exceed 100 entries.");
         RuleForEach(x => x.LootTable).SetValidator(new LootEntryDtoValidator());

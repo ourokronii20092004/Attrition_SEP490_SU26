@@ -638,7 +638,7 @@ namespace Attrition.UI
             if (db != null)
             {
                 var itemSO = db.GetItemByStringId(itemId);
-                if (itemSO != null) displayName = itemSO.displayName;
+                if (itemSO != null) displayName = Attrition.Persistence.ItemRuntimeConfig.Name(itemSO);
             }
             nameLabel.text = displayName;
             row.Add(nameLabel);

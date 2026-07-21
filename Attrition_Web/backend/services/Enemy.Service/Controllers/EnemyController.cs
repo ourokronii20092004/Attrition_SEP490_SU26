@@ -13,10 +13,12 @@ public class EnemyController : ControllerBase
 {
     private readonly IEnemyService _service;
     private readonly IItemService _itemService;
-    public EnemyController(IEnemyService service, IItemService itemService)
+    private readonly ISkillService _skillService;
+    public EnemyController(IEnemyService service, IItemService itemService, ISkillService skillService)
     {
         _service = service;
         _itemService = itemService;
+        _skillService = skillService;
     }
 
     [HttpGet]
@@ -47,8 +49,9 @@ public class EnemyController : ControllerBase
     {
         var enemy = await _service.GetConfigVersionAsync();
         var (itemVersion, itemCount) = await _itemService.GetVersionInfoAsync();
+        var (skillVersion, skillCount) = await _skillService.GetVersionInfoAsync();
         return Ok(ApiResponse<GameConfigVersions>.Ok(
-            new GameConfigVersions(enemy.Version, enemy.Count, itemVersion, itemCount)));
+            new GameConfigVersions(enemy.Version, enemy.Count, itemVersion, itemCount, skillVersion, skillCount)));
     }
 
     /// <summary>Game tải 1 cục config (enemy + loot) khi version đổi.</summary>

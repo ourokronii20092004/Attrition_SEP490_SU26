@@ -23,8 +23,6 @@ internal static class ItemFieldRules
             .WithMessage("Max stack must be between 1 and 9999.");
         v.RuleFor(modifiers).Must(m => m == null || m.Count <= 50)
             .WithMessage("An item cannot have more than 50 modifiers.");
-        // Per-element modifier validation is added by each concrete validator below — RuleForEach
-        // can't infer the element type through this generic helper.
     }
 }
 
@@ -32,7 +30,8 @@ public class ItemCreateRequestValidator : AbstractValidator<ItemCreateRequest>
 {
     public ItemCreateRequestValidator()
     {
-        RuleFor(x => x.ItemId).NotEmpty().MaximumLength(64);
+        RuleFor(x => x.ItemId).NotEmpty().Must(GameDataRules.IsStableId);
+        RuleFor(x => x.ImageUrl).Must(GameDataRules.IsOwnedImage);
         ItemFieldRules.ApplyTo(this,
             x => x.Name, x => x.Category, x => x.Rarity, x => x.Description, x => x.MaxStack, x => x.Modifiers);
         RuleForEach(x => x.Modifiers).SetValidator(new ItemModifierDtoValidator());
@@ -43,6 +42,7 @@ public class ItemUpdateRequestValidator : AbstractValidator<ItemUpdateRequest>
 {
     public ItemUpdateRequestValidator()
     {
+        RuleFor(x => x.ImageUrl).Must(GameDataRules.IsOwnedImage);
         ItemFieldRules.ApplyTo(this,
             x => x.Name, x => x.Category, x => x.Rarity, x => x.Description, x => x.MaxStack, x => x.Modifiers);
         RuleForEach(x => x.Modifiers).SetValidator(new ItemModifierDtoValidator());

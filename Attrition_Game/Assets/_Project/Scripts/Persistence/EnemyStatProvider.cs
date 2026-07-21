@@ -147,11 +147,13 @@ namespace Attrition.Persistence
                         var resp = JsonConvert.DeserializeObject<ApiResponse<GameConfigBundleDto>>(req.downloadHandler.text);
                         if (resp != null && resp.Success && resp.Data != null)
                         {
-                            _cache.Clear();
+                            var next = new Dictionary<string, EnemyStatOverride>(StringComparer.Ordinal);
                             if (resp.Data.Enemies != null)
                                 foreach (var d in resp.Data.Enemies)
-                                    if (d != null && !string.IsNullOrEmpty(d.EnemyId))
-                                        _cache[d.EnemyId] = ToOverride(d);
+                                    if (d != null && IsValid(d) && !next.ContainsKey(d.EnemyId))
+                                        next.Add(d.EnemyId, ToOverride(d));
+                            _cache.Clear();
+                            foreach (var pair in next) _cache.Add(pair.Key, pair.Value);
                             _loadedVersion = resp.Data.Version;
                         }
                     }
@@ -200,6 +202,12 @@ namespace Attrition.Persistence
                 ap = d.Ap,
                 def = d.Def,
                 res = d.Res,
+                poise = d.Poise,
+                poiseRecoveryTime = d.PoiseRecoveryTime,
+                patrolSpeed = d.PatrolSpeed,
+                chaseSpeed = d.ChaseSpeed,
+                attackSpeed = d.AttackSpeed,
+                expReward = d.ExpReward,
             };
 
             // Bảng rơi đồ admin cấu hình trên web → chuẩn hoá thành LootRule cho game.
@@ -222,6 +230,15 @@ namespace Attrition.Persistence
 
             return ov;
         }
+
+        private static bool IsValid(EnemyResponseDto d) =>
+            !string.IsNullOrEmpty(d.EnemyId) && d.Hp > 0 && d.Ad >= 0 && d.Ap >= 0 && d.Def >= 0 && d.Res >= 0 &&
+            d.Poise >= 0 && d.ExpReward >= 0 && IsFiniteNonNegative(d.PoiseRecoveryTime) &&
+            IsFiniteNonNegative(d.PatrolSpeed) && IsFiniteNonNegative(d.ChaseSpeed) &&
+            !float.IsNaN(d.AttackSpeed) && !float.IsInfinity(d.AttackSpeed) && d.AttackSpeed > 0;
+
+        private static bool IsFiniteNonNegative(float value) =>
+            !float.IsNaN(value) && !float.IsInfinity(value) && value >= 0;
 
         /// <summary>Lấy override đã cache (null = không có, dùng default SO). Gọi đồng bộ lúc spawn.</summary>
         public EnemyStatOverride GetOverride(string enemyId)
