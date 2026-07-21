@@ -33,6 +33,10 @@ namespace Assets.Service.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("ContentHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
@@ -78,6 +82,10 @@ namespace Assets.Service.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AssetType");
+
+                    b.HasIndex("SourceType", "SourceId")
+                        .IsUnique()
+                        .HasFilter("\"SourceType\" IN ('unity-item', 'unity-skill', 'unity-enemy') AND \"SourceId\" IS NOT NULL");
 
                     b.ToTable("Assets", "assets");
                 });

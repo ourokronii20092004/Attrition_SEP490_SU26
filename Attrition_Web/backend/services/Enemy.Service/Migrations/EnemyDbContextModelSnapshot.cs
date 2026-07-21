@@ -40,6 +40,9 @@ namespace Enemy.Service.Migrations
                         .HasColumnType("real")
                         .HasDefaultValue(1f);
 
+                    b.Property<float>("ChaseSpeed")
+                        .HasColumnType("real");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -58,6 +61,9 @@ namespace Enemy.Service.Migrations
                     b.Property<string>("ImageUrl")
                         .HasColumnType("text");
 
+                    b.Property<DateTime?>("ImportedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("IsRanged")
                         .HasColumnType("boolean");
 
@@ -69,6 +75,15 @@ namespace Enemy.Service.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<float>("PatrolSpeed")
+                        .HasColumnType("real");
+
+                    b.Property<int>("Poise")
+                        .HasColumnType("integer");
+
+                    b.Property<float>("PoiseRecoveryTime")
+                        .HasColumnType("real");
+
                     b.Property<int>("Res")
                         .HasColumnType("integer");
 
@@ -79,6 +94,9 @@ namespace Enemy.Service.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<string>("UnityBaselineJson")
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -114,6 +132,9 @@ namespace Enemy.Service.Migrations
                     b.Property<string>("ImageUrl")
                         .HasColumnType("text");
 
+                    b.Property<DateTime?>("ImportedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("IsKeyItem")
                         .HasColumnType("boolean");
 
@@ -130,6 +151,9 @@ namespace Enemy.Service.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<string>("UnityBaselineJson")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -138,6 +162,115 @@ namespace Enemy.Service.Migrations
                     b.HasIndex("Category");
 
                     b.ToTable("items", "enemy");
+                });
+
+            modelBuilder.Entity("Enemy.Service.Models.SkillEntity", b =>
+                {
+                    b.Property<string>("SkillId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<float>("ActiveEndFrac")
+                        .HasColumnType("real");
+
+                    b.Property<float>("ActiveStartFrac")
+                        .HasColumnType("real");
+
+                    b.Property<float>("Angle")
+                        .HasColumnType("real");
+
+                    b.Property<float>("ApScaling")
+                        .HasColumnType("real");
+
+                    b.Property<int>("BaseDamage")
+                        .HasColumnType("integer");
+
+                    b.Property<float>("CastTime")
+                        .HasColumnType("real");
+
+                    b.Property<float>("Cooldown")
+                        .HasColumnType("real");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DamageType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("Delivery")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("Element")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("HitShape")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ImportedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<float>("KnockbackForce")
+                        .HasColumnType("real");
+
+                    b.Property<int>("ManaCost")
+                        .HasColumnType("integer");
+
+                    b.Property<float>("OffsetX")
+                        .HasColumnType("real");
+
+                    b.Property<float>("OffsetY")
+                        .HasColumnType("real");
+
+                    b.Property<int>("ProjectileCount")
+                        .HasColumnType("integer");
+
+                    b.Property<float>("ProjectileSpeed")
+                        .HasColumnType("real");
+
+                    b.Property<float>("Range")
+                        .HasColumnType("real");
+
+                    b.Property<float>("RectHeight")
+                        .HasColumnType("real");
+
+                    b.Property<float>("RectWidth")
+                        .HasColumnType("real");
+
+                    b.Property<float>("SpreadAngle")
+                        .HasColumnType("real");
+
+                    b.Property<float>("SweetSpotMultiplier")
+                        .HasColumnType("real");
+
+                    b.Property<float>("SweetSpotRadius")
+                        .HasColumnType("real");
+
+                    b.Property<float>("TickInterval")
+                        .HasColumnType("real");
+
+                    b.Property<string>("UnityBaselineJson")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<float>("VfxLifetime")
+                        .HasColumnType("real");
+
+                    b.HasKey("SkillId");
+
+                    b.ToTable("skills", "enemy");
                 });
 
             modelBuilder.Entity("Enemy.Service.Models.EnemyEntity", b =>

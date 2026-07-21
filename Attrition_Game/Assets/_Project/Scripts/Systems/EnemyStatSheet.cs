@@ -61,6 +61,11 @@ namespace Attrition.Systems
         public int? def;
         public int? res;
         public int? poise;
+        public float? poiseRecoveryTime;
+        public float? patrolSpeed;
+        public float? chaseSpeed;
+        public float? attackSpeed;
+        public int? expReward;
 
         /// <summary>
         /// Bảng rơi đồ admin cấu hình trên web (null/rỗng = không override, dùng lootItemIds trong SO).

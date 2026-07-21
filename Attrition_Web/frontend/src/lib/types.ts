@@ -178,6 +178,10 @@ export interface EnemyResponse {
   updatedAt: string;
   lootTable: LootEntryDto[];
   imageUrl: string | null;
+  poise: number;
+  poiseRecoveryTime: number;
+  patrolSpeed: number;
+  chaseSpeed: number;
 }
 
 export interface EnemyCreateRequest {
@@ -197,6 +201,10 @@ export interface EnemyCreateRequest {
   lore?: string;
   lootTable?: LootEntryDto[];
   imageUrl?: string | null;
+  poise: number;
+  poiseRecoveryTime: number;
+  patrolSpeed: number;
+  chaseSpeed: number;
 }
 
 export interface EnemyUpdateRequest {
@@ -215,6 +223,10 @@ export interface EnemyUpdateRequest {
   lore?: string;
   lootTable?: LootEntryDto[];
   imageUrl?: string | null;
+  poise: number;
+  poiseRecoveryTime: number;
+  patrolSpeed: number;
+  chaseSpeed: number;
 }
 
 // ─── Item config (admin-editable, game downloads) ───────────────────────────────
@@ -263,6 +275,47 @@ export interface ItemUpdateRequest {
   modifiers?: ItemModifierDto[];
   imageUrl?: string | null;
 }
+
+export interface SkillResponse {
+  skillId: string;
+  name: string;
+  description: string | null;
+  iconKey: string | null;
+  rarity: string;
+  maxStack: number;
+  isKeyItem: boolean;
+  modifiers: ItemModifierDto[];
+  element: string;
+  manaCost: number;
+  castTime: number;
+  cooldown: number;
+  activeStartFrac: number;
+  activeEndFrac: number;
+  damageType: string;
+  baseDamage: number;
+  apScaling: number;
+  knockbackForce: number;
+  tickInterval: number;
+  sweetSpotRadius: number;
+  sweetSpotMultiplier: number;
+  delivery: string;
+  hitShape: string;
+  range: number;
+  angle: number;
+  rectWidth: number;
+  rectHeight: number;
+  offsetX: number;
+  offsetY: number;
+  projectileSpeed: number;
+  projectileCount: number;
+  spreadAngle: number;
+  vfxLifetime: number;
+  createdAt: string;
+  updatedAt: string;
+  imageUrl: string | null;
+}
+
+export type SkillUpdateRequest = Omit<SkillResponse, "createdAt" | "updatedAt">;
 
 // ─── Wiki Service ─────────────────────────────────────────────────────────────
 
@@ -757,6 +810,8 @@ export interface AdminStatsDto {
   totalForumPosts: number | null;
   removedPosts: number | null;
   totalEnemies: number | null;
+  totalItems: number | null;
+  totalSkills: number | null;
   totalAssets: number | null;
   totalMusicAlbums: number | null;
   totalMusicTracks: number | null;

@@ -12,6 +12,8 @@ public record AdminStatsDto(
     int? TotalForumPosts,
     int? RemovedPosts,
     int? TotalEnemies,
+    int? TotalItems,
+    int? TotalSkills,
     int? TotalAssets,
     int? TotalMusicAlbums,
     int? TotalMusicTracks,

@@ -1,0 +1,82 @@
+[
+  {
+    "index": 0,
+    "itemId": "leather_helm"
+  },
+  {
+    "index": 1,
+    "itemId": "leather_chest"
+  },
+  {
+    "index": 2,
+    "itemId": "leather_boots"
+  },
+  {
+    "index": 3,
+    "itemId": "bronze_helm"
+  },
+  {
+    "index": 4,
+    "itemId": "bronze_chest"
+  },
+  {
+    "index": 5,
+    "itemId": "bronze_boots"
+  },
+  {
+    "index": 6,
+    "itemId": "iron_helm"
+  },
+  {
+    "index": 7,
+    "itemId": "iron_chest"
+  },
+  {
+    "index": 8,
+    "itemId": "iron_boots"
+  },
+  {
+    "index": 9,
+    "itemId": "gold_helm"
+  },
+  {
+    "index": 10,
+    "itemId": "gold_chest"
+  },
+  {
+    "index": 11,
+    "itemId": "gold_boots"
+  },
+  {
+    "index": 12,
+    "itemId": "acc_double_jump"
+  },
+  {
+    "index": 13,
+    "itemId": "acc_shadow_dash"
+  },
+  {
+    "index": 14,
+    "itemId": "acc_stamina_charm"
+  },
+  {
+    "index": 15,
+    "itemId": "skill_fire"
+  },
+  {
+    "index": 16,
+    "itemId": "skill_wood"
+  },
+  {
+    "index": 17,
+    "itemId": "skill_earth"
+  },
+  {
+    "index": 18,
+    "itemId": "skill_thunder"
+  },
+  {
+    "index": 19,
+    "itemId": "skill_thrust"
+  }
+]

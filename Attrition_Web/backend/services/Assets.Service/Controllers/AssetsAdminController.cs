@@ -42,6 +42,17 @@ public class AssetsAdminController : ControllerBase
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
+    [HttpPost("unity-source")]
+    public async Task<IActionResult> UploadUnitySource(
+        [FromForm] IFormFile file,
+        [FromForm] string sourceType,
+        [FromForm] string sourceId)
+    {
+        var result = await _assets.UploadUnitySourceAsync(file, sourceType, sourceId,
+            _user.UserId!.Value, _user.Username ?? "Unknown");
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateAssetReq req)
     {

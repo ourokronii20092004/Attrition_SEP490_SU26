@@ -9,6 +9,7 @@ public class EnemyDbContext : DbContext
 
     public DbSet<EnemyEntity> Enemies => Set<EnemyEntity>();
     public DbSet<ItemEntity> Items => Set<ItemEntity>();
+    public DbSet<SkillEntity> Skills => Set<SkillEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -34,6 +35,17 @@ public class EnemyDbContext : DbContext
                 b.Property(l => l.ItemName).HasMaxLength(100);
                 b.Property(l => l.Rarity).HasMaxLength(50);
             });
+        });
+
+        modelBuilder.Entity<SkillEntity>(e =>
+        {
+            e.ToTable("skills");
+            e.HasKey(x => x.SkillId);
+            e.Property(x => x.SkillId).HasMaxLength(64);
+            e.Property(x => x.Element).HasMaxLength(30);
+            e.Property(x => x.DamageType).HasMaxLength(30);
+            e.Property(x => x.Delivery).HasMaxLength(30);
+            e.Property(x => x.HitShape).HasMaxLength(30);
         });
 
         modelBuilder.Entity<ItemEntity>(e =>

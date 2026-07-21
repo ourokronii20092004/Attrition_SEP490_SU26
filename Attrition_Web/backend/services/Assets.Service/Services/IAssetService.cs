@@ -10,6 +10,8 @@ public interface IAssetService
     Task<ApiResponse<AssetDto>> UploadAssetAsync(Microsoft.AspNetCore.Http.IFormFile file, string assetType,
         string? title, string? description, string? tags, Guid userId, string userName,
         string? sourceType = null, string? sourceId = null);
+    Task<ApiResponse<AssetDto>> UploadUnitySourceAsync(Microsoft.AspNetCore.Http.IFormFile file,
+        string sourceType, string sourceId, Guid userId, string userName);
     /// <summary>Lightweight image upload for inline use (forum posts): validates + stores, returns the
     /// public URL only — no Asset DB row, no gallery entry.</summary>
     Task<ApiResponse<string>> UploadInlineImageAsync(Microsoft.AspNetCore.Http.IFormFile file);
