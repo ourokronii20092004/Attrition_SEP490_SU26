@@ -335,16 +335,6 @@
                     <ui:Slider name="set-vol-sfx" low-value="0" high-value="1" class="set-slider"/>
                     <ui:Label name="set-vol-sfx-val" text="100%" class="set-row-val"/>
                 </ui:VisualElement>
-                <ui:VisualElement class="set-row">
-                    <ui:Label text="Ambient" class="set-row-key"/>
-                    <ui:Slider name="set-vol-ambient" low-value="0" high-value="1" class="set-slider"/>
-                    <ui:Label name="set-vol-ambient-val" text="70%" class="set-row-val"/>
-                </ui:VisualElement>
-                <ui:VisualElement class="set-row">
-                    <ui:Label text="Voice" class="set-row-key"/>
-                    <ui:Slider name="set-vol-voice" low-value="0" high-value="1" class="set-slider"/>
-                    <ui:Label name="set-vol-voice-val" text="90%" class="set-row-val"/>
-                </ui:VisualElement>
 
                 <ui:Label text="GAMEPLAY &amp; GRAPHICS" class="set-section"/>
                 <ui:VisualElement class="set-row">
@@ -352,16 +342,16 @@
                     <ui:Toggle name="set-dmg"/>
                 </ui:VisualElement>
                 <ui:VisualElement class="set-row">
-                    <ui:Label text="Camera Shake" class="set-row-key wide"/>
-                    <ui:Toggle name="set-shake"/>
+                    <ui:Label text="Show Other Players" class="set-row-key wide"/>
+                    <ui:Toggle name="set-other-players"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="set-row">
+                    <ui:Label text="Show Player Nameplates" class="set-row-key wide"/>
+                    <ui:Toggle name="set-player-nameplates"/>
                 </ui:VisualElement>
                 <ui:VisualElement class="set-row">
                     <ui:Label text="VSync" class="set-row-key wide"/>
                     <ui:Toggle name="set-vsync"/>
-                </ui:VisualElement>
-                <ui:VisualElement class="set-row">
-                    <ui:Label text="Post Processing" class="set-row-key wide"/>
-                    <ui:Toggle name="set-postfx"/>
                 </ui:VisualElement>
 
                 <ui:VisualElement name="set-actions">

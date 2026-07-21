@@ -230,8 +230,12 @@
                             <ui:Toggle name="toggle-dmg-numbers" class="settings-toggle" value="true"/>
                         </ui:VisualElement>
                         <ui:VisualElement class="settings-row">
-                            <ui:Label text="CAMERA SHAKE" class="settings-label"/>
-                            <ui:Toggle name="toggle-cam-shake" class="settings-toggle"/>
+                            <ui:Label text="SHOW OTHER PLAYERS" class="settings-label"/>
+                            <ui:Toggle name="toggle-other-players" class="settings-toggle" value="true"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="settings-row">
+                            <ui:Label text="SHOW PLAYER NAMEPLATES" class="settings-label"/>
+                            <ui:Toggle name="toggle-player-nameplates" class="settings-toggle" value="true"/>
                         </ui:VisualElement>
                     </ui:ScrollView>
 
@@ -257,10 +261,6 @@
                             <ui:Label text="SHADOW QUALITY" class="settings-label"/>
                             <ui:DropdownField name="dropdown-shadows" class="settings-dropdown" choices="Low,Medium,High,Ultra" index="3"/>
                         </ui:VisualElement>
-                        <ui:VisualElement class="settings-row">
-                            <ui:Label text="POST PROCESSING" class="settings-label"/>
-                            <ui:Toggle name="toggle-post-processing" class="settings-toggle" value="true"/>
-                        </ui:VisualElement>
                     </ui:ScrollView>
 
                     <!-- Audio -->
@@ -284,20 +284,6 @@
                             <ui:VisualElement class="settings-slider-group">
                                 <ui:Slider name="slider-sfx" class="settings-slider" low-value="0" high-value="100" value="100"/>
                                 <ui:Label text="100%" name="label-sfx-val" class="settings-slider-value"/>
-                            </ui:VisualElement>
-                        </ui:VisualElement>
-                        <ui:VisualElement class="settings-row">
-                            <ui:Label text="AMBIENT VOLUME" class="settings-label"/>
-                            <ui:VisualElement class="settings-slider-group">
-                                <ui:Slider name="slider-ambient" class="settings-slider" low-value="0" high-value="100" value="70"/>
-                                <ui:Label text="70%" name="label-ambient-val" class="settings-slider-value"/>
-                            </ui:VisualElement>
-                        </ui:VisualElement>
-                        <ui:VisualElement class="settings-row">
-                            <ui:Label text="VOICE VOLUME" class="settings-label"/>
-                            <ui:VisualElement class="settings-slider-group">
-                                <ui:Slider name="slider-voice" class="settings-slider" low-value="0" high-value="100" value="90"/>
-                                <ui:Label text="90%" name="label-voice-val" class="settings-slider-value"/>
                             </ui:VisualElement>
                         </ui:VisualElement>
                     </ui:ScrollView>
@@ -327,10 +313,6 @@
                         <ui:VisualElement class="keybind-row">
                             <ui:Label text="MANA FLASK" class="settings-label"/>
                             <ui:Button text="E" name="key-ManaFlask" class="keybind-btn"/>
-                        </ui:VisualElement>
-                        <ui:VisualElement class="keybind-row">
-                            <ui:Label text="BLOCK" class="settings-label"/>
-                            <ui:Button text="L" name="key-Block" class="keybind-btn"/>
                         </ui:VisualElement>
                         <ui:VisualElement class="keybind-row">
                             <ui:Label text="MAP" class="settings-label"/>

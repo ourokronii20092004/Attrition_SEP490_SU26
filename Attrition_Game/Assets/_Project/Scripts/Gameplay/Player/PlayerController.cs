@@ -5,6 +5,7 @@ using System.Linq;
 using Unity.Cinemachine;
 using Attrition.Controllers;
 using Attrition.Gameplay.Player;
+using Attrition.Persistence;
 
 /// <summary>
 /// Đồng bộ vật lý giữa Host và Client:
@@ -213,6 +214,20 @@ public class PlayerController : NetworkBehaviour, IDamageable
         // Nhãn TÊN + thanh máu trên đầu mỗi player. Bọc try/catch để KHÔNG làm hỏng Spawned nếu lỗi.
         try { PlayerNameTag.Attach(this, HasInputAuthority); }
         catch (System.Exception e) { Debug.LogWarning($"[PlayerController] NameTag lỗi: {e.Message}"); }
+
+        GameSettings.OnChanged += ApplyLocalVisibility;
+        ApplyLocalVisibility();
+    }
+
+    public override void Despawned(NetworkRunner runner, bool hasState)
+    {
+        GameSettings.OnChanged -= ApplyLocalVisibility;
+    }
+
+    private void ApplyLocalVisibility()
+    {
+        if (HasInputAuthority || visualRoot == null) return;
+        visualRoot.gameObject.SetActive(GameSettings.ShowOtherPlayers);
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]

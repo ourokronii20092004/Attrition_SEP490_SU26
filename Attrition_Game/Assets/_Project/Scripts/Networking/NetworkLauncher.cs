@@ -48,14 +48,7 @@ namespace Attrition.Networking
             Instance = this;
             DontDestroyOnLoad(gameObject);
 
-            QualitySettings.vSyncCount = 1;
-#if UNITY_ANDROID || UNITY_IOS
-            Application.targetFrameRate = 60;
-#else
-            var rr = Screen.currentResolution.refreshRateRatio;
-            var hz = rr.denominator != 0 ? rr.numerator / (double)rr.denominator : 60.0;
-            Application.targetFrameRate = Mathf.Clamp(Mathf.RoundToInt((float)hz), 60, 360);
-#endif
+            Attrition.Persistence.GameSettings.ApplyToEngine();
         }
 
         private void OnDestroy()
