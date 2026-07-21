@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1479014e8aa531b4f8a50c90ef8847c9, type: 3}
   m_Name: Gollux_Stats
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.EnemyStatsSO
-  enemyId: Gollux
+  enemyId: gollux
   tier: 1
   maxHP: 120
   ad: 18

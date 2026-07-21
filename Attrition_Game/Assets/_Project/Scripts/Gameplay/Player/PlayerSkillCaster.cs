@@ -30,6 +30,8 @@ namespace Attrition.Gameplay.Player
         [Networked] private TickTimer _cooldown { get; set; }
         [Networked] private int _ticksDone { get; set; }
         [Networked] private NetworkBool _projectileFired { get; set; }
+        private Attrition.Persistence.SkillRuntimeConfig _activeConfig;
+        private SkillSO _activeSkill;
 
         private PlayerStats _stats;
         private PlayerInventory _inventory;
@@ -58,43 +60,49 @@ namespace Attrition.Gameplay.Player
             if (!_cooldown.ExpiredOrNotRunning(Runner)) return;
 
             var skill = _inventory.GetEquippedSkillSO();
-            if (skill == null || !_stats.HasMana(skill.manaCost)) return;
-            if (!_stats.TryConsumeMana(skill.manaCost)) return;
+            if (skill == null) return;
+            var config = Attrition.Persistence.SkillRuntimeConfig.From(skill);
+            if (!_stats.HasMana(config.manaCost)) return;
+            if (!_stats.TryConsumeMana(config.manaCost)) return;
 
+            _activeSkill = skill;
+            _activeConfig = config;
             IsCasting = true;
             _ticksDone = 0;
             _projectileFired = false;
-            _castTimer = TickTimer.CreateFromSeconds(Runner, skill.castTime);
-            _cooldown = TickTimer.CreateFromSeconds(Runner, skill.castTime + skill.cooldown);
-            if (Runner.IsForward) RPC_PlayVfx((int)skill.element);
+            _castTimer = TickTimer.CreateFromSeconds(Runner, config.castTime);
+            _cooldown = TickTimer.CreateFromSeconds(Runner, config.castTime + config.cooldown);
+            if (Runner.IsForward) RPC_PlayVfx((int)config.element, config.vfxLifetime);
         }
 
         private void TickCast(bool isFacingRight)
         {
-            var skill = _inventory.GetEquippedSkillSO();
-            float total = skill != null ? skill.castTime : 0.6f;
+            var skill = _activeSkill;
+            var config = _activeConfig;
+            float total = config != null ? config.castTime : 0.6f;
             float remain = _castTimer.RemainingTime(Runner) ?? 0f;
             float elapsedFrac = total <= 0f ? 1f : 1f - (remain / total);
 
-            if (skill != null && elapsedFrac >= skill.activeStartFrac && elapsedFrac <= skill.activeEndFrac + 0.001f)
+            if (skill != null && elapsedFrac >= config.activeStartFrac && elapsedFrac <= config.activeEndFrac + 0.001f)
             {
-                if (skill.delivery == SkillDelivery.Projectile)
+                if (config.delivery == SkillDelivery.Projectile)
                 {
-                    if (!_projectileFired) { FireProjectiles(skill, isFacingRight); _projectileFired = true; }
+                    if (!_projectileFired) { FireProjectiles(skill, config, isFacingRight); _projectileFired = true; }
                 }
                 else
                 {
-                    int wantTicks = Mathf.Min(skill.ComputeTickCount(),
-                        Mathf.FloorToInt((elapsedFrac - skill.activeStartFrac) / Mathf.Max(0.0001f,
-                            (skill.activeEndFrac - skill.activeStartFrac)) * skill.ComputeTickCount()) + 1);
-                    if (_ticksDone < wantTicks) { DealArea(skill, isFacingRight); _ticksDone++; }
+                    int tickCount = config.ComputeTickCount();
+                    int wantTicks = Mathf.Min(tickCount,
+                        Mathf.FloorToInt((elapsedFrac - config.activeStartFrac) / Mathf.Max(0.0001f,
+                            (config.activeEndFrac - config.activeStartFrac)) * tickCount) + 1);
+                    if (_ticksDone < wantTicks) { DealArea(config, isFacingRight); _ticksDone++; }
                 }
             }
 
             if (_castTimer.Expired(Runner)) IsCasting = false;
         }
 
-        private void DealArea(SkillSO skill, bool isFacingRight)
+        private void DealArea(Attrition.Persistence.SkillRuntimeConfig skill, bool isFacingRight)
         {
             if (castPoint == null) return;
             Vector2 facing = isFacingRight ? Vector2.right : Vector2.left;
@@ -124,33 +132,33 @@ namespace Attrition.Gameplay.Player
             }
         }
 
-        private void FireProjectiles(SkillSO skill, bool isFacingRight)
+        private void FireProjectiles(SkillSO skill, Attrition.Persistence.SkillRuntimeConfig config, bool isFacingRight)
         {
             if (!skill.projectilePrefab.IsValid) return;
             Vector3 spawn = castPoint != null ? castPoint.position : transform.position;
-            int raw = skill.baseDamage + Mathf.RoundToInt(_stats.AP * skill.apScaling);
-            int count = Mathf.Max(1, skill.projectileCount);
+            int raw = config.baseDamage + Mathf.RoundToInt(_stats.AP * config.apScaling);
+            int count = Mathf.Max(1, config.projectileCount);
             float baseAng = isFacingRight ? 0f : 180f;
-            float step = count > 1 ? skill.spreadAngle / (count - 1) : 0f;
-            float start = baseAng - (count > 1 ? skill.spreadAngle * 0.5f : 0f);
+            float step = count > 1 ? config.spreadAngle / (count - 1) : 0f;
+            float start = baseAng - (count > 1 ? config.spreadAngle * 0.5f : 0f);
 
             for (int i = 0; i < count; i++)
             {
                 float a = (start + step * i) * Mathf.Deg2Rad;
                 Vector2 dir = new Vector2(Mathf.Cos(a), Mathf.Sin(a)).normalized;
                 Runner.Spawn(skill.projectilePrefab, spawn, Quaternion.identity, null,
-                    (r, obj) => ProjectileInitializer.Init(obj, dir, raw, skill.projectileSpeed, skill.damageType, skill.knockbackForce));
+                    (r, obj) => ProjectileInitializer.Init(obj, dir, raw, config.projectileSpeed, config.damageType, config.knockbackForce));
             }
         }
 
-        [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
-        private void RPC_PlayVfx(int element)
+        [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+        private void RPC_PlayVfx(int element, float lifetime)
         {
             var skill = _inventory != null ? _inventory.GetEquippedSkillSO() : null;
             if (skill == null || skill.castVfxPrefab == null) return;
             Vector3 pos = castPoint != null ? castPoint.position : transform.position;
             var fx = Instantiate(skill.castVfxPrefab, pos, Quaternion.identity);
-            if (skill.vfxLifetime > 0f) Destroy(fx, skill.vfxLifetime);
+            if (lifetime > 0f) Destroy(fx, lifetime);
         }
     }
 }

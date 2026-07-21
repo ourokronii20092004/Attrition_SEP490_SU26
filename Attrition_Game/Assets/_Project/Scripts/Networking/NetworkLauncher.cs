@@ -312,34 +312,32 @@ namespace Attrition.Networking
             // ranh giới assembly (Networking không ref Gameplay).
             if (_phase == Phase.Gameplay && _gameplaySpawned)
             {
-                // Client RECONNECT khi host VẪN ở room → host KHÔNG reload scene nên OnSceneLoadDone
-                // (chỗ clear cache) không chạy → cache stat/bình của lần trước còn nguyên. Clear cache +
-                // reset cờ TRƯỚC khi spawn để player mới của client chạy EnsureSessionLoaded → FETCH LẠI
-                // session từ server → hydrate bằng save MỚI NHẤT của client (bình/vị trí đã đổi). Host
-                // player đang chơi đã hydrate xong từ trước, KHÔNG spawn lại nên không bị ảnh hưởng.
-                Attrition.Persistence.GameLaunch.ClearSessionInventoryCache();
-
-                var spawner = FindFirstObjectByType<NetworkSpawner>();
-                if (spawner != null) spawner.ServerSpawnPlayer(runner, player);
-
-                if (runner.GameMode != GameMode.Single && runner.ActivePlayers.Count() >= 2)
-                    Attrition.Persistence.CoopSession.EndWaiting();
+                StartCoroutine(PrefetchThenSpawnLatePlayer(runner, player));
+                return;
             }
+        }
+
+        private System.Collections.IEnumerator PrefetchThenSpawnLatePlayer(NetworkRunner runner, PlayerRef player)
+        {
+            Attrition.Persistence.GameLaunch.ClearSessionInventoryCache();
+            var spawner = FindFirstObjectByType<NetworkSpawner>();
+            if (spawner == null) yield break;
+            yield return spawner.PrefetchGameConfig();
+            spawner.ServerSpawnPlayer(runner, player);
+            if (runner.GameMode != GameMode.Single && runner.ActivePlayers.Count() >= 2)
+                Attrition.Persistence.CoopSession.EndWaiting();
         }
 
         public void OnSceneLoadDone(NetworkRunner runner)
         {
-            if (!runner.IsServer) return;
-
             var spawner = FindFirstObjectByType<NetworkSpawner>();
-            if (spawner == null) return; // scene Menu (lobby) không có NetworkSpawner → bỏ qua.
+            if (spawner == null) return;
+            if (!runner.IsServer)
+            {
+                StartCoroutine(spawner.PrefetchGameConfig());
+                return;
+            }
 
-            // XOÁ CACHE session TRƯỚC KHI SPAWN — điểm DETERMINISTIC: OnSceneLoadDone chạy trên host MỖI
-            // lần vào scene gameplay, ngay trước ServerSpawnPlayer → trước EnsureSessionLoaded của
-            // PlayerInventory. Các đường clear khác (OnShutdown async, StartCoopLobby early-return) không
-            // chắc chạy khi back menu rồi vào lại CÙNG phòng (cùng sessionId) → cờ static
-            // SessionInventoryFetchStarted vẫn true → dùng cache CŨ. Clear ở đây đảm bảo mỗi lần vào game
-            // đều fetch mới stat/bình/vị trí từ server. Cache chỉ sống ở máy host nên chỉ cần clear host.
             Attrition.Persistence.GameLaunch.ClearSessionInventoryCache();
 
             // (EnemyLootTracker tự reset qua SceneManager.sceneLoaded — nó ở assembly Gameplay, Networking
@@ -349,6 +347,12 @@ namespace Attrition.Networking
             _phase = Phase.Gameplay;
             if (_gameplaySpawned) return;
             _gameplaySpawned = true;
+            StartCoroutine(PrefetchThenSpawnGameplay(runner, spawner));
+        }
+
+        private System.Collections.IEnumerator PrefetchThenSpawnGameplay(NetworkRunner runner, NetworkSpawner spawner)
+        {
+            yield return spawner.PrefetchGameConfig();
 
             foreach (var lp in FindObjectsByType<LobbyPlayer>(FindObjectsSortMode.None))
                 if (lp != null && lp.Object != null && lp.Object.IsValid) runner.Despawn(lp.Object);

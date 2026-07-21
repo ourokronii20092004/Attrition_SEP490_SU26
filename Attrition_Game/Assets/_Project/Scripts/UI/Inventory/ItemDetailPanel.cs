@@ -39,8 +39,8 @@ namespace Attrition.UI.Inventory
 
             panel.SetActive(true);
 
-            if (nameText != null) nameText.text = item.displayName;
-            if (descriptionText != null) descriptionText.text = item.description;
+            if (nameText != null) nameText.text = Attrition.Persistence.ItemRuntimeConfig.Name(item);
+            if (descriptionText != null) descriptionText.text = Attrition.Persistence.ItemRuntimeConfig.Description(item);
             if (categoryText != null) categoryText.text = item.Category.ToString();
             if (itemIcon != null) { itemIcon.sprite = item.icon; itemIcon.enabled = item.icon != null; }
 
@@ -66,16 +66,17 @@ namespace Attrition.UI.Inventory
                 }
                 else if (item is SkillSO skill)
                 {
-                    sb.AppendLine($"Element: {skill.element}");
-                    sb.AppendLine($"Mana: {skill.manaCost}");
-                    sb.AppendLine($"Damage: {skill.baseDamage}");
-                    sb.AppendLine($"Cast: {skill.castTime:F1}s");
-                    sb.AppendLine($"CD: {skill.cooldown:F1}s");
+                    var runtime = Attrition.Persistence.SkillRuntimeConfig.From(skill);
+                    sb.AppendLine($"Element: {runtime.element}");
+                    sb.AppendLine($"Mana: {runtime.manaCost}");
+                    sb.AppendLine($"Damage: {runtime.baseDamage}");
+                    sb.AppendLine($"Cast: {runtime.castTime:F1}s");
+                    sb.AppendLine($"CD: {runtime.cooldown:F1}s");
                 }
                 else if (item is MaterialSO)
                 {
-                    sb.AppendLine($"Stack: {slot.Amount}/{item.maxStack}");
-                    if (item.isKeyItem) sb.AppendLine("<color=yellow>Key Item</color>");
+                    sb.AppendLine($"Stack: {slot.Amount}/{Attrition.Persistence.ItemRuntimeConfig.MaxStack(item)}");
+                    if (Attrition.Persistence.ItemRuntimeConfig.IsKeyItem(item)) sb.AppendLine("<color=yellow>Key Item</color>");
                 }
 
                 statsText.text = sb.ToString();

@@ -28,6 +28,10 @@ public class ItemEntity
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
+    // Baseline enables three-way merge without overwriting admin edits.
+    public string? UnityBaselineJson { get; set; }
+    public DateTime? ImportedAt { get; set; }
+
     // Cộng chỉ số (StatType + amount) — owned, giống loot của enemy. Game áp khi build item runtime.
     public List<ItemModifierEntry> Modifiers { get; set; } = new();
 }

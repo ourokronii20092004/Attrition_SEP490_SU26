@@ -16,6 +16,8 @@ namespace Attrition.Data
         [Tooltip("Khóa duy nhất khớp với DB (web sửa stats theo id này).")]
         public string enemyId = "skeleton_sword";
         public EnemyTier tier = EnemyTier.Normal;
+        [Tooltip("Ảnh đại diện chỉ upload lên web; gameplay vẫn dùng prefab/sprite đóng gói trong Unity.")]
+        public Sprite webImage;
 
         [Header("---- COMBAT STATS ----")]
         public int maxHP = 30;

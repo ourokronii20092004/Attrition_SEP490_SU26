@@ -106,41 +106,37 @@ public class NetworkSpawner : MonoBehaviour
         _runner = runner;
         if (_hasSpawnedEnemies) return;
         _hasSpawnedEnemies = true;
-        // Host prefetch override chỉ số quái (web sửa) TRƯỚC khi spawn, rồi mới spawn để EnemyStats
-        // đọc được cache. Lỗi mạng → PrefetchAll tự fallback dùng default SO, vẫn spawn bình thường.
-        StartCoroutine(PrefetchThenSpawn());
+        SpawnAllEnemies();
     }
 
-    private System.Collections.IEnumerator PrefetchThenSpawn()
+    public System.Collections.IEnumerator PrefetchGameConfig()
     {
         var enemyProvider = Attrition.Persistence.EnemyStatProvider.Ensure();
         var itemProvider = Attrition.Persistence.ItemConfigProvider.Ensure();
+        var skillProvider = Attrition.Persistence.SkillConfigProvider.Ensure();
 
-        // Hỏi version gộp (enemy + item) 1 request, rồi mỗi provider chỉ tải bundle phần nào đổi.
-        string enemyVersion = null, itemVersion = null;
+        string enemyVersion = null, itemVersion = null, skillVersion = null;
         bool gotVersions = false;
-        yield return FetchConfigVersions(enemyProvider.baseUrl, (ev, iv) =>
+        yield return FetchConfigVersions(enemyProvider.baseUrl, (ev, iv, sv) =>
         {
-            enemyVersion = ev; itemVersion = iv; gotVersions = true;
+            enemyVersion = ev; itemVersion = iv; skillVersion = sv; gotVersions = true;
         });
 
         if (gotVersions)
         {
             yield return enemyProvider.PrefetchBundle(enemyVersion);
             yield return itemProvider.PrefetchBundle(itemVersion);
+            yield return skillProvider.PrefetchBundle(skillVersion);
         }
         else
         {
-            // Không lấy được version gộp (mạng/parse lỗi) → fallback mỗi provider tự xử như cũ.
             yield return enemyProvider.PrefetchAll();
             yield return itemProvider.PrefetchAll();
+            yield return skillProvider.PrefetchBundle(null);
         }
-
-        SpawnAllEnemies();
     }
 
-    /// <summary>Gọi GET /api/gameconfig/versions lấy version gộp enemy+item. baseUrl rỗng → bỏ qua.</summary>
-    private System.Collections.IEnumerator FetchConfigVersions(string baseUrl, System.Action<string, string> onGot)
+    private System.Collections.IEnumerator FetchConfigVersions(string baseUrl, System.Action<string, string, string> onGot)
     {
         if (string.IsNullOrEmpty(baseUrl)) yield break;
         using (var req = UnityEngine.Networking.UnityWebRequest.Get($"{baseUrl}/gameconfig/versions"))
@@ -152,7 +148,7 @@ public class NetworkSpawner : MonoBehaviour
             {
                 var resp = Newtonsoft.Json.JsonConvert.DeserializeObject<Attrition.Persistence.Dtos.ApiResponse<Attrition.Persistence.Dtos.GameConfigVersionsDto>>(req.downloadHandler.text);
                 if (resp != null && resp.Success && resp.Data != null)
-                    onGot(resp.Data.EnemyVersion, resp.Data.ItemVersion);
+                    onGot(resp.Data.EnemyVersion, resp.Data.ItemVersion, resp.Data.SkillVersion);
             }
             catch (System.Exception e)
             {
@@ -183,11 +179,7 @@ public class NetworkSpawner : MonoBehaviour
                 Vector3 spawnPos = config.spawnPoint.position + new Vector3(randomXOffset, 0f, 0f);
                 spawnPos.z = 0f;
 
-                NetworkObject spawned = TrySpawnOneEnemy(config, spawnPos);
-                if (spawned != null)
-                    Debug.Log($"[NetworkSpawner] Spawn quái OK: {spawned.name} tại {spawnPos}");
-                else
-                    Debug.LogError("[NetworkSpawner] Spawn thất bại (prefab / Fusion PrefabTable).");
+                TrySpawnOneEnemy(config, spawnPos);
             }
         }
     }

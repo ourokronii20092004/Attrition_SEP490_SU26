@@ -388,14 +388,14 @@ namespace Attrition.Gameplay.Player.Inventory
             int remaining = amount;
 
             // 1) Stack vào ô đã có (nếu stackable)
-            if (item.maxStack > 1)
+            if (Attrition.Persistence.ItemRuntimeConfig.MaxStack(item) > 1)
             {
                 for (int i = 0; i < arr.Length && remaining > 0; i++)
                 {
                     var slot = arr.Get(i);
-                    if (slot.ItemIndex == itemIndex && slot.Amount < item.maxStack)
+                    if (slot.ItemIndex == itemIndex && slot.Amount < Attrition.Persistence.ItemRuntimeConfig.MaxStack(item))
                     {
-                        int canAdd = Mathf.Min(remaining, item.maxStack - slot.Amount);
+                        int canAdd = Mathf.Min(remaining, Attrition.Persistence.ItemRuntimeConfig.MaxStack(item) - slot.Amount);
                         slot.Amount += canAdd;
                         arr.Set(i, slot);
                         remaining -= canAdd;
@@ -409,7 +409,7 @@ namespace Attrition.Gameplay.Player.Inventory
                 var slot = arr.Get(i);
                 if (slot.IsEmpty)
                 {
-                    int canAdd = Mathf.Min(remaining, item.maxStack);
+                    int canAdd = Mathf.Min(remaining, Attrition.Persistence.ItemRuntimeConfig.MaxStack(item));
                     arr.Set(i, new InventorySlot { ItemIndex = itemIndex, Amount = canAdd });
                     remaining -= canAdd;
                 }
@@ -694,7 +694,7 @@ namespace Attrition.Gameplay.Player.Inventory
             if (equipped.IsEmpty) return false;
             
             var item = _db.GetItem(equipped.ItemIndex);
-            if (item == null || item.isKeyItem) return false;
+            if (item == null || Attrition.Persistence.ItemRuntimeConfig.IsKeyItem(item)) return false;
 
             SpawnDroppedItem(equipped.ItemIndex, equipped.Amount, Object.InputAuthority);
             SetEquipSlot(armorSlot, InventorySlot.Empty);
@@ -709,7 +709,7 @@ namespace Attrition.Gameplay.Player.Inventory
             if (EquippedSkill.IsEmpty) return false;
 
             var item = _db.GetItem(EquippedSkill.ItemIndex);
-            if (item == null || item.isKeyItem) return false;
+            if (item == null || Attrition.Persistence.ItemRuntimeConfig.IsKeyItem(item)) return false;
 
             SpawnDroppedItem(EquippedSkill.ItemIndex, EquippedSkill.Amount, Object.InputAuthority);
             EquippedSkill = InventorySlot.Empty;
@@ -723,7 +723,7 @@ namespace Attrition.Gameplay.Player.Inventory
             if (EquippedAccessory.IsEmpty) return false;
 
             var item = _db.GetItem(EquippedAccessory.ItemIndex);
-            if (item == null || item.isKeyItem) return false;
+            if (item == null || Attrition.Persistence.ItemRuntimeConfig.IsKeyItem(item)) return false;
 
             SpawnDroppedItem(EquippedAccessory.ItemIndex, EquippedAccessory.Amount, Object.InputAuthority);
             EquippedAccessory = InventorySlot.Empty;
@@ -747,7 +747,7 @@ namespace Attrition.Gameplay.Player.Inventory
 
             var item = _db.GetItem(slot.ItemIndex);
             if (item == null) return false;
-            if (item.isKeyItem) return false; // BR-45
+            if (Attrition.Persistence.ItemRuntimeConfig.IsKeyItem(item)) return false; // BR-45
 
             SpawnDroppedItem(slot.ItemIndex, slot.Amount, Object.InputAuthority);
 
