@@ -4,51 +4,44 @@ using UnityEngine;
 
 namespace Attrition.Persistence
 {
-    /// <summary>
-    /// Lưu/đọc toàn bộ thiết lập người chơi ở LOCAL (PlayerPrefs).
-    /// Gồm: âm lượng, toggle gameplay/graphics, đồ hoạ, và keybinding (đổi phím).
-    /// Gameplay đọc phím qua GameSettings.GetKey(action); UI Settings ghi qua Set/Save.
-    ///
-    /// Không phụ thuộc Fusion — chạy được cả ở MainMenu lẫn trong trận, solo lẫn coop.
-    /// </summary>
     public static class GameSettings
     {
-        // ─── Hành động có thể đổi phím (khớp Game Mechanics trong concept) ───
         public enum InputAction
         {
-            Jump, Dash, LightAttack, Skill, HealthFlask, ManaFlask, Block, Map, Inventory, Interact, Revive
+            Jump, Dash, LightAttack, Skill, HealthFlask, ManaFlask, Map, Inventory, Interact, Revive
         }
 
         public static readonly Dictionary<InputAction, KeyCode> DefaultKeys = new()
         {
-            { InputAction.Jump,        KeyCode.Space },
-            { InputAction.Dash,        KeyCode.LeftShift },
+            { InputAction.Jump, KeyCode.Space },
+            { InputAction.Dash, KeyCode.LeftShift },
             { InputAction.LightAttack, KeyCode.J },
-            { InputAction.Skill,       KeyCode.K },
+            { InputAction.Skill, KeyCode.K },
             { InputAction.HealthFlask, KeyCode.Q },
-            { InputAction.ManaFlask,   KeyCode.E },
-            { InputAction.Block,       KeyCode.L },
-            { InputAction.Map,         KeyCode.M },
-            { InputAction.Inventory,   KeyCode.Tab },
-            { InputAction.Interact,    KeyCode.F },
-            { InputAction.Revive,      KeyCode.R },
+            { InputAction.ManaFlask, KeyCode.E },
+            { InputAction.Map, KeyCode.M },
+            { InputAction.Inventory, KeyCode.Tab },
+            { InputAction.Interact, KeyCode.F },
+            { InputAction.Revive, KeyCode.R },
         };
 
         private static readonly Dictionary<InputAction, KeyCode> _keys = new();
         private static bool _loaded;
 
-        // ─── Audio (0..1) ───
         public static float MasterVolume { get; private set; } = 0.8f;
-        public static float MusicVolume  { get; private set; } = 0.65f;
-        public static float SfxVolume    { get; private set; } = 1f;
-        public static float AmbientVolume { get; private set; } = 0.7f;
-        public static float VoiceVolume  { get; private set; } = 0.9f;
+        public static float MusicVolume { get; private set; } = 0.65f;
+        public static float SfxVolume { get; private set; } = 1f;
 
-        // ─── Gameplay/Graphics toggles ───
         public static bool ShowDamageNumbers { get; private set; } = true;
-        public static bool CameraShake       { get; private set; } = true;
-        public static bool VSync             { get; private set; } = true;
-        public static bool PostProcessing    { get; private set; } = true;
+        public static bool ShowOtherPlayers { get; private set; } = true;
+        public static bool ShowPlayerNameplates { get; private set; } = true;
+        public static bool VSync { get; private set; } = true;
+
+        public static int ResolutionWidth { get; private set; } = 1920;
+        public static int ResolutionHeight { get; private set; } = 1080;
+        public static FullScreenMode DisplayMode { get; private set; } = FullScreenMode.FullScreenWindow;
+        public static int FrameLimit { get; private set; } = 144;
+        public static int ShadowQualityIndex { get; private set; } = 3;
 
         public static event Action OnChanged;
 
@@ -56,14 +49,13 @@ namespace Attrition.Persistence
 
         public static void EnsureLoaded()
         {
-            if (_loaded) return;
-            Load();
+            if (!_loaded) Load();
         }
 
         public static KeyCode GetKey(InputAction action)
         {
             EnsureLoaded();
-            return _keys.TryGetValue(action, out var k) ? k : DefaultKeys[action];
+            return _keys.TryGetValue(action, out var key) ? key : DefaultKeys[action];
         }
 
         public static void SetKey(InputAction action, KeyCode key)
@@ -72,42 +64,55 @@ namespace Attrition.Persistence
             _keys[action] = key;
         }
 
-        public static void SetAudio(float master, float music, float sfx, float ambient, float voice)
+        public static void SetAudio(float master, float music, float sfx)
         {
             MasterVolume = Mathf.Clamp01(master);
             MusicVolume = Mathf.Clamp01(music);
             SfxVolume = Mathf.Clamp01(sfx);
-            AmbientVolume = Mathf.Clamp01(ambient);
-            VoiceVolume = Mathf.Clamp01(voice);
         }
 
-        public static void SetToggles(bool showDmg, bool camShake, bool vsync, bool postFx)
+        public static void SetGameplay(bool showDamageNumbers, bool showOtherPlayers, bool showPlayerNameplates)
         {
-            ShowDamageNumbers = showDmg;
-            CameraShake = camShake;
+            ShowDamageNumbers = showDamageNumbers;
+            ShowOtherPlayers = showOtherPlayers;
+            ShowPlayerNameplates = showPlayerNameplates;
+        }
+
+        public static void SetGraphics(int width, int height, FullScreenMode mode, bool vsync, int frameLimit, int shadowQualityIndex)
+        {
+            ResolutionWidth = width > 0 ? width : 1920;
+            ResolutionHeight = height > 0 ? height : 1080;
+            DisplayMode = Enum.IsDefined(typeof(FullScreenMode), mode) ? mode : FullScreenMode.FullScreenWindow;
             VSync = vsync;
-            PostProcessing = postFx;
+            FrameLimit = frameLimit is 30 or 60 or 120 or 144 or -1 ? frameLimit : 144;
+            ShadowQualityIndex = Mathf.Clamp(shadowQualityIndex, 0, 3);
         }
 
         public static void Load()
         {
-            MasterVolume  = PlayerPrefs.GetFloat(P + "vol.master", 0.8f);
-            MusicVolume   = PlayerPrefs.GetFloat(P + "vol.music", 0.65f);
-            SfxVolume     = PlayerPrefs.GetFloat(P + "vol.sfx", 1f);
-            AmbientVolume = PlayerPrefs.GetFloat(P + "vol.ambient", 0.7f);
-            VoiceVolume   = PlayerPrefs.GetFloat(P + "vol.voice", 0.9f);
+            MasterVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(P + "vol.master", 0.8f));
+            MusicVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(P + "vol.music", 0.65f));
+            SfxVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(P + "vol.sfx", 1f));
 
             ShowDamageNumbers = PlayerPrefs.GetInt(P + "showDmg", 1) == 1;
-            CameraShake       = PlayerPrefs.GetInt(P + "camShake", 1) == 1;
-            VSync             = PlayerPrefs.GetInt(P + "vsync", 1) == 1;
-            PostProcessing    = PlayerPrefs.GetInt(P + "postFx", 1) == 1;
+            ShowOtherPlayers = PlayerPrefs.GetInt(P + "showPlayers", 1) == 1;
+            ShowPlayerNameplates = PlayerPrefs.GetInt(P + "showNameplates", 1) == 1;
+
+            var modeValue = PlayerPrefs.GetInt(P + "fullscreenMode", (int)FullScreenMode.FullScreenWindow);
+            var mode = Enum.IsDefined(typeof(FullScreenMode), modeValue)
+                ? (FullScreenMode)modeValue
+                : FullScreenMode.FullScreenWindow;
+            SetGraphics(
+                PlayerPrefs.GetInt(P + "resolutionWidth", 1920),
+                PlayerPrefs.GetInt(P + "resolutionHeight", 1080),
+                mode,
+                PlayerPrefs.GetInt(P + "vsync", 1) == 1,
+                PlayerPrefs.GetInt(P + "frameLimit", 144),
+                PlayerPrefs.GetInt(P + "shadowQuality", 3));
 
             _keys.Clear();
-            foreach (var kv in DefaultKeys)
-            {
-                int stored = PlayerPrefs.GetInt(P + "key." + kv.Key, (int)kv.Value);
-                _keys[kv.Key] = (KeyCode)stored;
-            }
+            foreach (var pair in DefaultKeys)
+                _keys[pair.Key] = (KeyCode)PlayerPrefs.GetInt(P + "key." + pair.Key, (int)pair.Value);
             _loaded = true;
         }
 
@@ -116,16 +121,18 @@ namespace Attrition.Persistence
             PlayerPrefs.SetFloat(P + "vol.master", MasterVolume);
             PlayerPrefs.SetFloat(P + "vol.music", MusicVolume);
             PlayerPrefs.SetFloat(P + "vol.sfx", SfxVolume);
-            PlayerPrefs.SetFloat(P + "vol.ambient", AmbientVolume);
-            PlayerPrefs.SetFloat(P + "vol.voice", VoiceVolume);
-
             PlayerPrefs.SetInt(P + "showDmg", ShowDamageNumbers ? 1 : 0);
-            PlayerPrefs.SetInt(P + "camShake", CameraShake ? 1 : 0);
+            PlayerPrefs.SetInt(P + "showPlayers", ShowOtherPlayers ? 1 : 0);
+            PlayerPrefs.SetInt(P + "showNameplates", ShowPlayerNameplates ? 1 : 0);
             PlayerPrefs.SetInt(P + "vsync", VSync ? 1 : 0);
-            PlayerPrefs.SetInt(P + "postFx", PostProcessing ? 1 : 0);
+            PlayerPrefs.SetInt(P + "resolutionWidth", ResolutionWidth);
+            PlayerPrefs.SetInt(P + "resolutionHeight", ResolutionHeight);
+            PlayerPrefs.SetInt(P + "fullscreenMode", (int)DisplayMode);
+            PlayerPrefs.SetInt(P + "frameLimit", FrameLimit);
+            PlayerPrefs.SetInt(P + "shadowQuality", ShadowQualityIndex);
 
-            foreach (var kv in _keys)
-                PlayerPrefs.SetInt(P + "key." + kv.Key, (int)kv.Value);
+            foreach (var pair in _keys)
+                PlayerPrefs.SetInt(P + "key." + pair.Key, (int)pair.Value);
 
             PlayerPrefs.Save();
             OnChanged?.Invoke();
@@ -133,24 +140,25 @@ namespace Attrition.Persistence
 
         public static void ResetToDefault()
         {
-            SetAudio(0.8f, 0.65f, 1f, 0.7f, 0.9f);
-            SetToggles(true, true, true, true);
+            SetAudio(0.8f, 0.65f, 1f);
+            SetGameplay(true, true, true);
+            SetGraphics(1920, 1080, FullScreenMode.FullScreenWindow, true, 144, 3);
             _keys.Clear();
-            foreach (var kv in DefaultKeys) _keys[kv.Key] = kv.Value;
+            foreach (var pair in DefaultKeys) _keys[pair.Key] = pair.Value;
             _loaded = true;
         }
 
-        /// <summary>Áp ngay vào engine (gọi sau Load/Save): âm lượng tổng + VSync.</summary>
         public static void ApplyToEngine()
         {
             EnsureLoaded();
             AudioListener.volume = MasterVolume;
-            QualitySettings.vSyncCount = VSync ? 1 : 0;
-            // Đẩy hệ số âm lượng SFX xuống GameSfx (Systems). Chiều Persistence→Systems là hợp lệ
-            // (Persistence đã tham chiếu Systems); KHÔNG để GameSfx đọc ngược lên đây (circular dep).
             Attrition.Systems.GameSfx.SfxVolume = SfxVolume;
             Attrition.Systems.GameBgm.MusicVolume = MusicVolume;
-            Attrition.Systems.GameBgm.MasterVolume = MasterVolume;
+            QualitySettings.vSyncCount = VSync ? 1 : 0;
+            Application.targetFrameRate = FrameLimit;
+            QualitySettings.shadows = ShadowQualityIndex == 0 ? ShadowQuality.HardOnly : ShadowQuality.All;
+            QualitySettings.shadowResolution = (ShadowResolution)ShadowQualityIndex;
+            Screen.SetResolution(ResolutionWidth, ResolutionHeight, DisplayMode);
         }
     }
 }

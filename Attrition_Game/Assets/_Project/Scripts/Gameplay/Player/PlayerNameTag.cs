@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using Attrition.Persistence;
 
 namespace Attrition.Gameplay.Player
 {
@@ -14,7 +15,8 @@ namespace Attrition.Gameplay.Player
         private const float BarW = 1.1f, BarH = 0.14f;
 
         private PlayerController _player;
-        private PlayerStats _stats;   // cache để đọc MaxHP live (mẫu số thanh máu)
+        private PlayerStats _stats;
+        private bool _isLocal;
         private TextMeshPro _nameText;
         private Transform _fill;
         private Transform _trailFill;
@@ -29,6 +31,7 @@ namespace Attrition.Gameplay.Player
             var parent = player.VisualRoot != null ? player.VisualRoot : player.transform;
             go.transform.SetParent(parent, false);
             var tag = go.AddComponent<PlayerNameTag>();
+            tag._isLocal = isLocal;
             tag.Build(player, isLocal ? new Color(0.4f, 0.9f, 0.5f) : new Color(0.95f, 0.6f, 0.25f));
         }
 
@@ -52,6 +55,19 @@ namespace Attrition.Gameplay.Player
             var bg = Quad("BarBG", transform, new Color(0f, 0f, 0f, 0.75f), BarW, BarH, 78);
             _trailFill = Quad("BarTrail", bg.transform, new Color(1f, 0.85f, 0.3f, 1f), BarW - 0.04f, BarH - 0.04f, 79).transform;
             _fill = Quad("BarFill", bg.transform, color, BarW - 0.04f, BarH - 0.04f, 80).transform;
+            GameSettings.OnChanged += ApplyVisibility;
+            ApplyVisibility();
+        }
+
+        private void OnDestroy()
+        {
+            GameSettings.OnChanged -= ApplyVisibility;
+        }
+
+        private void ApplyVisibility()
+        {
+            bool visible = GameSettings.ShowPlayerNameplates && (_isLocal || GameSettings.ShowOtherPlayers);
+            gameObject.SetActive(visible);
         }
 
         private GameObject Quad(string n, Transform parent, Color c, float w, float h, int order)
