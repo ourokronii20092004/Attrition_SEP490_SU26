@@ -56,7 +56,7 @@ public static class AuthenticationExtensions
                     // we only fall back to the cookie when no bearer token was supplied.
                     OnMessageReceived = context =>
                     {
-                        if (string.IsNullOrEmpty(context.Token))
+                        if (string.IsNullOrEmpty(context.Request.Headers.Authorization))
                         {
                             var cookieToken = context.Request.Cookies[AuthCookies.AccessToken];
                             if (!string.IsNullOrEmpty(cookieToken))

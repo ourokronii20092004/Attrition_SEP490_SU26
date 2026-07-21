@@ -58,6 +58,9 @@ namespace Attrition.UI
 
         private void OnEnable()
         {
+            UnityEngine.Cursor.lockState = CursorLockMode.None;
+            UnityEngine.Cursor.visible = true;
+
             _uiDocument = GetComponent<UIDocument>();
             _root = _uiDocument.rootVisualElement;
             if (_root == null) return;
@@ -816,7 +819,7 @@ namespace Attrition.UI
         private VisualElement _slotWarningToast;
 
         /// <summary>Hiện cảnh báo nổi (toast) khi chọn slot sai chế độ. Tự dựng runtime, tự ẩn sau 4s.</summary>
-        private void ShowSlotWarning(string message)
+        private void ShowSlotWarning(string message, bool success = false)
         {
             if (_root == null) return;
 
@@ -831,7 +834,9 @@ namespace Attrition.UI
                 _slotWarningToast.style.paddingRight = 22;
                 _slotWarningToast.style.paddingTop = 12;
                 _slotWarningToast.style.paddingBottom = 12;
-                _slotWarningToast.style.backgroundColor = new Color(0.12f, 0.04f, 0.04f, 0.96f);
+                _slotWarningToast.style.backgroundColor = success
+                    ? new Color(0.04f, 0.16f, 0.08f, 0.96f)
+                    : new Color(0.12f, 0.04f, 0.04f, 0.96f);
                 _slotWarningToast.style.borderTopLeftRadius = 6;
                 _slotWarningToast.style.borderTopRightRadius = 6;
                 _slotWarningToast.style.borderBottomLeftRadius = 6;
@@ -848,7 +853,14 @@ namespace Attrition.UI
                 _root.Add(_slotWarningToast);
             }
 
-            _slotWarningToast.Q<Label>("slot-warning-label").text = message;
+            var toastColor = success ? new Color(0.18f, 0.65f, 0.32f) : new Color(0.78f, 0.25f, 0.25f);
+            _slotWarningToast.style.backgroundColor = success
+                ? new Color(0.04f, 0.16f, 0.08f, 0.96f)
+                : new Color(0.12f, 0.04f, 0.04f, 0.96f);
+            SetBorder(_slotWarningToast, toastColor, 1);
+            var toastLabel = _slotWarningToast.Q<Label>("slot-warning-label");
+            toastLabel.style.color = success ? new Color(0.82f, 0.96f, 0.84f) : new Color(0.96f, 0.82f, 0.78f);
+            toastLabel.text = message;
             _slotWarningToast.style.display = DisplayStyle.Flex;
             _slotWarningToast.BringToFront();
 
@@ -1560,8 +1572,6 @@ namespace Attrition.UI
             SetupSliderLabel("slider-master", "label-master-val");
             SetupSliderLabel("slider-music", "label-music-val");
             SetupSliderLabel("slider-sfx", "label-sfx-val");
-            SetupSliderLabel("slider-ambient", "label-ambient-val");
-            SetupSliderLabel("slider-voice", "label-voice-val");
 
             SetupKeybindButtons();
             LoadSettingsIntoUI();
@@ -1644,76 +1654,77 @@ namespace Attrition.UI
         {
             GameSettings.ResetToDefault();
             GameSettings.Save();
-            LoadSettingsIntoUI();
-            SetDropdownIndex("dropdown-resolution", 1);
-            SetDropdownIndex("dropdown-fullscreen", 1);
-            SetDropdownIndex("dropdown-framelimit", 3);
-            SetDropdownIndex("dropdown-shadows", 3);
             GameSettings.ApplyToEngine();
-            ApplyGraphicsFromUI();
+            LoadSettingsIntoUI();
             SetupKeybindButtons();
+            ShowSlotWarning("Settings reset to defaults.", true);
         }
 
-        /// <summary>Đổ giá trị đã lưu (PlayerPrefs) lên các control trong UI.</summary>
         private void LoadSettingsIntoUI()
         {
             GameSettings.EnsureLoaded();
             SetSliderValue("slider-master", GameSettings.MasterVolume * 100f, "label-master-val");
             SetSliderValue("slider-music", GameSettings.MusicVolume * 100f, "label-music-val");
             SetSliderValue("slider-sfx", GameSettings.SfxVolume * 100f, "label-sfx-val");
-            SetSliderValue("slider-ambient", GameSettings.AmbientVolume * 100f, "label-ambient-val");
-            SetSliderValue("slider-voice", GameSettings.VoiceVolume * 100f, "label-voice-val");
             SetToggleValue("toggle-dmg-numbers", GameSettings.ShowDamageNumbers);
-            SetToggleValue("toggle-cam-shake", GameSettings.CameraShake);
+            SetToggleValue("toggle-other-players", GameSettings.ShowOtherPlayers);
+            SetToggleValue("toggle-player-nameplates", GameSettings.ShowPlayerNameplates);
             SetToggleValue("toggle-vsync", GameSettings.VSync);
-            SetToggleValue("toggle-post-processing", GameSettings.PostProcessing);
+
+            int[][] resolutions = { new[] { 1280, 720 }, new[] { 1920, 1080 }, new[] { 2560, 1440 }, new[] { 3840, 2160 } };
+            int resolutionIndex = System.Array.FindIndex(resolutions,
+                x => x[0] == GameSettings.ResolutionWidth && x[1] == GameSettings.ResolutionHeight);
+            SetDropdownIndex("dropdown-resolution", resolutionIndex >= 0 ? resolutionIndex : 1);
+            SetDropdownIndex("dropdown-fullscreen", GameSettings.DisplayMode switch
+            {
+                FullScreenMode.ExclusiveFullScreen => 0,
+                FullScreenMode.Windowed => 2,
+                _ => 1,
+            });
+            SetDropdownIndex("dropdown-framelimit", GameSettings.FrameLimit switch
+            {
+                30 => 0,
+                60 => 1,
+                120 => 2,
+                144 => 3,
+                _ => 4,
+            });
+            SetDropdownIndex("dropdown-shadows", GameSettings.ShadowQualityIndex);
         }
 
         private void ApplySettings()
         {
-            float V(string n) { var s = _root.Q<Slider>(n); return s != null ? s.value / 100f : 0f; }
-            bool T(string n) { var t = _root.Q<Toggle>(n); return t != null && t.value; }
+            float Volume(string name) => _root.Q<Slider>(name)?.value / 100f ?? 0f;
+            bool ToggleValue(string name) => _root.Q<Toggle>(name)?.value ?? false;
 
-            GameSettings.SetAudio(V("slider-master"), V("slider-music"), V("slider-sfx"), V("slider-ambient"), V("slider-voice"));
-            GameSettings.SetToggles(T("toggle-dmg-numbers"), T("toggle-cam-shake"), T("toggle-vsync"), T("toggle-post-processing"));
+            GameSettings.SetAudio(Volume("slider-master"), Volume("slider-music"), Volume("slider-sfx"));
+            GameSettings.SetGameplay(
+                ToggleValue("toggle-dmg-numbers"),
+                ToggleValue("toggle-other-players"),
+                ToggleValue("toggle-player-nameplates"));
+            ApplyGraphicsFromUI(ToggleValue("toggle-vsync"));
             GameSettings.Save();
             GameSettings.ApplyToEngine();
-            ApplyGraphicsFromUI();
+            ShowSlotWarning("Settings updated.", true);
         }
 
-        /// <summary>Áp thiết lập đồ hoạ không lưu trong GameSettings: độ phân giải, fps, shadow, fullscreen.</summary>
-        private void ApplyGraphicsFromUI()
+        private void ApplyGraphicsFromUI(bool vsync)
         {
-            var fs = _root.Q<DropdownField>("dropdown-fullscreen");
-            if (fs != null)
-                Screen.fullScreenMode = fs.index switch
-                {
-                    0 => FullScreenMode.ExclusiveFullScreen,
-                    2 => FullScreenMode.Windowed,
-                    _ => FullScreenMode.FullScreenWindow,
-                };
+            int[][] resolutions = { new[] { 1280, 720 }, new[] { 1920, 1080 }, new[] { 2560, 1440 }, new[] { 3840, 2160 } };
+            int resolutionIndex = Mathf.Clamp(_root.Q<DropdownField>("dropdown-resolution")?.index ?? 1, 0, resolutions.Length - 1);
+            int fullscreenIndex = _root.Q<DropdownField>("dropdown-fullscreen")?.index ?? 1;
+            int frameIndex = _root.Q<DropdownField>("dropdown-framelimit")?.index ?? 3;
+            int shadowIndex = Mathf.Clamp(_root.Q<DropdownField>("dropdown-shadows")?.index ?? 3, 0, 3);
 
-            var resDropdown = _root.Q<DropdownField>("dropdown-resolution");
-            if (resDropdown != null && resDropdown.index >= 0)
+            var resolution = resolutions[resolutionIndex];
+            var mode = fullscreenIndex switch
             {
-                int[][] resolutions = { new[]{1280,720}, new[]{1920,1080}, new[]{2560,1440}, new[]{3840,2160} };
-                if (resDropdown.index < resolutions.Length)
-                {
-                    var res = resolutions[resDropdown.index];
-                    Screen.SetResolution(res[0], res[1], Screen.fullScreenMode);
-                }
-            }
-
-            var fps = _root.Q<DropdownField>("dropdown-framelimit");
-            if (fps != null)
-                Application.targetFrameRate = fps.index switch { 0 => 30, 1 => 60, 2 => 120, 3 => 144, _ => -1 };
-
-            var shadows = _root.Q<DropdownField>("dropdown-shadows");
-            if (shadows != null)
-            {
-                QualitySettings.shadows = shadows.index <= 0 ? ShadowQuality.Disable : ShadowQuality.All;
-                QualitySettings.shadowResolution = (ShadowResolution)Mathf.Clamp(shadows.index, 0, 3);
-            }
+                0 => FullScreenMode.ExclusiveFullScreen,
+                2 => FullScreenMode.Windowed,
+                _ => FullScreenMode.FullScreenWindow,
+            };
+            int frameLimit = frameIndex switch { 0 => 30, 1 => 60, 2 => 120, 3 => 144, _ => -1 };
+            GameSettings.SetGraphics(resolution[0], resolution[1], mode, vsync, frameLimit, shadowIndex);
         }
 
         private void SetSliderValue(string sliderName, float value, string labelName)
