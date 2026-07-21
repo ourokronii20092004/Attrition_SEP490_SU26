@@ -58,6 +58,32 @@ public class SkillConfigDtoValidator : AbstractValidator<SkillConfigDto>
         RuleFor(field).Must(x => GameDataRules.Finite(x) && x >= 0).WithMessage("Value must be finite and non-negative.");
 }
 
+public class SkillUpdateRequestValidator : AbstractValidator<SkillUpdateRequest>
+{
+    public SkillUpdateRequestValidator()
+    {
+        RuleFor(x => x.SkillId).NotEmpty().Must(GameDataRules.IsStableId);
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(100);
+        RuleFor(x => x.Description).MaximumLength(2000);
+        RuleFor(x => x.Rarity).NotEmpty().MaximumLength(50);
+        RuleFor(x => x.MaxStack).InclusiveBetween(1, 9999);
+        RuleFor(x => x.Modifiers).Must(x => x == null || x.Count <= 50);
+        RuleForEach(x => x.Modifiers).SetValidator(new ItemModifierDtoValidator());
+        RuleFor(x => x).Custom((x, context) =>
+        {
+            var config = new SkillConfigDto(
+                x.SkillId, x.Element, x.ManaCost, x.CastTime, x.Cooldown, x.ActiveStartFrac,
+                x.ActiveEndFrac, x.DamageType, x.BaseDamage, x.ApScaling, x.KnockbackForce,
+                x.TickInterval, x.SweetSpotRadius, x.SweetSpotMultiplier, x.Delivery,
+                x.HitShape, x.Range, x.Angle, x.RectWidth, x.RectHeight, x.OffsetX,
+                x.OffsetY, x.ProjectileSpeed, x.ProjectileCount, x.SpreadAngle,
+                x.VfxLifetime, x.ImageUrl);
+            var result = new SkillConfigDtoValidator().Validate(config);
+            foreach (var error in result.Errors) context.AddFailure(error.PropertyName, error.ErrorMessage);
+        });
+    }
+}
+
 public class UnityItemImportValidator : AbstractValidator<UnityItemImport>
 {
     public UnityItemImportValidator()

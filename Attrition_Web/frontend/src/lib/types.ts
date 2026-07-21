@@ -278,6 +278,13 @@ export interface ItemUpdateRequest {
 
 export interface SkillResponse {
   skillId: string;
+  name: string;
+  description: string | null;
+  iconKey: string | null;
+  rarity: string;
+  maxStack: number;
+  isKeyItem: boolean;
+  modifiers: ItemModifierDto[];
   element: string;
   manaCost: number;
   castTime: number;
@@ -803,6 +810,8 @@ export interface AdminStatsDto {
   totalForumPosts: number | null;
   removedPosts: number | null;
   totalEnemies: number | null;
+  totalItems: number | null;
+  totalSkills: number | null;
   totalAssets: number | null;
   totalMusicAlbums: number | null;
   totalMusicTracks: number | null;

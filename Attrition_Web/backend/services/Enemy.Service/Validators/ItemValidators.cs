@@ -16,7 +16,8 @@ internal static class ItemFieldRules
         System.Linq.Expressions.Expression<Func<T, List<ItemModifierDto>?>> modifiers)
     {
         v.RuleFor(name).NotEmpty().MaximumLength(100);
-        v.RuleFor(category).NotEmpty().MaximumLength(50);
+        v.RuleFor(category).NotEmpty().Must(x => GameDataRules.Categories.Contains(x) && x != "Skill")
+            .WithMessage("Skills must be managed through the Skills endpoint.");
         v.RuleFor(rarity).NotEmpty().MaximumLength(50);
         v.RuleFor(description).MaximumLength(2000);
         v.RuleFor(maxStack).InclusiveBetween(1, 9999)

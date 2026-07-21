@@ -39,7 +39,7 @@ public class AdminStatsService : IAdminStatsService
         var usersT = Safe("identity", () => _identity.GetCountAsync("api/internal/users/count", ct), down);
         var wikiT = Safe("wiki", () => _wiki.GetObjectAsync("api/internal/wiki/stats", ct), down);
         var forumT = Safe("forum", () => _forum.GetObjectAsync("api/internal/forum/stats", ct), down);
-        var enemyT = Safe("enemy", () => _enemy.GetCountAsync("api/internal/enemies/count", ct), down);
+        var enemyT = Safe("enemy", () => _enemy.GetObjectAsync("api/internal/enemies/stats", ct), down);
         var assetsT = Safe("assets", () => _assets.GetCountAsync("api/internal/assets/count", ct), down);
         var musicT = Safe("music", () => _music.GetObjectAsync("api/internal/music/count", ct), down);
 
@@ -50,6 +50,9 @@ public class AdminStatsService : IAdminStatsService
         int? threads = GetInt(forumT, "threads");
         int? posts = GetInt(forumT, "posts");
         int? removed = GetInt(forumT, "removedPosts");
+        int? enemies = GetInt(enemyT, "enemies");
+        int? items = GetInt(enemyT, "items");
+        int? skills = GetInt(enemyT, "skills");
         int? albums = GetInt(musicT, "albums");
         int? tracks = GetInt(musicT, "tracks");
 
@@ -60,7 +63,9 @@ public class AdminStatsService : IAdminStatsService
             TotalForumThreads: threads,
             TotalForumPosts: posts,
             RemovedPosts: removed,
-            TotalEnemies: enemyT.Result,
+            TotalEnemies: enemies,
+            TotalItems: items,
+            TotalSkills: skills,
             TotalAssets: assetsT.Result,
             TotalMusicAlbums: albums,
             TotalMusicTracks: tracks,

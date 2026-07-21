@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import {
   ArrowRight, Users, BookOpen, FileClock, MessagesSquare, MessageSquare, EyeOff,
-  Skull, Image as ImageIcon, Disc3, Music, Flag, Gem, Gamepad2, Keyboard,
+  Skull, Image as ImageIcon, Disc3, Music, Flag, Gem, Sparkles, Gamepad2, Keyboard,
 } from "lucide-react";
 import { adminApi } from "@/lib/api/admin";
 import { Card } from "@/components/ui/card";
@@ -53,6 +53,8 @@ export default function AdminPage() {
       title: "Game Content",
       cards: [
         { label: "Enemies", value: stats?.totalEnemies, href: "/admin/enemies", icon: Skull },
+        { label: "Items", value: stats?.totalItems, href: "/admin/items", icon: Gem },
+        { label: "Skills", value: stats?.totalSkills, href: "/admin/skills", icon: Sparkles },
         { label: "Assets", value: stats?.totalAssets, href: "/admin/assets", icon: ImageIcon },
         { label: "Music Albums", value: stats?.totalMusicAlbums, href: "/admin/music/albums", icon: Disc3 },
         { label: "Music Tracks", value: stats?.totalMusicTracks, href: "/admin/music/tracks", icon: Music },
@@ -64,6 +66,7 @@ export default function AdminPage() {
     { label: "Review reports", href: "/admin/user-reports", icon: Flag },
     { label: "Add enemy", href: "/admin/enemies", icon: Skull },
     { label: "Add item", href: "/admin/items", icon: Gem },
+    { label: "Manage skills", href: "/admin/skills", icon: Sparkles },
     { label: "Upload asset", href: "/admin/assets", icon: ImageIcon },
     { label: "Characters", href: "/admin/characters", icon: Gamepad2 },
   ];
