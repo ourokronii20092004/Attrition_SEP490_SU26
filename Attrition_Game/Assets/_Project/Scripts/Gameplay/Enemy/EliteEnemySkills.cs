@@ -9,15 +9,10 @@ using System.Collections.Generic;
 /// </summary>
 public class EliteEnemySkills : NetworkBehaviour
 {
-    // ═══════════════════════════════════════════════════════════════
-    // REFERENCES
-    // ═══════════════════════════════════════════════════════════════
     [Header("---- REFS ----")]
     [SerializeField] private EnemyAnimation animationComp;
 
-    // ═══════════════════════════════════════════════════════════════
     // TELEPORT — Dịch chuyển ngẫu nhiên quanh player
-    // ═══════════════════════════════════════════════════════════════
     [Header("---- TELEPORT ----")]
     [Tooltip("Bật nếu quái có khả năng teleport")]
     public bool canTeleport = true;
@@ -32,9 +27,7 @@ public class EliteEnemySkills : NetworkBehaviour
     [Tooltip("Chỉ teleport khi player trong khoảng cách này (0 = luôn teleport khi chase)")]
     public float teleportTriggerRange = 0f;
 
-    // ═══════════════════════════════════════════════════════════════
     // HEALING — Tự hồi máu ngẫu nhiên
-    // ═══════════════════════════════════════════════════════════════
     [Header("---- HEALING ----")]
     [Tooltip("Bật nếu quái có khả năng tự hồi máu")]
     public bool canHeal = true;
@@ -49,9 +42,7 @@ public class EliteEnemySkills : NetworkBehaviour
     [Tooltip("Xác suất heal mỗi giây khi đủ điều kiện (0~1). Cao = hay heal hơn")]
     [Range(0f, 1f)] public float healChancePerSecond = 0.15f;
 
-    // ═══════════════════════════════════════════════════════════════
     // SKILL — Kỹ năng gây sát thương đặc biệt (Undead)
-    // ═══════════════════════════════════════════════════════════════
     [System.Serializable]
     public class SkillConfig
     {
@@ -95,9 +86,7 @@ public class EliteEnemySkills : NetworkBehaviour
     [Tooltip("Tỉ lệ % dùng Skill thay vì Attack thường mỗi lần tấn công (0~1)")] 
     [Range(0f, 1f)] public float skillChance = 0.3f;
 
-    // ═══════════════════════════════════════════════════════════════
     // SUMMON — Triệu hồi quái phụ (Undead)
-    // ═══════════════════════════════════════════════════════════════
     [Header("---- SUMMON (Undead) ----")]
     [Tooltip("Bật nếu quái có khả năng triệu hồi quái phụ")]
     public bool canSummon = false;
@@ -122,9 +111,6 @@ public class EliteEnemySkills : NetworkBehaviour
     [Tooltip("Tầm raycast xuống tìm đất khi snap summon.")]
     public float summonGroundSnapDistance = 6f;
 
-    // ═══════════════════════════════════════════════════════════════
-    // RUNTIME (ẩn khỏi Inspector)
-    // ═══════════════════════════════════════════════════════════════
     [HideInInspector][Networked] public NetworkBool IsTeleporting { get; set; }
     [HideInInspector][Networked] public NetworkBool IsHealing { get; set; }
     [HideInInspector][Networked] public NetworkBool IsUsingSkill { get; set; }
@@ -152,9 +138,6 @@ public class EliteEnemySkills : NetworkBehaviour
     // Track active summons
     private List<NetworkObject> activeSummons = new List<NetworkObject>();
 
-    // ═══════════════════════════════════════════════════════════════
-    // INIT
-    // ═══════════════════════════════════════════════════════════════
     public override void Spawned()
     {
         if (animationComp == null) animationComp = GetComponent<EnemyAnimation>();
@@ -177,9 +160,6 @@ public class EliteEnemySkills : NetworkBehaviour
         playerLayer = playerMask;
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // TELEPORT
-    // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
     /// AI gọi mỗi tick khi muốn thử teleport. Trả về true nếu đã bắt đầu teleport.
@@ -251,9 +231,6 @@ public class EliteEnemySkills : NetworkBehaviour
         if (animationComp != null) animationComp.PlayTeleport();
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // HEALING
-    // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
     /// AI gọi mỗi tick để roll xem có heal không. Trả về true nếu bắt đầu heal.
@@ -333,9 +310,7 @@ public class EliteEnemySkills : NetworkBehaviour
         if (animationComp != null) animationComp.StopHealing();
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // SKILL — Kỹ năng gây sát thương
-    // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
     /// AI gọi khi trong tầm đánh — roll xem có dùng Skill thay vì Attack thường không.
@@ -559,9 +534,7 @@ public class EliteEnemySkills : NetworkBehaviour
         if (animationComp != null) animationComp.PlaySkill(skillIndex);
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // SUMMON — Triệu hồi quái phụ
-    // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
     /// AI gọi mỗi tick để roll xem có summon không. Trả về true nếu bắt đầu summon.
@@ -690,9 +663,7 @@ public class EliteEnemySkills : NetworkBehaviour
         if (animationComp != null) animationComp.PlaySummon();
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // GIZMOS — Hiển thị bán kính Skill, Summon, Teleport trong Scene
-    // ═══════════════════════════════════════════════════════════════
 
     void OnDrawGizmosSelected()
     {
@@ -709,7 +680,6 @@ public class EliteEnemySkills : NetworkBehaviour
         else
             facingDirection = scaleX > 0 ? Vector3.right : Vector3.left;
 
-        // ─── SKILL HITBOXES ───
         if (canUseSkills && skills != null)
         {
             Color[] skillColors = {
@@ -791,7 +761,6 @@ public class EliteEnemySkills : NetworkBehaviour
             }
         }
 
-        // ─── SUMMON RADIUS ───
         if (canSummon)
         {
             Color summonColor = new Color(0.3f, 1f, 0.3f); // Xanh lá sáng
@@ -824,7 +793,6 @@ public class EliteEnemySkills : NetworkBehaviour
 #endif
         }
 
-        // ─── TELEPORT RANGE ───
         if (canTeleport && teleportTriggerRange > 0)
         {
             Gizmos.color = new Color(0.4f, 0.8f, 1f, 0.15f);

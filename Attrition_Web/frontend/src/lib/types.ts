@@ -1,4 +1,3 @@
-// ─── Envelope types ───────────────────────────────────────────────────────────
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -14,7 +13,6 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
-// ─── Identity Service ─────────────────────────────────────────────────────────
 
 export interface UserDto {
   id: string;
@@ -148,7 +146,6 @@ export interface UserSummaryDto {
   role: string;
 }
 
-// ─── Enemy Service ────────────────────────────────────────────────────────────
 
 export interface LootEntryDto {
   itemName: string;
@@ -229,7 +226,6 @@ export interface EnemyUpdateRequest {
   chaseSpeed: number;
 }
 
-// ─── Item config (admin-editable, game downloads) ───────────────────────────────
 
 export interface ItemModifierDto {
   stat: string;
@@ -317,7 +313,6 @@ export interface SkillResponse {
 
 export type SkillUpdateRequest = Omit<SkillResponse, "createdAt" | "updatedAt">;
 
-// ─── Wiki Service ─────────────────────────────────────────────────────────────
 
 export interface WikiCategoryDto {
   id: number;
@@ -413,7 +408,6 @@ export interface WikiCategoryRequest {
   iconUrl?: string;
 }
 
-// ─── Forum Service ────────────────────────────────────────────────────────────
 
 export interface ForumCategoryDto {
   id: number;
@@ -571,7 +565,6 @@ export interface RemovePostRequest {
   reason: string;
 }
 
-// ─── Assets Service ───────────────────────────────────────────────────────────
 
 export interface AssetDto {
   id: string;
@@ -597,7 +590,6 @@ export interface UpdateAssetReq {
   assetType?: string;
 }
 
-// ─── Music Service ────────────────────────────────────────────────────────────
 
 export interface MusicAlbumDto {
   albumId: number;
@@ -757,7 +749,6 @@ export interface PlaylistDetailDto {
   tracks: MusicTrackDto[];
 }
 
-// ─── Search Service ───────────────────────────────────────────────────────────
 
 export interface SearchWikiResultDto {
   id: string;
@@ -800,7 +791,6 @@ export interface SearchSuggestionDto {
   url: string;
 }
 
-// ─── Admin Service ────────────────────────────────────────────────────────────
 
 export interface AdminStatsDto {
   totalUsers: number | null;
@@ -818,7 +808,6 @@ export interface AdminStatsDto {
   unavailableSources: string[];
 }
 
-// ─── Character Service ────────────────────────────────────────────────────────
 
 export interface SnapshotDto {
   level: number;

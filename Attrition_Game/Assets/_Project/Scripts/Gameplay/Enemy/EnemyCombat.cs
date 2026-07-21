@@ -4,15 +4,10 @@ using System.Collections.Generic;
 
 public class EnemyCombat : NetworkBehaviour
 {
-    // ═══════════════════════════════════════════════════════════════
-    // ENUMS
-    // ═══════════════════════════════════════════════════════════════
     public enum AttackStyle { Normal, DashSlash, LeapAttack }
     public enum HitboxShape { Cone, Circle, Rectangle }
 
-    // ═══════════════════════════════════════════════════════════════
     // ATTACK CONFIG — Mỗi đòn đánh gom hết thông số tại 1 chỗ
-    // ═══════════════════════════════════════════════════════════════
     [System.Serializable]
     public class AttackConfig
     {
@@ -60,9 +55,6 @@ public class EnemyCombat : NetworkBehaviour
         [Min(0f)] public float weight = 1f;
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // INSPECTOR FIELDS
-    // ═══════════════════════════════════════════════════════════════
     [Header("---- DANH SÁCH ĐÒN TẤN CÔNG ----")]
     [Tooltip("Mỗi phần tử = 1 đòn đánh (Attack1, Attack2, ...) với đầy đủ thông số riêng")]
     public AttackConfig[] attacks = new AttackConfig[] { new AttackConfig() };
@@ -101,9 +93,6 @@ public class EnemyCombat : NetworkBehaviour
     public NetworkPrefabRef projectilePrefab;
     public Transform projectileSpawnPoint;
 
-    // ═══════════════════════════════════════════════════════════════
-    // RUNTIME (ẩn khỏi Inspector)
-    // ═══════════════════════════════════════════════════════════════
     [HideInInspector][Networked] public NetworkBool IsAttacking { get; set; }
     [HideInInspector][Networked] public NetworkBool IsDashAttacking { get; set; }
     [HideInInspector][Networked] public Vector2 DashDirection { get; set; }
@@ -119,9 +108,7 @@ public class EnemyCombat : NetworkBehaviour
 
     [HideInInspector] public AttackStyle currentAttackStyle;
 
-    // ═══════════════════════════════════════════════════════════════
     // CONVENIENCE PROPERTIES — Đọc từ AttackConfig
-    // ═══════════════════════════════════════════════════════════════
 
     /// <summary>Số đòn đánh = attacks.Length</summary>
     public int AttackVariants => attacks != null ? attacks.Length : 1;
@@ -165,9 +152,7 @@ public class EnemyCombat : NetworkBehaviour
         return GetEngageRange(CurrentAttackIndex);
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // GETTERS — Đọc thông số từ AttackConfig an toàn
-    // ═══════════════════════════════════════════════════════════════
 
     private AttackConfig GetConfig(int index)
     {
@@ -201,9 +186,6 @@ public class EnemyCombat : NetworkBehaviour
     public float GetRecoveryDuration(int index) => GetConfig(index).recoveryDuration;
     public float GetTelegraphDuration(int index) => GetConfig(index).telegraphDuration;
 
-    // ═══════════════════════════════════════════════════════════════
-    // LIFECYCLE
-    // ═══════════════════════════════════════════════════════════════
 
     public override void Spawned()
     {
@@ -265,9 +247,7 @@ public class EnemyCombat : NetworkBehaviour
         return !IsAttacking && cooldownTimer.ExpiredOrNotRunning(Runner);
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // ATTACK SELECTION — Chọn trước đòn (để telegraph khớp), thực thi sau
-    // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
     /// Chọn TRƯỚC kiểu đòn + index (có trọng số) và chốt vào CurrentAttackIndex,
@@ -287,9 +267,6 @@ public class EnemyCombat : NetworkBehaviour
         return chosen;
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // ATTACK METHODS
-    // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
     /// Đánh thường — đứng yên tại chỗ.
@@ -392,9 +369,7 @@ public class EnemyCombat : NetworkBehaviour
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // HELPERS — Random chọn đòn
-    // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
     /// Random chọn attack index dựa trên mảng toggle, CÓ TRỌNG SỐ (AttackConfig.weight).
@@ -500,9 +475,6 @@ public class EnemyCombat : NetworkBehaviour
         return false;
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // RPC
-    // ═══════════════════════════════════════════════════════════════
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RPC_PlayAttackAnim(int attackIndex, float speed)
@@ -530,9 +502,7 @@ public class EnemyCombat : NetworkBehaviour
             return scaleX > 0 ? Vector2.right : Vector2.left;
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // GIZMOS — Vẽ hitbox cho từng đòn
-    // ═══════════════════════════════════════════════════════════════
 
     void OnDrawGizmosSelected()
     {
@@ -590,9 +560,7 @@ public class EnemyCombat : NetworkBehaviour
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // DAMAGE — Gây sát thương
-    // ═══════════════════════════════════════════════════════════════
 
     public void TriggerAttackDamage()
     {
@@ -647,7 +615,6 @@ public class EnemyCombat : NetworkBehaviour
             return;
         }
 
-        // ═══ MELEE ATTACK — Hỗ trợ nhiều hình dạng hitbox ═══
         Vector2 facingDir2D = GetFacingDirection();
 
         Collider2D[] results = new Collider2D[10];

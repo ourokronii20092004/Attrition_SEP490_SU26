@@ -107,7 +107,6 @@ public class PlayerController : NetworkBehaviour, IDamageable
     [Networked] private TickTimer _knockbackTimer { get; set; }
     [Networked] private Vector2 _lastStableGround { get; set; }
 
-    // ─── Đồng bộ vị trí cho proxy ───
     [Networked] public Vector2 NetworkPosition { get; set; }
     [Networked] public Vector2 NetworkVelocity { get; set; }
     [Networked] public float NetworkGravityScale { get; set; }
@@ -256,7 +255,6 @@ public class PlayerController : NetworkBehaviour, IDamageable
         CheckGround();
         NetworkVelocityY = rb.linearVelocity.y;
 
-        // ─── Đồng bộ vị trí/velocity cho proxy ───
         if (HasStateAuthority)
         {
             NetworkPosition = rb.position;
@@ -550,7 +548,6 @@ public class PlayerController : NetworkBehaviour, IDamageable
         UpdateMovementSfx();
     }
 
-    // ─── SFX di chuyển: chạy trong Render (1 lần/frame, mọi máy) bằng cách so sánh state trước/sau. ───
     private bool _sfxWasGrounded = true;
     private int _sfxPrevJumpCount;
     private float _sfxNextStep;
@@ -1006,9 +1003,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
         isInvincible = false;
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // IGNORE ENEMY COLLIDERS — Đảm bảo Player đi xuyên qua quái
-    // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
     /// Tìm tất cả Enemy trong scene và ignore collision với collider của chúng.
@@ -1044,7 +1039,6 @@ public class PlayerController : NetworkBehaviour, IDamageable
         }
     }
 
-    // ─── CHECKPOINT: track vùng đang đứng để gate phím R ───
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (!HasInputAuthority) return;
@@ -1081,9 +1075,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // GIZMOS — Debug Visualization
-    // ═══════════════════════════════════════════════════════════════
 
     void OnDrawGizmosSelected()
     {

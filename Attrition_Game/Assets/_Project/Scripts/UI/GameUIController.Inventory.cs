@@ -21,7 +21,6 @@ namespace Attrition.UI
         public enum SelectedSlotContext { None, InventoryGrid, EquippedHead, EquippedChest, EquippedLegs, EquippedBoots, EquippedAccessory, EquippedSkill }
         private SelectedSlotContext _selectedContext = SelectedSlotContext.None;
 
-        // ── Build grid 1 lần khi OnEnable ──
         private void BuildInventoryGrid()
         {
             var grid = _root?.Q<VisualElement>("inv-grid");

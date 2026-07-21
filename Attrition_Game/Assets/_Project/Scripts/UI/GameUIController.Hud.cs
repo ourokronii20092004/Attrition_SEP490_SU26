@@ -44,7 +44,6 @@ namespace Attrition.UI
             else if (!e.ClassListContains("hidden")) e.AddToClassList("hidden");
         }
 
-        // ─────────────────────────── HUD ───────────────────────────
 
         private void UpdateHud()
         {
@@ -236,7 +235,6 @@ namespace Attrition.UI
             SetFill("hud-revive-fill", _revive.ReviveFraction, 1f);
         }
 
-        // ── Boss bar API: gọi từ boss EnemyController khi aggro/đổi máu/chết ──
         public void ShowBossBar(string bossName, int maxHp)
         {
             SetVisible(_root.Q<VisualElement>("hud-boss"), true);
@@ -247,7 +245,6 @@ namespace Attrition.UI
         public void UpdateBossBar(int currentHp, int maxHp) => SetFill("hud-boss-fill", currentHp, maxHp);
         public void HideBossBar() => SetVisible(_root.Q<VisualElement>("hud-boss"), false);
 
-        // ─────────────────────────── helpers ───────────────────────────
 
         private void SetFill(string name, float cur, float max)
         {

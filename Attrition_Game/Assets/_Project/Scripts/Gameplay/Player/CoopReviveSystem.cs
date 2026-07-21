@@ -31,7 +31,6 @@ namespace Attrition.Gameplay.Player
             _myPotions = GetComponent<PotionSystem>();
         }
 
-        // ── UI query API (chạy local trên MỌI peer, kể cả client input-authority) ──
         // FindObjectsByType + p.IsDead (Networked) hoạt động trên proxy, nên client đọc được
         // trạng thái đồng đội để quyết định hiện prompt "[R] HỒI SINH".
 

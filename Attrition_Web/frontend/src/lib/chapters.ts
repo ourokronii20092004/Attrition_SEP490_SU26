@@ -1,12 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Chapter loader — reads the 17 Eldravir manuscript chapters bundled under
 // src/content/chapters/NN.md at request time (server components only). Parses the
 // lightweight YAML frontmatter by hand (no gray-matter dep) and strips the
 // Obsidian-isms (the H1 title line, [[wikilinks]]) so the prose renders clean.
-// ─────────────────────────────────────────────────────────────────────────────
 
 export interface ChapterMeta {
   /** 1-based chapter number, also the route segment and filename stem. */

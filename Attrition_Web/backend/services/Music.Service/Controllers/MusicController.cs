@@ -28,7 +28,6 @@ public class MusicController : ControllerBase
         _user = user;
     }
 
-    // ─── Albums (public) ───
     [HttpGet("albums")]
     public async Task<IActionResult> GetAlbums([FromQuery] int? page, [FromQuery] int pageSize = 24)
     {
@@ -46,7 +45,6 @@ public class MusicController : ControllerBase
         return result != null ? Ok(ApiResponse<AlbumDetailDto>.Ok(result)) : NotFound(ApiResponse.Fail("Album not found"));
     }
 
-    // ─── Tracks (public) ───
     [HttpGet("tracks")]
     public async Task<IActionResult> GetTracks([FromQuery] int? albumId, [FromQuery] int? page, [FromQuery] int pageSize = 50)
     {
@@ -93,7 +91,6 @@ public class MusicController : ControllerBase
         return ok ? Ok(ApiResponse.Ok()) : NotFound(ApiResponse.Fail("Track not found"));
     }
 
-    // ─── Favorites (authenticated) ───
     [Authorize]
     [HttpGet("favorites")]
     public async Task<IActionResult> GetFavorites()
@@ -119,7 +116,6 @@ public class MusicController : ControllerBase
         return success ? Ok(ApiResponse<object>.Ok(new { isFavorited })) : NotFound(ApiResponse.Fail(err!));
     }
 
-    // ─── Playlists (authenticated) ───
     [Authorize]
     [HttpGet("playlists")]
     public async Task<IActionResult> GetPlaylists()
@@ -206,7 +202,6 @@ public class MusicController : ControllerBase
         };
     }
 
-    // ─── Admin: albums ───
     [Authorize(Roles = Roles.Admin)]
     [HttpPost("albums")]
     public async Task<IActionResult> CreateAlbum([FromBody] CreateAlbumRequest req)
@@ -238,7 +233,6 @@ public class MusicController : ControllerBase
         return Ok(ApiResponse<object>.Ok(new { coverPath }));
     }
 
-    // ─── Admin: tracks ───
     [Authorize(Roles = Roles.Admin)]
     [HttpPost("tracks/scan")]
     public async Task<IActionResult> ScanTrack(IFormFile? file)

@@ -20,9 +20,6 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
     /// </summary>
     public class SeveredFangAI : EnemyAI
     {
-        // ═══════════════════════════════════════════════════════════════
-        // BOSS-SPECIFIC INSPECTOR FIELDS
-        // ═══════════════════════════════════════════════════════════════
 
         [Header("═══ SEVERED FANG — BOSS SETTINGS ═══")]
 
@@ -83,9 +80,6 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
         [Tooltip("Thời gian nghỉ tối thiểu sau mỗi skill xong (recovery, giây).")]
         public float recoveryTime = 0.8f;
 
-        // ═══════════════════════════════════════════════════════════════
-        // NETWORKED STATE
-        // ═══════════════════════════════════════════════════════════════
 
         [Networked] public TickTimer BossTimer { get; set; }
         [Networked] public TickTimer SkillCooldownTimer { get; set; }
@@ -95,9 +89,6 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
         /// Dùng để gate thanh máu boss (chỉ hiện khi đã vào phòng đánh).</summary>
         [Networked] public NetworkBool EncounterStarted { get; set; }
 
-        // ═══════════════════════════════════════════════════════════════
-        // STATE MACHINE
-        // ═══════════════════════════════════════════════════════════════
 
         private SeveredFangState _currentState;
 
@@ -112,9 +103,6 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
         public static readonly SF_RecoveryState RecoveryState = new SF_RecoveryState();
         public static readonly SF_MeleeAttackState MeleeAttackState = new SF_MeleeAttackState();
 
-        // ═══════════════════════════════════════════════════════════════
-        // LOCAL RUNTIME
-        // ═══════════════════════════════════════════════════════════════
 
         /// <summary>Đếm số vụ nổ đã spawn trong dash hiện tại.</summary>
         [HideInInspector] public int DashExplosionSpawned;
@@ -131,9 +119,6 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
         [Tooltip("File thoại mở đầu")]
         public Attrition.Data.DialogueSO introDialogue;
 
-        // ═══════════════════════════════════════════════════════════════
-        // PUBLIC ACCESSORS
-        // ═══════════════════════════════════════════════════════════════
 
         public NetworkPrefabRef FireExplosionPrefab => fireExplosionPrefab;
         public NetworkPrefabRef FireBoltPrefab => fireBoltPrefab;
@@ -145,9 +130,6 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
         public Transform PlayerTarget => playerTarget;
         public Vector2 StartPos => startPosition;
 
-        // ═══════════════════════════════════════════════════════════════
-        // LIFECYCLE
-        // ═══════════════════════════════════════════════════════════════
 
         public override void Spawned()
         {
@@ -179,9 +161,7 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
             ChangeState(IntroState);
         }
 
-        // ═══════════════════════════════════════════════════════════════
         // AI LOGIC — Ghi đè để dùng State Machine
-        // ═══════════════════════════════════════════════════════════════
 
         public override void RunAILogic()
         {
@@ -216,9 +196,6 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
             animationComp?.FaceDirection(NetFacingDir);
         }
 
-        // ═══════════════════════════════════════════════════════════════
-        // STATE TRANSITIONS
-        // ═══════════════════════════════════════════════════════════════
 
         /// <summary>
         /// Chuyển từ state hiện tại sang state mới (Exit → Enter).
@@ -230,9 +207,7 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
             _currentState?.Enter(this);
         }
 
-        // ═══════════════════════════════════════════════════════════════
         // HELPER — Player detection (delegate lên base class)
-        // ═══════════════════════════════════════════════════════════════
 
         /// <summary>Tìm player gần nhất. Kết quả lưu vào PlayerTarget.</summary>
         public void DetectPlayer()
@@ -309,9 +284,7 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
             return Vector2.Distance(transform.position, playerTarget.position);
         }
 
-        // ═══════════════════════════════════════════════════════════════
         // HELPER — Spawn hiệu ứng / đạn
-        // ═══════════════════════════════════════════════════════════════
 
         /// <summary>Spawn FireExplosion tại vị trí chỉ định. Việc HẠ XUỐNG MẶT ĐẤT do EnemyAoEDamage.Spawned()
         /// tự xử lý (raycast trên Fusion physics scene) — tránh nổ lơ lửng do NetworkTransform ghi đè.</summary>
@@ -340,9 +313,7 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
             });
         }
 
-        // ═══════════════════════════════════════════════════════════════
         // HELPER — Animation triggers (RPC broadcast)
-        // ═══════════════════════════════════════════════════════════════
 
         public void PlayAttackAnim()
         {
@@ -372,9 +343,7 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
             if (anim != null) anim.SetTrigger(triggerName);
         }
 
-        // ═══════════════════════════════════════════════════════════════
         // HELPER — Movement
-        // ═══════════════════════════════════════════════════════════════
 
         /// <summary>Di chuyển boss về phía player (chỉ trục X).</summary>
         public void MoveTowardsPlayer(float speed)
@@ -393,9 +362,7 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
             NetSpeed = 0f;
         }
 
-        // ═══════════════════════════════════════════════════════════════
         // SKILL RANDOMIZER — Chọn skill ngẫu nhiên kiểu Hollow Knight
-        // ═══════════════════════════════════════════════════════════════
 
         /// <summary>
         /// Chọn ngẫu nhiên 1 trong 3 skill (hoặc melee nếu gần),

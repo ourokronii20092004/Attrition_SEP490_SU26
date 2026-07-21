@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class MenuButtonController : MonoBehaviour {
 
-	// Use this for initialization
 	public int index;
 	[SerializeField] bool keyDown;
 	[SerializeField] int maxIndex;
@@ -16,7 +15,6 @@ public class MenuButtonController : MonoBehaviour {
 	void Start () {
 		audioSource = GetComponent<AudioSource>();
 
-		// Auto detect: tìm tất cả MenuButton trong scene và set maxIndex
 		if (autoDetectMaxIndex)
 		{
 			MenuButton[] buttons = FindObjectsByType<MenuButton>(FindObjectsSortMode.None);
@@ -27,7 +25,6 @@ public class MenuButtonController : MonoBehaviour {
 		}
 	}
 	
-	// Update is called once per frame
 	void Update () {
 		if(Input.GetAxis ("Vertical") != 0){
 			if(!keyDown){

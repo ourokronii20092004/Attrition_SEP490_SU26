@@ -121,7 +121,6 @@ namespace Attrition.UI
             SceneManager.LoadScene("Main_Menu_UI");
         }
 
-        // ─────────────────────────── LOADING ───────────────────────────
 
         /// <summary>API công khai: hiện màn loading khi vào trận/đổi khu.</summary>
         public void ShowLoading(string area, string status = "Preparing world...")

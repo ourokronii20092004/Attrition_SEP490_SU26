@@ -21,7 +21,6 @@ public class WikiController : ControllerBase
         _currentUser = currentUser;
     }
 
-    // ─── Public reads ───
     [HttpGet("categories")]
     public async Task<IActionResult> GetCategories()
         => Ok(ApiResponse<List<WikiCategoryDto>>.Ok(await _wiki.GetCategoriesAsync()));
@@ -67,7 +66,6 @@ public class WikiController : ControllerBase
             : Ok(ApiResponse<WikiRevisionDto>.Ok(revision));
     }
 
-    // ─── Authenticated: suggest edits ───
     [Authorize]
     [HttpPost("articles/{id:guid}/suggest")]
     public async Task<IActionResult> Suggest(Guid id, SuggestEditRequest request)
@@ -80,7 +78,6 @@ public class WikiController : ControllerBase
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
-    // ─── Admin ───
     [Authorize(Roles = Roles.Admin)]
     [HttpPost("articles")]
     public async Task<IActionResult> Create(CreateArticleRequest request)
@@ -121,7 +118,6 @@ public class WikiController : ControllerBase
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
-    // ─── Category management (admin) ───
     [Authorize(Roles = Roles.Admin)]
     [HttpPost("categories")]
     public async Task<IActionResult> CreateCategory(WikiCategoryRequest request)

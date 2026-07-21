@@ -1,6 +1,5 @@
 namespace Character.Service.DTOs;
 
-// ─── Player-facing views (JWT) ───
 
 // One character's progress within a room (for the room detail / load view).
 public record CharacterSessionDto(
@@ -27,7 +26,6 @@ public record SessionDetailDto(
     DateTime CreatedAt, DateTime UpdatedAt, DateTime LastPlayedAt,
     List<CharacterSessionDto> Characters, List<WorldStateDto> WorldStates);
 
-// ─── Game-client ingestion (internal, X-Internal-Key) ───
 
 // Host creates (or re-opens) a room. RoomCode null/empty → server generates a fixed unique code.
 // When RoomCode matches an existing row owned by OwnerId, that room is returned (re-open), not duplicated.

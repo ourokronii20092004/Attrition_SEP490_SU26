@@ -20,9 +20,6 @@ namespace Attrition.Gameplay.Player.Inventory
     [RequireComponent(typeof(PlayerStats))]
     public class PlayerInventory : NetworkBehaviour
     {
-        // ═══════════════════════════════════════════
-        //  NETWORKED INVENTORY GRID
-        // ═══════════════════════════════════════════
         [Networked, Capacity(40)] public NetworkArray<InventorySlot> EquipmentSlots { get; }
         [Networked, Capacity(10)] public NetworkArray<InventorySlot> AccessorySlots { get; }
         [Networked, Capacity(14)] public NetworkArray<InventorySlot> MaterialSlots { get; }
@@ -32,9 +29,6 @@ namespace Attrition.Gameplay.Player.Inventory
         [Networked] public NetworkString<_64> OwnerUserId { get; set; }
         [Networked] public NetworkString<_64> OwnerCharacterId { get; set; }
 
-        // ═══════════════════════════════════════════
-        //  NETWORKED EQUIP SLOTS (đang mặc)
-        // ═══════════════════════════════════════════
         [Networked] public InventorySlot EquippedHead { get; set; }
         [Networked] public InventorySlot EquippedChest { get; set; }
         [Networked] public InventorySlot EquippedLegs { get; set; }
@@ -42,9 +36,6 @@ namespace Attrition.Gameplay.Player.Inventory
         [Networked] public InventorySlot EquippedSkill { get; set; }
         [Networked] public InventorySlot EquippedAccessory { get; set; }
 
-        // ═══════════════════════════════════════════
-        //  REFERENCES
-        // ═══════════════════════════════════════════
         private PlayerStats _stats;
         private ItemDatabaseSO _db;
 
@@ -222,32 +213,19 @@ namespace Attrition.Gameplay.Player.Inventory
                 // Nguồn duy nhất đáng tin cho "map mà room này đang chơi" là GameLaunch.GameplayScene —
                 // save cũng ghi cùng giá trị này nên so khớp luôn nhất quán.
                 string activeScene = Attrition.Persistence.GameLaunch.GameplayScene;
-                if (!Attrition.Persistence.GameLaunch.SessionRestPosByChar.TryGetValue(charId, out var rest))
+                if (Attrition.Persistence.GameLaunch.SessionRestPosByChar.TryGetValue(charId, out var rest)
+                    && (rest.x != 0f || rest.y != 0f))
                 {
-                    // Không có key = char này chưa từng rest trong session (hoặc fetch session thất bại).
-                    // Đây có thể là nguyên nhân "spawn ở điểm gốc": nếu VỪA rest xong mà vẫn log dòng này,
-                    // nghĩa là save vị trí (posX/posY) hoặc fetch session đang hỏng.
-                    Debug.Log($"[Spawn] char {charId}: không có vị trí rest đã lưu → dùng spawnPoint mặc định.");
-                }
-                else if (rest.x == 0f && rest.y == 0f)
-                {
-                    Debug.Log($"[Spawn] char {charId}: vị trí rest = (0,0) (chưa rest hợp lệ) → spawnPoint mặc định.");
-                }
-                else if (!string.IsNullOrEmpty(rest.scene) && rest.scene != activeScene)
-                {
-                    // Bench gắn với room của nó (kiểu Hollow Knight): rest ở map khác thì vào map này ở
-                    // điểm gốc. Log rõ để phân biệt với lỗi "mismatch tên scene" ngoài ý muốn.
-                    Debug.LogWarning($"[Spawn] char {charId}: scene rest '{rest.scene}' ≠ scene hiện tại "
-                                     + $"'{activeScene}' → spawnPoint mặc định (rest ở map khác).");
-                }
-                else
-                {
-                    // scene khớp HOẶC scene lưu rỗng (session cũ chưa ghi scene) → tôn trọng vị trí đã lưu.
-                    var pc = GetComponent<PlayerController>();
-                    if (pc != null)
+                    if (!string.IsNullOrEmpty(rest.scene) && rest.scene != activeScene)
                     {
-                        pc.TeleportTo(new Vector3(rest.x, rest.y, 0f));
-                        Debug.Log($"[Spawn] char {charId}: teleport về checkpoint đã lưu ({rest.x:F1},{rest.y:F1}).");
+                        Debug.LogWarning($"[Spawn] char {charId}: scene rest '{rest.scene}' ≠ scene hiện tại "
+                                         + $"'{activeScene}' → spawnPoint mặc định (rest ở map khác).");
+                    }
+                    else
+                    {
+                        var pc = GetComponent<PlayerController>();
+                        if (pc != null)
+                            pc.TeleportTo(new Vector3(rest.x, rest.y, 0f));
                     }
                 }
             }
@@ -270,22 +248,17 @@ namespace Attrition.Gameplay.Player.Inventory
             Attrition.Persistence.GameLaunch.SessionInventoryFetchStarted = true; // claim fetch (idempotent)
 
             string sessionId = Attrition.Persistence.GameLaunch.SessionId;
-            Debug.Log($"[SessionLoad] fetch sessionId='{sessionId}' (rỗng = chưa tạo room server → seed mặc định)");
             if (APIManager.Instance != null && !string.IsNullOrEmpty(sessionId))
             {
                 yield return APIManager.Instance.GetSession(sessionId, detail =>
                 {
                     if (detail == null) { Debug.LogWarning("[SessionLoad] GetSession trả null → không nạp được stat/đồ."); return; }
 
-                    int n = detail.characters != null ? detail.characters.Count : 0;
-                    Debug.Log($"[SessionLoad] session '{sessionId}' có {n} character record. "
-                              + (n == 0 ? "0 record = save chưa từng ghi cho session này → về mặc định." : ""));
                     if (detail.characters != null)
                     {
                         foreach (var cs in detail.characters)
                         {
                             if (cs == null || string.IsNullOrEmpty(cs.characterId)) continue;
-                            Debug.Log($"[SessionLoad] cache char={cs.characterId} hpFlask={cs.potionMaxFlasks} manaFlask={cs.potionMaxManaFlasks} pos=({cs.posX:F1},{cs.posY:F1})");
                             Attrition.Persistence.GameLaunch.SessionInventoryByChar[cs.characterId] = cs.inventoryJson;
                             // Cache vị trí rest đã lưu (theo scene của room) để spawn đúng checkpoint.
                             Attrition.Persistence.GameLaunch.SessionRestPosByChar[cs.characterId] =
@@ -331,7 +304,6 @@ namespace Attrition.Gameplay.Player.Inventory
         /// <summary>Phát item khởi đầu cho nhân vật mới (host-only, chỉ khi túi trống).</summary>
         private void SeedStartingItems()
         {
-            Debug.Log($"[Seed] start. db.Count={_db.Count}, ids={(startingItemIds==null?0:startingItemIds.Length)}, eq0empty={EquipmentSlots.Get(0).IsEmpty}, acc0empty={AccessorySlots.Get(0).IsEmpty}");
             if (startingItemIds == null || startingItemIds.Length == 0) return;
             // Chỉ seed khi cả 3 nhóm đang trống (tránh ghi đè save đã load).
             if (!EquipmentSlots.Get(0).IsEmpty || !AccessorySlots.Get(0).IsEmpty) return;
@@ -341,17 +313,11 @@ namespace Attrition.Gameplay.Player.Inventory
                 if (string.IsNullOrEmpty(id)) continue;
                 int idx = _db.GetIndex(id);
                 if (idx >= 0)
-                {
-                    bool ok = TryAddItem(idx, 1);
-                    Debug.Log($"[Seed] '{id}' idx={idx} added={ok}");
-                }
+                    TryAddItem(idx, 1);
                 else Debug.LogWarning($"[Seed] '{id}' KHÔNG có trong ItemDatabase.");
             }
         }
 
-        // ═══════════════════════════════════════════
-        //  ADD ITEM (BR-40, BR-41, BR-42)
-        // ═══════════════════════════════════════════
 
         /// <summary>Thêm vật phẩm vào túi đồ. Trả false nếu đầy (BR-40). Chỉ host.</summary>
         public bool TryAddItem(int itemIndex, int amount = 1)
@@ -418,9 +384,6 @@ namespace Attrition.Gameplay.Player.Inventory
             return remaining;
         }
 
-        // ═══════════════════════════════════════════
-        //  REMOVE ITEM
-        // ═══════════════════════════════════════════
 
         /// <summary>Xóa vật phẩm khỏi túi đồ. Trả false nếu không đủ số lượng. Chỉ host.</summary>
         public bool TryRemoveItem(int itemIndex, int amount = 1)
@@ -457,9 +420,6 @@ namespace Attrition.Gameplay.Player.Inventory
             return true;
         }
 
-        // ═══════════════════════════════════════════
-        //  SWAP SLOTS
-        // ═══════════════════════════════════════════
 
         /// <summary>Hoán đổi 2 ô trong cùng category. Dùng cho drag-and-drop UI.</summary>
         public void SwapSlots(ItemCategory cat, int from, int to)
@@ -475,9 +435,6 @@ namespace Attrition.Gameplay.Player.Inventory
             NotifyChanged();
         }
 
-        // ═══════════════════════════════════════════
-        //  EQUIP / UNEQUIP (BR-17)
-        // ═══════════════════════════════════════════
 
         /// <summary>Trang bị Equipment từ ô inventory. Trả false nếu block (BR-17) hoặc sai loại.</summary>
         public bool TryEquipFromSlot(int slotIndex)
@@ -777,9 +734,6 @@ namespace Attrition.Gameplay.Player.Inventory
         }
 
 
-        // ═══════════════════════════════════════════
-        //  GEAR → STATS INTEGRATION
-        // ═══════════════════════════════════════════
 
         /// <summary>Rebuild trang bị → cập nhật PlayerStats. Gọi sau mỗi equip/unequip.</summary>
         public void RebuildAndApplyGear()
@@ -809,9 +763,6 @@ namespace Attrition.Gameplay.Player.Inventory
             if (eq != null) list.Add(eq);
         }
 
-        // ═══════════════════════════════════════════
-        //  ABILITY GRANTS (double jump, shadow dash…)
-        // ═══════════════════════════════════════════
 
         /// <summary>
         /// Có SỞ HỮU 1 accessory dạng AbilityGrant cấp kỹ năng `ability` không?
@@ -845,9 +796,6 @@ namespace Attrition.Gameplay.Player.Inventory
                 && acc.grantedAbility == ability;
         }
 
-        // ═══════════════════════════════════════════
-        //  LOCAL SAVE / LOAD (BR-46)
-        // ═══════════════════════════════════════════
 
         /// <summary>Lưu inventory vào local JSON. Gọi sau mỗi thay đổi (BR-46).</summary>
         public void CommitLocalSave()
@@ -934,9 +882,6 @@ namespace Attrition.Gameplay.Player.Inventory
             return System.IO.Path.Combine(Application.persistentDataPath, $"inventory_{key}.json");
         }
 
-        // ═══════════════════════════════════════════
-        //  RPC — Client gửi yêu cầu lên Host
-        // ═══════════════════════════════════════════
 
         [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
         public void RpcRequestEquip(int slotIndex) => TryEquipFromSlot(slotIndex);
@@ -987,9 +932,6 @@ namespace Attrition.Gameplay.Player.Inventory
         [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
         public void RpcRequestDropEquippedAccessory() => TryDropEquippedAccessory();
 
-        // ═══════════════════════════════════════════
-        //  HELPERS
-        // ═══════════════════════════════════════════
 
         private NetworkArray<InventorySlot> GetArrayForCategory(ItemCategory cat)
         {
@@ -1046,7 +988,6 @@ namespace Attrition.Gameplay.Player.Inventory
             OnInventoryChanged?.Invoke();
         }
 
-        // ── Save/Load serialization helpers ──
 
         private void SerializeArray(NetworkArray<InventorySlot> src, List<SlotSaveData> dest)
         {
@@ -1086,9 +1027,6 @@ namespace Attrition.Gameplay.Player.Inventory
         }
     }
 
-    // ═══════════════════════════════════════════
-    //  JSON SAVE STRUCTURES
-    // ═══════════════════════════════════════════
 
     [System.Serializable]
     public class SlotSaveData

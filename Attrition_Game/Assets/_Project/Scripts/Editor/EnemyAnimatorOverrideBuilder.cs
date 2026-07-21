@@ -7,9 +7,7 @@ using System.Text.RegularExpressions;
 
 public class EnemyAnimatorOverrideBuilder : EditorWindow
 {
-    // ═══════════════════════════════════════════════════════════════
     // Enum phân loại animation clip
-    // ═══════════════════════════════════════════════════════════════
     private enum ClipCategory
     {
         Idle, Walk, Run, Fly,
@@ -32,9 +30,6 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
         public bool include = true;
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // Fields
-    // ═══════════════════════════════════════════════════════════════
     private string prefix = "MonsterName";
     private string targetFolder = "Assets/_Project/Animations/Enemies";
     private float runSpeedThreshold = 3f;
@@ -80,12 +75,8 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
         w.minSize = new Vector2(480, 600);
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // GUI
-    // ═══════════════════════════════════════════════════════════════
     private void OnGUI()
     {
-        // Header
         EditorGUILayout.Space(5);
         var headerStyle = new GUIStyle(EditorStyles.boldLabel) { fontSize = 16, alignment = TextAnchor.MiddleCenter };
         GUILayout.Label("⚔ Enemy Animator Builder (Pro)", headerStyle);
@@ -101,7 +92,6 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
 
         EditorGUILayout.Space(5);
 
-        // ── Cấu hình ──
         prefix = EditorGUILayout.TextField("Monster Prefix", prefix);
 
         GUILayout.BeginHorizontal();
@@ -124,7 +114,6 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
 
         EditorGUILayout.Space(5);
 
-        // ── Nút Scan ──
         GUI.backgroundColor = new Color(0.3f, 0.8f, 1f);
         if (GUILayout.Button("🔍  Scan Animation Clips", GUILayout.Height(28)))
         {
@@ -132,7 +121,6 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
         }
         GUI.backgroundColor = Color.white;
 
-        // ── Danh sách clips ──
         if (clipsScanned)
         {
             EditorGUILayout.Space(5);
@@ -146,7 +134,6 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
             }
             else
             {
-                // Header
                 GUILayout.BeginHorizontal(EditorStyles.toolbar);
                 GUILayout.Label("✓", GUILayout.Width(25));
                 GUILayout.Label("Clip Name", GUILayout.MinWidth(180));
@@ -170,7 +157,6 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
 
             EditorGUILayout.EndScrollView();
 
-            // Summary
             var included = detectedClips.Where(c => c.include).ToList();
             int attackCount = included.Count(c => c.category >= ClipCategory.Attack1 && c.category <= ClipCategory.Attack5);
             EditorGUILayout.HelpBox(
@@ -188,7 +174,6 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
 
             EditorGUILayout.Space(5);
 
-            // ── Nút Build ──
             GUI.backgroundColor = new Color(0.2f, 0.9f, 0.3f);
             if (GUILayout.Button("⚡  Tạo Animator Controller", GUILayout.Height(35)))
             {
@@ -198,9 +183,7 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // SCAN: Tìm và phân loại clips
-    // ═══════════════════════════════════════════════════════════════
     private void ScanClips()
     {
         detectedClips.Clear();
@@ -278,9 +261,7 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
         return ClipCategory.Unknown;
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // BUILD: Tạo Animator Controller hoàn chỉnh
-    // ═══════════════════════════════════════════════════════════════
     private void BuildAnimatorController()
     {
         var included = detectedClips.Where(c => c.include).ToList();
@@ -297,7 +278,6 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
         AnimatorController controller = AnimatorController.CreateAnimatorControllerAtPath(savePath);
         AnimatorStateMachine rootSM = controller.layers[0].stateMachine;
 
-        // ── Thêm Parameters ──
         controller.AddParameter("Speed", AnimatorControllerParameterType.Float);
         controller.AddParameter("Attack", AnimatorControllerParameterType.Trigger);
         controller.AddParameter("AttackIndex", AnimatorControllerParameterType.Int);
@@ -351,7 +331,6 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
             controller.AddParameter("Appear", AnimatorControllerParameterType.Trigger);
         }
 
-        // ── Tạo States ──
         Dictionary<ClipCategory, AnimatorState> states = new Dictionary<ClipCategory, AnimatorState>();
 
         // Layout vị trí cho đẹp
@@ -405,7 +384,6 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
         if (states.ContainsKey(ClipCategory.Idle))
             rootSM.defaultState = states[ClipCategory.Idle];
 
-        // ── Tạo Transitions ──
         AnimatorState idleState = states.ContainsKey(ClipCategory.Idle) ? states[ClipCategory.Idle] : null;
         AnimatorState walkState = states.ContainsKey(ClipCategory.Walk) ? states[ClipCategory.Walk] : null;
         AnimatorState flyState = states.ContainsKey(ClipCategory.Fly) ? states[ClipCategory.Fly] : null;
@@ -419,7 +397,6 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
         // Locomotion state (ưu tiên: walk > fly)
         AnimatorState locoState = walkState ?? flyState;
 
-        // ─── Idle ↔ Walk/Fly ───
         if (idleState != null && locoState != null)
         {
             // Idle → Walk: Speed > 0.1
@@ -435,7 +412,6 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
             t2.AddCondition(AnimatorConditionMode.Less, 0.1f, "Speed");
         }
 
-        // ─── Walk ↔ Run ───
         if (walkState != null && runState != null)
         {
             var t1 = walkState.AddTransition(runState);
@@ -449,7 +425,6 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
             t2.AddCondition(AnimatorConditionMode.Less, runSpeedThreshold, "Speed");
         }
 
-        // ─── Attacks (AnyState) ───
         ClipCategory[] attackCats = { ClipCategory.Attack1, ClipCategory.Attack2, ClipCategory.Attack3, ClipCategory.Attack4, ClipCategory.Attack5 };
         for (int i = 0; i < attackCats.Length; i++)
         {
@@ -474,7 +449,6 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
             }
         }
 
-        // ─── Hit (AnyState) ───
         if (hitState != null)
         {
             var t = rootSM.AddAnyStateTransition(hitState);
@@ -492,7 +466,6 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
             }
         }
 
-        // ─── Dead (AnyState → Dead via DieTrigger) ───
         if (deadState != null)
         {
             var t = rootSM.AddAnyStateTransition(deadState);
@@ -537,7 +510,6 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
             }
         }
 
-        // ─── Teleport (AnyState) ───
         if (states.ContainsKey(ClipCategory.Teleport))
         {
             AnimatorState teleportState = states[ClipCategory.Teleport];
@@ -558,7 +530,6 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
             }
         }
 
-        // ─── Healing (AnyState → Healing via Heal trigger) ───
         if (states.ContainsKey(ClipCategory.Healing))
         {
             AnimatorState healingState = states[ClipCategory.Healing];
@@ -579,7 +550,6 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
             }
         }
 
-        // ─── Sleep / WakeUp ───
         if (states.ContainsKey(ClipCategory.Sleep))
         {
             AnimatorState sleepState = states[ClipCategory.Sleep];
@@ -623,7 +593,6 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
             }
         }
 
-        // ─── Jump (AnyState) ───
         if (jumpState != null)
         {
             var t = rootSM.AddAnyStateTransition(jumpState);
@@ -643,7 +612,6 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
             }
         }
 
-        // ─── Fall → Land ───
         if (states.ContainsKey(ClipCategory.Fall) && states.ContainsKey(ClipCategory.Land))
         {
             var t = states[ClipCategory.Fall].AddTransition(states[ClipCategory.Land]);
@@ -660,7 +628,6 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
             }
         }
 
-        // ─── Skill1, Skill2 (AnyState → Skill via Skill trigger + SkillIndex) ───
         ClipCategory[] skillCats = { ClipCategory.Skill1, ClipCategory.Skill2 };
         for (int i = 0; i < skillCats.Length; i++)
         {
@@ -684,7 +651,6 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
             }
         }
 
-        // ─── Summon (AnyState → Summon via Summon trigger) ───
         if (states.ContainsKey(ClipCategory.Summon))
         {
             AnimatorState summonState = states[ClipCategory.Summon];
@@ -704,7 +670,6 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
             }
         }
 
-        // ─── Appear (AnyState → Appear via Appear trigger) ───
         if (states.ContainsKey(ClipCategory.Appear))
         {
             AnimatorState appearState = states[ClipCategory.Appear];
@@ -724,13 +689,11 @@ public class EnemyAnimatorOverrideBuilder : EditorWindow
             }
         }
 
-        // ── Save ──
         EditorUtility.SetDirty(controller);
         AssetDatabase.SaveAssets();
         Selection.activeObject = controller;
         EditorGUIUtility.PingObject(controller);
 
-        // ── Log kết quả ──
         int atkCount = included.Count(c => c.category >= ClipCategory.Attack1 && c.category <= ClipCategory.Attack5);
         int skillCount = included.Count(c => c.category == ClipCategory.Skill1 || c.category == ClipCategory.Skill2);
         AnimatorState teleportStateLog = states.ContainsKey(ClipCategory.Teleport) ? states[ClipCategory.Teleport] : null;

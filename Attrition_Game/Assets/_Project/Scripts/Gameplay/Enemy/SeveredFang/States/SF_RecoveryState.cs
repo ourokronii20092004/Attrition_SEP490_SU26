@@ -18,7 +18,6 @@ namespace Attrition.Gameplay.Enemy.SeveredFang.States
             _elapsedTime = 0f;
             ai.StopMovement();
 
-            // Set global skill cooldown
             if (ai.HasStateAuthority)
             {
                 ai.SkillCooldownTimer = TickTimer.CreateFromSeconds(ai.Runner, ai.skillCooldown);

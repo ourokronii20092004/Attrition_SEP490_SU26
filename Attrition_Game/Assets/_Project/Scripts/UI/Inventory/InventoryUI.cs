@@ -112,7 +112,6 @@ namespace Attrition.UI.Inventory
 
         public bool IsOpen => _isOpen;
 
-        // ─── TABS ───
 
         private void SwitchTab(int tab)
         {
@@ -123,7 +122,6 @@ namespace Attrition.UI.Inventory
             }
         }
 
-        // ─── INIT SLOT UI ───
 
         private void InitSlots()
         {
@@ -175,7 +173,6 @@ namespace Attrition.UI.Inventory
             if (equipAccessory != null) equipAccessory.SetupAccessory(this, _inventory);
         }
 
-        // ─── REFRESH ───
 
         public void RefreshAll()
         {
@@ -234,7 +231,6 @@ namespace Attrition.UI.Inventory
                              $"Lv: {_stats.Level}";
         }
 
-        // ─── DETAIL PANEL ───
 
         public void ShowDetail(InventorySlot slot)
         {

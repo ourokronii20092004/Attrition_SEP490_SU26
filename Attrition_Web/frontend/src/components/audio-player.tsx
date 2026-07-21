@@ -33,7 +33,6 @@ export function AudioPlayer() {
 
   const { isFavorite, toggle: toggleFav, canFavorite } = useFavorites();
 
-  // ── Effect 1: load the audio source ONLY when the track actually changes. ──
   // We key off the track id (not audio.src, which resolves to an absolute URL and never
   // string-equals a relative stream path — the old comparison reloaded on every render,
   // resetting playback to 0 on each play/pause and scrub).
@@ -53,7 +52,6 @@ export function AudioPlayer() {
     }
   }, [currentTrack]);
 
-  // ── Effect 2: play / pause the already-loaded element (never reloads the source). ──
   // Play counts are NOT recorded here — a listen only counts after 10s of playback (see
   // maybeRecordPlay), not the instant a track starts.
   useEffect(() => {

@@ -24,7 +24,6 @@ namespace Attrition.Editor
             var sv = SceneView.lastActiveSceneView;
             if (sv != null) root.transform.position = sv.pivot;
 
-            // ── Exit Door (đóng) ──
             var doorGo = new GameObject("ExitDoor");
             doorGo.transform.SetParent(root.transform);
             doorGo.transform.localPosition = new Vector3(0f, 1.5f, 0f);
@@ -38,7 +37,6 @@ namespace Attrition.Editor
             SetPrivate(door, "doorVisual", doorVisual);
             SetPrivate(door, "startOpen", false);
 
-            // ── Transition Zone (tắt) — đặt ngay sau cửa ──
             var zoneGo = new GameObject("SceneTransitionZone");
             zoneGo.transform.SetParent(root.transform);
             zoneGo.transform.localPosition = new Vector3(2f, 1.5f, 0f);
@@ -50,7 +48,6 @@ namespace Attrition.Editor
             SetPrivate(zone, "nextSceneName", "Forest - Map 2");
             SetPrivate(zone, "startActive", false);
 
-            // ── Entry Door (mở sẵn; sẽ ĐÓNG khi vào trận để chặn quay lại) — đặt phía lối vào ──
             var entryGo = new GameObject("EntryDoor");
             entryGo.transform.SetParent(root.transform);
             entryGo.transform.localPosition = new Vector3(-12f, 1.5f, 0f);
@@ -64,7 +61,6 @@ namespace Attrition.Editor
             SetPrivate(entryDoor, "doorVisual", entryVisual);
             SetPrivate(entryDoor, "startOpen", true); // mở sẵn cho player đi vào; đóng khi đánh nhau
 
-            // ── BossGateController ──
             var gateGo = new GameObject("BossGateController");
             gateGo.transform.SetParent(root.transform);
             gateGo.transform.localPosition = Vector3.zero;
