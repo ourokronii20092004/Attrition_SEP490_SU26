@@ -23,7 +23,7 @@ import { useClientPagination } from "@/lib/hooks/use-client-pagination";
 import { qk } from "@/lib/query-keys";
 import type { ItemResponse, ItemCreateRequest, ItemUpdateRequest } from "@/lib/types";
 
-const CATEGORIES = ["Equipment", "Accessory", "Skill", "Material"];
+const CATEGORIES = ["Equipment", "Accessory", "Material"];
 const STAT_TYPES = ["MaxHP", "MaxMana", "MaxStamina", "AD", "AP", "DEF", "RES", "MoveSpeed", "AttackSpeed"];
 
 export default function AdminItemsPage() {
@@ -59,6 +59,7 @@ export default function AdminItemsPage() {
   };
 
   const filtered = items.filter((i) => {
+    if (i.category === "Skill") return false;
     if (categoryFilter !== "all" && i.category !== categoryFilter) return false;
     if (search && !i.name.toLowerCase().includes(search) && !i.itemId.toLowerCase().includes(search)) return false;
     return true;

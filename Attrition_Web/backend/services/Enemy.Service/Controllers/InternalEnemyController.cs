@@ -1,22 +1,25 @@
 using BuildingBlocks.Authentication;
 using BuildingBlocks.Contracts;
+using Enemy.Service.Data;
 using Enemy.Service.DTOs;
 using Enemy.Service.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Enemy.Service.Controllers;
 
-/// <summary>Service-to-service lookups for Search/Admin aggregators. Guarded by X-Internal-Key.</summary>
 [ApiController]
 [Route("api/internal/enemies")]
 public class InternalEnemyController : ControllerBase
 {
     private readonly IEnemyService _service;
+    private readonly EnemyDbContext _db;
     private readonly IConfiguration _config;
 
-    public InternalEnemyController(IEnemyService service, IConfiguration config)
+    public InternalEnemyController(IEnemyService service, EnemyDbContext db, IConfiguration config)
     {
         _service = service;
+        _db = db;
         _config = config;
     }
 
@@ -35,5 +38,15 @@ public class InternalEnemyController : ControllerBase
     {
         if (!KeyValid()) return Unauthorized(ApiResponse.Fail("Valid service authentication is required."));
         return Ok(ApiResponse<int>.Ok(await _service.CountAsync()));
+    }
+
+    [HttpGet("stats")]
+    public async Task<IActionResult> Stats()
+    {
+        if (!KeyValid()) return Unauthorized(ApiResponse.Fail("Valid service authentication is required."));
+        var enemies = await _db.Enemies.CountAsync();
+        var items = await _db.Items.CountAsync(x => x.Category != "Skill");
+        var skills = await _db.Skills.CountAsync();
+        return Ok(ApiResponse<object>.Ok(new { enemies, items, skills }));
     }
 }

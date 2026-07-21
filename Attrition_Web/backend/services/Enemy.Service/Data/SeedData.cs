@@ -20,7 +20,7 @@ internal static class SeedData
         E("cultist", "Cultist", "Elite", 120, 18, 0, 5, 0, 1f, 50),
         E("flying_demon", "Flying Demon", "Normal", 20, 10, 0, 0, 0, 1f, 10),
         E("frogger", "Frogger", "Elite", 120, 18, 0, 5, 0, 1f, 50),
-        E("Gollux", "Gollux", "Elite", 120, 18, 0, 20, 0, 1f, 50),
+        E("gollux", "Gollux", "Elite", 120, 18, 0, 20, 0, 1f, 50),
         E("huntress_bow", "Huntress Bow", "Normal", 40, 10, 0, 0, 0, 1f, 10),
         E("huntress", "Huntress", "Normal", 50, 10, 0, 0, 0, 1f, 10),
         E("mimic", "Mimic", "Normal", 40, 10, 0, 0, 0, 1f, 10),

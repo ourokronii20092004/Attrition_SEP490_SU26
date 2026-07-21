@@ -64,6 +64,10 @@ public class EnemyService : IEnemyService
             GoldReward = request.GoldReward,
             Lore = request.Lore is null ? null : ContentSanitizer.Sanitize(request.Lore),
             ImageUrl = request.ImageUrl,
+            Poise = request.Poise,
+            PoiseRecoveryTime = request.PoiseRecoveryTime,
+            PatrolSpeed = request.PatrolSpeed,
+            ChaseSpeed = request.ChaseSpeed,
             LootTable = MapLoot(request.LootTable)
         };
 
@@ -94,6 +98,10 @@ public class EnemyService : IEnemyService
         enemy.GoldReward = request.GoldReward;
         enemy.Lore = request.Lore is null ? null : ContentSanitizer.Sanitize(request.Lore);
         enemy.ImageUrl = request.ImageUrl;
+        enemy.Poise = request.Poise;
+        enemy.PoiseRecoveryTime = request.PoiseRecoveryTime;
+        enemy.PatrolSpeed = request.PatrolSpeed;
+        enemy.ChaseSpeed = request.ChaseSpeed;
         enemy.UpdatedAt = DateTime.UtcNow;
 
         // Replace loot wholesale — owned collection, so clearing + re-adding is the clean path.
@@ -165,5 +173,5 @@ public class EnemyService : IEnemyService
         e.EnemyId, e.Name, e.Tier, e.SpawnBiome, e.Hp, e.Ad, e.Ap, e.Def, e.Res,
         e.AttackSpeed, e.IsRanged, e.ExpReward, e.GoldReward, e.Lore, e.CreatedAt, e.UpdatedAt,
         e.LootTable.Select(l => new LootEntryDto(l.ItemName, l.Rarity, l.IconKey, l.DropChance, l.MinQty, l.MaxQty)).ToList(),
-        e.ImageUrl);
+        e.ImageUrl, e.Poise, e.PoiseRecoveryTime, e.PatrolSpeed, e.ChaseSpeed);
 }

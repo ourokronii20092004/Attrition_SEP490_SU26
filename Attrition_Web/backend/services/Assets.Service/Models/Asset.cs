@@ -17,6 +17,7 @@ public class Asset
     // SourceType: enemy | item | null (general gallery asset).
     public string? SourceType { get; set; }
     public string? SourceId { get; set; }
+    public string? ContentHash { get; set; }
 
     // Uploader ref: plain Guid + denormalized name (no cross-schema FK).
     public Guid? UploadedById { get; set; }

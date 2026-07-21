@@ -33,6 +33,11 @@ namespace Attrition.Persistence.Dtos
         public int ExpReward;
         public int GoldReward;
         public string Lore;
+        public string ImageUrl;
+        public int Poise;
+        public float PoiseRecoveryTime;
+        public float PatrolSpeed;
+        public float ChaseSpeed;
         public List<LootEntryDto> LootTable;
     }
 
@@ -63,6 +68,8 @@ namespace Attrition.Persistence.Dtos
         public int EnemyCount;
         public string ItemVersion;
         public int ItemCount;
+        public string SkillVersion;
+        public int SkillCount;
     }
 
     /// <summary>Khớp Enemy.Service GameConfigBundle (GET /api/gameconfig) — cục config game tải 1 lần.</summary>
