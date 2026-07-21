@@ -17,7 +17,6 @@ namespace Attrition.Editor
         [MenuItem("Tools/Attrition/Create Coop Two-Button Door")]
         public static void CreateCoopDoor()
         {
-            // Root
             var root = new GameObject("CoopButtonDoor");
             Undo.RegisterCreatedObjectUndo(root, "Create Coop Two-Button Door");
 
@@ -25,7 +24,6 @@ namespace Attrition.Editor
             var sv = SceneView.lastActiveSceneView;
             if (sv != null) root.transform.position = sv.pivot;
 
-            // ── Door ──
             var doorGo = new GameObject("Door");
             doorGo.transform.SetParent(root.transform);
             doorGo.transform.localPosition = new Vector3(0f, 1.5f, 0f);
@@ -39,12 +37,9 @@ namespace Attrition.Editor
             SetPrivate(door, "doorVisual", doorVisual);
             SetPrivate(door, "startOpen", false);
 
-            // ── Plate A (trái) ──
             var plateA = CreatePlate(root, "Plate_A", new Vector3(-4f, 0f, 0f));
-            // ── Plate B (phải) ──
             var plateB = CreatePlate(root, "Plate_B", new Vector3(4f, 0f, 0f));
 
-            // ── Controller ──
             var ctrlGo = new GameObject("CoopPlateDoorController");
             ctrlGo.transform.SetParent(root.transform);
             ctrlGo.transform.localPosition = Vector3.zero;

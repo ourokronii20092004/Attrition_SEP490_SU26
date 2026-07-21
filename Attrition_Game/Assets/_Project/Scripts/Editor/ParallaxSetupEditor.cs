@@ -13,7 +13,6 @@ namespace Attrition.Gameplay.Environment.Editor
         [MenuItem("Tools/Create Parallax Background (Map1)")]
         public static void CreateParallaxBackground()
         {
-            // Load sprites
             string basePath = "Assets/_Project/Art/Environments/DarkRoad_ServerdFang/";
             Sprite bgColor = AssetDatabase.LoadAssetAtPath<Sprite>(basePath + "backgroundColor.png");
             Sprite bgShapes = AssetDatabase.LoadAssetAtPath<Sprite>(basePath + "backgroundShapes.png");
@@ -34,19 +33,16 @@ namespace Attrition.Gameplay.Environment.Editor
             Undo.RegisterCreatedObjectUndo(root, "Create Parallax Background");
             root.transform.position = Vector3.zero;
 
-            // ── Layer 1: Sky gradient (xa nhất, gần như đứng yên) ──
             GameObject layer1 = CreateLayer(root, "BG_Layer1_Sky", bgColor,
                 sortingOrder: -100, parallaxFactor: 0.05f,
                 scaleX: 5f, scaleY: 10f, posY: 0f, posZ: 50f,
                 color: new Color(0.6f, 0.55f, 0.7f, 1f)); // tím nhạt
 
-            // ── Layer 2: Shapes xa (silhouette nhà/đá xa, di chuyển chậm) ──
             GameObject layer2 = CreateLayer(root, "BG_Layer2_FarShapes", bgShapes,
                 sortingOrder: -90, parallaxFactor: 0.15f,
                 scaleX: 4f, scaleY: 10f, posY: -1f, posZ: 40f,
                 color: new Color(0.25f, 0.22f, 0.3f, 0.85f)); // tối hơn, mờ nhẹ
 
-            // ── Layer 3: Shapes gần (silhouette gần hơn, di chuyển nhanh hơn) ──
             GameObject layer3 = CreateLayer(root, "BG_Layer3_NearShapes", bgShapes,
                 sortingOrder: -80, parallaxFactor: 0.35f,
                 scaleX: 4f, scaleY: 10f, posY: -2f, posZ: 30f,

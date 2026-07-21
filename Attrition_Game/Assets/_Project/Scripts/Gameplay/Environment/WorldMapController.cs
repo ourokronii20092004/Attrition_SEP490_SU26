@@ -77,7 +77,6 @@ namespace Attrition.Gameplay.Environment
             }
         }
 
-        // ─────────────── BUILD UI ───────────────
         private void BuildUI()
         {
             var canvasGo = new GameObject("WorldMapCanvas");
@@ -126,7 +125,6 @@ namespace Attrition.Gameplay.Environment
             MakeButton(_panel.transform, "X (M)", new Vector2(1f, 1f), new Vector2(-70, -40), () => SetOpen(false));
         }
 
-        // ─────────────── INPUT ───────────────
         private void Update()
         {
             if (Input.GetKeyDown(KeyCode.M)) SetOpen(!_open);
@@ -237,7 +235,6 @@ namespace Attrition.Gameplay.Environment
                 if (go != null) go.transform.localScale = new Vector3(inv, inv, 1f);
         }
 
-        // ─────────────── DỰNG NỘI DUNG MAP ───────────────
         private void RefreshContent()
         {
             foreach (var go in _spawned) if (go != null) Destroy(go);
@@ -482,7 +479,6 @@ namespace Attrition.Gameplay.Environment
             return _circleSprite;
         }
 
-        // ─────────────── TRAVEL (solo + coop) ───────────────
         private void DoTravel()
         {
             if (_selected == null || _selectedMap == null)
@@ -529,7 +525,6 @@ namespace Attrition.Gameplay.Environment
             return null;
         }
 
-        // ─────────────── UI HELPERS ───────────────
         private static GameObject NewElement(string name, Transform parent, out RectTransform rt)
         {
             var go = new GameObject(name);

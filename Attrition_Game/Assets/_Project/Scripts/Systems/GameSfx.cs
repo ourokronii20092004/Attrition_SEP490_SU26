@@ -142,7 +142,6 @@ namespace Attrition.Systems
             _source.PlayOneShot(clip, vol);
         }
 
-        // ─── API giữ nguyên tên để PlayerCombat/PlayerController gọi như cũ ───
         public void PlayAttack() => Play(attack);
         public void PlayCharge() => Play(charge);
         public void PlayHit() => Play(hit);

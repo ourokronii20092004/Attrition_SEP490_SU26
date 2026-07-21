@@ -19,9 +19,7 @@ namespace Attrition.Gameplay.NPC
     [RequireComponent(typeof(Collider2D))]
     public class NetworkNPC : NetworkBehaviour
     {
-        // ═══════════════════════════════════════════
         //  DATA (gán trong Inspector)
-        // ═══════════════════════════════════════════
 
         [Header("──── NPC IDENTITY ────")]
         [Tooltip("Tên NPC hiển thị trong hội thoại.")]
@@ -35,9 +33,7 @@ namespace Attrition.Gameplay.NPC
         [Tooltip("Hội thoại mặc định khi NPC không giao quest hoặc quest đã xong.")]
         [SerializeField] private DialogueSO idleDialogue;
 
-        // ═══════════════════════════════════════════
         //  NETWORKED QUEST STATE (shared cả hai player)
-        // ═══════════════════════════════════════════
 
         /// <summary>0=NotStarted, 1=Active, 2=Completed, 3=Rewarded</summary>
         [Networked] public byte QuestState { get; set; }
@@ -45,9 +41,7 @@ namespace Attrition.Gameplay.NPC
         /// <summary>Tiến độ hiện tại (VD: số quái đã giết).</summary>
         [Networked] public int QuestProgress { get; set; }
 
-        // ═══════════════════════════════════════════
         //  PUBLIC ACCESSORS (DialogueUI đọc)
-        // ═══════════════════════════════════════════
 
         public string NpcName => npcName;
         public QuestSO Quest => quest;
@@ -74,9 +68,6 @@ namespace Attrition.Gameplay.NPC
             }
         }
 
-        // ═══════════════════════════════════════════
-        //  LIFECYCLE
-        // ═══════════════════════════════════════════
 
         public override void Spawned()
         {
@@ -131,9 +122,6 @@ namespace Attrition.Gameplay.NPC
             catch { return null; }
         }
 
-        // ═══════════════════════════════════════════
-        //  RPC — Client → Host
-        // ═══════════════════════════════════════════
 
         /// <summary>Player nhấn Accept trong UI → nhận quest.</summary>
         [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
@@ -160,9 +148,7 @@ namespace Attrition.Gameplay.NPC
             DistributeRewards();
         }
 
-        // ═══════════════════════════════════════════
         //  QUEST PROGRESS — Host xử lý
-        // ═══════════════════════════════════════════
 
         /// <summary>
         /// Static: gọi khi quái chết (EnemyController.DieFinal).
@@ -206,9 +192,7 @@ namespace Attrition.Gameplay.NPC
             }
         }
 
-        // ═══════════════════════════════════════════
         //  SAVE / LOAD — Host gom & khôi phục tiến trình quest
-        // ═══════════════════════════════════════════
 
         /// <summary>
         /// Host gom trạng thái quest của MỌI NPC trong scene để lưu vào save slot.
@@ -266,9 +250,7 @@ namespace Attrition.Gameplay.NPC
             }
         }
 
-        // ═══════════════════════════════════════════
         //  REWARD DISTRIBUTION — Host
-        // ═══════════════════════════════════════════
 
         private void DistributeRewards()
         {

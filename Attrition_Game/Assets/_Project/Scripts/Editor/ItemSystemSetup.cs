@@ -57,7 +57,6 @@ namespace Attrition.Editor
 
             var items = new List<ItemSO>();
 
-            // ─── ARMOR: 4 tier (Leather/Bronze/Iron/Gold) × 3 slot (Helm/Chest/Boots) ───
             // Tên hiển thị TIẾNG ANH; tên file icon tiếng Việt khớp file bạn đã đặt.
             // Lưu ý: chưa có icon cho slot Legs (quần) nên tạm bỏ.
             items.Add(Equip("leather_helm",  "Leather Helm",  EquipmentSlot.Head,  Icon("nón da"),   (StatType.DEF, 2)));
@@ -76,12 +75,10 @@ namespace Attrition.Editor
             items.Add(Equip("gold_chest", "Gilded Armor", EquipmentSlot.Chest, Icon("giáp vàng"), (StatType.DEF, 11), (StatType.MaxHP, 30)));
             items.Add(Equip("gold_boots", "Gilded Boots", EquipmentSlot.Boots, Icon("giày vàng"), (StatType.DEF, 4), (StatType.RES, 4)));
 
-            // ─── ACCESSORY ───
             items.Add(AbilityAcc("acc_double_jump", "Feather Charm", GrantedAbility.DoubleJump));
             items.Add(AbilityAcc("acc_shadow_dash", "Shadow Cloak", GrantedAbility.ShadowDash));
             items.Add(DamageAcc("acc_stamina_charm", "Vigor Charm", Icon("bùa thể lực"), (StatType.MaxStamina, 20)));
 
-            // ─── SKILL ───
             items.Add(SkillProjectile("skill_fire", "Fireball", SkillElement.Fire, 20, 0.7f, 35, skillProjectile, count: 3, spread: 30f, icon: Icon("fire_ball_skill")));
             items.Add(SkillArea("skill_wood", "Thorn Lash", SkillElement.Wood, 18, 0.6f, 30, SkillHitShape.Cone, range: 3f, angle: 100f));
             items.Add(SkillArea("skill_earth", "Stone Spike", SkillElement.Earth, 25, 0.9f, 45, SkillHitShape.Circle, range: 2.5f, angle: 360f));

@@ -48,7 +48,6 @@ namespace Attrition.Gameplay.Enemy.SeveredFang.States
             // Chơi animation attack
             ai.PlayAttackAnim();
 
-            // Setup contact filter
             _contactFilter = new ContactFilter2D
             {
                 useLayerMask = true,

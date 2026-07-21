@@ -23,7 +23,6 @@ namespace Attrition.Gameplay.Environment
         public static string PendingTravelScene;
         public static string PendingTravelCheckpointId;
 
-        // ─── FOG ───
         public static string CellKey(string scene, int cx, int cy) => $"{scene}:{cx}:{cy}";
 
         public static bool IsFogVisited(string scene, int cx, int cy) => _fog.Contains(CellKey(scene, cx, cy));
@@ -33,7 +32,6 @@ namespace Attrition.Gameplay.Environment
 
         public static IReadOnlyCollection<string> AllFog => _fog;
 
-        // ─── CHECKPOINTS ĐÃ KHÁM PHÁ ───
         public static bool IsCheckpointDiscovered(string id) => !string.IsNullOrEmpty(id) && _checkpoints.Contains(id);
 
         public static bool MarkCheckpointDiscovered(string id)
@@ -44,7 +42,6 @@ namespace Attrition.Gameplay.Environment
 
         public static IReadOnlyCollection<string> AllDiscoveredCheckpoints => _checkpoints;
 
-        // ─── ĐỒNG BỘ VỚI SAVE ───
         public static void LoadFrom(Attrition.Persistence.SaveSlotData data)
         {
             _fog.Clear();

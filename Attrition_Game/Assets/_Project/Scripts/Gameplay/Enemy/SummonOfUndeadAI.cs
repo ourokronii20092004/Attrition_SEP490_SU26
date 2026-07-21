@@ -16,9 +16,6 @@ using UnityEngine;
 /// </summary>
 public class SummonOfUndeadAI : NetworkBehaviour, IDamageable
 {
-    // ═══════════════════════════════════════════════════════════════
-    // INSPECTOR FIELDS
-    // ═══════════════════════════════════════════════════════════════
 
     [Header("---- REFS ----")]
     [SerializeField] private EnemyAnimation animationComp;
@@ -43,9 +40,6 @@ public class SummonOfUndeadAI : NetworkBehaviour, IDamageable
     [Tooltip("Layers mà Summon bay xuyên qua (tường, sàn, chướng ngại vật...)")]
     public LayerMask passThroughLayers;
 
-    // ═══════════════════════════════════════════════════════════════
-    // NETWORKED STATE
-    // ═══════════════════════════════════════════════════════════════
 
     [HideInInspector][Networked] public int Health { get; set; }
     [HideInInspector][Networked] public NetworkBool IsDeadNetworked { get; set; }
@@ -54,9 +48,6 @@ public class SummonOfUndeadAI : NetworkBehaviour, IDamageable
     [Networked] private TickTimer despawnTimer { get; set; }
     [Networked] private NetworkId ownerNetId { get; set; }
 
-    // ═══════════════════════════════════════════════════════════════
-    // LOCAL STATE
-    // ═══════════════════════════════════════════════════════════════
 
     private Rigidbody2D rb;
     private Transform playerTarget;
@@ -68,9 +59,6 @@ public class SummonOfUndeadAI : NetworkBehaviour, IDamageable
     // IDamageable
     public bool IsDead => IsDeadNetworked;
 
-    // ═══════════════════════════════════════════════════════════════
-    // INIT
-    // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
     /// Gọi bởi EliteEnemySkills.SpawnSummons() khi spawn.
@@ -137,9 +125,7 @@ public class SummonOfUndeadAI : NetworkBehaviour, IDamageable
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // RENDER — Animation (tất cả clients)
-    // ═══════════════════════════════════════════════════════════════
 
     public override void Render()
     {
@@ -169,9 +155,7 @@ public class SummonOfUndeadAI : NetworkBehaviour, IDamageable
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // AI LOGIC — FixedUpdateNetwork (chỉ host)
-    // ═══════════════════════════════════════════════════════════════
 
     public override void FixedUpdateNetwork()
     {
@@ -203,7 +187,6 @@ public class SummonOfUndeadAI : NetworkBehaviour, IDamageable
             Vector2 dir = ((Vector2)playerTarget.position - (Vector2)transform.position).normalized;
             rb.linearVelocity = dir * chaseSpeed;
 
-            // Update facing
             float xDiff = playerTarget.position.x - transform.position.x;
             if (Mathf.Abs(xDiff) > 0.1f)
                 NetFacingDir = xDiff > 0 ? 1f : -1f;
@@ -217,9 +200,7 @@ public class SummonOfUndeadAI : NetworkBehaviour, IDamageable
         ApplyFloating();
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // DAMAGE — IDamageable
-    // ═══════════════════════════════════════════════════════════════
 
     public void TakeDamage(int damage, Vector2 knockbackDir, float knockbackForce, Attrition.Core.DamageType type = Attrition.Core.DamageType.Physical)
     {
@@ -275,9 +256,6 @@ public class SummonOfUndeadAI : NetworkBehaviour, IDamageable
         if (animationComp != null) animationComp.PlayDeath();
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // HELPERS
-    // ═══════════════════════════════════════════════════════════════
 
     private bool IsOwnerDead()
     {

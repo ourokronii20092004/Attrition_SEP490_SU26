@@ -40,7 +40,6 @@ public class AuthController : ControllerBase
     /// refreshes keep session logins as session cookies. Defaults to persistent when unknown.</summary>
     private bool RememberedPersistent() => Request.Cookies[AuthCookies.Remember] != "0";
 
-    // ─── Google OAuth 2.0 authorization-code (redirect) flow helpers ───
     private const string GoogleStateCookie = "google_oauth_state";
 
     private static bool IsProd =>

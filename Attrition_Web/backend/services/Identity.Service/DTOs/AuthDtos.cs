@@ -1,6 +1,5 @@
 namespace Identity.Service.DTOs;
 
-// ─── Auth requests/responses ───
 public record RegisterRequest(string Username, string Password, string? Email);
 public record GoogleAuthRequest(string Code, string RedirectUri);
 public record LoginRequest(string Username, string Password, bool RememberMe = true);

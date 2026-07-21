@@ -89,7 +89,6 @@ namespace Attrition.Networking
             }
         }
 
-        // ─────────────────────────── COOP LOBBY ───────────────────────────
 
         /// <summary>
         /// Host (GameMode.Host) hoặc Client (GameMode.Client) kết nối phòng chờ NGAY ở scene Menu.
@@ -125,8 +124,7 @@ namespace Attrition.Networking
             if (string.IsNullOrEmpty(userId)) userId = System.Guid.NewGuid().ToString();
 
 #if UNITY_EDITOR
-            // Tạm thời để test ParrelSync 2 acc không bị văng: 
-            // Nếu là clone project thì nối thêm một chuỗi random vào UserId để Photon coi là 2 người khác nhau.
+            // ponytail: ParrelSync clones need unique Photon IDs; remove when clones isolate account storage.
             if (Application.dataPath.Contains("clone", StringComparison.OrdinalIgnoreCase))
             {
                 userId += "_clone_" + System.Guid.NewGuid().ToString().Substring(0, 4);
@@ -187,7 +185,6 @@ namespace Attrition.Networking
             Attrition.Persistence.GameLaunch.ClearSessionInventoryCache();
         }
 
-        // ─────────────────────────── SOLO ───────────────────────────
 
         /// <summary>
         /// Solo cục bộ (GameMode.Single) — gọi bởi GameBootstrap trong scene gameplay.
@@ -234,7 +231,6 @@ namespace Attrition.Networking
             }
         }
 
-        // ─────────────────────────── CALLBACKS ───────────────────────────
 
         private bool _spawnAttempted;
 
@@ -374,7 +370,6 @@ namespace Attrition.Networking
         public void OnInput(NetworkRunner runner, NetworkInput input) { }
         public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
 
-        // ─── Mất kết nối / host tắt phòng → client KHÔNG đứng kẹt trong scene gameplay ───
 
         /// <summary>
         /// Host shutdown phòng (BeginGameplay xong host Quit, hoặc host crash) → client nhận shutdown.
