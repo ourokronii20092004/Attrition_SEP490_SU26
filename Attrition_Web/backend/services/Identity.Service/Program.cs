@@ -38,6 +38,8 @@ builder.Services.AddDbContext<IdentityDbContext>(opt =>
 builder.Services.AddScoped<DbContext>(sp => sp.GetRequiredService<IdentityDbContext>());
 builder.Services.AddDbWarmup();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<IUserReportRepository, UserReportRepository>();
 builder.Services.AddScoped(typeof(BuildingBlocks.Persistence.IRepository<>), typeof(BuildingBlocks.Persistence.Repository<>));
 
 builder.Services.AddSingleton<TokenService>();

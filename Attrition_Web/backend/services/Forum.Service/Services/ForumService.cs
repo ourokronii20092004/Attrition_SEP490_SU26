@@ -2,7 +2,6 @@ using System.Linq.Expressions;
 using System.Text.RegularExpressions;
 using BuildingBlocks.Caching;
 using BuildingBlocks.Contracts;
-using BuildingBlocks.Persistence;
 using BuildingBlocks.Web;
 using Forum.Service.Clients;
 using Forum.Service.DTOs;
@@ -14,32 +13,17 @@ namespace Forum.Service.Services;
 public class ForumService : IForumService
 {
     private readonly IForumRepository _threadRepo;
-    private readonly IRepository<ForumCategory> _categoryRepo;
-    private readonly IRepository<ForumPost> _postRepo;
-    private readonly IRepository<ForumReaction> _reactionRepo;
-    private readonly IRepository<ThreadSubscription> _subRepo;
-    private readonly IRepository<PostReport> _reportRepo;
     private readonly ICacheService _cache;
     private readonly NotificationClient _notify;
     private readonly IdentityClient _identity;
 
     public ForumService(
         IForumRepository threadRepo,
-        IRepository<ForumCategory> categoryRepo,
-        IRepository<ForumPost> postRepo,
-        IRepository<ForumReaction> reactionRepo,
-        IRepository<ThreadSubscription> subRepo,
-        IRepository<PostReport> reportRepo,
         ICacheService cache,
         NotificationClient notify,
         IdentityClient identity)
     {
         _threadRepo = threadRepo;
-        _categoryRepo = categoryRepo;
-        _postRepo = postRepo;
-        _reactionRepo = reactionRepo;
-        _subRepo = subRepo;
-        _reportRepo = reportRepo;
         _cache = cache;
         _notify = notify;
         _identity = identity;
@@ -134,7 +118,7 @@ public class ForumService : IForumService
         if (thread == null || thread.RootPostId != null || thread.Moderation.IsRemoved) return null;
 
         var category = thread.CategoryId is { } categoryId ? await _threadRepo.GetCategoryByIdAsync(categoryId) : null;
-        var reactions = await _reactionRepo.ListAsync(r => r.PostId == thread.Id);
+        var reactions = await _threadRepo.Reactions.ListAsync(r => r.PostId == thread.Id);
         return new ForumThreadDto(thread.Id, thread.Title ?? "Discussion", category?.Slug ?? string.Empty,
             thread.AuthorId, thread.AuthorName ?? "Unknown", thread.IsPinned, thread.IsLocked,
             thread.ReplyCount, thread.CreatedAt, thread.Content, ParseAttachments(thread.Attachments),
@@ -176,11 +160,11 @@ public class ForumService : IForumService
 
     public async Task<PaginatedResponse<ForumPostDto>> GetPostsAsync(Guid threadId, int page, int pageSize, Guid? currentUserId)
     {
-        var (posts, total) = await _postRepo.GetPagedAsync(page, pageSize,
+        var (posts, total) = await _threadRepo.Posts.GetPagedAsync(page, pageSize,
             p => p.RootPostId == threadId && !p.Moderation.IsRemoved, q => q.OrderBy(p => p.CreatedAt));
 
         var postIds = posts.Select(p => p.Id).ToList();
-        var reactions = await _reactionRepo.ListAsync(r => postIds.Contains(r.PostId));
+        var reactions = await _threadRepo.Reactions.ListAsync(r => postIds.Contains(r.PostId));
         // Avatars aren't stored on the post; resolve them fresh from Identity (best-effort).
         var avatars = await _identity.ResolveUsersAsync(posts.Select(p => p.AuthorId).ToList());
 
@@ -203,7 +187,7 @@ public class ForumService : IForumService
 
         // Reaction counts are resolved here (same pattern as GetPostsAsync) rather than in the query.
         var postIds = rows.Select(r => r.PostId).ToList();
-        var reactions = await _reactionRepo.ListAsync(r => postIds.Contains(r.PostId));
+        var reactions = await _threadRepo.Reactions.ListAsync(r => postIds.Contains(r.PostId));
 
         var items = rows.Select(r => new UserReplyDto(
             r.PostId, r.ThreadId, r.ThreadTitle, r.Content, r.CreatedAt,
@@ -251,7 +235,7 @@ public class ForumService : IForumService
         Guid? parentAuthorId = null;
         if (request.ParentPostId is { } pid)
         {
-            var parent = await _postRepo.GetByIdAsync(pid);
+            var parent = await _threadRepo.Posts.GetByIdAsync(pid);
             if (parent == null || (parent.Id != threadId && parent.RootPostId != threadId))
                 return ApiResponse<ForumPostDto>.Fail("The post you're replying to no longer exists.");
             parentPostId = pid;
@@ -271,14 +255,14 @@ public class ForumService : IForumService
             Content = ContentSanitizer.Sanitize(request.Content),
             Attachments = SerializeAttachments(request.Attachments)
         };
-        await _postRepo.AddAsync(newPost);
+        await _threadRepo.Posts.AddAsync(newPost);
 
         await _threadRepo.IncrementReplyCountAsync(threadId, DateTime.UtcNow);
 
         // Auto-subscribe the replier if not already subscribed.
-        var (existing, _) = await _subRepo.GetPagedAsync(1, 1, sub => sub.ThreadId == threadId && sub.UserId == author.Id);
+        var (existing, _) = await _threadRepo.Subscriptions.GetPagedAsync(1, 1, sub => sub.ThreadId == threadId && sub.UserId == author.Id);
         if (existing.Count == 0)
-            await _subRepo.AddAsync(new ThreadSubscription { ThreadId = threadId, UserId = author.Id });
+            await _threadRepo.Subscriptions.AddAsync(new ThreadSubscription { ThreadId = threadId, UserId = author.Id });
 
         // NOTE: reply-notification emails dropped — Forum no longer has access to subscriber emails
         // (lives in Identity now). Subscriptions are kept as data for a future notification service.
@@ -309,20 +293,20 @@ public class ForumService : IForumService
 
     public async Task<ApiResponse> UpdatePostAsync(Guid postId, UpdatePostRequest request, Guid userId)
     {
-        var post = await _postRepo.GetByIdAsync(postId);
+        var post = await _threadRepo.Posts.GetByIdAsync(postId);
         if (post == null) return ApiResponse.Fail("Post not found.");
         if (post.AuthorId != userId) return ApiResponse.Fail("Unauthorized.");
 
         post.Content = ContentSanitizer.Sanitize(request.Content);
         post.UpdatedAt = DateTime.UtcNow;
-        await _postRepo.UpdateAsync(post);
+        await _threadRepo.Posts.UpdateAsync(post);
         await InvalidateCategoriesAsync();
         return ApiResponse.Ok();
     }
 
     public async Task<ApiResponse> DeletePostAsync(Guid postId, Guid userId, bool isAdmin)
     {
-        var post = await _postRepo.GetByIdAsync(postId);
+        var post = await _threadRepo.Posts.GetByIdAsync(postId);
         if (post == null) return ApiResponse.Fail("Post not found.");
         if (post.AuthorId != userId && !isAdmin) return ApiResponse.Fail("Unauthorized.");
 
@@ -334,39 +318,39 @@ public class ForumService : IForumService
     public async Task<ApiResponse> ToggleReactionAsync(Guid postId, Guid userId, ReactRequest request)
     {
         // Without this, a reaction to a non-existent post is silently stored (no FK on the column).
-        if (await _postRepo.GetByIdAsync(postId) is null)
+        if (await _threadRepo.Posts.GetByIdAsync(postId) is null)
             return ApiResponse.Fail("Post not found.");
 
-        var (existingList, _) = await _reactionRepo.GetPagedAsync(1, 1, r => r.PostId == postId && r.UserId == userId);
+        var (existingList, _) = await _threadRepo.Reactions.GetPagedAsync(1, 1, r => r.PostId == postId && r.UserId == userId);
         var existing = existingList.FirstOrDefault();
 
         if (existing != null)
         {
             if (existing.ReactionType == request.ReactionType)
-                await _reactionRepo.DeleteAsync(existing);
+                await _threadRepo.Reactions.DeleteAsync(existing);
             else
             {
                 existing.ReactionType = request.ReactionType;
-                await _reactionRepo.UpdateAsync(existing);
+                await _threadRepo.Reactions.UpdateAsync(existing);
             }
         }
         else
         {
             // Race-safe: a concurrent reaction from the same user hits the unique (PostId,UserId)
             // index; treat the duplicate as idempotent success rather than a 500.
-            await _reactionRepo.TryAddAsync(new ForumReaction { PostId = postId, UserId = userId, ReactionType = request.ReactionType });
+            await _threadRepo.Reactions.TryAddAsync(new ForumReaction { PostId = postId, UserId = userId, ReactionType = request.ReactionType });
         }
         return ApiResponse.Ok();
     }
 
     public async Task<ApiResponse> SavePostAttachmentsAsync(Guid postId, List<string> urls, Guid userId)
     {
-        var post = await _postRepo.GetByIdAsync(postId);
+        var post = await _threadRepo.Posts.GetByIdAsync(postId);
         if (post == null) return ApiResponse.Fail("Post not found.");
         if (post.AuthorId != userId) return ApiResponse.Fail("Unauthorized.");
 
         post.Attachments = System.Text.Json.JsonSerializer.Serialize(urls);
-        await _postRepo.UpdateAsync(post);
+        await _threadRepo.Posts.UpdateAsync(post);
         return ApiResponse.Ok();
     }
 
@@ -375,25 +359,25 @@ public class ForumService : IForumService
         if (await _threadRepo.GetByIdAsync(threadId) is null)
             return ApiResponse.Fail("Thread not found.");
 
-        var (existing, _) = await _subRepo.GetPagedAsync(1, 1, ts => ts.ThreadId == threadId && ts.UserId == userId);
+        var (existing, _) = await _threadRepo.Subscriptions.GetPagedAsync(1, 1, ts => ts.ThreadId == threadId && ts.UserId == userId);
         var sub = existing.FirstOrDefault();
 
         if (sub != null)
         {
-            await _subRepo.DeleteAsync(sub);
+            await _threadRepo.Subscriptions.DeleteAsync(sub);
             return new ApiResponse(true, "Unsubscribed successfully.");
         }
         // Race-safe against the unique (ThreadId,UserId) index; a duplicate is idempotent success.
-        await _subRepo.TryAddAsync(new ThreadSubscription { ThreadId = threadId, UserId = userId });
+        await _threadRepo.Subscriptions.TryAddAsync(new ThreadSubscription { ThreadId = threadId, UserId = userId });
         return new ApiResponse(true, "Subscribed successfully.");
     }
 
     public async Task<ApiResponse> ReportPostAsync(Guid postId, string reason, Author reporter)
     {
-        var post = await _postRepo.GetByIdAsync(postId);
+        var post = await _threadRepo.Posts.GetByIdAsync(postId);
         if (post == null) return ApiResponse.Fail("Post not found.");
 
-        await _reportRepo.AddAsync(new PostReport
+        await _threadRepo.Reports.AddAsync(new PostReport
         {
             PostId = postId,
             ReporterId = reporter.Id,
@@ -432,7 +416,7 @@ public class ForumService : IForumService
 
     public async Task<ApiResponse> RemovePostAsync(Guid postId, Author moderator, string reason)
     {
-        var post = await _postRepo.GetByIdAsync(postId);
+        var post = await _threadRepo.Posts.GetByIdAsync(postId);
         if (post == null) return ApiResponse.Fail("Post not found.");
 
         post.Moderation.IsRemoved = true;
@@ -440,14 +424,14 @@ public class ForumService : IForumService
         post.Moderation.ByUserId = moderator.Id;
         post.Moderation.ByName = moderator.Name;
         post.Moderation.At = DateTime.UtcNow;
-        await _postRepo.UpdateAsync(post);
+        await _threadRepo.Posts.UpdateAsync(post);
 
         // Resolved-after-action: pending reports on this post are now actioned.
-        var pending = await _reportRepo.ListAsync(r => r.PostId == postId && r.Status == ReportStatus.Pending);
+        var pending = await _threadRepo.Reports.ListAsync(r => r.PostId == postId && r.Status == ReportStatus.Pending);
         foreach (var report in pending)
         {
             report.Status = ReportStatus.Resolved;
-            await _reportRepo.UpdateAsync(report);
+            await _threadRepo.Reports.UpdateAsync(report);
         }
         await InvalidateCategoriesAsync();
         return ApiResponse.Ok();
@@ -455,7 +439,7 @@ public class ForumService : IForumService
 
     public async Task<ApiResponse> RestorePostAsync(Guid postId)
     {
-        var post = await _postRepo.GetByIdAsync(postId);
+        var post = await _threadRepo.Posts.GetByIdAsync(postId);
         if (post == null) return ApiResponse.Fail("Post not found.");
 
         post.Moderation.IsRemoved = false;
@@ -463,7 +447,7 @@ public class ForumService : IForumService
         post.Moderation.ByUserId = null;
         post.Moderation.ByName = null;
         post.Moderation.At = null;
-        await _postRepo.UpdateAsync(post);
+        await _threadRepo.Posts.UpdateAsync(post);
         return ApiResponse.Ok();
     }
 
@@ -485,7 +469,7 @@ public class ForumService : IForumService
             (false, string s) => p => p.Content.ToLower().Contains(s),
             _ => null
         };
-        var (posts, total) = await _postRepo.GetPagedAsync(page, pageSize, filter,
+        var (posts, total) = await _threadRepo.Posts.GetPagedAsync(page, pageSize, filter,
             q => q.OrderByDescending(p => p.CreatedAt));
         var items = posts.Select(p => new AdminForumPostDto(p.Id, p.RootPostId ?? p.Id, p.Content, p.CreatedAt, p.UpdatedAt,
             p.Moderation.IsRemoved, p.Moderation.Reason, p.Moderation.At, p.AuthorName, p.Moderation.ByName)).ToList();
@@ -494,10 +478,10 @@ public class ForumService : IForumService
 
     public async Task<PaginatedResponse<AdminPostReportDto>> ListReportsAsync(string status, int page, int pageSize)
     {
-        var (reports, total) = await _reportRepo.GetPagedAsync(page, pageSize, r => r.Status == status,
+        var (reports, total) = await _threadRepo.Reports.GetPagedAsync(page, pageSize, r => r.Status == status,
             q => q.OrderByDescending(r => r.CreatedAt));
         var reportPostIds = reports.Select(r => r.PostId).Distinct().ToList();
-        var reportPosts = (await _postRepo.ListAsync(p => reportPostIds.Contains(p.Id)))
+        var reportPosts = (await _threadRepo.Posts.ListAsync(p => reportPostIds.Contains(p.Id)))
             .ToDictionary(p => p.Id);
         var items = new List<AdminPostReportDto>();
         foreach (var r in reports)
@@ -511,19 +495,19 @@ public class ForumService : IForumService
 
     public async Task<ApiResponse> DismissReportAsync(Guid reportId)
     {
-        var report = await _reportRepo.GetByIdAsync(reportId);
+        var report = await _threadRepo.Reports.GetByIdAsync(reportId);
         if (report == null) return ApiResponse.Fail("Report not found.");
         report.Status = ReportStatus.Dismissed;
-        await _reportRepo.UpdateAsync(report);
+        await _threadRepo.Reports.UpdateAsync(report);
         return ApiResponse.Ok();
     }
 
     public async Task<ApiResponse> ResolveReportAsync(Guid reportId)
     {
-        var report = await _reportRepo.GetByIdAsync(reportId);
+        var report = await _threadRepo.Reports.GetByIdAsync(reportId);
         if (report == null) return ApiResponse.Fail("Report not found.");
         report.Status = ReportStatus.Resolved;
-        await _reportRepo.UpdateAsync(report);
+        await _threadRepo.Reports.UpdateAsync(report);
         return ApiResponse.Ok();
     }
 
@@ -540,7 +524,7 @@ public class ForumService : IForumService
             Description = request.Description ?? string.Empty
         };
         // Optimistic check above for the message; TryAddAsync makes the unique-slug insert race-safe.
-        if (!await _categoryRepo.TryAddAsync(category))
+        if (!await _threadRepo.Categories.TryAddAsync(category))
             return ApiResponse<int>.Fail("A category with a similar name already exists.");
         await InvalidateCategoriesAsync();
         return ApiResponse<int>.Ok(category.Id);
@@ -561,7 +545,7 @@ public class ForumService : IForumService
         category.Description = request.Description ?? string.Empty;
         try
         {
-            await _categoryRepo.UpdateAsync(category);
+            await _threadRepo.Categories.UpdateAsync(category);
         }
         catch (Microsoft.EntityFrameworkCore.DbUpdateException)
         {
@@ -582,7 +566,7 @@ public class ForumService : IForumService
         if (threadCount > 0)
             return ApiResponse.Fail("This category still has threads. Move or delete them first.");
 
-        await _categoryRepo.DeleteAsync(category);
+        await _threadRepo.Categories.DeleteAsync(category);
         await InvalidateCategoriesAsync();
         return ApiResponse.Ok();
     }
@@ -605,8 +589,8 @@ public class ForumService : IForumService
     public async Task<(int Threads, int Posts, int RemovedPosts)> GetStatsAsync()
     {
         var threads = await _threadRepo.CountAsync(p => p.RootPostId == null);
-        var posts = await _postRepo.CountAsync();
-        var removed = await _postRepo.CountAsync(p => p.Moderation.IsRemoved);
+        var posts = await _threadRepo.Posts.CountAsync();
+        var removed = await _threadRepo.Posts.CountAsync(p => p.Moderation.IsRemoved);
         return (threads, posts, removed);
     }
 }
