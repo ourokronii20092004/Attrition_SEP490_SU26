@@ -1,11 +1,5 @@
 namespace Assets.Service.Services;
 
-public interface IFileStorage
-{
-    Task<string> SaveAsync(string subfolder, string fileName, Stream stream);
-    Task<bool> DeleteAsync(string relativePath);
-}
-
 public class LocalFileStorage : IFileStorage
 {
     private readonly string _uploadPath;

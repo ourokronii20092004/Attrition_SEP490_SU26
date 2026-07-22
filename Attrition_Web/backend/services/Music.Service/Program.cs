@@ -28,6 +28,7 @@ builder.Services.AddDbContext<MusicDbContext>(opt =>
 builder.Services.AddScoped<DbContext>(sp => sp.GetRequiredService<MusicDbContext>());
 builder.Services.AddDbWarmup();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+builder.Services.AddScoped<IMusicRepository, Music.Service.Repositories.MusicRepository>();
 builder.Services.AddScoped<IAlbumService, AlbumService>();
 builder.Services.AddScoped<ITrackService, TrackService>();
 builder.Services.AddScoped<IFavoriteService, FavoriteService>();

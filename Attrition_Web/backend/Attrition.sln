@@ -37,6 +37,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Character.Service", "servic
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuildingBlocks.Caching", "building-blocks\BuildingBlocks.Caching\BuildingBlocks.Caching.csproj", "{B09CA0F5-B8D5-40AE-9EE3-BCF482B10EBA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skill.Service", "services\Skill.Service\Skill.Service.csproj", "{47AAE9E5-5A3E-4622-8480-9C730B25988D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -227,6 +229,18 @@ Global
 		{B09CA0F5-B8D5-40AE-9EE3-BCF482B10EBA}.Release|x64.Build.0 = Release|Any CPU
 		{B09CA0F5-B8D5-40AE-9EE3-BCF482B10EBA}.Release|x86.ActiveCfg = Release|Any CPU
 		{B09CA0F5-B8D5-40AE-9EE3-BCF482B10EBA}.Release|x86.Build.0 = Release|Any CPU
+		{47AAE9E5-5A3E-4622-8480-9C730B25988D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{47AAE9E5-5A3E-4622-8480-9C730B25988D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{47AAE9E5-5A3E-4622-8480-9C730B25988D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{47AAE9E5-5A3E-4622-8480-9C730B25988D}.Debug|x64.Build.0 = Debug|Any CPU
+		{47AAE9E5-5A3E-4622-8480-9C730B25988D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{47AAE9E5-5A3E-4622-8480-9C730B25988D}.Debug|x86.Build.0 = Debug|Any CPU
+		{47AAE9E5-5A3E-4622-8480-9C730B25988D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{47AAE9E5-5A3E-4622-8480-9C730B25988D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{47AAE9E5-5A3E-4622-8480-9C730B25988D}.Release|x64.ActiveCfg = Release|Any CPU
+		{47AAE9E5-5A3E-4622-8480-9C730B25988D}.Release|x64.Build.0 = Release|Any CPU
+		{47AAE9E5-5A3E-4622-8480-9C730B25988D}.Release|x86.ActiveCfg = Release|Any CPU
+		{47AAE9E5-5A3E-4622-8480-9C730B25988D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -247,5 +261,6 @@ Global
 		{62DA4659-0A95-4630-ACDB-17AF97AEACB1} = {5854FF58-B8C5-05C6-5BF2-ACE42193F22B}
 		{18948D94-17D5-4212-BD02-7AFE1557F59F} = {5854FF58-B8C5-05C6-5BF2-ACE42193F22B}
 		{B09CA0F5-B8D5-40AE-9EE3-BCF482B10EBA} = {31CBEB51-93DC-9CA1-DA8D-67643319BEE1}
+		{47AAE9E5-5A3E-4622-8480-9C730B25988D} = {5854FF58-B8C5-05C6-5BF2-ACE42193F22B}
 	EndGlobalSection
 EndGlobal

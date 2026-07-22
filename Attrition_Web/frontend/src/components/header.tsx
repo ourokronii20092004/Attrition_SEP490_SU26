@@ -19,6 +19,7 @@ const NAV_LINKS = [
   { href: "/wiki", label: "Wiki" },
   { href: "/bestiary", label: "Bestiary" },
   { href: "/items", label: "Items" },
+  { href: "/skills", label: "Skills" },
   { href: "/world", label: "World" },
   { href: "/forum", label: "Forum" },
   { href: "/music", label: "Music" },

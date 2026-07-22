@@ -9,17 +9,6 @@ public record UnityEnemyImport(
     int Poise, float PoiseRecoveryTime, float PatrolSpeed, float ChaseSpeed,
     float AttackSpeed, int ExpReward, string? ImageUrl = null);
 
-public record GameDataImportRequest(
-    List<UnityItemImport> Items,
-    List<UnityEnemyImport> Enemies,
-    List<SkillConfigDto> Skills);
-
+public record GameDataImportRequest(List<UnityItemImport> Items, List<UnityEnemyImport> Enemies);
 public record ImportCounts(int Created, int BaselinesUpdated, int Unchanged);
-
-public record GameDataImportResult(
-    ImportCounts Items,
-    ImportCounts Enemies,
-    ImportCounts Skills,
-    string EnemyVersion,
-    string ItemVersion,
-    string SkillVersion);
+public record GameDataImportResult(ImportCounts Items, ImportCounts Enemies, string EnemyVersion, string ItemVersion);

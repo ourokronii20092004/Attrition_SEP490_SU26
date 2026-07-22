@@ -136,6 +136,9 @@ public class EnemyService : IEnemyService
 
     public Task<int> CountAsync() => _repo.CountAsync();
 
+    public Task<(int Enemies, int Items)> GetStatsAsync() => _repo.GetStatsAsync();
+
+
     // Version = MAX(UpdatedAt) ISO-8601 + count. Count vào version để xoá quái cũng đổi version
     // (xoá không làm MAX(UpdatedAt) tăng). Bảng rỗng → "0".
     private static string BuildVersion(DateTime? maxUpdatedAt, int count) =>

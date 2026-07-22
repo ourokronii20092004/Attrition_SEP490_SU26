@@ -5,28 +5,25 @@ using Admin.Service.DTOs;
 
 namespace Admin.Service.Services;
 
-public interface IAdminStatsService
-{
-    Task<AdminStatsDto> GetStatsAsync(CancellationToken ct);
-}
-
 public class AdminStatsService : IAdminStatsService
 {
     private readonly IdentityStatsClient _identity;
     private readonly WikiStatsClient _wiki;
     private readonly ForumStatsClient _forum;
     private readonly EnemyStatsClient _enemy;
+    private readonly SkillStatsClient _skill;
     private readonly AssetsStatsClient _assets;
     private readonly MusicStatsClient _music;
     private readonly ILogger<AdminStatsService> _logger;
 
     public AdminStatsService(IdentityStatsClient identity, WikiStatsClient wiki, ForumStatsClient forum,
-        EnemyStatsClient enemy, AssetsStatsClient assets, MusicStatsClient music, ILogger<AdminStatsService> logger)
+        EnemyStatsClient enemy, SkillStatsClient skill, AssetsStatsClient assets, MusicStatsClient music, ILogger<AdminStatsService> logger)
     {
         _identity = identity;
         _wiki = wiki;
         _forum = forum;
         _enemy = enemy;
+        _skill = skill;
         _assets = assets;
         _music = music;
         _logger = logger;
@@ -40,10 +37,11 @@ public class AdminStatsService : IAdminStatsService
         var wikiT = Safe("wiki", () => _wiki.GetObjectAsync("api/internal/wiki/stats", ct), down);
         var forumT = Safe("forum", () => _forum.GetObjectAsync("api/internal/forum/stats", ct), down);
         var enemyT = Safe("enemy", () => _enemy.GetObjectAsync("api/internal/enemies/stats", ct), down);
+        var skillT = Safe("skill", () => _skill.GetCountAsync("api/internal/skills/count", ct), down);
         var assetsT = Safe("assets", () => _assets.GetCountAsync("api/internal/assets/count", ct), down);
         var musicT = Safe("music", () => _music.GetObjectAsync("api/internal/music/count", ct), down);
 
-        await Task.WhenAll(usersT, wikiT, forumT, enemyT, assetsT, musicT);
+        await Task.WhenAll(usersT, wikiT, forumT, enemyT, skillT, assetsT, musicT);
 
         int? wikiArticles = GetInt(wikiT, "articles");
         int? pending = GetInt(wikiT, "pendingContributions");
@@ -52,7 +50,7 @@ public class AdminStatsService : IAdminStatsService
         int? removed = GetInt(forumT, "removedPosts");
         int? enemies = GetInt(enemyT, "enemies");
         int? items = GetInt(enemyT, "items");
-        int? skills = GetInt(enemyT, "skills");
+        int? skills = skillT.Result;
         int? albums = GetInt(musicT, "albums");
         int? tracks = GetInt(musicT, "tracks");
 
