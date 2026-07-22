@@ -1,10 +1,8 @@
 using BuildingBlocks.Authentication;
 using BuildingBlocks.Contracts;
-using Enemy.Service.Data;
 using Enemy.Service.DTOs;
 using Enemy.Service.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace Enemy.Service.Controllers;
 
@@ -13,13 +11,11 @@ namespace Enemy.Service.Controllers;
 public class InternalEnemyController : ControllerBase
 {
     private readonly IEnemyService _service;
-    private readonly EnemyDbContext _db;
     private readonly IConfiguration _config;
 
-    public InternalEnemyController(IEnemyService service, EnemyDbContext db, IConfiguration config)
+    public InternalEnemyController(IEnemyService service, IConfiguration config)
     {
         _service = service;
-        _db = db;
         _config = config;
     }
 
@@ -44,8 +40,7 @@ public class InternalEnemyController : ControllerBase
     public async Task<IActionResult> Stats()
     {
         if (!KeyValid()) return Unauthorized(ApiResponse.Fail("Valid service authentication is required."));
-        var enemies = await _db.Enemies.CountAsync();
-        var items = await _db.Items.CountAsync();
+        var (enemies, items) = await _service.GetStatsAsync();
         return Ok(ApiResponse<object>.Ok(new { enemies, items }));
     }
 }

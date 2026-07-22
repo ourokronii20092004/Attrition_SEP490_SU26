@@ -9,7 +9,40 @@ public class WikiRepository : Repository<WikiArticle>, IWikiRepository
 {
     private readonly WikiDbContext _context;
 
-    public WikiRepository(WikiDbContext context) : base(context) => _context = context;
+    public WikiRepository(WikiDbContext context) : base(context)
+    {
+        _context = context;
+        Categories = new Repository<WikiCategory>(context);
+        Revisions = new Repository<WikiRevision>(context);
+        Contributions = new Repository<WikiContribution>(context);
+    }
+
+    public IRepository<WikiCategory> Categories { get; }
+    public IRepository<WikiRevision> Revisions { get; }
+    public IRepository<WikiContribution> Contributions { get; }
+
+    public async Task<T> ExecuteInTransactionAsync<T>(Func<Task<T>> action)
+    {
+        var strategy = _context.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            var result = await action();
+            await transaction.CommitAsync();
+            return result;
+        });
+    }
+
+    public async Task ExecuteInTransactionAsync(Func<Task> action)
+    {
+        var strategy = _context.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            await action();
+            await transaction.CommitAsync();
+        });
+    }
 
     public async Task<List<WikiArticle>> SearchAsync(string query, int limit)
     {

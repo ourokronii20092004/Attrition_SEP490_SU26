@@ -18,6 +18,7 @@ builder.Services.AddDbContext<SkillDbContext>(opt => opt.UseNpgsql(
 builder.Services.AddScoped<DbContext>(sp => sp.GetRequiredService<SkillDbContext>());
 builder.Services.AddDbWarmup();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+builder.Services.AddScoped<ISkillRepository, Skill.Service.Repositories.SkillRepository>();
 builder.Services.AddScoped<ISkillService, Skill.Service.Services.SkillService>();
 builder.Services.AddAttritionCache(builder.Configuration, "skill");
 builder.Services.AddAttritionJwtAuth(builder.Configuration);

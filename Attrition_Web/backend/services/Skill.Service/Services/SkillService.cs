@@ -2,33 +2,31 @@ using System.Text.Json;
 using BuildingBlocks.Caching;
 using BuildingBlocks.Contracts;
 using BuildingBlocks.Web;
-using Microsoft.EntityFrameworkCore;
-using Skill.Service.Data;
 using Skill.Service.DTOs;
 using Skill.Service.Models;
 
 namespace Skill.Service.Services;
 
-public class SkillService(SkillDbContext db, ICacheService cache) : ISkillService
+public class SkillService(ISkillRepository repository, ICacheService cache) : ISkillService
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     public async Task<List<SkillDto>> GetAllAsync() =>
-        await db.Skills.AsNoTracking().OrderBy(x => x.Name).Take(500).Select(x => ToDto(x)).ToListAsync();
+        (await repository.GetAllAsync()).Select(ToDto).ToList();
 
     public async Task<SkillDto?> GetByIdAsync(string id)
     {
-        var skill = await db.Skills.AsNoTracking().FirstOrDefaultAsync(x => x.SkillId == id);
+        var skill = await repository.GetByIdAsync(id);
         return skill == null ? null : ToDto(skill);
     }
 
     public async Task<ApiResponse<SkillDto>> UpdateAsync(string id, SkillUpdateRequest request)
     {
-        var skill = await db.Skills.FirstOrDefaultAsync(x => x.SkillId == id);
+        var skill = await repository.GetByIdAsync(id, tracked: true);
         if (skill == null) return ApiResponse<SkillDto>.Fail("Skill not found. Sync it from Unity first.");
         Apply(skill, request);
         skill.UpdatedAt = DateTime.UtcNow;
-        await db.SaveChangesAsync();
+        await repository.SaveChangesAsync();
         await cache.RemoveAsync("skill-bundle:all");
         return ApiResponse<SkillDto>.Ok(ToDto(skill));
     }
@@ -36,8 +34,7 @@ public class SkillService(SkillDbContext db, ICacheService cache) : ISkillServic
     public async Task<ApiResponse<SkillImportResult>> ImportAsync(SkillImportRequest request)
     {
         var ids = request.Skills.Select(x => x.SkillId).ToList();
-        var existing = await db.Skills.Where(x => ids.Contains(x.SkillId))
-            .ToDictionaryAsync(x => x.SkillId, StringComparer.Ordinal);
+        var existing = await repository.GetByIdsAsync(ids);
         var created = 0; var updated = 0; var unchanged = 0;
         var now = DateTime.UtcNow;
         foreach (var dto in request.Skills)
@@ -49,7 +46,7 @@ public class SkillService(SkillDbContext db, ICacheService cache) : ISkillServic
                 Apply(skill, dto);
                 skill.UnityBaselineJson = baseline;
                 skill.ImportedAt = now;
-                db.Skills.Add(skill);
+                repository.Add(skill);
                 created++;
             }
             else if (skill.UnityBaselineJson != baseline)
@@ -64,7 +61,7 @@ public class SkillService(SkillDbContext db, ICacheService cache) : ISkillServic
             }
             else unchanged++;
         }
-        await db.SaveChangesAsync();
+        await repository.SaveChangesAsync();
         await cache.RemoveAsync("skill-bundle:all");
         return ApiResponse<SkillImportResult>.Ok(new(new(created, updated, unchanged), await VersionAsync()));
     }
@@ -72,17 +69,16 @@ public class SkillService(SkillDbContext db, ICacheService cache) : ISkillServic
     public Task<SkillConfigBundle> GetConfigBundleAsync() =>
         cache.GetOrSetAsync("skill-bundle:all", async () =>
         {
-            var skills = await db.Skills.AsNoTracking().OrderBy(x => x.SkillId).ToListAsync();
+            var skills = await repository.GetAllAsync(orderById: true);
             return new SkillConfigBundle(Version(skills.Count == 0 ? null : skills.Max(x => x.UpdatedAt), skills.Count),
                 skills.Count, skills.Select(ToDto).ToList());
         }, TimeSpan.FromMinutes(10));
 
-    public Task<int> CountAsync() => db.Skills.CountAsync();
+    public async Task<int> CountAsync() => (await repository.GetVersionInfoAsync()).Count;
 
     private async Task<string> VersionAsync()
     {
-        var count = await db.Skills.CountAsync();
-        var max = count == 0 ? null : await db.Skills.MaxAsync(x => (DateTime?)x.UpdatedAt);
+        var (max, count) = await repository.GetVersionInfoAsync();
         return Version(max, count);
     }
 

@@ -5,11 +5,6 @@ using Admin.Service.DTOs;
 
 namespace Admin.Service.Services;
 
-public interface IAdminStatsService
-{
-    Task<AdminStatsDto> GetStatsAsync(CancellationToken ct);
-}
-
 public class AdminStatsService : IAdminStatsService
 {
     private readonly IdentityStatsClient _identity;

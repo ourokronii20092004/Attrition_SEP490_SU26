@@ -5,8 +5,25 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Forum.Service.Repositories;
 
-public class ForumRepository(ForumDbContext context) : Repository<ForumPost>(context), IForumRepository
+public class ForumRepository : Repository<ForumPost>, IForumRepository
 {
+    private readonly ForumDbContext context;
+
+    public ForumRepository(ForumDbContext context) : base(context)
+    {
+        this.context = context;
+        Categories = new Repository<ForumCategory>(context);
+        Posts = this;
+        Reactions = new Repository<ForumReaction>(context);
+        Subscriptions = new Repository<ThreadSubscription>(context);
+        Reports = new Repository<PostReport>(context);
+    }
+
+    public IRepository<ForumCategory> Categories { get; }
+    public IRepository<ForumPost> Posts { get; }
+    public IRepository<ForumReaction> Reactions { get; }
+    public IRepository<ThreadSubscription> Subscriptions { get; }
+    public IRepository<PostReport> Reports { get; }
     public Task<List<ForumCategory>> GetCategoriesAsync() => context.ForumCategories.OrderBy(c => c.SortOrder).ToListAsync();
     public async Task<Dictionary<int, (int ThreadCount, DateTime? LatestActivity)>> GetCategoryStatsAsync()
     {
