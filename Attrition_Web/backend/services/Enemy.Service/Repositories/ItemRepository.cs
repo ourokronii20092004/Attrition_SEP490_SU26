@@ -18,7 +18,7 @@ public class ItemRepository : Repository<ItemEntity>, IItemRepository
 
     public async Task<List<ItemEntity>> GetAllWithModifiersAsync(string? category, string? search)
     {
-        var query = _context.Items.Include(i => i.Modifiers).AsQueryable();
+        var query = _context.Items.Include(i => i.Modifiers).Where(i => i.Category != "Skill");
 
         if (!string.IsNullOrWhiteSpace(category))
             query = query.Where(i => i.Category == category);
@@ -34,13 +34,13 @@ public class ItemRepository : Repository<ItemEntity>, IItemRepository
     }
 
     public async Task<List<ItemEntity>> GetAllForBundleAsync() =>
-        await _context.Items.Include(i => i.Modifiers).OrderBy(i => i.ItemId).ToListAsync();
+        await _context.Items.Include(i => i.Modifiers).Where(i => i.Category != "Skill").OrderBy(i => i.ItemId).ToListAsync();
 
     public async Task<(DateTime? maxUpdatedAt, int count)> GetVersionInfoAsync()
     {
-        var count = await _context.Items.CountAsync();
+        var count = await _context.Items.CountAsync(i => i.Category != "Skill");
         if (count == 0) return (null, 0);
-        var max = await _context.Items.MaxAsync(i => (DateTime?)i.UpdatedAt);
+        var max = await _context.Items.Where(i => i.Category != "Skill").MaxAsync(i => (DateTime?)i.UpdatedAt);
         return (max, count);
     }
 

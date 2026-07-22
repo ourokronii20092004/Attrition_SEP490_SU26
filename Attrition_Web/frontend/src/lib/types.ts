@@ -278,9 +278,6 @@ export interface SkillResponse {
   description: string | null;
   iconKey: string | null;
   rarity: string;
-  maxStack: number;
-  isKeyItem: boolean;
-  modifiers: ItemModifierDto[];
   element: string;
   manaCost: number;
   castTime: number;
@@ -441,6 +438,14 @@ export interface ForumThreadDto {
   isLocked: boolean;
   replyCount: number;
   createdAt: string;
+  content: string;
+  attachments: string[];
+  authorAvatar: string | null;
+  authorRole: "Admin" | "User";
+  updatedAt: string | null;
+  likeCount: number;
+  dislikeCount: number;
+  currentUserReaction: string | null;
 }
 
 export interface ForumPostDto {

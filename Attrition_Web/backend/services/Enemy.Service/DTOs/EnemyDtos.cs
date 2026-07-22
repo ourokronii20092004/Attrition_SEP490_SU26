@@ -90,5 +90,4 @@ public record GameConfigVersion(string Version, int Count);
 /// </summary>
 public record GameConfigVersions(
     string EnemyVersion, int EnemyCount,
-    string ItemVersion, int ItemCount,
-    string SkillVersion, int SkillCount);
+    string ItemVersion, int ItemCount);

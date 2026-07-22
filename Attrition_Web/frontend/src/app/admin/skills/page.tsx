@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -20,13 +20,11 @@ import { AdminPageHeader, AdminTable, AdminRow } from "@/components/admin/admin-
 import { AssetImageField } from "@/components/admin/asset-image-field";
 import type { SkillResponse, SkillUpdateRequest } from "@/lib/types";
 
-const STAT_TYPES = ["MaxHP", "MaxMana", "MaxStamina", "AD", "AP", "DEF", "RES", "MoveSpeed", "AttackSpeed"];
 const finite = z.coerce.number().finite();
 const nonNegative = finite.min(0);
 const schema = z.object({
   skillId: z.string(), name: z.string().min(1, "Required").max(100), description: z.string().max(2000),
-  iconKey: z.string().nullable(), rarity: z.string().min(1).max(50), maxStack: z.coerce.number().int().min(1).max(9999),
-  isKeyItem: z.boolean(), modifiers: z.array(z.object({ stat: z.string().min(1), amount: z.coerce.number().int().min(-100000).max(100000) })).max(50),
+  iconKey: z.string().nullable(), rarity: z.string().min(1).max(50),
   element: z.enum(["Fire", "Wood", "Earth", "Thunder", "Thrust"]), manaCost: z.coerce.number().int().min(0),
   castTime: nonNegative, cooldown: nonNegative, activeStartFrac: finite.min(0).max(1), activeEndFrac: finite.min(0).max(1),
   damageType: z.enum(["Physical", "Magic", "True"]), baseDamage: z.coerce.number().int().min(0), apScaling: nonNegative,
@@ -38,7 +36,7 @@ const schema = z.object({
 }).refine((v) => v.activeEndFrac >= v.activeStartFrac, { path: ["activeEndFrac"], message: "Must be after active start." });
 
 type Values = z.infer<typeof schema>;
-type NumberField = Exclude<keyof Values, "skillId" | "name" | "description" | "iconKey" | "rarity" | "isKeyItem" | "modifiers" | "element" | "damageType" | "delivery" | "hitShape" | "imageUrl">;
+type NumberField = Exclude<keyof Values, "skillId" | "name" | "description" | "iconKey" | "rarity" | "element" | "damageType" | "delivery" | "hitShape" | "imageUrl">;
 
 export default function AdminSkillsPage() {
   const { user } = useAuth();
@@ -71,8 +69,7 @@ export default function AdminSkillsPage() {
 function SkillForm({ initial, onDone, onCancel, onDirtyChange }: { initial: SkillResponse; onDone: () => void; onCancel: () => void; onDirtyChange: (dirty: boolean) => void }) {
   const [error, setError] = useState<string | null>(null);
   const defaults: Values = { ...initial, description: initial.description ?? "", element: initial.element as Values["element"], damageType: initial.damageType as Values["damageType"], delivery: initial.delivery as Values["delivery"], hitShape: initial.hitShape as Values["hitShape"] };
-  const { register, handleSubmit, watch, setValue, control, formState: { errors, isSubmitting, isDirty } } = useForm<Values>({ resolver: zodResolver(schema), defaultValues: defaults });
-  const { fields, append, remove } = useFieldArray({ control, name: "modifiers" });
+  const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting, isDirty } } = useForm<Values>({ resolver: zodResolver(schema), defaultValues: defaults });
   const mutation = useMutation({ mutationFn: (v: SkillUpdateRequest) => skillsApi.update(initial.skillId, v) });
   const delivery = watch("delivery");
   const hitShape = watch("hitShape");
@@ -88,16 +85,8 @@ function SkillForm({ initial, onDone, onCancel, onDirtyChange }: { initial: Skil
         <Input label="Name" error={errors.name?.message} {...register("name")} />
         <Input label="Icon key" {...register("iconKey")} />
         <Input label="Rarity" error={errors.rarity?.message} {...register("rarity")} />
-        {number("maxStack", "Max stack")}
-        <label className="flex items-end gap-2 pb-2 text-sm text-fg-muted"><input type="checkbox" {...register("isKeyItem")} /> Key item</label>
       </div>
       <label className="block text-sm font-medium text-fg-muted">Description<textarea rows={3} {...register("description")} className="mt-1 w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-fg outline-none focus:border-accent" /></label>
-      <div className="flex items-center justify-between"><h4 className="text-sm font-medium text-fg">Stat modifiers</h4><Button type="button" size="sm" variant="secondary" onClick={() => append({ stat: "AD", amount: 1 })}>Add modifier</Button></div>
-      {fields.map((field, index) => <div key={field.id} className="grid grid-cols-[1fr_1fr_auto] items-end gap-2">
-        <Select label="Stat" {...register(`modifiers.${index}.stat`)}>{STAT_TYPES.map((x) => <option key={x}>{x}</option>)}</Select>
-        <Input label="Amount" type="number" {...register(`modifiers.${index}.amount`)} />
-        <Button type="button" size="sm" variant="danger" onClick={() => remove(index)}>Remove</Button>
-      </div>)}
     </Section>
     <Section title="Cost & timing"><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       <Select label="Element" {...register("element")}><option>Fire</option><option>Wood</option><option>Earth</option><option>Thunder</option><option>Thrust</option></Select>

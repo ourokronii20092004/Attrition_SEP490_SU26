@@ -167,14 +167,46 @@ namespace Attrition.Editor
             foreach (var skill in scan.Skills)
                 if (imageUrls.TryGetValue($"skill:{skill.skillId}", out var url)) skill.imageUrl = url;
 
-            var payload = JsonConvert.SerializeObject(new { items = scan.Items, enemies = scan.Enemies, skills = scan.Skills });
+            var itemById = FindAssets<ItemSO>().ToDictionary(x => x.itemId, StringComparer.Ordinal);
+            var payload = JsonConvert.SerializeObject(new { items = scan.Items, enemies = scan.Enemies });
             using (var req = AuthorizedRequest($"{_baseUrl}/admin/game-data/import", "POST"))
             {
                 req.uploadHandler = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(payload));
                 req.SetRequestHeader("Content-Type", "application/json");
                 yield return req.SendWebRequest();
                 if (req.result != UnityWebRequest.Result.Success)
-                    _report = "Import failed; retry is safe.\n" + req.downloadHandler.text;
+                {
+                    _report = "Enemy/item import failed; retry is safe.\n" + req.downloadHandler.text;
+                    _busy = false; Repaint(); yield break;
+                }
+            }
+
+            var skills = scan.Skills.Select(skill =>
+            {
+                var item = itemById[skill.skillId];
+                return new SkillImport
+                {
+                    skillId = skill.skillId, name = item.displayName, description = item.description,
+                    iconKey = item.itemId, rarity = "Common", element = skill.element,
+                    manaCost = skill.manaCost, castTime = skill.castTime, cooldown = skill.cooldown,
+                    activeStartFrac = skill.activeStartFrac, activeEndFrac = skill.activeEndFrac,
+                    damageType = skill.damageType, baseDamage = skill.baseDamage, apScaling = skill.apScaling,
+                    knockbackForce = skill.knockbackForce, tickInterval = skill.tickInterval,
+                    sweetSpotRadius = skill.sweetSpotRadius, sweetSpotMultiplier = skill.sweetSpotMultiplier,
+                    delivery = skill.delivery, hitShape = skill.hitShape, range = skill.range, angle = skill.angle,
+                    rectWidth = skill.rectWidth, rectHeight = skill.rectHeight, offsetX = skill.offsetX,
+                    offsetY = skill.offsetY, projectileSpeed = skill.projectileSpeed,
+                    projectileCount = skill.projectileCount, spreadAngle = skill.spreadAngle,
+                    vfxLifetime = skill.vfxLifetime, imageUrl = skill.imageUrl
+                };
+            }).ToList();
+            using (var req = AuthorizedRequest($"{_baseUrl}/admin/skill-data/import", "POST"))
+            {
+                req.uploadHandler = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { skills })));
+                req.SetRequestHeader("Content-Type", "application/json");
+                yield return req.SendWebRequest();
+                if (req.result != UnityWebRequest.Result.Success)
+                    _report = "Skill import failed; enemy/item metadata is already safe and retrying will not duplicate it.\n" + req.downloadHandler.text;
                 else
                 {
                     File.WriteAllText(ManifestPath, JsonConvert.SerializeObject(scan.Manifest, Formatting.Indented));
@@ -230,9 +262,14 @@ namespace Attrition.Editor
                 var modifiers = new List<object>();
                 if (item is EquipmentSO eq && eq.modifiers != null) modifiers.AddRange(eq.modifiers.Select(m => (object)new { stat = m.stat.ToString(), amount = m.amount }));
                 if (item is AccessorySO acc && acc.modifiers != null) modifiers.AddRange(acc.modifiers.Select(m => (object)new { stat = m.stat.ToString(), amount = m.amount }));
+                if (item is SkillSO skill)
+                {
+                    AddImage(result, "skill", item.itemId, item.icon);
+                    AddSkill(result, skill);
+                    continue;
+                }
                 result.Items.Add(new ItemImport { itemId = item.itemId, name = item.displayName, category = item.Category.ToString(), description = item.description, maxStack = item.maxStack, isKeyItem = item.isKeyItem, modifiers = modifiers });
-                AddImage(result, item is SkillSO ? "skill" : "item", item.itemId, item.icon);
-                if (item is SkillSO skill) AddSkill(result, skill);
+                AddImage(result, "item", item.itemId, item.icon);
             }
 
             foreach (var enemy in enemies)
@@ -340,7 +377,7 @@ namespace Attrition.Editor
         [Serializable] private class ScanResult { public readonly List<string> Errors = new(); public readonly List<ItemImport> Items = new(); public readonly List<EnemyImport> Enemies = new(); public readonly List<SkillImport> Skills = new(); public readonly List<ImageUpload> Images = new(); public List<ManifestEntry> Manifest = new(); }
         [Serializable] private class ItemImport { public string itemId, name, category, description, imageUrl; public int maxStack; public bool isKeyItem; public List<object> modifiers; }
         [Serializable] private class EnemyImport { public string enemyId, name, tier, imageUrl; public int hp, ad, ap, def, res, poise, expReward; public float poiseRecoveryTime, patrolSpeed, chaseSpeed, attackSpeed; }
-        [Serializable] private class SkillImport { public string skillId, element, damageType, delivery, hitShape, imageUrl; public int manaCost, baseDamage, projectileCount; public float castTime, cooldown, activeStartFrac, activeEndFrac, apScaling, knockbackForce, tickInterval, sweetSpotRadius, sweetSpotMultiplier, range, angle, rectWidth, rectHeight, offsetX, offsetY, projectileSpeed, spreadAngle, vfxLifetime; }
+        [Serializable] private class SkillImport { public string skillId, name, description, iconKey, rarity, element, damageType, delivery, hitShape, imageUrl; public int manaCost, baseDamage, projectileCount; public float castTime, cooldown, activeStartFrac, activeEndFrac, apScaling, knockbackForce, tickInterval, sweetSpotRadius, sweetSpotMultiplier, range, angle, rectWidth, rectHeight, offsetX, offsetY, projectileSpeed, spreadAngle, vfxLifetime; }
         [Serializable] private class ManifestEntry { public int index; public string itemId; }
         private class ImageUpload { public string Type, Id, Path; public string Key => Type + ":" + Id; }
     }
