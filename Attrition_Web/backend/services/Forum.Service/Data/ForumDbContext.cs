@@ -3,12 +3,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Forum.Service.Data;
 
-public class ForumDbContext : DbContext
+public class ForumDbContext(DbContextOptions<ForumDbContext> options) : DbContext(options)
 {
-    public ForumDbContext(DbContextOptions<ForumDbContext> options) : base(options) { }
-
     public DbSet<ForumCategory> ForumCategories => Set<ForumCategory>();
-    public DbSet<ForumThread> ForumThreads => Set<ForumThread>();
     public DbSet<ForumPost> ForumPosts => Set<ForumPost>();
     public DbSet<ForumReaction> ForumReactions => Set<ForumReaction>();
     public DbSet<ThreadSubscription> ThreadSubscriptions => Set<ThreadSubscription>();
@@ -17,30 +14,16 @@ public class ForumDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("forum");
-
-        modelBuilder.Entity<ForumCategory>(e =>
-        {
-            e.HasKey(c => c.Id);
-            e.HasIndex(c => c.Slug).IsUnique();
-        });
-
-        modelBuilder.Entity<ForumThread>(e =>
-        {
-            e.HasKey(t => t.Id);
-            e.HasIndex(t => t.CategoryId);
-            // One comment thread per wiki article (QOLF-3b); the filtered unique index lets all
-            // normal (non-wiki) threads keep WikiArticleId null without colliding.
-            e.HasIndex(t => t.WikiArticleId).IsUnique().HasFilter("\"WikiArticleId\" IS NOT NULL");
-            e.Property(t => t.IsPinned).HasDefaultValue(false);
-            e.Property(t => t.IsLocked).HasDefaultValue(false);
-        });
-
+        modelBuilder.Entity<ForumCategory>(e => { e.HasKey(c => c.Id); e.HasIndex(c => c.Slug).IsUnique(); });
         modelBuilder.Entity<ForumPost>(e =>
         {
             e.HasKey(p => p.Id);
-            e.HasIndex(p => p.ThreadId);
+            e.HasIndex(p => p.RootPostId);
             e.HasIndex(p => p.ParentPostId);
-
+            e.HasIndex(p => p.CategoryId);
+            e.HasIndex(p => p.WikiArticleId).IsUnique().HasFilter("\"WikiArticleId\" IS NOT NULL");
+            e.Property(p => p.IsPinned).HasDefaultValue(false);
+            e.Property(p => p.IsLocked).HasDefaultValue(false);
             e.OwnsOne(p => p.Moderation, b =>
             {
                 b.Property(m => m.IsRemoved).HasColumnName("IsRemoved");
@@ -50,25 +33,8 @@ public class ForumDbContext : DbContext
                 b.Property(m => m.At).HasColumnName("RemovedAt");
             });
         });
-
-        modelBuilder.Entity<ForumReaction>(e =>
-        {
-            e.HasKey(r => r.Id);
-            // One reaction per user per post (like OR dislike, never both).
-            e.HasIndex(r => new { r.PostId, r.UserId }).IsUnique();
-        });
-
-        modelBuilder.Entity<ThreadSubscription>(e =>
-        {
-            e.HasKey(ts => ts.Id);
-            e.HasIndex(ts => new { ts.ThreadId, ts.UserId }).IsUnique();
-        });
-
-        modelBuilder.Entity<PostReport>(e =>
-        {
-            e.HasKey(pr => pr.Id);
-            e.HasIndex(pr => pr.Status);
-            e.Property(pr => pr.Status).HasDefaultValue(ReportStatus.Pending);
-        });
+        modelBuilder.Entity<ForumReaction>(e => { e.HasKey(r => r.Id); e.HasIndex(r => new { r.PostId, r.UserId }).IsUnique(); });
+        modelBuilder.Entity<ThreadSubscription>(e => { e.HasKey(s => s.Id); e.HasIndex(s => new { s.ThreadId, s.UserId }).IsUnique(); });
+        modelBuilder.Entity<PostReport>(e => { e.HasKey(r => r.Id); e.HasIndex(r => r.Status); e.Property(r => r.Status).HasDefaultValue(ReportStatus.Pending); });
     }
 }

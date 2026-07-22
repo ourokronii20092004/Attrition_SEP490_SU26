@@ -76,6 +76,9 @@ namespace Forum.Service.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int?>("CategoryId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("text");
@@ -86,35 +89,48 @@ namespace Forum.Service.Migrations
                     b.Property<int>("Depth")
                         .HasColumnType("integer");
 
-                    b.Property<bool>("IsRemoved")
-                        .HasColumnType("boolean");
+                    b.Property<bool>("IsLocked")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsPinned")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTime>("LastReplyAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid?>("ParentPostId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime?>("RemovedAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<int>("ReplyCount")
+                        .HasColumnType("integer");
 
-                    b.Property<string>("RemovedByName")
-                        .HasColumnType("text");
-
-                    b.Property<Guid?>("RemovedByUserId")
+                    b.Property<Guid?>("RootPostId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("RemovedReason")
+                    b.Property<string>("Title")
                         .HasColumnType("text");
-
-                    b.Property<Guid>("ThreadId")
-                        .HasColumnType("uuid");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("WikiArticleId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
 
                     b.HasIndex("ParentPostId");
 
-                    b.HasIndex("ThreadId");
+                    b.HasIndex("RootPostId");
+
+                    b.HasIndex("WikiArticleId")
+                        .IsUnique()
+                        .HasFilter("\"WikiArticleId\" IS NOT NULL");
 
                     b.ToTable("ForumPosts", "forum");
                 });
@@ -141,61 +157,6 @@ namespace Forum.Service.Migrations
                         .IsUnique();
 
                     b.ToTable("ForumReactions", "forum");
-                });
-
-            modelBuilder.Entity("Forum.Service.Models.ForumThread", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("AuthorAvatar")
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("AuthorId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("AuthorName")
-                        .HasColumnType("text");
-
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsLocked")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<bool>("IsPinned")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<DateTime>("LastReplyAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("ReplyCount")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid?>("WikiArticleId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CategoryId");
-
-                    b.HasIndex("WikiArticleId")
-                        .IsUnique()
-                        .HasFilter("\"WikiArticleId\" IS NOT NULL");
-
-                    b.ToTable("ForumThreads", "forum");
                 });
 
             modelBuilder.Entity("Forum.Service.Models.PostReport", b =>
@@ -254,6 +215,45 @@ namespace Forum.Service.Migrations
                         .IsUnique();
 
                     b.ToTable("ThreadSubscriptions", "forum");
+                });
+
+            modelBuilder.Entity("Forum.Service.Models.ForumPost", b =>
+                {
+                    b.OwnsOne("Forum.Service.Models.ModerationInfo", "Moderation", b1 =>
+                        {
+                            b1.Property<Guid>("ForumPostId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime?>("At")
+                                .HasColumnType("timestamp with time zone")
+                                .HasColumnName("RemovedAt");
+
+                            b1.Property<string>("ByName")
+                                .HasColumnType("text")
+                                .HasColumnName("RemovedByName");
+
+                            b1.Property<Guid?>("ByUserId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("RemovedByUserId");
+
+                            b1.Property<bool>("IsRemoved")
+                                .HasColumnType("boolean")
+                                .HasColumnName("IsRemoved");
+
+                            b1.Property<string>("Reason")
+                                .HasColumnType("text")
+                                .HasColumnName("RemovedReason");
+
+                            b1.HasKey("ForumPostId");
+
+                            b1.ToTable("ForumPosts", "forum");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ForumPostId");
+                        });
+
+                    b.Navigation("Moderation")
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

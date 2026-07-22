@@ -67,13 +67,6 @@ internal static class SeedData
         I("acc_shadow_dash", "Shadow Cloak", "Accessory", "Rare", 1),
         I("acc_stamina_charm", "Vigor Charm", "Accessory", "Rare", 1, ("MaxStamina", 20)),
 
-        // Skill.
-        I("skill_fire", "Fireball", "Skill", "Rare", 1),
-        I("skill_wood", "Thorn Lash", "Skill", "Rare", 1),
-        I("skill_earth", "Stone Spike", "Skill", "Rare", 1),
-        I("skill_thunder", "Chain Bolt", "Skill", "Rare", 1),
-        I("skill_thrust", "Phantom Thrust", "Skill", "Rare", 1),
-
         // Consumable (potions) → Material category, stackable.
         I("health_potion", "Health Potion", "Material", "Common", 99),
         I("mana_potion", "Mana Potion", "Material", "Common", 99),

@@ -13,6 +13,11 @@ export const qk = {
     detail: (id: string) => ["enemy", id] as const,
   },
 
+  skills: {
+    list: () => ["skills"] as const,
+    detail: (id: string) => ["skill", id] as const,
+  },
+
   wiki: {
     categories: () => ["wiki", "categories"] as const,
     articles: (filter?: unknown) =>

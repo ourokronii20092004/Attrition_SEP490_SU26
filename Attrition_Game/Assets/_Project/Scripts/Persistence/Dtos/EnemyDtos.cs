@@ -68,8 +68,6 @@ namespace Attrition.Persistence.Dtos
         public int EnemyCount;
         public string ItemVersion;
         public int ItemCount;
-        public string SkillVersion;
-        public int SkillCount;
     }
 
     /// <summary>Khớp Enemy.Service GameConfigBundle (GET /api/gameconfig) — cục config game tải 1 lần.</summary>
