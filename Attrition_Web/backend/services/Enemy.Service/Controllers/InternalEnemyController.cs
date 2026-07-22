@@ -45,8 +45,7 @@ public class InternalEnemyController : ControllerBase
     {
         if (!KeyValid()) return Unauthorized(ApiResponse.Fail("Valid service authentication is required."));
         var enemies = await _db.Enemies.CountAsync();
-        var items = await _db.Items.CountAsync(x => x.Category != "Skill");
-        var skills = await _db.Skills.CountAsync();
-        return Ok(ApiResponse<object>.Ok(new { enemies, items, skills }));
+        var items = await _db.Items.CountAsync();
+        return Ok(ApiResponse<object>.Ok(new { enemies, items }));
     }
 }

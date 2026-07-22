@@ -10,7 +10,7 @@ public interface IForumService
 {
     Task<List<ForumCategoryDto>> GetCategoriesAsync();
     Task<PaginatedResponse<ForumThreadListDto>> GetThreadsAsync(string? categorySlug, string? search, int page, int pageSize, Guid? authorId = null);
-    Task<ForumThreadDto?> GetThreadAsync(Guid threadId);
+    Task<ForumThreadDto?> GetThreadAsync(Guid threadId, Guid? currentUserId = null);
     // QOLF-3b: resolve (creating if needed) the comment thread for a wiki article.
     Task<ApiResponse<ForumThreadDto>> GetOrCreateWikiThreadAsync(Guid articleId, string articleTitle);
     Task<PaginatedResponse<ForumPostDto>> GetPostsAsync(Guid threadId, int page, int pageSize, Guid? currentUserId);
@@ -18,7 +18,7 @@ public interface IForumService
     Task<PaginatedResponse<UserReplyDto>> GetUserRepliesAsync(Guid userId, int page, int pageSize);
 
     Task<ApiResponse<Guid>> CreateThreadAsync(CreateThreadRequest request, Author author);
-    Task<ApiResponse> CreatePostAsync(Guid threadId, CreatePostRequest request, Author author);
+    Task<ApiResponse<ForumPostDto>> CreatePostAsync(Guid threadId, CreatePostRequest request, Author author);
     Task<ApiResponse> UpdatePostAsync(Guid postId, UpdatePostRequest request, Guid userId);
     Task<ApiResponse> DeletePostAsync(Guid postId, Guid userId, bool isAdmin);
     Task<ApiResponse> ToggleReactionAsync(Guid postId, Guid userId, ReactRequest request);

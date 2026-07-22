@@ -10,7 +10,7 @@ public class ItemEntity
     public string ItemId { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
 
-    // Equipment | Accessory | Skill | Material — khớp ItemCategory trong game.
+    // Equipment | Accessory | Material — skills are owned by Skill.Service.
     public string Category { get; set; } = "Material";
 
     public string Rarity { get; set; } = "Common";

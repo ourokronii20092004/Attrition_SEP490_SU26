@@ -28,7 +28,6 @@ builder.Services.AddScoped<IEnemyRepository, EnemyRepository>();
 builder.Services.AddScoped<IEnemyService, EnemyService>();
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<IItemService, ItemService>();
-builder.Services.AddScoped<ISkillService, SkillService>();
 builder.Services.AddScoped<IGameDataImportService, GameDataImportService>();
 builder.Services.AddAttritionCache(builder.Configuration, "enemy");
 

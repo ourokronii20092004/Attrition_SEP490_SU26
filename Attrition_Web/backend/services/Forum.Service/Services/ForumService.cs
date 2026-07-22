@@ -93,7 +93,7 @@ public class ForumService : IForumService
 
     public async Task<PaginatedResponse<ForumThreadListDto>> GetThreadsAsync(string? categorySlug, string? search, int page, int pageSize, Guid? authorId = null)
     {
-        Expression<Func<ForumThread, bool>>? filter = null;
+        Expression<Func<ForumPost, bool>>? filter = null;
         int? categoryId = null;
 
         if (!string.IsNullOrEmpty(categorySlug))
@@ -108,9 +108,11 @@ public class ForumService : IForumService
         // Compose the optional filters (category, search, author) into one predicate. Wiki-comment
         // threads (WikiArticleId != null) are excluded — they're reached via the article (QOLF-3b).
         filter = t =>
+            t.RootPostId == null &&
+            !t.Moderation.IsRemoved &&
             t.WikiArticleId == null &&
             (categoryId == null || t.CategoryId == categoryId.Value) &&
-            (s == null || t.Title.ToLower().Contains(s)) &&
+            (s == null || (t.Title != null && t.Title.ToLower().Contains(s))) &&
             (authorId == null || t.AuthorId == authorId.Value);
 
         var (items, total) = await _threadRepo.GetPagedAsync(page, pageSize, filter,
@@ -118,7 +120,7 @@ public class ForumService : IForumService
 
         // Avatars aren't stored on the post; resolve them fresh from Identity (best-effort).
         var avatars = await _identity.ResolveUsersAsync(items.Select(t => t.AuthorId).ToList());
-        var dtos = items.Select(t => new ForumThreadListDto(t.Id, t.Title, t.AuthorId,
+        var dtos = items.Select(t => new ForumThreadListDto(t.Id, t.Title ?? "Discussion", t.AuthorId,
             t.AuthorName ?? "Unknown",
             avatars.GetValueOrDefault(t.AuthorId)?.AvatarUrl ?? t.AuthorAvatar,
             t.IsPinned, t.IsLocked, t.ReplyCount, t.CreatedAt, t.LastReplyAt)).ToList();
@@ -126,15 +128,20 @@ public class ForumService : IForumService
         return new PaginatedResponse<ForumThreadListDto>(dtos, total, page, pageSize);
     }
 
-    public async Task<ForumThreadDto?> GetThreadAsync(Guid threadId)
+    public async Task<ForumThreadDto?> GetThreadAsync(Guid threadId, Guid? currentUserId = null)
     {
         var thread = await _threadRepo.GetByIdAsync(threadId);
-        if (thread == null) return null;
+        if (thread == null || thread.RootPostId != null || thread.Moderation.IsRemoved) return null;
 
-        var category = await _threadRepo.GetCategoryByIdAsync(thread.CategoryId);
-        return new ForumThreadDto(thread.Id, thread.Title, category?.Slug ?? string.Empty,
+        var category = thread.CategoryId is { } categoryId ? await _threadRepo.GetCategoryByIdAsync(categoryId) : null;
+        var reactions = await _reactionRepo.ListAsync(r => r.PostId == thread.Id);
+        return new ForumThreadDto(thread.Id, thread.Title ?? "Discussion", category?.Slug ?? string.Empty,
             thread.AuthorId, thread.AuthorName ?? "Unknown", thread.IsPinned, thread.IsLocked,
-            thread.ReplyCount, thread.CreatedAt);
+            thread.ReplyCount, thread.CreatedAt, thread.Content, ParseAttachments(thread.Attachments),
+            thread.AuthorAvatar, thread.AuthorRole, thread.UpdatedAt,
+            reactions.Count(r => r.ReactionType == ReactionType.Like),
+            reactions.Count(r => r.ReactionType == ReactionType.Dislike),
+            currentUserId.HasValue ? reactions.FirstOrDefault(r => r.UserId == currentUserId.Value)?.ReactionType : null);
     }
 
     public async Task<ApiResponse<ForumThreadDto>> GetOrCreateWikiThreadAsync(Guid articleId, string articleTitle)
@@ -144,10 +151,11 @@ public class ForumService : IForumService
         var existing = await _threadRepo.GetByWikiArticleIdAsync(articleId);
         if (existing == null)
         {
-            var thread = new ForumThread
+            var thread = new ForumPost
             {
-                CategoryId = 0,
+                CategoryId = null,
                 Title = articleTitle,
+                Content = string.Empty,
                 AuthorId = Guid.Empty,
                 AuthorName = "Wiki",
                 WikiArticleId = articleId
@@ -160,15 +168,16 @@ public class ForumService : IForumService
         }
         if (existing == null) return ApiResponse<ForumThreadDto>.Fail("Could not open the comment thread.");
 
-        return ApiResponse<ForumThreadDto>.Ok(new ForumThreadDto(existing.Id, existing.Title, string.Empty,
+        return ApiResponse<ForumThreadDto>.Ok(new ForumThreadDto(existing.Id, existing.Title ?? "Article comments", string.Empty,
             existing.AuthorId, existing.AuthorName ?? "Wiki", existing.IsPinned, existing.IsLocked,
-            existing.ReplyCount, existing.CreatedAt));
+            existing.ReplyCount, existing.CreatedAt, existing.Content, ParseAttachments(existing.Attachments),
+            existing.AuthorAvatar, existing.AuthorRole, existing.UpdatedAt, 0, 0, null));
     }
 
     public async Task<PaginatedResponse<ForumPostDto>> GetPostsAsync(Guid threadId, int page, int pageSize, Guid? currentUserId)
     {
         var (posts, total) = await _postRepo.GetPagedAsync(page, pageSize,
-            p => p.ThreadId == threadId && !p.Moderation.IsRemoved, q => q.OrderBy(p => p.CreatedAt));
+            p => p.RootPostId == threadId && !p.Moderation.IsRemoved, q => q.OrderBy(p => p.CreatedAt));
 
         var postIds = posts.Select(p => p.Id).ToList();
         var reactions = await _reactionRepo.ListAsync(r => postIds.Contains(r.PostId));
@@ -178,7 +187,7 @@ public class ForumService : IForumService
         var items = posts.Select(p =>
         {
             var postReactions = reactions.Where(r => r.PostId == p.Id).ToList();
-            return new ForumPostDto(p.Id, p.ThreadId, p.ParentPostId, p.Depth, p.AuthorId, p.AuthorName ?? "Unknown",
+            return new ForumPostDto(p.Id, threadId, p.ParentPostId, p.Depth, p.AuthorId, p.AuthorName ?? "Unknown",
                 avatars.GetValueOrDefault(p.AuthorId)?.AvatarUrl ?? p.AuthorAvatar, p.AuthorRole, p.Content, ParseAttachments(p.Attachments), p.CreatedAt, p.UpdatedAt,
                 postReactions.Count(r => r.ReactionType == ReactionType.Like),
                 postReactions.Count(r => r.ReactionType == ReactionType.Dislike),
@@ -209,18 +218,10 @@ public class ForumService : IForumService
         var category = await _threadRepo.GetCategoryByIdAsync(request.CategoryId);
         if (category == null) return ApiResponse<Guid>.Fail("Category not found.");
 
-        var thread = new ForumThread
+        var thread = new ForumPost
         {
             CategoryId = request.CategoryId,
             Title = request.Title,
-            AuthorId = author.Id,
-            AuthorName = author.Name,
-            AuthorAvatar = author.Avatar
-        };
-
-        var firstPost = new ForumPost
-        {
-            ThreadId = thread.Id,
             AuthorId = author.Id,
             AuthorName = author.Name,
             AuthorAvatar = author.Avatar,
@@ -230,16 +231,17 @@ public class ForumService : IForumService
 
         var subscription = new ThreadSubscription { ThreadId = thread.Id, UserId = author.Id };
 
-        await _threadRepo.CreateThreadWithFirstPostAsync(thread, firstPost, subscription);
+        await _threadRepo.CreateRootAsync(thread, subscription);
         await InvalidateCategoriesAsync();
         return ApiResponse<Guid>.Ok(thread.Id);
     }
 
-    public async Task<ApiResponse> CreatePostAsync(Guid threadId, CreatePostRequest request, Author author)
+    public async Task<ApiResponse<ForumPostDto>> CreatePostAsync(Guid threadId, CreatePostRequest request, Author author)
     {
         var thread = await _threadRepo.GetByIdAsync(threadId);
-        if (thread == null) return ApiResponse.Fail("Thread not found.");
-        if (thread.IsLocked) return ApiResponse.Fail("Thread is locked.");
+        if (thread == null || thread.RootPostId != null || thread.Moderation.IsRemoved)
+            return ApiResponse<ForumPostDto>.Fail("Thread not found.");
+        if (thread.IsLocked) return ApiResponse<ForumPostDto>.Fail("Thread is locked.");
 
         // Resolve nesting: a reply to a parent post inherits depth+1 (capped so the UI indent
         // stays sane — deeper replies still thread, just stop indenting). Parent must be in this thread.
@@ -250,8 +252,8 @@ public class ForumService : IForumService
         if (request.ParentPostId is { } pid)
         {
             var parent = await _postRepo.GetByIdAsync(pid);
-            if (parent == null || parent.ThreadId != threadId)
-                return ApiResponse.Fail("The post you're replying to no longer exists.");
+            if (parent == null || (parent.Id != threadId && parent.RootPostId != threadId))
+                return ApiResponse<ForumPostDto>.Fail("The post you're replying to no longer exists.");
             parentPostId = pid;
             depth = Math.Min(parent.Depth + 1, MaxDepth);
             parentAuthorId = parent.AuthorId;
@@ -259,7 +261,7 @@ public class ForumService : IForumService
 
         var newPost = new ForumPost
         {
-            ThreadId = threadId,
+            RootPostId = threadId,
             ParentPostId = parentPostId,
             Depth = depth,
             AuthorId = author.Id,
@@ -299,7 +301,10 @@ public class ForumService : IForumService
             await _notify.NotifyUsernameAsync(username, "mention",
                 $"{author.Name} mentioned you in a post", link, author.Name, default);
 
-        return ApiResponse.Ok();
+        return ApiResponse<ForumPostDto>.Ok(new ForumPostDto(newPost.Id, threadId, newPost.ParentPostId,
+            newPost.Depth, newPost.AuthorId, newPost.AuthorName ?? "Unknown", newPost.AuthorAvatar,
+            newPost.AuthorRole, newPost.Content, ParseAttachments(newPost.Attachments), newPost.CreatedAt,
+            newPost.UpdatedAt, 0, 0, null));
     }
 
     public async Task<ApiResponse> UpdatePostAsync(Guid postId, UpdatePostRequest request, Guid userId)
@@ -464,9 +469,9 @@ public class ForumService : IForumService
 
     public async Task<PaginatedResponse<AdminForumThreadDto>> ListThreadsForModerationAsync(int page, int pageSize)
     {
-        var (threads, total) = await _threadRepo.GetPagedAsync(page, pageSize, null,
+        var (threads, total) = await _threadRepo.GetPagedAsync(page, pageSize, p => p.RootPostId == null,
             q => q.OrderByDescending(t => t.LastReplyAt));
-        var items = threads.Select(t => new AdminForumThreadDto(t.Id, t.Title, t.IsPinned, t.IsLocked,
+        var items = threads.Select(t => new AdminForumThreadDto(t.Id, t.Title ?? "Discussion", t.IsPinned, t.IsLocked,
             t.ReplyCount, t.CreatedAt, t.LastReplyAt, t.AuthorName)).ToList();
         return new PaginatedResponse<AdminForumThreadDto>(items, total, page, pageSize);
     }
@@ -482,7 +487,7 @@ public class ForumService : IForumService
         };
         var (posts, total) = await _postRepo.GetPagedAsync(page, pageSize, filter,
             q => q.OrderByDescending(p => p.CreatedAt));
-        var items = posts.Select(p => new AdminForumPostDto(p.Id, p.ThreadId, p.Content, p.CreatedAt, p.UpdatedAt,
+        var items = posts.Select(p => new AdminForumPostDto(p.Id, p.RootPostId ?? p.Id, p.Content, p.CreatedAt, p.UpdatedAt,
             p.Moderation.IsRemoved, p.Moderation.Reason, p.Moderation.At, p.AuthorName, p.Moderation.ByName)).ToList();
         return new PaginatedResponse<AdminForumPostDto>(items, total, page, pageSize);
     }
@@ -573,7 +578,7 @@ public class ForumService : IForumService
         if (category == null) return ApiResponse.Fail("Category not found.");
 
         // Refuse to delete a category that still has threads — deleting it would orphan them.
-        var threadCount = await _threadRepo.CountAsync(t => t.CategoryId == id);
+        var threadCount = await _threadRepo.CountAsync(t => t.RootPostId == null && t.CategoryId == id);
         if (threadCount > 0)
             return ApiResponse.Fail("This category still has threads. Move or delete them first.");
 
@@ -590,16 +595,16 @@ public class ForumService : IForumService
         {
             var firstPost = await _threadRepo.GetFirstPostAsync(t.Id);
             var postId = firstPost?.PostId ?? t.Id;
-            var body = firstPost?.Content ?? t.Title;
+            var body = firstPost?.Content ?? t.Title ?? string.Empty;
             var snippet = body.Length > 120 ? body[..120] : body;
-            results.Add(new ForumPostSearchDto(postId, t.Id, t.Title, snippet));
+            results.Add(new ForumPostSearchDto(postId, t.Id, t.Title ?? "Discussion", snippet));
         }
         return results;
     }
 
     public async Task<(int Threads, int Posts, int RemovedPosts)> GetStatsAsync()
     {
-        var threads = await _threadRepo.CountAsync();
+        var threads = await _threadRepo.CountAsync(p => p.RootPostId == null);
         var posts = await _postRepo.CountAsync();
         var removed = await _postRepo.CountAsync(p => p.Moderation.IsRemoved);
         return (threads, posts, removed);
