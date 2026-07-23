@@ -32,7 +32,6 @@ namespace Attrition.Persistence
         public int deaths;
         public int avatarColorIndex; // 0=purple, 1=blue, etc.
 
-        // ─── Tiến trình thật (dùng khi load lại) ───
         public int currentExp;
         public int currentHP;
         public int currentMana;
@@ -51,7 +50,6 @@ namespace Attrition.Persistence
         public string originMode;         // "Solo" | "Coop" — chặn dùng chéo chế độ
         public QuestProgressEntry[] quests; // tiến trình quest NPC (khớp lại qua questId)
 
-        // ─── World Map (fog of war + fast-travel) ───
         public List<string> discoveredCheckpoints = new List<string>(); // id (DisplayName) các checkpoint ĐÃ REST
         public List<string> fogVisited = new List<string>();            // "scene:cellX:cellY" các ô fog đã xua
 

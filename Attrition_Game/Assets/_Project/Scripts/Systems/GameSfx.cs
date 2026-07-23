@@ -97,6 +97,7 @@ namespace Attrition.Systems
         {
             if (_instance != null && _instance != this) { Destroy(gameObject); return; }
             _instance = this;
+            transform.SetParent(null, true);
             DontDestroyOnLoad(gameObject);
 
             _source = GetComponent<AudioSource>();
@@ -141,7 +142,6 @@ namespace Attrition.Systems
             _source.PlayOneShot(clip, vol);
         }
 
-        // ─── API giữ nguyên tên để PlayerCombat/PlayerController gọi như cũ ───
         public void PlayAttack() => Play(attack);
         public void PlayCharge() => Play(charge);
         public void PlayHit() => Play(hit);

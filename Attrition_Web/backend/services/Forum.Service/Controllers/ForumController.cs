@@ -28,6 +28,17 @@ public class ForumController : ControllerBase
     private IActionResult? RequireVerified() =>
         _user.IsEmailVerified ? null : StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Fail(VerifyMessage));
 
+    private IActionResult MapWriteFailure<T>(ApiResponse<T> result)
+    {
+        var err = result.Error ?? "";
+        if (err.Contains("not found", StringComparison.OrdinalIgnoreCase)) return NotFound(result);
+        if (err.Contains("author", StringComparison.OrdinalIgnoreCase)
+            || err.Contains("unauthorized", StringComparison.OrdinalIgnoreCase)
+            || err.Contains("permission", StringComparison.OrdinalIgnoreCase))
+            return StatusCode(StatusCodes.Status403Forbidden, result);
+        return BadRequest(result);
+    }
+
     // Author/ownership failures should be 403 and missing rows 404 — not a blanket 400.
     private IActionResult MapWriteFailure(ApiResponse result)
     {
@@ -47,19 +58,25 @@ public class ForumController : ControllerBase
     [HttpGet("threads")]
     public async Task<IActionResult> GetThreads([FromQuery] string? category, [FromQuery] string? search,
         [FromQuery] Guid? authorId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
-        => Ok(ApiResponse<PaginatedResponse<ForumThreadListDto>>.Ok(
+    {
+        page = Math.Max(1, page); pageSize = Math.Clamp(pageSize, 1, 100);
+        return Ok(ApiResponse<PaginatedResponse<ForumThreadListDto>>.Ok(
             await _forum.GetThreadsAsync(category, search, page, pageSize, authorId)));
+    }
 
     // A user's forum replies (public — powers the profile "Replies" tab). Anonymous reads are fine.
     [HttpGet("users/{userId:guid}/replies")]
     public async Task<IActionResult> GetUserReplies(Guid userId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
-        => Ok(ApiResponse<PaginatedResponse<UserReplyDto>>.Ok(
+    {
+        page = Math.Max(1, page); pageSize = Math.Clamp(pageSize, 1, 100);
+        return Ok(ApiResponse<PaginatedResponse<UserReplyDto>>.Ok(
             await _forum.GetUserRepliesAsync(userId, page, pageSize)));
+    }
 
     [HttpGet("threads/{id:guid}")]
     public async Task<IActionResult> GetThread(Guid id)
     {
-        var result = await _forum.GetThreadAsync(id);
+        var result = await _forum.GetThreadAsync(id, _user.UserId);
         return result != null
             ? Ok(ApiResponse<ForumThreadDto>.Ok(result))
             : NotFound(ApiResponse.Fail("Thread not found."));
@@ -78,8 +95,9 @@ public class ForumController : ControllerBase
     public async Task<IActionResult> GetPosts(Guid id, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
         // A missing thread should 404, not return an empty 200 (which reads as "thread exists, no posts").
-        if (await _forum.GetThreadAsync(id) is null)
+        if (await _forum.GetThreadAsync(id, _user.UserId) is null)
             return NotFound(ApiResponse.Fail("Thread not found."));
+        page = Math.Max(1, page); pageSize = Math.Clamp(pageSize, 1, 100);
         var result = await _forum.GetPostsAsync(id, page, pageSize, _user.UserId);
         return Ok(ApiResponse<PaginatedResponse<ForumPostDto>>.Ok(result));
     }
@@ -167,7 +185,6 @@ public class ForumController : ControllerBase
         return result.Success ? Ok(result) : MapWriteFailure(result);
     }
 
-    // ─── Inline moderation (Admin) ───
     [Authorize(Roles = Roles.Admin)]
     [HttpPut("threads/{id:guid}/pin")]
     public async Task<IActionResult> TogglePin(Guid id)
@@ -192,7 +209,6 @@ public class ForumController : ControllerBase
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
-    // ─── Category management (Admin) ───
     [Authorize(Roles = Roles.Admin)]
     [HttpPost("categories")]
     public async Task<IActionResult> CreateCategory(ForumCategoryRequest request)

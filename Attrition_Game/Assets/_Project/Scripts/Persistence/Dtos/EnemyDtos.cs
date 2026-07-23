@@ -33,6 +33,11 @@ namespace Attrition.Persistence.Dtos
         public int ExpReward;
         public int GoldReward;
         public string Lore;
+        public string ImageUrl;
+        public int Poise;
+        public float PoiseRecoveryTime;
+        public float PatrolSpeed;
+        public float ChaseSpeed;
         public List<LootEntryDto> LootTable;
     }
 

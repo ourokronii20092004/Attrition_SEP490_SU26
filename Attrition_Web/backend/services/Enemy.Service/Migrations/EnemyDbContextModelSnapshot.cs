@@ -40,6 +40,9 @@ namespace Enemy.Service.Migrations
                         .HasColumnType("real")
                         .HasDefaultValue(1f);
 
+                    b.Property<float>("ChaseSpeed")
+                        .HasColumnType("real");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -58,6 +61,9 @@ namespace Enemy.Service.Migrations
                     b.Property<string>("ImageUrl")
                         .HasColumnType("text");
 
+                    b.Property<DateTime?>("ImportedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("IsRanged")
                         .HasColumnType("boolean");
 
@@ -69,6 +75,15 @@ namespace Enemy.Service.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<float>("PatrolSpeed")
+                        .HasColumnType("real");
+
+                    b.Property<int>("Poise")
+                        .HasColumnType("integer");
+
+                    b.Property<float>("PoiseRecoveryTime")
+                        .HasColumnType("real");
+
                     b.Property<int>("Res")
                         .HasColumnType("integer");
 
@@ -79,6 +94,9 @@ namespace Enemy.Service.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<string>("UnityBaselineJson")
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -114,6 +132,9 @@ namespace Enemy.Service.Migrations
                     b.Property<string>("ImageUrl")
                         .HasColumnType("text");
 
+                    b.Property<DateTime?>("ImportedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("IsKeyItem")
                         .HasColumnType("boolean");
 
@@ -129,6 +150,9 @@ namespace Enemy.Service.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<string>("UnityBaselineJson")
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");

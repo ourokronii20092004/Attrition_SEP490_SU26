@@ -21,9 +21,6 @@ namespace Attrition.UI
         public static DialogueUI Instance { get; private set; }
         public static bool IsOpen => Instance != null && Instance._isDialogueOpen;
 
-        // ═══════════════════════════════════════════
-        //  SETTINGS
-        // ═══════════════════════════════════════════
 
         [Header("──── TYPEWRITER ────")]
         [Tooltip("Số ký tự hiện mỗi giây (typewriter speed).")]
@@ -37,23 +34,17 @@ namespace Attrition.UI
         [Tooltip("Tần suất refresh quest tracker (giây).")]
         [SerializeField] private float trackerRefreshInterval = 0.5f;
 
-        // ═══════════════════════════════════════════
-        //  UI ELEMENTS
-        // ═══════════════════════════════════════════
 
         private VisualElement _root;
 
-        // Dialogue
         private VisualElement _dialogueOverlay, _dialoguePanel, _questInfo, _dialogueButtons;
         private Label _speakerName, _dialogueText, _questTitle, _questDesc, _keyHint;
         private Button _btnAccept, _btnDecline, _btnContinue;
 
-        // Reward
         private VisualElement _rewardOverlay, _rewardPanel, _rewardItems;
         private Label _rewardTitle, _rewardExp;
         private Button _btnRewardClose;
 
-        // Quest Tracker
         private VisualElement _questTracker, _trackerList;
 
         // Interact prompt ("[F] Talk")
@@ -61,9 +52,6 @@ namespace Attrition.UI
         private Label _interactKey, _interactLabel;
         private bool _promptShown;
 
-        // ═══════════════════════════════════════════
-        //  STATE
-        // ═══════════════════════════════════════════
 
         private bool _isDialogueOpen;
         private NetworkNPC _currentNPC;
@@ -89,9 +77,6 @@ namespace Attrition.UI
             public int amount;
         }
 
-        // ═══════════════════════════════════════════
-        //  LIFECYCLE
-        // ═══════════════════════════════════════════
 
         private void Awake()
         {
@@ -135,13 +120,11 @@ namespace Attrition.UI
             _interactKey = _root.Q<Label>("interact-key");
             _interactLabel = _root.Q<Label>("interact-label");
 
-            // Button callbacks
             _btnAccept.clicked += OnAcceptClicked;
             _btnDecline.clicked += OnDeclineClicked;
             _btnContinue.clicked += AdvanceLine;
             _btnRewardClose.clicked += CloseRewardPopup;
 
-            // Reward events
             RewardEvents.OnItemReceived += OnItemReceived;
             RewardEvents.OnExpReceived += OnExpReceived;
             RewardEvents.OnRewardBatchComplete += OnRewardBatchComplete;
@@ -170,16 +153,13 @@ namespace Attrition.UI
             if (Instance == this) Instance = null;
         }
 
-        // ═══════════════════════════════════════════
         //  UPDATE — F key + typewriter + tracker
-        // ═══════════════════════════════════════════
 
         private void Update()
         {
             KeyCode interactKey = Attrition.Persistence.GameSettings.GetKey(
                 Attrition.Persistence.GameSettings.InputAction.Interact);
 
-            // ── Interact key: mở hội thoại khi gần NPC ──
             if (!_isDialogueOpen && !_isRewardShowing && Input.GetKeyDown(interactKey))
             {
                 TryOpenFromNearbyNPC();
@@ -188,7 +168,6 @@ namespace Attrition.UI
                 return;
             }
 
-            // ── Interact/Space: advance dialogue khi đang mở ──
             if (_isDialogueOpen
                 && (Input.GetKeyDown(interactKey) || Input.GetKeyDown(KeyCode.Space)))
             {
@@ -198,10 +177,8 @@ namespace Attrition.UI
                     AdvanceLine();
             }
 
-            // ── Interact prompt: hiện "[F] Talk" khi đứng gần NPC, ẩn khi rời ──
             UpdateInteractPrompt(interactKey);
 
-            // ── Typewriter ──
             if (_isTyping)
             {
                 _typeTimer += Time.unscaledDeltaTime;
@@ -215,7 +192,6 @@ namespace Attrition.UI
                 }
             }
 
-            // ── Quest tracker refresh ──
             _trackerTimer += Time.unscaledDeltaTime;
             if (_trackerTimer >= trackerRefreshInterval)
             {
@@ -224,9 +200,7 @@ namespace Attrition.UI
             }
         }
 
-        // ═══════════════════════════════════════════
         //  DIALOGUE — Open / Advance / Close
-        // ═══════════════════════════════════════════
 
         /// <summary>Tìm NPC gần (qua PlayerController.CurrentNPC) và mở hội thoại.</summary>
         private void TryOpenFromNearbyNPC()
@@ -327,7 +301,6 @@ namespace Attrition.UI
             Attrition.Persistence.DialogueState.IsActive = true;
             SetCursorFree(true);
 
-            // Show overlay
             _dialogueOverlay.RemoveFromClassList("hidden");
             // Delay 1 frame để CSS transition chạy từ trạng thái ẩn → hiện
             _dialoguePanel.schedule.Execute(() => _dialoguePanel.AddToClassList("visible")).ExecuteLater(20);
@@ -352,7 +325,6 @@ namespace Attrition.UI
             Attrition.Persistence.DialogueState.IsActive = true;
             SetCursorFree(true);
 
-            // Show overlay
             _dialogueOverlay.RemoveFromClassList("hidden");
             _dialoguePanel.schedule.Execute(() => _dialoguePanel.AddToClassList("visible")).ExecuteLater(20);
 
@@ -481,9 +453,6 @@ namespace Attrition.UI
             _currentDialogue = null;
         }
 
-        // ═══════════════════════════════════════════
-        //  BUTTON CALLBACKS
-        // ═══════════════════════════════════════════
 
         private void OnAcceptClicked()
         {
@@ -500,9 +469,6 @@ namespace Attrition.UI
             CloseDialogue();
         }
 
-        // ═══════════════════════════════════════════
-        //  HELPERS
-        // ═══════════════════════════════════════════
 
         private void HideAllButtons()
         {
@@ -555,9 +521,6 @@ namespace Attrition.UI
             }
         }
 
-        // ═══════════════════════════════════════════
-        //  REWARD POPUP
-        // ═══════════════════════════════════════════
 
         private void OnItemReceived(string itemId, int amount)
         {
@@ -580,12 +543,10 @@ namespace Attrition.UI
             _isRewardShowing = true;
             SetCursorFree(true);
 
-            // Clear old items
             _rewardItems.Clear();
             _rewardExp.AddToClassList("hidden");
             _rewardExp.RemoveFromClassList("visible");
 
-            // Show overlay
             _rewardOverlay.RemoveFromClassList("hidden");
             _rewardOverlay.schedule.Execute(() => _rewardOverlay.AddToClassList("visible")).ExecuteLater(20);
             _rewardPanel.schedule.Execute(() => _rewardPanel.AddToClassList("visible")).ExecuteLater(50);
@@ -638,7 +599,7 @@ namespace Attrition.UI
             if (db != null)
             {
                 var itemSO = db.GetItemByStringId(itemId);
-                if (itemSO != null) displayName = itemSO.displayName;
+                if (itemSO != null) displayName = Attrition.Persistence.ItemRuntimeConfig.Name(itemSO);
             }
             nameLabel.text = displayName;
             row.Add(nameLabel);
@@ -669,9 +630,7 @@ namespace Attrition.UI
             }).ExecuteLater(400);
         }
 
-        // ═══════════════════════════════════════════
         //  QUEST TRACKER HUD (right side)
-        // ═══════════════════════════════════════════
 
         private void RefreshQuestTracker()
         {

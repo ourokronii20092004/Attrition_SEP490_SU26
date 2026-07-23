@@ -17,6 +17,10 @@ public class AssetsDbContext : DbContext
         {
             e.HasKey(a => a.Id);
             e.HasIndex(a => a.AssetType);
+            e.HasIndex(a => new { a.SourceType, a.SourceId })
+                .IsUnique()
+                .HasFilter("\"SourceType\" IN ('unity-item', 'unity-skill', 'unity-enemy') AND \"SourceId\" IS NOT NULL");
+            e.Property(a => a.ContentHash).HasMaxLength(64);
             // No HasOne<User>() — uploader ref is plain Guid + denormalized name.
         });
     }

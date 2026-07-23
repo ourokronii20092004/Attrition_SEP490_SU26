@@ -13,6 +13,11 @@ export const qk = {
     detail: (id: string) => ["enemy", id] as const,
   },
 
+  skills: {
+    list: () => ["skills"] as const,
+    detail: (id: string) => ["skill", id] as const,
+  },
+
   wiki: {
     categories: () => ["wiki", "categories"] as const,
     articles: (filter?: unknown) =>
@@ -65,6 +70,7 @@ export const qk = {
     userDetail: (id: string) => ["admin", "user", id] as const,
     enemies: () => ["admin", "enemies"] as const,
     items: () => ["admin", "items"] as const,
+    skills: () => ["admin", "skills"] as const,
     assets: (filter?: unknown) =>
       filter === undefined ? (["admin", "assets"] as const) : (["admin", "assets", filter] as const),
     characters: (page?: number) =>

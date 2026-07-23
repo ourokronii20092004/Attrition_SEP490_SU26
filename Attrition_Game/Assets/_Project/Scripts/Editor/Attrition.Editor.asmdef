@@ -5,7 +5,8 @@
         "Attrition.Core",
         "Attrition.Data",
         "Attrition.Gameplay",
-        "Fusion.Unity"
+        "Fusion.Unity",
+        "Fusion.Unity.Editor"
     ],
     "includePlatforms": [
         "Editor"

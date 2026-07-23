@@ -126,6 +126,17 @@ services:
       ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=${POSTGRES_DB:-attrition};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
     depends_on:
       postgres: { condition: service_healthy }
+      skill-service: { condition: service_healthy }
+
+  skill-service:
+    <<: [ *service-defaults, *svc-healthcheck ]
+    build: { context: ./backend, dockerfile: services/Skill.Service/Dockerfile }
+    container_name: attrition-skill
+    environment:
+      <<: [ *jwt-env, *redis-env ]
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=${POSTGRES_DB:-attrition};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
+    depends_on:
+      postgres: { condition: service_healthy }
 
   wiki-service:
     <<: [ *service-defaults, *svc-healthcheck ]
@@ -206,11 +217,12 @@ services:
       <<: *jwt-env
       Services__Identity: "http://identity-service:8080/"
       Services__Enemy: "http://enemy-service:8080/"
+      Services__Skill: "http://skill-service:8080/"
       Services__Wiki: "http://wiki-service:8080/"
       Services__Forum: "http://forum-service:8080/"
       Services__Assets: "http://assets-service:8080/"
       Services__Music: "http://music-service:8080/"
-    depends_on: [ identity-service, enemy-service, wiki-service, forum-service, assets-service, music-service ]
+    depends_on: [ identity-service, enemy-service, skill-service, wiki-service, forum-service, assets-service, music-service ]
 
   # ─────────────── Gateway (YARP) ───────────────
   gateway:
@@ -224,6 +236,7 @@ services:
     depends_on:
       - identity-service
       - enemy-service
+      - skill-service
       - wiki-service
       - forum-service
       - assets-service

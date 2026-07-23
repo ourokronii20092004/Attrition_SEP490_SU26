@@ -110,8 +110,8 @@ namespace Attrition.UI
             var item = _db.GetItem(slot.ItemIndex);
             if (item == null) return;
             SetVisible(_root.Q<VisualElement>("inv-detail"), true);
-            SetText("inv-detail-name", item.displayName);
-            SetText("inv-detail-desc", item.description);
+            SetText("inv-detail-name", Attrition.Persistence.ItemRuntimeConfig.Name(item));
+            SetText("inv-detail-desc", Attrition.Persistence.ItemRuntimeConfig.Description(item));
 
             var mods = _root.Q<VisualElement>("inv-detail-mods");
             if (mods != null)
@@ -128,7 +128,7 @@ namespace Attrition.UI
 
             // Key item không drop được (BR-45)
             var dropBtn = _root.Q<Button>("inv-detail-drop");
-            if (dropBtn != null) dropBtn.SetEnabled(!item.isKeyItem);
+            if (dropBtn != null) dropBtn.SetEnabled(!Attrition.Persistence.ItemRuntimeConfig.IsKeyItem(item));
         }
 
         private void AppendMods(VisualElement parent, ItemSO item)
@@ -138,8 +138,9 @@ namespace Attrition.UI
             else if (item is AccessorySO acc && acc.kind == AccessoryKind.DamageEffect) arr = acc.modifiers;
             else if (item is SkillSO sk)
             {
-                parent.Add(MakeModLabel($"Mana {sk.manaCost}  ·  Cast {sk.castTime:0.0}s"));
-                parent.Add(MakeModLabel($"Base DMG {sk.baseDamage}  ({sk.element})"));
+                var runtime = Attrition.Persistence.SkillRuntimeConfig.From(sk);
+                parent.Add(MakeModLabel($"Mana {runtime.manaCost}  ·  Cast {runtime.castTime:0.0}s"));
+                parent.Add(MakeModLabel($"Base DMG {runtime.baseDamage}  ({runtime.element})"));
                 return;
             }
             if (arr == null) return;

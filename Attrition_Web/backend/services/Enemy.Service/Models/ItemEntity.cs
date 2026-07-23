@@ -10,7 +10,7 @@ public class ItemEntity
     public string ItemId { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
 
-    // Equipment | Accessory | Skill | Material — khớp ItemCategory trong game.
+    // Equipment | Accessory | Material — skills are owned by Skill.Service.
     public string Category { get; set; } = "Material";
 
     public string Rarity { get; set; } = "Common";
@@ -27,6 +27,10 @@ public class ItemEntity
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+    // Baseline enables three-way merge without overwriting admin edits.
+    public string? UnityBaselineJson { get; set; }
+    public DateTime? ImportedAt { get; set; }
 
     // Cộng chỉ số (StatType + amount) — owned, giống loot của enemy. Game áp khi build item runtime.
     public List<ItemModifierEntry> Modifiers { get; set; } = new();

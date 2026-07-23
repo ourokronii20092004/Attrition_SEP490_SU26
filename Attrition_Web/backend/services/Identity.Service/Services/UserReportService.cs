@@ -1,25 +1,15 @@
 using BuildingBlocks.Contracts;
-using BuildingBlocks.Persistence;
 using Identity.Service.DTOs;
 using Identity.Service.Models;
-using Identity.Service.Repositories;
 
 namespace Identity.Service.Services;
 
-public interface IUserReportService
-{
-    Task<ApiResponse> ReportUserAsync(Guid reportedUserId, string reason, Guid reporterId, string? reporterName);
-    Task<PaginatedResponse<AdminUserReportDto>> ListReportsAsync(string status, int page, int pageSize);
-    Task<ApiResponse> ResolveAsync(Guid reportId, bool banUser, string? note, string? adminName);
-    Task<ApiResponse> DismissAsync(Guid reportId, string? adminName);
-}
-
 public class UserReportService : IUserReportService
 {
-    private readonly IRepository<UserReport> _reports;
+    private readonly IUserReportRepository _reports;
     private readonly IUserRepository _users;
 
-    public UserReportService(IRepository<UserReport> reports, IUserRepository users)
+    public UserReportService(IUserReportRepository reports, IUserRepository users)
     {
         _reports = reports;
         _users = users;

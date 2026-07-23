@@ -5,6 +5,7 @@ const EXPLORE = [
   { href: "/wiki", label: "Wiki" },
   { href: "/bestiary", label: "Bestiary" },
   { href: "/items", label: "Items" },
+  { href: "/skills", label: "Skills" },
   { href: "/world", label: "World" },
 ];
 

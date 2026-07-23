@@ -2,7 +2,6 @@ import {
   BookOpen, Skull, MessagesSquare, Users, Gem, Music, Images, ScrollText, Globe, type LucideIcon,
 } from "lucide-react";
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Search configuration — a single registry that drives the search modal's scope
 // chips, prefix parsing, and the empty-state browse links. Adding a new search
 // area later means appending ONE entry here; the modal needs no other change.
@@ -12,7 +11,6 @@ import {
 //   - `aliases`: typed-prefix forms ("enemy:" / "bestiary:") that map to this scope.
 //   - `pages`: static/client-only routes (Items, Music, Story, …) that the API
 //     search doesn't cover — matched locally by label so they're instantly findable.
-// ─────────────────────────────────────────────────────────────────────────────
 
 export type ResultKind = "wiki" | "enemy" | "forum" | "user";
 

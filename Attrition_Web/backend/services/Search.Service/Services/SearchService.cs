@@ -5,12 +5,6 @@ using Search.Service.DTOs;
 
 namespace Search.Service.Services;
 
-public interface ISearchService
-{
-    Task<GlobalSearchResponse> GlobalSearchAsync(string query, int limit, bool includeUsers, CancellationToken ct);
-    Task<List<SearchSuggestionDto>> SuggestAsync(string query, int limit, bool includeUsers, CancellationToken ct);
-}
-
 public class SearchService : ISearchService
 {
     private readonly WikiSearchClient _wiki;

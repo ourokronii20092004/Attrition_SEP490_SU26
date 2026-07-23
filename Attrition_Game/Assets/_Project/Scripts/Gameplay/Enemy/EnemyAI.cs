@@ -3,11 +3,9 @@ using Fusion;
 using UnityEngine;
 using Attrition.Gameplay.Enemy;
 
-// ═══════════════════════════════════════════════════════════════
 // ENEMY STATE — Finite State Machine
 // Chỉ MỘT state active tại mỗi thời điểm.
 // Hướng nhìn chỉ thay đổi ở state được phép (Patrol, Chase).
-// ═══════════════════════════════════════════════════════════════
 public enum EnemyState : byte
 {
     Patrol,             // Tuần tra ngẫu nhiên quanh spawn point
@@ -26,9 +24,6 @@ public enum EnemyState : byte
 
 public class EnemyAI : NetworkBehaviour
 {
-    // ═══════════════════════════════════════════════════════════════
-    // INSPECTOR FIELDS
-    // ═══════════════════════════════════════════════════════════════
 
     [Header("---- REFS ----")]
     [SerializeField] protected EnemyAnimation animationComp;
@@ -112,9 +107,7 @@ public class EnemyAI : NetworkBehaviour
     [Tooltip("Dead zone: không đổi hướng nhìn khi khoảng cách X với mục tiêu nhỏ hơn giá trị này (tránh giật/nhấp nháy)")]
     public float facingDeadZone = 0.3f;
 
-    // ═══════════════════════════════════════════════════════════════
     // NETWORKED STATE — Single source of truth
-    // ═══════════════════════════════════════════════════════════════
 
     [HideInInspector][Networked] public EnemyState CurrentState { get; set; }
     [HideInInspector][Networked] public float NetSpeed { get; set; }
@@ -131,9 +124,7 @@ public class EnemyAI : NetworkBehaviour
     [Networked] private TickTimer jumpCooldownTimer { get; set; }
     [Networked] private TickTimer telegraphTimer { get; set; }
 
-    // ═══════════════════════════════════════════════════════════════
     // BACKWARD COMPATIBILITY — Cho MimicSleepTrigger và các script cũ
-    // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
     /// Property tương thích ngược. MimicSleepTrigger dùng property này.
@@ -150,9 +141,7 @@ public class EnemyAI : NetworkBehaviour
         CurrentState == EnemyState.Summoning ||
         CurrentState == EnemyState.RetreatingUp;
 
-    // ═══════════════════════════════════════════════════════════════
     // LOCAL STATE (không cần đồng bộ mạng)
-    // ═══════════════════════════════════════════════════════════════
 
     protected Vector2 startPosition;
     private Vector2 sleepPosition;
@@ -177,9 +166,6 @@ public class EnemyAI : NetworkBehaviour
     private bool localSleepHandled;
     private bool localWakeHandled;
 
-    // ═══════════════════════════════════════════════════════════════
-    // LIFECYCLE
-    // ═══════════════════════════════════════════════════════════════
 
     public override void Spawned()
     {
@@ -226,9 +212,7 @@ public class EnemyAI : NetworkBehaviour
         playerTarget = null;
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // RENDER — Animation & Facing (chạy trên TẤT CẢ clients)
-    // ═══════════════════════════════════════════════════════════════
 
     public override void Render()
     {
@@ -240,7 +224,6 @@ public class EnemyAI : NetworkBehaviour
             return;
         }
 
-        // ─── Sleep/WakeUp animation ───
         if (enableSleep)
         {
             bool isSleepingNow = CurrentState == EnemyState.Sleeping;
@@ -265,7 +248,6 @@ public class EnemyAI : NetworkBehaviour
             animationComp.UpdateAirState(rb.linearVelocity.y, IsGrounded());
         }
 
-        // ─── Facing direction ───
         // State-based lock: Attacking, Recovery, WakingUp, UsingSkill, Summoning → dùng AttackLockedFacingDir
         // Elite override: Healing, Teleporting → giữ nguyên NetFacingDir (không thay đổi)
         // Tất cả state khác → dùng NetFacingDir
@@ -282,20 +264,16 @@ public class EnemyAI : NetworkBehaviour
         animationComp.SetTelegraph(CurrentState == EnemyState.Telegraphing);
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // AI LOGIC — State Machine (chỉ chạy trên Host/StateAuthority)
-    // ═══════════════════════════════════════════════════════════════
 
     public virtual void RunAILogic()
     {
-        // ─── KNOCKBACK OVERRIDE (ưu tiên cao nhất) ───
         if (controller.IsKnockbackActive)
         {
             HandleKnockbackOverride();
             return;
         }
 
-        // ─── ELITE SKILL OVERRIDES ───
         if (eliteSkills != null && eliteSkills.IsHealing)
         {
             rb.linearVelocity = isFlying ? Vector2.zero : new Vector2(0f, rb.linearVelocity.y);
@@ -346,7 +324,6 @@ public class EnemyAI : NetworkBehaviour
             return;
         }
 
-        // ─── STATE MACHINE ───
         switch (CurrentState)
         {
             case EnemyState.Sleeping:         StateSleeping();         break;
@@ -363,11 +340,7 @@ public class EnemyAI : NetworkBehaviour
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // STATE HANDLERS
-    // ═══════════════════════════════════════════════════════════════
 
-    // ─────────────────────── KNOCKBACK ───────────────────────
 
     private void HandleKnockbackOverride()
     {
@@ -400,7 +373,6 @@ public class EnemyAI : NetworkBehaviour
         NetSpeed = Mathf.Abs(rb.linearVelocity.x);
     }
 
-    // ─────────────────────── SLEEPING ───────────────────────
 
     private void StateSleeping()
     {
@@ -416,7 +388,6 @@ public class EnemyAI : NetworkBehaviour
         }
     }
 
-    // ─────────────────────── WAKING UP ───────────────────────
 
     private void StateWakingUp()
     {
@@ -450,7 +421,6 @@ public class EnemyAI : NetworkBehaviour
         noPlayerTimer = 0f;
     }
 
-    // ─────────────────────── RETURNING TO SLEEP ───────────────────────
 
     private void StateReturningToSleep()
     {
@@ -519,7 +489,6 @@ public class EnemyAI : NetworkBehaviour
         NetSpeed = 0f;
     }
 
-    // ─────────────────────── PATROL ───────────────────────
 
     private void StatePatrol()
     {
@@ -571,7 +540,6 @@ public class EnemyAI : NetworkBehaviour
         }
     }
 
-    // ─────────────────────── CHASE ───────────────────────
 
     private void StateChase()
     {
@@ -596,7 +564,6 @@ public class EnemyAI : NetworkBehaviour
         float dist = Vector2.Distance(transform.position, currentTarget);
         float xDiff = currentTarget.x - transform.position.x;
 
-        // ─── ANTI-JITTER: Quái mặt đất bỏ đuổi nếu player KHÔNG THỂ TỚI ĐƯỢC ───
         if (!isFlying && playerTarget != null)
         {
             float yDiff = Mathf.Abs(playerTarget.position.y - transform.position.y);
@@ -721,7 +688,6 @@ public class EnemyAI : NetworkBehaviour
         }
     }
 
-    // ─────────────────────── ATTACKING ───────────────────────
 
     private void StateAttacking()
     {
@@ -737,7 +703,6 @@ public class EnemyAI : NetworkBehaviour
             return;
         }
 
-        // ─── Đang tấn công: xử lý movement theo kiểu attack ───
         // KHÔNG thay đổi hướng nhìn trong state này!
 
         if (combatComp.IsLeapAttacking)
@@ -767,7 +732,6 @@ public class EnemyAI : NetworkBehaviour
         }
     }
 
-    // ─────────────────────── RECOVERY ───────────────────────
 
     private void StateRecovery()
     {
@@ -800,7 +764,6 @@ public class EnemyAI : NetworkBehaviour
         noPlayerTimer = 0f;
     }
 
-    // ─────────────────────── RETREATING UP (Fly Melee) ───────────────────────
 
     private void StateRetreatingUp()
     {
@@ -844,7 +807,6 @@ public class EnemyAI : NetworkBehaviour
         NetSpeed = flyMeleeRetreatSpeed;
     }
 
-    // ─────────────────────── JUMPING / EVADE ───────────────────────
 
     private void ExecuteEvadeJump(float xDiff)
     {
@@ -917,9 +879,6 @@ public class EnemyAI : NetworkBehaviour
         if (animationComp != null) animationComp.PlayJump();
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // ATTACK EXECUTION
-    // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
     /// COMMIT hướng nhìn và bắt đầu tấn công.
@@ -965,7 +924,6 @@ public class EnemyAI : NetworkBehaviour
         }
     }
 
-    // ─────────────────────── TELEGRAPHING ───────────────────────
 
     private void StateTelegraphing()
     {
@@ -1007,9 +965,6 @@ public class EnemyAI : NetworkBehaviour
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // MOVEMENT HELPERS
-    // ═══════════════════════════════════════════════════════════════
 
     /// <summary>Hệ số tốc độ do hiệu ứng LÀM CHẬM (accessory) áp lên quái. 1 = bình thường.</summary>
     private float SlowFactor() => controller != null ? controller.SlowMultiplier : 1f;
@@ -1084,9 +1039,7 @@ public class EnemyAI : NetworkBehaviour
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // FACING DIRECTION — Chỉ thay đổi khi STATE cho phép
-    // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
     /// Cập nhật hướng nhìn với dead zone chống jitter.
@@ -1132,9 +1085,6 @@ public class EnemyAI : NetworkBehaviour
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // PLAYER DETECTION
-    // ═══════════════════════════════════════════════════════════════
 
     protected void FindPlayer()
     {
@@ -1198,9 +1148,6 @@ public class EnemyAI : NetworkBehaviour
         return false;
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // OBSTACLE DETECTION
-    // ═══════════════════════════════════════════════════════════════
 
     private bool IsPathBlocked(float dirX)
     {
@@ -1220,9 +1167,7 @@ public class EnemyAI : NetworkBehaviour
         return Random.Range(minX, maxX);
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // PUBLIC API — Cho các script khác gọi
-    // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
     /// Gọi bởi MimicSleepTrigger khi Player chạm collider.
@@ -1256,9 +1201,6 @@ public class EnemyAI : NetworkBehaviour
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // SLEEP POSITION
-    // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
     /// Tìm vị trí ngủ, LẤY SPAWN LÀM CHUẨN:
@@ -1284,9 +1226,7 @@ public class EnemyAI : NetworkBehaviour
         return startPosition;
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // GIZMOS — Debug visualization
-    // ═══════════════════════════════════════════════════════════════
 
     void OnDrawGizmosSelected()
     {

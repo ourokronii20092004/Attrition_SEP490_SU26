@@ -1,6 +1,5 @@
 namespace Identity.Service.DTOs;
 
-// ─── User views ───
 public record UserDto(
     Guid Id,
     string Username,
@@ -53,7 +52,6 @@ public record AdminUserDetailDto(
     DateTime? LockoutEnd
 );
 
-// ─── Public profile (anonymous, no PII) ───
 public record PublicProfileDto(
     Guid Id,
     string Username,
@@ -67,19 +65,15 @@ public record PublicProfileDto(
     int ContributionCount
 );
 
-// ─── Internal lookup (used by Search/Admin aggregators) ───
 public record UserSummaryDto(Guid Id, string Username, string? DisplayName, string? AvatarUrl, string Role);
 
-// ─── Session check (polled by the game client to enforce bans mid-session) ───
 // TokensValidAfter lets callers detect a revoked session: a token issued before this instant
 // (compared against its "sat" claim) has been invalidated by a password change / forced logout.
 public record SessionStatusDto(Guid UserId, string Username, string Role, bool IsBanned, DateTime? TokensValidAfter = null);
 
-// ─── Admin actions ───
 public record ChangeRoleRequest(string Role);
 public record AdminResetPasswordRequest(string NewPassword);
 
-// ─── User reports (QOLF-9) ───
 public record ReportUserRequest(string Reason);
 public record AdminUserReportDto(
     Guid Id, Guid ReportedUserId, string ReportedUserName, string ReporterName,

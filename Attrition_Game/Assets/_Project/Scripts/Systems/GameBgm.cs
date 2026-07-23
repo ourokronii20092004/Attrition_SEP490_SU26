@@ -42,12 +42,7 @@ namespace Attrition.Systems
         private AudioSource _source;
         private float _baseVolume = 1f;
 
-        /// <summary>
-        /// Hệ số âm lượng Music được đồng bộ từ UI/Settings.
-        /// (Tránh gọi trực tiếp GameSettings để ngăn Circular Dependency tương tự GameSfx)
-        /// </summary>
         public static float MusicVolume = 1f;
-        public static float MasterVolume = 1f;
 
         private void Awake()
         {
@@ -67,7 +62,7 @@ namespace Attrition.Systems
             // Cập nhật âm lượng thời gian thực khi người chơi kéo thanh Slider
             if (_source != null && _source.isPlaying)
             {
-                _source.volume = _baseVolume * MusicVolume * MasterVolume;
+                _source.volume = _baseVolume * MusicVolume;
             }
         }
 

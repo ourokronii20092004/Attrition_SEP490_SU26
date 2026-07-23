@@ -26,6 +26,15 @@ public class EnemyEntity
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
+    // Baseline enables three-way merge without overwriting admin edits.
+    public string? UnityBaselineJson { get; set; }
+    public DateTime? ImportedAt { get; set; }
+
+    public int Poise { get; set; }
+    public float PoiseRecoveryTime { get; set; } = 3f;
+    public float PatrolSpeed { get; set; } = 2f;
+    public float ChaseSpeed { get; set; } = 5f;
+
     // Denormalized loot — owned by this enemy, no FK to any items catalog.
     public List<EnemyLootEntry> LootTable { get; set; } = new();
 }

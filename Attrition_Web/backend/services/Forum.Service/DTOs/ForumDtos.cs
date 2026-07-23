@@ -6,7 +6,9 @@ public record ForumThreadListDto(Guid Id, string Title, Guid AuthorId, string Au
     bool IsPinned, bool IsLocked, int ReplyCount, DateTime CreatedAt, DateTime LastReplyAt);
 
 public record ForumThreadDto(Guid Id, string Title, string CategorySlug, Guid AuthorId, string AuthorName,
-    bool IsPinned, bool IsLocked, int ReplyCount, DateTime CreatedAt);
+    bool IsPinned, bool IsLocked, int ReplyCount, DateTime CreatedAt, string Content,
+    IReadOnlyList<string> Attachments, string? AuthorAvatar, string AuthorRole, DateTime? UpdatedAt,
+    int LikeCount, int DislikeCount, string? CurrentUserReaction);
 
 public record ForumPostDto(Guid Id, Guid ThreadId, Guid? ParentPostId, int Depth, Guid AuthorId, string AuthorName, string? AuthorAvatar,
     string AuthorRole, string Content, IReadOnlyList<string> Attachments, DateTime CreatedAt, DateTime? UpdatedAt,

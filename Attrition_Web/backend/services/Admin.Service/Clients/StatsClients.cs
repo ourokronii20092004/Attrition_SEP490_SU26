@@ -48,6 +48,8 @@ public sealed class ForumStatsClient : StatsClient
 { public ForumStatsClient(HttpClient http, IConfiguration config, ILogger<ForumStatsClient> logger) : base(http, config, logger) { } }
 public sealed class EnemyStatsClient : StatsClient
 { public EnemyStatsClient(HttpClient http, IConfiguration config, ILogger<EnemyStatsClient> logger) : base(http, config, logger) { } }
+public sealed class SkillStatsClient : StatsClient
+{ public SkillStatsClient(HttpClient http, IConfiguration config, ILogger<SkillStatsClient> logger) : base(http, config, logger) { } }
 public sealed class AssetsStatsClient : StatsClient
 { public AssetsStatsClient(HttpClient http, IConfiguration config, ILogger<AssetsStatsClient> logger) : base(http, config, logger) { } }
 public sealed class MusicStatsClient : StatsClient

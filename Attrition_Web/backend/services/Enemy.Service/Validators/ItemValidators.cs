@@ -16,15 +16,14 @@ internal static class ItemFieldRules
         System.Linq.Expressions.Expression<Func<T, List<ItemModifierDto>?>> modifiers)
     {
         v.RuleFor(name).NotEmpty().MaximumLength(100);
-        v.RuleFor(category).NotEmpty().MaximumLength(50);
+        v.RuleFor(category).NotEmpty().Must(x => GameDataRules.Categories.Contains(x) && x != "Skill")
+            .WithMessage("Skills must be managed through the Skills endpoint.");
         v.RuleFor(rarity).NotEmpty().MaximumLength(50);
         v.RuleFor(description).MaximumLength(2000);
         v.RuleFor(maxStack).InclusiveBetween(1, 9999)
             .WithMessage("Max stack must be between 1 and 9999.");
         v.RuleFor(modifiers).Must(m => m == null || m.Count <= 50)
             .WithMessage("An item cannot have more than 50 modifiers.");
-        // Per-element modifier validation is added by each concrete validator below — RuleForEach
-        // can't infer the element type through this generic helper.
     }
 }
 
@@ -32,7 +31,8 @@ public class ItemCreateRequestValidator : AbstractValidator<ItemCreateRequest>
 {
     public ItemCreateRequestValidator()
     {
-        RuleFor(x => x.ItemId).NotEmpty().MaximumLength(64);
+        RuleFor(x => x.ItemId).NotEmpty().Must(GameDataRules.IsStableId);
+        RuleFor(x => x.ImageUrl).Must(GameDataRules.IsOwnedImage);
         ItemFieldRules.ApplyTo(this,
             x => x.Name, x => x.Category, x => x.Rarity, x => x.Description, x => x.MaxStack, x => x.Modifiers);
         RuleForEach(x => x.Modifiers).SetValidator(new ItemModifierDtoValidator());
@@ -43,6 +43,7 @@ public class ItemUpdateRequestValidator : AbstractValidator<ItemUpdateRequest>
 {
     public ItemUpdateRequestValidator()
     {
+        RuleFor(x => x.ImageUrl).Must(GameDataRules.IsOwnedImage);
         ItemFieldRules.ApplyTo(this,
             x => x.Name, x => x.Category, x => x.Rarity, x => x.Description, x => x.MaxStack, x => x.Modifiers);
         RuleForEach(x => x.Modifiers).SetValidator(new ItemModifierDtoValidator());

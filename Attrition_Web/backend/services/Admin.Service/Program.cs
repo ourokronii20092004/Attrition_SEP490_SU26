@@ -20,6 +20,7 @@ AddStatsClient<IdentityStatsClient>("Identity");
 AddStatsClient<WikiStatsClient>("Wiki");
 AddStatsClient<ForumStatsClient>("Forum");
 AddStatsClient<EnemyStatsClient>("Enemy");
+AddStatsClient<SkillStatsClient>("Skill");
 AddStatsClient<AssetsStatsClient>("Assets");
 AddStatsClient<MusicStatsClient>("Music");
 
