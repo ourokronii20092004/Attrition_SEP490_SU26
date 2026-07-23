@@ -21,7 +21,6 @@ namespace Attrition.UI
         private UIDocument _uiDocument;
         private VisualElement _root;
 
-        // ===== Screens =====
         private VisualElement _mainMenuScreen;
         private VisualElement _saveSelectionScreen;
         private VisualElement _loginScreen;
@@ -29,7 +28,6 @@ namespace Attrition.UI
         private VisualElement _settingsScreen;
         private VisualElement _sessionSelectionScreen;
 
-        // ===== State =====
         private string _currentScreen = "main-menu";
         private string _previousScreen = "main-menu";
         private int _selectedSaveSlot = 0;
@@ -43,21 +41,21 @@ namespace Attrition.UI
         private SaveSlotData[] _saveSlots;
         private string[] _characterIds = new string[SaveManager.SlotCount];
 
-        // ===== Session Selection =====
         private System.Collections.Generic.List<APIManager.SessionSummaryDto> _cachedSessions;
         private int _selectedSessionIndex = -1; // -1 = "New Journey"
         private string _sessionIdToDelete;
 
-        // ===== Particles =====
         private List<Button> _menuButtons = new List<Button>();
         private Dictionary<Button, Coroutine> _particleCoroutines = new Dictionary<Button, Coroutine>();
 
-        // ===== Settings =====
         private string _activeSettingsTab = "gameplay";
         private readonly string[] _settingsTabNames = { "gameplay", "graphics", "audio", "controls" };
 
         private void OnEnable()
         {
+            UnityEngine.Cursor.lockState = CursorLockMode.None;
+            UnityEngine.Cursor.visible = true;
+
             _uiDocument = GetComponent<UIDocument>();
             _root = _uiDocument.rootVisualElement;
             if (_root == null) return;
@@ -193,9 +191,6 @@ namespace Attrition.UI
             }
         }
 
-        // =================================================================
-        // MAIN MENU
-        // =================================================================
         private void SetupMainMenu()
         {
             var buttons = _mainMenuScreen?.Query<Button>(className: "menu-button").ToList();
@@ -254,9 +249,6 @@ namespace Attrition.UI
             }
         }
 
-        // =================================================================
-        // SAVE SELECTION (REAL DATA)
-        // =================================================================
         private void LoadSavesFromDisk()
         {
             if (_saveSlots == null) _saveSlots = new SaveSlotData[SaveManager.SlotCount];
@@ -585,7 +577,6 @@ namespace Attrition.UI
                         // SOLO cục bộ: lưu ý định + load thẳng scene gameplay (không cần login/mạng).
                         GameLaunch.Mode = LaunchMode.Solo;
                         GameLaunch.SelectedSlot = _selectedSaveSlot;
-                        Debug.Log($"[MainMenu] Bắt đầu SOLO, slot {_selectedSaveSlot} → scene {GameLaunch.GameplayScene}");
                         StartCoroutine(LoadGameplaySceneAsync(GameLaunch.GameplayScene));
                     }
                 });
@@ -640,9 +631,7 @@ namespace Attrition.UI
             op.allowSceneActivation = true;
         }
 
-        // =================================================================
         // NAME ENTRY (tạo nhân vật mới — BR-02/03/04)
-        // =================================================================
         private void SetupNameEntry()
         {
             var confirm = _root.Q<Button>("btn-name-confirm");
@@ -816,7 +805,7 @@ namespace Attrition.UI
         private VisualElement _slotWarningToast;
 
         /// <summary>Hiện cảnh báo nổi (toast) khi chọn slot sai chế độ. Tự dựng runtime, tự ẩn sau 4s.</summary>
-        private void ShowSlotWarning(string message)
+        private void ShowSlotWarning(string message, bool success = false)
         {
             if (_root == null) return;
 
@@ -831,7 +820,9 @@ namespace Attrition.UI
                 _slotWarningToast.style.paddingRight = 22;
                 _slotWarningToast.style.paddingTop = 12;
                 _slotWarningToast.style.paddingBottom = 12;
-                _slotWarningToast.style.backgroundColor = new Color(0.12f, 0.04f, 0.04f, 0.96f);
+                _slotWarningToast.style.backgroundColor = success
+                    ? new Color(0.04f, 0.16f, 0.08f, 0.96f)
+                    : new Color(0.12f, 0.04f, 0.04f, 0.96f);
                 _slotWarningToast.style.borderTopLeftRadius = 6;
                 _slotWarningToast.style.borderTopRightRadius = 6;
                 _slotWarningToast.style.borderBottomLeftRadius = 6;
@@ -848,7 +839,14 @@ namespace Attrition.UI
                 _root.Add(_slotWarningToast);
             }
 
-            _slotWarningToast.Q<Label>("slot-warning-label").text = message;
+            var toastColor = success ? new Color(0.18f, 0.65f, 0.32f) : new Color(0.78f, 0.25f, 0.25f);
+            _slotWarningToast.style.backgroundColor = success
+                ? new Color(0.04f, 0.16f, 0.08f, 0.96f)
+                : new Color(0.12f, 0.04f, 0.04f, 0.96f);
+            SetBorder(_slotWarningToast, toastColor, 1);
+            var toastLabel = _slotWarningToast.Q<Label>("slot-warning-label");
+            toastLabel.style.color = success ? new Color(0.82f, 0.96f, 0.84f) : new Color(0.96f, 0.82f, 0.78f);
+            toastLabel.text = message;
             _slotWarningToast.style.display = DisplayStyle.Flex;
             _slotWarningToast.BringToFront();
 
@@ -896,9 +894,6 @@ namespace Attrition.UI
             if (title != null) title.text = titleText;
         }
 
-        // =================================================================
-        // LOGIN SCREEN (REAL API)
-        // =================================================================
         private void SetupLogin()
         {
             var loginError = _root.Q<VisualElement>("login-error");
@@ -933,7 +928,6 @@ namespace Attrition.UI
 
                     if (APIManager.Instance == null)
                     {
-                        Debug.Log("APIManager not found in scene. Creating one automatically.");
                         var apiObj = new GameObject("APIManager");
                         apiObj.AddComponent<APIManager>();
                     }
@@ -1038,9 +1032,6 @@ namespace Attrition.UI
             }));
         }
 
-        // =================================================================
-        // HOST OR JOIN SCREEN
-        // =================================================================
         private void SetupHostJoin()
         {
             var hostBtn = _root.Q<Button>("btn-host-game");
@@ -1207,7 +1198,6 @@ namespace Attrition.UI
                 if (session != null)
                 {
                     GameLaunch.SessionId = session.id;
-                    Debug.Log($"[Session] Host room sẵn sàng: id={session.id} code={session.roomCode}");
                 }
                 else
                 {
@@ -1217,9 +1207,6 @@ namespace Attrition.UI
             }));
         }
 
-        // =================================================================
-        // SESSION SELECTION (HOST ONLY)
-        // =================================================================
 
         private void SetupSessionSelection()
         {
@@ -1257,7 +1244,6 @@ namespace Attrition.UI
                 });
             }
 
-            // Reset overlay buttons
             var resetCancel = _root.Q<Button>("btn-reset-cancel");
             if (resetCancel != null)
             {
@@ -1283,9 +1269,7 @@ namespace Attrition.UI
                     {
                         StartCoroutine(APIManager.Instance.DeleteSession(_sessionIdToDelete, success =>
                         {
-                            if (success)
-                                Debug.Log($"[Session] Delete thành công: {_sessionIdToDelete}");
-                            else
+                            if (!success)
                                 ShowSlotWarning("Failed to delete session.");
                             LoadSessionsFromServer(); // refresh list
                         }));
@@ -1505,9 +1489,6 @@ namespace Attrition.UI
             return "";
         }
 
-        // =================================================================
-        // SETTINGS (UNCHANGED)
-        // =================================================================
         private void SetupSettings()
         {
             foreach (var tabName in _settingsTabNames)
@@ -1560,8 +1541,6 @@ namespace Attrition.UI
             SetupSliderLabel("slider-master", "label-master-val");
             SetupSliderLabel("slider-music", "label-music-val");
             SetupSliderLabel("slider-sfx", "label-sfx-val");
-            SetupSliderLabel("slider-ambient", "label-ambient-val");
-            SetupSliderLabel("slider-voice", "label-voice-val");
 
             SetupKeybindButtons();
             LoadSettingsIntoUI();
@@ -1644,76 +1623,77 @@ namespace Attrition.UI
         {
             GameSettings.ResetToDefault();
             GameSettings.Save();
-            LoadSettingsIntoUI();
-            SetDropdownIndex("dropdown-resolution", 1);
-            SetDropdownIndex("dropdown-fullscreen", 1);
-            SetDropdownIndex("dropdown-framelimit", 3);
-            SetDropdownIndex("dropdown-shadows", 3);
             GameSettings.ApplyToEngine();
-            ApplyGraphicsFromUI();
+            LoadSettingsIntoUI();
             SetupKeybindButtons();
+            ShowSlotWarning("Settings reset to defaults.", true);
         }
 
-        /// <summary>Đổ giá trị đã lưu (PlayerPrefs) lên các control trong UI.</summary>
         private void LoadSettingsIntoUI()
         {
             GameSettings.EnsureLoaded();
             SetSliderValue("slider-master", GameSettings.MasterVolume * 100f, "label-master-val");
             SetSliderValue("slider-music", GameSettings.MusicVolume * 100f, "label-music-val");
             SetSliderValue("slider-sfx", GameSettings.SfxVolume * 100f, "label-sfx-val");
-            SetSliderValue("slider-ambient", GameSettings.AmbientVolume * 100f, "label-ambient-val");
-            SetSliderValue("slider-voice", GameSettings.VoiceVolume * 100f, "label-voice-val");
             SetToggleValue("toggle-dmg-numbers", GameSettings.ShowDamageNumbers);
-            SetToggleValue("toggle-cam-shake", GameSettings.CameraShake);
+            SetToggleValue("toggle-other-players", GameSettings.ShowOtherPlayers);
+            SetToggleValue("toggle-player-nameplates", GameSettings.ShowPlayerNameplates);
             SetToggleValue("toggle-vsync", GameSettings.VSync);
-            SetToggleValue("toggle-post-processing", GameSettings.PostProcessing);
+
+            int[][] resolutions = { new[] { 1280, 720 }, new[] { 1920, 1080 }, new[] { 2560, 1440 }, new[] { 3840, 2160 } };
+            int resolutionIndex = System.Array.FindIndex(resolutions,
+                x => x[0] == GameSettings.ResolutionWidth && x[1] == GameSettings.ResolutionHeight);
+            SetDropdownIndex("dropdown-resolution", resolutionIndex >= 0 ? resolutionIndex : 1);
+            SetDropdownIndex("dropdown-fullscreen", GameSettings.DisplayMode switch
+            {
+                FullScreenMode.ExclusiveFullScreen => 0,
+                FullScreenMode.Windowed => 2,
+                _ => 1,
+            });
+            SetDropdownIndex("dropdown-framelimit", GameSettings.FrameLimit switch
+            {
+                30 => 0,
+                60 => 1,
+                120 => 2,
+                144 => 3,
+                _ => 4,
+            });
+            SetDropdownIndex("dropdown-shadows", GameSettings.ShadowQualityIndex);
         }
 
         private void ApplySettings()
         {
-            float V(string n) { var s = _root.Q<Slider>(n); return s != null ? s.value / 100f : 0f; }
-            bool T(string n) { var t = _root.Q<Toggle>(n); return t != null && t.value; }
+            float Volume(string name) => _root.Q<Slider>(name)?.value / 100f ?? 0f;
+            bool ToggleValue(string name) => _root.Q<Toggle>(name)?.value ?? false;
 
-            GameSettings.SetAudio(V("slider-master"), V("slider-music"), V("slider-sfx"), V("slider-ambient"), V("slider-voice"));
-            GameSettings.SetToggles(T("toggle-dmg-numbers"), T("toggle-cam-shake"), T("toggle-vsync"), T("toggle-post-processing"));
+            GameSettings.SetAudio(Volume("slider-master"), Volume("slider-music"), Volume("slider-sfx"));
+            GameSettings.SetGameplay(
+                ToggleValue("toggle-dmg-numbers"),
+                ToggleValue("toggle-other-players"),
+                ToggleValue("toggle-player-nameplates"));
+            ApplyGraphicsFromUI(ToggleValue("toggle-vsync"));
             GameSettings.Save();
             GameSettings.ApplyToEngine();
-            ApplyGraphicsFromUI();
+            ShowSlotWarning("Settings updated.", true);
         }
 
-        /// <summary>Áp thiết lập đồ hoạ không lưu trong GameSettings: độ phân giải, fps, shadow, fullscreen.</summary>
-        private void ApplyGraphicsFromUI()
+        private void ApplyGraphicsFromUI(bool vsync)
         {
-            var fs = _root.Q<DropdownField>("dropdown-fullscreen");
-            if (fs != null)
-                Screen.fullScreenMode = fs.index switch
-                {
-                    0 => FullScreenMode.ExclusiveFullScreen,
-                    2 => FullScreenMode.Windowed,
-                    _ => FullScreenMode.FullScreenWindow,
-                };
+            int[][] resolutions = { new[] { 1280, 720 }, new[] { 1920, 1080 }, new[] { 2560, 1440 }, new[] { 3840, 2160 } };
+            int resolutionIndex = Mathf.Clamp(_root.Q<DropdownField>("dropdown-resolution")?.index ?? 1, 0, resolutions.Length - 1);
+            int fullscreenIndex = _root.Q<DropdownField>("dropdown-fullscreen")?.index ?? 1;
+            int frameIndex = _root.Q<DropdownField>("dropdown-framelimit")?.index ?? 3;
+            int shadowIndex = Mathf.Clamp(_root.Q<DropdownField>("dropdown-shadows")?.index ?? 3, 0, 3);
 
-            var resDropdown = _root.Q<DropdownField>("dropdown-resolution");
-            if (resDropdown != null && resDropdown.index >= 0)
+            var resolution = resolutions[resolutionIndex];
+            var mode = fullscreenIndex switch
             {
-                int[][] resolutions = { new[]{1280,720}, new[]{1920,1080}, new[]{2560,1440}, new[]{3840,2160} };
-                if (resDropdown.index < resolutions.Length)
-                {
-                    var res = resolutions[resDropdown.index];
-                    Screen.SetResolution(res[0], res[1], Screen.fullScreenMode);
-                }
-            }
-
-            var fps = _root.Q<DropdownField>("dropdown-framelimit");
-            if (fps != null)
-                Application.targetFrameRate = fps.index switch { 0 => 30, 1 => 60, 2 => 120, 3 => 144, _ => -1 };
-
-            var shadows = _root.Q<DropdownField>("dropdown-shadows");
-            if (shadows != null)
-            {
-                QualitySettings.shadows = shadows.index <= 0 ? ShadowQuality.Disable : ShadowQuality.All;
-                QualitySettings.shadowResolution = (ShadowResolution)Mathf.Clamp(shadows.index, 0, 3);
-            }
+                0 => FullScreenMode.ExclusiveFullScreen,
+                2 => FullScreenMode.Windowed,
+                _ => FullScreenMode.FullScreenWindow,
+            };
+            int frameLimit = frameIndex switch { 0 => 30, 1 => 60, 2 => 120, 3 => 144, _ => -1 };
+            GameSettings.SetGraphics(resolution[0], resolution[1], mode, vsync, frameLimit, shadowIndex);
         }
 
         private void SetSliderValue(string sliderName, float value, string labelName)

@@ -106,17 +106,15 @@ public class NetworkSpawner : MonoBehaviour
         _runner = runner;
         if (_hasSpawnedEnemies) return;
         _hasSpawnedEnemies = true;
-        // Host prefetch override chỉ số quái (web sửa) TRƯỚC khi spawn, rồi mới spawn để EnemyStats
-        // đọc được cache. Lỗi mạng → PrefetchAll tự fallback dùng default SO, vẫn spawn bình thường.
-        StartCoroutine(PrefetchThenSpawn());
+        SpawnAllEnemies();
     }
 
-    private System.Collections.IEnumerator PrefetchThenSpawn()
+    public System.Collections.IEnumerator PrefetchGameConfig()
     {
         var enemyProvider = Attrition.Persistence.EnemyStatProvider.Ensure();
         var itemProvider = Attrition.Persistence.ItemConfigProvider.Ensure();
+        var skillProvider = Attrition.Persistence.SkillConfigProvider.Ensure();
 
-        // Hỏi version gộp (enemy + item) 1 request, rồi mỗi provider chỉ tải bundle phần nào đổi.
         string enemyVersion = null, itemVersion = null;
         bool gotVersions = false;
         yield return FetchConfigVersions(enemyProvider.baseUrl, (ev, iv) =>
@@ -128,18 +126,17 @@ public class NetworkSpawner : MonoBehaviour
         {
             yield return enemyProvider.PrefetchBundle(enemyVersion);
             yield return itemProvider.PrefetchBundle(itemVersion);
+            // Skill.Service owns its own version now; the bundle endpoint remains one cheap conditional fetch.
+            yield return skillProvider.PrefetchBundle(null);
         }
         else
         {
-            // Không lấy được version gộp (mạng/parse lỗi) → fallback mỗi provider tự xử như cũ.
             yield return enemyProvider.PrefetchAll();
             yield return itemProvider.PrefetchAll();
+            yield return skillProvider.PrefetchBundle(null);
         }
-
-        SpawnAllEnemies();
     }
 
-    /// <summary>Gọi GET /api/gameconfig/versions lấy version gộp enemy+item. baseUrl rỗng → bỏ qua.</summary>
     private System.Collections.IEnumerator FetchConfigVersions(string baseUrl, System.Action<string, string> onGot)
     {
         if (string.IsNullOrEmpty(baseUrl)) yield break;
@@ -183,11 +180,7 @@ public class NetworkSpawner : MonoBehaviour
                 Vector3 spawnPos = config.spawnPoint.position + new Vector3(randomXOffset, 0f, 0f);
                 spawnPos.z = 0f;
 
-                NetworkObject spawned = TrySpawnOneEnemy(config, spawnPos);
-                if (spawned != null)
-                    Debug.Log($"[NetworkSpawner] Spawn quái OK: {spawned.name} tại {spawnPos}");
-                else
-                    Debug.LogError("[NetworkSpawner] Spawn thất bại (prefab / Fusion PrefabTable).");
+                TrySpawnOneEnemy(config, spawnPos);
             }
         }
     }

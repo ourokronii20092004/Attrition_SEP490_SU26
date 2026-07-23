@@ -63,7 +63,6 @@ public class APIManager : MonoBehaviour
             Debug.LogWarning($"[APIManager] Đọc api_base_url.txt lỗi: {e.Message}");
         }
 
-        Debug.Log($"[APIManager] baseUrl = {baseUrl} (mặc định/Inspector).");
     }
 
     /// <summary>Override webUrl (frontend) tương tự baseUrl: env ATTRITION_WEB_URL hoặc StreamingAssets/web_base_url.txt.</summary>
@@ -212,8 +211,6 @@ public class APIManager : MonoBehaviour
     /// </summary>
     public IEnumerator LoginWithToken(string token, string refreshToken, System.Action<string> callback)
     {
-        StoreTokens(token, refreshToken);
-
         using (UnityWebRequest request = UnityWebRequest.Get($"{baseUrl}/Auth/me"))
         {
             request.SetRequestHeader("Authorization", "Bearer " + token);
@@ -224,6 +221,7 @@ public class APIManager : MonoBehaviour
                 var response = JsonConvert.DeserializeObject<ApiResponse<UserDto>>(request.downloadHandler.text);
                 if (response.success && response.data != null)
                 {
+                    StoreTokens(token, refreshToken);
                     string userId = response.data.id;
                     Username = response.data.username;
                     callback?.Invoke(userId);
@@ -353,7 +351,6 @@ public class APIManager : MonoBehaviour
         }
     }
 
-    // ─── SAVE ONLINE: post snapshot tiến trình lên server (Postgres) ───
     // Khớp SnapshotIngestRequest của web. Xác thực bằng JWT host — server lấy OwnerId từ token,
     // nên chỉ snapshot được nhân vật của CHÍNH host (client progress nằm ở character_session).
     [System.Serializable]
@@ -396,7 +393,6 @@ public class APIManager : MonoBehaviour
         }
     }
 
-    // ─── SESSIONS (room bền) — JWT host, guard ownership ở server ───
     // Khớp DTO của Character.Service. ASP.NET serialize PascalCase → camelCase nên field ở đây
     // để camelCase. Model-binding của ASP.NET case-insensitive nên request gửi camelCase vẫn khớp.
 
@@ -520,7 +516,6 @@ public class APIManager : MonoBehaviour
     public IEnumerator GetSessionByCode(string roomCode, System.Action<SessionDetailDto> callback)
         => GetSessionInternal($"sessions/by-code/{UnityWebRequest.EscapeURL(roomCode)}", callback);
 
-    // ─── helpers nội bộ cho session (JWT host) ───
     private IEnumerator PostSession(string path, object req, System.Action<SessionDetailDto> callback)
     {
         string json = JsonConvert.SerializeObject(req);
@@ -588,7 +583,6 @@ public class APIManager : MonoBehaviour
         }
     }
 
-    // ─── SESSION SUMMARY (player-facing, JWT) ───
 
     [System.Serializable]
     public class SessionSummaryDto
@@ -629,7 +623,6 @@ public class APIManager : MonoBehaviour
         }
     }
 
-    // ─── DELETE SESSION (JWT host, guard ownership ở server) ───
 
     /// <summary>Host deletes a room entirely.</summary>
     public IEnumerator DeleteSession(string sessionId, System.Action<bool> callback)

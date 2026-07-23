@@ -43,9 +43,7 @@ public class LocalAuthServer : MonoBehaviour
         StopListening();
     }
 
-    /// <summary>
-    /// Bắt đầu mở mini server trên máy để chờ trình duyệt gửi Token về
-    /// </summary>
+    /// <summary>Starts the localhost callback listener for browser authentication.</summary>
     public async void StartListening()
     {
         if (_isListening) return;
@@ -56,9 +54,8 @@ public class LocalAuthServer : MonoBehaviour
             _listener.Prefixes.Add(ServerUrl);
             _listener.Start();
             _isListening = true;
-            Debug.Log($"[LocalAuthServer] Đã mở cổng {ServerUrl} để chờ đăng nhập...");
 
-            // Lắng nghe Request ở một luồng khác để không làm treo Game
+            // HttpListener waits off the Unity main thread.
             await ListenForRequestsAsync();
         }
         catch (Exception ex)
@@ -80,7 +77,6 @@ public class LocalAuthServer : MonoBehaviour
             _listener.Close();
             _listener = null;
         }
-        Debug.Log("[LocalAuthServer] Đã đóng cổng lắng nghe.");
     }
 
     private async Task ListenForRequestsAsync()
@@ -89,21 +85,15 @@ public class LocalAuthServer : MonoBehaviour
         {
             try
             {
-                // Task này sẽ chặn cho tới khi có một request HTTP bay vào
                 HttpListenerContext context = await _listener.GetContextAsync();
-
-                // Lấy URL mà trình duyệt gửi đến (VD: http://localhost:52000/?token=abc&refresh=xyz)
                 string token = context.Request.QueryString["token"];
                 string refresh = context.Request.QueryString["refresh"];
 
-                // Gửi phản hồi lại cho trình duyệt báo thành công
                 SendSuccessResponse(context.Response);
 
                 if (!string.IsNullOrEmpty(token))
                 {
-                    Debug.Log($"[LocalAuthServer] Đã bắt được token (refresh: {(string.IsNullOrEmpty(refresh) ? "không" : "có")}).");
-
-                    // Đẩy sự kiện về Main Thread qua biến cờ để Update() gọi OnTokenReceived.
+                    // Marshal the callback to Unity's main thread through Update.
                     _pendingToken = token;
                     _pendingRefresh = refresh;
                 }
@@ -112,13 +102,11 @@ public class LocalAuthServer : MonoBehaviour
                     Debug.LogWarning("[LocalAuthServer] Có request tới nhưng không có token!");
                 }
 
-                // Nhận được token rồi thì tự động đóng server luôn, vì xong việc rồi
                 StopListening();
                 break;
             }
             catch (HttpListenerException)
             {
-                // Bị ném ra khi Listener bị ép đóng (Stop), ta chỉ cần thoát vòng lặp
                 break;
             }
             catch (ObjectDisposedException)
@@ -141,7 +129,7 @@ public class LocalAuthServer : MonoBehaviour
         {
             string tokenToPass = _pendingToken;
             string refreshToPass = _pendingRefresh;
-            _pendingToken = null; // Reset để không gọi 2 lần
+            _pendingToken = null;
             _pendingRefresh = null;
             OnTokenReceived?.Invoke(tokenToPass, refreshToPass);
         }

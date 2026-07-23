@@ -1,9 +1,11 @@
 using System.Linq.Expressions;
+using System.Security.Cryptography;
 using Assets.Service.DTOs;
 using Assets.Service.Models;
 using Assets.Service.Repositories;
 using BuildingBlocks.Contracts;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Assets.Service.Services;
@@ -127,6 +129,85 @@ public class AssetService : IAssetService
         }
 
         return ApiResponse<AssetDto>.Ok(ToDto(asset));
+    }
+
+    public async Task<ApiResponse<AssetDto>> UploadUnitySourceAsync(IFormFile file, string sourceType,
+        string sourceId, Guid userId, string userName)
+    {
+        if (sourceType is not ("item" or "skill" or "enemy"))
+            return ApiResponse<AssetDto>.Fail("Source type must be item, skill, or enemy.");
+        if (string.IsNullOrWhiteSpace(sourceId) || sourceId.Length > 64 ||
+            !System.Text.RegularExpressions.Regex.IsMatch(sourceId, "^[a-z0-9]+(?:_[a-z0-9]+)*$"))
+            return ApiResponse<AssetDto>.Fail("Source ID must be canonical lower_snake_case up to 64 characters.");
+        if (file == null || file.Length == 0)
+            return ApiResponse<AssetDto>.Fail("File is empty.");
+        if (file.Length > _maxSize)
+            return ApiResponse<AssetDto>.Fail($"File exceeds the maximum allowed size of {_maxSize / (1024 * 1024)}MB.");
+
+        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (!ImageExts.Contains(ext)) return ApiResponse<AssetDto>.Fail("Invalid image file type.");
+
+        string hash;
+        await using (var hashStream = file.OpenReadStream())
+        {
+            var (matches, detected) = await ContentMatchesExtensionAsync(hashStream, ext);
+            if (!matches)
+                return ApiResponse<AssetDto>.Fail($"File content does not match its extension; detected {detected}.");
+            hashStream.Position = 0;
+            hash = Convert.ToHexString(await SHA256.HashDataAsync(hashStream)).ToLowerInvariant();
+        }
+
+        var existing = await _repo.GetBySourceAsync($"unity-{sourceType}", sourceId);
+        if (existing?.ContentHash == hash) return ApiResponse<AssetDto>.Ok(ToDto(existing));
+        var creating = existing == null;
+
+        var fileName = $"{Guid.NewGuid()}{ext}";
+        string newPath;
+        await using (var stream = file.OpenReadStream())
+            newPath = await _storage.SaveAsync("assets", fileName, stream);
+
+        try
+        {
+            if (existing == null)
+            {
+                existing = new Asset
+                {
+                    FileName = file.FileName, FilePath = newPath, AssetType = "sprite",
+                    MimeType = ResolveMime(ext), FileSize = file.Length, Title = sourceId,
+                    Tags = $"unity,{sourceType}", SourceType = $"unity-{sourceType}", SourceId = sourceId,
+                    ContentHash = hash, UploadedById = userId, UploadedByName = userName
+                };
+                await _repo.AddTrackedAsync(existing);
+                await _repo.SaveAsync();
+            }
+            else
+            {
+                existing.FileName = file.FileName;
+                existing.FilePath = newPath;
+                existing.MimeType = ResolveMime(ext);
+                existing.FileSize = file.Length;
+                existing.ContentHash = hash;
+                existing.UpdatedAt = DateTime.UtcNow;
+                await _repo.SaveAsync();
+            }
+        }
+        catch (DbUpdateException) when (creating && existing != null)
+        {
+            await _storage.DeleteAsync(newPath);
+            _repo.Detach(existing);
+            var winner = await _repo.GetBySourceAsync($"unity-{sourceType}", sourceId);
+            return winner == null
+                ? ApiResponse<AssetDto>.Fail("Concurrent upload conflict. Retry the upload.")
+                : ApiResponse<AssetDto>.Ok(ToDto(winner));
+        }
+        catch
+        {
+            await _storage.DeleteAsync(newPath);
+            throw;
+        }
+
+        // ponytail: Retain replaced source files so a failed metadata import cannot break the live URL; add reference-aware cleanup when storage growth warrants it.
+        return ApiResponse<AssetDto>.Ok(ToDto(existing));
     }
 
     public async Task<ApiResponse<string>> UploadInlineImageAsync(IFormFile file)

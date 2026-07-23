@@ -23,6 +23,7 @@ namespace Attrition.Persistence.Dtos
         public string Category;
         public string Rarity;
         public string IconKey;
+        public string ImageUrl;
         public string Description;
         public int MaxStack;
         public bool IsKeyItem;

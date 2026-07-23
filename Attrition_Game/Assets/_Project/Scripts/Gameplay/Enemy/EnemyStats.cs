@@ -31,10 +31,12 @@ namespace Attrition.Gameplay.Enemy
         [Networked] public float PatrolSpeed { get; set; }
         [Networked] public float ChaseSpeed { get; set; }
         [Networked] public float AttackSpeed { get; set; }
+        [Networked] public int RuntimeExpReward { get; set; }
 
         public EnemyTier Tier => statsSO != null ? statsSO.tier : EnemyTier.Normal;
         public string EnemyId => statsSO != null ? statsSO.enemyId : null;
-        public int ExpReward => statsSO != null ? statsSO.expReward : 0;
+        public EnemyStatsSO StatsSO => statsSO;
+        public int ExpReward => RuntimeExpReward;
 
         // Fallback khi chưa gán SO (prefab cũ chưa migrate)
         private const int FallbackHP = 30, FallbackAD = 10;
@@ -68,27 +70,17 @@ namespace Attrition.Gameplay.Enemy
             RES = sheet.RES;
             Poise = sheet.Poise;
 
-            if (statsSO != null)
-            {
-                PoiseRecoveryTime = statsSO.poiseRecoveryTime;
-                PatrolSpeed = statsSO.patrolSpeed;
-                ChaseSpeed = statsSO.chaseSpeed;
-                AttackSpeed = statsSO.attackSpeed;
-            }
-            else
-            {
-                PoiseRecoveryTime = 3f;
-                PatrolSpeed = 2f;
-                ChaseSpeed = 5f;
-                AttackSpeed = 1f;
-            }
+            PoiseRecoveryTime = Mathf.Max(0f, ovr?.poiseRecoveryTime ?? statsSO.poiseRecoveryTime);
+            PatrolSpeed = Mathf.Max(0f, ovr?.patrolSpeed ?? statsSO.patrolSpeed);
+            ChaseSpeed = Mathf.Max(0f, ovr?.chaseSpeed ?? statsSO.chaseSpeed);
+            AttackSpeed = Mathf.Max(0.01f, ovr?.attackSpeed ?? statsSO.attackSpeed);
+            RuntimeExpReward = Mathf.Max(0, ovr?.expReward ?? statsSO.expReward);
 
             var ctrl = GetComponent<Attrition.Controllers.EnemyController>();
             if (ctrl != null)
             {
                 ctrl.maxHealth = MaxHP;
                 ctrl.Health = MaxHP;
-                Debug.Log($"[EnemyStats] {gameObject.name} → MaxHP={MaxHP}, AD={AD}, DEF={DEF}, Health gán={ctrl.Health}");
             }
         }
 

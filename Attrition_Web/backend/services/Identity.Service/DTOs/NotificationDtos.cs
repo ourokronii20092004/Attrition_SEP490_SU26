@@ -1,6 +1,5 @@
 namespace Identity.Service.DTOs;
 
-// ─── Notifications ───
 public record NotificationDto(Guid Id, string Type, string Message, string? Link, string? ActorName,
     bool IsRead, DateTime CreatedAt);
 

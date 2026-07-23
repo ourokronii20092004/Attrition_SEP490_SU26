@@ -37,17 +37,6 @@ function buildTree(posts: ForumPostDto[]): PostNode[] {
   return roots;
 }
 
-/** The original post (thread starter): the top-level post (no parent) with the earliest
- * createdAt. Returns null if none of the loaded posts is top-level. */
-function findOriginalPost(posts: ForumPostDto[]): ForumPostDto | null {
-  let op: ForumPostDto | null = null;
-  for (const p of posts) {
-    if (p.parentPostId != null) continue;
-    if (!op || new Date(p.createdAt).getTime() < new Date(op.createdAt).getTime()) op = p;
-  }
-  return op;
-}
-
 // First reply page size. Beyond this, a "Load more replies" button grows the pool and the tree
 // rebuilds incrementally (orphans fall back to top-level, so partial loads stay coherent).
 const REPLY_PAGE_SIZE = 50;
@@ -88,11 +77,16 @@ export default function ThreadPage() {
   });
 
   const allPosts = posts?.items ?? [];
-  const originalPost = findOriginalPost(allPosts);
-  // Replies = everything except the original post; build the nested tree from those.
-  const tree = buildTree(allPosts.filter((p) => p.id !== originalPost?.id));
-  const totalReplies = posts ? posts.totalCount - (originalPost ? 1 : 0) : 0;
-  const loadedReplies = allPosts.length - (originalPost ? 1 : 0);
+  const originalPost: ForumPostDto | null = thread ? {
+    id: thread.id, threadId: thread.id, parentPostId: null, depth: 0,
+    authorId: thread.authorId, authorName: thread.authorName, authorAvatar: thread.authorAvatar,
+    authorRole: thread.authorRole, content: thread.content, attachments: thread.attachments,
+    createdAt: thread.createdAt, updatedAt: thread.updatedAt, likeCount: thread.likeCount,
+    dislikeCount: thread.dislikeCount, currentUserReaction: thread.currentUserReaction,
+  } : null;
+  const tree = buildTree(allPosts);
+  const totalReplies = posts?.totalCount ?? 0;
+  const loadedReplies = allPosts.length;
   const hasMore = loadedReplies < totalReplies;
 
   // Scroll to + briefly highlight a post when arriving via a notification deep-link (#post-id).
@@ -146,29 +140,33 @@ export default function ThreadPage() {
     onMutate: async ({ postId, type }) => {
       await queryClient.cancelQueries({ queryKey: postsKey });
       const prev = queryClient.getQueryData<typeof posts>(postsKey);
+      const prevThread = queryClient.getQueryData<ForumThreadDto | null>(qk.forum.thread(params.id));
+      const react = <T extends { id: string; likeCount: number; dislikeCount: number; currentUserReaction: string | null }>(p: T) => {
+        if (p.id !== postId) return p;
+        let { likeCount, dislikeCount } = p;
+        if (p.currentUserReaction === "like") likeCount--;
+        if (p.currentUserReaction === "dislike") dislikeCount--;
+        const next = p.currentUserReaction === type ? null : type;
+        if (next === "like") likeCount++;
+        if (next === "dislike") dislikeCount++;
+        return { ...p, currentUserReaction: next, likeCount, dislikeCount };
+      };
+      queryClient.setQueryData<ForumThreadDto | null>(qk.forum.thread(params.id), (old) => old ? react(old) : old);
       queryClient.setQueryData<typeof posts>(postsKey, (old) => {
         if (!old) return old;
-        return {
-          ...old,
-          items: old.items.map((p) => {
-            if (p.id !== postId) return p;
-            let { likeCount, dislikeCount } = p;
-            if (p.currentUserReaction === "like") likeCount--;
-            if (p.currentUserReaction === "dislike") dislikeCount--;
-            const next = p.currentUserReaction === type ? null : type;
-            if (next === "like") likeCount++;
-            if (next === "dislike") dislikeCount++;
-            return { ...p, currentUserReaction: next, likeCount, dislikeCount };
-          }),
-        };
+        return { ...old, items: old.items.map(react) };
       });
-      return { prev };
+      return { prev, prevThread };
     },
     onError: (_e, _v, ctx) => {
       if (ctx?.prev) queryClient.setQueryData(postsKey, ctx.prev);
+      if (ctx?.prevThread) queryClient.setQueryData(qk.forum.thread(params.id), ctx.prevThread);
       setActionError("Failed to register your reaction. Please try again.");
     },
-    onSettled: invalidatePosts,
+    onSettled: (_data, _error, variables) => {
+      invalidatePosts();
+      if (variables.postId === params.id) queryClient.invalidateQueries({ queryKey: qk.forum.thread(params.id) });
+    },
   });
 
   const reportMutation = useMutation({
@@ -214,14 +212,12 @@ export default function ThreadPage() {
     if (ok) { setActionError(""); deleteMutation.mutate(postId); }
   };
 
-  // Deleting the original post removes just that post — replies stay (they mirror the separate
-  // forum-post records and aren't cascaded). Since the post being viewed is gone, return to the
-  // forum list and refresh it rather than leaving the author on a now-headless thread.
+  // Deleting the root post deletes the whole discussion and all of its replies.
   const handleDeleteOriginalPost = async () => {
     if (!originalPost) return;
     const ok = await confirm({
-      title: "Delete this post?",
-      message: "This permanently removes your original post. Existing replies stay on the thread. This can't be undone.",
+      title: "Delete this discussion?",
+      message: "This permanently removes the original post and all replies. This can't be undone.",
       confirmLabel: "Delete",
       danger: true,
     });

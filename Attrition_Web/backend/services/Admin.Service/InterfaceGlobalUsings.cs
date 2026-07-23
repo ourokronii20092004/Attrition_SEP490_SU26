@@ -1,0 +1,1 @@
+global using Admin.Service.Services.Interface;

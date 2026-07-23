@@ -3,54 +3,6 @@ using Music.Service.Models;
 
 namespace Music.Service.Services;
 
-public interface IAlbumService
-{
-    Task<IEnumerable<MusicAlbumDto>> GetAlbumsAsync();
-    Task<BuildingBlocks.Contracts.PaginatedResponse<MusicAlbumDto>> GetAlbumsPagedAsync(int page, int pageSize);
-    Task<AlbumDetailDto?> GetAlbumAsync(int id);
-    Task<MusicAlbumDto> CreateAlbumAsync(CreateAlbumRequest req);
-    Task<MusicAlbumDto?> UpdateAlbumAsync(int id, CreateAlbumRequest req);
-    Task<bool> DeleteAlbumAsync(int id);
-    Task<(bool success, string? error, string? coverPath)> UploadAlbumCoverAsync(int id, Microsoft.AspNetCore.Http.IFormFile file);
-    Task<int> CountAsync();
-}
-
-public interface ITrackService
-{
-    Task<IEnumerable<MusicTrackDto>> GetTracksAsync(int? albumId);
-    Task<BuildingBlocks.Contracts.PaginatedResponse<MusicTrackDto>> GetTracksPagedAsync(int? albumId, int page, int pageSize);
-    Task<FeaturedTracksResponse> GetFeaturedTracksAsync();
-    Task<(string? filePath, bool trackExists)> GetTrackStreamInfoAsync(int id);
-    Task<(string? filePath, string fileName, bool trackExists)> GetTrackDownloadInfoAsync(int id);
-    Task<bool> IncrementPlayCountAsync(int id);
-    Task<(bool success, string? error, ScanTrackResponse? data)> ScanTrackAsync(Microsoft.AspNetCore.Http.IFormFile file);
-    Task<(bool success, string? error, MusicTrackDto? data)> UploadTrackAsync(UploadTrackRequest req);
-    Task<(bool success, string? error, MusicTrackDto? data)> UpdateTrackAsync(int id, UpdateTrackRequest req);
-    Task<bool> DeleteTrackAsync(int id);
-    Task<int> CountAsync();
-}
-
-public interface IFavoriteService
-{
-    Task<IEnumerable<FavoriteTrackDto>> GetFavoritesAsync(Guid userId);
-    Task<IEnumerable<int>> GetFavoriteIdsAsync(Guid userId);
-    Task<(bool success, bool isFavorited, string? error)> ToggleFavoriteAsync(Guid userId, int trackId);
-}
-
-public enum PlaylistOpResult { Ok, NotFound, Forbidden }
-
-public interface IPlaylistService
-{
-    Task<IEnumerable<PlaylistDto>> GetPlaylistsAsync(Guid userId);
-    Task<MusicPlaylist?> GetPlaylistAsync(Guid id);
-    Task<(PlaylistOpResult result, PlaylistDetailDto? playlist)> GetPlaylistWithTracksAsync(Guid userId, Guid playlistId);
-    Task<PlaylistDto> CreatePlaylistAsync(Guid userId, string name, string? description);
-    Task<PlaylistOpResult> AddTrackToPlaylistAsync(Guid userId, Guid playlistId, int trackId);
-    Task<PlaylistOpResult> RemoveTrackFromPlaylistAsync(Guid userId, Guid playlistId, int trackId);
-    Task<PlaylistOpResult> ReorderPlaylistAsync(Guid userId, Guid playlistId, IReadOnlyList<int> trackIds);
-    Task<PlaylistOpResult> DeletePlaylistAsync(Guid userId, Guid playlistId);
-}
-
 /// <summary>Shared helpers for music services.</summary>
 public static class MusicHelpers
 {

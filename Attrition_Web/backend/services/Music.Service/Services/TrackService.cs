@@ -1,12 +1,9 @@
 using System.Linq.Expressions;
 using BuildingBlocks.Caching;
 using BuildingBlocks.Contracts;
-using BuildingBlocks.Persistence;
 using BuildingBlocks.Web;
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Music.Service.Data;
 using Music.Service.DTOs;
 using Music.Service.Models;
 
@@ -14,9 +11,7 @@ namespace Music.Service.Services;
 
 public class TrackService : ITrackService
 {
-    private readonly IRepository<MusicAlbum> _albumRepo;
-    private readonly IRepository<MusicTrack> _trackRepo;
-    private readonly MusicDbContext _db;
+    private readonly IMusicRepository _repository;
     private readonly ICacheService _cache;
     private readonly ILogger<TrackService> _logger;
     private readonly string _uploadPath;
@@ -30,12 +25,10 @@ public class TrackService : ITrackService
     // counts are informational, not transactional. Lower this value to shrink the loss window.
     private const int PlayFlushEvery = 10;
 
-    public TrackService(IRepository<MusicAlbum> albumRepo, IRepository<MusicTrack> trackRepo, MusicDbContext db,
+    public TrackService(IMusicRepository repository,
         ICacheService cache, IConfiguration config, ILogger<TrackService> logger)
     {
-        _albumRepo = albumRepo;
-        _trackRepo = trackRepo;
-        _db = db;
+        _repository = repository;
         _cache = cache;
         _logger = logger;
         _uploadPath = config["FileUpload:UploadPath"] ?? "/app/uploads";
@@ -46,10 +39,10 @@ public class TrackService : ITrackService
 
     private async Task RescanAlbumAggregatesAsync(int albumId)
     {
-        var album = await _albumRepo.GetByIdAsync(albumId);
+        var album = await _repository.Albums.GetByIdAsync(albumId);
         if (album == null) return;
 
-        var tracks = await _trackRepo.ListAsync(t => t.AlbumId == albumId,
+        var tracks = await _repository.Tracks.ListAsync(t => t.AlbumId == albumId,
             q => q.OrderBy(t => t.TrackNumber));
 
         album.TrackCount = tracks.Count;
@@ -64,13 +57,13 @@ public class TrackService : ITrackService
             album.CoverPath = firstWithCover?.CoverPath;
         }
 
-        await _albumRepo.UpdateAsync(album);
+        await _repository.Albums.UpdateAsync(album);
     }
 
     public async Task<IEnumerable<MusicTrackDto>> GetTracksAsync(int? albumId)
     {
         Expression<Func<MusicTrack, bool>>? filter = albumId.HasValue ? t => t.AlbumId == albumId.Value : null;
-        var tracks = await _trackRepo.ListAsync(filter,
+        var tracks = await _repository.Tracks.ListAsync(filter,
             q => q.OrderBy(t => t.AlbumId).ThenBy(t => t.TrackNumber));
 
         var albumMap = await LoadAlbumsAsync(tracks.Select(t => t.AlbumId));
@@ -86,7 +79,7 @@ public class TrackService : ITrackService
     {
         var ids = albumIds.Distinct().ToList();
         if (ids.Count == 0) return new Dictionary<int, MusicAlbum>();
-        var albums = await _albumRepo.ListAsync(a => ids.Contains(a.AlbumId));
+        var albums = await _repository.Albums.ListAsync(a => ids.Contains(a.AlbumId));
         return albums.ToDictionary(a => a.AlbumId);
     }
 
@@ -94,7 +87,7 @@ public class TrackService : ITrackService
     {
         if (page < 1) page = 1;
         Expression<Func<MusicTrack, bool>>? filter = albumId.HasValue ? t => t.AlbumId == albumId.Value : null;
-        var (tracks, total) = await _trackRepo.GetPagedAsync(page, pageSize, filter,
+        var (tracks, total) = await _repository.Tracks.GetPagedAsync(page, pageSize, filter,
             q => q.OrderBy(t => t.AlbumId).ThenBy(t => t.TrackNumber));
 
         var albumMap = await LoadAlbumsAsync(tracks.Select(t => t.AlbumId));
@@ -110,13 +103,13 @@ public class TrackService : ITrackService
     public async Task<FeaturedTracksResponse> GetFeaturedTracksAsync()
     {
         var lastMonth = DateTime.UtcNow.AddDays(-30);
-        var (featured, _) = await _trackRepo.GetPagedAsync(1, 10, t => t.CreatedAt >= lastMonth,
+        var (featured, _) = await _repository.Tracks.GetPagedAsync(1, 10, t => t.CreatedAt >= lastMonth,
             q => q.OrderByDescending(t => t.PlayCount));
 
         if (featured.Count < 10)
         {
             var excluded = featured.Select(t => t.TrackId).ToList();
-            var (fallback, _) = await _trackRepo.GetPagedAsync(1, 10 - featured.Count,
+            var (fallback, _) = await _repository.Tracks.GetPagedAsync(1, 10 - featured.Count,
                 t => !excluded.Contains(t.TrackId), q => q.OrderByDescending(t => t.PlayCount));
             featured.AddRange(fallback);
         }
@@ -132,12 +125,7 @@ public class TrackService : ITrackService
 
         // Newest albums: compute per-album track count + most-recent track date in the database,
         // take the top 5, then load only those albums. Avoids pulling every track/album into memory.
-        var topAlbumStats = await _db.MusicTracks
-            .GroupBy(t => t.AlbumId)
-            .Select(g => new { AlbumId = g.Key, TrackCount = g.Count(), NewestTrackAddedAt = g.Max(t => t.CreatedAt) })
-            .OrderByDescending(x => x.NewestTrackAddedAt)
-            .Take(5)
-            .ToListAsync();
+        var topAlbumStats = await _repository.GetNewestAlbumStatsAsync(5);
 
         var newestAlbumMap = await LoadAlbumsAsync(topAlbumStats.Select(x => x.AlbumId));
         var newestAlbums = new List<NewestAlbumDto>();
@@ -152,7 +140,7 @@ public class TrackService : ITrackService
 
     public async Task<(string? filePath, bool trackExists)> GetTrackStreamInfoAsync(int id)
     {
-        var track = await _trackRepo.GetByIdAsync(id);
+        var track = await _repository.Tracks.GetByIdAsync(id);
         if (track == null) return (null, false);
         var filePath = Path.Combine(MusicDir, track.FilePath);
         if (!File.Exists(filePath)) return (null, true);
@@ -161,7 +149,7 @@ public class TrackService : ITrackService
 
     public async Task<(string? filePath, string fileName, bool trackExists)> GetTrackDownloadInfoAsync(int id)
     {
-        var track = await _trackRepo.GetByIdAsync(id);
+        var track = await _repository.Tracks.GetByIdAsync(id);
         if (track == null) return (null, string.Empty, false);
         var filePath = Path.Combine(MusicDir, track.FilePath);
         if (!File.Exists(filePath)) return (null, string.Empty, true);
@@ -180,18 +168,13 @@ public class TrackService : ITrackService
         var buffered = await _cache.IncrementAsync($"plays:{id}", 1, TimeSpan.FromDays(1));
         if (buffered == null)
         {
-            var rows = await _db.MusicTracks
-                .Where(t => t.TrackId == id)
-                .ExecuteUpdateAsync(s => s.SetProperty(t => t.PlayCount, t => t.PlayCount + 1));
-            return rows > 0;
+            return await _repository.IncrementPlayCountAsync(id, 1);
         }
 
         if (buffered % PlayFlushEvery == 0)
         {
-            var rows = await _db.MusicTracks
-                .Where(t => t.TrackId == id)
-                .ExecuteUpdateAsync(s => s.SetProperty(t => t.PlayCount, t => t.PlayCount + PlayFlushEvery));
-            if (rows == 0)
+            var updated = await _repository.IncrementPlayCountAsync(id, PlayFlushEvery);
+            if (!updated)
             {
                 // Track no longer exists — drop the buffered counter so it can't leak.
                 await _cache.RemoveAsync($"plays:{id}");
@@ -322,11 +305,11 @@ public class TrackService : ITrackService
 
         MusicAlbum? album = null;
         if (req.AlbumId.HasValue)
-            album = await _albumRepo.GetByIdAsync(req.AlbumId.Value);
+            album = await _repository.Albums.GetByIdAsync(req.AlbumId.Value);
         else if (!string.IsNullOrEmpty(albumTitle))
         {
             var norm = albumTitle.Trim().ToLower();
-            var (albums, _) = await _albumRepo.GetPagedAsync(1, 1, a => a.Title.ToLower() == norm);
+            var (albums, _) = await _repository.Albums.GetPagedAsync(1, 1, a => a.Title.ToLower() == norm);
             album = albums.FirstOrDefault();
             if (album == null)
             {
@@ -338,7 +321,7 @@ public class TrackService : ITrackService
                     Genre = genre,
                     AlbumType = "soundtrack"
                 };
-                await _albumRepo.AddAsync(album);
+                await _repository.Albums.AddAsync(album);
             }
         }
 
@@ -350,7 +333,7 @@ public class TrackService : ITrackService
 
         // Duplicate detection: same title + same artists + duration within 10s.
         var normTitle = title.Trim().ToLower();
-        var candidates = await _trackRepo.ListAsync(
+        var candidates = await _repository.Tracks.ListAsync(
             t => t.AlbumId == album.AlbumId && t.Title.Trim().ToLower() == normTitle);
         foreach (var t in candidates)
         {
@@ -426,7 +409,7 @@ public class TrackService : ITrackService
         var trackDir = Path.Combine(MusicDir, "tracks");
         Directory.CreateDirectory(trackDir);
         var slug = await SlugHelper.GenerateUniqueSlugAsync(title, async s =>
-            await _trackRepo.CountAsync(t => t.Slug == s) > 0);
+            await _repository.Tracks.CountAsync(t => t.Slug == s) > 0);
         var audioExt = Path.GetExtension(tempAudioPath);
         var fileName = $"{trackNumber:D2}-{Guid.NewGuid().ToString()[..8]}-{slug}{audioExt}";
         if (!await SafeFileOperations.SafeMoveAsync(tempAudioPath, Path.Combine(trackDir, fileName), _logger))
@@ -446,7 +429,7 @@ public class TrackService : ITrackService
             CoverPath = coverPath,
             IsFeatured = req.IsFeatured
         };
-        await _trackRepo.AddAsync(track);
+        await _repository.Tracks.AddAsync(track);
         await RescanAlbumAggregatesAsync(album.AlbumId);
 
         return (true, null, new MusicTrackDto(track.TrackId, track.AlbumId, track.Title, track.Slug,
@@ -456,7 +439,7 @@ public class TrackService : ITrackService
 
     public async Task<(bool success, string? error, MusicTrackDto? data)> UpdateTrackAsync(int id, UpdateTrackRequest req)
     {
-        var track = await _trackRepo.GetByIdAsync(id);
+        var track = await _repository.Tracks.GetByIdAsync(id);
         if (track == null) return (false, "Track not found", null);
 
         track.Title = req.Title ?? track.Title;
@@ -470,10 +453,10 @@ public class TrackService : ITrackService
         track.Genre = req.Genre ?? track.Genre;
         track.IsFeatured = req.IsFeatured ?? track.IsFeatured;
 
-        await _trackRepo.UpdateAsync(track);
+        await _repository.Tracks.UpdateAsync(track);
         await RescanAlbumAggregatesAsync(track.AlbumId);
 
-        var album = await _albumRepo.GetByIdAsync(track.AlbumId);
+        var album = await _repository.Albums.GetByIdAsync(track.AlbumId);
         return (true, null, new MusicTrackDto(track.TrackId, track.AlbumId, track.Title, track.Slug,
             track.TrackNumber, track.Artists, track.Duration, track.Genre, track.CoverPath, track.PlayCount,
             track.IsFeatured, track.FileSize ?? 0, album?.Title, album?.CoverPath));
@@ -481,7 +464,7 @@ public class TrackService : ITrackService
 
     public async Task<bool> DeleteTrackAsync(int id)
     {
-        var track = await _trackRepo.GetByIdAsync(id);
+        var track = await _repository.Tracks.GetByIdAsync(id);
         if (track == null) return false;
 
         var filePath = Path.Combine(MusicDir, track.FilePath);
@@ -491,10 +474,10 @@ public class TrackService : ITrackService
             return false;
 
         var albumId = track.AlbumId;
-        await _trackRepo.DeleteAsync(track);
+        await _repository.Tracks.DeleteAsync(track);
         await RescanAlbumAggregatesAsync(albumId);
         return true;
     }
 
-    public Task<int> CountAsync() => _trackRepo.CountAsync();
+    public Task<int> CountAsync() => _repository.Tracks.CountAsync();
 }

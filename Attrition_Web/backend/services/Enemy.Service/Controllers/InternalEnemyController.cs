@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Enemy.Service.Controllers;
 
-/// <summary>Service-to-service lookups for Search/Admin aggregators. Guarded by X-Internal-Key.</summary>
 [ApiController]
 [Route("api/internal/enemies")]
 public class InternalEnemyController : ControllerBase
@@ -35,5 +34,13 @@ public class InternalEnemyController : ControllerBase
     {
         if (!KeyValid()) return Unauthorized(ApiResponse.Fail("Valid service authentication is required."));
         return Ok(ApiResponse<int>.Ok(await _service.CountAsync()));
+    }
+
+    [HttpGet("stats")]
+    public async Task<IActionResult> Stats()
+    {
+        if (!KeyValid()) return Unauthorized(ApiResponse.Fail("Valid service authentication is required."));
+        var (enemies, items) = await _service.GetStatsAsync();
+        return Ok(ApiResponse<object>.Ok(new { enemies, items }));
     }
 }

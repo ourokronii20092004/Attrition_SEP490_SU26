@@ -64,7 +64,6 @@ namespace Attrition.UI.Inventory
             if (amountText != null) amountText.text = slot.Amount > 1 ? slot.Amount.ToString() : "";
         }
 
-        // ─── RIGHT-CLICK = EQUIP ───
 
         public void OnPointerClick(PointerEventData eventData)
         {
@@ -98,7 +97,6 @@ namespace Attrition.UI.Inventory
             }
         }
 
-        // ─── HOVER = SHOW DETAIL ───
 
         public void OnPointerEnter(PointerEventData eventData)
         {
@@ -112,7 +110,6 @@ namespace Attrition.UI.Inventory
             if (_ui != null) _ui.HideDetail();
         }
 
-        // ─── DRAG & DROP = SWAP ───
 
         public void OnBeginDrag(PointerEventData eventData)
         {

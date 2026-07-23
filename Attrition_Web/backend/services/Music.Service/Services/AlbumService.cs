@@ -1,5 +1,4 @@
 using BuildingBlocks.Contracts;
-using BuildingBlocks.Persistence;
 using BuildingBlocks.Web;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -10,17 +9,15 @@ namespace Music.Service.Services;
 
 public class AlbumService : IAlbumService
 {
-    private readonly IRepository<MusicAlbum> _albumRepo;
-    private readonly IRepository<MusicTrack> _trackRepo;
+    private readonly IMusicRepository _repository;
     private readonly ILogger<AlbumService> _logger;
     private readonly string _uploadPath;
     private readonly string _publicPrefix;
 
-    public AlbumService(IRepository<MusicAlbum> albumRepo, IRepository<MusicTrack> trackRepo,
+    public AlbumService(IMusicRepository repository,
         IConfiguration config, ILogger<AlbumService> logger)
     {
-        _albumRepo = albumRepo;
-        _trackRepo = trackRepo;
+        _repository = repository;
         _logger = logger;
         _uploadPath = config["FileUpload:UploadPath"] ?? "/app/uploads";
         _publicPrefix = config["FileUpload:PublicPrefix"] ?? "/api/music/media";
@@ -28,24 +25,24 @@ public class AlbumService : IAlbumService
 
     public async Task<IEnumerable<MusicAlbumDto>> GetAlbumsAsync()
     {
-        var albums = await _albumRepo.GetAllAsync();
+        var albums = await _repository.Albums.GetAllAsync();
         // Admin-controlled SortOrder wins (lower = earlier); newest-first breaks ties.
         return albums.OrderBy(a => a.SortOrder).ThenByDescending(a => a.CreatedAt).Select(ToDto);
     }
 
     public async Task<PaginatedResponse<MusicAlbumDto>> GetAlbumsPagedAsync(int page, int pageSize)
     {
-        var (items, total) = await _albumRepo.GetPagedAsync(page, pageSize, null,
+        var (items, total) = await _repository.Albums.GetPagedAsync(page, pageSize, null,
             q => q.OrderBy(a => a.SortOrder).ThenByDescending(a => a.CreatedAt));
         return new PaginatedResponse<MusicAlbumDto>(items.Select(ToDto).ToList(), total, page, pageSize);
     }
 
     public async Task<AlbumDetailDto?> GetAlbumAsync(int id)
     {
-        var album = await _albumRepo.GetByIdAsync(id);
+        var album = await _repository.Albums.GetByIdAsync(id);
         if (album == null) return null;
 
-        var tracks = await _trackRepo.ListAsync(t => t.AlbumId == id,
+        var tracks = await _repository.Tracks.ListAsync(t => t.AlbumId == id,
             q => q.OrderBy(t => t.TrackNumber));
 
         return new AlbumDetailDto(album.AlbumId, album.Title, album.Slug, album.Artists, album.Description,
@@ -69,17 +66,17 @@ public class AlbumService : IAlbumService
             ReleaseDate = req.ReleaseDate,
             SortOrder = req.SortOrder
         };
-        await _albumRepo.AddAsync(album);
+        await _repository.Albums.AddAsync(album);
         return ToDto(album);
     }
 
     private async Task<string> UniqueAlbumSlugAsync(string title, int? selfId) =>
         await SlugHelper.GenerateUniqueSlugAsync(title, async slug =>
-            await _albumRepo.CountAsync(a => a.Slug == slug && (selfId == null || a.AlbumId != selfId)) > 0);
+            await _repository.Albums.CountAsync(a => a.Slug == slug && (selfId == null || a.AlbumId != selfId)) > 0);
 
     public async Task<MusicAlbumDto?> UpdateAlbumAsync(int id, CreateAlbumRequest req)
     {
-        var album = await _albumRepo.GetByIdAsync(id);
+        var album = await _repository.Albums.GetByIdAsync(id);
         if (album == null) return null;
 
         album.Title = req.Title;
@@ -95,7 +92,7 @@ public class AlbumService : IAlbumService
         album.ReleaseDate = req.ReleaseDate;
         album.SortOrder = req.SortOrder;
 
-        await _albumRepo.UpdateAsync(album);
+        await _repository.Albums.UpdateAsync(album);
         return ToDto(album);
     }
 
@@ -105,10 +102,10 @@ public class AlbumService : IAlbumService
 
     public async Task<bool> DeleteAlbumAsync(int id)
     {
-        var album = await _albumRepo.GetByIdAsync(id);
+        var album = await _repository.Albums.GetByIdAsync(id);
         if (album == null) return false;
 
-        var tracks = await _trackRepo.ListAsync(t => t.AlbumId == id);
+        var tracks = await _repository.Tracks.ListAsync(t => t.AlbumId == id);
         foreach (var track in tracks)
         {
             var filePath = Path.Combine(_uploadPath, "music", track.FilePath);
@@ -119,13 +116,13 @@ public class AlbumService : IAlbumService
         if (!string.IsNullOrEmpty(album.CoverPath))
             await DeletePublicFileAsync(album.CoverPath);
 
-        await _albumRepo.DeleteAsync(album);
+        await _repository.Albums.DeleteAsync(album);
         return true;
     }
 
     public async Task<(bool success, string? error, string? coverPath)> UploadAlbumCoverAsync(int id, IFormFile file)
     {
-        var album = await _albumRepo.GetByIdAsync(id);
+        var album = await _repository.Albums.GetByIdAsync(id);
         if (album == null) return (false, "Album not found", null);
         if (file.Length > 10 * 1024 * 1024) return (false, "Cover image must be under 10MB", null);
         if (!MusicHelpers.IsAllowedImageExtension(file.FileName))
@@ -147,12 +144,12 @@ public class AlbumService : IAlbumService
 
         album.CoverPath = $"{_publicPrefix}/music/covers/{fileName}";
         album.IsCoverUserDefined = true;
-        await _albumRepo.UpdateAsync(album);
+        await _repository.Albums.UpdateAsync(album);
 
         return (true, null, album.CoverPath);
     }
 
-    public Task<int> CountAsync() => _albumRepo.CountAsync();
+    public Task<int> CountAsync() => _repository.Albums.CountAsync();
 
     private async Task DeletePublicFileAsync(string publicUrl)
     {

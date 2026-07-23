@@ -151,7 +151,11 @@ const enemySchema = z.object({
   ap: z.coerce.number().int().min(0),
   def: z.coerce.number().int().min(0),
   res: z.coerce.number().int().min(0),
-  attackSpeed: z.coerce.number().min(0),
+  attackSpeed: z.coerce.number().positive(),
+  poise: z.coerce.number().int().min(0),
+  poiseRecoveryTime: z.coerce.number().min(0),
+  patrolSpeed: z.coerce.number().min(0),
+  chaseSpeed: z.coerce.number().min(0),
   isRanged: z.boolean(),
   expReward: z.coerce.number().int().min(0),
   goldReward: z.coerce.number().int().min(0),
@@ -182,6 +186,10 @@ function EnemyForm({ initial, onDone, onCancel, onDirtyChange }: { initial: Enem
       def: initial?.def ?? 5,
       res: initial?.res ?? 5,
       attackSpeed: initial?.attackSpeed ?? 1,
+      poise: initial?.poise ?? 0,
+      poiseRecoveryTime: initial?.poiseRecoveryTime ?? 3,
+      patrolSpeed: initial?.patrolSpeed ?? 2,
+      chaseSpeed: initial?.chaseSpeed ?? 5,
       isRanged: initial?.isRanged ?? false,
       expReward: initial?.expReward ?? 10,
       goldReward: initial?.goldReward ?? 5,
@@ -235,6 +243,10 @@ function EnemyForm({ initial, onDone, onCancel, onDirtyChange }: { initial: Enem
         <Input label="DEF" type="number" {...register("def")} />
         <Input label="RES" type="number" {...register("res")} />
         <Input label="ATK Speed" type="number" step="0.01" {...register("attackSpeed")} />
+        <Input label="Poise" type="number" {...register("poise")} />
+        <Input label="Poise Recovery" type="number" step="0.01" {...register("poiseRecoveryTime")} />
+        <Input label="Patrol Speed" type="number" step="0.01" {...register("patrolSpeed")} />
+        <Input label="Chase Speed" type="number" step="0.01" {...register("chaseSpeed")} />
         <Input label="EXP" type="number" {...register("expReward")} />
         <Input label="Gold" type="number" {...register("goldReward")} />
       </div>

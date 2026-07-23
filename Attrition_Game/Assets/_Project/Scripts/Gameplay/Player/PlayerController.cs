@@ -5,6 +5,7 @@ using System.Linq;
 using Unity.Cinemachine;
 using Attrition.Controllers;
 using Attrition.Gameplay.Player;
+using Attrition.Persistence;
 
 /// <summary>
 /// Đồng bộ vật lý giữa Host và Client:
@@ -113,7 +114,6 @@ public class PlayerController : NetworkBehaviour, IDamageable
     [Networked] private TickTimer _knockbackTimer { get; set; }
     [Networked] private Vector2 _lastStableGround { get; set; }
 
-    // ─── Đồng bộ vị trí cho proxy ───
     [Networked] public Vector2 NetworkPosition { get; set; }
     [Networked] public Vector2 NetworkVelocity { get; set; }
     [Networked] public float NetworkGravityScale { get; set; }
@@ -227,6 +227,20 @@ public class PlayerController : NetworkBehaviour, IDamageable
         // Nhãn TÊN + thanh máu trên đầu mỗi player. Bọc try/catch để KHÔNG làm hỏng Spawned nếu lỗi.
         try { PlayerNameTag.Attach(this, HasInputAuthority); }
         catch (System.Exception e) { Debug.LogWarning($"[PlayerController] NameTag lỗi: {e.Message}"); }
+
+        GameSettings.OnChanged += ApplyLocalVisibility;
+        ApplyLocalVisibility();
+    }
+
+    public override void Despawned(NetworkRunner runner, bool hasState)
+    {
+        GameSettings.OnChanged -= ApplyLocalVisibility;
+    }
+
+    private void ApplyLocalVisibility()
+    {
+        if (HasInputAuthority || visualRoot == null) return;
+        visualRoot.gameObject.SetActive(GameSettings.ShowOtherPlayers);
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
@@ -255,7 +269,6 @@ public class PlayerController : NetworkBehaviour, IDamageable
         CheckGround();
         NetworkVelocityY = rb.linearVelocity.y;
 
-        // ─── Đồng bộ vị trí/velocity cho proxy ───
         if (HasStateAuthority)
         {
             NetworkPosition = rb.position;
@@ -552,7 +565,6 @@ public class PlayerController : NetworkBehaviour, IDamageable
         UpdateMovementSfx();
     }
 
-    // ─── SFX di chuyển: chạy trong Render (1 lần/frame, mọi máy) bằng cách so sánh state trước/sau. ───
     private bool _sfxWasGrounded = true;
     private int _sfxPrevJumpCount;
     private float _sfxNextStep;
@@ -1012,9 +1024,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
         isInvincible = false;
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // IGNORE ENEMY COLLIDERS — Đảm bảo Player đi xuyên qua quái
-    // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
     /// Tìm tất cả Enemy trong scene và ignore collision với collider của chúng.
@@ -1050,7 +1060,6 @@ public class PlayerController : NetworkBehaviour, IDamageable
         }
     }
 
-    // ─── CHECKPOINT: track vùng đang đứng để gate phím R ───
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (!HasInputAuthority) return;
@@ -1087,9 +1096,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // GIZMOS — Debug Visualization
-    // ═══════════════════════════════════════════════════════════════
 
     void OnDrawGizmosSelected()
     {

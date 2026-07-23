@@ -22,9 +22,7 @@ namespace Attrition.Gameplay
             spriteRenderer = GetComponent<SpriteRenderer>();
         }
 
-        // ==========================================
         // HÀM CHÍNH ĐƯỢC GỌI TỪ ANIMATION EVENT
-        // ==========================================
         // Bạn đặt Event này tại đúng Frame gậy của Boss Druid đập xuống đất trong Druid_Attack.anim
         public void TriggerEarthWave()
         {

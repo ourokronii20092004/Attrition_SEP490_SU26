@@ -133,7 +133,6 @@ public class CharacterService : ICharacterService
 
     public Task<int> CountAsync() => _repo.CountAsync();
 
-    // ─── mapping ───
     private static SnapshotDto ToSnapshotDto(CharacterSnapshot s) => new(
         s.Level, s.Hp, s.MaxHp, s.Gold, s.IsAlive, s.RoomCode, s.EventType, s.PlaytimeSeconds, s.CapturedAt);
 

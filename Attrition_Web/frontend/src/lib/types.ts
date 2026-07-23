@@ -1,4 +1,3 @@
-// ─── Envelope types ───────────────────────────────────────────────────────────
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -14,7 +13,6 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
-// ─── Identity Service ─────────────────────────────────────────────────────────
 
 export interface UserDto {
   id: string;
@@ -148,7 +146,6 @@ export interface UserSummaryDto {
   role: string;
 }
 
-// ─── Enemy Service ────────────────────────────────────────────────────────────
 
 export interface LootEntryDto {
   itemName: string;
@@ -178,6 +175,10 @@ export interface EnemyResponse {
   updatedAt: string;
   lootTable: LootEntryDto[];
   imageUrl: string | null;
+  poise: number;
+  poiseRecoveryTime: number;
+  patrolSpeed: number;
+  chaseSpeed: number;
 }
 
 export interface EnemyCreateRequest {
@@ -197,6 +198,10 @@ export interface EnemyCreateRequest {
   lore?: string;
   lootTable?: LootEntryDto[];
   imageUrl?: string | null;
+  poise: number;
+  poiseRecoveryTime: number;
+  patrolSpeed: number;
+  chaseSpeed: number;
 }
 
 export interface EnemyUpdateRequest {
@@ -215,9 +220,12 @@ export interface EnemyUpdateRequest {
   lore?: string;
   lootTable?: LootEntryDto[];
   imageUrl?: string | null;
+  poise: number;
+  poiseRecoveryTime: number;
+  patrolSpeed: number;
+  chaseSpeed: number;
 }
 
-// ─── Item config (admin-editable, game downloads) ───────────────────────────────
 
 export interface ItemModifierDto {
   stat: string;
@@ -264,7 +272,44 @@ export interface ItemUpdateRequest {
   imageUrl?: string | null;
 }
 
-// ─── Wiki Service ─────────────────────────────────────────────────────────────
+export interface SkillResponse {
+  skillId: string;
+  name: string;
+  description: string | null;
+  iconKey: string | null;
+  rarity: string;
+  element: string;
+  manaCost: number;
+  castTime: number;
+  cooldown: number;
+  activeStartFrac: number;
+  activeEndFrac: number;
+  damageType: string;
+  baseDamage: number;
+  apScaling: number;
+  knockbackForce: number;
+  tickInterval: number;
+  sweetSpotRadius: number;
+  sweetSpotMultiplier: number;
+  delivery: string;
+  hitShape: string;
+  range: number;
+  angle: number;
+  rectWidth: number;
+  rectHeight: number;
+  offsetX: number;
+  offsetY: number;
+  projectileSpeed: number;
+  projectileCount: number;
+  spreadAngle: number;
+  vfxLifetime: number;
+  createdAt: string;
+  updatedAt: string;
+  imageUrl: string | null;
+}
+
+export type SkillUpdateRequest = Omit<SkillResponse, "createdAt" | "updatedAt">;
+
 
 export interface WikiCategoryDto {
   id: number;
@@ -360,7 +405,6 @@ export interface WikiCategoryRequest {
   iconUrl?: string;
 }
 
-// ─── Forum Service ────────────────────────────────────────────────────────────
 
 export interface ForumCategoryDto {
   id: number;
@@ -394,6 +438,14 @@ export interface ForumThreadDto {
   isLocked: boolean;
   replyCount: number;
   createdAt: string;
+  content: string;
+  attachments: string[];
+  authorAvatar: string | null;
+  authorRole: "Admin" | "User";
+  updatedAt: string | null;
+  likeCount: number;
+  dislikeCount: number;
+  currentUserReaction: string | null;
 }
 
 export interface ForumPostDto {
@@ -518,7 +570,6 @@ export interface RemovePostRequest {
   reason: string;
 }
 
-// ─── Assets Service ───────────────────────────────────────────────────────────
 
 export interface AssetDto {
   id: string;
@@ -544,7 +595,6 @@ export interface UpdateAssetReq {
   assetType?: string;
 }
 
-// ─── Music Service ────────────────────────────────────────────────────────────
 
 export interface MusicAlbumDto {
   albumId: number;
@@ -704,7 +754,6 @@ export interface PlaylistDetailDto {
   tracks: MusicTrackDto[];
 }
 
-// ─── Search Service ───────────────────────────────────────────────────────────
 
 export interface SearchWikiResultDto {
   id: string;
@@ -747,7 +796,6 @@ export interface SearchSuggestionDto {
   url: string;
 }
 
-// ─── Admin Service ────────────────────────────────────────────────────────────
 
 export interface AdminStatsDto {
   totalUsers: number | null;
@@ -757,13 +805,14 @@ export interface AdminStatsDto {
   totalForumPosts: number | null;
   removedPosts: number | null;
   totalEnemies: number | null;
+  totalItems: number | null;
+  totalSkills: number | null;
   totalAssets: number | null;
   totalMusicAlbums: number | null;
   totalMusicTracks: number | null;
   unavailableSources: string[];
 }
 
-// ─── Character Service ────────────────────────────────────────────────────────
 
 export interface SnapshotDto {
   level: number;

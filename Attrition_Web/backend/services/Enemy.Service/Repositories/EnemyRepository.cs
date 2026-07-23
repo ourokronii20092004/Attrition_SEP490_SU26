@@ -55,6 +55,9 @@ public class EnemyRepository : Repository<EnemyEntity>, IEnemyRepository
         return (max, count);
     }
 
+    public async Task<(int Enemies, int Items)> GetStatsAsync() =>
+        (await _context.Enemies.CountAsync(), await _context.Items.CountAsync());
+
     public async Task<List<EnemyEntity>> GetAllForBundleAsync() =>
         await _context.Enemies.Include(e => e.LootTable).OrderBy(e => e.EnemyId).ToListAsync();
 }

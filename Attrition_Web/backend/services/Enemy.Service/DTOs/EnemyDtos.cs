@@ -20,7 +20,11 @@ public record EnemyResponse(
     DateTime CreatedAt,
     DateTime UpdatedAt,
     List<LootEntryDto> LootTable,
-    string? ImageUrl = null
+    string? ImageUrl = null,
+    int Poise = 0,
+    float PoiseRecoveryTime = 3f,
+    float PatrolSpeed = 2f,
+    float ChaseSpeed = 5f
 );
 
 public record EnemyCreateRequest(
@@ -39,7 +43,11 @@ public record EnemyCreateRequest(
     int GoldReward,
     string? Lore,
     List<LootEntryDto>? LootTable,
-    string? ImageUrl = null
+    string? ImageUrl = null,
+    int Poise = 0,
+    float PoiseRecoveryTime = 3f,
+    float PatrolSpeed = 2f,
+    float ChaseSpeed = 5f
 );
 
 public record EnemyUpdateRequest(
@@ -57,7 +65,11 @@ public record EnemyUpdateRequest(
     int GoldReward,
     string? Lore,
     List<LootEntryDto>? LootTable,
-    string? ImageUrl = null
+    string? ImageUrl = null,
+    int Poise = 0,
+    float PoiseRecoveryTime = 3f,
+    float PatrolSpeed = 2f,
+    float ChaseSpeed = 5f
 );
 
 // Summary projection used by Search aggregator.
@@ -76,4 +88,6 @@ public record GameConfigVersion(string Version, int Count);
 /// Version gộp cho cả enemy + item trong 1 request (GET /api/gameconfig/versions). Game so
 /// 1 lần rồi chỉ tải lại bundle (/api/gameconfig hoặc /api/itemconfig) của phần nào đổi.
 /// </summary>
-public record GameConfigVersions(string EnemyVersion, int EnemyCount, string ItemVersion, int ItemCount);
+public record GameConfigVersions(
+    string EnemyVersion, int EnemyCount,
+    string ItemVersion, int ItemCount);
