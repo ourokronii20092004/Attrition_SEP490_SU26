@@ -1,0 +1,481 @@
+fileFormatVersion: 2
+guid: d758118c60dc5bd429cfe4e6e92a881a
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 3752433217845318590
+    second: Earth projectile Spritesheet _0
+  - first:
+      213: 3023175990212091532
+    second: Earth projectile Spritesheet _1
+  - first:
+      213: -8217633541853326191
+    second: Earth projectile Spritesheet _2
+  - first:
+      213: 1012185149144019150
+    second: Earth projectile Spritesheet _3
+  - first:
+      213: -2296041886863017874
+    second: Earth projectile Spritesheet _4
+  - first:
+      213: -3558080432977196544
+    second: Earth projectile Spritesheet _5
+  - first:
+      213: 3888760592054716529
+    second: Earth projectile Spritesheet _6
+  - first:
+      213: -6865201954682257270
+    second: Earth projectile Spritesheet _7
+  - first:
+      213: 2687024177193960817
+    second: Earth projectile Spritesheet _8
+  - first:
+      213: -3054086209712298232
+    second: Earth projectile Spritesheet _9
+  - first:
+      213: -5383932638432884560
+    second: Earth projectile Spritesheet _10
+  - first:
+      213: 7193207812035685658
+    second: Earth projectile Spritesheet _11
+  - first:
+      213: -7550404251690330458
+    second: Earth projectile Spritesheet _12
+  - first:
+      213: -7751570725362719752
+    second: Earth projectile Spritesheet _13
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Earth projectile Spritesheet _0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 43
+        width: 22
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eb3db016122531430800000000000000
+      internalID: 3752433217845318590
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Earth projectile Spritesheet _1
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 44
+        width: 22
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c8ed41eab8a74f920800000000000000
+      internalID: 3023175990212091532
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Earth projectile Spritesheet _2
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 44
+        width: 22
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1945f7325d915fd80800000000000000
+      internalID: -8217633541853326191
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Earth projectile Spritesheet _3
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 6
+        width: 35
+        height: 47
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ec0b7a5c7010c0e00800000000000000
+      internalID: 1012185149144019150
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Earth projectile Spritesheet _4
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 44
+        width: 22
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e68bc10a112d220e0800000000000000
+      internalID: -2296041886863017874
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Earth projectile Spritesheet _5
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 44
+        width: 22
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00a402e92b82f9ec0800000000000000
+      internalID: -3558080432977196544
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Earth projectile Spritesheet _6
+      rect:
+        serializedVersion: 2
+        x: 3
+        y: 9
+        width: 27
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 17885f9a727a7f530800000000000000
+      internalID: 3888760592054716529
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Earth projectile Spritesheet _7
+      rect:
+        serializedVersion: 2
+        x: 30
+        y: 11
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a80c8d31237e9b0a0800000000000000
+      internalID: -6865201954682257270
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Earth projectile Spritesheet _8
+      rect:
+        serializedVersion: 2
+        x: 52
+        y: 12
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1754880b04a3a4520800000000000000
+      internalID: 2687024177193960817
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Earth projectile Spritesheet _9
+      rect:
+        serializedVersion: 2
+        x: 58
+        y: 11
+        width: 8
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 807eda406c4bd95d0800000000000000
+      internalID: -3054086209712298232
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Earth projectile Spritesheet _10
+      rect:
+        serializedVersion: 2
+        x: 65
+        y: 11
+        width: 22
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0b883976acd6845b0800000000000000
+      internalID: -5383932638432884560
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Earth projectile Spritesheet _11
+      rect:
+        serializedVersion: 2
+        x: 68
+        y: 3
+        width: 9
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a1da3ffc46863d360800000000000000
+      internalID: 7193207812035685658
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Earth projectile Spritesheet _12
+      rect:
+        serializedVersion: 2
+        x: 102
+        y: 2
+        width: 34
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6a6166b3653973790800000000000000
+      internalID: -7550404251690330458
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Earth projectile Spritesheet _13
+      rect:
+        serializedVersion: 2
+        x: 22
+        y: 4
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8f3207fae73ec6490800000000000000
+      internalID: -7751570725362719752
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Earth projectile Spritesheet _0: 3752433217845318590
+      Earth projectile Spritesheet _1: 3023175990212091532
+      Earth projectile Spritesheet _10: -5383932638432884560
+      Earth projectile Spritesheet _11: 7193207812035685658
+      Earth projectile Spritesheet _12: -7550404251690330458
+      Earth projectile Spritesheet _13: -7751570725362719752
+      Earth projectile Spritesheet _2: -8217633541853326191
+      Earth projectile Spritesheet _3: 1012185149144019150
+      Earth projectile Spritesheet _4: -2296041886863017874
+      Earth projectile Spritesheet _5: -3558080432977196544
+      Earth projectile Spritesheet _6: 3888760592054716529
+      Earth projectile Spritesheet _7: -6865201954682257270
+      Earth projectile Spritesheet _8: 2687024177193960817
+      Earth projectile Spritesheet _9: -3054086209712298232
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

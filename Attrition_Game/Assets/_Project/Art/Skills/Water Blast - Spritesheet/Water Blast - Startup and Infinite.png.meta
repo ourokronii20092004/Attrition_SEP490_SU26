@@ -1,0 +1,533 @@
+fileFormatVersion: 2
+guid: 07ce08e487510864a9fe2eb0488d88e3
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 783092905571151625
+    second: Water Blast - Startup and Infinite_0
+  - first:
+      213: 4235764342197598927
+    second: Water Blast - Startup and Infinite_1
+  - first:
+      213: 3996425132493441457
+    second: Water Blast - Startup and Infinite_2
+  - first:
+      213: -3994785914085615944
+    second: Water Blast - Startup and Infinite_3
+  - first:
+      213: 3243752937280222235
+    second: Water Blast - Startup and Infinite_4
+  - first:
+      213: -8670182699766003340
+    second: Water Blast - Startup and Infinite_5
+  - first:
+      213: -7983473062811307893
+    second: Water Blast - Startup and Infinite_6
+  - first:
+      213: 1326771293003029267
+    second: Water Blast - Startup and Infinite_7
+  - first:
+      213: 4299158096815469122
+    second: Water Blast - Startup and Infinite_8
+  - first:
+      213: 2029144410723576181
+    second: Water Blast - Startup and Infinite_9
+  - first:
+      213: -1491961588126407229
+    second: Water Blast - Startup and Infinite_10
+  - first:
+      213: -7783044939155567716
+    second: Water Blast - Startup and Infinite_11
+  - first:
+      213: 7408458091171295801
+    second: Water Blast - Startup and Infinite_12
+  - first:
+      213: -7068698747127359164
+    second: Water Blast - Startup and Infinite_13
+  - first:
+      213: -2087273297881196700
+    second: Water Blast - Startup and Infinite_14
+  - first:
+      213: -188419101082595136
+    second: Water Blast - Startup and Infinite_15
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Water Blast - Startup and Infinite_0
+      rect:
+        serializedVersion: 2
+        x: 55
+        y: 271
+        width: 18
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 90f62be39da1eda00800000000000000
+      internalID: 783092905571151625
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water Blast - Startup and Infinite_1
+      rect:
+        serializedVersion: 2
+        x: 171
+        y: 271
+        width: 42
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fca34f82a3578ca30800000000000000
+      internalID: 4235764342197598927
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water Blast - Startup and Infinite_2
+      rect:
+        serializedVersion: 2
+        x: 293
+        y: 271
+        width: 55
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1b907b9eb77267730800000000000000
+      internalID: 3996425132493441457
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water Blast - Startup and Infinite_3
+      rect:
+        serializedVersion: 2
+        x: 430
+        y: 271
+        width: 36
+        height: 95
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8b6513d506baf88c0800000000000000
+      internalID: -3994785914085615944
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water Blast - Startup and Infinite_4
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 143
+        width: 51
+        height: 86
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b14b7bd3c10240d20800000000000000
+      internalID: 3243752937280222235
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water Blast - Startup and Infinite_5
+      rect:
+        serializedVersion: 2
+        x: 167
+        y: 143
+        width: 53
+        height: 87
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 479c5ba65c25da780800000000000000
+      internalID: -8670182699766003340
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water Blast - Startup and Infinite_6
+      rect:
+        serializedVersion: 2
+        x: 294
+        y: 143
+        width: 55
+        height: 90
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b807b313c81053190800000000000000
+      internalID: -7983473062811307893
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water Blast - Startup and Infinite_7
+      rect:
+        serializedVersion: 2
+        x: 421
+        y: 177
+        width: 13
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 31b91a12673a96210800000000000000
+      internalID: 1326771293003029267
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water Blast - Startup and Infinite_8
+      rect:
+        serializedVersion: 2
+        x: 427
+        y: 143
+        width: 52
+        height: 93
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2423ee9d28da9ab30800000000000000
+      internalID: 4299158096815469122
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water Blast - Startup and Infinite_9
+      rect:
+        serializedVersion: 2
+        x: 43
+        y: 15
+        width: 48
+        height: 94
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 579e5273718f82c10800000000000000
+      internalID: 2029144410723576181
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water Blast - Startup and Infinite_10
+      rect:
+        serializedVersion: 2
+        x: 86
+        y: 84
+        width: 10
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3c5a23127dc7b4be0800000000000000
+      internalID: -1491961588126407229
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water Blast - Startup and Infinite_11
+      rect:
+        serializedVersion: 2
+        x: 164
+        y: 15
+        width: 60
+        height: 84
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c9b0bba3dd11df390800000000000000
+      internalID: -7783044939155567716
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water Blast - Startup and Infinite_12
+      rect:
+        serializedVersion: 2
+        x: 292
+        y: 15
+        width: 60
+        height: 84
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 93232a9d16120d660800000000000000
+      internalID: 7408458091171295801
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water Blast - Startup and Infinite_13
+      rect:
+        serializedVersion: 2
+        x: 426
+        y: 15
+        width: 43
+        height: 84
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4499939e0ffe6ed90800000000000000
+      internalID: -7068698747127359164
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water Blast - Startup and Infinite_14
+      rect:
+        serializedVersion: 2
+        x: 36
+        y: 51
+        width: 9
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 46712a29ef38803e0800000000000000
+      internalID: -2087273297881196700
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water Blast - Startup and Infinite_15
+      rect:
+        serializedVersion: 2
+        x: 82
+        y: 33
+        width: 9
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0c0d21b63d9926df0800000000000000
+      internalID: -188419101082595136
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Water Blast - Startup and Infinite_0: 783092905571151625
+      Water Blast - Startup and Infinite_1: 4235764342197598927
+      Water Blast - Startup and Infinite_10: -1491961588126407229
+      Water Blast - Startup and Infinite_11: -7783044939155567716
+      Water Blast - Startup and Infinite_12: 7408458091171295801
+      Water Blast - Startup and Infinite_13: -7068698747127359164
+      Water Blast - Startup and Infinite_14: -2087273297881196700
+      Water Blast - Startup and Infinite_15: -188419101082595136
+      Water Blast - Startup and Infinite_2: 3996425132493441457
+      Water Blast - Startup and Infinite_3: -3994785914085615944
+      Water Blast - Startup and Infinite_4: 3243752937280222235
+      Water Blast - Startup and Infinite_5: -8670182699766003340
+      Water Blast - Startup and Infinite_6: -7983473062811307893
+      Water Blast - Startup and Infinite_7: 1326771293003029267
+      Water Blast - Startup and Infinite_8: 4299158096815469122
+      Water Blast - Startup and Infinite_9: 2029144410723576181
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

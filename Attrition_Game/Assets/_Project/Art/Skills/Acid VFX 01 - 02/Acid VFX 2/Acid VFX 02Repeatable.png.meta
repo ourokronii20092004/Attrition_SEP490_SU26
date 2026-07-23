@@ -1,0 +1,637 @@
+fileFormatVersion: 2
+guid: 2188b9b0dbf597b418cd5490da2306ce
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -1381397242302438746
+    second: Acid VFX 02Repeatable_0
+  - first:
+      213: -7314431038255050661
+    second: Acid VFX 02Repeatable_1
+  - first:
+      213: 7582269903404874185
+    second: Acid VFX 02Repeatable_2
+  - first:
+      213: -6418873239251538312
+    second: Acid VFX 02Repeatable_3
+  - first:
+      213: 7195018325036658250
+    second: Acid VFX 02Repeatable_4
+  - first:
+      213: 4808585913319506918
+    second: Acid VFX 02Repeatable_5
+  - first:
+      213: 6926708811567437341
+    second: Acid VFX 02Repeatable_6
+  - first:
+      213: -8140660490490264779
+    second: Acid VFX 02Repeatable_7
+  - first:
+      213: 1494794477069749717
+    second: Acid VFX 02Repeatable_8
+  - first:
+      213: -4699582864206730087
+    second: Acid VFX 02Repeatable_9
+  - first:
+      213: 2080504935821724323
+    second: Acid VFX 02Repeatable_10
+  - first:
+      213: -4192719530506340063
+    second: Acid VFX 02Repeatable_11
+  - first:
+      213: -6395939162587746920
+    second: Acid VFX 02Repeatable_12
+  - first:
+      213: 7386057043480787849
+    second: Acid VFX 02Repeatable_13
+  - first:
+      213: 418334332427910631
+    second: Acid VFX 02Repeatable_14
+  - first:
+      213: 9035189948020287574
+    second: Acid VFX 02Repeatable_15
+  - first:
+      213: 1449370283021328692
+    second: Acid VFX 02Repeatable_16
+  - first:
+      213: 7772860938881083621
+    second: Acid VFX 02Repeatable_17
+  - first:
+      213: 1244420233050550268
+    second: Acid VFX 02Repeatable_18
+  - first:
+      213: 7111118237908548630
+    second: Acid VFX 02Repeatable_19
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Acid VFX 02Repeatable_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 364
+        width: 37
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6a2ebdee68a44dce0800000000000000
+      internalID: -1381397242302438746
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Acid VFX 02Repeatable_1
+      rect:
+        serializedVersion: 2
+        x: 43
+        y: 361
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b5057b669bbed7a90800000000000000
+      internalID: -7314431038255050661
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Acid VFX 02Repeatable_2
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 329
+        width: 56
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9c93597fd42a93960800000000000000
+      internalID: 7582269903404874185
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Acid VFX 02Repeatable_3
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 298
+        width: 38
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 87ea62c2cc49be6a0800000000000000
+      internalID: -6418873239251538312
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Acid VFX 02Repeatable_4
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 265
+        width: 45
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a4e6c38bb07d9d360800000000000000
+      internalID: 7195018325036658250
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Acid VFX 02Repeatable_5
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 235
+        width: 49
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6e34b5349678bb240800000000000000
+      internalID: 4808585913319506918
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Acid VFX 02Repeatable_6
+      rect:
+        serializedVersion: 2
+        x: 34
+        y: 230
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d169b0007fc902060800000000000000
+      internalID: 6926708811567437341
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Acid VFX 02Repeatable_7
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 198
+        width: 42
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 533454b3a60960f80800000000000000
+      internalID: -8140660490490264779
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Acid VFX 02Repeatable_8
+      rect:
+        serializedVersion: 2
+        x: 38
+        y: 205
+        width: 12
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5dd45f938a39eb410800000000000000
+      internalID: 1494794477069749717
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Acid VFX 02Repeatable_9
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 172
+        width: 45
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 99ce172d84ab7ceb0800000000000000
+      internalID: -4699582864206730087
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Acid VFX 02Repeatable_10
+      rect:
+        serializedVersion: 2
+        x: 44
+        y: 171
+        width: 7
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3aac91557307fdc10800000000000000
+      internalID: 2080504935821724323
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Acid VFX 02Repeatable_11
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 139
+        width: 51
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 129b35d0dc770d5c0800000000000000
+      internalID: -4192719530506340063
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Acid VFX 02Repeatable_12
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 109
+        width: 55
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 89da2f0083f0d37a0800000000000000
+      internalID: -6395939162587746920
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Acid VFX 02Repeatable_13
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 76
+        width: 43
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 98bb17f7fbb808660800000000000000
+      internalID: 7386057043480787849
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Acid VFX 02Repeatable_14
+      rect:
+        serializedVersion: 2
+        x: 39
+        y: 77
+        width: 17
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7ed37b1ebd83ec500800000000000000
+      internalID: 418334332427910631
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Acid VFX 02Repeatable_15
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 43
+        width: 46
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 658ede12361736d70800000000000000
+      internalID: 9035189948020287574
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Acid VFX 02Repeatable_16
+      rect:
+        serializedVersion: 2
+        x: 41
+        y: 46
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4316e73e7923d1410800000000000000
+      internalID: 1449370283021328692
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Acid VFX 02Repeatable_17
+      rect:
+        serializedVersion: 2
+        x: 45
+        y: 42
+        width: 11
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5e8248e67dfbedb60800000000000000
+      internalID: 7772860938881083621
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Acid VFX 02Repeatable_18
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 10
+        width: 47
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cff6946db91154110800000000000000
+      internalID: 1244420233050550268
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Acid VFX 02Repeatable_19
+      rect:
+        serializedVersion: 2
+        x: 44
+        y: 9
+        width: 12
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 61c375e6c54cfa260800000000000000
+      internalID: 7111118237908548630
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Acid VFX 02Repeatable_0: -1381397242302438746
+      Acid VFX 02Repeatable_1: -7314431038255050661
+      Acid VFX 02Repeatable_10: 2080504935821724323
+      Acid VFX 02Repeatable_11: -4192719530506340063
+      Acid VFX 02Repeatable_12: -6395939162587746920
+      Acid VFX 02Repeatable_13: 7386057043480787849
+      Acid VFX 02Repeatable_14: 418334332427910631
+      Acid VFX 02Repeatable_15: 9035189948020287574
+      Acid VFX 02Repeatable_16: 1449370283021328692
+      Acid VFX 02Repeatable_17: 7772860938881083621
+      Acid VFX 02Repeatable_18: 1244420233050550268
+      Acid VFX 02Repeatable_19: 7111118237908548630
+      Acid VFX 02Repeatable_2: 7582269903404874185
+      Acid VFX 02Repeatable_3: -6418873239251538312
+      Acid VFX 02Repeatable_4: 7195018325036658250
+      Acid VFX 02Repeatable_5: 4808585913319506918
+      Acid VFX 02Repeatable_6: 6926708811567437341
+      Acid VFX 02Repeatable_7: -8140660490490264779
+      Acid VFX 02Repeatable_8: 1494794477069749717
+      Acid VFX 02Repeatable_9: -4699582864206730087
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

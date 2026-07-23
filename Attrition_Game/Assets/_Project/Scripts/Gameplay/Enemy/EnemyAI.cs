@@ -698,7 +698,7 @@ public class EnemyAI : NetworkBehaviour
         else
         {
             _chaseBlockedTimer = 0f; // Đường thông → reset bộ đếm
-            float cSpeed = statsComp != null ? statsComp.ChaseSpeed : 5f;
+            float cSpeed = (statsComp != null ? statsComp.ChaseSpeed : 5f) * SlowFactor();
             // Quái bay: nhắm cao độ ngang thân player (clamp ground clearance + max offset), không sà đất / bay quá cao.
             Vector2 chaseTarget = isFlying ? ComputeFlyTarget(currentTarget) : currentTarget;
             MoveTowards(chaseTarget, cSpeed);
@@ -1011,9 +1011,12 @@ public class EnemyAI : NetworkBehaviour
     // MOVEMENT HELPERS
     // ═══════════════════════════════════════════════════════════════
 
+    /// <summary>Hệ số tốc độ do hiệu ứng LÀM CHẬM (accessory) áp lên quái. 1 = bình thường.</summary>
+    private float SlowFactor() => controller != null ? controller.SlowMultiplier : 1f;
+
     private void DoPatrolMovement()
     {
-        float pSpeed = statsComp != null ? statsComp.PatrolSpeed : 2f;
+        float pSpeed = (statsComp != null ? statsComp.PatrolSpeed : 2f) * SlowFactor();
 
         if (patrolRadius <= 0.05f)
         {
