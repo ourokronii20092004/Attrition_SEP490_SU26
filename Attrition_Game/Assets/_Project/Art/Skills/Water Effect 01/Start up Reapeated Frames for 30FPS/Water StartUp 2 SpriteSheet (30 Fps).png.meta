@@ -1,0 +1,1079 @@
+fileFormatVersion: 2
+guid: 4f0820a24fe8b0d419ef7a37e0f85a68
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -4005280437824161050
+    second: Water StartUp 2 SpriteSheet (30 Fps)_0
+  - first:
+      213: -6403953456461875115
+    second: Water StartUp 2 SpriteSheet (30 Fps)_1
+  - first:
+      213: 3225644803770377177
+    second: Water StartUp 2 SpriteSheet (30 Fps)_2
+  - first:
+      213: 936379993710630065
+    second: Water StartUp 2 SpriteSheet (30 Fps)_3
+  - first:
+      213: -2868527345003337305
+    second: Water StartUp 2 SpriteSheet (30 Fps)_4
+  - first:
+      213: 5216437409808280673
+    second: Water StartUp 2 SpriteSheet (30 Fps)_5
+  - first:
+      213: -7596483971526406306
+    second: Water StartUp 2 SpriteSheet (30 Fps)_6
+  - first:
+      213: -4587449684052862666
+    second: Water StartUp 2 SpriteSheet (30 Fps)_7
+  - first:
+      213: -7351489610148755667
+    second: Water StartUp 2 SpriteSheet (30 Fps)_8
+  - first:
+      213: 4620229251796774161
+    second: Water StartUp 2 SpriteSheet (30 Fps)_9
+  - first:
+      213: -6160137831409487179
+    second: Water StartUp 2 SpriteSheet (30 Fps)_10
+  - first:
+      213: -7738196658717388881
+    second: Water StartUp 2 SpriteSheet (30 Fps)_11
+  - first:
+      213: 2638658791202644700
+    second: Water StartUp 2 SpriteSheet (30 Fps)_12
+  - first:
+      213: -606438409095542326
+    second: Water StartUp 2 SpriteSheet (30 Fps)_13
+  - first:
+      213: -4667057754373130015
+    second: Water StartUp 2 SpriteSheet (30 Fps)_14
+  - first:
+      213: -7249647575821153882
+    second: Water StartUp 2 SpriteSheet (30 Fps)_15
+  - first:
+      213: -867833081083715384
+    second: Water StartUp 2 SpriteSheet (30 Fps)_16
+  - first:
+      213: 2141080177264477528
+    second: Water StartUp 2 SpriteSheet (30 Fps)_17
+  - first:
+      213: 3017899904857293260
+    second: Water StartUp 2 SpriteSheet (30 Fps)_18
+  - first:
+      213: -5885930850848876395
+    second: Water StartUp 2 SpriteSheet (30 Fps)_19
+  - first:
+      213: -4301588926896568656
+    second: Water StartUp 2 SpriteSheet (30 Fps)_20
+  - first:
+      213: -5733247201585388395
+    second: Water StartUp 2 SpriteSheet (30 Fps)_21
+  - first:
+      213: -3257404366691210505
+    second: Water StartUp 2 SpriteSheet (30 Fps)_22
+  - first:
+      213: 7939335022816386524
+    second: Water StartUp 2 SpriteSheet (30 Fps)_23
+  - first:
+      213: -2464230325251823712
+    second: Water StartUp 2 SpriteSheet (30 Fps)_24
+  - first:
+      213: -830282130641399537
+    second: Water StartUp 2 SpriteSheet (30 Fps)_25
+  - first:
+      213: -7364901670953146530
+    second: Water StartUp 2 SpriteSheet (30 Fps)_26
+  - first:
+      213: -1218984142464618073
+    second: Water StartUp 2 SpriteSheet (30 Fps)_27
+  - first:
+      213: 6388752091998592136
+    second: Water StartUp 2 SpriteSheet (30 Fps)_28
+  - first:
+      213: -6978730123957875101
+    second: Water StartUp 2 SpriteSheet (30 Fps)_29
+  - first:
+      213: 1172605171621342416
+    second: Water StartUp 2 SpriteSheet (30 Fps)_30
+  - first:
+      213: -7735212072180228511
+    second: Water StartUp 2 SpriteSheet (30 Fps)_31
+  - first:
+      213: 2025714842562942766
+    second: Water StartUp 2 SpriteSheet (30 Fps)_32
+  - first:
+      213: -4313267342616164722
+    second: Water StartUp 2 SpriteSheet (30 Fps)_33
+  - first:
+      213: -8718743872645327350
+    second: Water StartUp 2 SpriteSheet (30 Fps)_34
+  - first:
+      213: 8773650090725844736
+    second: Water StartUp 2 SpriteSheet (30 Fps)_35
+  - first:
+      213: 974616064757771995
+    second: Water StartUp 2 SpriteSheet (30 Fps)_36
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_0
+      rect:
+        serializedVersion: 2
+        x: 20
+        y: 307
+        width: 29
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6ea7ba5a9a26a68c0800000000000000
+      internalID: -4005280437824161050
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_1
+      rect:
+        serializedVersion: 2
+        x: 11
+        y: 291
+        width: 17
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 558747dc2469027a0800000000000000
+      internalID: -6403953456461875115
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_2
+      rect:
+        serializedVersion: 2
+        x: 29
+        y: 291
+        width: 9
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9d3615cdbdac3cc20800000000000000
+      internalID: 3225644803770377177
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_3
+      rect:
+        serializedVersion: 2
+        x: 38
+        y: 291
+        width: 17
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1b497e3a4a0befc00800000000000000
+      internalID: 936379993710630065
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_4
+      rect:
+        serializedVersion: 2
+        x: 11
+        y: 275
+        width: 17
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7a9e49ce391f038d0800000000000000
+      internalID: -2868527345003337305
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_5
+      rect:
+        serializedVersion: 2
+        x: 29
+        y: 275
+        width: 9
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 16c6ea4bf22846840800000000000000
+      internalID: 5216437409808280673
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_6
+      rect:
+        serializedVersion: 2
+        x: 38
+        y: 275
+        width: 17
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e5f4837631ed39690800000000000000
+      internalID: -7596483971526406306
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_7
+      rect:
+        serializedVersion: 2
+        x: 4
+        y: 258
+        width: 19
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6391d0551da1650c0800000000000000
+      internalID: -4587449684052862666
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_8
+      rect:
+        serializedVersion: 2
+        x: 25
+        y: 259
+        width: 11
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d27cb1146234af990800000000000000
+      internalID: -7351489610148755667
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_9
+      rect:
+        serializedVersion: 2
+        x: 35
+        y: 259
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 11d2736860a5e1040800000000000000
+      internalID: 4620229251796774161
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_10
+      rect:
+        serializedVersion: 2
+        x: 43
+        y: 258
+        width: 19
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5b27467b74bc28aa0800000000000000
+      internalID: -6160137831409487179
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_11
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 242
+        width: 11
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: faf090b33276c9490800000000000000
+      internalID: -7738196658717388881
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_12
+      rect:
+        serializedVersion: 2
+        x: 12
+        y: 242
+        width: 18
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cd2681db0366e9420800000000000000
+      internalID: 2638658791202644700
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_13
+      rect:
+        serializedVersion: 2
+        x: 30
+        y: 242
+        width: 28
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ac905bfda7f7597f0800000000000000
+      internalID: -606438409095542326
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_14
+      rect:
+        serializedVersion: 2
+        x: 56
+        y: 243
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1e87b5413b74b3fb0800000000000000
+      internalID: -4667057754373130015
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_15
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 226
+        width: 11
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6a98868a0f3146b90800000000000000
+      internalID: -7249647575821153882
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_16
+      rect:
+        serializedVersion: 2
+        x: 12
+        y: 226
+        width: 18
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8c02ca52966d4f3f0800000000000000
+      internalID: -867833081083715384
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_17
+      rect:
+        serializedVersion: 2
+        x: 30
+        y: 226
+        width: 28
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 855ca79c315a6bd10800000000000000
+      internalID: 2141080177264477528
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_18
+      rect:
+        serializedVersion: 2
+        x: 56
+        y: 227
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cc144b459fbb1e920800000000000000
+      internalID: 3017899904857293260
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_19
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 210
+        width: 24
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 598d3ae7319f05ea0800000000000000
+      internalID: -5885930850848876395
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_20
+      rect:
+        serializedVersion: 2
+        x: 27
+        y: 210
+        width: 32
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0b6839a69afad44c0800000000000000
+      internalID: -4301588926896568656
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_21
+      rect:
+        serializedVersion: 2
+        x: 57
+        y: 211
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5942004db0a6f60b0800000000000000
+      internalID: -5733247201585388395
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_22
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 194
+        width: 24
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7fa6099acff5bc2d0800000000000000
+      internalID: -3257404366691210505
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_23
+      rect:
+        serializedVersion: 2
+        x: 27
+        y: 194
+        width: 32
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cddd9cb832f2e2e60800000000000000
+      internalID: 7939335022816386524
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_24
+      rect:
+        serializedVersion: 2
+        x: 57
+        y: 195
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0a7ae92439b4dcdd0800000000000000
+      internalID: -2464230325251823712
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_25
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 178
+        width: 21
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f01d3cb1dce3a74f0800000000000000
+      internalID: -830282130641399537
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_26
+      rect:
+        serializedVersion: 2
+        x: 26
+        y: 178
+        width: 35
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e57282183fc9ac990800000000000000
+      internalID: -7364901670953146530
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_27
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 162
+        width: 21
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7a1ff81816c451fe0800000000000000
+      internalID: -1218984142464618073
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_28
+      rect:
+        serializedVersion: 2
+        x: 26
+        y: 162
+        width: 35
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 88c1c99bd2869a850800000000000000
+      internalID: 6388752091998592136
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_29
+      rect:
+        serializedVersion: 2
+        x: 9
+        y: 146
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 36e4c2a5de1962f90800000000000000
+      internalID: -6978730123957875101
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_30
+      rect:
+        serializedVersion: 2
+        x: 24
+        y: 147
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0dca64cd03ee54010800000000000000
+      internalID: 1172605171621342416
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_31
+      rect:
+        serializedVersion: 2
+        x: 36
+        y: 147
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 16e526f6a9107a490800000000000000
+      internalID: -7735212072180228511
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_32
+      rect:
+        serializedVersion: 2
+        x: 45
+        y: 146
+        width: 14
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e275337aae8cc1c10800000000000000
+      internalID: 2025714842562942766
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_33
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 130
+        width: 23
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e86021e54323424c0800000000000000
+      internalID: -4313267342616164722
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_34
+      rect:
+        serializedVersion: 2
+        x: 35
+        y: 130
+        width: 25
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a069c5744acc00780800000000000000
+      internalID: -8718743872645327350
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_35
+      rect:
+        serializedVersion: 2
+        x: 7
+        y: 101
+        width: 24
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 007a941d54442c970800000000000000
+      internalID: 8773650090725844736
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water StartUp 2 SpriteSheet (30 Fps)_36
+      rect:
+        serializedVersion: 2
+        x: 7
+        y: 1
+        width: 54
+        height: 122
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bdea64ca528868d00800000000000000
+      internalID: 974616064757771995
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Water StartUp 2 SpriteSheet (30 Fps)_0: -4005280437824161050
+      Water StartUp 2 SpriteSheet (30 Fps)_1: -6403953456461875115
+      Water StartUp 2 SpriteSheet (30 Fps)_10: -6160137831409487179
+      Water StartUp 2 SpriteSheet (30 Fps)_11: -7738196658717388881
+      Water StartUp 2 SpriteSheet (30 Fps)_12: 2638658791202644700
+      Water StartUp 2 SpriteSheet (30 Fps)_13: -606438409095542326
+      Water StartUp 2 SpriteSheet (30 Fps)_14: -4667057754373130015
+      Water StartUp 2 SpriteSheet (30 Fps)_15: -7249647575821153882
+      Water StartUp 2 SpriteSheet (30 Fps)_16: -867833081083715384
+      Water StartUp 2 SpriteSheet (30 Fps)_17: 2141080177264477528
+      Water StartUp 2 SpriteSheet (30 Fps)_18: 3017899904857293260
+      Water StartUp 2 SpriteSheet (30 Fps)_19: -5885930850848876395
+      Water StartUp 2 SpriteSheet (30 Fps)_2: 3225644803770377177
+      Water StartUp 2 SpriteSheet (30 Fps)_20: -4301588926896568656
+      Water StartUp 2 SpriteSheet (30 Fps)_21: -5733247201585388395
+      Water StartUp 2 SpriteSheet (30 Fps)_22: -3257404366691210505
+      Water StartUp 2 SpriteSheet (30 Fps)_23: 7939335022816386524
+      Water StartUp 2 SpriteSheet (30 Fps)_24: -2464230325251823712
+      Water StartUp 2 SpriteSheet (30 Fps)_25: -830282130641399537
+      Water StartUp 2 SpriteSheet (30 Fps)_26: -7364901670953146530
+      Water StartUp 2 SpriteSheet (30 Fps)_27: -1218984142464618073
+      Water StartUp 2 SpriteSheet (30 Fps)_28: 6388752091998592136
+      Water StartUp 2 SpriteSheet (30 Fps)_29: -6978730123957875101
+      Water StartUp 2 SpriteSheet (30 Fps)_3: 936379993710630065
+      Water StartUp 2 SpriteSheet (30 Fps)_30: 1172605171621342416
+      Water StartUp 2 SpriteSheet (30 Fps)_31: -7735212072180228511
+      Water StartUp 2 SpriteSheet (30 Fps)_32: 2025714842562942766
+      Water StartUp 2 SpriteSheet (30 Fps)_33: -4313267342616164722
+      Water StartUp 2 SpriteSheet (30 Fps)_34: -8718743872645327350
+      Water StartUp 2 SpriteSheet (30 Fps)_35: 8773650090725844736
+      Water StartUp 2 SpriteSheet (30 Fps)_36: 974616064757771995
+      Water StartUp 2 SpriteSheet (30 Fps)_4: -2868527345003337305
+      Water StartUp 2 SpriteSheet (30 Fps)_5: 5216437409808280673
+      Water StartUp 2 SpriteSheet (30 Fps)_6: -7596483971526406306
+      Water StartUp 2 SpriteSheet (30 Fps)_7: -4587449684052862666
+      Water StartUp 2 SpriteSheet (30 Fps)_8: -7351489610148755667
+      Water StartUp 2 SpriteSheet (30 Fps)_9: 4620229251796774161
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

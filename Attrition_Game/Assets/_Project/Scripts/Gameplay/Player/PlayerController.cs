@@ -22,6 +22,8 @@ public class PlayerController : NetworkBehaviour, IDamageable
     [SerializeField] private PlayerStats statsComp;
     [Tooltip("Tùy chọn: hệ thống bình HP/Mana. Bỏ trống = không có bình (prefab cũ).")]
     [SerializeField] private PotionSystem potionComp;
+    [Tooltip("Tùy chọn: hub hiệu ứng accessory (lá chắn hấp thụ...). Bỏ trống = tự tìm.")]
+    [SerializeField] private AccessoryEffects accessoryFx;
     // Túi đồ — host quét để biết đã mở khoá double jump chưa (cache, không bắt buộc gán Inspector).
     private Attrition.Gameplay.Player.Inventory.PlayerInventory _inventory;
 
@@ -49,7 +51,9 @@ public class PlayerController : NetworkBehaviour, IDamageable
     // Xác đã tách Visual khỏi cây networked chưa (chống rung). Idempotent guard cho Detach/Reattach.
     private bool _corpseVisualDetached;
 
-    private bool hasShadowDash => moveConfig != null ? moveConfig.hasShadowDash : false;
+    // Shadow dash mở khoá bằng accessory (nhặt Shadow Cloak → HasShadowDash sync). OR config để
+    // prefab/test cũ (hasShadowDash=true trong MovementConfigSO) vẫn dùng được như trước.
+    private bool hasShadowDash => HasShadowDash || (moveConfig != null && moveConfig.hasShadowDash);
     private float dashDuration => moveConfig != null ? moveConfig.dashDuration : 0.2f;
     private float dashCooldownTime => moveConfig != null ? moveConfig.dashCooldownTime : 0.8f;
     private float crouchSpeedMultiplier => moveConfig != null ? moveConfig.crouchSpeedMultiplier : 0.4f;
@@ -88,6 +92,9 @@ public class PlayerController : NetworkBehaviour, IDamageable
 
     /// <summary>Đã mở khoá double jump chưa (sở hữu accessory AbilityGrant=DoubleJump). Host set, sync xuống client.</summary>
     [Networked] public NetworkBool HasDoubleJump { get; set; }
+
+    /// <summary>Đã mở khoá shadow dash chưa (sở hữu accessory AbilityGrant=ShadowDash). Host set, sync xuống client.</summary>
+    [Networked] public NetworkBool HasShadowDash { get; set; }
 
     /// <summary>Teleport chờ áp dụng TRONG FixedUpdateNetwork (in-sim). TeleportTo có thể được gọi từ
     /// coroutine (spawn checkpoint) hoặc RPC — cả hai đều KHÔNG phải lúc an toàn để gọi
@@ -128,6 +135,12 @@ public class PlayerController : NetworkBehaviour, IDamageable
     /// <summary>True khi player đứng gần NPC (DialogueUI kiểm tra để mở hội thoại).</summary>
     public bool IsNearNPC => _currentNPC != null;
 
+    /// <summary>Đã mở khoá shadow dash chưa (nhặt Shadow Cloak). ShadowDashEffect đọc để bật afterimage.</summary>
+    public bool HasShadowDashAbility => hasShadowDash;
+
+    /// <summary>Dash đã hồi xong chưa (cooldown hết). ShadowDashEffect đọc để báo hiệu "dash sẵn sàng".</summary>
+    public bool IsDashReady => _dashCooldown.ExpiredOrNotRunning(Runner);
+
     /// <summary>NPC đang đứng gần (DialogueUI đọc).</summary>
     public Attrition.Gameplay.NPC.NetworkNPC CurrentNPC => _currentNPC;
 
@@ -156,6 +169,7 @@ public class PlayerController : NetworkBehaviour, IDamageable
         if (statsComp == null) statsComp = GetComponent<PlayerStats>();
         if (statsComp != null) maxHP = statsComp.MaxHP;
         if (potionComp == null) potionComp = GetComponent<PotionSystem>();
+        if (accessoryFx == null) accessoryFx = GetComponent<AccessoryEffects>();
         if (_inventory == null) _inventory = GetComponent<Attrition.Gameplay.Player.Inventory.PlayerInventory>();
         // statsComp tự init CurrentHP=MaxHP trong Spawned của nó. Chỉ tự init khi KHÔNG có statsComp.
         if (HasStateAuthority && statsComp == null) currentHP = maxHP;
@@ -266,7 +280,10 @@ public class PlayerController : NetworkBehaviour, IDamageable
 
             // Cập nhật cờ mở khoá double jump theo túi đồ (sở hữu Feather Charm). Host tính, sync proxy.
             if (_inventory != null)
+            {
                 HasDoubleJump = _inventory.HasAbility(Attrition.Data.GrantedAbility.DoubleJump);
+                HasShadowDash = _inventory.HasAbility(Attrition.Data.GrantedAbility.ShadowDash);
+            }
         }
         else if (!HasInputAuthority)
         {
@@ -656,6 +673,10 @@ public class PlayerController : NetworkBehaviour, IDamageable
         int def = statsComp != null ? statsComp.DEF : 0;
         int res = statsComp != null ? statsComp.RES : 0;
         int taken = Attrition.Core.DamageCalculator.Compute((Attrition.Core.DamageType)type, damage, def, res);
+
+        // Accessory DamageShield: khiên hấp thụ trước, chỉ phần dư mới trừ HP.
+        if (accessoryFx != null) taken = accessoryFx.AbsorbWithShield(taken);
+
         HP -= taken;
 
         // Luôn dùng knockbackForceOverride từ Inspector để điều chỉnh lực đẩy lùi

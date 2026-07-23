@@ -84,12 +84,23 @@ namespace Attrition.Gameplay.World
                 case PickupKind.InventoryItem:
                 {
                     if (itemData == null) return false;
-                    var inv = stats.GetComponent<PlayerInventory>();
-                    if (inv == null) return false;
                     var db = ItemDatabaseSO.Instance;
                     if (db == null) return false;
                     int idx = db.GetIndex(itemData);
                     if (idx < 0) return false;
+
+                    // Accessory (kể cả AbilityGrant double jump / shadow dash) DÙNG CHUNG: 1 người nhặt →
+                    // thêm vào túi CẢ HAI player. Item thường chỉ vào người chạm vào.
+                    if (itemData is AccessorySO)
+                    {
+                        bool anyAdded = false;
+                        foreach (var otherInv in FindObjectsByType<PlayerInventory>(FindObjectsSortMode.None))
+                            if (otherInv != null && otherInv.TryAddItem(idx, amount)) anyAdded = true;
+                        return anyAdded;
+                    }
+
+                    var inv = stats.GetComponent<PlayerInventory>();
+                    if (inv == null) return false;
                     return inv.TryAddItem(idx, amount); // BR-40: trả false nếu đầy
                 }
                 default:
