@@ -81,6 +81,15 @@ namespace Attrition.Editor
             items.Add(AbilityAcc("acc_shadow_dash", "Shadow Cloak", GrantedAbility.ShadowDash));
             items.Add(DamageAcc("acc_stamina_charm", "Vigor Charm", Icon("bùa thể lực"), (StatType.MaxStamina, 20)));
 
+            // ─── ACCESSORY HIỆU ỨNG (chưa có art — icon null, chỉnh tham số trong Inspector nếu cần) ───
+            items.Add(EffectAcc("acc_burn",       "Ember Charm",    DamageEffectType.Burn,          magnitude: 30, duration: 3f));
+            items.Add(EffectAcc("acc_slow",       "Frost Charm",    DamageEffectType.Slow,          magnitude: 0.5f, duration: 2.5f));
+            items.Add(EffectAcc("acc_lifesteal",  "Vampiric Charm", DamageEffectType.Lifesteal,     magnitude: 0.2f));
+            items.Add(EffectAcc("acc_regen",      "Renewal Charm",  DamageEffectType.HealthRegen,   magnitude: 5f, threshold: 0.5f, thresholdStop: 0.8f));
+            items.Add(EffectAcc("acc_potion",     "Alchemist Charm",DamageEffectType.PotionBoost,   magnitude: 0.3f));
+            items.Add(EffectAcc("acc_shield",     "Aegis Charm",    DamageEffectType.DamageShield,  magnitude: 40, duration: 4f, cooldown: 8f));
+            items.Add(EffectAcc("acc_postskill",  "Focus Charm",    DamageEffectType.PostSkillDamage,magnitude: 1.5f));
+
             // ─── SKILL ───
             items.Add(SkillProjectile("skill_fire", "Fireball", SkillElement.Fire, 20, 0.7f, 35, skillProjectile, count: 3, spread: 30f, icon: Icon("fire_ball_skill")));
             items.Add(SkillArea("skill_wood", "Thorn Lash", SkillElement.Wood, 18, 0.6f, 30, SkillHitShape.Cone, range: 3f, angle: 100f));
@@ -169,6 +178,23 @@ namespace Attrition.Editor
             so.itemId = id; so.displayName = name; so.maxStack = 1;
             so.icon = icon;
             so.kind = AccessoryKind.DamageEffect; so.modifiers = ToMods(mods);
+            return Save(so, id);
+        }
+
+        /// <summary>Accessory DamageEffect có HIỆU ỨNG đặc biệt (burn/slow/lifesteal...). Chưa có asset art
+        /// nên icon = null; chỉnh magnitude/duration/threshold sau trong Inspector nếu cần.</summary>
+        private static AccessorySO EffectAcc(string id, string name, DamageEffectType effect,
+            float magnitude, float duration = 3f, float threshold = 0.5f, float thresholdStop = 0.8f, float cooldown = 8f)
+        {
+            var so = ScriptableObject.CreateInstance<AccessorySO>();
+            so.itemId = id; so.displayName = name; so.maxStack = 1;
+            so.kind = AccessoryKind.DamageEffect;
+            so.effect = effect;
+            so.effectMagnitude = magnitude;
+            so.effectDuration = duration;
+            so.effectThreshold = threshold;
+            so.effectThresholdStop = thresholdStop;
+            so.effectCooldown = cooldown;
             return Save(so, id);
         }
 
