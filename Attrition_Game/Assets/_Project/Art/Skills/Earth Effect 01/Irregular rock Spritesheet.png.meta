@@ -1,0 +1,1131 @@
+fileFormatVersion: 2
+guid: 1405467679dfb4f4e8f07422878e8449
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 6817854425926531477
+    second: Irregular rock Spritesheet_0
+  - first:
+      213: 3929869733720270682
+    second: Irregular rock Spritesheet_1
+  - first:
+      213: 4127516468003071197
+    second: Irregular rock Spritesheet_2
+  - first:
+      213: 1028570765121418880
+    second: Irregular rock Spritesheet_3
+  - first:
+      213: 9065550577972586202
+    second: Irregular rock Spritesheet_4
+  - first:
+      213: -8989927587475101345
+    second: Irregular rock Spritesheet_5
+  - first:
+      213: 6241315977421750294
+    second: Irregular rock Spritesheet_6
+  - first:
+      213: 7533774863159523364
+    second: Irregular rock Spritesheet_7
+  - first:
+      213: 4652531855074350399
+    second: Irregular rock Spritesheet_8
+  - first:
+      213: 6534051041330954201
+    second: Irregular rock Spritesheet_9
+  - first:
+      213: -3343438215909404515
+    second: Irregular rock Spritesheet_10
+  - first:
+      213: -6788042236567042082
+    second: Irregular rock Spritesheet_11
+  - first:
+      213: -6194457198056353991
+    second: Irregular rock Spritesheet_12
+  - first:
+      213: 6007498753023369116
+    second: Irregular rock Spritesheet_13
+  - first:
+      213: 6091465645535039831
+    second: Irregular rock Spritesheet_14
+  - first:
+      213: -4321160117395831649
+    second: Irregular rock Spritesheet_15
+  - first:
+      213: 7206299117451202057
+    second: Irregular rock Spritesheet_16
+  - first:
+      213: -7707361352214409159
+    second: Irregular rock Spritesheet_17
+  - first:
+      213: -5147183455552720384
+    second: Irregular rock Spritesheet_18
+  - first:
+      213: 3203043285842868894
+    second: Irregular rock Spritesheet_19
+  - first:
+      213: -4470253474484518024
+    second: Irregular rock Spritesheet_20
+  - first:
+      213: -8368435015195482407
+    second: Irregular rock Spritesheet_21
+  - first:
+      213: -1709079328729588410
+    second: Irregular rock Spritesheet_22
+  - first:
+      213: -1367501769827770986
+    second: Irregular rock Spritesheet_23
+  - first:
+      213: -4289661245468500897
+    second: Irregular rock Spritesheet_24
+  - first:
+      213: -1870178389995875790
+    second: Irregular rock Spritesheet_25
+  - first:
+      213: -1906338401571038327
+    second: Irregular rock Spritesheet_26
+  - first:
+      213: -1770259218699078603
+    second: Irregular rock Spritesheet_27
+  - first:
+      213: -2972587096974016527
+    second: Irregular rock Spritesheet_28
+  - first:
+      213: -4745107520386140258
+    second: Irregular rock Spritesheet_29
+  - first:
+      213: -946241638000124233
+    second: Irregular rock Spritesheet_30
+  - first:
+      213: 8704366182776669192
+    second: Irregular rock Spritesheet_31
+  - first:
+      213: -7671184441708515118
+    second: Irregular rock Spritesheet_32
+  - first:
+      213: -7101315866480858657
+    second: Irregular rock Spritesheet_33
+  - first:
+      213: 9018614844079514161
+    second: Irregular rock Spritesheet_34
+  - first:
+      213: -8452559259369415581
+    second: Irregular rock Spritesheet_35
+  - first:
+      213: 4547941816826633886
+    second: Irregular rock Spritesheet_36
+  - first:
+      213: 8343379876572843741
+    second: Irregular rock Spritesheet_37
+  - first:
+      213: -6570804015154340277
+    second: Irregular rock Spritesheet_38
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_0
+      rect:
+        serializedVersion: 2
+        x: 2
+        y: 79
+        width: 40
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 599fca35a72ed9e50800000000000000
+      internalID: 6817854425926531477
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_1
+      rect:
+        serializedVersion: 2
+        x: 50
+        y: 65
+        width: 40
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a57a4f393b3b98630800000000000000
+      internalID: 3929869733720270682
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_2
+      rect:
+        serializedVersion: 2
+        x: 100
+        y: 57
+        width: 37
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dd4e5efeb52e74930800000000000000
+      internalID: 4127516468003071197
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_3
+      rect:
+        serializedVersion: 2
+        x: 100
+        y: 77
+        width: 11
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 086f96949a7364e00800000000000000
+      internalID: 1028570765121418880
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_4
+      rect:
+        serializedVersion: 2
+        x: 109
+        y: 80
+        width: 13
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ad6a465283e4fcd70800000000000000
+      internalID: 9065550577972586202
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_5
+      rect:
+        serializedVersion: 2
+        x: 143
+        y: 6
+        width: 43
+        height: 82
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f59ef086d7c5d3380800000000000000
+      internalID: -8989927587475101345
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_6
+      rect:
+        serializedVersion: 2
+        x: 196
+        y: 5
+        width: 39
+        height: 82
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 610813540db9d9650800000000000000
+      internalID: 6241315977421750294
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_7
+      rect:
+        serializedVersion: 2
+        x: 244
+        y: 57
+        width: 32
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 428f36882585d8860800000000000000
+      internalID: 7533774863159523364
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_8
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 67
+        width: 8
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f3555ef621d119040800000000000000
+      internalID: 4652531855074350399
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_9
+      rect:
+        serializedVersion: 2
+        x: 36
+        y: 70
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9df7dce9dcc9daa50800000000000000
+      internalID: 6534051041330954201
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_10
+      rect:
+        serializedVersion: 2
+        x: 37
+        y: 64
+        width: 8
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d90114c28a8b991d0800000000000000
+      internalID: -3343438215909404515
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_11
+      rect:
+        serializedVersion: 2
+        x: 79
+        y: 59
+        width: 12
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ed7c219ec870cc1a0800000000000000
+      internalID: -6788042236567042082
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_12
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 53
+        width: 19
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 93f4d7d7ffdd80aa0800000000000000
+      internalID: -6194457198056353991
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_13
+      rect:
+        serializedVersion: 2
+        x: 33
+        y: 57
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c9f5f8a694cee5350800000000000000
+      internalID: 6007498753023369116
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_14
+      rect:
+        serializedVersion: 2
+        x: 57
+        y: 55
+        width: 9
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7519c9b0bbb398450800000000000000
+      internalID: 6091465645535039831
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_15
+      rect:
+        serializedVersion: 2
+        x: 63
+        y: 56
+        width: 12
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f94490984c72804c0800000000000000
+      internalID: -4321160117395831649
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_16
+      rect:
+        serializedVersion: 2
+        x: 5
+        y: 24
+        width: 10
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 90ec3e0eddae10460800000000000000
+      internalID: 7206299117451202057
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_17
+      rect:
+        serializedVersion: 2
+        x: 13
+        y: 24
+        width: 14
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9309fad7fa3f90590800000000000000
+      internalID: -7707361352214409159
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_18
+      rect:
+        serializedVersion: 2
+        x: 25
+        y: 26
+        width: 11
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 002330a0be78198b0800000000000000
+      internalID: -5147183455552720384
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_19
+      rect:
+        serializedVersion: 2
+        x: 54
+        y: 31
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e9a3dd4e5ee737c20800000000000000
+      internalID: 3203043285842868894
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_20
+      rect:
+        serializedVersion: 2
+        x: 61
+        y: 29
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 873056d362876f1c0800000000000000
+      internalID: -4470253474484518024
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_21
+      rect:
+        serializedVersion: 2
+        x: 74
+        y: 31
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9d6255901b85ddb80800000000000000
+      internalID: -8368435015195482407
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_22
+      rect:
+        serializedVersion: 2
+        x: 75
+        y: 27
+        width: 12
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 64d1c16d7612848e0800000000000000
+      internalID: -1709079328729588410
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_23
+      rect:
+        serializedVersion: 2
+        x: 101
+        y: 33
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 69d92bbb268a50de0800000000000000
+      internalID: -1367501769827770986
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_24
+      rect:
+        serializedVersion: 2
+        x: 110
+        y: 33
+        width: 12
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f5c171923df0874c0800000000000000
+      internalID: -4289661245468500897
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_25
+      rect:
+        serializedVersion: 2
+        x: 124
+        y: 27
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2321fa5b9aacb06e0800000000000000
+      internalID: -1870178389995875790
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_26
+      rect:
+        serializedVersion: 2
+        x: 5
+        y: 18
+        width: 14
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 98b1ca0f2535b85e0800000000000000
+      internalID: -1906338401571038327
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_27
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 11
+        width: 23
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 534b41dae96ce67e0800000000000000
+      internalID: -1770259218699078603
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_28
+      rect:
+        serializedVersion: 2
+        x: 19
+        y: 22
+        width: 13
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1ff34f4e8cf3fb6d0800000000000000
+      internalID: -2972587096974016527
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_29
+      rect:
+        serializedVersion: 2
+        x: 30
+        y: 15
+        width: 8
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e977952d9ddf52eb0800000000000000
+      internalID: -4745107520386140258
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_30
+      rect:
+        serializedVersion: 2
+        x: 50
+        y: 18
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7be915f5e364ed2f0800000000000000
+      internalID: -946241638000124233
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_31
+      rect:
+        serializedVersion: 2
+        x: 70
+        y: 23
+        width: 13
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 804835fecee1cc870800000000000000
+      internalID: 8704366182776669192
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_32
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 9
+        width: 14
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2d0f579d46a7a8590800000000000000
+      internalID: -7671184441708515118
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_33
+      rect:
+        serializedVersion: 2
+        x: 124
+        y: 23
+        width: 9
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fd9209408de037d90800000000000000
+      internalID: -7101315866480858657
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_34
+      rect:
+        serializedVersion: 2
+        x: 54
+        y: 10
+        width: 11
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 132ac630b6e882d70800000000000000
+      internalID: 9018614844079514161
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_35
+      rect:
+        serializedVersion: 2
+        x: 68
+        y: 9
+        width: 12
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 36cd85e132a72ba80800000000000000
+      internalID: -8452559259369415581
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_36
+      rect:
+        serializedVersion: 2
+        x: 81
+        y: 14
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e9e98138cf88d1f30800000000000000
+      internalID: 4547941816826633886
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_37
+      rect:
+        serializedVersion: 2
+        x: 117
+        y: 7
+        width: 11
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dde4449eac3a9c370800000000000000
+      internalID: 8343379876572843741
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Irregular rock Spritesheet_38
+      rect:
+        serializedVersion: 2
+        x: 131
+        y: 13
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b4ed304df80dfc4a0800000000000000
+      internalID: -6570804015154340277
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Irregular rock Spritesheet_0: 6817854425926531477
+      Irregular rock Spritesheet_1: 3929869733720270682
+      Irregular rock Spritesheet_10: -3343438215909404515
+      Irregular rock Spritesheet_11: -6788042236567042082
+      Irregular rock Spritesheet_12: -6194457198056353991
+      Irregular rock Spritesheet_13: 6007498753023369116
+      Irregular rock Spritesheet_14: 6091465645535039831
+      Irregular rock Spritesheet_15: -4321160117395831649
+      Irregular rock Spritesheet_16: 7206299117451202057
+      Irregular rock Spritesheet_17: -7707361352214409159
+      Irregular rock Spritesheet_18: -5147183455552720384
+      Irregular rock Spritesheet_19: 3203043285842868894
+      Irregular rock Spritesheet_2: 4127516468003071197
+      Irregular rock Spritesheet_20: -4470253474484518024
+      Irregular rock Spritesheet_21: -8368435015195482407
+      Irregular rock Spritesheet_22: -1709079328729588410
+      Irregular rock Spritesheet_23: -1367501769827770986
+      Irregular rock Spritesheet_24: -4289661245468500897
+      Irregular rock Spritesheet_25: -1870178389995875790
+      Irregular rock Spritesheet_26: -1906338401571038327
+      Irregular rock Spritesheet_27: -1770259218699078603
+      Irregular rock Spritesheet_28: -2972587096974016527
+      Irregular rock Spritesheet_29: -4745107520386140258
+      Irregular rock Spritesheet_3: 1028570765121418880
+      Irregular rock Spritesheet_30: -946241638000124233
+      Irregular rock Spritesheet_31: 8704366182776669192
+      Irregular rock Spritesheet_32: -7671184441708515118
+      Irregular rock Spritesheet_33: -7101315866480858657
+      Irregular rock Spritesheet_34: 9018614844079514161
+      Irregular rock Spritesheet_35: -8452559259369415581
+      Irregular rock Spritesheet_36: 4547941816826633886
+      Irregular rock Spritesheet_37: 8343379876572843741
+      Irregular rock Spritesheet_38: -6570804015154340277
+      Irregular rock Spritesheet_4: 9065550577972586202
+      Irregular rock Spritesheet_5: -8989927587475101345
+      Irregular rock Spritesheet_6: 6241315977421750294
+      Irregular rock Spritesheet_7: 7533774863159523364
+      Irregular rock Spritesheet_8: 4652531855074350399
+      Irregular rock Spritesheet_9: 6534051041330954201
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

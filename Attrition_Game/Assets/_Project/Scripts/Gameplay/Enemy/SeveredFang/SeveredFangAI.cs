@@ -68,6 +68,46 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
         [Tooltip("Tốc độ bay của FireBolt (skill 3). 0 = giữ tốc độ prefab.")]
         public float shortDashFireboltSpeed = 0f;
 
+        [Header("---- SKILL 4: FIRE BREATH (vệt lửa trên đất) ----")]
+        [Tooltip("Thời gian vung kiếm (charge) trước khi vệt lửa đầu tiên xuất hiện.")]
+        public float fireBreathChargeTime = 0.5f;
+        [Tooltip("Số vệt lửa lan trên mặt đất (5-6).")]
+        public int fireBreathStreakCount = 6;
+        [Tooltip("Khoảng cách (units) giữa 2 vệt lửa liên tiếp.")]
+        public float fireBreathSpacing = 2.2f;
+        [Tooltip("Giãn cách thời gian (giây) giữa 2 vệt lửa — tạo cảm giác lan tới trước.")]
+        public float fireBreathInterval = 0.12f;
+        [Tooltip("Sát thương mỗi vệt lửa. Tái dùng FireExplosion prefab.")]
+        public int fireBreathDamage = 18;
+
+        [Header("---- SKILL 5: SPLIT FIREBALL (bắn thẳng rồi tách) ----")]
+        [Tooltip("Tốc độ cầu lửa 'carrier' bay tới điểm tách. 0 = giữ tốc độ prefab.")]
+        public float splitCarrierSpeed = 12f;
+        [Tooltip("Sát thương cầu lửa carrier khi bay tới.")]
+        public int splitCarrierDamage = 20;
+        [Tooltip("Thời gian carrier bay trước khi tách (giây) — sau đó spawn các cầu lửa con.")]
+        public float splitTravelTime = 0.55f;
+        [Tooltip("Số cầu lửa tách ra tại điểm tách (3-4).")]
+        public int splitFireballCount = 4;
+        [Tooltip("Góc toả (độ) của chùm cầu lửa con.")]
+        public float splitSpreadAngle = 60f;
+        [Tooltip("Sát thương mỗi cầu lửa con.")]
+        public int splitFireballDamage = 15;
+        [Tooltip("Tốc độ cầu lửa con. 0 = giữ tốc độ prefab.")]
+        public float splitFireballSpeed = 0f;
+
+        [Header("---- SKILL 6: FIREBOLT VOLLEY (ném liên tiếp) ----")]
+        [Tooltip("Số firebolt ném liên tiếp (2-3).")]
+        public int volleyCount = 3;
+        [Tooltip("Giãn cách thời gian (giây) giữa 2 firebolt.")]
+        public float volleyInterval = 0.22f;
+        [Tooltip("Thời gian vung tay (charge) trước phát đầu.")]
+        public float volleyChargeTime = 0.4f;
+        [Tooltip("Sát thương mỗi firebolt volley.")]
+        public int volleyDamage = 16;
+        [Tooltip("Tốc độ firebolt volley. 0 = giữ tốc độ prefab.")]
+        public float volleyFireboltSpeed = 0f;
+
         [Header("---- MELEE ATTACK ----")]
         [Tooltip("Phạm vi đánh cận chiến cơ bản (trigger attack animation).")]
         public float meleeRange = 2.0f;
@@ -102,6 +142,9 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
         public static readonly SF_ShortDashFireboltState ShortDashFireboltState = new SF_ShortDashFireboltState();
         public static readonly SF_RecoveryState RecoveryState = new SF_RecoveryState();
         public static readonly SF_MeleeAttackState MeleeAttackState = new SF_MeleeAttackState();
+        public static readonly SF_FireBreathState FireBreathState = new SF_FireBreathState();
+        public static readonly SF_SplitFireballState SplitFireballState = new SF_SplitFireballState();
+        public static readonly SF_FireboltVolleyState FireboltVolleyState = new SF_FireboltVolleyState();
 
 
         /// <summary>Đếm số vụ nổ đã spawn trong dash hiện tại.</summary>
@@ -313,6 +356,27 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
             });
         }
 
+        /// <summary>Như SpawnFireBolt nhưng TRẢ VỀ NetworkObject để state theo dõi (vd carrier của Split
+        /// Fireball cần despawn tại điểm tách). Trả null nếu không phải host / prefab chưa gán.</summary>
+        public NetworkObject SpawnFireBoltTracked(Vector2 spawnPos, Vector2 dir, int damage, float speed = 0f)
+        {
+            if (!HasStateAuthority || !fireBoltPrefab.IsValid) return null;
+            return Runner.Spawn(fireBoltPrefab, spawnPos, Quaternion.identity, null, (runner, obj) =>
+            {
+                Attrition.Gameplay.Combat.ProjectileInitializer.Init(
+                    obj, dir, damage, speed,
+                    Attrition.Core.DamageType.Magic);
+            });
+        }
+
+        /// <summary>Despawn 1 NetworkObject (host). Dùng để huỷ carrier fireball tại điểm tách.</summary>
+        public void DespawnObject(NetworkObject obj)
+        {
+            if (!HasStateAuthority || obj == null || !obj.IsValid) return;
+            Runner.Despawn(obj);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
         // HELPER — Animation triggers (RPC broadcast)
 
         public void PlayAttackAnim()
@@ -323,6 +387,13 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
         public void PlaySheatheAnim()
         {
             RPC_SF_PlayAnim("Sheathe");
+        }
+
+        /// <summary>Trigger animation FireBreath (skill 4). Cần thêm trigger "FireBreath" + clip trong Animator.
+        /// Chưa có clip → Animator bỏ qua trigger, skill vẫn chạy logic (spawn vệt lửa) bình thường.</summary>
+        public void PlayFireBreathAnim()
+        {
+            RPC_SF_PlayAnim("FireBreath");
         }
 
         public void PlayHurtAnim()
@@ -372,40 +443,26 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
         {
             float dist = DistanceToPlayer();
 
-            // Nếu player rất gần → ưu tiên melee hoặc short dash
+            // Nếu player rất gần → ưu tiên áp sát/cận chiến (6 lựa chọn ngang nhau).
             if (dist >= 0 && dist <= meleeRange)
             {
-                // 40% melee, 30% short dash + firebolt, 30% dash explosion
                 float roll = Random.value;
-                if (roll < 0.4f)
-                {
-                    ChangeState(MeleeAttackState);
-                }
-                else if (roll < 0.7f)
-                {
-                    ChangeState(ShortDashFireboltState);
-                }
-                else
-                {
-                    ChangeState(DashExplosionState);
-                }
+                if (roll < 0.30f)      ChangeState(MeleeAttackState);
+                else if (roll < 0.50f) ChangeState(ShortDashFireboltState);
+                else if (roll < 0.70f) ChangeState(DashExplosionState);
+                else if (roll < 0.90f) ChangeState(FireBreathState);   // vệt lửa quét quanh chân — mạnh khi gần
+                else                   ChangeState(FireboltVolleyState);
             }
             else
             {
-                // Player xa → random 3 skill ngang nhau
+                // Player xa → ưu tiên đòn tầm xa (split fireball, firebolt volley) + skill lướt tiếp cận.
                 float roll = Random.value;
-                if (roll < 0.33f)
-                {
-                    ChangeState(DashExplosionState);
-                }
-                else if (roll < 0.66f)
-                {
-                    ChangeState(SheatheFireballState);
-                }
-                else
-                {
-                    ChangeState(ShortDashFireboltState);
-                }
+                if (roll < 0.20f)      ChangeState(DashExplosionState);
+                else if (roll < 0.40f) ChangeState(SheatheFireballState);
+                else if (roll < 0.58f) ChangeState(ShortDashFireboltState);
+                else if (roll < 0.74f) ChangeState(FireBreathState);
+                else if (roll < 0.88f) ChangeState(SplitFireballState);
+                else                   ChangeState(FireboltVolleyState);
             }
         }
     }

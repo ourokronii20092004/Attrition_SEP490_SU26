@@ -55,6 +55,13 @@ namespace Attrition.Controllers
         [Networked] private TickTimer despawnTimer { get; set; }
         [Networked] private int RevivesRemaining { get; set; }
 
+        // ─── STATUS EFFECTS (accessory: Burn DoT + Slow) — host-authoritative ───
+        [Networked] private TickTimer burnTimer { get; set; }        // còn cháy tới khi hết
+        [Networked] private TickTimer burnTickTimer { get; set; }    // nhịp gây damage cháy kế tiếp
+        [Networked] private int burnDamagePerTick { get; set; }
+        [Networked] private TickTimer slowTimer { get; set; }        // còn chậm tới khi hết
+        [Networked] private float slowMultiplier { get; set; }       // 0..1 (0.5 = còn 50% tốc)
+
         [HideInInspector] public int maxHealth = 1;
         [Tooltip("Nguồn chỉ số (point-based).")]
         [SerializeField] private EnemyStats statsComp;
@@ -162,6 +169,10 @@ namespace Attrition.Controllers
                 CurrentPoise = GetMaxPoise();
                 poiseRecoveryTimer = TickTimer.None;
             }
+
+            // DoT thiêu đốt (accessory Burn). Có thể giết quái → return sớm tránh chạy AI trên xác.
+            TickBurn();
+            if (isDeadNetworked || IsAwaitingRevive) return;
 
             aiComp.RunAILogic();
         }
@@ -498,6 +509,69 @@ namespace Attrition.Controllers
             if (!HasStateAuthority) return;
             if (isDeadNetworked || IsAwaitingRevive) return;
             Health = Mathf.Min(Health + amount, maxHealth);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // STATUS EFFECTS (accessory Burn / Slow) — host-authoritative
+        // ═══════════════════════════════════════════════════════════════
+
+        /// <summary>Áp hiệu ứng THIÊU ĐỐT: tổng totalDamage rải đều theo tickInterval trong duration giây.
+        /// Gọi lại (đánh trúng liên tiếp) làm mới thời gian cháy. Chỉ host.</summary>
+        private const float BurnTickInterval = 0.5f;
+
+        public void ApplyBurn(int totalDamage, float duration)
+        {
+            if (!HasStateAuthority || isDeadNetworked || IsAwaitingRevive) return;
+            if (totalDamage <= 0 || duration <= 0f) return;
+
+            int ticks = Mathf.Max(1, Mathf.RoundToInt(duration / BurnTickInterval));
+            burnDamagePerTick = Mathf.Max(1, totalDamage / ticks);
+            burnTimer = TickTimer.CreateFromSeconds(Runner, duration);
+            burnTickTimer = TickTimer.CreateFromSeconds(Runner, BurnTickInterval);
+        }
+
+        /// <summary>Áp hiệu ứng LÀM CHẬM: giảm tốc còn multiplier (0..1) trong duration giây. Lấy mức
+        /// chậm MẠNH hơn nếu đang có sẵn. Chỉ host.</summary>
+        public void ApplySlow(float multiplier, float duration)
+        {
+            if (!HasStateAuthority || isDeadNetworked || IsAwaitingRevive) return;
+            multiplier = Mathf.Clamp01(multiplier);
+            if (duration <= 0f || multiplier >= 1f) return;
+
+            // Đang chậm → giữ mức mạnh hơn (nhỏ hơn) + gia hạn thời gian.
+            if (!slowTimer.ExpiredOrNotRunning(Runner))
+                slowMultiplier = Mathf.Min(slowMultiplier, multiplier);
+            else
+                slowMultiplier = multiplier;
+            slowTimer = TickTimer.CreateFromSeconds(Runner, duration);
+        }
+
+        /// <summary>Cho máy BẤT KỲ (input authority của player đánh) yêu cầu áp burn — host thực thi.</summary>
+        [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+        public void RpcApplyBurn(int totalDamage, float duration) => ApplyBurn(totalDamage, duration);
+
+        /// <summary>Cho máy BẤT KỲ yêu cầu áp slow — host thực thi.</summary>
+        [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+        public void RpcApplySlow(float multiplier, float duration) => ApplySlow(multiplier, duration);
+
+        /// <summary>Hệ số tốc độ hiện tại do slow (1 = bình thường). EnemyAI nhân vào tốc chạy/tuần tra.</summary>
+        public float SlowMultiplier =>
+            (Object != null && Object.IsValid && !slowTimer.ExpiredOrNotRunning(Runner)) ? slowMultiplier : 1f;
+
+        /// <summary>Tick DoT thiêu đốt. Gọi trong FixedUpdateNetwork (host). Trả true nếu đã chết vì cháy.</summary>
+        private void TickBurn()
+        {
+            if (burnTimer.ExpiredOrNotRunning(Runner)) return;
+            if (!burnTickTimer.ExpiredOrNotRunning(Runner)) return;
+
+            burnTickTimer = TickTimer.CreateFromSeconds(Runner, BurnTickInterval);
+            Health -= burnDamagePerTick;
+            RPC_NotifyDamageTaken(burnDamagePerTick);
+            if (Health <= 0)
+            {
+                if (RevivesRemaining > 0) { RevivesRemaining--; BeginDownedPhase(); }
+                else DieFinal();
+            }
         }
 
         private float GetMaxPoise()

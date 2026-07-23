@@ -896,6 +896,13 @@ namespace Attrition.Gameplay.Player.Inventory
             return _db.GetItem(EquippedSkill.ItemIndex) as Attrition.Data.SkillSO;
         }
 
+        /// <summary>AccessorySO đang trang bị (ô EquippedAccessory), hoặc null. Dùng cho AccessoryEffects đọc hiệu ứng.</summary>
+        public Attrition.Data.AccessorySO GetEquippedAccessorySO()
+        {
+            if (EquippedAccessory.IsEmpty || _db == null) return null;
+            return _db.GetItem(EquippedAccessory.ItemIndex) as Attrition.Data.AccessorySO;
+        }
+
         [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
         public void RpcRequestEquipAccessory(int slotIndex) => TryEquipAccessoryFromSlot(slotIndex);
 

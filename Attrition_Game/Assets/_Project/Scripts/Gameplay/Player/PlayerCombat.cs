@@ -7,6 +7,8 @@ public class PlayerCombat : NetworkBehaviour
     [SerializeField] private PlayerAnimation animationComp;
     [Tooltip("Tùy chọn: nguồn chỉ số. Bỏ trống = dùng attackDamage/chargeAttackDamage serialized.")]
     [SerializeField] private PlayerStats statsComp;
+    [Tooltip("Tùy chọn: hiệu ứng accessory. Bỏ trống = tự tìm trên cùng GameObject.")]
+    [SerializeField] private Attrition.Gameplay.Player.AccessoryEffects accessoryFx;
     [SerializeField] private Transform attackPoint;
     [SerializeField] private float attackRange = 1.5f;
     [Range(0, 360)]
@@ -45,6 +47,7 @@ public class PlayerCombat : NetworkBehaviour
     {
         if (animationComp == null) animationComp = GetComponent<PlayerAnimation>();
         if (statsComp == null) statsComp = GetComponent<PlayerStats>();
+        if (accessoryFx == null) accessoryFx = GetComponent<Attrition.Gameplay.Player.AccessoryEffects>();
     }
 
     public void HandleCombat(NetworkInputData data, bool isFacingRight, bool isCrouching)
@@ -213,6 +216,9 @@ public class PlayerCombat : NetworkBehaviour
 
         _hitSomething = false;
 
+        // Accessory: đòn đánh KẾ sau skill được nhân sát thương (PostSkillDamage). Tính 1 lần cho cả đòn.
+        if (accessoryFx != null) damage = accessoryFx.ApplyAttackDamageMultiplier(damage);
+
         // Xác định hướng Player đang nhìn dựa vào vị trí attackPoint
         Vector2 facingDir = attackPoint.localPosition.x >= 0 ? Vector2.right : Vector2.left;
 
@@ -240,6 +246,14 @@ public class PlayerCombat : NetworkBehaviour
                 float force = damage >= ChargeAttackRaw ? 8f : 5f;
                 dmg.TakeDamage(damage, pushDir, force, type);
                 _hitSomething = true;
+
+                // Accessory: hiệu ứng khi gây sát thương lên QUÁI (burn/slow/lifesteal/shield).
+                // Chỉ áp khi mục tiêu là enemy (Lever/Breakable cũng là IDamageable nhưng không phải quái).
+                if (accessoryFx != null)
+                {
+                    var enemy = hit.GetComponentInParent<Attrition.Controllers.EnemyController>();
+                    if (enemy != null) accessoryFx.OnDealtDamageToEnemy(enemy, damage);
+                }
             }
         }
 

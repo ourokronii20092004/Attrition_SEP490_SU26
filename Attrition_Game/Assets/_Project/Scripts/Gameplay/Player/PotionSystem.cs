@@ -63,6 +63,8 @@ namespace Attrition.Gameplay.Player
             if (_stats.CurrentHP <= 0) return false;
 
             int restore = healthPotion != null ? healthPotion.ComputeRestore(_stats.MaxHP) : _stats.MaxHP / 2;
+            var fx = GetComponent<AccessoryEffects>();
+            if (fx != null) restore = Mathf.RoundToInt(restore * fx.PotionHealMultiplier);
             _stats.RestoreHP(restore);
             HealthCharges--;
             return true;
