@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 442600777760671455}
   - component: {fileID: 4555258441647066427}
   - component: {fileID: 6845569757427119661}
+  - component: {fileID: 950538800078509192}
   m_Layer: 0
   m_Name: Druid
   m_TagString: Untagged
@@ -199,6 +200,113 @@ MonoBehaviour:
   numberOfGai: 5
   stepDistance: 1.5
   timeBetweenGai: 0.1
+--- !u!114 &950538800078509192
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 680963846886948012}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c81968cd96973f49a1f243829b882bc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Enemy.Druid.DruidBossAI
+  animationComp: {fileID: 0}
+  combatComp: {fileID: 0}
+  controller: {fileID: 0}
+  eliteSkills: {fileID: 0}
+  viewRadius: 5
+  patrolRadius: 3
+  isFlying: 0
+  flyHoverOffsetY: 0.8
+  flyMinGroundClearance: 1.2
+  flyMaxOffsetFromPlayer: 2.5
+  flyGroundLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  flyMeleeRetreat: 0
+  flyMeleeRetreatAltitude: 3
+  flyMeleeRetreatSpeed: 8
+  enableSleep: 0
+  wakeUpRadius: 0
+  sleepReturnDelay: 3
+  returnToSleepSpeed: 6
+  sleepOnCeiling: 1
+  sleepSurfaceLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  obstacleLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  wallCheckDistance: 0.8
+  wallCheckHeightOffset: 0.5
+  canEvadeJump: 0
+  evadeTriggerDistance: 2
+  jumpForce: 12
+  evadeBackwardSpeed: 8
+  jumpCooldown: 3
+  canLungeJump: 0
+  lungeMinDistance: 2.5
+  lungeMaxDistance: 7
+  lungeForwardSpeed: 11
+  lungeJumpForce: 10
+  facingDeadZone: 0.3
+  _CurrentState: 0
+  _NetSpeed: 0
+  _NetFacingDir: 1
+  _IsJumping:
+    _value: 0
+  _AttackLockedFacingDir: 1
+  woodProjectilePrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  windBeamPrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  windSwordPrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  airBurstPrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  airExplosionPrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  targetRetargetInterval: 4
+  meleeRange: 2.2
+  meleeDamage: 16
+  meleeDuration: 0.7
+  woodWaves: 3
+  woodPerWave: 3
+  woodSpacing: 2
+  woodSpawnHeight: 8
+  woodWaveGap: 0.9
+  woodSpeed: 12
+  woodDamage: 14
+  windBreathChargeTime: 0.6
+  windBreathSegments: 10
+  windBreathSpacing: 2
+  windBreathInterval: 0.05
+  windBreathHeight: 1
+  windBreathDamage: 18
+  windSwordCount: 4
+  windSwordSpread: 40
+  windSwordInterval: 0.12
+  windSwordChargeTime: 0.4
+  windSwordSpeed: 0
+  windSwordDamage: 15
+  airBurstCount: 6
+  airBurstScatter: 4
+  airBurstPrepareTime: 0.8
+  airBurstDamage: 20
+  airExplosionCount: 7
+  airExplosionStepX: 2
+  airExplosionAmplitudeY: 1.5
+  airExplosionInterval: 0.18
+  airExplosionDamage: 18
+  recoveryTime: 1
+  initialDelay: 1.5
+  waitForTrigger: 1
+  introDialogue: {fileID: 0}
+  _EncounterStarted:
+    _value: 0
+  StateLocalTimer: 0
 --- !u!1 &4153679582645008929
 GameObject:
   m_ObjectHideFlags: 0
