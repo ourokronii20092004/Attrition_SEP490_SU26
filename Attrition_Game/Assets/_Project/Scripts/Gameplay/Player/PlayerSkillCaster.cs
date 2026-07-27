@@ -70,8 +70,8 @@ namespace Attrition.Gameplay.Player
             IsCasting = true;
             _ticksDone = 0;
             _projectileFired = false;
-            _castTimer = TickTimer.CreateFromSeconds(Runner, skill.castTime);
-            _cooldown = TickTimer.CreateFromSeconds(Runner, skill.castTime + skill.cooldown);
+            _castTimer = TickTimer.CreateFromSeconds(Runner, config.castTime);
+            _cooldown = TickTimer.CreateFromSeconds(Runner, config.castTime + config.cooldown);
 
             // Accessory PostSkillDamage: vũ trang đòn đánh thường KẾ TIẾP tăng damage. Chỉ host set cờ networked.
             if (HasStateAuthority)
@@ -80,9 +80,6 @@ namespace Attrition.Gameplay.Player
                 if (fx != null) fx.ArmPostSkill();
             }
 
-            if (Runner.IsForward) RPC_PlayVfx((int)skill.element);
-            _castTimer = TickTimer.CreateFromSeconds(Runner, config.castTime);
-            _cooldown = TickTimer.CreateFromSeconds(Runner, config.castTime + config.cooldown);
             if (Runner.IsForward) RPC_PlayVfx((int)config.element, config.vfxLifetime);
         }
 
