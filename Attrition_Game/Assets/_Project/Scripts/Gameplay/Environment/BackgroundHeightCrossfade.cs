@@ -112,6 +112,10 @@ namespace Attrition.Gameplay.Environment
                 ? Mathf.MoveTowards(_blend, target, smoothSpeed * Time.deltaTime)
                 : target;
 
+            // Blend đứng yên (đa số thời gian: player không đổi độ cao) → khỏi ghi lại màu cho mọi sprite.
+            if (Mathf.Abs(_blend - _appliedBlend) < 0.002f) return;
+            _appliedBlend = _blend;
+
             ApplyAlpha(backgroundUnder, 1f - _blend);
             ApplyAlpha(backgroundSurface, _blend);
         }
@@ -133,11 +137,20 @@ namespace Attrition.Gameplay.Environment
             return Mathf.Clamp01(Mathf.InverseLerp(lo, hi, _localPlayer.position.y));
         }
 
+        // Cache renderer để không gọi GetComponentsInChildren (cấp phát mảng) mỗi frame — đây là rác GC
+        // đều đặn mỗi frame, đúng loại chi phí gây hitch dồn cục khi GC chạy.
+        private SpriteRenderer[] _underSr, _surfaceSr;
+        private float _appliedBlend = -1f;
+
         private void ApplyAlpha(GameObject go, float a)
         {
             if (go == null) return;
-            foreach (var sr in go.GetComponentsInChildren<SpriteRenderer>())
+            var list = go == backgroundUnder
+                ? (_underSr ??= go.GetComponentsInChildren<SpriteRenderer>(true))
+                : (_surfaceSr ??= go.GetComponentsInChildren<SpriteRenderer>(true));
+            for (int i = 0; i < list.Length; i++)
             {
+                var sr = list[i];
                 if (sr == null) continue;
                 var c = sr.color; c.a = a; sr.color = c;
             }

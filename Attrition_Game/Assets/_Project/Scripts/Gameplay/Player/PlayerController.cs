@@ -114,9 +114,9 @@ public class PlayerController : NetworkBehaviour, IDamageable
     [Networked] private TickTimer _knockbackTimer { get; set; }
     [Networked] private Vector2 _lastStableGround { get; set; }
 
-    [Networked] public Vector2 NetworkPosition { get; set; }
-    [Networked] public Vector2 NetworkVelocity { get; set; }
-    [Networked] public float NetworkGravityScale { get; set; }
+    // NetworkPosition/NetworkVelocity/NetworkGravityScale ĐÃ BỎ: NetworkRigidbody2D (addon) đã sync
+    // transform + velocity rồi, 3 field này host ghi mỗi tick nhưng KHÔNG ai đọc → chỉ tốn băng thông
+    // và làm snapshot to hơn (client nhận/rollback nhiều dữ liệu vô ích mỗi tick).
 
     /// <summary>Tên hiển thị (sync mọi máy) — hiện trên đầu player + thanh máu đồng đội.</summary>
     [Networked] public NetworkString<_32> DisplayName { get; set; }
@@ -202,19 +202,14 @@ public class PlayerController : NetworkBehaviour, IDamageable
         // CHỈ dùng Collider-based (không dùng IgnoreLayerCollision vì nó chặn cả trigger → ContactDamage không hoạt động)
         IgnoreAllEnemyColliders();
 
-        // Camera follow ROOT (transform), KHÔNG follow visualRoot. Lý do:
-        // - visualRoot DETACH khỏi cây khi chết (chống rung xác) → nếu camera follow nó, khi chết camera
-        //   kẹt theo xác, respawn không follow lại được (bug "camera dưới đất").
-        // - root không bao giờ detach + được teleport về checkpoint khi respawn → camera luôn theo đúng.
-        // - Nametag cũng nằm trên root → tên + camera cùng nhịp (không giật tương đối). Sprite vẫn mượt
-        //   nhờ interpolation target = visualRoot. User đã xác nhận camera-follow-root là ổn.
+        // Camera follow VISUAL ROOT (= interpolation target), KHÔNG follow root.
+        // Root chỉ nhảy theo tick 60Hz; visualRoot được addon nội suy mỗi frame. Nếu camera bám root mà
+        // sprite bám visualRoot thì hai cái LỆCH NHỊP → ở 144fps sprite rung tại chỗ so với camera:
+        // đúng hiện tượng "chỉ nhân vật của mình rung, quái vẫn mượt" (quái là proxy, camera không bám).
+        // Xác chết detach visualRoot → lúc đó chuyển Follow về root (xem DetachCorpseVisual).
         if (HasInputAuthority)
         {
-            var cam = FindAnyObjectByType<CinemachineCamera>();
-            if (cam != null)
-            {
-                cam.Follow = transform;
-            }
+            SetCameraFollow(visualRoot != null ? visualRoot : transform);
 
             // Đặt tên hiển thị. Solo/host (có StateAuthority) set THẲNG; coop CLIENT mới gửi RPC.
             // KHÔNG gọi RPC khi đang có StateAuthority trong Spawned() → tránh exception làm hỏng init (player rơi).
@@ -241,6 +236,16 @@ public class PlayerController : NetworkBehaviour, IDamageable
     {
         if (HasInputAuthority || visualRoot == null) return;
         visualRoot.gameObject.SetActive(GameSettings.ShowOtherPlayers);
+    }
+
+    private CinemachineCamera _cam;
+
+    /// <summary>Gán Follow cho camera local (cache camera để không FindAnyObjectByType lại mỗi lần).</summary>
+    private void SetCameraFollow(Transform target)
+    {
+        if (!HasInputAuthority || target == null) return;
+        if (_cam == null) _cam = FindAnyObjectByType<CinemachineCamera>();
+        if (_cam != null) _cam.Follow = target;
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
@@ -271,10 +276,6 @@ public class PlayerController : NetworkBehaviour, IDamageable
 
         if (HasStateAuthority)
         {
-            NetworkPosition = rb.position;
-            NetworkVelocity = rb.linearVelocity;
-            NetworkGravityScale = rb.gravityScale;
-
             // Hồi stamina theo thời gian (concept: 10/s). Null-safe nếu chưa gán statsComp.
             if (statsComp != null) statsComp.RegenStamina(Runner.DeltaTime);
 
@@ -571,6 +572,16 @@ public class PlayerController : NetworkBehaviour, IDamageable
     private bool _sfxWasDashing;
     private int _sfxPrevHealthCharges;
     private int _sfxPrevManaCharges;
+    private float _sfxDashLock, _sfxJumpLock, _sfxLandLock;
+
+    // CLIENT: các cờ dưới đây là state PREDICT. Khi server snapshot về lệch dự đoán, Fusion rollback +
+    // resimulate → cờ có thể nhấp nháy false→true LẦN NỮA trong cùng một hành động, khiến Render bắt 2
+    // sườn lên và phát SFX 2 lần (đúng lỗi "tiếng dash tách thành 2"). Lockout ngắn cho mỗi loại âm
+    // chặn lần lặp đó nhưng vẫn giữ phản hồi tức thì của state predict.
+    // ponytail: lockout theo thời gian (đủ vì dash/nhảy đều > 0.15s); nếu sau này cần chính xác tuyệt
+    // đối thì đổi sang GetChangeDetector(ChangeDetector.Source.SnapshotFrom) cho proxy và giữ predict
+    // cho local player.
+    private const float SfxRetriggerLockout = 0.15f;
 
     private void UpdateMovementSfx()
     {
@@ -578,15 +589,27 @@ public class PlayerController : NetworkBehaviour, IDamageable
         var sfx = Attrition.Systems.GameSfx.Instance;
 
         // JUMP: JumpCount tăng lên = vừa bật nhảy (gồm cả double jump).
-        if (JumpCount > _sfxPrevJumpCount) sfx.PlayJump();
+        if (JumpCount > _sfxPrevJumpCount && Time.time >= _sfxJumpLock)
+        {
+            sfx.PlayJump();
+            _sfxJumpLock = Time.time + SfxRetriggerLockout;
+        }
         _sfxPrevJumpCount = JumpCount;
 
         // LAND: chuyển từ trên-không sang chạm-đất.
-        if (IsGrounded && !_sfxWasGrounded) sfx.PlayLand();
+        if (IsGrounded && !_sfxWasGrounded && Time.time >= _sfxLandLock)
+        {
+            sfx.PlayLand();
+            _sfxLandLock = Time.time + SfxRetriggerLockout;
+        }
         _sfxWasGrounded = IsGrounded;
 
         // DASH: cờ IsDashing bật lên = vừa bắt đầu lướt.
-        if (IsDashing && !_sfxWasDashing) sfx.PlayDash();
+        if (IsDashing && !_sfxWasDashing && Time.time >= _sfxDashLock)
+        {
+            sfx.PlayDash();
+            _sfxDashLock = Time.time + SfxRetriggerLockout;
+        }
         _sfxWasDashing = IsDashing;
 
         // POTION: số bình giảm = vừa uống (HP hoặc Mana). Networked nên nghe được trên mọi máy.
@@ -613,11 +636,22 @@ public class PlayerController : NetworkBehaviour, IDamageable
         }
     }
 
+    // Buffer + filter dùng lại cho ground cast. Trước đây cấp phát mới MỖI tick; client còn resimulate
+    // nhiều tick/frame nên rác GC dồn lên gấp nhiều lần host → GC spike = giật dù FPS cao.
+    private readonly RaycastHit2D[] _groundHits = new RaycastHit2D[1];
+    private ContactFilter2D _groundFilter;
+    private bool _groundFilterReady;
+
     private void CheckGround()
     {
         // Dùng rb.Cast vì nó tự động dùng đúng physics scene của Fusion
         // Fix góc đất được xử lý bằng cách clamp velocity Y ở trên
-        IsGrounded = rb.Cast(Vector2.down, new ContactFilter2D { layerMask = groundLayer, useLayerMask = true }, new RaycastHit2D[1], 0.05f) > 0;
+        if (!_groundFilterReady)
+        {
+            _groundFilter = new ContactFilter2D { layerMask = groundLayer, useLayerMask = true };
+            _groundFilterReady = true;
+        }
+        IsGrounded = rb.Cast(Vector2.down, _groundFilter, _groundHits, 0.05f) > 0;
 
         // BR-39: ghi nhớ điểm đất an toàn cuối (đứng yên trên đất) để hồi sinh khi rơi bẫy.
         if (HasStateAuthority && IsGrounded && Mathf.Abs(rb.linearVelocity.y) < 0.1f)
@@ -789,8 +823,11 @@ public class PlayerController : NetworkBehaviour, IDamageable
     /// Đợi vài frame cho FUN áp teleport, rồi ForceCameraPosition để camera nhảy tức thì, không kẹt/lết.</summary>
     private System.Collections.IEnumerator SnapCameraAfterRespawn(Vector3 target)
     {
-        var cam = FindAnyObjectByType<CinemachineCamera>();
+        if (_cam == null) _cam = FindAnyObjectByType<CinemachineCamera>();
+        var cam = _cam;
         if (cam == null) yield break;
+        // Bám root trong lúc chờ teleport (visualRoot vừa reattach có thể còn lệch), sau khi snap xong
+        // mới trả Follow về visualRoot để lấy lại nội suy mượt.
         cam.Follow = transform;
 
         // Đợi tối đa ~30 frame tới khi root đã teleport về gần target (teleport deferred sang FUN).
@@ -803,6 +840,8 @@ public class PlayerController : NetworkBehaviour, IDamageable
         // Snap camera thẳng về player — giữ z của camera. ForceCameraPosition = API Cinemachine 3.
         Vector3 camTarget = new Vector3(transform.position.x, transform.position.y, cam.transform.position.z);
         cam.ForceCameraPosition(camTarget, cam.transform.rotation);
+
+        if (!_corpseVisualDetached && visualRoot != null) SetCameraFollow(visualRoot);
     }
 
     /// <summary>Chống rung XÁC CHẾT trên client: tách Visual khỏi cây networked. Chạy trên MỌI peer
@@ -816,6 +855,10 @@ public class PlayerController : NetworkBehaviour, IDamageable
         var nrb = GetComponent<Fusion.Addons.Physics.NetworkRigidbody2D>();
         if (nrb != null) nrb.SetInterpolationTarget(null); // addon thôi chase Visual
         visualRoot.SetParent(null, worldPositionStays: true); // tách khỏi root networked
+
+        // Camera đang bám visualRoot (xem Spawned) — xác đã tách khỏi cây networked nên phải chuyển
+        // Follow về root, nếu không respawn sẽ kẹt camera tại chỗ chết.
+        SetCameraFollow(transform);
     }
 
     /// <summary>Gắn lại Visual vào root sau khi sống lại (đảo ngược DetachCorpseVisual). Reset local
@@ -834,6 +877,9 @@ public class PlayerController : NetworkBehaviour, IDamageable
         }
         var nrb = GetComponent<Fusion.Addons.Physics.NetworkRigidbody2D>();
         if (nrb != null) nrb.SetInterpolationTarget(visualRoot);
+
+        // Visual đã về cây → camera bám lại target nội suy (giữ mượt như lúc mới spawn).
+        if (visualRoot != null) SetCameraFollow(visualRoot);
     }
 
     /// <summary>Dịch chuyển player về vị trí (điểm rest / spawn checkpoint). Chỉ host. Ghi ý định vào
@@ -846,8 +892,6 @@ public class PlayerController : NetworkBehaviour, IDamageable
         // Set rb.position ngay để host và trường hợp chưa in-sim (spawn từ coroutine) vào đúng chỗ.
         rb.position = position;
         rb.linearVelocity = Vector2.zero;
-        NetworkPosition = position;
-        NetworkVelocity = Vector2.zero;
 
         // Ghi ý định teleport (tăng seq) → FUN sẽ gọi nrb.Teleport() đúng thời điểm in-sim trên mọi
         // peer, kể cả CLIENT đang prediction. Không gọi Teleport() trực tiếp ở đây vì có thể đang ở
