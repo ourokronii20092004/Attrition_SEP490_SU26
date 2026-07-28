@@ -15,7 +15,7 @@ MonoBehaviour:
   baseExp: 100
   perLevelExp: 50
   maxLevel: 100
-  statPointsPerLevel: 1
+  statPointsPerLevel: 5
   hpPerPoint: 5
   manaPerPoint: 5
   staminaPerPoint: 5
