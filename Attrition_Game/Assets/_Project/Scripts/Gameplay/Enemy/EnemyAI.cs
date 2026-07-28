@@ -242,8 +242,10 @@ public class EnemyAI : NetworkBehaviour
         }
 
         animationComp.UpdateSpeed(NetSpeed);
-        
-        if (rb != null)
+
+        // IsGrounded() = 1 rb.Cast physics. Chỉ chạy khi animator THẬT SỰ có param bay — quái đi đất
+        // không có param nào, trước đây vẫn tốn 1 cast/frame/con quái (nhân thêm khi client resimulate).
+        if (rb != null && animationComp.NeedsAirState)
         {
             animationComp.UpdateAirState(rb.linearVelocity.y, IsGrounded());
         }
@@ -865,12 +867,23 @@ public class EnemyAI : NetworkBehaviour
         }
     }
 
+    // Buffer + filter dùng lại. IsGrounded() được gọi trong Render (mỗi frame, MỖI con quái) → cấp phát
+    // mới ở đây tạo rác GC tỉ lệ (số quái × FPS); trên client còn nhân thêm vì resimulation.
+    private readonly RaycastHit2D[] _groundHits = new RaycastHit2D[1];
+    private ContactFilter2D _groundFilter;
+    private bool _groundFilterReady;
+
     private bool IsGrounded()
     {
         if (rb == null) return true;
         // Sử dụng rb.Cast giống hệt như PlayerController để quét nguyên hình dáng Collider xuống đất
         // Khắc phục hoàn toàn lỗi sai pivot hoặc lệch tâm
-        return rb.Cast(Vector2.down, new ContactFilter2D { layerMask = obstacleLayer, useLayerMask = true }, new RaycastHit2D[1], 0.1f) > 0;
+        if (!_groundFilterReady)
+        {
+            _groundFilter = new ContactFilter2D { layerMask = obstacleLayer, useLayerMask = true };
+            _groundFilterReady = true;
+        }
+        return rb.Cast(Vector2.down, _groundFilter, _groundHits, 0.1f) > 0;
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]

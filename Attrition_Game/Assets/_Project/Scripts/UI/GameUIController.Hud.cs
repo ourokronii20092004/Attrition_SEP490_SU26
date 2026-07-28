@@ -45,32 +45,58 @@ namespace Attrition.UI
         }
 
 
+        // Chữ ký các con số HUD ở frame trước. HUD chỉ đổi khi số đổi, nên chạy lại toàn bộ set-text +
+        // nội suy chuỗi ($"{a}/{b}") mỗi frame ở 144fps là rác GC thuần vô ích — đây là loại chi phí gây
+        // giật kiểu "FPS cao nhưng vẫn hitch" vì GC dồn cục.
+        private int _hudSig = int.MinValue;
+
         private void UpdateHud()
         {
             if (_stats == null || _stats.Object == null || !_stats.Object.IsValid) return;
 
-            SetFill("hud-hp-fill", _stats.CurrentHP, _stats.MaxHP);
-            SetText("hud-hp-label", $"{_stats.CurrentHP}/{_stats.MaxHP}");
-
-            SetFill("hud-mana-fill", _stats.CurrentMana, _stats.MaxMana);
-            SetText("hud-mana-label", $"{_stats.CurrentMana}/{_stats.MaxMana}");
-
             int sta = Mathf.FloorToInt(_stats.CurrentStamina);
-            SetFill("hud-stamina-fill", sta, _stats.MaxStamina);
-            SetText("hud-stamina-label", $"{sta}/{_stats.MaxStamina}");
-
-            SetText("hud-level", $"LV. {_stats.Level}");
-
-            if (_potions != null)
+            int sig;
+            unchecked
             {
-                SetText("hud-hp-flask-count", _potions.HealthCharges.ToString());
-                SetText("hud-mana-flask-count", _potions.ManaCharges.ToString());
-                SetSlotEmpty("hud-hp-flask", _potions.HealthCharges <= 0);
-                SetSlotEmpty("hud-mana-flask", _potions.ManaCharges <= 0);
-                ApplyFlaskIcons();
+                sig = 17;
+                sig = sig * 31 + _stats.CurrentHP; sig = sig * 31 + _stats.MaxHP;
+                sig = sig * 31 + _stats.CurrentMana; sig = sig * 31 + _stats.MaxMana;
+                sig = sig * 31 + sta; sig = sig * 31 + Mathf.RoundToInt(_stats.MaxStamina);
+                sig = sig * 31 + _stats.Level;
+                if (_potions != null)
+                {
+                    sig = sig * 31 + _potions.HealthCharges;
+                    sig = sig * 31 + _potions.ManaCharges;
+                }
             }
 
-            UpdateHudSkillIcon();
+            if (sig != _hudSig)
+            {
+                _hudSig = sig;
+
+                SetFill("hud-hp-fill", _stats.CurrentHP, _stats.MaxHP);
+                SetText("hud-hp-label", $"{_stats.CurrentHP}/{_stats.MaxHP}");
+
+                SetFill("hud-mana-fill", _stats.CurrentMana, _stats.MaxMana);
+                SetText("hud-mana-label", $"{_stats.CurrentMana}/{_stats.MaxMana}");
+
+                SetFill("hud-stamina-fill", sta, _stats.MaxStamina);
+                SetText("hud-stamina-label", $"{sta}/{_stats.MaxStamina}");
+
+                SetText("hud-level", $"LV. {_stats.Level}");
+
+                if (_potions != null)
+                {
+                    SetText("hud-hp-flask-count", _potions.HealthCharges.ToString());
+                    SetText("hud-mana-flask-count", _potions.ManaCharges.ToString());
+                    SetSlotEmpty("hud-hp-flask", _potions.HealthCharges <= 0);
+                    SetSlotEmpty("hud-mana-flask", _potions.ManaCharges <= 0);
+                    ApplyFlaskIcons();
+                }
+
+                UpdateHudSkillIcon();
+            }
+
             UpdateRestPrompt();
             UpdateRevivePrompt();
             UpdatePing();
