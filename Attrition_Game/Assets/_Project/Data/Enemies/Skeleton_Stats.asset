@@ -14,12 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.EnemyStatsSO
   enemyId: skeleton_sword
   tier: 0
-  maxHP: 30
-  ad: 10
-  ap: 0
-  def: 0
-  res: 0
+  webImage: {fileID: 0}
+  maxHP: 40
+  ad: 15
+  ap: 15
+  def: 2
+  res: 2
   poise: 0
+  poiseRecoveryTime: 3
+  patrolSpeed: 2
+  chaseSpeed: 5
+  attackSpeed: 1
   expReward: 10
   coopHpMultiplier: 1.6
   coopDamageMultiplier: 1.2

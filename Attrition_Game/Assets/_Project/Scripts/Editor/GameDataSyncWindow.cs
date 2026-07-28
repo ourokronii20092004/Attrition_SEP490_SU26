@@ -19,7 +19,10 @@ namespace Attrition.Editor
     {
         private const string ManifestPath = "Assets/_Project/Data/Items/ItemDatabaseManifest.json";
         private static readonly Regex StableId = new("^[a-z0-9]+(?:_[a-z0-9]+)*$", RegexOptions.CultureInvariant);
-        private string _baseUrl = "http://localhost:8080/api";
+        // Khớp với APIManager.baseUrl (gateway production). Sync chủ yếu chạy lên production nên để sẵn
+        // — gõ tay dễ nhập URL trang web (https://attrition.io.vn/login) thay vì API base, rồi endpoint
+        // thành /login/auth/login → 404. Test gateway local thì tự sửa thành http://localhost:8080/api.
+        private string _baseUrl = "https://attrition.io.vn/api";
         private string _username = "";
         private string _password = "";
         private string _token = "";
