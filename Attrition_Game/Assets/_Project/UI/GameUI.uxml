@@ -10,23 +10,30 @@
                 <ui:VisualElement class="hud-decor-bg"/>
                 <ui:VisualElement class="hud-avatar"/>
                 <ui:VisualElement name="hud-bars">
-                    <ui:VisualElement class="stat-bar-row">
-                        <ui:VisualElement class="stat-bar-track">
+                    <ui:VisualElement name="hud-hp-row" class="stat-bar-row">
+                        <ui:VisualElement name="hud-hp-track" class="stat-bar-track">
                             <ui:VisualElement name="hud-hp-fill" class="stat-bar-fill fill-hp"/>
                         </ui:VisualElement>
                         <ui:Label name="hud-hp-label" text="100/100" class="stat-bar-label"/>
                     </ui:VisualElement>
-                    <ui:VisualElement class="stat-bar-row">
-                        <ui:VisualElement class="stat-bar-track">
+                    <ui:VisualElement name="hud-mana-row" class="stat-bar-row">
+                        <ui:VisualElement name="hud-mana-track" class="stat-bar-track">
                             <ui:VisualElement name="hud-mana-fill" class="stat-bar-fill fill-mana"/>
                         </ui:VisualElement>
                         <ui:Label name="hud-mana-label" text="100/100" class="stat-bar-label"/>
                     </ui:VisualElement>
-                    <ui:VisualElement class="stat-bar-row">
-                        <ui:VisualElement class="stat-bar-track">
+                    <ui:VisualElement name="hud-stamina-row" class="stat-bar-row">
+                        <ui:VisualElement name="hud-stamina-track" class="stat-bar-track">
                             <ui:VisualElement name="hud-stamina-fill" class="stat-bar-fill fill-stamina"/>
                         </ui:VisualElement>
                         <ui:Label name="hud-stamina-label" text="100/100" class="stat-bar-label"/>
+                    </ui:VisualElement>
+                    <!-- EXP: khung Gandalf chỉ có 2 rãnh (mana/stamina) nên EXP là thanh riêng
+                         đặt NGAY DƯỚI khung, cùng cụm để dễ theo dõi (yêu cầu user). -->
+                    <ui:VisualElement name="hud-exp-row" class="stat-bar-row">
+                        <ui:VisualElement name="hud-exp-track" class="stat-bar-track">
+                            <ui:VisualElement name="hud-exp-fill" class="stat-bar-fill fill-exp"/>
+                        </ui:VisualElement>
                     </ui:VisualElement>
                     <ui:Label name="hud-level" text="LV. 1" class="stat-bar-label hud-lvl"/>
                 </ui:VisualElement>
@@ -80,6 +87,22 @@
                 <ui:VisualElement name="hud-revive-track">
                     <ui:VisualElement name="hud-revive-fill"/>
                 </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- COOP — NGƯỜI ĐANG GỤC thấy: có ai đang cứu mình không + tiến trình.
+                 Trước đây HUD người gục trống trơn nên không biết đồng đội có đang cứu hay không. -->
+            <ui:VisualElement name="hud-downed" class="hidden">
+                <ui:Label name="hud-downed-text" text="ĐÃ GỤC — CHỜ ĐỒNG ĐỘI CỨU"/>
+                <ui:VisualElement name="hud-downed-track">
+                    <ui:VisualElement name="hud-downed-fill"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- COOP — NGƯỜI CÒN SỐNG thấy: đồng đội đã gục (kể cả ở xa, ngoài tầm cứu).
+                 Kèm khoảng cách để biết phải chạy tới đâu. -->
+            <ui:VisualElement name="hud-ally-down" class="hidden">
+                <ui:Label name="hud-ally-down-text" text="ĐỒNG ĐỘI ĐÃ GỤC"/>
+                <ui:Label name="hud-ally-down-dist" text="-- m"/>
             </ui:VisualElement>
         </ui:VisualElement>
 

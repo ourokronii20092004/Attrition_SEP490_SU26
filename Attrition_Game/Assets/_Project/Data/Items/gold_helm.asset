@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5169bec6b72d93447a155aa416878291, type: 3}
-  m_Name: gold_helm
+  m_Name: 
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.EquipmentSO
   itemId: gold_helm
   displayName: Gilded Helm

@@ -100,7 +100,8 @@ namespace Attrition.Gameplay.Environment
             _viewport.pivot = new Vector2(0.5f, 0.5f);
             _viewport.offsetMin = new Vector2(40, 40);    // lề trái/dưới
             _viewport.offsetMax = new Vector2(-40, -40);  // lề phải/trên
-            AddImage(vpGo, new Color(0.06f, 0.06f, 0.10f, 1f));
+            // Khung Ornate cho viewport (khung trong). Panel ngoài giữ nền tối đục để che gameplay.
+            UiTheme.ApplyPanelAlt(AddImage(vpGo, new Color(0.06f, 0.06f, 0.10f, 1f)));
             vpGo.AddComponent<RectMask2D>();
 
             // Content = lớp di chuyển/zoom, chứa toàn bộ map-space.
@@ -251,13 +252,42 @@ namespace Attrition.Gameplay.Environment
                 Debug.LogWarning("[WorldMap] MapRegistry NULL — tạo asset 'MapRegistry' trong thư mục Resources và kéo các MapData vào.");
                 return;
             }
+            // Nhiều map dùng CHUNG worldMapOffset (0,0) → chúng vẽ ĐÈ LÊN NHAU tại cùng một chỗ, và fog
+            // của map chưa đi (alpha = 1, đục kín) che hết silhouette map đang chơi → "mở bảng mà không
+            // thấy map". Chỉ ghép nhiều map vào bản đồ tổng khi designer ĐÃ đặt offset khác nhau.
+            bool offsetsConfigured = HasDistinctOffsets(_registry.maps);
+
             foreach (var map in _registry.maps)
             {
                 if (map == null) continue;
                 if (map.worldBounds.size.sqrMagnitude < 0.01f) continue; // chưa bake bounds → bỏ
+                // Chưa cấu hình offset → CHỈ vẽ map đang chơi (không có gì che nó nữa).
+                if (!offsetsConfigured && map != cur) continue;
                 DrawMap(map);
             }
             BuildPlayerDot();
+        }
+
+        /// <summary>
+        /// Các map đã được đặt worldMapOffset KHÁC NHAU chưa? Nếu mọi map (từ 2 cái trở lên) đều dùng
+        /// cùng một offset (mặc định 0,0) thì chúng sẽ vẽ đè lên nhau → coi như CHƯA cấu hình bản đồ tổng.
+        /// </summary>
+        private static bool HasDistinctOffsets(List<MapDataSO> maps)
+        {
+            if (maps == null) return false;
+
+            Vector2? first = null;
+            int counted = 0;
+            foreach (var m in maps)
+            {
+                if (m == null) continue;
+                if (m.worldBounds.size.sqrMagnitude < 0.01f) continue;
+                counted++;
+                if (first == null) { first = m.worldMapOffset; continue; }
+                if ((m.worldMapOffset - first.Value).sqrMagnitude > 0.01f) return true; // có cái lệch → đã cấu hình
+            }
+            // 0-1 map hợp lệ: không có gì đè nhau → cứ vẽ bình thường.
+            return counted <= 1;
         }
 
         private void DrawMap(MapDataSO map)
@@ -557,11 +587,14 @@ namespace Attrition.Gameplay.Environment
             btn.targetGraphic = img;
             btn.onClick.AddListener(() => onClick());
 
+            // Nút theme Ornate: 9-slice + đổi sprite khi hover/press (no-op nếu thiếu sprite).
+            UiTheme.ApplyButtonStates(btn);
+
             var txtGo = NewElement("Label", go.transform, out var txtRt);
             Stretch(txtRt);
             var txt = txtGo.AddComponent<TextMeshProUGUI>();
             txt.text = label; txt.alignment = TextAlignmentOptions.Center;
-            txt.fontSize = 26; txt.color = Color.white; txt.raycastTarget = false;
+            txt.fontSize = 26; txt.color = UiTheme.TextGold; txt.raycastTarget = false;
             return btn;
         }
     }

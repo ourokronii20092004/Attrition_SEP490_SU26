@@ -49,6 +49,52 @@ namespace Attrition.Gameplay.Player
         public float ReviveFraction =>
             reviveTimeRequired > 0f ? Mathf.Clamp01(ReviveProgress / reviveTimeRequired) : 0f;
 
+        /// <summary>
+        /// Tiến trình đồng đội đang cứu MÌNH (0..1), hoặc **-1 nếu không ai đang cứu**.
+        ///
+        /// VÌ SAO CẦN: `ReviveFraction` là tiến trình MÌNH cứu người khác. Người đang GỤC không có
+        /// tiến trình của riêng mình nên trước đây HUD của họ trống trơn — không biết có ai đang cứu
+        /// hay không (đúng vấn đề user báo). Ở đây quét CoopReviveSystem của peer khác và đọc
+        /// `IsReviving`/`TargetPlayerToRevive`/`ReviveProgress` — cả 3 đều [Networked] nên proxy đọc
+        /// được, chạy đúng trên MỌI máy kể cả người đã gục.
+        /// </summary>
+        public float IncomingReviveFraction
+        {
+            get
+            {
+                if (Object == null || !Object.IsValid) return -1f;
+                var me = Object.InputAuthority;
+
+                foreach (var rs in FindObjectsByType<CoopReviveSystem>(FindObjectsSortMode.None))
+                {
+                    if (rs == null || rs == this) continue;
+                    if (rs.Object == null || !rs.Object.IsValid) continue;
+                    if (!rs.IsReviving) continue;
+                    if (rs.TargetPlayerToRevive != me) continue;
+                    return rs.ReviveFraction;
+                }
+                return -1f;
+            }
+        }
+
+        /// <summary>
+        /// Đồng đội đã gục — BẤT KỂ xa gần (khác `FindDeadPlayerInRadius` chỉ tìm trong tầm cứu).
+        /// HUD người còn sống dùng cái này để báo "đồng đội đã gục" dù đang ở đầu map bên kia.
+        /// Null nếu không có ai gục.
+        /// </summary>
+        public PlayerController FindDownedAllyAnywhere()
+        {
+            if (_myController == null || Object == null || !Object.IsValid) return null;
+
+            foreach (var p in FindObjectsByType<PlayerController>(FindObjectsSortMode.None))
+            {
+                if (p == _myController) continue;
+                if (p.Object == null || !p.Object.IsValid) continue;   // chưa Spawned → đọc IsDead sẽ ném
+                if (p.IsDead) return p;
+            }
+            return null;
+        }
+
         public override void FixedUpdateNetwork()
         {
             if (!HasStateAuthority) return;

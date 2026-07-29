@@ -40,11 +40,11 @@ namespace Attrition.Gameplay.Enemy.SeveredFang.States
 
                 if (ai.introDialogue != null)
                 {
-                    Attrition.Data.DialogueEvents.OnOpenCustomDialogue?.Invoke(ai.introDialogue, () => 
-                    {
-                        // Khi thoại đóng, vào combat
-                        ai.ChangeState(SeveredFangAI.IdleState);
-                    });
+                    // Bắn RPC cho MỌI máy cùng mở thoại. Trước đây gọi thẳng DialogueEvents ở đây,
+                    // nhưng state machine CHỈ chạy trên host (EnemyController.FUN return sớm khi
+                    // !HasStateAuthority) → client không bao giờ thấy thoại mở đầu.
+                    // RPC tự chuyển sang IdleState (chỉ host) khi thoại đóng.
+                    ai.BroadcastIntroDialogue();
                 }
                 else
                 {

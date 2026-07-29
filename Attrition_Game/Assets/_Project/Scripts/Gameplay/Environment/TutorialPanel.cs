@@ -26,6 +26,18 @@ namespace Attrition.Gameplay.Environment
             _instance.ShowInternal(title, lines, autoHideSeconds, onClosed);
         }
 
+        /// <summary>
+        /// Hiện LẦN LƯỢT từng dòng: mỗi bước 1 phím (WASD → Space → J → ...), bấm phím bất kỳ để sang
+        /// bước sau. Hết bước thì đóng và gọi onClosed. Có chỉ báo tiến độ (● ○ ○) để người chơi biết
+        /// còn mấy bước.
+        /// </summary>
+        public static void ShowSteps(string title, TutorialPrompt.Line[] lines, float autoHideSeconds,
+                                     System.Action onClosed = null)
+        {
+            EnsureInstance();
+            _instance.ShowStepsInternal(title, lines, autoHideSeconds, onClosed);
+        }
+
         private static void EnsureInstance()
         {
             if (_instance != null) return;
@@ -58,6 +70,8 @@ namespace Attrition.Gameplay.Environment
             var bg = panelGo.AddComponent<Image>();
             bg.color = new Color(0.04f, 0.04f, 0.07f, 0.88f);
             bg.raycastTarget = false;
+            // Khung Ornate Retro UI (9-slice). Không nạp được sprite → giữ nguyên màu phẳng ở trên.
+            UiTheme.ApplyPanel(bg);
 
             _group = panelGo.AddComponent<CanvasGroup>();
             _group.alpha = 0f;
@@ -110,6 +124,70 @@ namespace Attrition.Gameplay.Environment
 
             if (_routine != null) StopCoroutine(_routine);
             _routine = StartCoroutine(ShowRoutine(autoHideSeconds, onClosed));
+        }
+
+        private void ShowStepsInternal(string title, TutorialPrompt.Line[] lines, float autoHideSeconds,
+                                       System.Action onClosed)
+        {
+            if (_titleLabel == null) return;
+            if (lines == null || lines.Length == 0) { onClosed?.Invoke(); return; }
+
+            _titleLabel.text = title;
+            _group.transform.parent.gameObject.SetActive(true);
+            _group.gameObject.SetActive(true);
+
+            if (_routine != null) StopCoroutine(_routine);
+            _routine = StartCoroutine(StepsRoutine(lines, autoHideSeconds, onClosed));
+        }
+
+        private IEnumerator StepsRoutine(TutorialPrompt.Line[] lines, float autoHideSeconds,
+                                         System.Action onClosed)
+        {
+            var panel = _group.gameObject;
+            panel.SetActive(true);
+
+            yield return Fade(0f, 1f, 0.25f);
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                _bodyLabel.text = BuildStepText(lines, i);
+
+                // Chờ người chơi bấm phím bất kỳ để sang bước kế (hoặc tự sang nếu có autoHide).
+                float shownAt = Time.unscaledTime;
+                while (true)
+                {
+                    bool timedOut = autoHideSeconds > 0f && Time.unscaledTime - shownAt >= autoHideSeconds;
+                    // Trễ 0.4s để phím vừa bấm ở bước trước không lật luôn bước này.
+                    bool advanced = Time.unscaledTime - shownAt > 0.4f
+                                    && (Input.anyKeyDown || Input.GetMouseButtonDown(0));
+                    if (timedOut || advanced) break;
+                    yield return null;
+                }
+            }
+
+            yield return Fade(1f, 0f, 0.25f);
+            panel.SetActive(false);
+            _routine = null;
+            onClosed?.Invoke();
+        }
+
+        /// <summary>Dòng của bước hiện tại + chỉ báo tiến độ (● đã/đang, ○ còn lại).</summary>
+        private static string BuildStepText(TutorialPrompt.Line[] lines, int index)
+        {
+            var l = lines[index];
+            var sb = new System.Text.StringBuilder();
+            sb.Append("<size=34><color=#FFE08A><b>").Append(l.key).Append("</b></color></size>\n\n");
+            sb.Append(l.description);
+
+            // Chỉ báo tiến độ — chỉ hiện khi có nhiều hơn 1 bước.
+            if (lines.Length > 1)
+            {
+                sb.Append("\n\n<size=20><color=#8A8A99>");
+                for (int i = 0; i < lines.Length; i++)
+                    sb.Append(i <= index ? "● " : "○ ");
+                sb.Append("</color></size>");
+            }
+            return sb.ToString();
         }
 
         private IEnumerator ShowRoutine(float autoHideSeconds, System.Action onClosed)

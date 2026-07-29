@@ -22,9 +22,11 @@ MonoBehaviour:
   worldMapScale: 1
   fogCellSize: 2.5
   checkpoints:
-  - checkpointId: CP1
+  - checkpointId: Rest 4 - Rainbow Plains
+    worldPos: {x: 12.580017, y: 69.7}
+  - checkpointId: Rest 1 - Cave
     worldPos: {x: -6.42, y: 16.7}
-  - checkpointId: CP2
+  - checkpointId: Rest 3 - Rainbow Plains
     worldPos: {x: 260.58002, y: 70.7}
-  - checkpointId: CP3
+  - checkpointId: Rest 2 - Middle
     worldPos: {x: 123.58002, y: 57.699997}

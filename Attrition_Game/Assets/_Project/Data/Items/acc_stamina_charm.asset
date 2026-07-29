@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6d740e8b8ddbb1d45be05976a51f8007, type: 3}
-  m_Name: acc_stamina_charm
+  m_Name: 
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.AccessorySO
   itemId: acc_stamina_charm
   displayName: Vigor Charm
@@ -23,3 +23,9 @@ MonoBehaviour:
   modifiers:
   - stat: 2
     amount: 20
+  effect: 0
+  effectMagnitude: 0
+  effectDuration: 3
+  effectThreshold: 0.5
+  effectThresholdStop: 0.8
+  effectCooldown: 8

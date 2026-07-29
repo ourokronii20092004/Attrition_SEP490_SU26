@@ -12,7 +12,7 @@ using Attrition.Persistence;
 /// - Input Authority (người chơi local): dùng physics prediction bình thường.
 /// - Proxy (người chơi khác nhìn thấy trên màn hình bạn): nhận vị trí + velocity từ server.
 /// </summary>
-public class PlayerController : NetworkBehaviour, IDamageable
+public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
 {
     [Header("---- INJECT COMPONENTS ----")]
     [SerializeField] private PlayerCombat combatComp;
@@ -150,12 +150,6 @@ public class PlayerController : NetworkBehaviour, IDamageable
         if (_currentCheckpoint != null) _currentCheckpoint.RequestRest();
     }
 
-    /// <summary>Gọi khi nhấn F mở bảng checkpoint: kích hoạt beacon + LƯU tiến trình (tách khỏi Rest).</summary>
-    public void ActivateAndSaveCheckpoint()
-    {
-        if (_currentCheckpoint != null) _currentCheckpoint.RequestActivateAndSave();
-    }
-
     // Nguồn HP DUY NHẤT: có statsComp → dùng PlayerStats.CurrentHP (chỗ PotionSystem hồi vào).
     // Không có → fallback currentHP riêng (tương thích prefab cũ).
     public int HP
@@ -225,11 +219,51 @@ public class PlayerController : NetworkBehaviour, IDamageable
 
         GameSettings.OnChanged += ApplyLocalVisibility;
         ApplyLocalVisibility();
+
+        // Player sống sót qua LoadScene (Fusion không huỷ NetworkObject khi đổi scene) → phải bám lại
+        // camera của scene mới, vì Spawned() không chạy lần hai.
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoadedRebindCamera;
     }
 
     public override void Despawned(NetworkRunner runner, bool hasState)
     {
         GameSettings.OnChanged -= ApplyLocalVisibility;
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoadedRebindCamera;
+    }
+
+    /// <summary>
+    /// Sang scene mới, NetworkObject của player SỐNG SÓT nên Spawned() KHÔNG chạy lại → camera của
+    /// scene mới không có Follow target ("no display camera"). Bám lại camera mỗi lần scene load.
+    /// Chỉ máy sở hữu nhân vật này (InputAuthority) mới đặt camera.
+    /// </summary>
+    private void OnSceneLoadedRebindCamera(UnityEngine.SceneManagement.Scene scene,
+                                           UnityEngine.SceneManagement.LoadSceneMode mode)
+    {
+        if (!HasInputAuthority) return;
+        StartCoroutine(RebindCameraNextFrame());
+    }
+
+    private IEnumerator RebindCameraNextFrame()
+    {
+        // Chờ 1 frame cho camera của scene mới kịp Awake.
+        yield return null;
+        var cam = FindAnyObjectByType<CinemachineCamera>();
+        if (cam == null) yield break;
+
+        cam.Follow = transform;
+
+        // Xoá confiner của map CŨ (bounding shape thuộc scene cũ) — nếu không camera bị kẹt trong
+        // vùng giới hạn không còn tồn tại.
+        var confiner = cam.GetComponent<CinemachineConfiner2D>();
+        if (confiner != null)
+        {
+            confiner.BoundingShape2D = null;
+            confiner.InvalidateBoundingShapeCache();
+        }
+
+        cam.ForceCameraPosition(
+            new Vector3(transform.position.x, transform.position.y, cam.transform.position.z),
+            cam.transform.rotation);
     }
 
     private void ApplyLocalVisibility()
@@ -1043,6 +1077,50 @@ public class PlayerController : NetworkBehaviour, IDamageable
                 spawner.DespawnObject(enemy.Object);
             }
             spawner.RespawnConfiguredEnemies();
+        }
+
+        // BOSS: đặt sẵn trong scene nên KHÔNG despawn/respawn như quái thường → phải reset tay.
+        // Hồi đầy HP + trả AI về chờ trigger (ẩn thanh máu) + MỞ LẠI cửa phòng boss, nếu không player
+        // hồi sinh sẽ gặp boss máu dở, không thanh máu, cửa khoá.
+        ResetLivingBossesAfterWipe();
+    }
+
+    /// <summary>
+    /// Reset mọi boss CÒN SỐNG sau khi cả team chết. Ưu tiên BossGateController (nó quản cả cửa vào);
+    /// boss không có gate thì reset trực tiếp. Boss đã bị hạ giữ nguyên (không hồi sinh). Chỉ host.
+    /// </summary>
+    private static void ResetLivingBossesAfterWipe()
+    {
+        // 1) Boss có cổng: gate lo cả mở cửa + reset boss + reset trigger.
+        var gates = FindObjectsByType<Attrition.Gameplay.Environment.BossGateController>(FindObjectsSortMode.None);
+        foreach (var gate in gates)
+            if (gate != null) gate.ResetEncounterAfterWipe();
+
+        // 2) Boss KHÔNG có gate (vd Druid đặt trần trong scene): reset trực tiếp.
+        foreach (var enemy in FindObjectsByType<Attrition.Controllers.EnemyController>(FindObjectsSortMode.None))
+        {
+            if (enemy == null || enemy.IsDead) continue;
+            var es = enemy.GetComponent<Attrition.Gameplay.Enemy.EnemyStats>();
+            if (es == null || es.Tier != Attrition.Data.EnemyTier.Boss) continue;
+
+            var sfAI = enemy.GetComponent<Attrition.Gameplay.Enemy.SeveredFang.SeveredFangAI>();
+            var druidAI = enemy.GetComponent<Attrition.Gameplay.Enemy.Druid.DruidBossAI>();
+
+            // Đã được gate xử lý ở bước 1 → bỏ qua để không reset hai lần.
+            bool handledByGate = false;
+            foreach (var gate in gates)
+                if (gate != null && gate.Boss == enemy) { handledByGate = true; break; }
+            if (handledByGate) continue;
+
+            enemy.ResetForEncounterRetry();
+            var bc = enemy.GetComponent<Attrition.Controllers.BossController>();
+            if (bc != null) bc.ResetPhases();
+            if (sfAI != null) sfAI.ResetEncounter();
+            if (druidAI != null) druidAI.ResetEncounter();
+
+            // Cho phép kích hoạt lại trigger vào phòng.
+            foreach (var trig in FindObjectsByType<Attrition.Gameplay.Environment.BossEncounterTrigger>(FindObjectsSortMode.None))
+                if (trig != null && trig.boss != null && (trig.boss == sfAI)) trig.ResetTrigger();
         }
     }
 
