@@ -14,9 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.EnemyStatsSO
   enemyId: the_dark
   tier: 0
-  maxHP: 80
-  ad: 10
-  ap: 0
+  webImage: {fileID: 0}
+  maxHP: 100
+  ad: 20
+  ap: 20
   def: 5
   res: 5
   poise: 100

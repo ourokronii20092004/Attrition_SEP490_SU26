@@ -15,7 +15,7 @@ MonoBehaviour:
   enemyId: gollux
   tier: 1
   webImage: {fileID: 0}
-  maxHP: 200
+  maxHP: 300
   ad: 20
   ap: 20
   def: 20

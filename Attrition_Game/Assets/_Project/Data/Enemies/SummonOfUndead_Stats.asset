@@ -14,9 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.EnemyStatsSO
   enemyId: summon_of_undead
   tier: 0
-  maxHP: 10
-  ad: 0
-  ap: 0
+  webImage: {fileID: 0}
+  maxHP: 20
+  ad: 20
+  ap: 20
   def: 0
   res: 0
   poise: 0

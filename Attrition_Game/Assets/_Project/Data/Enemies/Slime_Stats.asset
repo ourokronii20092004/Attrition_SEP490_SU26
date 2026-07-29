@@ -17,7 +17,7 @@ MonoBehaviour:
   webImage: {fileID: 0}
   maxHP: 30
   ad: 12
-  ap: 0
+  ap: 12
   def: 15
   res: 0
   poise: 0

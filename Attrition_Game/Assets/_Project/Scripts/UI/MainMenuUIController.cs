@@ -15,8 +15,18 @@ namespace Attrition.UI
     {
         [Header("Audio")]
         [SerializeField] private AudioSource _audioSource;
+        [Tooltip("Trỏ chuột lên nút.")]
         [SerializeField] private AudioClip _hoverSound;
+        [Tooltip("Bấm nút (dùng cho mọi nút chưa có âm riêng).")]
         [SerializeField] private AudioClip _clickSound;
+        [Tooltip("Nút Back / Cancel. Để trống = dùng lại click.")]
+        [SerializeField] private AudioClip _backSound;
+        [Tooltip("Xác nhận nặng: vào game, host/join, tạo nhân vật. Để trống = dùng lại click.")]
+        [SerializeField] private AudioClip _confirmSound;
+        [Tooltip("Toast cảnh báo / lỗi (sai mã phòng, slot sai chế độ...). Để trống = im lặng.")]
+        [SerializeField] private AudioClip _errorSound;
+        [Tooltip("Âm lượng riêng của SFX menu (nhân thêm với slider SFX trong Settings).")]
+        [SerializeField][Range(0f, 1f)] private float _sfxVolume = 1f;
 
         private UIDocument _uiDocument;
         private VisualElement _root;
@@ -504,7 +514,7 @@ namespace Attrition.UI
                 backBtn.RegisterCallback<PointerEnterEvent>(evt => PlayHoverSound());
                 backBtn.RegisterCallback<ClickEvent>(evt =>
                 {
-                    PlayClickSound();
+                    PlayBackSound();
                     if (_previousScreen == "host-join")
                         ShowScreen("host-join");
                     else
@@ -531,7 +541,7 @@ namespace Attrition.UI
                 continueBtn.RegisterCallback<PointerEnterEvent>(evt => PlayHoverSound());
                 continueBtn.RegisterCallback<ClickEvent>(evt =>
                 {
-                    PlayClickSound();
+                    PlayConfirmSound();
                     if (_saveSlots[_selectedSaveSlot] == null)
                     {
                         Debug.LogWarning("Selected slot is empty!");
@@ -847,6 +857,7 @@ namespace Attrition.UI
             var toastLabel = _slotWarningToast.Q<Label>("slot-warning-label");
             toastLabel.style.color = success ? new Color(0.82f, 0.96f, 0.84f) : new Color(0.96f, 0.82f, 0.78f);
             toastLabel.text = message;
+            if (!success) PlayErrorSound();
             _slotWarningToast.style.display = DisplayStyle.Flex;
             _slotWarningToast.BringToFront();
 
@@ -962,7 +973,7 @@ namespace Attrition.UI
                 backBtn.RegisterCallback<PointerEnterEvent>(evt => PlayHoverSound());
                 backBtn.RegisterCallback<ClickEvent>(evt =>
                 {
-                    PlayClickSound();
+                    PlayBackSound();
                     if (loginError != null) loginError.style.display = DisplayStyle.None;
                     ShowScreen("main-menu");
                 });
@@ -1102,7 +1113,7 @@ namespace Attrition.UI
                 backBtn.RegisterCallback<PointerEnterEvent>(evt => PlayHoverSound());
                 backBtn.RegisterCallback<ClickEvent>(evt =>
                 {
-                    PlayClickSound();
+                    PlayBackSound();
                     ShowScreen("main-menu");
                 });
             }
@@ -1716,8 +1727,23 @@ namespace Attrition.UI
             if (dropdown != null) dropdown.index = index;
         }
 
-        private void PlayClickSound() { if (_audioSource != null && _clickSound != null) _audioSource.PlayOneShot(_clickSound); }
-        private void PlayHoverSound() { if (_audioSource != null && _hoverSound != null) _audioSource.PlayOneShot(_hoverSound); }
+        // Nhân với slider SFX trong Settings để menu tôn trọng cùng 1 mức âm như gameplay (GameSfx).
+        // Master volume đã áp toàn cục qua AudioListener nên không nhân lại ở đây.
+        private void PlayUiSound(AudioClip clip)
+        {
+            if (_audioSource == null || clip == null) return;
+            float vol = _sfxVolume * GameSettings.SfxVolume;
+            if (vol <= 0f) return;
+            _audioSource.PlayOneShot(clip, vol);
+        }
+
+        private void PlayClickSound() => PlayUiSound(_clickSound);
+        private void PlayHoverSound() => PlayUiSound(_hoverSound);
+        // != null (không dùng ??) để đi qua overload của UnityEngine.Object: clip bị xoá khỏi project
+        // trả về "fake null", ?? sẽ nhận nhầm là có clip và bỏ mất fallback.
+        private void PlayBackSound() => PlayUiSound(_backSound != null ? _backSound : _clickSound);
+        private void PlayConfirmSound() => PlayUiSound(_confirmSound != null ? _confirmSound : _clickSound);
+        private void PlayErrorSound() => PlayUiSound(_errorSound);
 
         private void OnButtonHover(Button btn)
         {
