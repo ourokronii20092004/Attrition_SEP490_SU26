@@ -130,11 +130,13 @@ namespace Attrition.UI
             RewardEvents.OnRewardBatchComplete += OnRewardBatchComplete;
 
             Attrition.Data.DialogueEvents.OnOpenCustomDialogue += OpenCustomDialogue;
+            Attrition.Data.DialogueEvents.OnForceCloseDialogue += ForceCloseDialogue;
         }
 
         private void OnDisable()
         {
             Attrition.Data.DialogueEvents.OnOpenCustomDialogue -= OpenCustomDialogue;
+            Attrition.Data.DialogueEvents.OnForceCloseDialogue -= ForceCloseDialogue;
 
             if (_btnAccept != null) _btnAccept.clicked -= OnAcceptClicked;
             if (_btnDecline != null) _btnDecline.clicked -= OnDeclineClicked;
@@ -160,7 +162,10 @@ namespace Attrition.UI
             KeyCode interactKey = Attrition.Persistence.GameSettings.GetKey(
                 Attrition.Persistence.GameSettings.InputAction.Interact);
 
-            if (!_isDialogueOpen && !_isRewardShowing && Input.GetKeyDown(interactKey))
+            // Cutscene đang chiếu → không cho mở thoại NPC (sẽ chồng lên thoại của chính cảnh, và
+            // cutscene đang chờ callback của thoại nó mở → mở đè sẽ làm cảnh treo).
+            if (!_isDialogueOpen && !_isRewardShowing && Input.GetKeyDown(interactKey)
+                && !Attrition.Persistence.CutsceneState.IsPlaying)
             {
                 TryOpenFromNearbyNPC();
                 // Mở xong return ngay: tránh cùng frame rơi vào khối advance bên dưới
@@ -431,6 +436,21 @@ namespace Attrition.UI
                 }
             }
             CloseDialogue();
+        }
+
+        /// <summary>
+        /// Đóng NGAY hội thoại đang mở (dùng khi bỏ qua cutscene), VẪN gọi callback onComplete.
+        /// Phải gọi callback: CloseDialogue thuần KHÔNG gọi, nên cutscene đang chờ thoại xong sẽ
+        /// treo vĩnh viễn (người chơi bị khoá input) nếu chỉ đóng suông.
+        /// </summary>
+        public void ForceCloseDialogue()
+        {
+            if (!_isDialogueOpen) return;
+
+            var callback = _onDialogueComplete;
+            _onDialogueComplete = null;
+            CloseDialogue();
+            callback?.Invoke();
         }
 
         /// <summary>Đóng hội thoại.</summary>

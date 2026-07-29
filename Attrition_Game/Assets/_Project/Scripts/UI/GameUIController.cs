@@ -101,6 +101,10 @@ namespace Attrition.UI
             // Reset cờ hội thoại (static, sống xuyên phiên). Thoát/đổi scene lúc đang mở hội thoại →
             // IsActive kẹt true → phiên sau PlayerController đọc thấy → KHÓA di chuyển. Reset ở đây.
             Attrition.Persistence.DialogueState.IsActive = false;
+            // Cùng lý do với DialogueState: thoát giữa cutscene → cờ kẹt → lượt sau bị khoá input.
+            // Clear() cũng xoá danh sách "đã xem" để lượt sau nạp lại từ ĐÚNG slot của lượt đó
+            // (save-on-quit đã chạy trước khi scene unload nên không mất cờ vừa đánh dấu).
+            Attrition.Persistence.CutsceneState.Clear();
             if (_stats != null)
             {
                 _stats.OnStatsChanged -= RefreshCharacterPanel;
@@ -144,6 +148,10 @@ namespace Attrition.UI
             UpdateWaitingOverlay();
 
             CheckGameOver();
+
+            // CUTSCENE: khoá toàn bộ phím mở overlay. ESC lúc này thuộc về cutscene (bỏ qua cảnh) —
+            // nếu không chặn ở đây thì cùng một lần nhấn vừa skip cảnh vừa bật menu Pause.
+            if (Attrition.Persistence.CutsceneState.IsPlaying) return;
 
             // Tab = mở/đóng Character/Inventory (không khi đang Game Over/Loading)
             if (Input.GetKeyDown(KeyCode.Tab) && _overlay != Overlay.GameOver && _overlay != Overlay.Loading)

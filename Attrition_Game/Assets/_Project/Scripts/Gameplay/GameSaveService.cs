@@ -133,6 +133,9 @@ namespace Attrition.Gameplay.Persistence
             // Bản đồ tổng: ghi fog đã xua + checkpoint đã khám phá vào save (lưu vĩnh viễn).
             Attrition.Gameplay.Environment.WorldMapState.WriteTo(data);
 
+            // Cutscene đã xem (playOnce) — không chiếu lại ở lần chơi sau.
+            Attrition.Persistence.CutsceneState.WriteTo(data);
+
             SaveManager.SaveSlot(slot, data);
         }
 
