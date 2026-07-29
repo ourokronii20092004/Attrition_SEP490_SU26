@@ -134,11 +134,26 @@ namespace Attrition.Gameplay.Player
 
         private void SpawnGhost()
         {
-            var go = new GameObject("DashGhost");
+            DashGhostFade fade;
+            SpriteRenderer sr;
+            if (_pool.Count > 0)
+            {
+                fade = _pool.Pop();
+                sr = fade.Renderer;
+                fade.gameObject.SetActive(true);
+            }
+            else
+            {
+                var newGo = new GameObject("DashGhost");
+                sr = newGo.AddComponent<SpriteRenderer>();
+                fade = newGo.AddComponent<DashGhostFade>();
+                fade.Pool = _pool;
+            }
+
+            var go = fade.gameObject;
             go.transform.SetPositionAndRotation(sourceSprite.transform.position, sourceSprite.transform.rotation);
             go.transform.localScale = sourceSprite.transform.lossyScale;
 
-            var sr = go.AddComponent<SpriteRenderer>();
             sr.sprite = sourceSprite.sprite;
             sr.flipX = sourceSprite.flipX;
             sr.flipY = sourceSprite.flipY;
@@ -146,8 +161,18 @@ namespace Attrition.Gameplay.Player
             sr.sortingOrder = sourceSprite.sortingOrder + sortingOffset;
             sr.color = ghostColor;
 
-            var fade = go.AddComponent<DashGhostFade>();
             fade.Init(ghostColor, ghostLifetime);
+        }
+
+        // Ghost trong pool là con của scene (không phải con của player) nên khi player bị destroy phải
+        // dọn theo, tránh rác treo lại khi đổi scene.
+        private void OnDestroy()
+        {
+            while (_pool.Count > 0)
+            {
+                var g = _pool.Pop();
+                if (g != null) Destroy(g.gameObject);
+            }
         }
 
         private void ApplyReadyFlash()
@@ -213,11 +238,17 @@ namespace Attrition.Gameplay.Player
         private float _life;
         private float _t;
 
+        /// <summary>Pool trả về khi mờ hết (do ShadowDashEffect gán lúc tạo). Null = tự huỷ như cũ.</summary>
+        public System.Collections.Generic.Stack<DashGhostFade> Pool;
+
+        public SpriteRenderer Renderer => _sr != null ? _sr : (_sr = GetComponent<SpriteRenderer>());
+
         public void Init(Color start, float life)
         {
-            _sr = GetComponent<SpriteRenderer>();
+            _sr = Renderer;
             _start = start;
             _life = Mathf.Max(0.01f, life);
+            _t = 0f;
         }
 
         private void Update()
@@ -230,7 +261,14 @@ namespace Attrition.Gameplay.Player
                 c.a = _start.a * k;
                 _sr.color = c;
             }
-            if (_t >= _life) Destroy(gameObject);
+            if (_t < _life) return;
+
+            if (Pool != null)
+            {
+                gameObject.SetActive(false);
+                Pool.Push(this);
+            }
+            else Destroy(gameObject);
         }
     }
 }

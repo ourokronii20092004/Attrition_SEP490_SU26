@@ -45,6 +45,11 @@ namespace Attrition.UI
         }
 
 
+        // Chữ ký các con số HUD ở frame trước. HUD chỉ đổi khi số đổi, nên chạy lại toàn bộ set-text +
+        // nội suy chuỗi ($"{a}/{b}") mỗi frame ở 144fps là rác GC thuần vô ích — đây là loại chi phí gây
+        // giật kiểu "FPS cao nhưng vẫn hitch" vì GC dồn cục.
+        private int _hudSig = int.MinValue;
+
         private void UpdateHud()
         {
             if (_stats == null || _stats.Object == null || !_stats.Object.IsValid) return;
@@ -56,14 +61,14 @@ namespace Attrition.UI
             SetFillVertical("hud-hp-track", _stats.CurrentHP, _stats.MaxHP);
             SetText("hud-hp-label", $"{_stats.CurrentHP}/{_stats.MaxHP}");
 
-            SetFill("hud-mana-fill", _stats.CurrentMana, _stats.MaxMana);
-            SetText("hud-mana-label", $"{_stats.CurrentMana}/{_stats.MaxMana}");
+                SetFill("hud-hp-fill", _stats.CurrentHP, _stats.MaxHP);
+                SetText("hud-hp-label", $"{_stats.CurrentHP}/{_stats.MaxHP}");
 
-            int sta = Mathf.FloorToInt(_stats.CurrentStamina);
-            SetFill("hud-stamina-fill", sta, _stats.MaxStamina);
-            SetText("hud-stamina-label", $"{sta}/{_stats.MaxStamina}");
+                SetFill("hud-mana-fill", _stats.CurrentMana, _stats.MaxMana);
+                SetText("hud-mana-label", $"{_stats.CurrentMana}/{_stats.MaxMana}");
 
-            SetText("hud-level", $"LV. {_stats.Level}");
+                SetFill("hud-stamina-fill", sta, _stats.MaxStamina);
+                SetText("hud-stamina-label", $"{sta}/{_stats.MaxStamina}");
 
             // EXP trên HUD (yêu cầu user: hiện chung cụm với mana/stamina cho dễ theo dõi).
             // _progression có thể null nếu prefab chưa gắn → chỉ vẽ khi có.
@@ -79,7 +84,6 @@ namespace Attrition.UI
                 ApplyFlaskIcons();
             }
 
-            UpdateHudSkillIcon();
             UpdateRestPrompt();
             UpdateRevivePrompt();
             UpdatePing();

@@ -557,6 +557,15 @@ MonoBehaviour:
     pitch: 1
     pitchVariance: 0
     delay: 0
+  stepAlt:
+    clips:
+    - {fileID: 8300000, guid: f5272e1b4d7cb3048a26a835b4a6f936, type: 3}
+    volume: 1
+    pitch: 1
+    pitchVariance: 0
+    delay: 0
+  altStepScenes:
+  - Castle - Map 5
   potion:
     clips:
     - {fileID: 8300000, guid: eef69514673b0c54da9d705eeecda0ad, type: 3}
@@ -806,6 +815,10 @@ MonoBehaviour:
   _audioSource: {fileID: 0}
   _hoverSound: {fileID: 0}
   _clickSound: {fileID: 8300000, guid: cd8f231778a234138849b780b1e91d98, type: 3}
+  _backSound: {fileID: 0}
+  _confirmSound: {fileID: 0}
+  _errorSound: {fileID: 0}
+  _sfxVolume: 1
 --- !u!114 &2029634900
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -178,11 +178,29 @@ namespace Attrition.Gameplay.Player
             CancelRevive();
         }
 
+        // Cache danh sách player: UI gọi HasRevivableAllyNearby MỖI FRAME → FindObjectsByType mỗi frame
+        // quét toàn scene + cấp phát mảng mới = rác GC liên tục (thấy rõ nhất trên client, nơi frame đã
+        // phải chịu resimulation). Coop tối đa 2 player nên refresh 0.5s là quá đủ.
+        // ponytail: nếu sau này có >2 player join/leave nhanh, đổi sang đăng ký ở OnPlayerJoined/Left.
+        private static PlayerController[] _playersCache = System.Array.Empty<PlayerController>();
+        private static float _playersCacheTime = -1f;
+
+        private static PlayerController[] GetPlayers()
+        {
+            if (Time.unscaledTime - _playersCacheTime >= 0.5f)
+            {
+                _playersCache = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+                _playersCacheTime = Time.unscaledTime;
+            }
+            return _playersCache;
+        }
+
         private PlayerController FindDeadPlayerInRadius()
         {
-            var players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+            var players = GetPlayers();
             foreach (var p in players)
             {
+                if (p == null) continue;
                 if (p == _myController) continue;
                 // Guard: đọc IsDead ([Networked]) ném InvalidOperationException nếu Object chưa Spawned
                 // (player khác đang trong quá trình spawn). Bỏ qua tới khi hợp lệ.
@@ -195,9 +213,10 @@ namespace Attrition.Gameplay.Player
 
         private PlayerController GetPlayerByRef(PlayerRef playerRef)
         {
-            var players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+            var players = GetPlayers();
             foreach (var p in players)
             {
+                if (p == null || p.Object == null || !p.Object.IsValid) continue;
                 if (p.Object.InputAuthority == playerRef) return p;
             }
             return null;

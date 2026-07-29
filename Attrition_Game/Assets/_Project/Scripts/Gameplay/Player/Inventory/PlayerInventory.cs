@@ -101,9 +101,16 @@ namespace Attrition.Gameplay.Player.Inventory
 
         // CLIENT: phát hiện networked inventory đổi (host sync xuống) rồi rebuild gear + refresh UI. Host
         // đã tự làm qua NotifyChanged khi thao tác; client KHÔNG có trigger đó nên tự dò checksum mỗi frame.
+        private float _nextInvPoll;
+
         public override void Render()
         {
             if (HasStateAuthority || _db == null) return; // host tự xử lý; chỉ client cần dò.
+
+            // Dò 5 lần/giây thay vì mỗi frame: quét 64 ô NetworkArray ở 144fps là chi phí thuần vô ích
+            // (đồ chỉ đổi khi có thao tác), và nó nằm trong Render nên tính vào mọi frame của client.
+            if (Time.unscaledTime < _nextInvPoll) return;
+            _nextInvPoll = Time.unscaledTime + 0.2f;
 
             int sum = ComputeInventoryChecksum();
             if (sum == _lastInvChecksum) return;

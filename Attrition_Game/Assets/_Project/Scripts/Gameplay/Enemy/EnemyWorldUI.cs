@@ -145,13 +145,23 @@ namespace Attrition.Gameplay.Enemy
             go.AddComponent<FloatingNumber>();
         }
 
+        // Chữ ký frame trước: thanh máu chỉ đổi khi HP đổi / trail đang chạy / quái quay mặt. Ghi lại
+        // 4 transform (mỗi con quái, mỗi frame) khi chẳng có gì đổi là chi phí thuần vô ích — Unity còn
+        // phải đánh dấu transform dirty và đồng bộ lại toàn bộ hierarchy đó.
+        private float _lastSig = float.NaN;
+
         private void Update()
         {
             if (!_everDamaged || _enemy == null || _fill == null) return;
 
             int max = MaxHpForBar();
             float target = Mathf.Clamp01((float)_enemy.CurrentHealth / max);
-            
+
+            float signXNow = Mathf.Sign(transform.localScale.x);
+            float sig = target * 4096f + _trailFraction * 16f + signXNow;
+            if (sig == _lastSig) return;
+            _lastSig = sig;
+
             _shownFraction = target;
             _trailFraction = Mathf.MoveTowards(_trailFraction, target, Time.deltaTime * 1.5f);
 
@@ -170,7 +180,7 @@ namespace Attrition.Gameplay.Enemy
 
             // Chống lật UI (khi enemy quay mặt, transform.localScale.x bị lật âm, 
             // khiến chữ và thanh máu bị lộn ngược trái phải).
-            float signX = Mathf.Sign(transform.localScale.x);
+            float signX = signXNow;
             if (_nameLabel != null)
             {
                 var ns = _nameLabel.localScale;
