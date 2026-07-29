@@ -48,7 +48,10 @@ namespace Attrition.Gameplay.Environment
         [SerializeField] private Line[] lines = new Line[0];
 
         [Header("---- HÀNH VI ----")]
-        [Tooltip("Tự ẩn sau bao nhiêu giây (0 = chỉ ẩn khi người chơi bấm phím / click).")]
+        [Tooltip("BẬT = hiện LẦN LƯỢT từng dòng (WASD → Space → J...), bấm phím bất kỳ để sang bước sau. " +
+                 "TẮT = hiện tất cả dòng trong 1 bảng như cũ.")]
+        [SerializeField] private bool stepByStep = true;
+        [Tooltip("Tự ẩn/sang bước sau sau bao nhiêu giây (0 = chờ người chơi bấm phím / click).")]
         [SerializeField] private float autoHideSeconds = 0f;
 
         [Header("---- CREDITS (tùy chọn) ----")]
@@ -103,7 +106,8 @@ namespace Attrition.Gameplay.Environment
                 ? () => TeamCreditsPanel.Show(tutorialId + "_credits", creditsTitle, creditsMembers, 0.35f, 3f)
                 : (System.Action)null;
 
-            TutorialPanel.Show(title, lines, autoHideSeconds, onClosed);
+            if (stepByStep) TutorialPanel.ShowSteps(title, lines, autoHideSeconds, onClosed);
+            else TutorialPanel.Show(title, lines, autoHideSeconds, onClosed);
         }
 
         private bool AlreadyShown() => _shown.Contains(tutorialId);

@@ -1,7 +1,22 @@
 /* ============================================================
    ATTRITION — IN-GAME UI (HUD, Inventory, Fast Travel, Game Over, Loading)
    Dark-fantasy theme. Gold #c9a84c, ash #07080d.
+
+   THEME ART (2026-07-28):
+   - Font: BoldPixels (Art/UI_Elements/Fontstyle/boldpixels.ttf).
+   - Khung/nút/ô: Ornate Retro UI, bảng BrownFantasy — sprite đã tách sẵn ra
+     Art/UI_Elements/OrnateUI/*.png để USS dùng 9-slice (sheet gốc là Multiple,
+     USS không tham chiếu sub-sprite được).
+   - Thanh HP/Mana/Stamina: GandalfHardcore Hp bar — dải đã tách ra
+     Art/UI_Elements/Bars/ (đỏ = HP, xanh = Mana, vàng = Stamina).
    ============================================================ */
+
+/* Font pixel cho TOÀN BỘ UI trong trận. -unity-font-definition: initial là bắt
+   buộc khi dùng -unity-font với file .ttf (nếu không Unity vẫn giữ font mặc định). */
+#game-root, #game-root Label, #game-root Button, #game-root TextField {
+    -unity-font-definition: initial;
+    -unity-font: url('../Art/UI_Elements/Fontstyle/boldpixels.ttf');
+}
 
 #game-root {
     width: 100%;
@@ -58,26 +73,38 @@
     margin-bottom: 4px;
 }
 
+/* Rãnh thanh: khung Ornate 9-slice. slice-scale: 1px giữ nét pixel (không kéo mờ). */
 .stat-bar-track {
     flex-grow: 1;
-    height: 12px;
-    background-color: rgba(0, 0, 0, 0.6);
-    border-width: 1px;
-    border-color: rgba(0, 0, 0, 0.8);
-    border-radius: 2px;
+    height: 14px;
+    background-image: url('../Art/UI_Elements/OrnateUI/bar_track.png');
+    -unity-slice-left: 6;
+    -unity-slice-right: 6;
+    -unity-slice-top: 6;
+    -unity-slice-bottom: 6;
+    -unity-slice-scale: 1px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    padding-left: 2px; padding-right: 2px;
+    padding-top: 2px; padding-bottom: 2px;
     overflow: hidden;
 }
 
+/* Fill: dải pixel Gandalf, kéo ngang theo % máu. Slice 2px hai đầu để giữ viền dải. */
 .stat-bar-fill {
     height: 100%;
     width: 100%;
-    border-radius: 1px;
+    -unity-slice-left: 2;
+    -unity-slice-right: 2;
+    -unity-slice-scale: 1px;
+    background-color: rgba(0, 0, 0, 0);
 }
 
-.fill-hp { background-color: rgb(200, 48, 48); } /* Brighter red */
-.fill-mana { background-color: rgb(48, 110, 200); } /* Brighter blue */
-.fill-stamina { background-color: rgb(200, 160, 64); } /* Brighter yellow */
-.fill-exp { background-color: rgb(140, 82, 255); } /* Purple for EXP */
+.fill-hp      { background-image: url('../Art/UI_Elements/Bars/fill_hp.png'); }
+.fill-mana    { background-image: url('../Art/UI_Elements/Bars/fill_mana.png'); }
+.fill-stamina { background-image: url('../Art/UI_Elements/Bars/fill_stamina.png'); }
+/* EXP không thuộc bộ Gandalf (chỉ có 3 màu) → giữ màu tím phẳng cho khác biệt rõ. */
+.fill-exp { background-color: rgb(140, 82, 255); }
 
 .stat-bar-label {
     width: 64px;
@@ -1118,3 +1145,710 @@
     border-top-color: #c9a84c;
     border-radius: 18px;
 }
+
+/* ============================================================
+/* ============================================================
+   ORNATE RETRO UI THEME (BrownFantasy) — sửa 2026-07-28 (lần 2)
+
+   LẦN ĐẦU BỊ LOẠN vì 2 lỗi, nay đã sửa:
+   1. Slice VƯỢT kích thước sprite. VD button cao 18px mà đặt slice
+      top+bottom = 8+8 = 16px → chỉ còn 2px ở giữa để kéo giãn nên khung
+      bị bóp méo. Giờ mọi giá trị slice đo TỪ ẢNH THẬT và kẹp lại sao cho
+      (2 cạnh) <= (kích thước - 2).
+   2. Không tắt nền/viền cũ → khung Ornate vẽ ĐÈ lên viền vàng + bo góc cũ,
+      thành 2 lớp khung lồng nhau. Giờ mọi selector đều ép
+      background-color: transparent + border-width 0 + border-radius 0.
+
+   Số slice thật (rộng x cao → left/right/top/bottom):
+     panel        98x98 → 26/26/22/20      slot      50x50 → 7/6/7/9
+     panel_alt    98x96 → 26/26/20/20      slot_sel  50x50 → 6/6/6/9
+     header       47x16 → 16/15/7/7        button    50x18 → 7/6/7/8
+     bar_track    84x15 → 9/9/6/6          btn_hover 50x18 → 6/6/6/7
+                                           btn_press 50x16 → 7/6/7/7
+   ============================================================ */
+
+/* ---------- KHUNG PANEL LỚN ---------- */
+#inv-panel,
+#pause-content,
+#set-content,
+#go-content {
+    background-image: url('../Art/UI_Elements/OrnateUI/panel.png');
+    -unity-slice-left: 26;
+    -unity-slice-right: 26;
+    -unity-slice-top: 22;
+    -unity-slice-bottom: 20;
+    -unity-slice-scale: 1px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+    padding-left: 30px; padding-right: 30px;
+    padding-top: 26px; padding-bottom: 24px;
+}
+
+/* Vùng lồng bên trong dùng khung nhạt hơn để phân lớp. */
+#inv-detail,
+#ft-preview,
+#waiting-content {
+    background-image: url('../Art/UI_Elements/OrnateUI/panel_alt.png');
+    -unity-slice-left: 26;
+    -unity-slice-right: 26;
+    -unity-slice-top: 20;
+    -unity-slice-bottom: 20;
+    -unity-slice-scale: 1px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+}
+
+/* ---------- Ô CHỨA ĐỒ / TRANG BỊ ---------- */
+.inv-cell,
+.equip-slot,
+.hud-slot {
+    background-image: url('../Art/UI_Elements/OrnateUI/slot.png');
+    -unity-slice-left: 7;
+    -unity-slice-right: 6;
+    -unity-slice-top: 7;
+    -unity-slice-bottom: 9;
+    -unity-slice-scale: 1px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+}
+
+.inv-cell.selected,
+.equip-slot:hover {
+    background-image: url('../Art/UI_Elements/OrnateUI/slot_sel.png');
+    -unity-slice-left: 6;
+    -unity-slice-right: 6;
+    -unity-slice-top: 6;
+    -unity-slice-bottom: 9;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+}
+
+/* ---------- NÚT ---------- */
+.bonfire-btn,
+.detail-btn,
+.plus-btn,
+.ft-row,
+#go-resume,
+#go-quit {
+    background-image: url('../Art/UI_Elements/OrnateUI/button.png');
+    -unity-slice-left: 7;
+    -unity-slice-right: 6;
+    -unity-slice-top: 7;
+    -unity-slice-bottom: 8;
+    -unity-slice-scale: 1px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+    color: #f0e0b8;
+}
+
+.bonfire-btn:hover,
+.detail-btn:hover,
+.plus-btn:hover,
+.ft-row:hover,
+.ft-row.selected,
+#go-resume:hover,
+#go-quit:hover {
+    background-image: url('../Art/UI_Elements/OrnateUI/button_hover.png');
+    -unity-slice-left: 6;
+    -unity-slice-right: 6;
+    -unity-slice-top: 6;
+    -unity-slice-bottom: 7;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    color: #fff6d8;
+}
+
+.bonfire-btn:active,
+.detail-btn:active,
+.plus-btn:active,
+.ft-row:active {
+    background-image: url('../Art/UI_Elements/OrnateUI/button_press.png');
+    -unity-slice-left: 7;
+    -unity-slice-right: 6;
+    -unity-slice-top: 7;
+    -unity-slice-bottom: 7;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+}
+
+/* ---------- THANH HP / MANA / STAMINA ---------- */
+/* Rãnh: khung Gandalf Hp bar (dùng luôn theo yêu cầu). Cao 16px để vừa viền
+   trên+dưới của sprite (6+6) mà còn chỗ cho fill. */
+.stat-bar-track {
+    height: 16px;
+    background-image: url('../Art/UI_Elements/OrnateUI/bar_track.png');
+    -unity-slice-left: 9;
+    -unity-slice-right: 9;
+    -unity-slice-top: 6;
+    -unity-slice-bottom: 6;
+    -unity-slice-scale: 1px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+    padding-left: 3px; padding-right: 3px;
+    padding-top: 3px; padding-bottom: 3px;
+    overflow: hidden;
+}
+
+/* Fill: dải pixel Gandalf. Chỉ slice NGANG (2px mỗi đầu) — dải chỉ cao 4-6px
+   nên KHÔNG slice dọc, nếu không sẽ bị bóp mất phần giữa. */
+.stat-bar-fill {
+    height: 100%;
+    width: 100%;
+    -unity-slice-left: 2;
+    -unity-slice-right: 2;
+    -unity-slice-top: 0;
+    -unity-slice-bottom: 0;
+    -unity-slice-scale: 1px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+}
+
+.fill-hp      { background-image: url('../Art/UI_Elements/Bars/fill_hp.png'); }
+.fill-mana    { background-image: url('../Art/UI_Elements/Bars/fill_mana.png'); }
+.fill-stamina { background-image: url('../Art/UI_Elements/Bars/fill_stamina.png'); }
+.fill-exp     { background-color: rgb(140, 82, 255); }
+
+/* ---------- CHỮ PIXEL ---------- */
+/* Font pixel cỡ nhỏ: bỏ giãn chữ + shadow cho khỏi nhoè. */
+.stat-bar-label,
+.hud-slot-count,
+.hud-slot-key {
+    letter-spacing: 0;
+    text-shadow: 0 0 0 rgba(0, 0, 0, 0);
+}
+
+/* ---------- THANH LOAD trong trận (#loading-* thuộc GameUI.uxml) ---------- */
+#loading-track {
+    background-image: url('../Art/UI_Elements/OrnateUI/bar_track.png');
+    -unity-slice-left: 9;
+    -unity-slice-right: 9;
+    -unity-slice-top: 6;
+    -unity-slice-bottom: 6;
+    -unity-slice-scale: 1px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+    height: 16px;
+    padding-left: 3px; padding-right: 3px;
+    padding-top: 3px; padding-bottom: 3px;
+    overflow: hidden;
+}
+
+#loading-fill {
+    background-image: url('../Art/UI_Elements/Bars/fill_stamina.png');
+    -unity-slice-left: 2;
+    -unity-slice-right: 2;
+    -unity-slice-top: 0;
+    -unity-slice-bottom: 0;
+    -unity-slice-scale: 1px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+    height: 100%;
+}
+
+/* ============================================================
+   FIX LAYOUT TAB (inventory) — 2026-07-28
+   TRIỆU CHỨNG: cột trái (trang bị / HP-Mana-Stamina / chỉ số) đè lên nhau.
+   NGUYÊN NHÂN: #inv-panel có height 560px CỐ ĐỊNH + overflow: hidden. Khi theme
+   Ornate thêm padding (26+24px) và thanh cao 16px, tổng nội dung cột trái vượt
+   quá 560px → các khối bị bóp/chồng lên nhau.
+   CÁCH SỬA: nới panel (1040x660), nới cột trái 340→400px, và cho cột trái tự
+   cuộn khi vẫn thiếu chỗ thay vì cắt cụt.
+   Đặt CUỐI FILE để thắng cascade (#inv-panel khai báo 3 lần ở trên).
+   ============================================================ */
+
+#inv-panel {
+    width: 1040px;
+    height: 660px;
+    overflow: hidden;
+}
+
+#inv-left {
+    width: 400px;
+    padding-left: 20px; padding-right: 20px;
+    padding-top: 16px; padding-bottom: 16px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+#inv-right {
+    flex-grow: 1;
+    flex-shrink: 1;
+    padding-left: 20px; padding-right: 20px;
+    padding-top: 16px; padding-bottom: 16px;
+    overflow: hidden;
+}
+
+/* Ô trang bị: giữ 52px nhưng giảm margin để 4 ô + avatar vừa bề ngang 400px. */
+.equip-slot {
+    width: 52px; height: 52px;
+    margin-left: 5px; margin-right: 5px;
+    margin-top: 5px; margin-bottom: 5px;
+    flex-shrink: 0;
+}
+
+#inv-equip-row {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    margin-top: 4px;
+}
+
+/* Avatar nhỏ lại một chút để hàng trang bị không bị đẩy rộng quá cột. */
+#inv-avatar {
+    width: 84px; height: 84px;
+    border-radius: 42px;
+    margin-left: 6px; margin-right: 6px;
+}
+
+/* Chỉ số: 2 cột, chừa khoảng giữa rõ ràng để chữ không dính nhau. */
+#inv-stats {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 12px;
+    flex-shrink: 0;
+}
+
+.stat-cell {
+    width: 48%;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding-left: 10px; padding-right: 10px;
+    padding-top: 5px; padding-bottom: 5px;
+    margin-bottom: 6px;
+    min-height: 26px;
+}
+
+.stat-cell-key { font-size: 11px; letter-spacing: 0; }
+.stat-cell-val { font-size: 12px; letter-spacing: 0; }
+
+/* Khối thanh HP/Mana/Stamina trong Tab: mỗi hàng cao hơn cho vừa khung 16px. */
+#inv-bars {
+    width: 100%;
+    align-self: center;
+    margin-top: 12px;
+    flex-shrink: 0;
+}
+
+#inv-bars .stat-bar-row {
+    margin-bottom: 7px;
+    min-height: 18px;
+    align-items: center;
+}
+
+/* ============================================================
+/* ============================================================
+   HUD — KHUNG HP BAR GANDALF (sửa 2026-07-28, lần 3)
+
+   BỐ CỤC (gốc trên-trái sprite 116x64 → USS = x4):
+     HP      = ORB TRÒN bên trái, lòng orb x4..54  y4..57  (51x54)
+     Stamina = rãnh TRÊN          x67..95  y47..50 (29x4)
+     Mana    = rãnh DƯỚI          x63..111 y54..59 (49x6)
+   Scale x4 (trước x3) cho chữ + thanh dễ đọc → khung 464x256.
+
+   SỬA 3 LỖI user báo:
+   1. "Orb lệch trái, chưa lấp đầy bên phải": `red bar.png` là 56x54 nhưng lòng
+      orb chỉ 51x54 → ảnh RỘNG HƠN lòng 5px. Trước tôi đặt fill = 100% chiều
+      rộng của ô 51px nên ảnh bị co lại, hụt bên phải. Nay đặt fill ĐÚNG kích
+      thước ảnh (56x54 → 224x216) và lệch left -8px để phần màu trùng lòng orb.
+   2. "Tụt thẳng thay vì xéo": trước đổi height của FILL + scale-and-crop → Unity
+      CO ảnh theo chiều cao nên mép nước phẳng ngang. Nay đổi height của TRACK
+      (cửa sổ cắt) còn fill giữ nguyên cỡ ảnh → cắt lộ dần, mép nước cong theo
+      viền cầu đúng như 2 lần tụt đầu.
+   3. EXP + LV: EXP là thanh riêng ngay dưới khung; LV cỡ 16px cho dễ nhìn.
+   ============================================================ */
+
+#hud-topleft {
+    position: absolute;
+    left: 16px; top: 12px;
+    width: 464px;
+    height: 256px;
+    flex-direction: column;
+    align-items: flex-start;
+    background-image: url('../Art/UI_Elements/Bars/gandalf_frame.png');
+    -unity-background-scale-mode: stretch-to-fill;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    padding: 0;
+}
+
+/* Art đã có orb + khung sẵn → bỏ nền trang trí và avatar tròn cũ. */
+.hud-decor-bg { display: none; }
+.hud-avatar { display: none; }
+
+#hud-bars {
+    position: absolute;
+    left: 0; top: 0;
+    width: 464px;
+    height: 256px;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+#hud-hp-row, #hud-mana-row, #hud-stamina-row {
+    position: absolute;
+    flex-direction: row;
+    margin: 0;
+    padding: 0;
+}
+
+/* HP = ORB TRÒN. Hàng chỉ là mốc vị trí; TRACK bên trong mới là cửa sổ cắt. */
+#hud-hp-row {
+    left: 16px; top: 16px;      /* offset khop nhat do bang correlation: dx=4 dy=4 (*4) */
+    width: 224px;               /* = ANH red bar 56*4, KHONG phai long orb 51*4 */
+    height: 216px;              /* = 54*4 */
+    flex-direction: column;
+    justify-content: flex-end;  /* nuoc dang tu DAY */
+}
+
+#hud-stamina-row { left: 268px; top: 188px; width: 116px; height: 16px; } /* x67 y47 w29 h4 */
+#hud-mana-row    { left: 252px; top: 216px; width: 196px; height: 24px; } /* x63 y54 w49 h6 */
+
+/* TRACK của orb = CỬA SỔ CẮT. C# đổi HEIGHT của phần tử này theo % máu;
+   overflow: hidden cắt bớt phần TRÊN của ảnh, fill giữ nguyên cỡ nên mép nước
+   cong theo viền cầu. justify-content: flex-end ghim ảnh xuống đáy. */
+#hud-hp-row > .stat-bar-track {
+    /* flex-grow: 0 LA BAT BUOC: base class .stat-bar-track co flex-grow:1, ma trong
+       flexbox flex-grow THANG height inline -> track luon gian full 216px nen
+       SetFillVertical doi height khong co tac dung => HP khong tut (bug user bao). */
+    flex-grow: 0;
+    flex-shrink: 0;
+    width: 224px;
+    height: 100%;
+    flex-direction: column;
+    justify-content: flex-end;
+    background-image: none;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+/* FILL orb: ĐÚNG kích thước ảnh gốc (56x54 * 4), KHÔNG co giãn, KHÔNG slice.
+   Lệch trái -8px (= -2 * 4) vì ảnh rộng 56 mà lòng orb chỉ 51 → căn cho phần
+   màu trùng đúng lòng. flex-shrink: 0 để flexbox không bóp lại khi track thu nhỏ. */
+#hud-hp-row .stat-bar-fill {
+    width: 224px;
+    height: 216px;
+    flex-shrink: 0;             /* KHONG cho flexbox bop lai khi track co */
+    -unity-slice-left: 0;
+    -unity-slice-right: 0;
+    -unity-slice-top: 0;
+    -unity-slice-bottom: 0;
+    -unity-background-scale-mode: stretch-to-fill;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+}
+
+/* 2 rãnh: track trong suốt (rãnh đã vẽ trong art), fill kéo ngang theo %. */
+#hud-mana-row > .stat-bar-track,
+#hud-stamina-row > .stat-bar-track {
+    flex-grow: 1;
+    height: 100%;
+    background-image: none;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+#hud-mana-row .stat-bar-fill,
+#hud-stamina-row .stat-bar-fill {
+    height: 100%;
+    -unity-slice-left: 2;
+    -unity-slice-right: 2;
+    -unity-slice-top: 0;
+    -unity-slice-bottom: 0;
+    -unity-slice-scale: 1px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+}
+
+/* Khung không có chỗ cho chữ số → ẩn label trên HUD (Tab vẫn hiện đủ). */
+#hud-hp-label, #hud-mana-label, #hud-stamina-label { display: none; }
+
+/* ---------- EXP: thanh riêng NGAY DƯỚI khung (khung chỉ có 2 rãnh) ---------- */
+#hud-exp-row {
+    position: absolute;
+    left: 252px; top: 248px;
+    width: 196px;
+    height: 24px;              /* bang thanh mana (24px) cho dong bo */
+    flex-direction: row;
+    margin: 0;
+    padding: 0;
+}
+
+#hud-exp-track {
+    /* Mana/Stamina co khung ve san trong art Gandalf; EXP nam NGOAI khung nen
+       phai tu dap khung Ornate bar_track cho dong bo (yeu cau user). */
+    flex-grow: 1;
+    height: 100%;
+    background-image: url('../Art/UI_Elements/OrnateUI/bar_track.png');
+    -unity-slice-left: 9;
+    -unity-slice-right: 9;
+    -unity-slice-top: 6;
+    -unity-slice-bottom: 6;
+    -unity-slice-scale: 1px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+    padding-left: 4px; padding-right: 4px;
+    padding-top: 4px; padding-bottom: 4px;
+    overflow: hidden;
+}
+
+#hud-exp-fill {
+    height: 100%;
+    background-color: rgb(150, 90, 255);
+    background-image: none;
+    border-width: 0;
+    border-radius: 0;
+}
+
+/* LV: to hơn (16px) + đặt dưới orb cho khỏi chồng art. */
+.hud-lvl {
+    position: absolute;
+    left: 20px; top: 234px;
+    width: auto;
+    font-size: 16px;
+    letter-spacing: 1px;
+    color: #f5e6b8;
+    -unity-text-align: middle-left;
+    text-shadow: 0 0 0 rgba(0, 0, 0, 0);
+}
+
+/* ============================================================
+   TĂNG CỠ CHỮ TOÀN UI (lần 2 — user báo vẫn nhỏ, tăng thêm ~40%)
+   Font BoldPixels vẽ ở 16px nên cỡ là BỘI SỐ CỦA 8 sẽ nét nhất (8/16/24/32);
+   các cỡ khác vẫn đọc được nhưng hơi nhoè cạnh.
+   ============================================================ */
+
+/* ---------- HUD ---------- */
+.stat-bar-label { font-size: 16px; }
+.hud-slot-count { font-size: 24px; }
+.hud-slot-key   { font-size: 16px; }
+#hud-ping-label, #hud-fps-label { font-size: 18px; }
+#hud-boss-name  { font-size: 24px; letter-spacing: 3px; }
+#hud-prompt-text, #hud-revive-text { font-size: 20px; }
+
+/* ---------- TAB: nhân vật / chỉ số / túi đồ ---------- */
+.stat-cell-key  { font-size: 16px; }
+.stat-cell-val  { font-size: 20px; }
+#inv-char-name  { font-size: 32px; }
+#inv-char-level { font-size: 20px; }
+.inv-tab        { font-size: 20px; }
+.detail-btn, .bonfire-btn { font-size: 18px; }
+#inv-detail-name { font-size: 24px; }
+#inv-detail-desc { font-size: 16px; }
+.alloc-name, .alloc-val  { font-size: 18px; }
+.inv-cell-count { font-size: 16px; }
+#inv-weight-label { font-size: 16px; }
+
+/* ---------- Fast travel / checkpoint ---------- */
+#ft-count, #ft-preview-name, #ft-preview-region { font-size: 20px; }
+.ft-row { font-size: 18px; }
+#ft-points, #ft-flasks-total { font-size: 18px; }
+
+/* ---------- Loading / pause / settings / game over ---------- */
+#loading-title  { font-size: 28px; }
+#loading-area   { font-size: 24px; }
+#loading-status, #loading-tip, #loading-countdown { font-size: 18px; }
+#pause-title, #set-title { font-size: 32px; }
+#go-title { font-size: 40px; }
+#go-subtitle, #go-time, #go-level { font-size: 20px; }
+#waiting-title { font-size: 28px; }
+#waiting-desc  { font-size: 18px; }
+
+/* Toast lưu game: cỡ chữ set INLINE trong GameUIController.Toast.cs (style.fontSize)
+   nên USS không đè được — đã tăng trực tiếp trong C#. */
+
+/* ============================================================
+   NỚI KHUNG CHO CHỮ TO (2026-07-28) — user báo chữ tràn khung.
+   Sau khi tăng cỡ chữ (~1.5x) mọi container cỡ cố định đều chật. Nới ~20-30%
+   theo đúng tỉ lệ chữ đã tăng. ĐẶT CUỐI FILE vì #inv-panel/#pause-content...
+   được khai báo nhiều lần ở trên (USS lấy luật SAU cùng độ ưu tiên).
+   ============================================================ */
+
+/* ---------- TAB: inventory / nhân vật ---------- */
+#inv-panel {
+    width: 1240px;              /* 1040 → 1240 */
+    height: 780px;              /* 660 → 780 */
+    overflow: hidden;
+}
+
+#inv-left {
+    width: 480px;               /* 400 → 480: chứa tên nhân vật 32px + 2 cột chỉ số 20px */
+    padding-left: 24px; padding-right: 24px;
+    padding-top: 20px; padding-bottom: 20px;
+    flex-shrink: 0;
+}
+
+#inv-right {
+    flex-grow: 1;
+    flex-shrink: 1;
+    padding-left: 24px; padding-right: 24px;
+    padding-top: 20px; padding-bottom: 20px;
+    overflow: hidden;
+}
+
+#inv-detail {
+    width: 330px;               /* 240 → 330: tên item 24px + mô tả 16px xuống dòng */
+    flex-shrink: 0;
+}
+
+/* Ô chỉ số: cao hơn cho chữ 20px, và chừa lề trong rộng hơn. */
+.stat-cell {
+    width: 48%;
+    min-height: 38px;           /* 26 → 38 */
+    padding-left: 14px; padding-right: 14px;
+    padding-top: 7px; padding-bottom: 7px;
+    margin-bottom: 8px;
+    align-items: center;
+}
+
+/* Tab (Character/Inventory/…): chữ 20px cần nhiều lề ngang hơn. */
+.inv-tab {
+    padding-left: 22px; padding-right: 22px;
+    padding-top: 10px; padding-bottom: 10px;
+}
+
+/* Nút: cao hơn để chữ 18px không sát viền. */
+.bonfire-btn { height: 60px; }
+.detail-btn  { height: 44px; padding-left: 16px; padding-right: 16px; }
+.plus-btn    { min-width: 38px; min-height: 38px; }
+
+/* Ô trang bị + ô đồ: nới nhẹ cho số lượng 16px ở góc không đè icon. */
+.equip-slot { width: 58px; height: 58px; }
+.inv-cell   { width: 58px; height: 58px; }
+
+/* Nhãn số HP/Mana trong Tab: chữ 16px cần chỗ cho "1000/1000". */
+.stat-bar-label { width: 96px; }
+
+/* ---------- HUD ---------- */
+/* Ô bình/skill: chữ đếm 24px ở góc dưới-phải cần khung to hơn. */
+.hud-slot        { width: 72px; height: 72px; }
+.hud-slot.skill  { width: 82px; height: 82px; }
+.hud-slot-icon   { width: 42px; height: 42px; }
+
+/* ---------- Fast travel (bảng checkpoint) ---------- */
+#ft-panel     { height: 420px; }   /* 300 → 420 */
+#ft-list-col  { width: 300px; padding-right: 16px; }  /* 220 → 300 */
+#ft-preview-col { padding-left: 16px; }
+.ft-row { min-height: 40px; padding-left: 14px; padding-right: 14px; }
+
+/* ---------- Overlay: pause / settings / game over / loading / waiting ---------- */
+#pause-content   { width: 500px; }   /* 360 → 500 (tiêu đề 32px) */
+#set-content     { width: 700px; }   /* 520 → 700 */
+#go-content      { width: 640px; }   /* 480 → 640 (go-title 40px) */
+#loading-content { width: 720px; }   /* 560 → 720 */
+#waiting-content { width: 600px; }   /* 460 → 600 */
+
+/* ============================================================
+   COOP — HIỂN THỊ TRẠNG THÁI GỤC / TIẾN TRÌNH CỨU (2026-07-28)
+
+   Trước đây chỉ có `#hud-revive` và nó đọc `_revive` của CHÍNH MÌNH:
+     - Người ĐANG GỤC: HUD trống trơn, không biết ai đang cứu mình.
+     - Người CÒN SỐNG ở xa: không biết đồng đội đã gục.
+   Thêm 2 khối, loại trừ nhau nên không bao giờ chồng lên nhau:
+     #hud-downed    — chỉ hiện khi MÌNH gục   (giữa-dưới, trên chỗ prompt [R])
+     #hud-ally-down — chỉ hiện khi MÌNH sống mà đồng đội gục NGOÀI tầm cứu (trên-giữa)
+   ============================================================ */
+
+/* ---------- MÌNH ĐANG GỤC ---------- */
+#hud-downed {
+    position: absolute;
+    bottom: 250px; left: 50%;
+    translate: -50% 0;
+    padding-left: 26px; padding-right: 26px;
+    padding-top: 12px; padding-bottom: 12px;
+    background-color: rgba(8, 10, 16, 0.9);
+    border-width: 2px;
+    border-color: rgba(150, 40, 40, 0.9);
+    border-radius: 0;
+    align-items: center;
+}
+
+#hud-downed-text {
+    color: #ffb0a0;
+    font-size: 20px;
+    letter-spacing: 2px;
+    -unity-text-align: middle-center;
+}
+
+#hud-downed-track {
+    margin-top: 8px;
+    width: 260px;
+    height: 22px;
+    background-image: url('../Art/UI_Elements/OrnateUI/bar_track.png');
+    -unity-slice-left: 9;
+    -unity-slice-right: 9;
+    -unity-slice-top: 6;
+    -unity-slice-bottom: 6;
+    -unity-slice-scale: 1px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    padding-left: 4px; padding-right: 4px;
+    padding-top: 4px; padding-bottom: 4px;
+    overflow: hidden;
+}
+
+/* Dải ĐỎ Gandalf: dùng lại dải HP ngang (đã có sẵn cho Tab). */
+#hud-downed-fill {
+    height: 100%;
+    width: 0%;
+    background-image: url('../Art/UI_Elements/Bars/fill_hp_strip.png');
+    -unity-slice-left: 2;
+    -unity-slice-right: 2;
+    -unity-slice-top: 0;
+    -unity-slice-bottom: 0;
+    -unity-slice-scale: 1px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+}
+
+/* ---------- ĐỒNG ĐỘI GỤC Ở XA (mình còn sống) ---------- */
+#hud-ally-down {
+    position: absolute;
+    top: 28px; left: 50%;
+    translate: -50% 0;
+    flex-direction: row;
+    align-items: center;
+    padding-left: 22px; padding-right: 22px;
+    padding-top: 10px; padding-bottom: 10px;
+    background-color: rgba(8, 10, 16, 0.9);
+    border-width: 2px;
+    border-color: rgba(150, 40, 40, 0.9);
+    border-radius: 0;
+}
+
+#hud-ally-down-text {
+    color: #ffb0a0;
+    font-size: 20px;
+    letter-spacing: 2px;
+}
+
+/* Khoảng cách: vàng nhạt cho tách khỏi chữ đỏ, dễ đọc nhanh. */
+#hud-ally-down-dist {
+    color: #f5e6b8;
+    font-size: 20px;
+    letter-spacing: 1px;
+    margin-left: 14px;
+}
+
+/* Prompt [R] cũ: đồng bộ cỡ chữ + thanh với 2 khối trên. */
+#hud-revive-text { font-size: 20px; }
+#hud-revive-track { width: 260px; height: 22px; }

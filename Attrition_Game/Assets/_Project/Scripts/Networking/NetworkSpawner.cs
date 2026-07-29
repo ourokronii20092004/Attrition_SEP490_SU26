@@ -65,10 +65,6 @@ public class NetworkSpawner : MonoBehaviour
         if (runner == null || !runner.IsServer) return;
         _runner = runner;
 
-        // Idempotent: peer đã có nhân vật rồi thì bỏ qua. Chặn spawn trùng khi cả OnSceneLoadDone
-        // lẫn OnPlayerJoined cùng gọi (Solo: local player join fire SAU khi scene load xong → 2 nhân vật).
-        if (runner.TryGetPlayerObject(player, out var existing) && existing != null) return;
-
         bool isHostPlayer = player == runner.LocalPlayer;
         NetworkPrefabRef prefabToSpawn = isHostPlayer ? playerPrefab : player1Prefab;
 
@@ -93,6 +89,26 @@ public class NetworkSpawner : MonoBehaviour
             {
                 spawnPos = new Vector3(data.checkpointX, data.checkpointY, data.checkpointZ);
             }
+        }
+
+        // ƯU TIÊN CAO NHẤT: vừa đi qua cửa nối 2 map → đặt player tại SceneEntryPoint tương ứng
+        // (đứng ngay cửa của map này), KHÔNG phải đầu map / checkpoint cũ. Nhờ vậy cửa 2 chiều
+        // (VD Map 2 → về Map 1) đưa player ra đúng chỗ mình vừa đi vào.
+        if (SceneEntryRegistry.TryGetPendingPosition(out var entryPos))
+            spawnPos = entryPos;
+
+        // Nhân vật SỐNG SÓT qua Fusion LoadScene (NetworkObject không bị huỷ khi đổi scene). Trước đây
+        // chỗ này return luôn → player giữ NGUYÊN toạ độ của map CŨ khi sang map mới, mà toạ độ đó
+        // thường là khoảng không ở map mới → RƠI RA NGOÀI MAP. Giờ: KHÔNG spawn trùng, nhưng DỊCH CHUYỂN
+        // nhân vật cũ về spawn point của scene mới.
+        // (Fast-travel CROSS-MAP: PendingTravelSpawner đặt lại đúng checkpoint đích SAU đó — vẫn đúng.)
+        if (runner.TryGetPlayerObject(player, out var existing) && existing != null && existing.IsValid)
+        {
+            // Dùng ITeleportable (Attrition.Core) chứ KHÔNG ref PlayerController: Gameplay → Networking
+            // là một chiều, ref ngược sẽ tạo vòng lặp asmdef.
+            var tp = existing.GetComponent<ITeleportable>();
+            if (tp != null) tp.TeleportTo(spawnPos);
+            return;
         }
 
         NetworkObject playerObj = runner.Spawn(prefabToSpawn, spawnPos, Quaternion.identity, player);

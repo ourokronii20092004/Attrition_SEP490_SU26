@@ -67,7 +67,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 1
+    filterMode: 0
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -81,7 +81,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 100
+  spritePixelsToUnits: 16
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -133,12 +133,12 @@ TextureImporter:
       name: Air Explosion_0
       rect:
         serializedVersion: 2
-        x: 7
-        y: 68
-        width: 21
-        height: 22
+        x: 8
+        y: 69
+        width: 19
+        height: 20
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -155,12 +155,12 @@ TextureImporter:
       name: Air Explosion_1
       rect:
         serializedVersion: 2
-        x: 37
-        y: 68
-        width: 24
-        height: 24
+        x: 38
+        y: 69
+        width: 22
+        height: 22
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -177,12 +177,12 @@ TextureImporter:
       name: Air Explosion_2
       rect:
         serializedVersion: 2
-        x: 67
-        y: 67
-        width: 26
-        height: 26
+        x: 68
+        y: 68
+        width: 24
+        height: 24
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -199,12 +199,12 @@ TextureImporter:
       name: Air Explosion_3
       rect:
         serializedVersion: 2
-        x: 99
-        y: 66
-        width: 26
-        height: 28
+        x: 100
+        y: 67
+        width: 24
+        height: 26
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -226,7 +226,7 @@ TextureImporter:
         width: 28
         height: 26
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -243,12 +243,12 @@ TextureImporter:
       name: Air Explosion_5
       rect:
         serializedVersion: 2
-        x: 33
-        y: 37
-        width: 32
-        height: 21
+        x: 34
+        y: 38
+        width: 30
+        height: 19
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -262,37 +262,15 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Air Explosion_6
-      rect:
-        serializedVersion: 2
-        x: 64
-        y: 40
-        width: 15
-        height: 18
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: ee4e3fade2a0cdf70800000000000000
-      internalID: 9213250134051382510
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
       name: Air Explosion_7
       rect:
         serializedVersion: 2
-        x: 71
-        y: 37
-        width: 39
-        height: 21
+        x: 65
+        y: 38
+        width: 31
+        height: 19
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -309,12 +287,12 @@ TextureImporter:
       name: Air Explosion_8
       rect:
         serializedVersion: 2
-        x: 100
-        y: 37
-        width: 21
-        height: 15
+        x: 96
+        y: 38
+        width: 32
+        height: 19
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -328,37 +306,15 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Air Explosion_9
-      rect:
-        serializedVersion: 2
-        x: 121
-        y: 41
-        width: 7
-        height: 6
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: fb7adedc04e0dbfc0800000000000000
-      internalID: -3477607665764554817
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
       name: Air Explosion_10
       rect:
         serializedVersion: 2
         x: 0
-        y: 4
-        width: 33
-        height: 23
+        y: 5
+        width: 32
+        height: 21
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -375,7 +331,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 227cae702c907cb4fbfb88fc3a7aeb8c
     internalID: 0
     vertices: []
     indices: 

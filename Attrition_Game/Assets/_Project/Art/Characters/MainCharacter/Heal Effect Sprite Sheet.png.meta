@@ -1,0 +1,533 @@
+fileFormatVersion: 2
+guid: 2c5fe53164153d44babd0c20efe434cd
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 8462607926601699822
+    second: Heal Effect Sprite Sheet_0
+  - first:
+      213: 1206714422193133145
+    second: Heal Effect Sprite Sheet_1
+  - first:
+      213: -805895194049491569
+    second: Heal Effect Sprite Sheet_2
+  - first:
+      213: -4616894488842464432
+    second: Heal Effect Sprite Sheet_3
+  - first:
+      213: 7239725890141473874
+    second: Heal Effect Sprite Sheet_4
+  - first:
+      213: 8811921900105486683
+    second: Heal Effect Sprite Sheet_5
+  - first:
+      213: -1963778481454215531
+    second: Heal Effect Sprite Sheet_6
+  - first:
+      213: 2355546953842022766
+    second: Heal Effect Sprite Sheet_7
+  - first:
+      213: 3757344884877547861
+    second: Heal Effect Sprite Sheet_8
+  - first:
+      213: -448318992193265429
+    second: Heal Effect Sprite Sheet_9
+  - first:
+      213: -3362900968028220222
+    second: Heal Effect Sprite Sheet_10
+  - first:
+      213: 5166571873943616174
+    second: Heal Effect Sprite Sheet_11
+  - first:
+      213: -4227349195044720005
+    second: Heal Effect Sprite Sheet_12
+  - first:
+      213: -7407218444995323203
+    second: Heal Effect Sprite Sheet_13
+  - first:
+      213: 9174076301933715262
+    second: Heal Effect Sprite Sheet_14
+  - first:
+      213: 2729061392458392094
+    second: Heal Effect Sprite Sheet_15
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Heal Effect Sprite Sheet_0
+      rect:
+        serializedVersion: 2
+        x: 174
+        y: 431
+        width: 40
+        height: 45
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ee1df7a8219317570800000000000000
+      internalID: 8462607926601699822
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Heal Effect Sprite Sheet_1
+      rect:
+        serializedVersion: 2
+        x: 305
+        y: 170
+        width: 159
+        height: 307
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9569920af5c1fb010800000000000000
+      internalID: 1206714422193133145
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Heal Effect Sprite Sheet_2
+      rect:
+        serializedVersion: 2
+        x: 53
+        y: 313
+        width: 22
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f8d4c704792e0d4f0800000000000000
+      internalID: -805895194049491569
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Heal Effect Sprite Sheet_3
+      rect:
+        serializedVersion: 2
+        x: 172
+        y: 326
+        width: 29
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 053161b7cee7defb0800000000000000
+      internalID: -4616894488842464432
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Heal Effect Sprite Sheet_4
+      rect:
+        serializedVersion: 2
+        x: 183
+        y: 323
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 25cc411e65ca87460800000000000000
+      internalID: 7239725890141473874
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Heal Effect Sprite Sheet_5
+      rect:
+        serializedVersion: 2
+        x: 312
+        y: 307
+        width: 24
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b51d544d74c3a4a70800000000000000
+      internalID: 8811921900105486683
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Heal Effect Sprite Sheet_6
+      rect:
+        serializedVersion: 2
+        x: 50
+        y: 196
+        width: 12
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 59e8d5b20e14fb4e0800000000000000
+      internalID: -1963778481454215531
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Heal Effect Sprite Sheet_7
+      rect:
+        serializedVersion: 2
+        x: 57
+        y: 201
+        width: 22
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e69d18b697590b020800000000000000
+      internalID: 2355546953842022766
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Heal Effect Sprite Sheet_8
+      rect:
+        serializedVersion: 2
+        x: 61
+        y: 180
+        width: 10
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 559d1c9f345c42430800000000000000
+      internalID: 3757344884877547861
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Heal Effect Sprite Sheet_9
+      rect:
+        serializedVersion: 2
+        x: 182
+        y: 197
+        width: 20
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: be0624c704047c9f0800000000000000
+      internalID: -448318992193265429
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Heal Effect Sprite Sheet_10
+      rect:
+        serializedVersion: 2
+        x: 182
+        y: 190
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2c45cd113639451d0800000000000000
+      internalID: -3362900968028220222
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Heal Effect Sprite Sheet_11
+      rect:
+        serializedVersion: 2
+        x: 303
+        y: 178
+        width: 35
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eaafee4eeb953b740800000000000000
+      internalID: 5166571873943616174
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Heal Effect Sprite Sheet_12
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 64
+        width: 34
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b7273d7fd407555c0800000000000000
+      internalID: -4227349195044720005
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Heal Effect Sprite Sheet_13
+      rect:
+        serializedVersion: 2
+        x: 61
+        y: 47
+        width: 14
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dba1554c116443990800000000000000
+      internalID: -7407218444995323203
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Heal Effect Sprite Sheet_14
+      rect:
+        serializedVersion: 2
+        x: 180
+        y: 57
+        width: 24
+        height: 35
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e3f961f4acdd05f70800000000000000
+      internalID: 9174076301933715262
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Heal Effect Sprite Sheet_15
+      rect:
+        serializedVersion: 2
+        x: 302
+        y: 49
+        width: 30
+        height: 35
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e1227b390e29fd520800000000000000
+      internalID: 2729061392458392094
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Heal Effect Sprite Sheet_0: 8462607926601699822
+      Heal Effect Sprite Sheet_1: 1206714422193133145
+      Heal Effect Sprite Sheet_10: -3362900968028220222
+      Heal Effect Sprite Sheet_11: 5166571873943616174
+      Heal Effect Sprite Sheet_12: -4227349195044720005
+      Heal Effect Sprite Sheet_13: -7407218444995323203
+      Heal Effect Sprite Sheet_14: 9174076301933715262
+      Heal Effect Sprite Sheet_15: 2729061392458392094
+      Heal Effect Sprite Sheet_2: -805895194049491569
+      Heal Effect Sprite Sheet_3: -4616894488842464432
+      Heal Effect Sprite Sheet_4: 7239725890141473874
+      Heal Effect Sprite Sheet_5: 8811921900105486683
+      Heal Effect Sprite Sheet_6: -1963778481454215531
+      Heal Effect Sprite Sheet_7: 2355546953842022766
+      Heal Effect Sprite Sheet_8: 3757344884877547861
+      Heal Effect Sprite Sheet_9: -448318992193265429
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
