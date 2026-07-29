@@ -50,18 +50,56 @@ namespace Attrition.UI
         // giật kiểu "FPS cao nhưng vẫn hitch" vì GC dồn cục.
         private int _hudSig = int.MinValue;
 
+        /// <summary>
+        /// PlayerProgression của `_stats` hiện tại. Cache vì `GetComponent` mỗi frame cũng là chi phí
+        /// thừa đúng loại mà `_hudSig` đang tránh. `_progOwner` để phát hiện đổi player (respawn/rebind)
+        /// → tự resolve lại thay vì giữ tham chiếu cũ.
+        /// </summary>
+        private Attrition.Gameplay.Player.PlayerProgression _prog;
+        private Attrition.Gameplay.Player.PlayerStats _progOwner;
+
         private void UpdateHud()
         {
             if (_stats == null || _stats.Object == null || !_stats.Object.IsValid) return;
 
-            // HP trên HUD là ORB TRÒN (khung Gandalf) → dâng theo CHIỀU CAO, không bóp ngang.
-            // Đổi height của TRACK (cửa sổ cắt), KHÔNG phải của fill: fill giữ nguyên kích thước ảnh
-            // nên hình cầu không bị co méo, chỉ bị CẮT bớt phần trên → mép nước cong đúng theo viền orb.
-            // Tab (#inv-hp-fill) vẫn là thanh ngang nên vẫn dùng SetFill thường.
-            SetFillVertical("hud-hp-track", _stats.CurrentHP, _stats.MaxHP);
-            SetText("hud-hp-label", $"{_stats.CurrentHP}/{_stats.MaxHP}");
+            if (_progOwner != _stats)
+            {
+                _progOwner = _stats;
+                _prog = _stats.GetComponent<Attrition.Gameplay.Player.PlayerProgression>();
+            }
 
-                SetFill("hud-hp-fill", _stats.CurrentHP, _stats.MaxHP);
+            int sta = Mathf.FloorToInt(_stats.CurrentStamina);
+            int exp = _prog != null ? _prog.CurrentExp : 0;
+            int expMax = _prog != null ? _prog.ExpToNext : 0;
+            int hpFlask = _potions != null ? _potions.HealthCharges : 0;
+            int manaFlask = _potions != null ? _potions.ManaCharges : 0;
+
+            // Chữ ký gộp mọi con số HUD vẽ ở dưới. Chỉ đổi UI khi có số thật sự đổi.
+            int sig = _stats.CurrentHP;
+            unchecked
+            {
+                sig = sig * 397 + _stats.MaxHP;
+                sig = sig * 397 + _stats.CurrentMana;
+                sig = sig * 397 + _stats.MaxMana;
+                sig = sig * 397 + sta;
+                sig = sig * 397 + _stats.MaxStamina;
+                sig = sig * 397 + _stats.Level;
+                sig = sig * 397 + exp;
+                sig = sig * 397 + expMax;
+                sig = sig * 397 + hpFlask;
+                sig = sig * 397 + manaFlask;
+            }
+
+            if (sig != _hudSig)
+            {
+                _hudSig = sig;
+
+                // HP trên HUD là ORB TRÒN (khung Gandalf) → dâng theo CHIỀU CAO, không bóp ngang.
+                // Đổi height của TRACK (cửa sổ cắt), KHÔNG phải của fill: fill giữ nguyên kích thước ảnh
+                // nên hình cầu không bị co méo, chỉ bị CẮT bớt phần trên → mép nước cong đúng viền orb.
+                // KHÔNG chạm `hud-hp-fill` ở đây — set width % lên nó sẽ bóp méo ảnh orb.
+                // Tab (#inv-hp-fill) vẫn là thanh ngang nên vẫn dùng SetFill thường.
+                SetFillVertical("hud-hp-track", _stats.CurrentHP, _stats.MaxHP);
                 SetText("hud-hp-label", $"{_stats.CurrentHP}/{_stats.MaxHP}");
 
                 SetFill("hud-mana-fill", _stats.CurrentMana, _stats.MaxMana);
@@ -70,20 +108,24 @@ namespace Attrition.UI
                 SetFill("hud-stamina-fill", sta, _stats.MaxStamina);
                 SetText("hud-stamina-label", $"{sta}/{_stats.MaxStamina}");
 
-            // EXP trên HUD (yêu cầu user: hiện chung cụm với mana/stamina cho dễ theo dõi).
-            // _progression có thể null nếu prefab chưa gắn → chỉ vẽ khi có.
-            var prog = _stats.GetComponent<Attrition.Gameplay.Player.PlayerProgression>();
-            if (prog != null) SetFill("hud-exp-fill", prog.CurrentExp, prog.ExpToNext);
+                SetText("hud-level", $"LV. {_stats.Level}");
 
-            if (_potions != null)
-            {
-                SetText("hud-hp-flask-count", _potions.HealthCharges.ToString());
-                SetText("hud-mana-flask-count", _potions.ManaCharges.ToString());
-                SetSlotEmpty("hud-hp-flask", _potions.HealthCharges <= 0);
-                SetSlotEmpty("hud-mana-flask", _potions.ManaCharges <= 0);
-                ApplyFlaskIcons();
+                // EXP trên HUD (yêu cầu user: hiện chung cụm với mana/stamina cho dễ theo dõi).
+                // _prog có thể null nếu prefab chưa gắn → chỉ vẽ khi có.
+                if (_prog != null) SetFill("hud-exp-fill", exp, expMax);
+
+                if (_potions != null)
+                {
+                    SetText("hud-hp-flask-count", hpFlask.ToString());
+                    SetText("hud-mana-flask-count", manaFlask.ToString());
+                    SetSlotEmpty("hud-hp-flask", hpFlask <= 0);
+                    SetSlotEmpty("hud-mana-flask", manaFlask <= 0);
+                }
             }
 
+            // Ngoài cổng _hudSig: những cái này KHÔNG phụ thuộc con số stat nên gate sẽ làm chúng đứng.
+            if (_potions != null) ApplyFlaskIcons();   // tự no-op sau lần đầu
+            UpdateHudSkillIcon();                      // đổi theo skill đang trang bị
             UpdateRestPrompt();
             UpdateRevivePrompt();
             UpdatePing();
