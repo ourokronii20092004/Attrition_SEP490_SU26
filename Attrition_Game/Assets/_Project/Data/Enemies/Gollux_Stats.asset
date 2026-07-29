@@ -14,11 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.EnemyStatsSO
   enemyId: gollux
   tier: 1
-  maxHP: 120
-  ad: 18
-  ap: 0
+  webImage: {fileID: 0}
+  maxHP: 300
+  ad: 20
+  ap: 20
   def: 20
-  res: 0
+  res: 20
   poise: 100
   poiseRecoveryTime: 3
   patrolSpeed: 2

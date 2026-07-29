@@ -14,10 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.EnemyStatsSO
   enemyId: crab
   tier: 1
-  maxHP: 120
-  ad: 10
-  ap: 10
-  def: 20
+  webImage: {fileID: 0}
+  maxHP: 300
+  ad: 20
+  ap: 20
+  def: 10
   res: 10
   poise: 100
   poiseRecoveryTime: 3

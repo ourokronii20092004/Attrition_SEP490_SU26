@@ -40,25 +40,14 @@ public class GameDataImportRepository(EnemyDbContext db) : IGameDataImportReposi
             var baseline = JsonSerializer.Serialize(dto, JsonOptions);
             if (!existing.TryGetValue(dto.ItemId, out var item))
             {
-                item = new ItemEntity { ItemId = dto.ItemId, Name = dto.Name, Category = dto.Category,
-                    Description = Clean(dto.Description), MaxStack = dto.MaxStack, IsKeyItem = dto.IsKeyItem,
-                    ImageUrl = dto.ImageUrl, IconKey = dto.ItemId,
-                    Modifiers = dto.Modifiers?.Select(x => new ItemModifierEntry { Stat = x.Stat, Amount = x.Amount }).ToList() ?? [],
+                item = new ItemEntity { ItemId = dto.ItemId, IconKey = dto.ItemId,
                     UnityBaselineJson = baseline, ImportedAt = now, CreatedAt = now, UpdatedAt = now };
+                Apply(item, dto);
                 db.Items.Add(item); created++;
             }
-            else if (item.UnityBaselineJson != baseline)
+            else if (Signature(item) != Signature(dto, item.ImageUrl))
             {
-                var previous = Deserialize<UnityItemImport>(item.UnityBaselineJson);
-                if (previous != null)
-                {
-                    item.Name = Merge(item.Name, previous.Name, dto.Name); item.Category = Merge(item.Category, previous.Category, dto.Category);
-                    item.Description = Merge(item.Description, Clean(previous.Description), Clean(dto.Description));
-                    item.MaxStack = Merge(item.MaxStack, previous.MaxStack, dto.MaxStack); item.IsKeyItem = Merge(item.IsKeyItem, previous.IsKeyItem, dto.IsKeyItem);
-                    item.ImageUrl = Merge(item.ImageUrl, previous.ImageUrl, dto.ImageUrl);
-                    if (ModifiersEqual(item.Modifiers, previous.Modifiers)) { item.Modifiers.Clear(); item.Modifiers.AddRange(dto.Modifiers?.Select(x => new ItemModifierEntry { Stat = x.Stat, Amount = x.Amount }) ?? []); }
-                }
-                else if (item.ImageUrl == null) item.ImageUrl = dto.ImageUrl;
+                Apply(item, dto);
                 item.UnityBaselineJson = baseline; item.ImportedAt = now; item.UpdatedAt = now; updated++;
             }
             else unchanged++;
@@ -76,16 +65,13 @@ public class GameDataImportRepository(EnemyDbContext db) : IGameDataImportReposi
             var baseline = JsonSerializer.Serialize(dto, JsonOptions);
             if (!existing.TryGetValue(dto.EnemyId, out var enemy))
             {
-                enemy = new EnemyEntity { EnemyId = dto.EnemyId, Name = dto.Name, Tier = dto.Tier, Hp = dto.Hp, Ad = dto.Ad, Ap = dto.Ap, Def = dto.Def, Res = dto.Res,
-                    Poise = dto.Poise, PoiseRecoveryTime = dto.PoiseRecoveryTime, PatrolSpeed = dto.PatrolSpeed, ChaseSpeed = dto.ChaseSpeed, AttackSpeed = dto.AttackSpeed,
-                    ExpReward = dto.ExpReward, ImageUrl = dto.ImageUrl, UnityBaselineJson = baseline, ImportedAt = now, CreatedAt = now, UpdatedAt = now };
+                enemy = new EnemyEntity { EnemyId = dto.EnemyId, UnityBaselineJson = baseline, ImportedAt = now, CreatedAt = now, UpdatedAt = now };
+                Apply(enemy, dto);
                 db.Enemies.Add(enemy); created++;
             }
-            else if (enemy.UnityBaselineJson != baseline)
+            else if (Signature(enemy) != Signature(dto, enemy.ImageUrl))
             {
-                var p = Deserialize<UnityEnemyImport>(enemy.UnityBaselineJson);
-                if (p != null) { enemy.Name = Merge(enemy.Name,p.Name,dto.Name); enemy.Tier=Merge(enemy.Tier,p.Tier,dto.Tier); enemy.Hp=Merge(enemy.Hp,p.Hp,dto.Hp); enemy.Ad=Merge(enemy.Ad,p.Ad,dto.Ad); enemy.Ap=Merge(enemy.Ap,p.Ap,dto.Ap); enemy.Def=Merge(enemy.Def,p.Def,dto.Def); enemy.Res=Merge(enemy.Res,p.Res,dto.Res); enemy.Poise=Merge(enemy.Poise,p.Poise,dto.Poise); enemy.PoiseRecoveryTime=Merge(enemy.PoiseRecoveryTime,p.PoiseRecoveryTime,dto.PoiseRecoveryTime); enemy.PatrolSpeed=Merge(enemy.PatrolSpeed,p.PatrolSpeed,dto.PatrolSpeed); enemy.ChaseSpeed=Merge(enemy.ChaseSpeed,p.ChaseSpeed,dto.ChaseSpeed); enemy.AttackSpeed=Merge(enemy.AttackSpeed,p.AttackSpeed,dto.AttackSpeed); enemy.ExpReward=Merge(enemy.ExpReward,p.ExpReward,dto.ExpReward); enemy.ImageUrl=Merge(enemy.ImageUrl,p.ImageUrl,dto.ImageUrl); }
-                else if (enemy.ImageUrl == null) enemy.ImageUrl = dto.ImageUrl;
+                Apply(enemy, dto);
                 enemy.UnityBaselineJson = baseline; enemy.ImportedAt = now; enemy.UpdatedAt = now; updated++;
             }
             else unchanged++;
@@ -93,10 +79,47 @@ public class GameDataImportRepository(EnemyDbContext db) : IGameDataImportReposi
         return new(created, updated, unchanged);
     }
 
+    // Unity là nguồn thật khi bấm Sync: đè hết chỉ số, kể cả field admin đã sửa trên web. Chiều
+    // ngược lại (web → game) vẫn chạy qua /gameconfig, nên web sửa xong game vào phòng là áp dụng.
+    // ImageUrl giữ giá trị cũ nếu Unity không có webImage — ảnh do admin upload không bị xoá.
+    private static void Apply(ItemEntity item, UnityItemImport dto)
+    {
+        item.Name = dto.Name; item.Category = dto.Category; item.Description = Clean(dto.Description);
+        item.MaxStack = dto.MaxStack; item.IsKeyItem = dto.IsKeyItem; item.ImageUrl = dto.ImageUrl ?? item.ImageUrl;
+        item.Modifiers.Clear();
+        item.Modifiers.AddRange(dto.Modifiers?.Select(x => new ItemModifierEntry { Stat = x.Stat, Amount = x.Amount }) ?? []);
+    }
+
+    private static void Apply(EnemyEntity enemy, UnityEnemyImport dto)
+    {
+        enemy.Name = dto.Name; enemy.Tier = dto.Tier; enemy.Hp = dto.Hp; enemy.Ad = dto.Ad; enemy.Ap = dto.Ap;
+        enemy.Def = dto.Def; enemy.Res = dto.Res; enemy.Poise = dto.Poise;
+        enemy.PoiseRecoveryTime = dto.PoiseRecoveryTime; enemy.PatrolSpeed = dto.PatrolSpeed;
+        enemy.ChaseSpeed = dto.ChaseSpeed; enemy.AttackSpeed = dto.AttackSpeed; enemy.ExpReward = dto.ExpReward;
+        enemy.ImageUrl = dto.ImageUrl ?? enemy.ImageUrl;
+    }
+
+    // Đổi hay không thì so GIÁ TRỊ THẬT trên web với giá trị Unity sắp ghi, không so
+    // UnityBaselineJson. Baseline từng bị ghi lệch (bản cũ ghi baseline nhưng không áp chỉ số), nên
+    // record như axe_demon bị coi là "unchanged" vĩnh viễn dù web vẫn giữ số seed cũ.
+    // Signature phải liệt kê đúng các field Apply() ghi — khác nhau ⇒ Apply() mới có tác dụng.
+    private static string Signature(ItemEntity e) => JsonSerializer.Serialize(new object?[] {
+        e.Name, e.Category, e.Description, e.MaxStack, e.IsKeyItem, e.ImageUrl,
+        e.Modifiers.Select(x => new object?[] { x.Stat, x.Amount }) }, JsonOptions);
+
+    private static string Signature(UnityItemImport d, string? currentImage) => JsonSerializer.Serialize(new object?[] {
+        d.Name, d.Category, Clean(d.Description), d.MaxStack, d.IsKeyItem, d.ImageUrl ?? currentImage,
+        (d.Modifiers ?? []).Select(x => new object?[] { x.Stat, x.Amount }) }, JsonOptions);
+
+    private static string Signature(EnemyEntity e) => JsonSerializer.Serialize(new object?[] {
+        e.Name, e.Tier, e.Hp, e.Ad, e.Ap, e.Def, e.Res, e.Poise, e.PoiseRecoveryTime,
+        e.PatrolSpeed, e.ChaseSpeed, e.AttackSpeed, e.ExpReward, e.ImageUrl }, JsonOptions);
+
+    private static string Signature(UnityEnemyImport d, string? currentImage) => JsonSerializer.Serialize(new object?[] {
+        d.Name, d.Tier, d.Hp, d.Ad, d.Ap, d.Def, d.Res, d.Poise, d.PoiseRecoveryTime,
+        d.PatrolSpeed, d.ChaseSpeed, d.AttackSpeed, d.ExpReward, d.ImageUrl ?? currentImage }, JsonOptions);
+
     private static string? Clean(string? value) => value == null ? null : ContentSanitizer.Sanitize(value);
-    private static T? Deserialize<T>(string? json) where T : class { if (string.IsNullOrEmpty(json)) return null; try { return JsonSerializer.Deserialize<T>(json, JsonOptions); } catch (JsonException) { return null; } }
-    private static T Merge<T>(T current, T previous, T next) => EqualityComparer<T>.Default.Equals(current, previous) ? next : current;
-    private static bool ModifiersEqual(List<ItemModifierEntry> current, List<ItemModifierDto>? previous) { previous ??= []; return current.Count == previous.Count && current.Zip(previous).All(x => x.First.Stat == x.Second.Stat && x.First.Amount == x.Second.Amount); }
     private static async Task<(DateTime? max, int count)> VersionInfo(IQueryable<DateTime> query) { var count = await query.CountAsync(); return count == 0 ? (null, 0) : (await query.MaxAsync(x => (DateTime?)x), count); }
     private static string Version(DateTime? max, int count) => max is null ? "0" : $"{max:O}|{count}";
 }

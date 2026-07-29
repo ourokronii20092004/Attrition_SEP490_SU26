@@ -127,8 +127,13 @@ namespace Attrition.Gameplay.Environment
 
         private void Update()
         {
-            // Refresh tham chiếu mỗi frame: CinemachineConfiner2D có thể được CameraBoundsZone thêm
-            // vào lúc RUNTIME (sau khi zone này đã cache null) → phải tìm lại để clamp hoạt động.
+            // Zone nào player không ở trong VÀ zoom đã về mốc thì khỏi làm gì — scene có nhiều zone,
+            // trước đây mọi zone đều chạy EnsureCamera + ClampZoomToBounds mỗi frame.
+            if (!_inside && _hasDefault && _cachedCamera != null
+                && Mathf.Abs(_cachedCamera.Lens.OrthographicSize - defaultSize) < 0.01f) return;
+
+            // Refresh tham chiếu: CinemachineConfiner2D có thể được CameraBoundsZone thêm vào lúc
+            // RUNTIME (sau khi zone này đã cache null) → phải tìm lại để clamp hoạt động.
             EnsureCamera();
             if (_cachedCamera == null) return;
 
@@ -143,8 +148,16 @@ namespace Attrition.Gameplay.Environment
             _cachedCamera.Lens = lens;
         }
 
+        // Tìm lại tối đa 4 lần/giây thay vì mỗi frame: FindAnyObjectByType quét cả scene, và khi confiner
+        // chưa tồn tại thì GetComponent chạy mãi không bao giờ cache được.
+        private static float _nextSeek;
+
         private static void EnsureCamera()
         {
+            if (_cachedCamera != null && _cachedConfiner != null) return;
+            if (Time.unscaledTime < _nextSeek) return;
+            _nextSeek = Time.unscaledTime + 0.25f;
+
             if (_cachedCamera == null) _cachedCamera = FindAnyObjectByType<CinemachineCamera>();
             // Confiner có thể chưa tồn tại lúc đầu (CameraBoundsZone AddComponent khi player vào bound).
             if (_cachedConfiner == null && _cachedCamera != null)

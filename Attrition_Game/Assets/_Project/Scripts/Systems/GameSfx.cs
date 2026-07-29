@@ -85,13 +85,18 @@ namespace Attrition.Systems
         [SerializeField] private SfxEntry jump = new();
         [SerializeField] private SfxEntry land = new();
         [SerializeField] private SfxEntry dash = new();
-        [Tooltip("Bước chân — kéo nhiều clip vào để xen kẽ ngẫu nhiên khi chạy.")]
+        [Tooltip("Bước chân MẶC ĐỊNH (map 1-4: nền cỏ/đất) — kéo nhiều clip vào để xen kẽ ngẫu nhiên khi chạy.")]
         [SerializeField] private SfxEntry step = new();
+        [Tooltip("Bước chân cho các scene liệt kê ở 'Alt Step Scenes' (map 5: nền gạch). Để trống = dùng lại bước chân mặc định.")]
+        [SerializeField] private SfxEntry stepAlt = new();
+        [Tooltip("Tên scene dùng bước chân thay thế (phải khớp tên file scene). Mặc định: Castle - Map 5.")]
+        [SerializeField] private string[] altStepScenes = { "Castle - Map 5" };
 
         [Header("Vật phẩm")]
         [SerializeField] private SfxEntry potion = new();
 
         private AudioSource _source;
+        private bool _useAltStep;
 
         private void Awake()
         {
@@ -104,6 +109,49 @@ namespace Attrition.Systems
             if (_source == null) _source = gameObject.AddComponent<AudioSource>();
             _source.playOnAwake = false;
             _source.spatialBlend = 0f; // 2D
+
+            // GameSfx sống xuyên scene (DontDestroyOnLoad) nên phải tự cập nhật khi đổi map. Dùng
+            // sceneLoaded thay vì activeSceneChanged: Fusion có thể load scene kiểu Additive, khi đó
+            // active scene không đổi và event kia không bắn.
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
+            UnityEngine.SceneManagement.SceneManager.sceneUnloaded += OnSceneUnloaded;
+            RefreshStepSurface();
+        }
+
+        private void OnDestroy()
+        {
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
+            UnityEngine.SceneManagement.SceneManager.sceneUnloaded -= OnSceneUnloaded;
+        }
+
+        private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+            => RefreshStepSurface();
+
+        private void OnSceneUnloaded(UnityEngine.SceneManagement.Scene scene) => RefreshStepSurface();
+
+        /// <summary>
+        /// Chọn bộ bước chân theo tên scene: có scene nào đang mở nằm trong altStepScenes → dùng
+        /// stepAlt (nền gạch), còn lại → step (nền cỏ). Quét TẤT CẢ scene đang mở vì scene UI/gameplay
+        /// có thể load Additive — chỉ xem scene vừa load sẽ tắt nhầm bộ gạch khi UI load sau map.
+        /// Khớp theo tên scene thay vì component đặt trong scene: map mới chỉ cần thêm 1 dòng ở
+        /// Inspector, không phải kéo lại object.
+        /// </summary>
+        private void RefreshStepSurface()
+        {
+            _useAltStep = false;
+            if (altStepScenes == null || altStepScenes.Length == 0) return;
+
+            int count = UnityEngine.SceneManagement.SceneManager.sceneCount;
+            for (int i = 0; i < count; i++)
+            {
+                string loaded = UnityEngine.SceneManagement.SceneManager.GetSceneAt(i).name;
+                foreach (var s in altStepScenes)
+                    if (!string.IsNullOrEmpty(s) && string.Equals(s, loaded, System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        _useAltStep = true;
+                        return;
+                    }
+            }
         }
 
         /// <summary>
@@ -149,6 +197,7 @@ namespace Attrition.Systems
         public void PlayLand() => Play(land);
         public void PlayDash() => Play(dash);
         public void PlayPotion() => Play(potion);
-        public void PlayStep() => Play(step);
+        /// <summary>Bước chân theo bề mặt của scene hiện tại. Chưa gán stepAlt → tự dùng step mặc định.</summary>
+        public void PlayStep() => Play(_useAltStep && stepAlt != null && stepAlt.HasClip ? stepAlt : step);
     }
 }

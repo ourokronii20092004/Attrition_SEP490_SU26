@@ -97,6 +97,12 @@ public class EnemyAnimation : NetworkBehaviour
         if (anim != null && HasParam("Speed")) anim.SetFloat("Speed", speed);
     }
 
+    /// <summary>
+    /// Animator có param bay không? Đa số quái đi đất KHÔNG có → gọi bên EnemyAI để khỏi phải chạy
+    /// IsGrounded() (một rb.Cast physics) mỗi frame cho mỗi con quái chỉ để rồi bỏ đi.
+    /// </summary>
+    public bool NeedsAirState => anim != null && (HasParam("VelocityY") || HasParam("IsGrounded"));
+
     public void UpdateAirState(float velocityY, bool isGrounded)
     {
         if (anim == null) return;
