@@ -56,6 +56,9 @@ namespace Attrition.Gameplay.Player
         private float _nextSmokeTime;
         private bool _prevDashing;
 
+        /// <summary>Ghost đã mờ hết, chờ tái dùng. Dash spawn ~5 ghost/lần nên pool tránh alloc liên tục.</summary>
+        private readonly System.Collections.Generic.Stack<DashGhostFade> _pool = new();
+
         private void Awake()
         {
             _pc = GetComponent<PlayerController>();
