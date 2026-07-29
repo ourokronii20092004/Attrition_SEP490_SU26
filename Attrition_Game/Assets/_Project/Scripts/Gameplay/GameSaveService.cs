@@ -132,10 +132,31 @@ namespace Attrition.Gameplay.Persistence
 
             // Bản đồ tổng: ghi fog đã xua + checkpoint đã khám phá vào save (lưu vĩnh viễn).
             Attrition.Gameplay.Environment.WorldMapState.WriteTo(data);
+            // Boss đã hạ — không hồi sinh khi quay lại map / vào lại game.
+            Attrition.Gameplay.Environment.BossDefeatState.WriteTo(data);
 
             // Cutscene đã xem (playOnce) — không chiếu lại ở lần chơi sau.
             Attrition.Persistence.CutsceneState.WriteTo(data);
 
+            SaveManager.SaveSlot(slot, data);
+        }
+
+        /// <summary>
+        /// Lưu NGAY danh sách boss đã hạ vào slot (solo), không cần chờ mốc rest/quit.
+        /// Boss chết là mốc quan trọng: nếu chờ tới rest mà người chơi tắt game thì mất → boss hồi sinh.
+        /// Chỉ ghi các field world-state, KHÔNG đụng stat/vị trí player (tránh đè tiến trình bằng
+        /// dữ liệu giữa trận, vd HP đang thấp sau khi đánh boss).
+        /// </summary>
+        public void SaveBossDefeated()
+        {
+            if (GameLaunch.IsOnline) return;   // coop: chỉ giữ trong phiên host
+
+            int slot = GameLaunch.SelectedSlot;
+            var data = SaveManager.LoadSlot(slot);
+            if (data == null) return;          // chưa có slot (chưa từng lưu) → bỏ qua, mốc sau sẽ ghi
+
+            Attrition.Gameplay.Environment.BossDefeatState.WriteTo(data);
+            data.lastSavedUnix = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             SaveManager.SaveSlot(slot, data);
         }
 

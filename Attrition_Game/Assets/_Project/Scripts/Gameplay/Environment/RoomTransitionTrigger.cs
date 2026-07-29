@@ -16,6 +16,22 @@ namespace Attrition.Gameplay.Environment
         public Transform targetPosition;
 
         private HashSet<PlayerController> _playersInTrigger = new HashSet<PlayerController>();
+        private bool _transitionRunning;
+
+        /// <summary>
+        /// Máy này có quyền QUYẾT ĐỊNH mở cửa không? Chỉ HOST — vì client dùng
+        /// ClientPhysicsSimulation.SimulateForward và chỉ simulate player CỦA MÌNH, nên trigger của
+        /// đồng đội KHÔNG chạy trên máy client → client luôn đếm thiếu người, coop sẽ kẹt cửa.
+        /// </summary>
+        private static bool IsHost
+        {
+            get
+            {
+                var r = Attrition.Networking.NetworkLauncher.Instance != null
+                    ? Attrition.Networking.NetworkLauncher.Instance.Runner : null;
+                return r == null || r.IsServer;   // r == null: solo chạy không qua launcher → cứ cho phép
+            }
+        }
 
         private void OnTriggerEnter2D(Collider2D other)
         {
@@ -30,6 +46,16 @@ namespace Attrition.Gameplay.Environment
             }
         }
 
+        /// <summary>
+        /// HOST xét lại mỗi frame: người thứ hai có thể bước vào ở máy khác, hoặc đồng đội hồi sinh
+        /// làm đổi số người cần có. Chỉ dựa vào OnTriggerEnter2D thì dễ kẹt cửa trong coop.
+        /// </summary>
+        private void Update()
+        {
+            if (_transitionRunning || _playersInTrigger.Count == 0) return;
+            CheckTransition();
+        }
+
         private void OnTriggerExit2D(Collider2D other)
         {
             if (other.CompareTag("Player"))
@@ -42,108 +68,104 @@ namespace Attrition.Gameplay.Environment
             }
         }
 
+        /// <summary>
+        /// CHỈ HOST quyết định (xem <see cref="IsHost"/>). Client không thấy trigger của đồng đội nên
+        /// nếu để client tự xét thì coop kẹt cửa vĩnh viễn.
+        /// </summary>
         private void CheckTransition()
         {
-            if (targetPosition == null) return;
+            if (targetPosition == null || _transitionRunning) return;
+            if (!IsHost) return;
 
-            // Đếm tổng số lượng người chơi đang có trong màn
-            var allPlayers = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
             int requiredPlayers = 1; // Mặc định solo
 
-            // Nếu đang trong chế độ Coop, có bao nhiêu Player thì cần bấy nhiêu người vào trigger
+            // Coop: cần TẤT CẢ player còn sống cùng đứng ở cửa.
             if (Attrition.Persistence.GameLaunch.Mode == Attrition.Persistence.LaunchMode.Coop)
             {
+                var allPlayers = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
                 int activePlayers = 0;
                 foreach (var p in allPlayers)
                 {
-                    if (p != null && !p.isDeadNetworked) activePlayers++;
+                    if (p != null && p.Object != null && p.Object.IsValid && !p.isDeadNetworked)
+                        activePlayers++;
                 }
                 requiredPlayers = Mathf.Max(1, activePlayers);
             }
 
-            // Nếu đủ người chơi tập trung tại cửa
-            if (_playersInTrigger.Count >= requiredPlayers)
+            // Chỉ tính player CÒN SỐNG & hợp lệ (xác chết nằm trong vùng không tính).
+            int inTrigger = 0;
+            foreach (var p in _playersInTrigger)
             {
-                ExecuteTransition();
+                if (p != null && p.Object != null && p.Object.IsValid && !p.isDeadNetworked)
+                    inTrigger++;
             }
+
+            if (inTrigger >= requiredPlayers) ExecuteTransition();
         }
 
         private void ExecuteTransition()
         {
+            _transitionRunning = true;
             StartCoroutine(TransitionRoutine());
         }
 
         private System.Collections.IEnumerator TransitionRoutine()
         {
-            // Bắt đầu Fade Out (Màn hình đen dần)
+            // Màn đen trên MỌI máy: RpcRequestFastTravel (bên dưới) đã bắn RpcTravelLoading tới mọi peer
+            // → mỗi máy tự nháy đen. Ở đây host fade trước cho khớp nhịp của chính nó.
             yield return StartCoroutine(SceneFader.FadeOut(0.5f));
 
-            // Dịch chuyển tất cả người chơi sang vị trí mới thông qua RPC (Host xử lý)
-            // Lấy player local (có InputAuthority) để gửi yêu cầu
-            PlayerController localPlayer = null;
+            // Player của HOST (vừa có Input vừa có State authority) để gọi RPC teleport-toàn-đội.
+            PlayerController hostPlayer = null;
             foreach (var player in _playersInTrigger)
             {
-                if (player != null && player.HasInputAuthority)
-                {
-                    localPlayer = player;
-                    break;
-                }
+                if (player != null && player.HasInputAuthority) { hostPlayer = player; break; }
             }
 
-            if (localPlayer != null)
+            if (hostPlayer != null)
             {
-                // Dịch chuyển cục bộ ngay lập tức để giấu độ trễ mạng (Network Latency)
-                foreach (var player in _playersInTrigger)
-                {
-                    if (player != null)
-                    {
-                        var playerRb = player.GetComponent<Rigidbody2D>();
-                        if (playerRb != null)
-                        {
-                            Vector3 delta = targetPosition.position - player.transform.position;
-                            playerRb.position = targetPosition.position;
-                            
-                            // Ép Camera di chuyển ngay lập tức và xóa giới hạn của phòng cũ
-                            if (player.HasInputAuthority)
-                            {
-                                var cam = FindAnyObjectByType<Unity.Cinemachine.CinemachineCamera>();
-                                if (cam != null)
-                                {
-                                    var confiner = cam.GetComponent<Unity.Cinemachine.CinemachineConfiner2D>();
-                                    if (confiner != null)
-                                    {
-                                        confiner.BoundingShape2D = null;
-                                        confiner.InvalidateBoundingShapeCache();
-                                    }
-                                    cam.OnTargetObjectWarped(player.transform, delta);
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                localPlayer.RpcRequestFastTravel(targetPosition.position);
+                // Teleport MỌI player + bắn loading/fade tới MỌI máy. Vị trí đi qua _pendingTeleportSeq
+                // ([Networked]) nên client cũng SNAP đúng chỗ, không bị prediction đè.
+                // KHÔNG còn tự ghi rb.position cho từng player như trước: với player của máy khác,
+                // ghi tay sẽ bị teleport networked ghi đè (hoặc giật 2 nhịp).
+                hostPlayer.RpcRequestFastTravel(targetPosition.position);
             }
             else
             {
-                // Fallback nếu vì lý do nào đó không tìm thấy local player
+                // Host không đứng trong cửa (chỉ xảy ra ở solo lạ / test): teleport trực tiếp — host có
+                // StateAuthority trên mọi player nên TeleportTo là hợp lệ và vẫn networked.
                 foreach (var player in _playersInTrigger)
                 {
                     if (player != null && player.HasStateAuthority)
-                    {
                         player.TeleportTo(targetPosition.position);
-                    }
                 }
             }
 
-            // Đợi một chút để đồng bộ network và Camera kịp di chuyển
+            // Camera của máy này: xoá giới hạn phòng CŨ để không bị kẹt trong lúc chuyển. Bounds phòng
+            // MỚI do CameraBoundsZone tự set khi player local bước vào (mỗi máy tự chạy cho player mình).
+            ClearLocalCameraConfiner();
+
+            // Đợi network đồng bộ + camera kịp di chuyển.
             yield return new WaitForSeconds(0.2f);
 
-            // Bắt đầu Fade In (Màn hình sáng dần)
             yield return StartCoroutine(SceneFader.FadeIn(0.5f));
 
-            // Xoá danh sách sau khi dịch chuyển để tránh dính trigger lại lập tức
+            // Xoá danh sách để không dính trigger lại ngay.
             _playersInTrigger.Clear();
+            _transitionRunning = false;
+        }
+
+        /// <summary>Bỏ confiner phòng cũ trên MÁY NÀY (local visual, không liên quan network).</summary>
+        private static void ClearLocalCameraConfiner()
+        {
+            var cam = FindAnyObjectByType<Unity.Cinemachine.CinemachineCamera>();
+            if (cam == null) return;
+
+            var confiner = cam.GetComponent<Unity.Cinemachine.CinemachineConfiner2D>();
+            if (confiner == null) return;
+
+            confiner.BoundingShape2D = null;
+            confiner.InvalidateBoundingShapeCache();
         }
 
         private void OnDrawGizmos()

@@ -192,6 +192,28 @@ namespace Attrition.Gameplay.Enemy.Druid
             ChangeState(IdleState);
         }
 
+        /// <summary>
+        /// Player wipe (cả team chết) → trả boss về trạng thái CHỜ TRIGGER như lúc mới vào phòng:
+        /// đứng im, không state, ẩn thanh máu (EncounterStarted=false), về đúng chỗ spawn.
+        /// HP do EnemyController.ResetForEncounterRetry lo. Chỉ host.
+        /// </summary>
+        public void ResetEncounter()
+        {
+            if (!HasStateAuthority) return;
+
+            ChangeState(null);              // dừng state machine — boss đứng im chờ trigger lại
+            waitForTrigger = true;
+            EncounterStarted = false;       // ẩn thanh máu tới khi player kích hoạt lại
+
+            playerTarget = null;
+            _retargetCooldown = 0f;
+            StateLocalTimer = 0f;
+            SkillCooldownTimer = TickTimer.CreateFromSeconds(Runner, initialDelay);
+
+            StopMovement();
+            if (rb != null) rb.position = StartPos;   // về đúng vị trí đặt trong scene
+        }
+
         // ═══════════════════════════════════════════════════════════════
         // AI LOGIC
         // ═══════════════════════════════════════════════════════════════

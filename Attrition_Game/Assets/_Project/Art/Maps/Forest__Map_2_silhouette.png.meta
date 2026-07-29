@@ -1,0 +1,429 @@
+fileFormatVersion: 2
+guid: 60e3e54d79bdfe44d9f554989c945825
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 6740543996314743534
+    second: Forest__Map_2_silhouette_0
+  - first:
+      213: -9167984935555293436
+    second: Forest__Map_2_silhouette_1
+  - first:
+      213: 7265597847814616485
+    second: Forest__Map_2_silhouette_2
+  - first:
+      213: -879182375218288882
+    second: Forest__Map_2_silhouette_3
+  - first:
+      213: 7560736037404733523
+    second: Forest__Map_2_silhouette_4
+  - first:
+      213: -2969924380011579584
+    second: Forest__Map_2_silhouette_5
+  - first:
+      213: 7202371936205654102
+    second: Forest__Map_2_silhouette_6
+  - first:
+      213: -1624143472946067748
+    second: Forest__Map_2_silhouette_7
+  - first:
+      213: -2481019756827991090
+    second: Forest__Map_2_silhouette_8
+  - first:
+      213: -300331223948281016
+    second: Forest__Map_2_silhouette_9
+  - first:
+      213: -5707504446025361289
+    second: Forest__Map_2_silhouette_10
+  - first:
+      213: 6055326570572041258
+    second: Forest__Map_2_silhouette_11
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Forest__Map_2_silhouette_0
+      rect:
+        serializedVersion: 2
+        x: 23
+        y: 259
+        width: 606
+        height: 158
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ee27b3d3d093b8d50800000000000000
+      internalID: 6740543996314743534
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Forest__Map_2_silhouette_1
+      rect:
+        serializedVersion: 2
+        x: 659
+        y: 319
+        width: 14
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 40f18127646c4c080800000000000000
+      internalID: -9167984935555293436
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Forest__Map_2_silhouette_2
+      rect:
+        serializedVersion: 2
+        x: 683
+        y: 315
+        width: 10
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5a535df6fb694d460800000000000000
+      internalID: 7265597847814616485
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Forest__Map_2_silhouette_3
+      rect:
+        serializedVersion: 2
+        x: 707
+        y: 247
+        width: 606
+        height: 170
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e076450b9448cc3f0800000000000000
+      internalID: -879182375218288882
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Forest__Map_2_silhouette_4
+      rect:
+        serializedVersion: 2
+        x: 1395
+        y: 183
+        width: 590
+        height: 154
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 350f0061e512de860800000000000000
+      internalID: 7560736037404733523
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Forest__Map_2_silhouette_5
+      rect:
+        serializedVersion: 2
+        x: 2063
+        y: 179
+        width: 869
+        height: 158
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 04733aff285b8c6d0800000000000000
+      internalID: -2969924380011579584
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Forest__Map_2_silhouette_6
+      rect:
+        serializedVersion: 2
+        x: 651
+        y: 303
+        width: 10
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 658c7cdbd17f3f360800000000000000
+      internalID: 7202371936205654102
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Forest__Map_2_silhouette_7
+      rect:
+        serializedVersion: 2
+        x: 679
+        y: 303
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cd6c7cecd12e579e0800000000000000
+      internalID: -1624143472946067748
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Forest__Map_2_silhouette_8
+      rect:
+        serializedVersion: 2
+        x: 687
+        y: 307
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ec3aa891da5a19dd0800000000000000
+      internalID: -2481019756827991090
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Forest__Map_2_silhouette_9
+      rect:
+        serializedVersion: 2
+        x: 667
+        y: 299
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 84bba91d75205dbf0800000000000000
+      internalID: -300331223948281016
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Forest__Map_2_silhouette_10
+      rect:
+        serializedVersion: 2
+        x: 687
+        y: 295
+        width: 6
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 77812bc22fedac0b0800000000000000
+      internalID: -5707504446025361289
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Forest__Map_2_silhouette_11
+      rect:
+        serializedVersion: 2
+        x: 651
+        y: 279
+        width: 22
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a2c4ee5fe67d80450800000000000000
+      internalID: 6055326570572041258
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Forest__Map_2_silhouette_0: 6740543996314743534
+      Forest__Map_2_silhouette_1: -9167984935555293436
+      Forest__Map_2_silhouette_10: -5707504446025361289
+      Forest__Map_2_silhouette_11: 6055326570572041258
+      Forest__Map_2_silhouette_2: 7265597847814616485
+      Forest__Map_2_silhouette_3: -879182375218288882
+      Forest__Map_2_silhouette_4: 7560736037404733523
+      Forest__Map_2_silhouette_5: -2969924380011579584
+      Forest__Map_2_silhouette_6: 7202371936205654102
+      Forest__Map_2_silhouette_7: -1624143472946067748
+      Forest__Map_2_silhouette_8: -2481019756827991090
+      Forest__Map_2_silhouette_9: -300331223948281016
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5169bec6b72d93447a155aa416878291, type: 3}
-  m_Name: iron_chest
+  m_Name: 
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.EquipmentSO
   itemId: iron_chest
-  displayName: Iron Chestplate
+  displayName: Iron Armor
   description: 
   icon: {fileID: 21300000, guid: b617f6fe232dc444e841e8a26838e947, type: 3}
   maxStack: 1

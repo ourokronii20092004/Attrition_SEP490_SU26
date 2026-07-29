@@ -33,7 +33,7 @@
 }
 
 .interact-key {
-    font-size: 16px;
+    font-size: 24px;
     color: #1A1206;
     -unity-font-style: bold;
     -unity-text-align: middle-center;
@@ -45,7 +45,7 @@
 }
 
 .interact-label {
-    font-size: 16px;
+    font-size: 24px;
     color: #F0E8D0;
     -unity-font-style: bold;
     letter-spacing: 0.5px;
@@ -98,7 +98,7 @@
 }
 
 .speaker-name {
-    font-size: 20px;
+    font-size: 30px;
     color: #E8C869;
     -unity-font-style: bold;
     letter-spacing: 1px;
@@ -107,7 +107,7 @@
 
 /* ──── DIALOGUE TEXT ──── */
 .dialogue-text {
-    font-size: 16px;
+    font-size: 24px;
     color: #D8D3C8;
     white-space: normal;
     min-height: 48px;
@@ -134,14 +134,14 @@
 }
 
 .quest-title {
-    font-size: 15px;
+    font-size: 24px;
     color: #F0D878;
     -unity-font-style: bold;
     margin-bottom: 4px;
 }
 
 .quest-desc {
-    font-size: 13px;
+    font-size: 20px;
     color: #B0A890;
     white-space: normal;
 }
@@ -159,7 +159,7 @@
     border-color: rgba(200, 170, 80, 0.4);
     border-radius: 6px;
     color: #E8D8A8;
-    font-size: 14px;
+    font-size: 22px;
     -unity-font-style: bold;
     padding: 8px 24px;
     margin: 0 6px;
@@ -204,7 +204,7 @@
 
 /* ──── KEY HINT ──── */
 .key-hint {
-    font-size: 11px;
+    font-size: 18px;
     color: rgba(180, 170, 150, 0.5);
     -unity-text-align: middle-center;
     margin-top: 6px;
@@ -252,7 +252,7 @@
 }
 
 .reward-title {
-    font-size: 26px;
+    font-size: 40px;
     color: #F0D878;
     -unity-font-style: bold;
     letter-spacing: 2px;
@@ -306,19 +306,19 @@
 }
 
 .reward-item-name {
-    font-size: 15px;
+    font-size: 24px;
     color: #D8D3C8;
     flex-grow: 1;
 }
 
 .reward-item-amount {
-    font-size: 14px;
+    font-size: 22px;
     color: #E8C869;
     -unity-font-style: bold;
 }
 
 .reward-exp {
-    font-size: 16px;
+    font-size: 24px;
     color: #A8D8A0;
     -unity-font-style: bold;
     margin-bottom: 14px;
@@ -368,7 +368,7 @@
 }
 
 .tracker-header {
-    font-size: 14px;
+    font-size: 22px;
     color: #E8C869;
     -unity-font-style: bold;
     margin-bottom: 8px;
@@ -389,14 +389,14 @@
 }
 
 .tracker-entry-title {
-    font-size: 13px;
+    font-size: 20px;
     color: #D8D0B8;
     -unity-font-style: bold;
     margin-bottom: 4px;
 }
 
 .tracker-entry-progress {
-    font-size: 11px;
+    font-size: 18px;
     color: #A8A088;
     margin-bottom: 4px;
 }
@@ -428,3 +428,175 @@
 .tracker-entry-complete .tracker-progress-bar-fill {
     background-color: #80D880;
 }
+
+/* ============================================================
+/* ============================================================
+   ORNATE RETRO UI THEME (BrownFantasy) + FONT BOLDPIXELS — sửa 2026-07-28 (lần 2)
+   Slice đo từ ảnh thật + ép tắt nền/viền cũ (xem chi tiết trong GameUI.uss).
+
+   DialogueUI.uxml KHÔNG có root chung (nhiều element top-level) → gán font theo
+   Label/Button/TextElement + class đã kiểm tra có thật.
+   ============================================================ */
+
+Label, Button, TextElement {
+    -unity-font-definition: initial;
+    -unity-font: url('../Art/UI_Elements/Fontstyle/boldpixels.ttf');
+}
+
+/* ---------- KHUNG ---------- */
+.dialogue-panel,
+.reward-panel,
+.quest-tracker {
+    background-image: url('../Art/UI_Elements/OrnateUI/panel.png');
+    -unity-slice-left: 26;
+    -unity-slice-right: 26;
+    -unity-slice-top: 22;
+    -unity-slice-bottom: 20;
+    -unity-slice-scale: 1px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+    padding-left: 32px; padding-right: 32px;
+    padding-top: 26px; padding-bottom: 24px;
+}
+
+/* Dải tên người nói / header cột. */
+.speaker-bar,
+.tracker-header {
+    background-image: url('../Art/UI_Elements/OrnateUI/header.png');
+    -unity-slice-left: 16;
+    -unity-slice-right: 15;
+    -unity-slice-top: 7;
+    -unity-slice-bottom: 7;
+    -unity-slice-scale: 1px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+}
+
+/* Prompt "[F] Talk" + ô phím. */
+.interact-prompt,
+.interact-key {
+    background-image: url('../Art/UI_Elements/OrnateUI/slot.png');
+    -unity-slice-left: 7;
+    -unity-slice-right: 6;
+    -unity-slice-top: 7;
+    -unity-slice-bottom: 9;
+    -unity-slice-scale: 1px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+}
+
+/* ---------- NÚT ---------- */
+.dlg-btn,
+.btn-accept,
+.btn-decline,
+.btn-continue,
+.btn-reward-close {
+    background-image: url('../Art/UI_Elements/OrnateUI/button.png');
+    -unity-slice-left: 7;
+    -unity-slice-right: 6;
+    -unity-slice-top: 7;
+    -unity-slice-bottom: 8;
+    -unity-slice-scale: 1px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+    color: #f0e0b8;
+}
+
+.dlg-btn:hover,
+.btn-accept:hover,
+.btn-decline:hover,
+.btn-continue:hover,
+.btn-reward-close:hover {
+    background-image: url('../Art/UI_Elements/OrnateUI/button_hover.png');
+    -unity-slice-left: 6;
+    -unity-slice-right: 6;
+    -unity-slice-top: 6;
+    -unity-slice-bottom: 7;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    color: #fff6d8;
+}
+
+.dlg-btn:active,
+.btn-accept:active,
+.btn-decline:active,
+.btn-continue:active,
+.btn-reward-close:active {
+    background-image: url('../Art/UI_Elements/OrnateUI/button_press.png');
+    -unity-slice-left: 7;
+    -unity-slice-right: 6;
+    -unity-slice-top: 7;
+    -unity-slice-bottom: 7;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+}
+
+/* ---------- THANH TIẾN ĐỘ QUEST (tạo runtime) ---------- */
+.tracker-progress-bar-bg {
+    background-image: url('../Art/UI_Elements/OrnateUI/bar_track.png');
+    -unity-slice-left: 9;
+    -unity-slice-right: 9;
+    -unity-slice-top: 6;
+    -unity-slice-bottom: 6;
+    -unity-slice-scale: 1px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+    padding-left: 3px; padding-right: 3px;
+    padding-top: 3px; padding-bottom: 3px;
+}
+
+.tracker-progress-bar-fill {
+    background-image: url('../Art/UI_Elements/Bars/fill_stamina.png');
+    -unity-slice-left: 2;
+    -unity-slice-right: 2;
+    -unity-slice-top: 0;
+    -unity-slice-bottom: 0;
+    -unity-slice-scale: 1px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+}
+
+/* ---------- CHỮ PIXEL ---------- */
+.interact-label,
+.quest-desc,
+.reward-exp,
+.tracker-entry-progress {
+    letter-spacing: 0;
+    text-shadow: 0 0 0 rgba(0, 0, 0, 0);
+}
+
+/* ============================================================
+   NỚI KHUNG CHO CHỮ TO (2026-07-28) — user báo chữ tràn khung.
+   ĐẶT CUỐI FILE để thắng cascade.
+   ============================================================ */
+
+/* Panel thoại: cao hơn cho chữ 24px + nhiều dòng. */
+.dialogue-panel {
+    height: 52%;                             /* 45% → 52% */
+    padding-left: 70px; padding-right: 70px;
+    padding-top: 44px; padding-bottom: 26px;
+}
+
+/* Bảng thưởng + tracker quest: rộng hơn cho tên item/quest 20-24px. */
+.reward-panel  { width: 520px; padding-left: 34px; padding-right: 34px; }
+.quest-tracker { width: 340px; padding-left: 20px; padding-right: 20px; }
+
+/* Nút thoại: cao + rộng hơn cho chữ 22px. */
+.dlg-btn {
+    min-height: 52px;
+    padding-left: 32px; padding-right: 32px;
+    padding-top: 12px; padding-bottom: 12px;
+}
+
+/* Prompt "[F] Talk": ô phím to hơn cho chữ không sát viền. */
+.interact-prompt { padding-left: 16px; padding-right: 16px; padding-top: 8px; padding-bottom: 8px; }
+.interact-key    { min-width: 38px; min-height: 38px; padding-left: 12px; padding-right: 12px; }
+
+/* Dải tên người nói: cao hơn cho chữ 24px. */
+.speaker-bar { min-height: 46px; padding-left: 20px; padding-right: 20px; }

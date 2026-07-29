@@ -241,24 +241,14 @@ namespace Attrition.UI
             _controller.RpcRequestFastTravelToCheckpoint(_ftSelected.RespawnPosition, _ftSelected.DisplayName);
         }
 
-        /// <summary>Host bắn event này về MỌI máy khi rest/fast-travel thành công → thanh load đồng bộ.</summary>
+        /// <summary>
+        /// Host bắn event này về MỌI máy khi rest / chuyển room / fast-travel.
+        /// CHỈ nháy màn ĐEN rồi sáng lại — KHÔNG hiện màn hình loading (yêu cầu: chuyển room và rest chỉ
+        /// cần nền đen). Fast-travel CROSS-MAP vẫn dùng loading riêng ở NetworkLauncher (load scene thật).
+        /// </summary>
         private void OnCoopTravelLoading(string label)
         {
-            StartCoroutine(FastTravelLoadingRoutine(label));
-        }
-
-        private System.Collections.IEnumerator FastTravelLoadingRoutine(string dest)
-        {
-            ShowLoading(dest, "Travelling...");
-            float t = 0f;
-            const float dur = 1.2f;
-            while (t < dur)
-            {
-                t += Time.deltaTime;
-                SetLoadingProgress(t / dur);
-                yield return null;
-            }
-            HideLoading();
+            Attrition.Gameplay.Environment.SceneFader.FlashBlack();
         }
     }
 }

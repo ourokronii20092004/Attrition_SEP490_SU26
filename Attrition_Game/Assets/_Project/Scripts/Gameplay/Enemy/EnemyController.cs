@@ -351,6 +351,67 @@ namespace Attrition.Controllers
             despawnTimer = TickTimer.CreateFromSeconds(Runner, deathDur);
         }
 
+        /// <summary>
+        /// Reset quái về nguyên trạng để ĐÁNH LẠI (dùng cho BOSS khi cả team player chết — boss không
+        /// despawn/respawn được như quái thường vì đặt sẵn trong scene). Hồi đầy HP, xoá poise/burn/slow,
+        /// bật lại AI + combat + collider/physics. Chỉ host. No-op nếu boss đã bị đánh chết (không hồi sinh
+        /// boss đã hạ).
+        /// </summary>
+        public void ResetForEncounterRetry()
+        {
+            if (!HasStateAuthority) return;
+            if (isDeadNetworked) return;   // boss đã hạ → giữ nguyên, không hồi sinh
+
+            Health = maxHealth > 0 ? maxHealth : Health;
+            CurrentPoise = GetMaxPoise();
+            RevivesRemaining = extraLivesAfterHpZero;
+
+            IsAwaitingRevive = false;
+            IsKnockbackActive = false;
+            knockbackTimer = TickTimer.None;
+            poiseRecoveryTimer = TickTimer.None;
+            reviveTimer = TickTimer.None;
+            despawnTimer = TickTimer.None;
+
+            // Xoá hiệu ứng trạng thái còn dính từ lượt đánh trước.
+            burnTimer = TickTimer.None;
+            burnTickTimer = TickTimer.None;
+            burnDamagePerTick = 0;
+            slowTimer = TickTimer.None;
+            slowMultiplier = 1f;
+
+            if (combatComp != null) { combatComp.IsAttacking = false; combatComp.enabled = true; }
+            if (aiComp != null) aiComp.enabled = true;
+
+            RpcRestoreAliveVisuals();
+        }
+
+        /// <summary>Bật lại physics/collider + animator về trạng thái sống trên MỌI máy (state local, không
+        /// [Networked]) sau khi reset encounter. Dùng chung path với revive.</summary>
+        [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+        private void RpcRestoreAliveVisuals()
+        {
+            _localDeathHandled = false;
+            _localDownedHandled = false;
+
+            if (rb != null)
+            {
+                rb.bodyType = RigidbodyType2D.Dynamic;
+                rb.linearVelocity = Vector2.zero;
+            }
+            Collider2D col = GetComponent<Collider2D>();
+            if (col != null) col.enabled = true;
+
+            // Boss fade (BossGateController) có thể đã giảm alpha — trả lại rõ nét.
+            foreach (var sr in GetComponentsInChildren<SpriteRenderer>())
+            {
+                if (sr == null) continue;
+                var c = sr.color; c.a = 1f; sr.color = c;
+            }
+
+            if (animationComp != null) animationComp.ResetAlive();
+        }
+
         /// <summary>Host ra lệnh boss biến mất NGAY (dùng khi HoldDespawn=true và chuỗi thoại đã xong).</summary>
         public void ForceDespawnNow()
         {
