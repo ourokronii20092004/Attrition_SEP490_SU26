@@ -23,13 +23,15 @@ namespace Attrition.Editor
             SetStr(t, "tutorialId", "map1_basics");
             SetEnum(t, "trigger", (int)TutorialPrompt.TriggerMode.OnEnterZone);
             SetStr(t, "title", "ĐIỀU KHIỂN CƠ BẢN");
+            // stepByStep: hiện LẦN LƯỢT — WASD trước, xong mới tới các phím sau.
+            SetBool(t, "stepByStep", true);
             SetLines(t, new[]
             {
-                ("A / D", "Di chuyển"),
+                ("W A S D", "Di chuyển"),
                 ("Space", "Nhảy"),
                 ("Shift", "Lướt (Dash)"),
                 ("J", "Tấn công"),
-                ("S", "Ngồi"),
+                ("F", "Tương tác / Nghỉ tại checkpoint"),
                 ("Tab", "Túi đồ"),
             });
             SetStr(t, "creditsTitle", "ATTRITION — SEP490");
@@ -53,6 +55,7 @@ namespace Attrition.Editor
             SetEnum(t, "trigger", (int)TutorialPrompt.TriggerMode.OnAbilityUnlocked);
             SetStr(t, "title", "KỸ NĂNG MỚI");
             SetAbilities(t, new[] { GrantedAbility.DoubleJump, GrantedAbility.ShadowDash });
+            SetBool(t, "stepByStep", true);
             SetLines(t, new[]
             {
                 ("Space, Space", "Nhảy đúp (Double Jump)"),
@@ -93,6 +96,13 @@ namespace Attrition.Editor
             var so = new SerializedObject(target);
             var p = so.FindProperty(field);
             if (p != null) { p.enumValueIndex = value; so.ApplyModifiedPropertiesWithoutUndo(); }
+        }
+
+        private static void SetBool(Object target, string field, bool value)
+        {
+            var so = new SerializedObject(target);
+            var p = so.FindProperty(field);
+            if (p != null) { p.boolValue = value; so.ApplyModifiedPropertiesWithoutUndo(); }
         }
 
         private static void SetLines(Object target, (string key, string desc)[] lines)

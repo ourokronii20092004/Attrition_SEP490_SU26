@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using UnityEngine.SceneManagement;
@@ -22,6 +23,51 @@ namespace Attrition.Editor
         private static readonly Color WallColor = new Color(0.78f, 0.80f, 0.92f, 1f);   // tường: sáng đậm
         private static readonly Color PathColor = new Color(0.30f, 0.32f, 0.45f, 1f);   // đường đi: nhạt hơn
         private static readonly Color EmptyColor = new Color(0f, 0f, 0f, 0f);            // ngoài map: trong suốt
+
+        /// <summary>Mọi scene gameplay cần có mặt trên World Map (khớp Build Settings).</summary>
+        private static readonly string[] GameplayScenes =
+        {
+            "The Darkest Path - Map 1",
+            "Forest - Map 2",
+            "Elf Valley -Map 3",
+            "Dark Forest - Map 4",
+            "Castle - Map 5",
+        };
+
+        /// <summary>
+        /// Bake LẦN LƯỢT mọi map: mở từng scene → bake silhouette + MapData (checkpointId = DisplayName)
+        /// → tự thêm vào MapRegistry. Dùng khi World Map không hiện điểm tele: nguyên nhân thường là
+        /// MapData thiếu (Map 2..5 chưa bake) hoặc checkpointId cũ không khớp DisplayName hiện tại.
+        /// </summary>
+        [MenuItem("Tools/Attrition/Bake ALL Maps (World Map)")]
+        public static void BakeAll()
+        {
+            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+
+            string original = SceneManager.GetActiveScene().path;
+            int ok = 0;
+
+            foreach (var name in GameplayScenes)
+            {
+                string path = $"Assets/_Project/Scenes/{name}.unity";
+                if (!System.IO.File.Exists(path))
+                {
+                    Debug.LogWarning($"[MapBaker] Không thấy scene: {path} — bỏ qua.");
+                    continue;
+                }
+
+                EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
+                Bake();
+                ok++;
+            }
+
+            // Trả lại scene ban đầu cho designer.
+            if (!string.IsNullOrEmpty(original) && System.IO.File.Exists(original))
+                EditorSceneManager.OpenScene(original, OpenSceneMode.Single);
+
+            Debug.Log($"[MapBaker] BAKE ALL xong: {ok}/{GameplayScenes.Length} map. " +
+                      "Mở World Map (M) để kiểm tra — điểm tele chỉ hiện SAU khi đã REST tại checkpoint đó.");
+        }
 
         [MenuItem("Tools/Attrition/Bake Map Silhouette (current scene)")]
         public static void Bake()
@@ -170,7 +216,8 @@ namespace Attrition.Editor
             data.silhouette = sprite;
             data.worldBounds = bounds;
 
-            // Quét Checkpoint điền marker.
+            // Quét Checkpoint điền marker. checkpointId PHẢI = Checkpoint.DisplayName vì World Map lọc
+            // marker qua WorldMapState.IsCheckpointDiscovered(id), mà discovery được ghi theo DisplayName.
             data.checkpoints.Clear();
             foreach (var cp in Object.FindObjectsByType<Attrition.Gameplay.World.Checkpoint>(FindObjectsSortMode.None))
             {
@@ -179,10 +226,42 @@ namespace Attrition.Editor
             }
 
             EditorUtility.SetDirty(data);
+
+            // Tự ĐĂNG KÝ vào MapRegistry (Resources/MapRegistry) — trước đây phải kéo tay nên map mới
+            // bake xong vẫn không hiện trên World Map.
+            bool registered = RegisterInRegistry(data);
+
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log($"[MapBaker] Đã bake '{scene}': {pngPath} + {soPath} ({data.checkpoints.Count} checkpoint, bounds {bounds.size}). " +
-                      "Kéo MapData vào MapRegistry (Resources/MapRegistry).");
+            Debug.Log($"[MapBaker] Đã bake '{scene}': {pngPath} + {soPath} ({data.checkpoints.Count} checkpoint, " +
+                      $"bounds {bounds.size}). MapRegistry: {(registered ? "đã thêm" : "đã có sẵn")}.");
+        }
+
+        /// <summary>
+        /// Thêm MapData vào asset `Resources/MapRegistry` nếu chưa có. Trả true nếu VỪA thêm.
+        /// Tự tạo registry nếu chưa tồn tại.
+        /// </summary>
+        private static bool RegisterInRegistry(MapDataSO data)
+        {
+            const string resDir = "Assets/Resources";
+            const string regPath = "Assets/Resources/MapRegistry.asset";
+
+            if (!AssetDatabase.IsValidFolder(resDir))
+                AssetDatabase.CreateFolder("Assets", "Resources");
+
+            var reg = AssetDatabase.LoadAssetAtPath<MapRegistrySO>(regPath);
+            if (reg == null)
+            {
+                reg = ScriptableObject.CreateInstance<MapRegistrySO>();
+                AssetDatabase.CreateAsset(reg, regPath);
+            }
+
+            if (reg.maps == null) reg.maps = new List<MapDataSO>();
+            if (reg.maps.Contains(data)) return false;
+
+            reg.maps.Add(data);
+            EditorUtility.SetDirty(reg);
+            return true;
         }
     }
 }

@@ -16,6 +16,16 @@ namespace Attrition.UI
         private bool _gameOverShown;
         private bool _clientWaitShown; // coop CLIENT: đang chờ host quyết định sau khi cả 2 chết
 
+        /// <summary>
+        /// Chờ bao lâu sau khi player chết mới hiện menu Game Over — để animation chết chạy xong
+        /// (yêu cầu user). Trước đây menu bật NGAY frame `IsDead` bật nên che mất anim chết.
+        /// 2.2s: anim Player_Death + xác rơi xuống đất + lặng một nhịp cho đỡ hụt.
+        /// </summary>
+        private const float DeathAnimDelaySeconds = 2.2f;
+
+        /// <summary>Thời điểm phát hiện TẤT CẢ player chết (-1 = chưa). Dùng để đếm delay ở trên.</summary>
+        private float _allDeadSince = -1f;
+
         private void SetupGameOverControls()
         {
             BindButton("go-resume", OnResumeClicked);
@@ -48,6 +58,12 @@ namespace Attrition.UI
 
             if (validCount > 0 && allDead)
             {
+                // Bắt đầu đếm từ lúc phát hiện chết hết, KHÔNG hiện menu ngay (che mất anim chết).
+                if (_allDeadSince < 0f) _allDeadSince = Time.unscaledTime;
+
+                // Chưa đủ thời gian cho animation chết → chờ tiếp.
+                if (Time.unscaledTime - _allDeadSince < DeathAnimDelaySeconds) return;
+
                 // COOP + CLIENT: KHÔNG tự quyết. Host mới chọn (checkpoint / main menu). Client chờ.
                 if (coop && !isHost)
                 {
@@ -57,6 +73,14 @@ namespace Attrition.UI
             }
             else
             {
+                // Còn người sống → reset đồng hồ đếm để lần chết sau lại chờ đủ anim.
+                _allDeadSince = -1f;
+
+                // Reset luôn cờ đã-hiện-menu. `OnResumeClicked` có reset, nhưng player còn sống lại
+                // được bằng đường khác (đồng đội revive, host respawn qua RPC) — không reset ở đây thì
+                // lần chết SAU menu sẽ không bao giờ hiện lại.
+                _gameOverShown = false;
+
                 // Không còn all-dead nữa = host đã chọn respawn checkpoint → cả 2 sống lại. Client đang
                 // chờ thì tự ẩn màn chờ, trả lại HUD.
                 if (_clientWaitShown)

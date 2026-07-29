@@ -96,5 +96,23 @@ namespace Attrition.Gameplay.Enemy
             ChaseSpeed *= mult;
             AttackSpeed *= mult;
         }
+
+        /// <summary>
+        /// Trả tốc độ về giá trị GỐC (SO ⊕ override web), xoá hệ số phase đã nhân dồn.
+        /// Dùng khi đánh lại boss sau khi cả team chết — nếu không, boss giữ tốc phase 3 ở lượt đánh mới.
+        /// Chỉ host.
+        /// </summary>
+        public void RebuildBaseSpeeds()
+        {
+            if (!HasStateAuthority || statsSO == null) return;
+
+            var ovr = EnemyStatProvider.Instance != null
+                ? EnemyStatProvider.Instance.GetOverride(statsSO.enemyId)
+                : null;
+
+            PatrolSpeed = Mathf.Max(0f, ovr?.patrolSpeed ?? statsSO.patrolSpeed);
+            ChaseSpeed = Mathf.Max(0f, ovr?.chaseSpeed ?? statsSO.chaseSpeed);
+            AttackSpeed = Mathf.Max(0.01f, ovr?.attackSpeed ?? statsSO.attackSpeed);
+        }
     }
 }

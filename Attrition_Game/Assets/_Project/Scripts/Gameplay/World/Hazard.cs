@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Attrition.Gameplay.World
@@ -14,7 +15,9 @@ namespace Attrition.Gameplay.World
         [Tooltip("Giãn cách tối thiểu giữa 2 lần trúng bẫy của cùng 1 player (giây).")]
         [SerializeField] private float retriggerCooldown = 1.0f;
 
-        private float _lastHitTime = -999f;
+        // Cooldown THEO TỪNG PLAYER, không dùng 1 biến chung: cả map chỉ có 1 Tilemap hazard nên nếu
+        // dùng chung, player A trúng bẫy sẽ khoá luôn player B trong coop (B đi vào gai mà không mất máu).
+        private readonly Dictionary<PlayerController, float> _lastHitByPlayer = new Dictionary<PlayerController, float>();
 
         private void Reset()
         {
@@ -27,12 +30,13 @@ namespace Attrition.Gameplay.World
 
         private void TryHit(Collider2D other)
         {
-            if (Time.time - _lastHitTime < retriggerCooldown) return;
-
             var player = other.GetComponentInParent<PlayerController>();
             if (player == null || player.IsDead) return;
 
-            _lastHitTime = Time.time;
+            if (_lastHitByPlayer.TryGetValue(player, out float last)
+                && Time.time - last < retriggerCooldown) return;
+
+            _lastHitByPlayer[player] = Time.time;
             player.HazardHit();
         }
     }

@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6e7a8772108ae50479f32453b8fea2c7, type: 3}
-  m_Name: skill_wood
+  m_Name: 
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.SkillSO
   itemId: skill_wood
   displayName: Thorn Lash
@@ -22,6 +22,25 @@ MonoBehaviour:
   manaCost: 18
   castTime: 0.6
   cooldown: 2
+  activeStartFrac: 0.35
+  activeEndFrac: 0.6
   damageType: 1
   baseDamage: 30
   apScaling: 1
+  knockbackForce: 7
+  tickInterval: 0
+  sweetSpotRadius: 0
+  sweetSpotMultiplier: 1.5
+  delivery: 0
+  hitShape: 0
+  range: 3
+  angle: 100
+  rectSize: {x: 3, y: 1.5}
+  hitboxOffset: {x: 1, y: 0}
+  projectilePrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  projectileSpeed: 12
+  projectileCount: 1
+  spreadAngle: 20
+  castVfxPrefab: {fileID: 0}
+  vfxLifetime: 1.5

@@ -60,24 +60,13 @@ namespace Attrition.Gameplay.Enemy.SeveredFang.States
                 return;
             }
 
-            float dist = Vector2.Distance(ai.Rb.position, ai.PlayerTarget.position);
-
-            SeveredFangState nextState = null;
-
-            if (dist <= ai.meleeRange)
-            {
-                nextState = SeveredFangAI.MeleeAttackState;
-            }
-            else
-            {
-                float r = Random.value;
-                if (r < 0.33f) nextState = SeveredFangAI.DashExplosionState;
-                else if (r < 0.66f) nextState = SeveredFangAI.SheatheFireballState;
-                else nextState = SeveredFangAI.ShortDashFireboltState;
-            }
+            // Dùng CHUNG bộ chọn của AI (túi skill xoay vòng) thay vì tự roll 3 skill ở đây.
+            // Trước đây chỗ này chỉ roll Dash/Sheathe/ShortDash nên skill 4/5/6 (FireBreath,
+            // SplitFireball, FireboltVolley) gần như không bao giờ được dùng — Idle là đường vào
+            // chính của vòng chiến đấu.
+            ai.NextAttackState = ai.PickAttackState();
 
             // Gán NextAttack và vào trạng thái báo động (Telegraph)
-            ai.NextAttackState = nextState;
             ai.ChangeState(SeveredFangAI.TelegraphState);
         }
     }

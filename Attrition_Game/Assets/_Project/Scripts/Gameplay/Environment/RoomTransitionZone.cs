@@ -29,6 +29,11 @@ namespace Attrition.Gameplay.Environment
         [Tooltip("Tên scene Map kế tiếp (KHÔNG kèm path/đuôi). VD: 'Forest - Map 2'. Phải có trong Build Settings.")]
         [SerializeField] private string nextSceneName = "Forest - Map 2";
 
+        [Tooltip("ID của SceneEntryPoint ở scene ĐÍCH để player xuất hiện đúng cửa nối. " +
+                 "Bỏ trống = dùng Player_SpawnPoint (đầu map). Cửa ĐI NGƯỢC nên điền, " +
+                 "nếu không player về map cũ sẽ bị ném về đầu map.")]
+        [SerializeField] private string entryPointId = "";
+
         [Header("---- CỔNG KÍCH HOẠT ----")]
         [Tooltip("Bật sẵn khi spawn? Để FALSE nếu vùng chỉ mở sau khi đánh boss.")]
         [SerializeField] private bool startActive = false;
@@ -45,6 +50,20 @@ namespace Attrition.Gameplay.Environment
         public override void Spawned()
         {
             if (HasStateAuthority) IsActive = startActive;
+        }
+
+        /// <summary>
+        /// HOST xét điều kiện MỖI TICK thay vì chỉ lúc player bước vào. Lý do:
+        ///  1. Đứng sẵn trong vùng rồi boss mới chết (IsActive bật sau) → nếu chỉ xét ở OnTriggerEnter2D
+        ///     thì cửa "chết cứng", phải bước ra bước vào lại mới đi được.
+        ///  2. Coop: người thứ hai vào vùng ở máy khác — host mới là nơi thấy đủ cả hai (host có
+        ///     StateAuthority trên MỌI player nên simulate hết; client KHÔNG simulate đồng đội).
+        /// </summary>
+        public override void FixedUpdateNetwork()
+        {
+            if (!HasStateAuthority || _transitionStarted) return;
+            if (_playersInZone.Count == 0) return;
+            CheckTransition();
         }
 
         /// <summary>Bật cổng (host) — cho phép vùng chuyển scene. Gọi sau khi đánh boss xong.</summary>
@@ -68,41 +87,67 @@ namespace Attrition.Gameplay.Environment
             if (player != null) _playersInZone.Remove(player);
         }
 
+        /// <summary>
+        /// CHỈ HOST xét (host là peer duy nhất simulate MỌI player nên thấy đủ cả hai người).
+        /// Đủ điều kiện → host bắn RPC cho MỌI máy cùng fade + ghi điểm vào, rồi host load scene.
+        /// </summary>
         private void CheckTransition()
         {
-            if (!IsActive || _transitionStarted) return;
+            if (!HasStateAuthority || _transitionStarted) return;
+            if (!IsActive) return;
             if (string.IsNullOrEmpty(nextSceneName)) return;
 
-            var allPlayers = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
             int requiredPlayers = 1;
 
             if (Attrition.Persistence.GameLaunch.Mode == Attrition.Persistence.LaunchMode.Coop)
             {
+                var allPlayers = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
                 int alive = 0;
                 foreach (var p in allPlayers)
-                    if (p != null && !p.isDeadNetworked) alive++;
+                    if (p != null && p.Object != null && p.Object.IsValid && !p.isDeadNetworked) alive++;
                 requiredPlayers = Mathf.Max(1, alive);
             }
 
-            if (_playersInZone.Count >= requiredPlayers)
-                StartCoroutine(TransitionRoutine());
+            // Chỉ tính player CÒN SỐNG & hợp lệ đang trong vùng (xác chết nằm trong vùng không tính).
+            int inZone = 0;
+            foreach (var p in _playersInZone)
+                if (p != null && p.Object != null && p.Object.IsValid && !p.isDeadNetworked) inZone++;
+
+            if (inZone < requiredPlayers) return;
+
+            _transitionStarted = true;   // chặn ngay, tránh RPC bắn nhiều lần trong các tick kế
+            RpcBeginTransition(string.IsNullOrEmpty(entryPointId) ? "" : entryPointId);
         }
 
-        private IEnumerator TransitionRoutine()
+        /// <summary>
+        /// Host → MỌI máy: cùng fade đen và cùng ghi PendingEntryId, sau đó host load scene.
+        /// Trước đây mỗi máy tự chạy TransitionRoutine cục bộ, nhưng trigger chỉ đáng tin ở host
+        /// (client KHÔNG simulate đồng đội) → client thường không fade và KHÔNG ghi PendingEntryId
+        /// → sang scene mới client bị đặt về Player_SpawnPoint thay vì cửa nối.
+        /// </summary>
+        [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+        private void RpcBeginTransition(string entryId)
         {
             _transitionStarted = true;
+            StartCoroutine(TransitionRoutine(entryId));
+        }
 
-            // Màn đen dần trên MỌI máy đang đứng trong vùng (mỗi client tự chạy fade cục bộ).
+        private IEnumerator TransitionRoutine(string entryId)
+        {
+            // Ghi điểm vào cho scene ĐÍCH trên MỌI máy (static local, không networked).
+            // NetworkSpawner (host) đọc để đặt player đúng cửa nối; client dùng cho camera/entry sau load.
+            SceneEntryRegistry.PendingEntryId = string.IsNullOrEmpty(entryId) ? null : entryId;
+
+            // Màn đen dần trên MỌI máy.
             yield return SceneFader.FadeOut(fadeOutDuration);
 
-            // Chỉ HOST ra lệnh load scene; client follow qua Fusion. Client gọi sẽ no-op.
+            // Chỉ HOST ra lệnh load scene; client tự follow scene của host qua Fusion.
             var launcher = Attrition.Networking.NetworkLauncher.Instance;
             if (launcher != null && launcher.Runner != null && launcher.Runner.IsServer)
             {
                 launcher.BeginGameplay(nextSceneName);
             }
-            // Không FadeIn ở đây: scene mới load sẽ thay thế; SceneFader DontDestroyOnLoad nên
-            // scene kế có thể gọi FadeIn lúc sẵn sàng (hoặc để màn đen tự nhiên trong lúc load).
+            // Không FadeIn ở đây: SceneFader tự fade-in khi scene mới load xong (hook sceneLoaded).
         }
 
         private void OnDrawGizmos()

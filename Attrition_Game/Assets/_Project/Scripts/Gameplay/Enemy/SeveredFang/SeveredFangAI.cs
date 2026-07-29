@@ -204,6 +204,31 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
             ChangeState(IntroState);
         }
 
+        /// <summary>
+        /// Player wipe (cả team chết) → trả boss về trạng thái CHỜ TRIGGER như lúc mới vào phòng:
+        /// đứng im, không state, ẩn thanh máu (EncounterStarted=false), về đúng chỗ spawn.
+        /// HP do EnemyController.ResetForEncounterRetry lo. Chỉ host.
+        /// </summary>
+        public void ResetEncounter()
+        {
+            if (!HasStateAuthority) return;
+
+            ChangeState(null);              // dừng state machine — boss đứng im chờ trigger lại
+            waitForTrigger = true;
+            EncounterStarted = false;       // ẩn thanh máu tới khi player kích hoạt lại
+
+            playerTarget = null;
+            _retargetCooldown = 0f;
+            StateLocalTimer = 0f;
+            DashExplosionSpawned = 0;
+            NextAttackState = null;
+            BossPhaseIndex = 0;
+            SkillCooldownTimer = TickTimer.CreateFromSeconds(Runner, 1.5f);
+
+            StopMovement();
+            if (rb != null) rb.position = StartPos;   // về đúng vị trí đặt trong scene
+        }
+
         // AI LOGIC — Ghi đè để dùng State Machine
 
         public override void RunAILogic()
@@ -411,7 +436,52 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
         {
             if (animationComp == null) return;
             var anim = animationComp.GetComponentInChildren<Animator>();
-            if (anim != null) anim.SetTrigger(triggerName);
+            if (anim == null) return;
+
+            // Trigger chưa có trong Animator (vd "FireBreath" chưa dựng clip) → SetTrigger sẽ spam
+            // warning mỗi lần dùng skill. Bỏ qua im lặng: skill vẫn chạy đủ logic (spawn vệt lửa/đạn),
+            // chỉ thiếu animation. Thêm clip + trigger vào Animator là tự động có hình.
+            if (!HasAnimTrigger(anim, triggerName)) return;
+            anim.SetTrigger(triggerName);
+        }
+
+        /// <summary>Animator có tham số trigger tên này không (tránh warning khi clip chưa dựng).</summary>
+        private static bool HasAnimTrigger(Animator anim, string triggerName)
+        {
+            foreach (var p in anim.parameters)
+                if (p.type == AnimatorControllerParameterType.Trigger && p.name == triggerName)
+                    return true;
+            return false;
+        }
+
+        /// <summary>
+        /// Bảo MỌI MÁY mở thoại mở đầu boss. Gọi từ `SF_IntroState` (host).
+        ///
+        /// VÌ SAO CẦN RPC: `EnemyController.FixedUpdateNetwork` return sớm khi `!HasStateAuthority`,
+        /// nên `RunAILogic` → `SF_IntroState` CHỈ chạy trên host ⇒ client không bao giờ thấy thoại mở
+        /// đầu (đúng bug user báo: client chỉ thấy thoại KẾT THÚC, vì thoại kết thúc đi qua
+        /// `BossGateController.RpcRunDeathSequence` — có RPC).
+        ///
+        /// KHÔNG truyền DialogueSO qua mạng (Fusion không serialize được ScriptableObject): mỗi peer tự
+        /// mở `introDialogue` trên bản prefab của mình — cùng asset nên nội dung giống nhau.
+        /// </summary>
+        public void BroadcastIntroDialogue()
+        {
+            if (!HasStateAuthority) return;
+            RPC_ShowIntroDialogue();
+        }
+
+        [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+        private void RPC_ShowIntroDialogue()
+        {
+            if (introDialogue == null) return;
+
+            // Mỗi máy tự chờ thoại của mình đóng. CHỈ host chuyển state sang combat để tránh
+            // client tự ý đổi state (state do host quản).
+            Attrition.Data.DialogueEvents.OnOpenCustomDialogue?.Invoke(introDialogue, () =>
+            {
+                if (HasStateAuthority) ChangeState(IdleState);
+            });
         }
 
         // HELPER — Movement
@@ -433,37 +503,80 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
             NetSpeed = 0f;
         }
 
-        // SKILL RANDOMIZER — Chọn skill ngẫu nhiên kiểu Hollow Knight
+        // SKILL RANDOMIZER — "túi" xoay vòng để MỌI skill đều được dùng
 
         /// <summary>
-        /// Chọn ngẫu nhiên 1 trong 3 skill (hoặc melee nếu gần),
-        /// rồi chuyển sang state tương ứng.
+        /// Túi skill đã xáo trộn. Rút lần lượt tới hết túi mới xáo lại → trong 1 vòng, MỌI skill
+        /// đều được dùng đúng 1 lần (không như random thuần: skill 5/6 có thể cả trận không ra).
+        /// Index: 0=DashExplosion 1=SheatheFireball 2=ShortDashFirebolt 3=FireBreath 4=SplitFireball 5=FireboltVolley.
         /// </summary>
-        public void PickRandomSkill()
+        private readonly System.Collections.Generic.List<int> _skillBag = new System.Collections.Generic.List<int>();
+
+        private const int SkillCount = 6;
+
+        /// <summary>Rút skill kế tiếp từ túi (tự xáo lại khi hết). Đảm bảo phủ đều mọi skill.</summary>
+        private int DrawSkillFromBag()
+        {
+            if (_skillBag.Count == 0)
+            {
+                for (int i = 0; i < SkillCount; i++) _skillBag.Add(i);
+                // Fisher-Yates
+                for (int i = _skillBag.Count - 1; i > 0; i--)
+                {
+                    int j = Random.Range(0, i + 1);
+                    (_skillBag[i], _skillBag[j]) = (_skillBag[j], _skillBag[i]);
+                }
+            }
+            int last = _skillBag.Count - 1;
+            int pick = _skillBag[last];
+            _skillBag.RemoveAt(last);
+            return pick;
+        }
+
+        /// <summary>
+        /// CHỌN (không đổi state) skill kế tiếp theo khoảng cách tới player. Dùng chung cho cả
+        /// IdleState (đi qua Telegraph) và ChaseState → mọi đường vào đều phủ đủ 6 skill.
+        /// Player sát mặt → ưu tiên melee; còn lại rút từ túi xoay vòng.
+        /// </summary>
+        public SeveredFangState PickAttackState()
         {
             float dist = DistanceToPlayer();
 
-            // Nếu player rất gần → ưu tiên áp sát/cận chiến (6 lựa chọn ngang nhau).
-            if (dist >= 0 && dist <= meleeRange)
+            // Sát mặt → phần lớn là melee, nhưng vẫn chừa cơ hội cho skill (không thành bao cát melee).
+            if (dist >= 0f && dist <= meleeRange && Random.value < 0.5f)
+                return MeleeAttackState;
+
+            // Skill cần khoảng cách (đạn bay) mà player đang sát mặt → đổi sang đòn phù hợp khi gần.
+            bool tooClose = dist >= 0f && dist <= meleeRange;
+
+            for (int attempt = 0; attempt < SkillCount; attempt++)
             {
-                float roll = Random.value;
-                if (roll < 0.30f)      ChangeState(MeleeAttackState);
-                else if (roll < 0.50f) ChangeState(ShortDashFireboltState);
-                else if (roll < 0.70f) ChangeState(DashExplosionState);
-                else if (roll < 0.90f) ChangeState(FireBreathState);   // vệt lửa quét quanh chân — mạnh khi gần
-                else                   ChangeState(FireboltVolleyState);
+                int id = DrawSkillFromBag();
+
+                // Ở sát mặt: Sheathe/Split (đạn bay thẳng) dễ bay qua đầu player → bỏ qua, rút lại.
+                if (tooClose && (id == 1 || id == 4)) continue;
+
+                switch (id)
+                {
+                    case 0: return DashExplosionState;
+                    case 1: return SheatheFireballState;
+                    case 2: return ShortDashFireboltState;
+                    case 3: return FireBreathState;
+                    case 4: return SplitFireballState;
+                    default: return FireboltVolleyState;
+                }
             }
-            else
-            {
-                // Player xa → ưu tiên đòn tầm xa (split fireball, firebolt volley) + skill lướt tiếp cận.
-                float roll = Random.value;
-                if (roll < 0.20f)      ChangeState(DashExplosionState);
-                else if (roll < 0.40f) ChangeState(SheatheFireballState);
-                else if (roll < 0.58f) ChangeState(ShortDashFireboltState);
-                else if (roll < 0.74f) ChangeState(FireBreathState);
-                else if (roll < 0.88f) ChangeState(SplitFireballState);
-                else                   ChangeState(FireboltVolleyState);
-            }
+
+            // Rút mãi không hợp (rất hiếm) → đòn an toàn ở mọi khoảng cách.
+            return tooClose ? MeleeAttackState : DashExplosionState;
+        }
+
+        /// <summary>
+        /// Chọn skill rồi VÀO state ngay (không qua Telegraph) — ChaseState dùng khi đã áp sát.
+        /// </summary>
+        public void PickRandomSkill()
+        {
+            ChangeState(PickAttackState());
         }
     }
 }
