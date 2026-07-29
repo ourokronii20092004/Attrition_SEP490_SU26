@@ -34,26 +34,30 @@ namespace Attrition.Persistence
         public static void LoadFrom(SaveSlotData data)
         {
             _seen.Clear();
-            _loaded = true;
             if (data?.seenCutscenes == null) return;
             foreach (var id in data.seenCutscenes)
                 if (!string.IsNullOrEmpty(id)) _seen.Add(id);
         }
 
-        private static bool _loaded;
+        // Slot đã nạp (-1 = chưa nạp) — cùng mô hình với BossDefeatState.
+        private static int _loadedSlot = -1;
 
         /// <summary>
-        /// Nạp danh sách đã xem từ slot save — CHỈ MỘT LẦN mỗi lượt chơi (solo).
+        /// Nạp danh sách đã xem từ slot save — CHỈ MỘT LẦN mỗi slot (solo).
         /// Bắt buộc phải một lần: nhiều CutscenePlayer trong scene, và mỗi lần đổi map lại spawn mới.
         /// Nếu nạp lại sau khi đã MarkSeen (mà chưa kịp save), cờ vừa đánh dấu sẽ bị xoá → cutscene
-        /// vừa xem chiếu lại.
+        /// vừa xem chiếu lại. Nạp lại khi ĐỔI slot (chọn save khác / new game) để không dùng danh
+        /// sách của slot trước. Coop: no-op, chỉ nhớ trong phiên.
         /// </summary>
         public static void EnsureLoadedFromSave()
         {
-            if (_loaded) return;
-            _loaded = true;
             if (GameLaunch.IsOnline) return; // coop: xem mục ponytail ở CutscenePlayer
-            LoadFrom(SaveManager.LoadSlot(GameLaunch.SelectedSlot));
+
+            int slot = GameLaunch.SelectedSlot;
+            if (_loadedSlot == slot) return;
+            _loadedSlot = slot;
+
+            LoadFrom(SaveManager.LoadSlot(slot));
         }
 
         public static void WriteTo(SaveSlotData data)
@@ -66,7 +70,7 @@ namespace Attrition.Persistence
         public static void Clear()
         {
             _seen.Clear();
-            _loaded = false; // lượt chơi sau phải nạp lại từ slot của lượt đó
+            _loadedSlot = -1; // lượt chơi sau phải nạp lại từ slot của lượt đó
             IsPlaying = false;
         }
     }
