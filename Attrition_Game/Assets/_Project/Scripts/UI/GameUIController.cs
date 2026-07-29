@@ -159,8 +159,9 @@ namespace Attrition.UI
                 else if (_controller != null && _controller.IsNearNPC) { /* NPC ưu tiên — DialogueUI xử lý */ }
                 else if (_controller != null && _controller.IsAtCheckpoint)
                 {
-                    // Mở bảng checkpoint = kích hoạt beacon + LƯU tiến trình (save không cần out-of-combat).
-                    _controller.ActivateAndSaveCheckpoint();
+                    // CHỈ mở bảng — KHÔNG kích hoạt beacon. Trước đây mở bảng là tự activate + save nên
+                    // chỉ cần đi ngang qua rồi bấm F là checkpoint hiện luôn trong danh sách fast-travel
+                    // dù chưa Rest. Giờ chỉ nút REST (Checkpoint.DoRest) mới kích hoạt + lưu.
                     ShowOverlay(Overlay.FastTravel);
                 }
             }
@@ -244,18 +245,37 @@ namespace Attrition.UI
         [Tooltip("Số giây giữ màn loading sau khi player bind, để client sync xong tài nguyên.")]
         [SerializeField] private float loadingWarmupSeconds = 1.5f;
 
+        /// <summary>
+        /// Trần thời gian chờ màn loading. HẾT hạn là ẩn loading BẤT KỂ điều kiện khác.
+        /// Vì sao cần: điều kiện `enemiesReady` (coop) đòi có ÍT NHẤT 1 quái trong scene, nhưng
+        /// Map 2..5 hiện CHƯA cấu hình `enemySpawnConfigs` (chỉ Map 1 có) ⇒ sang map 2 là kẹt màn
+        /// loading vĩnh viễn ở CẢ host và client — đúng bug user báo. Timeout biến điều kiện đó
+        /// thành "chờ cho đẹp" thay vì "chặn cứng".
+        /// </summary>
+        private const float LoadingMaxWaitSeconds = 6f;
+
         private void UpdateLoadingWarmup()
         {
             if (_loadingHidden || !_isBound || _bindTime < 0f) return;
             if (_overlay != Overlay.Loading) { _loadingHidden = true; return; }
 
+            float waited = Time.unscaledTime - _bindTime;
+
             // Chờ đủ warmup VÀ (coop) quái đã spawn trên máy này — dấu hiệu scene gameplay đã sync.
-            bool warmedUp = Time.unscaledTime - _bindTime >= loadingWarmupSeconds;
+            bool warmedUp = waited >= loadingWarmupSeconds;
             bool enemiesReady = FindObjectsByType<Attrition.Controllers.EnemyController>(FindObjectsSortMode.None).Length > 0
                                 || Attrition.Persistence.GameLaunch.Mode == Attrition.Persistence.LaunchMode.Solo;
 
-            if (warmedUp && enemiesReady)
+            // Quá hạn → ẩn luôn, không để người chơi ngồi nhìn màn loading mãi.
+            bool timedOut = waited >= LoadingMaxWaitSeconds;
+
+            if ((warmedUp && enemiesReady) || timedOut)
             {
+                if (timedOut && !enemiesReady)
+                    Debug.LogWarning($"[UI] Loading quá {LoadingMaxWaitSeconds}s mà chưa thấy quái nào " +
+                                     "trong scene — ẩn loading để không kẹt. Kiểm tra enemySpawnConfigs " +
+                                     "của NetworkSpawner trong scene này (Map 2..5 hiện đang để trống).");
+
                 ShowOverlay(Overlay.None);
                 _loadingHidden = true;
             }

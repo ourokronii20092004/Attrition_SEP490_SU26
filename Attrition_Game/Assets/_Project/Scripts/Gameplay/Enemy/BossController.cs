@@ -31,9 +31,32 @@ namespace Attrition.Controllers
         private EnemyStats _stats;
         private EliteEnemySkills _skills;
         private Attrition.Gameplay.Enemy.SeveredFang.SeveredFangAI _sfAI;
+        private Attrition.Gameplay.Enemy.Druid.DruidBossAI _druidAI;
         private int _maxHp;
         private bool _barShown;
         private int _lastShownHp = -1;
+
+        /// <summary>Encounter đang diễn ra? Boss chờ trigger (hoặc đã reset sau wipe) = false → ẩn thanh máu.
+        /// Boss không có AI đặc thù (không gate được) coi như luôn active.</summary>
+        private bool EncounterActive
+        {
+            get
+            {
+                if (_sfAI != null) return _sfAI.EncounterStarted;
+                if (_druidAI != null) return _druidAI.EncounterStarted;
+                return true;
+            }
+        }
+
+        /// <summary>Host reset phase về 0 + trả lại tốc độ gốc khi đánh lại boss sau wipe.
+        /// EnemyStats.PatrolSpeed/ChaseSpeed/AttackSpeed đã bị nhân dồn mỗi phase nên phải build lại từ SO.</summary>
+        public void ResetPhases()
+        {
+            if (!HasStateAuthority) return;
+            CurrentPhase = 0;
+            if (_stats != null) _stats.RebuildBaseSpeeds();
+            _lastShownHp = -1;
+        }
 
         public override void Spawned()
         {
@@ -42,6 +65,7 @@ namespace Attrition.Controllers
             _skills = GetComponent<EliteEnemySkills>();
 
             _sfAI = GetComponent<Attrition.Gameplay.Enemy.SeveredFang.SeveredFangAI>();
+            _druidAI = GetComponent<Attrition.Gameplay.Enemy.Druid.DruidBossAI>();
 
             _maxHp = _stats != null && _stats.MaxHP > 0 ? _stats.MaxHP : Mathf.Max(1, _enemy.maxHealth);
 
@@ -84,8 +108,19 @@ namespace Attrition.Controllers
 
             // Chỉ hiện thanh máu khi encounter đã bắt đầu (player đã vào phòng kích hoạt boss).
             // Boss đặt sẵn trong scene + chờ trigger → KHÔNG hiện thanh máu trước đó.
-            bool encounterStarted = _sfAI == null || _sfAI.EncounterStarted;
-            if (!encounterStarted) return;
+            bool encounterStarted = EncounterActive;
+            if (!encounterStarted)
+            {
+                // Wipe → encounter reset về chờ trigger: ẩn thanh máu và cho phép hiện LẠI khi đánh lại.
+                // Không reset _barShown thì lần vào phòng thứ hai sẽ không có thanh máu.
+                if (_barShown)
+                {
+                    _barShown = false;
+                    _lastShownHp = -1;
+                    BossEvents.RaiseDespawned();
+                }
+                return;
+            }
             // MaxHP networked có thể tới SAU Spawned() trên client → refresh khi đã có giá trị thật,
             // tránh thanh máu boss tính theo _maxHp=1 (fallback) làm kẹt đầy.
             if (_stats != null && _stats.MaxHP > 0 && _maxHp != _stats.MaxHP)

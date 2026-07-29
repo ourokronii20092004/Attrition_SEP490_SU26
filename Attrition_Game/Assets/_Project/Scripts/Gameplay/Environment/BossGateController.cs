@@ -37,13 +37,65 @@ namespace Attrition.Gameplay.Environment
         [Tooltip("Thời gian phai mờ (fade out) trước khi boss biến mất (giây).")]
         [SerializeField] private float fadeOutTime = 1f;
 
+        /// <summary>Boss mà cổng này quản (để bên ngoài biết boss đã được gate xử lý, tránh reset 2 lần).</summary>
+        public EnemyController Boss => boss;
+
         [Networked] public NetworkBool DeathStarted { get; set; }
         [Networked] public NetworkBool BossDefeated { get; set; }
         [Networked] public NetworkBool EntrySealed { get; set; }
 
+        /// <summary>Id boss để nhớ "đã hạ" qua các lần load scene / lần chơi. Lấy từ EnemyStats.EnemyId.</summary>
+        private string BossId
+        {
+            get
+            {
+                if (boss == null) return null;
+                var st = boss.GetComponent<Attrition.Gameplay.Enemy.EnemyStats>();
+                return st != null ? st.EnemyId : null;
+            }
+        }
+
+        public override void Spawned()
+        {
+            if (!HasStateAuthority) return;
+
+            // Nạp lazy (thứ tự Spawned vs FogTracker.Start không đảm bảo).
+            BossDefeatState.EnsureLoadedForSolo();
+
+            // CHỈ đặt cờ ở đây, KHÔNG mở cửa/bật zone. Lý do: `Door.Spawned()` và
+            // `RoomTransitionZone.Spawned()` đều GHI ĐÈ trạng thái về mặc định Inspector
+            // (startOpen=false / startActive=false), mà thứ tự Spawned giữa các NetworkObject KHÔNG
+            // đảm bảo → mở ở đây có thể bị chúng đóng lại ngay sau đó (bug: về Map 1 rồi không sang
+            // lại Map 2 được vì exitZone bị khoá). Việc mở dồn xuống FixedUpdateNetwork — chạy SAU
+            // khi mọi Spawned() đã xong.
+            if (!BossDefeatState.IsDefeated(BossId)) return;
+
+            BossDefeated = true;
+            DeathStarted = true;      // chặn FixedUpdateNetwork chạy lại chuỗi chết
+            EntrySealed = false;
+        }
+
         public override void FixedUpdateNetwork()
         {
-            if (!HasStateAuthority || boss == null) return;
+            if (!HasStateAuthority) return;
+
+            // Boss đã hạ từ lần chơi/lần load trước → dọn xác + MỞ LẠI đường đi.
+            // Chạy ở FUN (sau mọi Spawned) nên không bị Door/Zone ghi đè mặc định.
+            // ĐẶT TRƯỚC guard `boss == null`: sau khi despawn thì boss = null, nếu return sớm ở trên
+            // thì cửa/zone sẽ KHÔNG BAO GIỜ được mở (bug: về Map 1 rồi không sang lại Map 2 được).
+            if (BossDefeated)
+            {
+                // Gọi MỖI TICK, không dùng cờ "đã áp 1 lần": Open()/Activate() đều idempotent (return
+                // sớm nếu đã mở) nên rẻ, mà lại TỰ CHỮA nếu Spawned() của Door/Zone chạy sau tick này
+                // và ghi đè về mặc định đóng. ForceDespawnNow cũng đã guard Object.IsValid.
+                if (boss != null) boss.ForceDespawnNow();
+                if (entryDoor != null) entryDoor.Open();
+                if (exitDoor != null) exitDoor.Open();
+                if (exitZone != null) exitZone.Activate();
+                return;
+            }
+
+            if (boss == null) return;
 
             if (!DeathStarted && boss.IsDead)
             {
@@ -60,6 +112,33 @@ namespace Attrition.Gameplay.Environment
                 EntrySealed = true;
                 entryDoor.Close();
             }
+        }
+
+        /// <summary>
+        /// Cả team player chết mà boss còn sống → MỞ LẠI lối vào + reset boss về chờ trigger, để player
+        /// hồi sinh ở checkpoint có thể quay lại đánh. Không mở lại thì phòng boss bị khoá vĩnh viễn.
+        /// Bỏ qua nếu boss đã bị hạ (lúc đó FinishDefeat đã mở cửa). Chỉ host.
+        /// </summary>
+        public void ResetEncounterAfterWipe()
+        {
+            if (!HasStateAuthority) return;
+            if (DeathStarted || BossDefeated) return;   // boss đã hạ → giữ nguyên kết quả
+
+            EntrySealed = false;
+            if (entryDoor != null) entryDoor.Open();
+
+            // Boss: hồi đầy máu + reset AI về chờ trigger (ẩn thanh máu tới khi player kích hoạt lại).
+            if (boss != null)
+            {
+                boss.ResetForEncounterRetry();
+                var bc = boss.GetComponent<Attrition.Controllers.BossController>();
+                if (bc != null) bc.ResetPhases();
+            }
+            if (bossAI != null) bossAI.ResetEncounter();
+
+            // Trigger vào phòng đã "dùng" 1 lần → cho phép kích hoạt lại.
+            foreach (var trig in FindObjectsByType<BossEncounterTrigger>(FindObjectsSortMode.None))
+                if (trig != null && trig.boss == bossAI) trig.ResetTrigger();
         }
 
         /// <summary>Chạy chuỗi chết trên mọi máy: chờ anim death → thoại → fade. Host kết thúc bằng mở cửa + despawn.</summary>
@@ -129,6 +208,20 @@ namespace Attrition.Gameplay.Environment
         {
             if (BossDefeated) return;
             BossDefeated = true;
+
+            // GHI NHỚ boss đã hạ (bền qua load scene + out/vào game). Không có bước này thì quay lại
+            // map cũ hoặc vào lại game boss sẽ spawn nguyên máu dù đã đánh chết.
+            string id = BossId;
+            if (BossDefeatState.MarkDefeated(id))
+            {
+                // Solo: ghi ngay vào save slot. Coop: chỉ giữ trong phiên host (theo quyết định thiết kế).
+                if (!Attrition.Persistence.GameLaunch.IsOnline)
+                {
+                    var saver = Attrition.Gameplay.Persistence.GameSaveService.EnsureExists();
+                    saver.SaveBossDefeated();
+                }
+            }
+
             if (boss != null) boss.ForceDespawnNow();
             if (entryDoor != null) entryDoor.Open();
             if (exitDoor != null) exitDoor.Open();

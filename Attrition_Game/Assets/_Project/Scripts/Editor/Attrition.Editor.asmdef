@@ -5,8 +5,10 @@
         "Attrition.Core",
         "Attrition.Data",
         "Attrition.Gameplay",
+        "Attrition.UI",
         "Fusion.Unity",
-        "Fusion.Unity.Editor"
+        "Fusion.Unity.Editor",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [
         "Editor"

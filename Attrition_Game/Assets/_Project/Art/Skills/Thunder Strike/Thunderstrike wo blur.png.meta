@@ -1,0 +1,845 @@
+fileFormatVersion: 2
+guid: 078d417fd1929f5438f236faef371a4c
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -6074101342684331356
+    second: Thunderstrike wo blur_0
+  - first:
+      213: 8417347753393346885
+    second: Thunderstrike wo blur_1
+  - first:
+      213: 5961485924979949580
+    second: Thunderstrike wo blur_2
+  - first:
+      213: 5907979361309522680
+    second: Thunderstrike wo blur_3
+  - first:
+      213: -4866075604718878935
+    second: Thunderstrike wo blur_4
+  - first:
+      213: 239595700088951295
+    second: Thunderstrike wo blur_5
+  - first:
+      213: -8601624698901724777
+    second: Thunderstrike wo blur_6
+  - first:
+      213: 2624603078568911602
+    second: Thunderstrike wo blur_7
+  - first:
+      213: 8118787230259140300
+    second: Thunderstrike wo blur_8
+  - first:
+      213: 3492372473252588672
+    second: Thunderstrike wo blur_9
+  - first:
+      213: 1423994329279506595
+    second: Thunderstrike wo blur_10
+  - first:
+      213: 466508037275500464
+    second: Thunderstrike wo blur_11
+  - first:
+      213: -1656614021225295966
+    second: Thunderstrike wo blur_12
+  - first:
+      213: -6234456754127234705
+    second: Thunderstrike wo blur_13
+  - first:
+      213: 6910933744047258618
+    second: Thunderstrike wo blur_14
+  - first:
+      213: -8577802314417057375
+    second: Thunderstrike wo blur_15
+  - first:
+      213: 588684607965373446
+    second: Thunderstrike wo blur_16
+  - first:
+      213: 1902334469092161687
+    second: Thunderstrike wo blur_17
+  - first:
+      213: 5525656510108792475
+    second: Thunderstrike wo blur_18
+  - first:
+      213: -8283862007935360254
+    second: Thunderstrike wo blur_19
+  - first:
+      213: -2925526674327873778
+    second: Thunderstrike wo blur_20
+  - first:
+      213: 7804615232074382688
+    second: Thunderstrike wo blur_21
+  - first:
+      213: 8231111634330788412
+    second: Thunderstrike wo blur_22
+  - first:
+      213: 6392728723191460156
+    second: Thunderstrike wo blur_23
+  - first:
+      213: 1166577137200938246
+    second: Thunderstrike wo blur_24
+  - first:
+      213: 5256570649008527539
+    second: Thunderstrike wo blur_25
+  - first:
+      213: 8971175708776679187
+    second: Thunderstrike wo blur_26
+  - first:
+      213: 4364539471554888210
+    second: Thunderstrike wo blur_27
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Thunderstrike wo blur_0
+      rect:
+        serializedVersion: 2
+        x: 268
+        y: 38
+        width: 37
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4a2c393c20574bba0800000000000000
+      internalID: -6074101342684331356
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Thunderstrike wo blur_1
+      rect:
+        serializedVersion: 2
+        x: 324
+        y: 0
+        width: 53
+        height: 64
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 54951f74f2d60d470800000000000000
+      internalID: 8417347753393346885
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Thunderstrike wo blur_2
+      rect:
+        serializedVersion: 2
+        x: 387
+        y: 0
+        width: 55
+        height: 64
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c00cbeb0dd37bb250800000000000000
+      internalID: 5961485924979949580
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Thunderstrike wo blur_3
+      rect:
+        serializedVersion: 2
+        x: 452
+        y: 0
+        width: 49
+        height: 63
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8fa71336deb5df150800000000000000
+      internalID: 5907979361309522680
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Thunderstrike wo blur_4
+      rect:
+        serializedVersion: 2
+        x: 516
+        y: 21
+        width: 52
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 92f7982e40a387cb0800000000000000
+      internalID: -4866075604718878935
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Thunderstrike wo blur_5
+      rect:
+        serializedVersion: 2
+        x: 519
+        y: 36
+        width: 18
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ff153811507335300800000000000000
+      internalID: 239595700088951295
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Thunderstrike wo blur_6
+      rect:
+        serializedVersion: 2
+        x: 541
+        y: 49
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7918cb2e8e3e0a880800000000000000
+      internalID: -8601624698901724777
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Thunderstrike wo blur_7
+      rect:
+        serializedVersion: 2
+        x: 553
+        y: 39
+        width: 17
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2f22f7e18967c6420800000000000000
+      internalID: 2624603078568911602
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Thunderstrike wo blur_8
+      rect:
+        serializedVersion: 2
+        x: 583
+        y: 38
+        width: 17
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cc6d29288f9bba070800000000000000
+      internalID: 8118787230259140300
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Thunderstrike wo blur_9
+      rect:
+        serializedVersion: 2
+        x: 585
+        y: 5
+        width: 50
+        height: 49
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 08ca293d246677030800000000000000
+      internalID: 3492372473252588672
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Thunderstrike wo blur_10
+      rect:
+        serializedVersion: 2
+        x: 647
+        y: 26
+        width: 25
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3a820ee3c4b03c310800000000000000
+      internalID: 1423994329279506595
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Thunderstrike wo blur_11
+      rect:
+        serializedVersion: 2
+        x: 676
+        y: 38
+        width: 87
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0bfbba6969e597600800000000000000
+      internalID: 466508037275500464
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Thunderstrike wo blur_12
+      rect:
+        serializedVersion: 2
+        x: 593
+        y: 34
+        width: 12
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2af4fe623568209e0800000000000000
+      internalID: -1656614021225295966
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Thunderstrike wo blur_13
+      rect:
+        serializedVersion: 2
+        x: 489
+        y: 12
+        width: 17
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f6916ba1d92ca79a0800000000000000
+      internalID: -6234456754127234705
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Thunderstrike wo blur_14
+      rect:
+        serializedVersion: 2
+        x: 518
+        y: 4
+        width: 31
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: afb7230ef9198ef50800000000000000
+      internalID: 6910933744047258618
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Thunderstrike wo blur_15
+      rect:
+        serializedVersion: 2
+        x: 521
+        y: 19
+        width: 10
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1a1d5affd3685f880800000000000000
+      internalID: -8577802314417057375
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Thunderstrike wo blur_16
+      rect:
+        serializedVersion: 2
+        x: 557
+        y: 0
+        width: 13
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 604248e288d6b2800800000000000000
+      internalID: 588684607965373446
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Thunderstrike wo blur_17
+      rect:
+        serializedVersion: 2
+        x: 600
+        y: 13
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7983832ee13766a10800000000000000
+      internalID: 1902334469092161687
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Thunderstrike wo blur_18
+      rect:
+        serializedVersion: 2
+        x: 22
+        y: 2
+        width: 22
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b96fbdbd1531fac40800000000000000
+      internalID: 5525656510108792475
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Thunderstrike wo blur_19
+      rect:
+        serializedVersion: 2
+        x: 79
+        y: 2
+        width: 35
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 203a8a0c46fc90d80800000000000000
+      internalID: -8283862007935360254
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Thunderstrike wo blur_20
+      rect:
+        serializedVersion: 2
+        x: 150
+        y: 1
+        width: 22
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e07d1c36df07667d0800000000000000
+      internalID: -2925526674327873778
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Thunderstrike wo blur_21
+      rect:
+        serializedVersion: 2
+        x: 212
+        y: 1
+        width: 24
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 06d7564f3309f4c60800000000000000
+      internalID: 7804615232074382688
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Thunderstrike wo blur_22
+      rect:
+        serializedVersion: 2
+        x: 265
+        y: 1
+        width: 26
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c322fdecb68ca3270800000000000000
+      internalID: 8231111634330788412
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Thunderstrike wo blur_23
+      rect:
+        serializedVersion: 2
+        x: 290
+        y: 0
+        width: 24
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c31734357e887b850800000000000000
+      internalID: 6392728723191460156
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Thunderstrike wo blur_24
+      rect:
+        serializedVersion: 2
+        x: 493
+        y: 0
+        width: 13
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 60d34f9b9b3803010800000000000000
+      internalID: 1166577137200938246
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Thunderstrike wo blur_25
+      rect:
+        serializedVersion: 2
+        x: 595
+        y: 5
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3b8d5ee972713f840800000000000000
+      internalID: 5256570649008527539
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Thunderstrike wo blur_26
+      rect:
+        serializedVersion: 2
+        x: 607
+        y: 4
+        width: 7
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3174f3b96c4008c70800000000000000
+      internalID: 8971175708776679187
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Thunderstrike wo blur_27
+      rect:
+        serializedVersion: 2
+        x: 658
+        y: 4
+        width: 21
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 212433a6685f19c30800000000000000
+      internalID: 4364539471554888210
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Thunderstrike wo blur_0: -6074101342684331356
+      Thunderstrike wo blur_1: 8417347753393346885
+      Thunderstrike wo blur_10: 1423994329279506595
+      Thunderstrike wo blur_11: 466508037275500464
+      Thunderstrike wo blur_12: -1656614021225295966
+      Thunderstrike wo blur_13: -6234456754127234705
+      Thunderstrike wo blur_14: 6910933744047258618
+      Thunderstrike wo blur_15: -8577802314417057375
+      Thunderstrike wo blur_16: 588684607965373446
+      Thunderstrike wo blur_17: 1902334469092161687
+      Thunderstrike wo blur_18: 5525656510108792475
+      Thunderstrike wo blur_19: -8283862007935360254
+      Thunderstrike wo blur_2: 5961485924979949580
+      Thunderstrike wo blur_20: -2925526674327873778
+      Thunderstrike wo blur_21: 7804615232074382688
+      Thunderstrike wo blur_22: 8231111634330788412
+      Thunderstrike wo blur_23: 6392728723191460156
+      Thunderstrike wo blur_24: 1166577137200938246
+      Thunderstrike wo blur_25: 5256570649008527539
+      Thunderstrike wo blur_26: 8971175708776679187
+      Thunderstrike wo blur_27: 4364539471554888210
+      Thunderstrike wo blur_3: 5907979361309522680
+      Thunderstrike wo blur_4: -4866075604718878935
+      Thunderstrike wo blur_5: 239595700088951295
+      Thunderstrike wo blur_6: -8601624698901724777
+      Thunderstrike wo blur_7: 2624603078568911602
+      Thunderstrike wo blur_8: 8118787230259140300
+      Thunderstrike wo blur_9: 3492372473252588672
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

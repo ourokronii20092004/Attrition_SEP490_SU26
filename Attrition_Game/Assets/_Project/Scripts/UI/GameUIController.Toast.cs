@@ -84,7 +84,9 @@ namespace Attrition.UI
             s.right = 24;
             s.paddingLeft = 16; s.paddingRight = 16; s.paddingTop = 10; s.paddingBottom = 10;
             s.color = Color.white;
-            s.fontSize = 16;
+            // Cỡ chữ set INLINE ở đây nên USS KHÔNG đè được → phải tăng trực tiếp (yêu cầu user:
+            // to hơn cho dễ đọc). 24 = bội số của 16 (cỡ vẽ gốc BoldPixels) nên nét nhất.
+            s.fontSize = 24;
             s.unityFontStyleAndWeight = FontStyle.Bold;
             s.borderTopLeftRadius = 6; s.borderTopRightRadius = 6;
             s.borderBottomLeftRadius = 6; s.borderBottomRightRadius = 6;

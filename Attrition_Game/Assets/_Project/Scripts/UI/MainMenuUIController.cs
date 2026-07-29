@@ -480,6 +480,9 @@ namespace Attrition.UI
                                     else
                                     {
                                         SaveManager.DeleteSlot(slotIndex);
+                                        // Xoá luôn danh sách boss đã hạ đang cache trong phiên — nếu không,
+                                        // tạo game mới ở CÙNG slot sẽ coi boss như đã chết sẵn.
+                                        Attrition.Gameplay.Environment.BossDefeatState.Clear();
                                         LoadSavesFromDisk();
                                     }
                                 }

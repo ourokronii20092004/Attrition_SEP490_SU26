@@ -49,7 +49,11 @@ namespace Attrition.UI
         {
             if (_stats == null || _stats.Object == null || !_stats.Object.IsValid) return;
 
-            SetFill("hud-hp-fill", _stats.CurrentHP, _stats.MaxHP);
+            // HP trên HUD là ORB TRÒN (khung Gandalf) → dâng theo CHIỀU CAO, không bóp ngang.
+            // Đổi height của TRACK (cửa sổ cắt), KHÔNG phải của fill: fill giữ nguyên kích thước ảnh
+            // nên hình cầu không bị co méo, chỉ bị CẮT bớt phần trên → mép nước cong đúng theo viền orb.
+            // Tab (#inv-hp-fill) vẫn là thanh ngang nên vẫn dùng SetFill thường.
+            SetFillVertical("hud-hp-track", _stats.CurrentHP, _stats.MaxHP);
             SetText("hud-hp-label", $"{_stats.CurrentHP}/{_stats.MaxHP}");
 
             SetFill("hud-mana-fill", _stats.CurrentMana, _stats.MaxMana);
@@ -60,6 +64,11 @@ namespace Attrition.UI
             SetText("hud-stamina-label", $"{sta}/{_stats.MaxStamina}");
 
             SetText("hud-level", $"LV. {_stats.Level}");
+
+            // EXP trên HUD (yêu cầu user: hiện chung cụm với mana/stamina cho dễ theo dõi).
+            // _progression có thể null nếu prefab chưa gắn → chỉ vẽ khi có.
+            var prog = _stats.GetComponent<Attrition.Gameplay.Player.PlayerProgression>();
+            if (prog != null) SetFill("hud-exp-fill", prog.CurrentExp, prog.ExpToNext);
 
             if (_potions != null)
             {
@@ -223,16 +232,52 @@ namespace Attrition.UI
         private void UpdateRevivePrompt()
         {
             var prompt = _root.Q<VisualElement>("hud-revive");
-            if (prompt == null) return;
+            var downed = _root.Q<VisualElement>("hud-downed");
+            var allyDown = _root.Q<VisualElement>("hud-ally-down");
 
             bool coop = Attrition.Persistence.GameLaunch.Mode == Attrition.Persistence.LaunchMode.Coop;
-            // Hiện khi: đang trong tiến trình hồi sinh, HOẶC có đồng đội gục trong tầm + còn bình máu.
-            bool show = coop && _revive != null && _revive.Object != null && _revive.Object.IsValid
-                        && (_revive.IsReviving || _revive.HasRevivableAllyNearby());
-            SetVisible(prompt, show);
-            if (!show) return;
+            bool valid = coop && _revive != null && _revive.Object != null && _revive.Object.IsValid
+                         && _controller != null && _controller.Object != null && _controller.Object.IsValid;
 
-            SetFill("hud-revive-fill", _revive.ReviveFraction, 1f);
+            if (!valid)
+            {
+                SetVisible(prompt, false);
+                SetVisible(downed, false);
+                SetVisible(allyDown, false);
+                return;
+            }
+
+            bool imDead = _controller.IsDead;
+
+            // ── 1. MÌNH ĐANG GỤC: hiện tiến trình đồng đội đang cứu mình ──
+            // IncomingReviveFraction đọc [Networked] của peer khác nên chạy đúng trên MỌI máy,
+            // kể cả client đã gục (trước đây HUD người gục trống trơn).
+            float incoming = imDead ? _revive.IncomingReviveFraction : -1f;
+            SetVisible(downed, imDead);
+            if (imDead)
+            {
+                bool beingSaved = incoming >= 0f;
+                SetText("hud-downed-text", beingSaved
+                    ? "ĐỒNG ĐỘI ĐANG CỨU..."
+                    : "ĐÃ GỤC — CHỜ ĐỒNG ĐỘI CỨU");
+                SetFill("hud-downed-fill", beingSaved ? incoming : 0f, 1f);
+            }
+
+            // ── 2. MÌNH CÒN SỐNG, đồng đội gục ──
+            // prompt [R] chỉ hiện khi TRONG TẦM + còn bình; ngoài tầm thì hiện chỉ báo + khoảng cách
+            // để biết chạy tới đâu (yêu cầu user: host phải thấy được đồng đội đã gục).
+            bool inRange = !imDead && (_revive.IsReviving || _revive.HasRevivableAllyNearby());
+            SetVisible(prompt, inRange);
+            if (inRange) SetFill("hud-revive-fill", _revive.ReviveFraction, 1f);
+
+            var ally = imDead ? null : _revive.FindDownedAllyAnywhere();
+            bool showAllyDown = ally != null && !inRange;
+            SetVisible(allyDown, showAllyDown);
+            if (showAllyDown)
+            {
+                float dist = Vector2.Distance(_controller.transform.position, ally.transform.position);
+                SetText("hud-ally-down-dist", $"{Mathf.RoundToInt(dist)} m");
+            }
         }
 
         public void ShowBossBar(string bossName, int maxHp)
@@ -252,6 +297,21 @@ namespace Attrition.UI
             if (e == null) return;
             float pct = max > 0 ? Mathf.Clamp01(cur / max) : 0f;
             e.style.width = Length.Percent(pct * 100f);
+        }
+
+        /// <summary>
+        /// Fill theo CHIỀU CAO (dâng từ đáy lên) — dùng cho ORB TRÒN chứa HP của khung Gandalf.
+        /// Orb là hình cầu: bóp theo chiều NGANG sẽ méo hình, phải cho "chất lỏng" dâng dần.
+        /// USS đặt hàng orb là flex-direction: column + justify-content: flex-end nên phần tử
+        /// tự dính đáy; ở đây chỉ đổi height theo %.
+        /// </summary>
+        private void SetFillVertical(string name, float cur, float max)
+        {
+            var e = _root.Q<VisualElement>(name);
+            if (e == null) return;
+            float pct = max > 0 ? Mathf.Clamp01(cur / max) : 0f;
+            e.style.height = Length.Percent(pct * 100f);
+            e.style.width = Length.Percent(100f);   // orb luôn phủ đủ chiều ngang
         }
 
         private void SetText(string name, string text)

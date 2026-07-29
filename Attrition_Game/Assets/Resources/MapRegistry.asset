@@ -14,3 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Environment.MapRegistrySO
   maps:
   - {fileID: 11400000, guid: 0ca879e492618314782f5c44217c21e4, type: 2}
+  - {fileID: 11400000, guid: 9e4afde0a8cae144b92b4887de9fd7eb, type: 2}
+  - {fileID: 11400000, guid: a908e765649829d49934f6b0b4bc84be, type: 2}
+  - {fileID: 11400000, guid: c8f0381dafcd1774e8d0b41bb5ffa649, type: 2}
+  - {fileID: 11400000, guid: d1563121ccef6964e96ad2bd652c308f, type: 2}

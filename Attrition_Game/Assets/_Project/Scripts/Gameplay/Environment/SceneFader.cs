@@ -20,6 +20,34 @@ namespace Attrition.Gameplay.Environment
             }
             _instance = this;
             DontDestroyOnLoad(gameObject);
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+
+        private void OnDestroy()
+        {
+            if (_instance == this)
+                UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
+        }
+
+        /// <summary>
+        /// Scene mới load xong → LUÔN mở màn (fade-in) và nhả cờ IsTransitioning.
+        /// RoomTransitionZone fade-đen rồi LoadScene nhưng không ai fade-in ở scene mới; canvas này
+        /// DontDestroyOnLoad nên màn đen ở lại vĩnh viễn → map mới "không hiện camera". Ngoài ra
+        /// IsTransitioning kẹt true còn khoá input player (PlayerController) và chặn popup tên khu vực.
+        /// </summary>
+        private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene,
+                                  UnityEngine.SceneManagement.LoadSceneMode mode)
+        {
+            if (_fadeImage == null) { IsTransitioning = false; return; }
+            StartCoroutine(FadeInAfterSceneLoad());
+        }
+
+        private IEnumerator FadeInAfterSceneLoad()
+        {
+            // Chờ 1 frame cho camera/player của scene mới khởi tạo xong rồi mới mở màn.
+            yield return null;
+            yield return FadeIn(0.5f);
+            IsTransitioning = false;   // chắc chắn nhả cờ dù fade bị ngắt
         }
 
         private static void CreateInstance()
@@ -71,11 +99,44 @@ namespace Attrition.Gameplay.Environment
             _instance._fadeImage.color = color;
         }
 
+        /// <summary>
+        /// Màn ĐEN NGAY rồi sáng dần — dùng cho REST / FAST-TRAVEL giữa các checkpoint.
+        /// Lúc event tới thì host ĐÃ teleport xong, nên nếu fade-out mới thì người chơi thấy cảnh cũ rồi
+        /// mới tối → cảm giác "chớp màn hình". Đen ngay rồi fade-in cho ra đúng cảm giác chuyển room
+        /// (tối → hiện ra chỗ mới). Gọi được từ RPC / script không phải MonoBehaviour trong scene.
+        /// </summary>
+        public static void FlashBlack(float hold = 0.2f, float fadeIn = 0.5f)
+        {
+            CreateInstance();
+            // Đang có fade khác chạy (vd RoomTransitionTrigger tự fade quanh lúc teleport) → KHÔNG chồng
+            // thêm coroutine, tránh hai fade giành nhau alpha làm màn nháy loang lổ.
+            if (IsTransitioning) return;
+            _instance.StartCoroutine(_instance.FlashRoutine(hold, fadeIn));
+        }
+
+        private IEnumerator FlashRoutine(float hold, float fadeIn)
+        {
+            IsTransitioning = true;
+            SetAlphaImmediate(1f);                       // đen tức thì — không có pha tối dần gây "chớp"
+            yield return new WaitForSeconds(hold);
+            yield return FadeIn(fadeIn);
+        }
+
+        /// <summary>Đặt alpha màn đen ngay lập tức (không animate).</summary>
+        private static void SetAlphaImmediate(float a)
+        {
+            CreateInstance();
+            if (_instance._fadeImage == null) return;
+            var c = _instance._fadeImage.color;
+            c.a = Mathf.Clamp01(a);
+            _instance._fadeImage.color = c;
+        }
+
         public static IEnumerator FadeIn(float duration)
         {
             CreateInstance();
-            
-            if (_instance._fadeImage == null) 
+
+            if (_instance._fadeImage == null)
             {
                 IsTransitioning = false;
                 yield break;

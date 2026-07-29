@@ -349,6 +349,10 @@ namespace Attrition.Networking
             foreach (var player in runner.ActivePlayers)
                 spawner.ServerSpawnPlayer(runner, player);
 
+            // Đã đặt xong MỌI player tại điểm vào (cửa nối 2 map) → xoá lệnh chờ để lần load scene sau
+            // (vd chết → respawn, fast-travel) không bị kéo về cửa cũ.
+            SceneEntryRegistry.ClearPending();
+
             spawner.ServerSpawnEnemies(runner);
         }
 
