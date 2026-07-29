@@ -15,10 +15,10 @@ MonoBehaviour:
   enemyId: slime2
   tier: 0
   webImage: {fileID: 0}
-  maxHP: 30
-  ad: 10
-  ap: 10
-  def: 2
+  maxHP: 40
+  ad: 18
+  ap: 18
+  def: 30
   res: 2
   poise: 0
   poiseRecoveryTime: 3
