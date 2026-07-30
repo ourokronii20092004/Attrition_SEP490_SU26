@@ -16917,6 +16917,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.World.Hazard
   retriggerCooldown: 1
+  extraReach: 0.14
+  scanInterval: 0.1
 --- !u!19719996 &946043744
 TilemapCollider2D:
   m_ObjectHideFlags: 0
@@ -19373,11 +19375,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7157405037218784309, guid: 00c5a4f58bd48284f97affb82c96b2df, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 172.9
+      value: 175.35
       objectReference: {fileID: 0}
     - target: {fileID: 7157405037218784309, guid: 00c5a4f58bd48284f97affb82c96b2df, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -5.2
+      value: 12.73
       objectReference: {fileID: 0}
     - target: {fileID: 7157405037218784309, guid: 00c5a4f58bd48284f97affb82c96b2df, type: 3}
       propertyPath: m_LocalPosition.z

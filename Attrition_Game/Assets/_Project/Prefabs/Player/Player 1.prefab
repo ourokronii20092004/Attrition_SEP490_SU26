@@ -151,6 +151,9 @@ GameObject:
   - component: {fileID: -8304798322267633763}
   - component: {fileID: 4926934666965263351}
   - component: {fileID: 817566648311922267}
+  - component: {fileID: 3194451447888378493}
+  - component: {fileID: 2878698790318821591}
+  - component: {fileID: 2700710711356225554}
   m_Layer: 7
   m_Name: Player 1
   m_TagString: Player
@@ -273,6 +276,8 @@ MonoBehaviour:
   skillCaster: {fileID: 0}
   statsComp: {fileID: 5532332673274492828}
   potionComp: {fileID: 2638378353840522064}
+  accessoryFx: {fileID: 0}
+  statusFx: {fileID: 0}
   rb: {fileID: 8158020556837803344}
   groundLayer:
     serializedVersion: 2
@@ -299,14 +304,15 @@ MonoBehaviour:
   _JumpCount: 0
   _HasDoubleJump:
     _value: 0
-  _NetworkPosition: {x: 0, y: 0}
-  _NetworkVelocity: {x: 0, y: 0}
-  _NetworkGravityScale: 0
+  _HasShadowDash:
+    _value: 0
   _DisplayName:
     _length: 0
     _data:
       Data: 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
   maxHP: 15
+  _AtCheckpointNet:
+    _value: 0
 --- !u!114 &8687308238461515992
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -321,6 +327,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCombat
   animationComp: {fileID: 8805790379459285585}
   statsComp: {fileID: 5532332673274492828}
+  accessoryFx: {fileID: 0}
   attackPoint: {fileID: 7035351457917283103}
   attackRange: 3
   attackAngle: 75
@@ -376,6 +383,8 @@ MonoBehaviour:
   - {fileID: -8304798322267633763}
   - {fileID: 4926934666965263351}
   - {fileID: 817566648311922267}
+  - {fileID: 3194451447888378493}
+  - {fileID: 2700710711356225554}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &-9211217073537501404
 MonoBehaviour:
@@ -510,6 +519,91 @@ MonoBehaviour:
   _IsReviving:
     _value: 0
   _ReviveProgress: 0
+--- !u!114 &3194451447888378493
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6831727267532873526}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0246fa650d1dd4a4a89d2685f855e754, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Player.PlayerStatusEffects
+  _IsRooted:
+    _value: 0
+--- !u!114 &2878698790318821591
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6831727267532873526}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1684020dc537d8f4d953eb396f3e9a68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Player.ShadowDashEffect
+  sourceSprite: {fileID: 1978158679812485804}
+  smokeFrames:
+  - {fileID: -5944832118280206015, guid: e6af9e2f5bd58ba41ab3c40560deb2bf, type: 3}
+  - {fileID: 8848241241217801831, guid: e6af9e2f5bd58ba41ab3c40560deb2bf, type: 3}
+  - {fileID: 8793261146601458887, guid: e6af9e2f5bd58ba41ab3c40560deb2bf, type: 3}
+  - {fileID: -74859173265101491, guid: e6af9e2f5bd58ba41ab3c40560deb2bf, type: 3}
+  smokeInterval: 0.07
+  smokeLifetime: 0.28
+  smokeOffset: {x: -0.35, y: -0.45}
+  smokeScale: 1.5
+  smokeColor: {r: 1, g: 1, b: 1, a: 0.75}
+  smokeSortingLayer: Player
+  smokeSortingOrder: 5
+  spawnInterval: 0.04
+  ghostLifetime: 0.35
+  ghostColor: {r: 0.4, g: 0.5, b: 1, a: 0.6}
+  sortingOffset: -1
+  readyFlashColor: {r: 0.6, g: 0.75, b: 1, a: 1}
+  readyFlashDuration: 0.18
+--- !u!114 &2700710711356225554
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6831727267532873526}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b07d0f0c3158bbf46b55147ea6709a10, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Player.PlayerVfx
+  healFrames:
+  - {fileID: 1206714422193133145, guid: 2c5fe53164153d44babd0c20efe434cd, type: 3}
+  - {fileID: 8462607926601699822, guid: 2c5fe53164153d44babd0c20efe434cd, type: 3}
+  - {fileID: -1235449047, guid: 2c5fe53164153d44babd0c20efe434cd, type: 3}
+  - {fileID: -4616894488842464432, guid: 2c5fe53164153d44babd0c20efe434cd, type: 3}
+  - {fileID: -805895194049491569, guid: 2c5fe53164153d44babd0c20efe434cd, type: 3}
+  - {fileID: 8811921900105486683, guid: 2c5fe53164153d44babd0c20efe434cd, type: 3}
+  - {fileID: 970372534, guid: 2c5fe53164153d44babd0c20efe434cd, type: 3}
+  - {fileID: -448318992193265429, guid: 2c5fe53164153d44babd0c20efe434cd, type: 3}
+  - {fileID: 2355546953842022766, guid: 2c5fe53164153d44babd0c20efe434cd, type: 3}
+  - {fileID: 5166571873943616174, guid: 2c5fe53164153d44babd0c20efe434cd, type: 3}
+  - {fileID: 7239725890141473874, guid: 2c5fe53164153d44babd0c20efe434cd, type: 3}
+  - {fileID: 9174076301933715262, guid: 2c5fe53164153d44babd0c20efe434cd, type: 3}
+  - {fileID: 2729061392458392094, guid: 2c5fe53164153d44babd0c20efe434cd, type: 3}
+  - {fileID: -4227349195044720005, guid: 2c5fe53164153d44babd0c20efe434cd, type: 3}
+  healDuration: 0.7
+  healScale: 1.2
+  levelUpFrames:
+  - {fileID: 1102079177054390825, guid: d9eaaa207d902dc42ac74ecdabc7d72f, type: 3}
+  - {fileID: 194108020, guid: d9eaaa207d902dc42ac74ecdabc7d72f, type: 3}
+  - {fileID: 1405750026, guid: d9eaaa207d902dc42ac74ecdabc7d72f, type: 3}
+  - {fileID: -732398441, guid: d9eaaa207d902dc42ac74ecdabc7d72f, type: 3}
+  levelUpDuration: 0.9
+  levelUpScale: 1.6
+  offset: {x: 0, y: 0}
+  sortingLayer: Player
+  sortingOrder: 20
+  healMinInterval: 0.4
 --- !u!1 &7179476028545329090
 GameObject:
   m_ObjectHideFlags: 0

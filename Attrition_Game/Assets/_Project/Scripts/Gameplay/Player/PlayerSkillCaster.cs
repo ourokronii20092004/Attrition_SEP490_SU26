@@ -73,7 +73,8 @@ namespace Attrition.Gameplay.Player
             _castTimer = TickTimer.CreateFromSeconds(Runner, config.castTime);
             _cooldown = TickTimer.CreateFromSeconds(Runner, config.castTime + config.cooldown);
 
-            // Accessory PostSkillDamage: vũ trang đòn đánh thường KẾ TIẾP tăng damage. Chỉ host set cờ networked.
+            // Accessory PostSkillDamage: vũ trang đòn đánh thường KẾ TIẾP. Chỉ host set cờ networked.
+            // (SkillBuff của acc_postskill KHÔNG bật ở đây — nó bật lúc TRANG BỊ, xem ArmBuffsOnEquip.)
             if (HasStateAuthority)
             {
                 var fx = GetComponent<AccessoryEffects>();
@@ -122,6 +123,11 @@ namespace Attrition.Gameplay.Player
                 skill.range, skill.angle, skill.rectSize, filter, _hits);
 
             int baseRaw = skill.baseDamage + Mathf.RoundToInt(_stats.AP * skill.apScaling);
+
+            // Accessory SkillBuff (acc_postskill): nhân sát thương mọi skill trong thời gian buff.
+            var accFx = GetComponent<AccessoryEffects>();
+            if (accFx != null) baseRaw = accFx.ApplySkillDamageMultiplier(baseRaw);
+
             for (int i = 0; i < n; i++)
             {
                 var hit = _hits[i];
@@ -145,6 +151,11 @@ namespace Attrition.Gameplay.Player
             if (!skill.projectilePrefab.IsValid) return;
             Vector3 spawn = castPoint != null ? castPoint.position : transform.position;
             int raw = config.baseDamage + Mathf.RoundToInt(_stats.AP * config.apScaling);
+
+            // Accessory SkillBuff: đạn skill cũng phải được buff (xem DealArea).
+            var accFx = GetComponent<AccessoryEffects>();
+            if (accFx != null) raw = accFx.ApplySkillDamageMultiplier(raw);
+
             int count = Mathf.Max(1, config.projectileCount);
             float baseAng = isFacingRight ? 0f : 180f;
             float step = count > 1 ? config.spreadAngle / (count - 1) : 0f;

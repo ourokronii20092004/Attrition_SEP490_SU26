@@ -296,16 +296,44 @@ namespace Attrition.Gameplay.Environment
             Vector2 sizePx = new Vector2(map.worldBounds.size.x, map.worldBounds.size.y) * map.worldMapScale * PixelsPerUnit;
             Vector2 centerPos = MapToContent(map, map.worldBounds.center);
 
-            // Silhouette (nếu đã bake).
+            // Silhouette (nếu đã bake) — vẽ ĐƯỜNG VIỀN trước, rồi thân map lên trên.
             if (map.silhouette != null)
             {
+                // ĐƯỜNG VIỀN: vẽ lại chính silhouette ở 8 hướng lệch quanh tâm, tô màu đậm hơn. Cách này
+                // không cần xử lý texture (silhouette do tool bake, có thể chưa readable) và tự khớp mọi
+                // hình dạng map. Vẽ TRƯỚC thân nên chỉ thấy phần nhô ra = viền.
+                if (map.outlineThickness > 0.01f)
+                {
+                    float t = map.outlineThickness;
+                    var dirs = new[]
+                    {
+                        new Vector2(-t, 0f), new Vector2(t, 0f), new Vector2(0f, -t), new Vector2(0f, t),
+                        new Vector2(-t, -t), new Vector2(t, -t), new Vector2(-t, t), new Vector2(t, t),
+                    };
+
+                    for (int i = 0; i < dirs.Length; i++)
+                    {
+                        var oGo = NewElement($"Outline_{map.sceneName}_{i}", _content, out var oRt);
+                        oRt.anchorMin = oRt.anchorMax = new Vector2(0.5f, 0.5f);
+                        oRt.pivot = new Vector2(0.5f, 0.5f);
+                        oRt.anchoredPosition = centerPos + dirs[i];
+                        oRt.sizeDelta = sizePx;
+                        var oImg = oGo.AddComponent<Image>();
+                        oImg.sprite = map.silhouette;
+                        oImg.raycastTarget = false;
+                        oImg.color = map.outlineTint;
+                        _spawned.Add(oGo);
+                    }
+                }
+
                 var silGo = NewElement("Sil_" + map.sceneName, _content, out var silRt);
                 silRt.anchorMin = silRt.anchorMax = new Vector2(0.5f, 0.5f);
                 silRt.pivot = new Vector2(0.5f, 0.5f);
                 silRt.anchoredPosition = centerPos; silRt.sizeDelta = sizePx;
                 var img = silGo.AddComponent<Image>();
                 img.sprite = map.silhouette; img.raycastTarget = false;
-                img.color = Color.white;
+                // Mỗi khu một màu riêng → nhìn bản đồ tổng là biết đang ở vùng nào.
+                img.color = map.mapTint;
                 _spawned.Add(silGo);
             }
 

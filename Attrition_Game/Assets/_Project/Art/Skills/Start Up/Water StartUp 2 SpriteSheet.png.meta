@@ -103,7 +103,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 1
+    filterMode: 0
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -117,7 +117,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 100
+  spritePixelsToUnits: 16
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -174,7 +174,7 @@ TextureImporter:
         width: 29
         height: 7
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -193,10 +193,10 @@ TextureImporter:
         serializedVersion: 2
         x: 11
         y: 147
-        width: 17
+        width: 44
         height: 7
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -213,9 +213,9 @@ TextureImporter:
       name: Water StartUp 2 SpriteSheet_2
       rect:
         serializedVersion: 2
-        x: 29
-        y: 147
-        width: 9
+        x: 8
+        y: 51
+        width: 52
         height: 7
       alignment: 0
       pivot: {x: 0, y: 0}
@@ -235,10 +235,10 @@ TextureImporter:
       name: Water StartUp 2 SpriteSheet_3
       rect:
         serializedVersion: 2
-        x: 38
-        y: 147
-        width: 17
-        height: 7
+        x: 7
+        y: 33
+        width: 53
+        height: 11
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -259,10 +259,10 @@ TextureImporter:
         serializedVersion: 2
         x: 4
         y: 130
-        width: 19
+        width: 58
         height: 9
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -279,10 +279,10 @@ TextureImporter:
       name: Water StartUp 2 SpriteSheet_5
       rect:
         serializedVersion: 2
-        x: 25
-        y: 131
-        width: 11
-        height: 7
+        x: 19
+        y: 17
+        width: 27
+        height: 11
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -301,10 +301,10 @@ TextureImporter:
       name: Water StartUp 2 SpriteSheet_6
       rect:
         serializedVersion: 2
-        x: 35
-        y: 131
-        width: 7
-        height: 7
+        x: 18
+        y: 2
+        width: 29
+        height: 10
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -320,37 +320,15 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Water StartUp 2 SpriteSheet_7
-      rect:
-        serializedVersion: 2
-        x: 43
-        y: 130
-        width: 19
-        height: 9
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 498b000c4306e8980800000000000000
-      internalID: -8534778464144672620
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
       name: Water StartUp 2 SpriteSheet_8
       rect:
         serializedVersion: 2
         x: 1
-        y: 114
-        width: 11
-        height: 8
+        y: 115
+        width: 63
+        height: 7
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -364,81 +342,15 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Water StartUp 2 SpriteSheet_9
-      rect:
-        serializedVersion: 2
-        x: 12
-        y: 114
-        width: 18
-        height: 9
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 26b91f278d7ca7ac0800000000000000
-      internalID: -3856550398434108574
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water StartUp 2 SpriteSheet_10
-      rect:
-        serializedVersion: 2
-        x: 30
-        y: 114
-        width: 28
-        height: 9
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 33bb6cb9aadc87e40800000000000000
-      internalID: 5654495464805284659
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water StartUp 2 SpriteSheet_11
-      rect:
-        serializedVersion: 2
-        x: 56
-        y: 115
-        width: 8
-        height: 7
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: d238c1865cb79fcf0800000000000000
-      internalID: -218007019165285587
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
       name: Water StartUp 2 SpriteSheet_12
       rect:
         serializedVersion: 2
         x: 0
         y: 98
-        width: 24
+        width: 64
         height: 9
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -452,59 +364,15 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Water StartUp 2 SpriteSheet_13
-      rect:
-        serializedVersion: 2
-        x: 27
-        y: 98
-        width: 32
-        height: 9
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 814f8763e79db0a60800000000000000
-      internalID: 7641440328867181592
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water StartUp 2 SpriteSheet_14
-      rect:
-        serializedVersion: 2
-        x: 57
-        y: 99
-        width: 7
-        height: 7
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 03d79cdda0718ce10800000000000000
-      internalID: 2218048151918050608
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
       name: Water StartUp 2 SpriteSheet_15
       rect:
         serializedVersion: 2
         x: 0
         y: 82
-        width: 21
+        width: 63
         height: 9
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -518,37 +386,15 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Water StartUp 2 SpriteSheet_16
-      rect:
-        serializedVersion: 2
-        x: 26
-        y: 82
-        width: 35
-        height: 9
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 09cc71893ff4c5b50800000000000000
-      internalID: 6583224662956166288
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
       name: Water StartUp 2 SpriteSheet_17
       rect:
         serializedVersion: 2
         x: 9
         y: 66
-        width: 10
+        width: 50
         height: 9
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -561,121 +407,11 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
-    - serializedVersion: 2
-      name: Water StartUp 2 SpriteSheet_18
-      rect:
-        serializedVersion: 2
-        x: 24
-        y: 67
-        width: 7
-        height: 7
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 883a8229963e52be0800000000000000
-      internalID: -1502544858094984312
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water StartUp 2 SpriteSheet_19
-      rect:
-        serializedVersion: 2
-        x: 36
-        y: 67
-        width: 6
-        height: 7
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 700b51c94df4a6cf0800000000000000
-      internalID: -258306254050054137
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water StartUp 2 SpriteSheet_20
-      rect:
-        serializedVersion: 2
-        x: 45
-        y: 66
-        width: 14
-        height: 9
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 079c6347a0cc53f80800000000000000
-      internalID: -8127365607248705168
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water StartUp 2 SpriteSheet_21
-      rect:
-        serializedVersion: 2
-        x: 7
-        y: 37
-        width: 24
-        height: 22
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: f939e97c0b18c7980800000000000000
-      internalID: -8539808197138017377
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water StartUp 2 SpriteSheet_22
-      rect:
-        serializedVersion: 2
-        x: 19
-        y: 1
-        width: 42
-        height: 58
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 21a1fb5b4dd3e80b0800000000000000
-      internalID: -5724570092549760494
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
     outline: []
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 30213f17a00436f4aa318bb24007a67b
     internalID: 0
     vertices: []
     indices: 

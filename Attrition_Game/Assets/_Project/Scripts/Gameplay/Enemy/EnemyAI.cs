@@ -107,6 +107,15 @@ public class EnemyAI : NetworkBehaviour
     [Tooltip("Dead zone: không đổi hướng nhìn khi khoảng cách X với mục tiêu nhỏ hơn giá trị này (tránh giật/nhấp nháy)")]
     public float facingDeadZone = 0.3f;
 
+    [Header("---- LEASH (giới hạn đuổi theo) ----")]
+    [Tooltip("Bật = quái THÔI ĐUỔI khi player ra khỏi CĂN PHÒNG của nó (vùng CameraBoundsZone), rồi quay " +
+             "về tuần tra. Dùng cho ELITE: player đi ra khỏi phòng thì elite không bám theo nữa. " +
+             "Tắt = đuổi theo viewRadius như quái thường.")]
+    public bool leashToRoom = false;
+
+    [Tooltip("Nới thêm bao nhiêu unit ngoài mép phòng mới thả target (chống nhả/bắt liên tục ở đúng mép cửa).")]
+    public float leashPadding = 1.5f;
+
     // NETWORKED STATE — Single source of truth
 
     [HideInInspector][Networked] public EnemyState CurrentState { get; set; }
@@ -1116,11 +1125,32 @@ public class EnemyAI : NetworkBehaviour
 
             float dst = Vector2.Distance(transform.position, pObj.transform.position);
             if (dst > viewRadius) continue;
+            if (!IsInsideLeash(pObj.transform.position)) continue;   // elite: player đã ra khỏi phòng
 
             playerTarget = pObj.transform;
             cachedChasePlayer = player;
             break;
         }
+    }
+
+    /// <summary>
+    /// Player còn trong "dây buộc" của quái không?
+    ///
+    /// VÌ SAO CẦN: elite trước đây đuổi theo `viewRadius` thuần nên player chạy ra khỏi phòng elite vẫn
+    /// bám theo — user muốn ra khỏi phòng là elite thôi đuổi. Ranh giới phòng lấy từ `CameraBoundsZone`
+    /// (cùng nguồn mà skill boss dùng để tính chiều ngang phòng), nên designer không phải nhập thêm số.
+    ///
+    /// leashToRoom = false (mặc định, quái thường) → luôn true, giữ đúng hành vi cũ.
+    /// Phòng chưa đặt CameraBoundsZone → cũng trả true: thà đuổi như cũ còn hơn elite bất động vì thiếu setup.
+    /// </summary>
+    protected bool IsInsideLeash(Vector2 playerPos)
+    {
+        if (!leashToRoom) return true;
+
+        if (!Attrition.Gameplay.Enemy.BossRoomBounds.TryGetRoom(startPosition, out var room)) return true;
+
+        room.Expand(new Vector3(leashPadding * 2f, leashPadding * 2f, 0f));
+        return room.Contains(new Vector3(playerPos.x, playerPos.y, room.center.z));
     }
 
     private bool TryUseCachedChaseTarget()
@@ -1135,6 +1165,11 @@ public class EnemyAI : NetworkBehaviour
 
         float dst = Vector2.Distance(transform.position, pObj.transform.position);
         if (dst > viewRadius * 1.05f) return false;
+
+        // Elite: nhả target ngay khi player ra khỏi phòng. Phải kiểm CẢ Ở ĐÂY, không chỉ trong FindPlayer —
+        // target đã cache sẽ được tái dùng và bỏ qua toàn bộ vòng quét, nên thiếu chỗ này thì elite vẫn bám
+        // theo player ra ngoài phòng.
+        if (!IsInsideLeash(pObj.transform.position)) return false;
 
         playerTarget = pObj.transform;
         return true;

@@ -15,7 +15,7 @@ MonoBehaviour:
   itemId: acc_double_jump
   displayName: Feather Charm
   description: 
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 6083b39c4269b074a849baf6c94dc947, type: 3}
   maxStack: 1
   isKeyItem: 0
   kind: 1
@@ -27,3 +27,4 @@ MonoBehaviour:
   effectThreshold: 0.5
   effectThresholdStop: 0.8
   effectCooldown: 8
+  coopOnlyReward: 0

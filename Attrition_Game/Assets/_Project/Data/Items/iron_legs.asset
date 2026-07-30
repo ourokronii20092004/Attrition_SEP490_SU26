@@ -15,7 +15,7 @@ MonoBehaviour:
   itemId: iron_legs
   displayName: Iron Legguards
   description: 
-  icon: {fileID: -855298285791758126, guid: 0b6c65eb0350d32488d9f53a45a1f8c6, type: 3}
+  icon: {fileID: 970720788, guid: 0b6c65eb0350d32488d9f53a45a1f8c6, type: 3}
   maxStack: 1
   isKeyItem: 0
   slot: 2

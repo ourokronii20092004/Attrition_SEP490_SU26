@@ -66,6 +66,11 @@ namespace Attrition.Gameplay.Player
         {
             // PlayerStats áp level mới → mở thêm điểm tự cộng (Option 2) và cập nhật MaxHP/Mana.
             if (_stats != null) _stats.SetLevelFromProgression(Level);
+
+            // Hiệu ứng lên cấp hiện giữa người. PlayerVfx tự broadcast RPC (hàm này host-only) nên cả
+            // client cũng thấy; no-op nếu prefab chưa gắn component.
+            var vfx = GetComponent<PlayerVfx>();
+            if (vfx != null) vfx.PlayLevelUp();
         }
 
         /// <summary>

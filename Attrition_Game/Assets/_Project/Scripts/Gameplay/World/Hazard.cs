@@ -15,6 +15,23 @@ namespace Attrition.Gameplay.World
         [Tooltip("Giãn cách tối thiểu giữa 2 lần trúng bẫy của cùng 1 player (giây).")]
         [SerializeField] private float retriggerCooldown = 1.0f;
 
+        [Header("---- VÙNG VỚI THÊM ----")]
+        [Tooltip("Bẫy 'với' thêm bao nhiêu world-unit ngoài mép tile (1 tile = 1 unit). Chống việc player " +
+                 "rơi vào RÃNH HẸP mà collider người chèn giữa 2 vách, không chạm đáy gai nên không chết " +
+                 "và kẹt luôn dưới đó. 0 = tắt, chỉ dùng trigger sát mép như cũ.")]
+        [SerializeField] private float extraReach = 0.14f;
+
+        [Tooltip("Nhịp quét vùng với thêm (giây). Không cần mỗi frame — 0.1s là quá đủ để bắt player kẹt.")]
+        [SerializeField] private float scanInterval = 0.1f;
+
+        private Collider2D _col;
+        private float _nextScanTime;
+
+        // Cache player để không FindObjectsByType mỗi nhịp quét. Refresh thưa vì player chỉ đổi khi
+        // spawn/despawn (vào trận, đổi scene, đồng đội kết nối).
+        private readonly List<PlayerController> _players = new List<PlayerController>();
+        private float _nextPlayerRefresh;
+
         // Cooldown THEO TỪNG PLAYER, không dùng 1 biến chung: cả map chỉ có 1 Tilemap hazard nên nếu
         // dùng chung, player A trúng bẫy sẽ khoá luôn player B trong coop (B đi vào gai mà không mất máu).
         private readonly Dictionary<PlayerController, float> _lastHitByPlayer = new Dictionary<PlayerController, float>();
@@ -25,8 +42,57 @@ namespace Attrition.Gameplay.World
             if (col != null) col.isTrigger = true;
         }
 
+        private void Awake() => _col = GetComponent<Collider2D>();
+
         private void OnTriggerEnter2D(Collider2D other) => TryHit(other);
         private void OnTriggerStay2D(Collider2D other) => TryHit(other);
+
+        /// <summary>
+        /// Quét thêm vùng RỘNG HƠN mép tile để bắt player kẹt trong rãnh hẹp — trường hợp trigger thường
+        /// không bắt được vì collider người chèn ngang giữa 2 vách, không chạm đáy gai.
+        ///
+        /// VÌ SAO KHÔNG PHÓNG TO COLLIDER: `TilemapCollider2D` sinh hình tự động từ tile, không có tham số
+        /// "nới ra". Đổi sang CompositeCollider2D + extrusion sẽ thay cả cách collider hoạt động — rủi ro
+        /// hơn nhiều so với việc với thêm một chút ở đây.
+        ///
+        /// VÌ SAO KHÔNG DÙNG Physics2D.Overlap*: Fusion chạy PHYSICS SCENE RIÊNG, scene mặc định RỖNG nên
+        /// mọi `Physics2D.*` query đều trả 0 (cùng bẫy đã gặp ở EnemyAoEDamage.SnapToGround). `Collider2D.
+        /// Distance` là phép tính collider-với-collider TRỰC TIẾP, không qua scene query → chạy đúng ở cả
+        /// hai loại scene.
+        /// </summary>
+        private void Update()
+        {
+            if (extraReach <= 0f || _col == null) return;
+            if (Time.time < _nextScanTime) return;
+            _nextScanTime = Time.time + Mathf.Max(0.02f, scanInterval);
+
+            RefreshPlayersIfNeeded();
+
+            for (int i = 0; i < _players.Count; i++)
+            {
+                var p = _players[i];
+                if (p == null || p.IsDead) continue;
+
+                var pc = p.GetComponent<Collider2D>();
+                if (pc == null || !pc.enabled) continue;   // xác chết bị tắt collider → bỏ qua
+
+                // distance < 0 = đang lồng nhau (trigger thường đã bắt); 0..extraReach = sát mép, kẹt rãnh.
+                var d = _col.Distance(pc);
+                if (!d.isValid || d.distance > extraReach) continue;
+
+                TryHit(pc);
+            }
+        }
+
+        private void RefreshPlayersIfNeeded()
+        {
+            if (Time.time < _nextPlayerRefresh && _players.Count > 0) return;
+            _nextPlayerRefresh = Time.time + 2f;
+
+            _players.Clear();
+            foreach (var p in FindObjectsByType<PlayerController>(FindObjectsSortMode.None))
+                if (p != null) _players.Add(p);
+        }
 
         private void TryHit(Collider2D other)
         {

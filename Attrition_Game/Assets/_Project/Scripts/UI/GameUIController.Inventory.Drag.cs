@@ -194,7 +194,11 @@ namespace Attrition.UI
                                 case SelectedSlotContext.EquippedChest: _inventory.RpcRequestUnequipArmorToSlot((int)EquipmentSlot.Chest, i); break;
                                 case SelectedSlotContext.EquippedLegs: _inventory.RpcRequestUnequipArmorToSlot((int)EquipmentSlot.Legs, i); break;
                                 case SelectedSlotContext.EquippedBoots: _inventory.RpcRequestUnequipArmorToSlot((int)EquipmentSlot.Boots, i); break;
-                                case SelectedSlotContext.EquippedAccessory: _inventory.RpcRequestUnequipAccessoryToSlot(i); break;
+                                // Accessory: chỉ đổi được tại checkpoint (toast giải thích lý do).
+                                case SelectedSlotContext.EquippedAccessory:
+                                    if (BlockAccessorySwapOutsideCheckpoint()) return;
+                                    _inventory.RpcRequestUnequipAccessoryToSlot(i);
+                                    break;
                                 case SelectedSlotContext.EquippedSkill: _inventory.RpcRequestUnequipSkillToSlot(i); break;
                             }
                         }
@@ -232,7 +236,11 @@ namespace Attrition.UI
                     {
                         switch (btnName)
                         {
-                            case "equip-accessory": _inventory.RpcRequestEquipAccessory(_dragSlot); break;
+                            // Accessory: chỉ đổi được tại checkpoint (toast giải thích lý do).
+                            case "equip-accessory":
+                                if (BlockAccessorySwapOutsideCheckpoint()) return;
+                                _inventory.RpcRequestEquipAccessory(_dragSlot);
+                                break;
                             case "equip-skill": _inventory.RpcRequestEquipSkill(_dragSlot); break;
                             default: _inventory.RpcRequestEquip(_dragSlot); break;
                         }

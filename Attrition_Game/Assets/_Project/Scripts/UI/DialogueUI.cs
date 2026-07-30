@@ -373,10 +373,13 @@ namespace Attrition.UI
             // Hiện nút phù hợp
             bool isLastLine = _currentLineIndex >= _currentDialogue.lines.Length - 1;
 
-            if (isLastLine && _currentNPC != null && _currentNPC.Quest != null)
+            // DisplayQuest/DisplayQuestState: NPC "nhận nộp hộ" (Autumn Fairy) không giữ quest của mình mà
+            // trỏ tới NPC giao (Summer Fairy) — đọc trực tiếp Quest/QuestState của nó sẽ luôn null/0 nên
+            // nút "Claim Reward" không bao giờ hiện.
+            if (isLastLine && _currentNPC != null && _currentNPC.DisplayQuest != null)
             {
-                byte state = _currentNPC.QuestState;
-                if (state == 0) // NotStarted → show Accept/Decline
+                byte state = _currentNPC.DisplayQuestState;
+                if (state == 0 && _currentNPC.CanOfferQuest) // NotStarted → show Accept/Decline
                 {
                     _btnAccept.RemoveFromClassList("hidden");
                     _btnDecline.RemoveFromClassList("hidden");
@@ -420,9 +423,10 @@ namespace Attrition.UI
                 return;
             }
 
-            if (_currentNPC != null && _currentNPC.Quest != null)
+            // DisplayQuest*: hỗ trợ NPC nhận nộp hộ (xem ghi chú ở phần hiện nút).
+            if (_currentNPC != null && _currentNPC.DisplayQuest != null)
             {
-                byte state = _currentNPC.QuestState;
+                byte state = _currentNPC.DisplayQuestState;
                 if (state == 2) // Completed → claim
                 {
                     _currentNPC.RpcClaimReward();
@@ -436,6 +440,11 @@ namespace Attrition.UI
         /// <summary>Đóng hội thoại.</summary>
         public void CloseDialogue()
         {
+            // NPC NHẬN NỘP (nhiệm vụ đưa tin): báo hoàn thành mục tiêu khi player đã NÓI CHUYỆN XONG.
+            // Báo ở đây (không phải lúc mở thoại) để đúng ý "nhận được khi nói chuyện xong với NPC cuối map".
+            // RpcReportTurnIn tự no-op nếu NPC này không phải điểm nộp / chưa ai mang tin / đã báo rồi.
+            if (_currentNPC != null && _currentNPC.IsTurnInPoint) _currentNPC.RpcReportTurnIn();
+
             _isDialogueOpen = false;
             _isTyping = false;
             Attrition.Persistence.DialogueState.IsActive = false;
@@ -490,15 +499,24 @@ namespace Attrition.UI
 
         private void UpdateQuestInfoVisibility()
         {
-            if (_currentNPC == null || _currentNPC.Quest == null)
+            // DisplayQuest*: NPC nhận nộp hộ (Autumn) trỏ tới quest của NPC giao (Summer) — xem NetworkNPC.
+            if (_currentNPC == null || _currentNPC.DisplayQuest == null)
             {
                 _questInfo.AddToClassList("hidden");
                 _questInfo.RemoveFromClassList("visible");
                 return;
             }
 
-            var q = _currentNPC.Quest;
-            byte state = _currentNPC.QuestState;
+            var q = _currentNPC.DisplayQuest;
+            byte state = _currentNPC.DisplayQuestState;
+
+            // Proxy KHÔNG chào mời quest (việc của Summer) → state 0 thì không hiện bảng "Quest: ...".
+            if (state == 0 && !_currentNPC.CanOfferQuest)
+            {
+                _questInfo.AddToClassList("hidden");
+                _questInfo.RemoveFromClassList("visible");
+                return;
+            }
 
             if (state == 0) // Offer quest → show info
             {

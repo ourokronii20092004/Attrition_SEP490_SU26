@@ -154,6 +154,23 @@ namespace Attrition.UI
             return l;
         }
 
+        /// <summary>
+        /// Đổi accessory chỉ được phép TẠI CHECKPOINT (yêu cầu user). Host mới là nơi chặn thật
+        /// (PlayerInventory.CanSwapAccessory); ở đây chặn sớm + HIỆN TOAST để player biết lý do — nếu không
+        /// thì bấm EQUIP mà không có gì xảy ra, trông như bug.
+        ///
+        /// Đọc `IsAtCheckpoint` (local) được vì máy này giữ InputAuthority của chính player đang bấm.
+        /// </summary>
+        private bool BlockAccessorySwapOutsideCheckpoint()
+        {
+            if (_controller == null) return false;
+            if (_controller.IsAtCheckpoint) return false;
+
+            ShowToast("Chỉ đổi phụ kiện được khi đang nghỉ tại điểm checkpoint.",
+                      new Color(0.55f, 0.35f, 0.12f), 2.5f);
+            return true;
+        }
+
         private void EquipOrUnequipSelected()
         {
             if (_inventory == null || _selectedContext == SelectedSlotContext.None) return;
@@ -165,7 +182,10 @@ namespace Attrition.UI
                 {
                     case ItemCategory.Equipment: _inventory.RpcRequestEquip(_selectedSlot); break;
                     case ItemCategory.Skill: _inventory.RpcRequestEquipSkill(_selectedSlot); break;
-                    case ItemCategory.Accessory: _inventory.RpcRequestEquipAccessory(_selectedSlot); break;
+                    case ItemCategory.Accessory:
+                        if (BlockAccessorySwapOutsideCheckpoint()) return;
+                        _inventory.RpcRequestEquipAccessory(_selectedSlot);
+                        break;
                 }
             }
             else
@@ -176,7 +196,10 @@ namespace Attrition.UI
                     case SelectedSlotContext.EquippedChest: _inventory.RpcRequestUnequipArmor((int)EquipmentSlot.Chest); break;
                     case SelectedSlotContext.EquippedLegs: _inventory.RpcRequestUnequipArmor((int)EquipmentSlot.Legs); break;
                     case SelectedSlotContext.EquippedBoots: _inventory.RpcRequestUnequipArmor((int)EquipmentSlot.Boots); break;
-                    case SelectedSlotContext.EquippedAccessory: _inventory.RpcRequestUnequipAccessory(); break;
+                    case SelectedSlotContext.EquippedAccessory:
+                        if (BlockAccessorySwapOutsideCheckpoint()) return;
+                        _inventory.RpcRequestUnequipAccessory();
+                        break;
                     case SelectedSlotContext.EquippedSkill: _inventory.RpcRequestUnequipSkill(); break;
                 }
             }

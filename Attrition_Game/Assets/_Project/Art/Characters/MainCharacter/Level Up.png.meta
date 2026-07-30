@@ -58,7 +58,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 1
+    filterMode: 0
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -72,7 +72,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 100
+  spritePixelsToUnits: 16
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -129,7 +129,7 @@ TextureImporter:
         width: 23
         height: 23
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -143,155 +143,67 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Effect 1 - Sprite Sheet_1
+      name: Level Up_0
       rect:
         serializedVersion: 2
         x: 18
-        y: 117
-        width: 13
-        height: 8
+        y: 99
+        width: 27
+        height: 27
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: cd8412cfcbe9f9940800000000000000
-      internalID: 5305133420586813660
+      spriteID: 2e17319fc16eb0d469498386c2efef59
+      internalID: 194108020
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Effect 1 - Sprite Sheet_2
-      rect:
-        serializedVersion: 2
-        x: 20
-        y: 112
-        width: 8
-        height: 7
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 9e0b79fd252e57c70800000000000000
-      internalID: 8968323078544666857
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Effect 1 - Sprite Sheet_3
-      rect:
-        serializedVersion: 2
-        x: 28
-        y: 111
-        width: 17
-        height: 14
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: e95383dd2d0c19890800000000000000
-      internalID: -7452963896434346594
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Effect 1 - Sprite Sheet_4
+      name: Level Up_1
       rect:
         serializedVersion: 2
         x: 16
-        y: 44
-        width: 19
-        height: 69
+        y: 67
+        width: 32
+        height: 29
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: b87e98f46322af5e0800000000000000
-      internalID: -1875148678188374133
+      spriteID: d14c6b319f0c3dc4c9a3d80f6e88b7d3
+      internalID: 1405750026
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Effect 1 - Sprite Sheet_5
+      name: Level Up_2
       rect:
         serializedVersion: 2
-        x: 27
-        y: 34
-        width: 22
-        height: 45
+        x: 16
+        y: 33
+        width: 34
+        height: 32
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: c005028850efe3940800000000000000
-      internalID: 5277935113036910604
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Effect 1 - Sprite Sheet_6
-      rect:
-        serializedVersion: 2
-        x: 32
-        y: 100
-        width: 12
-        height: 13
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 99d660ff96205fcd0800000000000000
-      internalID: -2525109361797861991
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Effect 1 - Sprite Sheet_7
-      rect:
-        serializedVersion: 2
-        x: 34
-        y: 85
-        width: 14
-        height: 10
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: d81e76bc04f0abd10800000000000000
-      internalID: 2142041343732998541
+      spriteID: 184b363973e340446b424b4d3e890afc
+      internalID: -732398441
       vertices: []
       indices: 
       edges: []
@@ -300,7 +212,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 7c7afe7441e61a9479d84941a493b2bf
     internalID: 0
     vertices: []
     indices: 
@@ -318,6 +230,9 @@ TextureImporter:
       Effect 1 - Sprite Sheet_5: 5277935113036910604
       Effect 1 - Sprite Sheet_6: -2525109361797861991
       Effect 1 - Sprite Sheet_7: 2142041343732998541
+      Level Up_0: 194108020
+      Level Up_1: 1405750026
+      Level Up_2: -732398441
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

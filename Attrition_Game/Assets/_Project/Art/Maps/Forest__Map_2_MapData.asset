@@ -21,14 +21,17 @@ MonoBehaviour:
   worldMapOffset: {x: 0, y: 0}
   worldMapScale: 1
   fogCellSize: 2.5
+  mapTint: {r: 0.66, g: 0.53, b: 0.24, a: 1}
+  outlineTint: {r: 0.297, g: 0.239, b: 0.108, a: 1}
+  outlineThickness: 2
   checkpoints:
-  - checkpointId: Rest 2 - Greenwood
-    worldPos: {x: 108.38, y: 13.74}
-  - checkpointId: Rest 1 - Greenwood
-    worldPos: {x: -42.68, y: 10.73}
   - checkpointId: Rest 4 - Wither Forest
     worldPos: {x: 290.27, y: 10.7}
+  - checkpointId: Rest 1 - Greenwood
+    worldPos: {x: -42.68, y: 10.73}
   - checkpointId: Rest 3 - Greenwood
     worldPos: {x: 186.12, y: 24.71}
   - checkpointId: Rest 5 - Wither Forest
     worldPos: {x: 535.24, y: -8.19}
+  - checkpointId: Rest 2 - Greenwood
+    worldPos: {x: 108.38, y: 13.74}

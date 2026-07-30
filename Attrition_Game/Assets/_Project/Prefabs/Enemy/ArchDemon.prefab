@@ -13,6 +13,12 @@ GameObject:
   - component: {fileID: 7841270895161922794}
   - component: {fileID: 2249232239601117400}
   - component: {fileID: 4760481864515761786}
+  - component: {fileID: 747415955058258738}
+  - component: {fileID: 7418000493216015126}
+  - component: {fileID: 407917610354042883}
+  - component: {fileID: 3459578007541165659}
+  - component: {fileID: 643089187529445467}
+  - component: {fileID: 5921478301797347660}
   m_Layer: 0
   m_Name: ArchDemon
   m_TagString: Untagged
@@ -180,3 +186,237 @@ CapsuleCollider2D:
   m_Offset: {x: 0, y: 1.9375}
   m_Size: {x: 2.6875, y: 3.875}
   m_Direction: 0
+--- !u!114 &747415955058258738
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7353810922886579706}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 3310200040
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 7418000493216015126}
+  - {fileID: 407917610354042883}
+  - {fileID: 3459578007541165659}
+  - {fileID: 643089187529445467}
+  - {fileID: 5921478301797347660}
+  ForceRemoteRenderTimeframe: 0
+--- !u!114 &7418000493216015126
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7353810922886579706}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bde3acf5f2a5191498de3b6e774d849c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Enemy.EnemyStats
+  statsSO: {fileID: 11400000, guid: f334cde2128b4764fa7603239af892f1, type: 2}
+  _MaxHP: 0
+  _AD: 0
+  _AP: 0
+  _DEF: 0
+  _RES: 0
+  _Poise: 0
+  _PoiseRecoveryTime: 0
+  _PatrolSpeed: 0
+  _ChaseSpeed: 0
+  _AttackSpeed: 0
+  _RuntimeExpReward: 0
+--- !u!114 &407917610354042883
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7353810922886579706}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 501014430ac2fca4c9aa96bf9efc23cc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::EnemyAnimation
+  anim: {fileID: 7841270895161922794}
+  defaultFacingLeft: 0
+  telegraphRenderer: {fileID: 0}
+  telegraphColor: {r: 1, g: 0.4, b: 0.4, a: 1}
+--- !u!114 &3459578007541165659
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7353810922886579706}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4477316cc1ec33f4cbc5bcc9afb45caf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Enemy.ArchDemon.ArchDemonBossAI
+  animationComp: {fileID: 407917610354042883}
+  combatComp: {fileID: 0}
+  controller: {fileID: 643089187529445467}
+  eliteSkills: {fileID: 0}
+  viewRadius: 5
+  patrolRadius: 3
+  isFlying: 0
+  flyHoverOffsetY: 0.8
+  flyMinGroundClearance: 1.2
+  flyMaxOffsetFromPlayer: 2.5
+  flyGroundLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  flyMeleeRetreat: 0
+  flyMeleeRetreatAltitude: 3
+  flyMeleeRetreatSpeed: 8
+  enableSleep: 0
+  wakeUpRadius: 0
+  sleepReturnDelay: 3
+  returnToSleepSpeed: 6
+  sleepOnCeiling: 1
+  sleepSurfaceLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  obstacleLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  wallCheckDistance: 0.8
+  wallCheckHeightOffset: 0.5
+  canEvadeJump: 0
+  evadeTriggerDistance: 2
+  jumpForce: 12
+  evadeBackwardSpeed: 8
+  jumpCooldown: 3
+  canLungeJump: 0
+  lungeMinDistance: 2.5
+  lungeMaxDistance: 7
+  lungeForwardSpeed: 11
+  lungeJumpForce: 10
+  facingDeadZone: 0.3
+  _CurrentState: 0
+  _NetSpeed: 0
+  _NetFacingDir: 1
+  _IsJumping:
+    _value: 0
+  _AttackLockedFacingDir: 1
+  darkOrbPrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  waterBallPrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  waterBallImpactPrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  waterBlastPrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  waterBlastEndPrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  waterStartup1Prefab:
+    RawGuidValue: 00000000000000000000000000000000
+  waterSpikePrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  waterStartup2Prefab:
+    RawGuidValue: 00000000000000000000000000000000
+  waterSplashPrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  targetRetargetInterval: 4
+  meleeRange: 2.6
+  meleeDamage: 26
+  meleeDuration: 0.7
+  orbChargeTime: 0.4
+  orbSpeed: 12
+  orbDamage: 28
+  ballChargeTime: 0.5
+  ballFarDistance: 11
+  ballFarGapY: 2
+  ballSpeed: 18
+  ballDamage: 24
+  blastCount: 3
+  blastInterval: 0.55
+  blastGapY: 1.5
+  blastChargeTime: 0.5
+  blastMoveSpeed: 9
+  blastSlowFactor: 0.7
+  blastSlowDuration: 2.5
+  blastTouchRadius: 1.2
+  blastDamage: 22
+  spikeCount: 7
+  spikeSpacing: 2.4
+  spikeFirstOffset: 2
+  spikeInterval: 0.16
+  spikeStartupLead: 0.35
+  spikeDamage: 24
+  splashRepeats: 3
+  splashStartupLead: 0.5
+  splashGap: 0.45
+  splashDamage: 26
+  roomFallbackHalfWidth: 15
+  recoveryTime: 0.4
+  initialDelay: 1.2
+  waitForTrigger: 1
+  introDialogue: {fileID: 0}
+  _EncounterStarted:
+    _value: 0
+  StateLocalTimer: 0
+--- !u!114 &643089187529445467
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7353810922886579706}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 700cca239293a354095d0e6f048f06c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Controllers.EnemyController
+  aiComp: {fileID: 3459578007541165659}
+  animationComp: {fileID: 407917610354042883}
+  combatComp: {fileID: 0}
+  eliteSkills: {fileID: 0}
+  extraLivesAfterHpZero: 0
+  reviveDelaySeconds: 2.5
+  deathClipName: 
+  despawnFallback: 1.5
+  lootItemIds: []
+  normalDropChance: 0.35
+  droppedItemPrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  canBeKnockedBack: 1
+  stunDuration: 0.4
+  _Health: 0
+  _CurrentPoise: 0
+  _isDeadNetworked:
+    _value: 0
+  _IsKnockbackActive:
+    _value: 0
+  _IsAwaitingRevive:
+    _value: 0
+  _HoldDespawn:
+    _value: 0
+  maxHealth: 1
+  statsComp: {fileID: 7418000493216015126}
+--- !u!114 &5921478301797347660
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7353810922886579706}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f1cf63d8e8f065b4493e300ad22b7313, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Controllers.BossController
+  bossDisplayName: Nameless Tyrant
+  phaseThresholds:
+  - 0.66
+  - 0.33
+  speedMultiplierPerPhase: 1.15
+  _CurrentPhase: 0

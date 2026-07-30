@@ -1852,3 +1852,186 @@
 /* Prompt [R] cũ: đồng bộ cỡ chữ + thanh với 2 khối trên. */
 #hud-revive-text { font-size: 20px; }
 #hud-revive-track { width: 260px; height: 22px; }
+
+/* ============================================================
+   SỬA LẦN 8 — ESC dễ đọc + panel thông tin item không còn mờ
+   User báo: (a) chữ trong ESC nhỏ khó nhìn, (b) thông tin item trong inventory
+   khó đọc vì khung TRONG SUỐT làm chữ mờ và chữ nhỏ.
+   ĐẶT CUỐI FILE: nhiều selector dưới đây đã khai báo ở trên (kể cả trong khối
+   theme Ornate) — USS lấy luật SAU cùng độ ưu tiên.
+   ============================================================ */
+
+/* ---------- (a) MÀN ESC (pause) ---------- */
+/* #pause-title đã lên 32px ở lần 6, nhưng .pause-btn thì BỊ BỎ SÓT — vẫn 12px.
+   Đó mới là phần user đọc nhiều nhất (RESUME / SETTINGS / QUIT TO MENU). */
+.pause-btn {
+    font-size: 22px;       /* 12 → 22 */
+    height: 64px;          /* 46 → 64: chữ 22px cần chỗ, không sát viền */
+    letter-spacing: 3px;   /* giảm nhẹ vì chữ to hơn, giữ tổng bề ngang vừa khung */
+    margin-bottom: 14px;
+}
+
+#pause-title {
+    font-size: 40px;       /* 32 → 40 cho cân với nút 22px */
+    letter-spacing: 8px;
+    margin-bottom: 36px;
+}
+
+#pause-content { width: 620px; }   /* 500 → 620: chứa nút chữ 22px + letter-spacing */
+
+/* ---------- (a2) MÀN SETTINGS (mở từ ESC) ---------- */
+/* Cùng lỗi: tiêu đề đã to nhưng nhãn/nút bên trong vẫn 11-12px. */
+.set-row-key    { font-size: 20px; width: 150px; }   /* 12 → 20 */
+.set-row-key.wide { width: 320px; }                  /* 220 → 320 cho chữ 20px */
+.set-row-val    { font-size: 20px; width: 72px; }    /* 12 → 20 */
+.set-section    { font-size: 18px; letter-spacing: 2px; }  /* 11 → 18 */
+.set-row        { margin-bottom: 12px; min-height: 40px; }
+
+.set-btn {
+    font-size: 20px;       /* 11 → 20 */
+    height: 56px;          /* 40 → 56 */
+    letter-spacing: 2px;
+    padding-left: 26px; padding-right: 26px;
+}
+
+#set-content { width: 900px; }   /* 700 → 900: hàng key(320)+slider+val(72) ở chữ 20px */
+
+/* ---------- (b) PANEL THÔNG TIN ITEM ---------- */
+/* NGUYÊN NHÂN chữ mờ: khối theme Ornate ép `background-color: rgba(0,0,0,0)` lên
+   #inv-detail, XOÁ MẤT nền đen đặc rgba(6,6,8,0.98) của luật gốc. Art panel_alt.png
+   có phần giữa bán trong suốt → cảnh game phía sau lọt qua, chữ chìm vào nền.
+   Trả lại nền đục NHƯNG GIỮ khung Ornate (background-image không bị đụng). */
+#inv-detail {
+    background-color: rgba(8, 7, 12, 0.97);
+    width: 400px;              /* 330 → 400 cho chữ to hơn */
+    padding: 22px;
+}
+
+#inv-detail-name {
+    font-size: 28px;           /* 24 → 28 */
+    color: #fbf0cf;            /* sáng hơn #e8d8a8 để nổi trên nền đục */
+    margin-bottom: 6px;
+}
+
+#inv-detail-desc {
+    font-size: 19px;           /* 16 → 19 */
+    color: rgba(255, 255, 255, 0.88);   /* 0.55 → 0.88: mô tả trước đây mờ nhất */
+    margin-bottom: 14px;
+}
+
+/* Dòng chỉ số cộng thêm (tạo runtime, class .detail-mod trong
+   GameUIController.Inventory.Refresh.cs) — trước 11px, nhỏ nhất cả panel. */
+.detail-mod {
+    font-size: 19px;
+    color: rgb(150, 225, 150);
+}
+
+#inv-detail-mods { margin-bottom: 16px; }
+
+.detail-btn { font-size: 20px; height: 50px; letter-spacing: 2px; }
+
+/* ============================================================
+   SỬA LẦN 9 — Tab: icon mặt player ở ô giữa + chỉ số dễ đọc
+   User báo: (a) ô giữa khi Tab lên trống, muốn có icon mặt player;
+             (b) các dòng HP/DEF/RES/AD nhỏ khó nhìn.
+   ĐẶT CUỐI FILE để thắng cascade (#inv-avatar/.stat-cell-* khai nhiều lần).
+   ============================================================ */
+
+/* ---------- (a) ICON MẶT PLAYER ---------- */
+/* #inv-avatar vốn CHỈ có nền tối + viền tròn, KHÔNG có ảnh nào → ô giữa trống.
+   (Khác `.hud-avatar` trên HUD — cái đó bị ẩn vì art Gandalf đã có orb chân dung.)
+   Ảnh cắt từ đầu nhân vật trong `_Idle.png` (rows 0..13 của sprite 21x38). */
+#inv-avatar {
+    width: 104px; height: 104px;
+    border-radius: 52px;
+    background-image: url('../Art/UI_Elements/player_portrait.png');
+    -unity-background-scale-mode: scale-to-fit;
+    background-color: rgb(20, 15, 26);
+    border-width: 2px;
+    border-color: rgba(201, 168, 76, 0.75);
+}
+
+/* ---------- (b) CHỈ SỐ TRONG TAB ---------- */
+/* Ô DEF/RES/AD/AP: 16/20px vẫn hụt so với phần còn lại của Tab sau khi nâng cỡ chữ. */
+.stat-cell-key { font-size: 20px; letter-spacing: 1px; color: rgba(255, 255, 255, 0.8); }
+.stat-cell-val { font-size: 24px; color: #fbf0cf; }
+
+.stat-cell {
+    min-height: 46px;
+    padding-left: 14px; padding-right: 14px;
+    padding-top: 8px; padding-bottom: 8px;
+    margin-bottom: 9px;
+}
+
+/* Số "1000/1000" của các thanh HP/Mana/Stamina/EXP trong Tab.
+   CHỈ nhắm theo ID của Tab — KHÔNG dùng class `.stat-bar-label` vì class đó dùng chung với HUD
+   (hud-hp-label...), mà nhãn HUD đang bị ẩn CÓ CHỦ Ý (khung Gandalf hẹp, đọc máu bằng hình). */
+#inv-hp-label,
+#inv-mana-label,
+#inv-stamina-label,
+#inv-exp-label {
+    font-size: 20px;
+    width: 124px;
+    color: #fbf0cf;
+}
+
+/* ============================================================
+   SỬA LẦN 10 — TAB NHIỆM VỤ (log quest trong bảng Tab)
+   User: "hiện log nhiệm vụ đã nhận chưa hoàn thành nằm chung với
+   các mục item, skill, accessory lúc tab".
+
+   ⚠ Các class `tracker-*` VỐN CHỈ CÓ trong DialogueUI.uss (quest tracker góc màn hình).
+   GameUI.uss là file style RIÊNG → không thừa hưởng gì từ đó, nên phải khai lại ở đây,
+   nếu không log nhiệm vụ trong Tab sẽ hiện chữ trần không khung.
+   Cỡ chữ để to hơn bản HUD (24/20 thay vì 20/18) cho khớp phần còn lại của Tab.
+   ============================================================ */
+
+#inv-quest-scroll { flex-grow: 1; }
+
+#inv-quest-list {
+    padding-left: 4px; padding-right: 4px;
+    padding-top: 2px;
+}
+
+.tracker-entry {
+    margin-bottom: 12px;
+    padding-left: 14px; padding-right: 14px;
+    padding-top: 12px; padding-bottom: 12px;
+    background-color: rgba(200, 170, 80, 0.07);
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: rgba(200, 170, 80, 0.18);
+}
+
+.tracker-entry-title {
+    font-size: 24px;
+    color: #f2e8c8;
+    -unity-font-style: bold;
+    margin-bottom: 6px;
+    white-space: normal;
+}
+
+.tracker-entry-progress {
+    font-size: 20px;
+    color: #c2b898;
+    margin-bottom: 6px;
+    white-space: normal;
+}
+
+.tracker-progress-bar-bg {
+    width: 100%;
+    height: 14px;
+    background-color: rgba(255, 255, 255, 0.08);
+    border-radius: 2px;
+}
+
+.tracker-progress-bar-fill {
+    height: 100%;
+    background-color: #E8C869;
+    border-radius: 2px;
+}
+
+/* Xong mục tiêu → viền + chữ xanh, để phân biệt với nhiệm vụ đang làm. */
+.tracker-entry-complete { border-color: rgba(100, 200, 100, 0.4); }
+.tracker-entry-complete .tracker-entry-title { color: #A8E8A0; }
+.tracker-entry-complete .tracker-progress-bar-fill { background-color: #80D880; }

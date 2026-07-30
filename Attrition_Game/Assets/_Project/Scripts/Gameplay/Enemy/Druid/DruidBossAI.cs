@@ -22,7 +22,7 @@ namespace Attrition.Gameplay.Enemy.Druid
     /// Các "prefab" là NetworkPrefabRef gán ở Inspector. Damage đến từ EnemyProjectile (đạn bay) hoặc
     /// EnemyAoEDamage (nổ đứng yên) gắn trên chính prefab đó — AI chỉ Spawn + Init.
     /// </summary>
-    public class DruidBossAI : EnemyAI
+    public class DruidBossAI : EnemyAI, Attrition.Core.IBossEncounter
     {
         [Header("═══ DRUID — BOSS SETTINGS ═══")]
 
@@ -128,6 +128,10 @@ namespace Attrition.Gameplay.Enemy.Druid
         public bool waitForTrigger = true;
         [Tooltip("File thoại mở đầu (tùy chọn).")]
         public Attrition.Data.DialogueSO introDialogue;
+
+        // IBossEncounter: bridge NetworkBool → bool (xem ghi chú cùng chỗ trong SeveredFangAI).
+        bool Attrition.Core.IBossEncounter.EncounterStarted => EncounterStarted;
+        public bool IsWaitingForTrigger => waitForTrigger;
 
         // ═══════════════════════════════════════════════════════════════
         // NETWORKED STATE

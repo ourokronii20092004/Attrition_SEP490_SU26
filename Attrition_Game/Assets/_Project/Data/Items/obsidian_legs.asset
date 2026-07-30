@@ -15,7 +15,7 @@ MonoBehaviour:
   itemId: obsidian_legs
   displayName: Obsidian Legguards
   description: 
-  icon: {fileID: 0}
+  icon: {fileID: 39480752, guid: cc0803e2bf90b964d8fb4117bdcb0579, type: 3}
   maxStack: 1
   isKeyItem: 0
   slot: 2

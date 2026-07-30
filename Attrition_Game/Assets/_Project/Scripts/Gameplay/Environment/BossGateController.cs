@@ -3,7 +3,6 @@ using Fusion;
 using UnityEngine;
 using Attrition.Controllers;
 using Attrition.Gameplay.World;
-using Attrition.Gameplay.Enemy.SeveredFang;
 
 namespace Attrition.Gameplay.Environment
 {
@@ -19,8 +18,12 @@ namespace Attrition.Gameplay.Environment
     {
         [Header("---- BOSS ----")]
         [SerializeField] private EnemyController boss;
-        [Tooltip("SeveredFangAI của boss — để biết đã VÀO TRẬN chưa. Bỏ trống = bỏ qua khoá lối vào.")]
-        [SerializeField] private SeveredFangAI bossAI;
+        [Tooltip("AI boss (SeveredFang / Druid / Elf / DemonKin / ArchDemon) — phải implement IBossEncounter. " +
+                 "Để biết đã VÀO TRẬN chưa. Bỏ trống = bỏ qua khoá lối vào.")]
+        [SerializeField] private MonoBehaviour bossAI;
+
+        /// <summary>bossAI dạng interface — null nếu bỏ trống hoặc gán sai loại component.</summary>
+        private Attrition.Core.IBossEncounter BossEncounter => bossAI as Attrition.Core.IBossEncounter;
 
         [Header("---- LỐI VÀO (khoá khi đang đánh) ----")]
         [SerializeField] private Door entryDoor;
@@ -107,7 +110,7 @@ namespace Attrition.Gameplay.Environment
 
             if (DeathStarted) return;
 
-            if (!EntrySealed && entryDoor != null && bossAI != null && !bossAI.waitForTrigger)
+            if (!EntrySealed && entryDoor != null && BossEncounter != null && !BossEncounter.IsWaitingForTrigger)
             {
                 EntrySealed = true;
                 entryDoor.Close();
@@ -134,7 +137,7 @@ namespace Attrition.Gameplay.Environment
                 var bc = boss.GetComponent<Attrition.Controllers.BossController>();
                 if (bc != null) bc.ResetPhases();
             }
-            if (bossAI != null) bossAI.ResetEncounter();
+            BossEncounter?.ResetEncounter();
 
             // Trigger vào phòng đã "dùng" 1 lần → cho phép kích hoạt lại.
             foreach (var trig in FindObjectsByType<BossEncounterTrigger>(FindObjectsSortMode.None))

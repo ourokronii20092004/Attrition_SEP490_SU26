@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.SkillSO
   itemId: skill_earth
-  displayName: Stone Spike
+  displayName: Stone Skill
   description: 
   icon: {fileID: 0}
   maxStack: 1

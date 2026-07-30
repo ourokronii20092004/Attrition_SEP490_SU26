@@ -31,6 +31,18 @@ namespace Attrition.Editor
     {
         private const string HazardLayerName = "Hazard";
 
+        /// <summary>
+        /// Bẫy "với" thêm bao nhiêu world-unit ngoài mép tile — set vào `Hazard.extraReach`.
+        ///
+        /// VÌ SAO CẦN: `TilemapCollider2D` bám SÁT mép tile. Player rơi vào RÃNH HẸP (rộng ~1 tile, gai ở
+        /// đáy) thì collider người chèn ngang giữa 2 vách mà KHÔNG chạm đáy → không trúng bẫy, không chết,
+        /// kẹt luôn dưới đó (đúng lỗi user báo).
+        ///
+        /// 0.14 ≈ 2px ở PPU 16: đủ bịt rãnh hẹp nhưng không đủ để gai "với" lên trúng player đang đứng an
+        /// toàn trên mép — nới quá tay thì đi cạnh gai cũng mất máu.
+        /// </summary>
+        private const float HazardExtraReach = 0.14f;
+
         private static readonly string[] GameplayScenes =
         {
             "The Darkest Path - Map 1",
@@ -123,7 +135,18 @@ namespace Attrition.Editor
                 }
 
                 // Script gây sát thương (đã có sẵn trong project).
-                if (go.GetComponent<Hazard>() == null) Undo.AddComponent<Hazard>(go);
+                var hazard = go.GetComponent<Hazard>();
+                if (hazard == null) hazard = Undo.AddComponent<Hazard>(go);
+
+                // Nới tầm "với" của bẫy — xem ghi chú ở HazardExtraReach. Field private [SerializeField]
+                // nên phải set qua SerializedObject.
+                var hso = new SerializedObject(hazard);
+                var reach = hso.FindProperty("extraReach");
+                if (reach != null && !Mathf.Approximately(reach.floatValue, HazardExtraReach))
+                {
+                    reach.floatValue = HazardExtraReach;
+                    hso.ApplyModifiedProperties();
+                }
 
                 // Đưa về đúng physics layer để rõ ràng + khớp mọi raycast/query lọc theo layer Hazard.
                 if (hazardLayer >= 0 && go.layer != hazardLayer)

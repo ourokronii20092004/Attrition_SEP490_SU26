@@ -15,11 +15,11 @@ MonoBehaviour:
   itemId: acc_slow
   displayName: Frost Charm
   description: 
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: a16a380d71aeb204f98f0e3fa4414fa5, type: 3}
   maxStack: 1
   isKeyItem: 0
   kind: 0
-  grantedAbility: 1
+  grantedAbility: 0
   modifiers: []
   effect: 2
   effectMagnitude: 0.5
@@ -27,3 +27,4 @@ MonoBehaviour:
   effectThreshold: 0.5
   effectThresholdStop: 0.8
   effectCooldown: 8
+  coopOnlyReward: 1

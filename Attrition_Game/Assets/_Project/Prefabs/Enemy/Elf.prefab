@@ -13,6 +13,12 @@ GameObject:
   - component: {fileID: 7841270895160571001}
   - component: {fileID: 2249232239600571001}
   - component: {fileID: 4760481864510571001}
+  - component: {fileID: 6437086433502861758}
+  - component: {fileID: 8147940626318781279}
+  - component: {fileID: 761417441523126437}
+  - component: {fileID: 1502889893757204786}
+  - component: {fileID: 5707874604750983181}
+  - component: {fileID: 5801135234133541705}
   m_Layer: 0
   m_Name: Elf
   m_TagString: Untagged
@@ -111,7 +117,7 @@ Animator:
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
-  m_WarningMessage:
+  m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
@@ -180,3 +186,228 @@ CapsuleCollider2D:
   m_Offset: {x: 0, y: 1.375}
   m_Size: {x: 1.375, y: 2.75}
   m_Direction: 0
+--- !u!114 &6437086433502861758
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7353810922886571001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 1200065653
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 8147940626318781279}
+  - {fileID: 761417441523126437}
+  - {fileID: 1502889893757204786}
+  - {fileID: 5707874604750983181}
+  - {fileID: 5801135234133541705}
+  ForceRemoteRenderTimeframe: 0
+--- !u!114 &8147940626318781279
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7353810922886571001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bde3acf5f2a5191498de3b6e774d849c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Enemy.EnemyStats
+  statsSO: {fileID: 11400000, guid: c8e4d1a26b5f79135d9c2e8f4a016b37, type: 2}
+  _MaxHP: 0
+  _AD: 0
+  _AP: 0
+  _DEF: 0
+  _RES: 0
+  _Poise: 0
+  _PoiseRecoveryTime: 0
+  _PatrolSpeed: 0
+  _ChaseSpeed: 0
+  _AttackSpeed: 0
+  _RuntimeExpReward: 0
+--- !u!114 &761417441523126437
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7353810922886571001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 501014430ac2fca4c9aa96bf9efc23cc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::EnemyAnimation
+  anim: {fileID: 7841270895160571001}
+  defaultFacingLeft: 0
+  telegraphRenderer: {fileID: 0}
+  telegraphColor: {r: 1, g: 0.4, b: 0.4, a: 1}
+--- !u!114 &1502889893757204786
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7353810922886571001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e2ad1d2d6b59d24890e883cabbdf95f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Enemy.Elf.ElfBossAI
+  animationComp: {fileID: 761417441523126437}
+  combatComp: {fileID: 0}
+  controller: {fileID: 5707874604750983181}
+  eliteSkills: {fileID: 0}
+  viewRadius: 5
+  patrolRadius: 3
+  isFlying: 0
+  flyHoverOffsetY: 0.8
+  flyMinGroundClearance: 1.2
+  flyMaxOffsetFromPlayer: 2.5
+  flyGroundLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  flyMeleeRetreat: 0
+  flyMeleeRetreatAltitude: 3
+  flyMeleeRetreatSpeed: 8
+  enableSleep: 0
+  wakeUpRadius: 0
+  sleepReturnDelay: 3
+  returnToSleepSpeed: 6
+  sleepOnCeiling: 1
+  sleepSurfaceLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  obstacleLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  wallCheckDistance: 0.8
+  wallCheckHeightOffset: 0.5
+  canEvadeJump: 0
+  evadeTriggerDistance: 2
+  jumpForce: 12
+  evadeBackwardSpeed: 8
+  jumpCooldown: 3
+  canLungeJump: 0
+  lungeMinDistance: 2.5
+  lungeMaxDistance: 7
+  lungeForwardSpeed: 11
+  lungeJumpForce: 10
+  facingDeadZone: 0.3
+  _CurrentState: 0
+  _NetSpeed: 0
+  _NetFacingDir: 1
+  _IsJumping:
+    _value: 0
+  _AttackLockedFacingDir: 1
+  thunderArrowPrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  thunderBirdPrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  thunderHitPrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  thunderSplashPrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  thunderStrikePrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  targetRetargetInterval: 4
+  meleeRange: 2
+  meleeDamage: 18
+  meleeDuration: 0.65
+  arrowCount: 3
+  arrowGapY: 1.8
+  arrowChargeTime: 0.35
+  arrowSpeed: 16
+  arrowDamage: 16
+  birdChargeTime: 1.1
+  birdHighOffsetY: 1.4
+  birdLowOffsetY: -0.9
+  birdSpeed: 11
+  birdDamage: 30
+  waveCount: 8
+  waveStepX: 1.9
+  waveAmplitudeY: 2.2
+  waveInterval: 0.13
+  waveDamage: 20
+  splashVanishTime: 0.3
+  splashAppearTime: 0.35
+  splashArriveOffsetX: 0.6
+  splashShootDelay: 0.25
+  splashDamage: 12
+  strikeSpacing: 2.6
+  strikeInterval: 0.1
+  strikeWaveGap: 0.8
+  strikeChaseCount: 3
+  strikeFallbackHalfWidth: 14
+  strikeSpawnHeight: 6
+  strikeDamage: 24
+  recoveryTime: 0.65
+  initialDelay: 1.2
+  waitForTrigger: 1
+  introDialogue: {fileID: 0}
+  _EncounterStarted:
+    _value: 0
+  StateLocalTimer: 0
+--- !u!114 &5707874604750983181
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7353810922886571001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 700cca239293a354095d0e6f048f06c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Controllers.EnemyController
+  aiComp: {fileID: 1502889893757204786}
+  animationComp: {fileID: 761417441523126437}
+  combatComp: {fileID: 0}
+  eliteSkills: {fileID: 0}
+  extraLivesAfterHpZero: 0
+  reviveDelaySeconds: 2.5
+  deathClipName: 
+  despawnFallback: 1.5
+  lootItemIds: []
+  normalDropChance: 0.35
+  droppedItemPrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  canBeKnockedBack: 1
+  stunDuration: 0.4
+  _Health: 0
+  _CurrentPoise: 0
+  _isDeadNetworked:
+    _value: 0
+  _IsKnockbackActive:
+    _value: 0
+  _IsAwaitingRevive:
+    _value: 0
+  _HoldDespawn:
+    _value: 0
+  maxHealth: 1
+  statsComp: {fileID: 8147940626318781279}
+--- !u!114 &5801135234133541705
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7353810922886571001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f1cf63d8e8f065b4493e300ad22b7313, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Controllers.BossController
+  bossDisplayName: Nameless Tyrant
+  phaseThresholds:
+  - 0.66
+  - 0.33
+  speedMultiplierPerPhase: 1.15
+  _CurrentPhase: 0
