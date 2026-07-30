@@ -18,6 +18,15 @@ namespace Attrition.UI
         private ItemCategory _activeTab = ItemCategory.Equipment;
         private int _selectedSlot = -1;
 
+        /// <summary>
+        /// Đang xem tab NHIỆM VỤ (log quest) thay vì lưới đồ?
+        ///
+        /// VÌ SAO KHÔNG THÊM VÀO `ItemCategory`: enum đó là DATA của item (Equipment/Accessory/Skill/
+        /// Material) — mọi ItemSO đều khai theo nó. Thêm "Quest" vào sẽ tạo một category item không tồn tại,
+        /// và `IsInTab` phải xử lý nhánh vô nghĩa. Tab nhiệm vụ chỉ là chuyện của UI nên giữ cờ riêng.
+        /// </summary>
+        private bool _questTabActive;
+
         public enum SelectedSlotContext { None, InventoryGrid, EquippedHead, EquippedChest, EquippedLegs, EquippedBoots, EquippedAccessory, EquippedSkill }
         private SelectedSlotContext _selectedContext = SelectedSlotContext.None;
 
@@ -51,6 +60,7 @@ namespace Attrition.UI
             BindTab("inv-tab-equipment", ItemCategory.Equipment);
             BindTab("inv-tab-accessory", ItemCategory.Accessory);
             BindTab("inv-tab-skill", ItemCategory.Skill);
+            BindQuestTab("inv-tab-quest");
 
             BindButton("inv-detail-equip", EquipOrUnequipSelected);
             BindButton("inv-detail-drop", DropSelected);
@@ -171,15 +181,46 @@ namespace Attrition.UI
             if (b != null) b.clicked += () => { if (_stats != null) _stats.RpcRequestAllocate((int)stat); };
         }
 
+        private void BindQuestTab(string name)
+        {
+            var b = _root.Q<Button>(name);
+            if (b != null) b.clicked += SwitchToQuestTab;
+        }
+
         private void SwitchTab(ItemCategory cat)
         {
             _activeTab = cat;
+            _questTabActive = false;
             _selectedSlot = -1;
-            SetTabActive("inv-tab-equipment", cat == ItemCategory.Equipment);
-            SetTabActive("inv-tab-accessory", cat == ItemCategory.Accessory);
-            SetTabActive("inv-tab-skill", cat == ItemCategory.Skill);
+            ApplyTabVisuals();
             SetVisible(_root.Q<VisualElement>("inv-detail"), false);
             RefreshInventory();
+        }
+
+        /// <summary>Chuyển sang tab NHIỆM VỤ: ẩn lưới đồ, hiện log quest.</summary>
+        private void SwitchToQuestTab()
+        {
+            _questTabActive = true;
+            _selectedSlot = -1;
+            ApplyTabVisuals();
+            SetVisible(_root.Q<VisualElement>("inv-detail"), false);
+            RefreshQuestLog();
+        }
+
+        /// <summary>Bật/tắt nút tab đang chọn + đổi giữa lưới đồ và log nhiệm vụ.</summary>
+        private void ApplyTabVisuals()
+        {
+            SetTabActive("inv-tab-equipment", !_questTabActive && _activeTab == ItemCategory.Equipment);
+            SetTabActive("inv-tab-accessory", !_questTabActive && _activeTab == ItemCategory.Accessory);
+            SetTabActive("inv-tab-skill", !_questTabActive && _activeTab == ItemCategory.Skill);
+            SetTabActive("inv-tab-quest", _questTabActive);
+
+            // Lưới đồ và log nhiệm vụ dùng CHUNG vùng bên phải → luôn chỉ 1 cái hiện.
+            SetVisible(_root.Q<VisualElement>("inv-grid-scroll"), !_questTabActive);
+            SetVisible(_root.Q<VisualElement>("inv-quest-scroll"), _questTabActive);
+
+            // Thanh "SLOTS x/40" chỉ có nghĩa với lưới đồ.
+            SetVisible(_root.Q<VisualElement>("inv-weight-row"), !_questTabActive);
         }
 
         private void SetTabActive(string name, bool active)

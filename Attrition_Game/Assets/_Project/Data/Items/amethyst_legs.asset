@@ -15,7 +15,7 @@ MonoBehaviour:
   itemId: amethyst_legs
   displayName: Amethyst Legguards
   description: 
-  icon: {fileID: 0}
+  icon: {fileID: 2130970781, guid: 1d44f8ca97be9d34b8364bfceba12232, type: 3}
   maxStack: 1
   isKeyItem: 0
   slot: 2

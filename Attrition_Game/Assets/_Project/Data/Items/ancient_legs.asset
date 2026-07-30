@@ -15,7 +15,7 @@ MonoBehaviour:
   itemId: ancient_legs
   displayName: Ancient Legguards
   description: 
-  icon: {fileID: 0}
+  icon: {fileID: 2134938502, guid: 073ca552d07ed6141bc0f7b148ee18bb, type: 3}
   maxStack: 1
   isKeyItem: 0
   slot: 2

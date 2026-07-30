@@ -42,6 +42,25 @@ namespace Attrition.Gameplay.Player.Inventory
         /// <summary>Flag set bởi PlayerController khi đang trong vùng Boss (BR-17).</summary>
         [System.NonSerialized] public bool IsInBossZone;
 
+        /// <summary>
+        /// Được phép ĐỔI ACCESSORY chưa? Yêu cầu user: CHỈ đổi khi đang đứng tại điểm checkpoint.
+        ///
+        /// Đọc `PlayerController.AtCheckpointNet` ([Networked]) chứ KHÔNG dùng `IsAtCheckpoint` — cái sau
+        /// chỉ có giá trị trên máy giữ InputAuthority, còn gate này chạy ở HOST (StateAuthority) nên trong
+        /// coop host sẽ luôn thấy false cho client và client không bao giờ đổi được.
+        ///
+        /// Không tìm thấy PlayerController (prefab lạ/test scene) → cho phép, để không khoá cứng đồ chơi thử.
+        /// </summary>
+        private bool CanSwapAccessory
+        {
+            get
+            {
+                var pc = GetComponent<PlayerController>();
+                if (pc == null) return true;
+                return pc.AtCheckpointNet;
+            }
+        }
+
         /// <summary>Event UI lắng nghe để refresh grid.</summary>
         public event System.Action OnInventoryChanged;
 
@@ -501,6 +520,7 @@ namespace Attrition.Gameplay.Player.Inventory
         public bool TryEquipAccessoryFromSlot(int slotIndex)
         {
             if (!HasStateAuthority || IsInBossZone) return false;
+            if (!CanSwapAccessory) return false;   // chỉ đổi accessory tại checkpoint
             if (slotIndex < 0 || slotIndex >= AccessorySlots.Length) return false;
 
             var slot = AccessorySlots.Get(slotIndex);
@@ -520,6 +540,12 @@ namespace Attrition.Gameplay.Player.Inventory
             AccessorySlots.Set(slotIndex, InventorySlot.Empty);
             RebuildAndApplyGear();
             NotifyChanged();
+
+            // acc_potion (AttackBuff) / acc_postskill (SkillBuff): buff chạy 60s tính TỪ LÚC TRANG BỊ.
+            // Gọi SAU khi `EquippedAccessory` đã đổi vì AccessoryEffects đọc ô đang trang bị để biết loại buff.
+            var fx = GetComponent<AccessoryEffects>();
+            if (fx != null) fx.ArmBuffsOnEquip();
+
             return true;
         }
 
@@ -613,6 +639,7 @@ namespace Attrition.Gameplay.Player.Inventory
         public bool TryUnequipAccessory()
         {
             if (!HasStateAuthority || IsInBossZone) return false;
+            if (!CanSwapAccessory) return false;   // chỉ đổi accessory tại checkpoint
             if (EquippedAccessory.IsEmpty) return false;
 
             int emptyIdx = FindEmptySlot(AccessorySlots);
@@ -628,6 +655,7 @@ namespace Attrition.Gameplay.Player.Inventory
         public bool TryUnequipAccessoryToSlot(int destSlot)
         {
             if (!HasStateAuthority || IsInBossZone) return false;
+            if (!CanSwapAccessory) return false;   // chỉ đổi accessory tại checkpoint
             if (EquippedAccessory.IsEmpty) return false;
 
             if (destSlot >= 0 && destSlot < AccessorySlots.Length)

@@ -18,7 +18,7 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
     /// 
     /// Animator dùng Entry → State → Exit, trigger-based.
     /// </summary>
-    public class SeveredFangAI : EnemyAI
+    public class SeveredFangAI : EnemyAI, Attrition.Core.IBossEncounter
     {
 
         [Header("═══ SEVERED FANG — BOSS SETTINGS ═══")]
@@ -28,6 +28,9 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
         [SerializeField] private NetworkPrefabRef fireExplosionPrefab;
         [Tooltip("Prefab đạn lửa (ném ra từ tay).")]
         [SerializeField] private NetworkPrefabRef fireBoltPrefab;
+        [Tooltip("Prefab VỆT LỬA của skill 4 Fire Breath (EnemyAoEDamage, tự hạ xuống đất). " +
+                 "BỎ TRỐNG = tái dùng fireExplosionPrefab như trước.")]
+        [SerializeField] private NetworkPrefabRef fireBreathPrefab;
 
         [Header("---- TARGETING (COOP) ----")]
         [Tooltip("Coop: boss bám 1 player trong khoảng thời gian này (giây) rồi mới xét lại ai gần nhất. " +
@@ -162,9 +165,16 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
         [Tooltip("File thoại mở đầu")]
         public Attrition.Data.DialogueSO introDialogue;
 
+        // IBossEncounter: `EncounterStarted` là NetworkBool (struct riêng của Fusion) nên KHÔNG tự thoả
+        // `bool` của interface — phải bridge tường minh. `IsWaitingForTrigger` cho gate đọc mà không cần
+        // biết boss là loại nào.
+        bool Attrition.Core.IBossEncounter.EncounterStarted => EncounterStarted;
+        public bool IsWaitingForTrigger => waitForTrigger;
+
 
         public NetworkPrefabRef FireExplosionPrefab => fireExplosionPrefab;
         public NetworkPrefabRef FireBoltPrefab => fireBoltPrefab;
+        public NetworkPrefabRef FireBreathPrefab => fireBreathPrefab;
         public Rigidbody2D Rb => rb;
         public EnemyAnimation AnimComp => animationComp;
         public EnemyCombat CombatComp => combatComp;
@@ -361,6 +371,24 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
             if (!HasStateAuthority || !fireExplosionPrefab.IsValid) return;
 
             Runner.Spawn(fireExplosionPrefab, position, Quaternion.identity, null, (runner, obj) =>
+            {
+                Attrition.Gameplay.Combat.ProjectileInitializer.Init(
+                    obj, Vector2.zero, damage,
+                    Attrition.Gameplay.Combat.ProjectileInitializer.DefaultSpeed,
+                    Attrition.Core.DamageType.Magic);
+            });
+        }
+
+        /// <summary>
+        /// Spawn 1 VỆT LỬA của skill 4 Fire Breath. Dùng `fireBreathPrefab` nếu đã gán; bỏ trống thì rơi
+        /// về `fireExplosionPrefab` để prefab boss cũ (chưa gán ô mới) vẫn chạy y như trước.
+        /// </summary>
+        public void SpawnFireBreath(Vector2 position, int damage)
+        {
+            var prefab = fireBreathPrefab.IsValid ? fireBreathPrefab : fireExplosionPrefab;
+            if (!HasStateAuthority || !prefab.IsValid) return;
+
+            Runner.Spawn(prefab, position, Quaternion.identity, null, (runner, obj) =>
             {
                 Attrition.Gameplay.Combat.ProjectileInitializer.Init(
                     obj, Vector2.zero, damage,

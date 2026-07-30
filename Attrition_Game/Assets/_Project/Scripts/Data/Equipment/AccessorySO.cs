@@ -27,7 +27,12 @@ namespace Attrition.Data
         HealthRegen,      // Hồi máu theo NHỊP: cứ effectCooldown giây hồi effectMagnitude HP.
         PotionBoost,      // Tăng hiệu quả hồi HP khi uống bình máu (% cộng thêm).
         DamageShield,     // Gây sát thương → tạo lá chắn tạm (có cooldown).
-        PostSkillDamage   // Sau khi dùng skill → đòn đánh KẾ TIẾP tăng sát thương.
+        PostSkillDamage,  // Sau khi dùng skill → đòn đánh KẾ TIẾP tăng sát thương.
+
+        // ⚠ CHỈ THÊM VÀO CUỐI. Asset .asset lưu `effect` dưới dạng SỐ (vd acc_potion = 5), chèn giữa sẽ
+        // làm mọi accessory hiện có trỏ sai hiệu ứng.
+        AttackBuff,       // Uống bình máu → tăng sát thương ĐÒN ĐÁNH THƯỜNG trong effectDuration giây.
+        SkillBuff         // Tung skill → mọi skill tung ra trong effectDuration giây tiếp theo tăng sát thương.
     }
 
     /// <summary>
@@ -69,6 +74,12 @@ namespace Attrition.Data
         [Tooltip("Cooldown hồi hiệu ứng (giây). DamageShield: giãn cách giữa 2 lần tạo khiên. "
                + "HealthRegen: giãn cách giữa 2 nhịp hồi HP.")]
         public float effectCooldown = 8f;
+
+        [Header("---- ĐIỀU KIỆN NHẬN ----")]
+        [Tooltip("Bật = accessory này CHỈ nhận được khi chơi COOP. Nhiệm vụ vẫn hiện ở cả 2 chế độ, nhưng " +
+                 "solo hoàn thành thì KHÔNG được món này (quest tự thay bằng phần thưởng khác/không có). " +
+                 "Áp cho: shield, slow, burn, lifesteal, acc_potion.")]
+        public bool coopOnlyReward = false;
 
         public override ItemCategory Category => ItemCategory.Accessory;
     }

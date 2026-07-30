@@ -197,7 +197,11 @@ namespace Attrition.UI
                                 case SelectedSlotContext.EquippedChest: _inventory.RpcRequestUnequipArmorToSlot((int)EquipmentSlot.Chest, dropTarget); break;
                                 case SelectedSlotContext.EquippedLegs: _inventory.RpcRequestUnequipArmorToSlot((int)EquipmentSlot.Legs, dropTarget); break;
                                 case SelectedSlotContext.EquippedBoots: _inventory.RpcRequestUnequipArmorToSlot((int)EquipmentSlot.Boots, dropTarget); break;
-                                case SelectedSlotContext.EquippedAccessory: _inventory.RpcRequestUnequipAccessoryToSlot(dropTarget); break;
+                                // Accessory: chỉ đổi được tại checkpoint (toast giải thích lý do).
+                                case SelectedSlotContext.EquippedAccessory:
+                                    if (BlockAccessorySwapOutsideCheckpoint()) return;
+                                    _inventory.RpcRequestUnequipAccessoryToSlot(dropTarget);
+                                    break;
                                 case SelectedSlotContext.EquippedSkill: _inventory.RpcRequestUnequipSkillToSlot(dropTarget); break;
                             }
                         }
@@ -237,7 +241,11 @@ namespace Attrition.UI
                         if (dragReal < 0) return;
                         switch (btnName)
                         {
-                            case "equip-accessory": _inventory.RpcRequestEquipAccessory(dragReal); break;
+                            // Accessory: chỉ đổi được tại checkpoint (toast giải thích lý do).
+                            case "equip-accessory":
+                                if (BlockAccessorySwapOutsideCheckpoint()) return;
+                                _inventory.RpcRequestEquipAccessory(dragReal);
+                                break;
                             case "equip-skill": _inventory.RpcRequestEquipSkill(dragReal); break;
                             default: _inventory.RpcRequestEquip(dragReal); break;
                         }

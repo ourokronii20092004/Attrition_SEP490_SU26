@@ -7,8 +7,9 @@ namespace Attrition.Gameplay.Enemy.SeveredFang.States
     /// (FireExplosion) LAN TUẦN TỰ trên mặt đất về phía player. Mỗi vệt cách nhau fireBreathSpacing (units)
     /// và fireBreathInterval (giây) → tạo cảm giác lửa "chạy" tới trước, player phải né/nhảy.
     ///
-    /// Chưa có animation riêng cho vệt lửa → tái dùng FireExplosion prefab (tự hạ xuống mặt đất qua
-    /// EnemyAoEDamage.SnapToGround). Chỉ host spawn; damage host-authoritative trong AoE.
+    /// Vệt lửa dùng ô prefab RIÊNG `fireBreathPrefab` trên SeveredFangAI; để trống thì tự rơi về
+    /// `fireExplosionPrefab` như bản cũ. Cả hai đều tự hạ xuống mặt đất qua EnemyAoEDamage.SnapToGround.
+    /// Chỉ host spawn; damage host-authoritative trong AoE.
     /// </summary>
     public class SF_FireBreathState : SeveredFangState
     {
@@ -58,7 +59,7 @@ namespace Attrition.Gameplay.Enemy.SeveredFang.States
                 // Vệt thứ i cách boss (i+1)*spacing về phía player → lửa "chạy" ra xa.
                 float offsetX = _dir * ai.fireBreathSpacing * (_spawned + 1);
                 Vector2 pos = (Vector2)ai.transform.position + new Vector2(offsetX, 0.2f);
-                ai.SpawnFireExplosion(pos, ai.fireBreathDamage); // tự hạ xuống mặt đất
+                ai.SpawnFireBreath(pos, ai.fireBreathDamage); // prefab riêng nếu đã gán; tự hạ xuống mặt đất
                 _spawned++;
                 _nextStreakTime = _elapsed + ai.fireBreathInterval;
                 _charging = false;

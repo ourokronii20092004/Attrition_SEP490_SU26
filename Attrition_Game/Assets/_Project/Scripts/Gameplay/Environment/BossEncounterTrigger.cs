@@ -1,5 +1,4 @@
 using UnityEngine;
-using Attrition.Gameplay.Enemy.SeveredFang;
 using Attrition.Gameplay.Player;
 using System.Collections.Generic;
 
@@ -8,8 +7,18 @@ namespace Attrition.Gameplay.Environment
     [RequireComponent(typeof(BoxCollider2D))]
     public class BossEncounterTrigger : MonoBehaviour
     {
-        public SeveredFangAI boss;
-        
+        /// <summary>
+        /// AI boss cần kích hoạt. Khai kiểu `MonoBehaviour` (không phải `SeveredFangAI` như trước) để mọi
+        /// boss implement <see cref="Attrition.Core.IBossEncounter"/> đều KÉO VÀO Ô NÀY được — Inspector
+        /// không hiện được ô nhận interface thuần, nên nhận MonoBehaviour rồi cast.
+        /// </summary>
+        [Tooltip("AI boss (SeveredFang / Druid / Elf / DemonKin / ArchDemon). Phải implement IBossEncounter.")]
+        public MonoBehaviour boss;
+
+        /// <summary>Boss dưới dạng interface, null nếu ô 'boss' để trống hoặc gán sai loại component.</summary>
+        public Attrition.Core.IBossEncounter BossEncounter => boss as Attrition.Core.IBossEncounter;
+
+
         private bool _isTriggered;
         private HashSet<PlayerController> _playersInTrigger = new HashSet<PlayerController>();
 
@@ -110,7 +119,7 @@ namespace Attrition.Gameplay.Environment
             if (inTrigger >= requiredPlayers)
             {
                 _isTriggered = true;
-                if (boss != null) boss.StartIntroSequence();
+                BossEncounter?.StartIntroSequence();
             }
         }
     }

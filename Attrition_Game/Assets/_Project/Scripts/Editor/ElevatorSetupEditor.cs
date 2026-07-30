@@ -6,12 +6,14 @@ using Attrition.Gameplay.World;
 namespace Attrition.Editor
 {
     /// <summary>
-    /// Tool tạo nhanh cụm Thang máy + Cần gạt kiểu Hollow Knight (Map 5): 1 Elevator (bệ kinematic
-    /// chạy A↔B) + 1 Lever (đánh vào để đổi chiều). Lever đã nối sẵn vào Elevator.
+    /// Tool tạo nhanh cụm Thang máy + Cần gạt kiểu Hollow Knight (Map 5): 1 Elevator (bệ kinematic chạy
+    /// qua các điểm dừng) + 1 Lever (đánh vào để đi tới điểm kế tiếp). Lever đã nối sẵn vào Elevator.
     /// Menu: Tools/Attrition/Create Elevator + Lever (Map 5)
-    /// Sau khi chạy: đặt vị trí bệ + cần, chỉnh pointBOffset (độ cao đi lên), gán sprite,
+    /// Sau khi chạy: đặt vị trí bệ + cần, chỉnh `stopOffsets` (danh sách điểm dừng), gán sprite,
     /// đảm bảo bệ nằm trên groundLayer + Lever ở layer nằm trong targetLayers của PlayerCombat,
     /// rồi SAVE scene để Fusion bake NetworkObject.
+    ///
+    /// Đã có 12 thang trong Map 5? Dùng `Tools/Attrition/World/Setup Map 5 Elevators` để dựng hàng loạt.
     /// </summary>
     public static class ElevatorSetupEditor
     {
@@ -39,7 +41,10 @@ namespace Attrition.Editor
             if (groundLayer >= 0) elevGo.layer = groundLayer;
             CreateVisual(elevGo, "ElevatorVisual", new Vector2(3f, 0.5f), new Color(0.3f, 0.5f, 0.6f));
             var elevator = elevGo.AddComponent<Elevator>();
-            SetPrivate(elevator, "pointBOffset", new Vector2(0f, 8f));
+
+            // Elevator giờ dùng DANH SÁCH điểm dừng (`stopOffsets`) thay cho pointAOffset/pointBOffset —
+            // để hỗ trợ thang nhiều tầng (Map 5 thang 12 có 3 điểm dừng). Mặc định 2 điểm: chỗ đặt → +8 cao.
+            SetStopOffsets(elevator, new[] { Vector2.zero, new Vector2(0f, 8f) });
 
             // ── Lever (cần gạt) ──
             var leverGo = new GameObject("Lever");
@@ -58,9 +63,10 @@ namespace Attrition.Editor
 
             Selection.activeGameObject = root;
             EditorGUIUtility.PingObject(root);
-            Debug.Log("[Attrition] Đã tạo Elevator + Lever. Chỉnh pointBOffset (độ cao/khoảng đi), đặt cần gạt " +
-                      "trong tầm với, gán sprite, đảm bảo bệ ở layer 'Ground' và cần ở layer trong targetLayers " +
-                      "của PlayerCombat, rồi SAVE scene để Fusion bake NetworkObject.");
+            Debug.Log("[Attrition] Đã tạo Elevator + Lever. Chỉnh 'stopOffsets' (danh sách điểm dừng — thêm " +
+                      "phần tử thứ 3 nếu muốn thang 3 tầng), đặt cần gạt trong tầm với, gán sprite, đảm bảo bệ " +
+                      "ở layer 'Ground' và cần ở layer trong targetLayers của PlayerCombat, rồi SAVE scene để " +
+                      "Fusion bake NetworkObject.");
         }
 
         private static GameObject CreateVisual(GameObject parent, string name, Vector2 size, Color color)
@@ -74,6 +80,28 @@ namespace Attrition.Editor
             sr.size = size;
             sr.sortingOrder = 5;
             return go;
+        }
+
+        /// <summary>
+        /// Ghi mảng `stopOffsets` (private [SerializeField] Vector2[]) qua SerializedObject.
+        /// `SetPrivate` không dùng được: nó xử lý giá trị đơn lẻ, còn đây là array nên phải set arraySize
+        /// rồi ghi từng phần tử.
+        /// </summary>
+        private static void SetStopOffsets(Elevator elevator, Vector2[] stops)
+        {
+            var so = new SerializedObject(elevator);
+            var arr = so.FindProperty("stopOffsets");
+            if (arr == null)
+            {
+                Debug.LogWarning("[Attrition] Elevator không có field 'stopOffsets'.");
+                return;
+            }
+
+            arr.arraySize = stops.Length;
+            for (int i = 0; i < stops.Length; i++)
+                arr.GetArrayElementAtIndex(i).vector2Value = stops[i];
+
+            so.ApplyModifiedPropertiesWithoutUndo();
         }
 
         private static void SetPrivate(Object target, string field, object value)

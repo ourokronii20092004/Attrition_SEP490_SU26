@@ -14,16 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.AccessorySO
   itemId: acc_potion
   displayName: Alchemist Charm
-  description: 
+  description: Uong binh mau se tang suc manh don danh thuong trong mot luc.
   icon: {fileID: 0}
   maxStack: 1
   isKeyItem: 0
   kind: 0
-  grantedAbility: 1
+  grantedAbility: 0
   modifiers: []
-  effect: 5
-  effectMagnitude: 0.3
-  effectDuration: 3
+  effect: 8
+  effectMagnitude: 1.25
+  effectDuration: 60
   effectThreshold: 0.5
   effectThresholdStop: 0.8
   effectCooldown: 8
+  coopOnlyReward: 1

@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: a25b4229811f045468b3785aa8b15062
+guid: a987e63b000308447b3a92ea8b4e702d
 TextureImporter:
   internalIDToNameTable:
   - first:
@@ -262,7 +262,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 1
+    filterMode: 0
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -276,7 +276,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 100
+  spritePixelsToUnits: 16
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -333,7 +333,7 @@ TextureImporter:
         width: 23
         height: 35
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -355,7 +355,7 @@ TextureImporter:
         width: 37
         height: 60
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -377,7 +377,7 @@ TextureImporter:
         width: 42
         height: 66
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -399,7 +399,7 @@ TextureImporter:
         width: 51
         height: 72
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -421,7 +421,7 @@ TextureImporter:
         width: 58
         height: 78
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -443,7 +443,7 @@ TextureImporter:
         width: 60
         height: 78
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -465,7 +465,7 @@ TextureImporter:
         width: 62
         height: 78
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -482,12 +482,12 @@ TextureImporter:
       name: Water Spike 01 - SpriteSheet_7
       rect:
         serializedVersion: 2
-        x: 128
+        x: 127
         y: 159
         width: 63
         height: 78
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -505,9 +505,9 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 191
-        y: 131
-        width: 47
-        height: 78
+        y: 160
+        width: 65
+        height: 79
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -526,10 +526,10 @@ TextureImporter:
       name: Water Spike 01 - SpriteSheet_9
       rect:
         serializedVersion: 2
-        x: 211
-        y: 203
-        width: 8
-        height: 16
+        x: 256
+        y: 161
+        width: 64
+        height: 78
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -548,10 +548,10 @@ TextureImporter:
       name: Water Spike 01 - SpriteSheet_10
       rect:
         serializedVersion: 2
-        x: 217
-        y: 196
-        width: 9
-        height: 19
+        x: 0
+        y: 82
+        width: 61
+        height: 77
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -570,10 +570,10 @@ TextureImporter:
       name: Water Spike 01 - SpriteSheet_11
       rect:
         serializedVersion: 2
-        x: 221
-        y: 191
-        width: 29
-        height: 47
+        x: 64
+        y: 82
+        width: 59
+        height: 77
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -592,10 +592,10 @@ TextureImporter:
       name: Water Spike 01 - SpriteSheet_12
       rect:
         serializedVersion: 2
-        x: 269
-        y: 137
-        width: 32
-        height: 72
+        x: 129
+        y: 82
+        width: 63
+        height: 77
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -614,10 +614,10 @@ TextureImporter:
       name: Water Spike 01 - SpriteSheet_13
       rect:
         serializedVersion: 2
-        x: 275
-        y: 203
-        width: 8
-        height: 16
+        x: 192
+        y: 82
+        width: 68
+        height: 78
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -636,10 +636,10 @@ TextureImporter:
       name: Water Spike 01 - SpriteSheet_14
       rect:
         serializedVersion: 2
-        x: 282
-        y: 201
-        width: 8
-        height: 14
+        x: 271
+        y: 85
+        width: 49
+        height: 75
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -658,10 +658,10 @@ TextureImporter:
       name: Water Spike 01 - SpriteSheet_15
       rect:
         serializedVersion: 2
-        x: 287
-        y: 191
-        width: 27
-        height: 47
+        x: 1
+        y: 5
+        width: 64
+        height: 77
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -680,10 +680,10 @@ TextureImporter:
       name: Water Spike 01 - SpriteSheet_16
       rect:
         serializedVersion: 2
-        x: 127
-        y: 193
-        width: 21
-        height: 6
+        x: 84
+        y: 13
+        width: 25
+        height: 53
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -698,1309 +698,11 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_17
-      rect:
-        serializedVersion: 2
-        x: 255
-        y: 193
-        width: 16
-        height: 6
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 8e608800e649efdf0800000000000000
-      internalID: -144514937853049112
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_18
-      rect:
-        serializedVersion: 2
-        x: 296
-        y: 165
-        width: 8
-        height: 31
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 93c4cf60e3b7043d0800000000000000
-      internalID: -3224441826861888455
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_19
-      rect:
-        serializedVersion: 2
-        x: 241
-        y: 162
-        width: 15
-        height: 25
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: e24a268aa58ac4b10800000000000000
-      internalID: 1967132244579623982
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_20
-      rect:
-        serializedVersion: 2
-        x: 255
-        y: 163
-        width: 17
-        height: 29
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 46ad73ee8f9f96b50800000000000000
-      internalID: 6587070777549904484
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_21
-      rect:
-        serializedVersion: 2
-        x: 306
-        y: 139
-        width: 14
-        height: 34
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: fbe78ebad31091f20800000000000000
-      internalID: 3393745158589152959
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_22
-      rect:
-        serializedVersion: 2
-        x: 311
-        y: 172
-        width: 9
-        height: 13
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 9acb381058999b1e0800000000000000
-      internalID: -2181543747949183831
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_23
-      rect:
-        serializedVersion: 2
-        x: 20
-        y: 128
-        width: 8
-        height: 20
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 32219e4d0d859d230800000000000000
-      internalID: 3664057425791095331
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_24
-      rect:
-        serializedVersion: 2
-        x: 32
-        y: 136
-        width: 14
-        height: 23
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 1b20b34a8fdcdaf70800000000000000
-      internalID: 9200236081578705585
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_25
-      rect:
-        serializedVersion: 2
-        x: 40
-        y: 131
-        width: 6
-        height: 8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: fcdd69e6af776e9e0800000000000000
-      internalID: -1592453500747981361
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_26
-      rect:
-        serializedVersion: 2
-        x: 41
-        y: 117
-        width: 20
-        height: 26
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: c11009123f4b3f560800000000000000
-      internalID: 7346414373504549148
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_27
-      rect:
-        serializedVersion: 2
-        x: 84
-        y: 129
-        width: 15
-        height: 20
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: f065c79180ddb4480800000000000000
-      internalID: -8913788010592709105
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_28
-      rect:
-        serializedVersion: 2
-        x: 96
-        y: 136
-        width: 14
-        height: 23
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 3dd79ecd35b6f6470800000000000000
-      internalID: 8390042638747270611
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_29
-      rect:
-        serializedVersion: 2
-        x: 104
-        y: 131
-        width: 6
-        height: 8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 05c118637277bc9d0800000000000000
-      internalID: -2752975736905065392
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_30
-      rect:
-        serializedVersion: 2
-        x: 114
-        y: 128
-        width: 12
-        height: 16
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 0e6942061afa324f0800000000000000
-      internalID: -854646396632656160
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_31
-      rect:
-        serializedVersion: 2
-        x: 151
-        y: 95
-        width: 18
-        height: 44
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 1d70fad6f2cdc1660800000000000000
-      internalID: 7357997987478308817
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_32
-      rect:
-        serializedVersion: 2
-        x: 153
-        y: 135
-        width: 21
-        height: 25
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: d0d88d134ea2b6a80800000000000000
-      internalID: -8472631114390270707
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_33
-      rect:
-        serializedVersion: 2
-        x: 169
-        y: 124
-        width: 6
-        height: 22
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 8a328ba4502133580800000000000000
-      internalID: -8848709028915174488
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_34
-      rect:
-        serializedVersion: 2
-        x: 179
-        y: 130
-        width: 13
-        height: 19
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: cc87232b611442530800000000000000
-      internalID: 3829257148906502348
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_35
-      rect:
-        serializedVersion: 2
-        x: 227
-        y: 139
-        width: 11
-        height: 22
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 89ea89e69177e8250800000000000000
-      internalID: 5948823108916391576
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_36
-      rect:
-        serializedVersion: 2
-        x: 233
-        y: 136
-        width: 24
-        height: 16
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: a9cb613934841f140800000000000000
-      internalID: 4751658536920333466
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_37
-      rect:
-        serializedVersion: 2
-        x: 233
-        y: 93
-        width: 27
-        height: 47
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 452bc93ef87de8cf0800000000000000
-      internalID: -248023916459806124
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_38
-      rect:
-        serializedVersion: 2
-        x: 295
-        y: 128
-        width: 6
-        height: 13
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: b91f4a4e06904dc10800000000000000
-      internalID: 2077295639882166683
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_39
-      rect:
-        serializedVersion: 2
-        x: 24
-        y: 116
-        width: 10
-        height: 16
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: b3665160d0575d0a0800000000000000
-      internalID: -6857446158804621765
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_40
-      rect:
-        serializedVersion: 2
-        x: 26
-        y: 129
-        width: 9
-        height: 9
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 913e68642ca3dc680800000000000000
-      internalID: -8733259496320212199
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_41
-      rect:
-        serializedVersion: 2
-        x: 90
-        y: 124
-        width: 8
-        height: 8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: a91f20108500d5df0800000000000000
-      internalID: -189995231305600614
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_42
-      rect:
-        serializedVersion: 2
-        x: 105
-        y: 101
-        width: 10
-        height: 31
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 26fde11fd91e1fcf0800000000000000
-      internalID: -220146838292996254
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_43
-      rect:
-        serializedVersion: 2
-        x: 220
-        y: 105
-        width: 14
-        height: 32
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 6f3d87c0faaa8a100800000000000000
-      internalID: 119533058930562038
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_44
-      rect:
-        serializedVersion: 2
-        x: 220
-        y: 118
-        width: 6
-        height: 12
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 6ae9a169852a4fac0800000000000000
-      internalID: -3822251682371559770
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_45
-      rect:
-        serializedVersion: 2
-        x: 278
-        y: 105
-        width: 42
-        height: 30
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: eef4704c35ce05af0800000000000000
-      internalID: -409567721575460882
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_46
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 38
-        width: 45
-        height: 89
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: d1177b66ecf1891b0800000000000000
-      internalID: -5649730761189265123
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_47
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 90
-        width: 17
-        height: 29
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 629b6e8480a90fd20800000000000000
-      internalID: 3310315086490810662
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_48
-      rect:
-        serializedVersion: 2
-        x: 42
-        y: 100
-        width: 6
-        height: 17
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 57483fc94a32199e0800000000000000
-      internalID: -1616471601334483851
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_49
-      rect:
-        serializedVersion: 2
-        x: 46
-        y: 92
-        width: 10
-        height: 19
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 644a6b1835baa72f0800000000000000
-      internalID: -974277994225425338
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_50
-      rect:
-        serializedVersion: 2
-        x: 66
-        y: 87
-        width: 13
-        height: 27
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 7fd869700d4112a80800000000000000
-      internalID: -8493484538530984457
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_51
-      rect:
-        serializedVersion: 2
-        x: 84
-        y: 93
-        width: 20
-        height: 35
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 1545f507a6fa0d4b0800000000000000
-      internalID: -5417637480040016815
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_52
-      rect:
-        serializedVersion: 2
-        x: 111
-        y: 82
-        width: 10
-        height: 30
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: e78fc550df18cb500800000000000000
-      internalID: 413348189527931006
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_53
-      rect:
-        serializedVersion: 2
-        x: 131
-        y: 89
-        width: 10
-        height: 30
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 4ab7f4a3c52dbb330800000000000000
-      internalID: 3727804410136329124
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_54
-      rect:
-        serializedVersion: 2
-        x: 150
-        y: 105
-        width: 7
-        height: 17
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 6c3f54157dfd34d20800000000000000
-      internalID: 3261696671020872646
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_55
-      rect:
-        serializedVersion: 2
-        x: 172
-        y: 93
-        width: 27
-        height: 29
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: f1da46e61ac95c1c0800000000000000
-      internalID: -4484005636821701345
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_56
-      rect:
-        serializedVersion: 2
-        x: 193
-        y: 106
-        width: 10
-        height: 15
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 61b84c720deae14e0800000000000000
-      internalID: -2008976174717039850
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_57
-      rect:
-        serializedVersion: 2
-        x: 214
-        y: 105
-        width: 9
-        height: 17
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: a7ae4f05dffae1f00800000000000000
-      internalID: 1089501662390053498
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_58
-      rect:
-        serializedVersion: 2
-        x: 216
-        y: 97
-        width: 12
-        height: 10
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: d69d5d4a8add2edd0800000000000000
-      internalID: -2458158730201147027
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_59
-      rect:
-        serializedVersion: 2
-        x: 283
-        y: 104
-        width: 9
-        height: 7
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: e91817bc98e2d5380800000000000000
-      internalID: -8980970912548290146
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_60
-      rect:
-        serializedVersion: 2
-        x: 3
-        y: 86
-        width: 7
-        height: 8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: f55a637bc7d8f2ce0800000000000000
-      internalID: -1427766990063884961
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_61
-      rect:
-        serializedVersion: 2
-        x: 81
-        y: 81
-        width: 22
-        height: 14
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 8344ff4c291770cc0800000000000000
-      internalID: -3744899689951050696
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_62
-      rect:
-        serializedVersion: 2
-        x: 143
-        y: 82
-        width: 24
-        height: 14
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: e1019bce61f4e3de0800000000000000
-      internalID: -1351555878285144034
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_63
-      rect:
-        serializedVersion: 2
-        x: 210
-        y: 87
-        width: 9
-        height: 7
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 6c2370a2d8481e970800000000000000
-      internalID: 8782446490179547846
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_64
-      rect:
-        serializedVersion: 2
-        x: 216
-        y: 90
-        width: 6
-        height: 7
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: df28191c4b41981b0800000000000000
-      internalID: -5653965090612739331
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_65
-      rect:
-        serializedVersion: 2
-        x: 220
-        y: 84
-        width: 11
-        height: 12
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 4dc120c2435a4cc70800000000000000
-      internalID: 8990492399633571028
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_66
-      rect:
-        serializedVersion: 2
-        x: 273
-        y: 90
-        width: 10
-        height: 7
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 527e3d8f218c37600800000000000000
-      internalID: 464935170358896421
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_67
-      rect:
-        serializedVersion: 2
-        x: 277
-        y: 85
-        width: 19
-        height: 14
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 5ebf60656183d0510800000000000000
-      internalID: 1516930318077459429
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_68
-      rect:
-        serializedVersion: 2
-        x: 50
-        y: 59
-        width: 15
-        height: 29
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: b37b7ad08a49a8150800000000000000
-      internalID: 5875672113362745147
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_69
-      rect:
-        serializedVersion: 2
-        x: 211
-        y: 83
-        width: 13
-        height: 6
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: c1d6793d1dbbe9a80800000000000000
-      internalID: -8458116540282737380
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_70
-      rect:
-        serializedVersion: 2
-        x: 22
-        y: 25
-        width: 42
-        height: 30
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 4a3ee514ecc5dbce0800000000000000
-      internalID: -1387851069230488668
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_71
-      rect:
-        serializedVersion: 2
-        x: 39
-        y: 48
-        width: 6
-        height: 13
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: fb87df99b0d6e62b0800000000000000
-      internalID: -5589410190924613441
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_72
-      rect:
-        serializedVersion: 2
-        x: 84
-        y: 13
-        width: 25
-        height: 48
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 715321bdbb6867090800000000000000
-      internalID: -8037088343603661545
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_73
-      rect:
-        serializedVersion: 2
-        x: 27
-        y: 24
-        width: 9
-        height: 7
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: cfccf37030e775050800000000000000
-      internalID: 5789234397479685372
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_74
-      rect:
-        serializedVersion: 2
-        x: 1
-        y: 10
-        width: 26
-        height: 7
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: d1a0df537c0007540800000000000000
-      internalID: 5003500041612888605
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Water Spike 01 - SpriteSheet_75
-      rect:
-        serializedVersion: 2
-        x: 21
-        y: 5
-        width: 19
-        height: 14
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 880ec46713d8066a0800000000000000
-      internalID: -6458006622071627640
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
     outline: []
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 9097cb1a06d0d22458c18c9493b91c37
     internalID: 0
     vertices: []
     indices: 

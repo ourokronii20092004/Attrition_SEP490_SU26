@@ -30,6 +30,17 @@ namespace Attrition.Controllers
         [Tooltip("Prefab DroppedItem để rơi ra thế giới (quái THƯỜNG). Bỏ trống = không rơi.")]
         [SerializeField] private Fusion.NetworkPrefabRef droppedItemPrefab;
 
+        [Header("---- BOSS ĐÁNH LẠI (rematch) ----")]
+        [Tooltip("Bật cho các BOSS CŨ đặt lại ở room khác (Map 5 có boss 2/3/4, Map 4 có boss 1).\n" +
+                 "Khi bật:\n" +
+                 "• KHÔNG rơi/thưởng vật phẩm (accessory tiến trình chỉ được nhận đúng 1 lần ở map gốc).\n" +
+                 "• KHÔNG báo NotifyEnemyKilled → không đụng tiến độ quest của boss gốc ở scene khác.\n" +
+                 "• Vẫn cộng EXP và vẫn tính là 'đã hạ' cho cổng phòng (BossRematchGate).")]
+        [SerializeField] private bool isRematchBoss = false;
+
+        /// <summary>Boss bản đánh lại (không loot, không đụng quest)? Cổng phòng đọc để biết đã hạ chưa.</summary>
+        public bool IsRematchBoss => isRematchBoss;
+
         private Vector3 _spawnPos;
 
         [Header("---- HIT / STUN ----")]
@@ -333,10 +344,16 @@ namespace Attrition.Controllers
                     if (p != null) p.GainExp(statsComp.ExpReward);
             }
 
-            // Thông báo cho hệ thống quest biết quái vừa chết (host cộng tiến độ quest nếu khớp)
-            Attrition.Gameplay.NPC.NetworkNPC.NotifyEnemyKilled(statsComp != null ? statsComp.EnemyId : "");
-
-            GrantLoot();
+            // Thông báo cho hệ thống quest biết quái vừa chết (host cộng tiến độ quest nếu khớp).
+            //
+            // BOSS ĐÁNH LẠI: bỏ qua cả notify quest lẫn loot. Boss 2/3/4 đặt trong room Map 5 dùng CHUNG
+            // enemyId với boss gốc ở Map 2/3/4 (druid/elf/demon_kin) — nếu vẫn notify thì hạ bản đánh lại sẽ
+            // hoàn thành nhầm quest boss của map gốc, và trao lại accessory tiến trình lần thứ hai.
+            if (!isRematchBoss)
+            {
+                Attrition.Gameplay.NPC.NetworkNPC.NotifyEnemyKilled(statsComp != null ? statsComp.EnemyId : "");
+                GrantLoot();
+            }
 
             if (aiComp != null) aiComp.enabled = false;
             if (combatComp != null) combatComp.enabled = false;

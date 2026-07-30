@@ -1,13 +1,12 @@
 using UnityEditor;
 using UnityEngine;
-using Attrition.Gameplay.Enemy.SeveredFang;
 using Attrition.Gameplay.Environment;
 
 namespace Attrition.Editor
 {
     /// <summary>
     /// Tool tạo vùng kích hoạt Boss (BossEncounterTrigger) — thứ còn THIẾU khiến boss chỉ đứng
-    /// idle (không ai gọi StartIntroSequence). Tự tìm SeveredFangAI trong scene và gán vào ô 'boss'.
+    /// idle (không ai gọi StartIntroSequence). Tự tìm AI boss (IBossEncounter) trong scene và gán vào 'boss'.
     /// Menu: Tools/Attrition/Create Boss Encounter Trigger
     /// Sau khi chạy: đặt vùng này ở GIỮA/đầu phòng boss (chỗ player chắc chắn đi qua sau khi vào),
     /// chỉnh kích thước BoxCollider cho phủ lối đi. Đảm bảo boss có waitForTrigger=true + introDialogue.
@@ -29,8 +28,14 @@ namespace Attrition.Editor
 
             var trigger = go.AddComponent<BossEncounterTrigger>();
 
-            // Tự tìm boss SeveredFang trong scene và gán.
-            var boss = Object.FindFirstObjectByType<SeveredFangAI>(FindObjectsInactive.Include);
+            // Tự tìm AI boss BẤT KỲ trong scene (SF/Druid/Elf/DemonKin/ArchDemon) rồi gán.
+            // Trước chỉ tìm SeveredFangAI → đặt tool này trong phòng boss map 2-5 là không gán được gì.
+            MonoBehaviour boss = null;
+            foreach (var mb in Object.FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                if (mb is Attrition.Core.IBossEncounter) { boss = mb; break; }
+            }
+
             if (boss != null)
             {
                 var so = new SerializedObject(trigger);
@@ -43,13 +48,13 @@ namespace Attrition.Editor
                 var dlg = bso.FindProperty("introDialogue");
                 if (wft != null && !wft.boolValue)
                     Debug.LogWarning("[Attrition] Boss đang waitForTrigger=FALSE → boss sẽ tự đánh, KHÔNG chờ trigger. " +
-                                     "Bật waitForTrigger=true trên SeveredFangAI nếu muốn intro qua trigger.");
+                                     "Bật waitForTrigger=true trên AI boss nếu muốn intro qua trigger.");
                 if (dlg != null && dlg.objectReferenceValue == null)
                     Debug.LogWarning("[Attrition] Boss chưa gán 'introDialogue' (DialogueSO) → sẽ vào đánh luôn, không có thoại.");
             }
             else
             {
-                Debug.LogWarning("[Attrition] Không tìm thấy SeveredFangAI trong scene. Hãy đặt boss vào scene trước, " +
+                Debug.LogWarning("[Attrition] Không tìm thấy AI boss (IBossEncounter) trong scene. Hãy đặt boss vào scene trước, " +
                                  "rồi kéo tay boss vào ô 'boss' của BossEncounterTrigger.");
             }
 

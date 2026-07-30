@@ -40,6 +40,17 @@ namespace Attrition.Gameplay.Environment
         [Tooltip("Kích thước 1 ô fog theo world units (nhỏ = mịn nhưng nặng hơn). ~2-3 hợp lý.")]
         public float fogCellSize = 2.5f;
 
+        [Header("──── MÀU TRÊN BẢN ĐỒ TỔNG (M) ────")]
+        [Tooltip("Màu NỀN địa hình của map này trên World Map. Mỗi khu một màu để nhìn là biết đang ở đâu " +
+                 "(kiểu Afterimage). Tool 'Setup World Map Colors' điền sẵn theo thiết kế.")]
+        public Color mapTint = Color.white;
+
+        [Tooltip("Màu ĐƯỜNG VIỀN quanh địa hình. Nên ĐẬM HƠN mapTint để đường nét nổi bật.")]
+        public Color outlineTint = new Color(0.15f, 0.12f, 0.10f, 1f);
+
+        [Tooltip("Độ dày đường viền (pixel trên ảnh silhouette). 0 = không vẽ viền.")]
+        [Range(0f, 6f)] public float outlineThickness = 2f;
+
         [Tooltip("Các checkpoint trong map (tool tự quét điền). worldPos để chấm marker.")]
         public List<CheckpointMarker> checkpoints = new List<CheckpointMarker>();
 

@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 8419484846610597862}
   - component: {fileID: 289738216629591877}
   - component: {fileID: 5532050352510634357}
+  - component: {fileID: 4412009918230711300}
   m_Layer: 0
   m_Name: DroppedItem
   m_TagString: Untagged
@@ -169,3 +170,20 @@ MonoBehaviour:
   selfPickupCooldown: 3
   _ItemIndex: 0
   _Amount: 0
+--- !u!114 &4412009918230711300
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7250314410122535131}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 397e2d2c5d6a74140a6db1671a9c25b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.World.FloatBobEffect
+  amplitude: 0.18
+  frequency: 1.1
+  baseLift: 0.18
+  tiltDegrees: 0
+  visual: {fileID: 0}
