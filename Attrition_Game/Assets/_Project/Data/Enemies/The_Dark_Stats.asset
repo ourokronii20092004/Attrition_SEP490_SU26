@@ -25,6 +25,6 @@ MonoBehaviour:
   patrolSpeed: 2
   chaseSpeed: 5
   attackSpeed: 1
-  expReward: 10
+  expReward: 30
   coopHpMultiplier: 1.6
   coopDamageMultiplier: 1.2
