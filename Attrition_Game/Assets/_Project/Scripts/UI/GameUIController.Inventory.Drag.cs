@@ -172,6 +172,11 @@ namespace Attrition.UI
                     var cell = grid.Q<VisualElement>($"cell-{i}");
                     if (cell != null && cell.worldBound.Contains(screenPos))
                     {
+                        // RPC nhận index THẬT trong NetworkArray, không phải số ô trên grid (grid đã dồn
+                        // item của tab về đầu — xem _cellToSlot trong GameUIController.Inventory.Refresh).
+                        int dropTarget = MapCell(i);
+                        if (dropTarget < 0) return; // ô không map tới slot nào (tab đầy / ngoài capacity)
+
                         if (_dragContext == SelectedSlotContext.InventoryGrid)
                         {
                             if (_dragSlot == i)
@@ -180,22 +185,20 @@ namespace Attrition.UI
                                 OnCellClicked(_dragSlot);
                                 return;
                             }
-                            else
-                            {
-                                _inventory.RpcRequestSwap((int)_activeTab, _dragSlot, i);
-                                return;
-                            }
+                            int dragReal = MapCell(_dragSlot);
+                            if (dragReal >= 0) _inventory.RpcRequestSwap((int)_activeTab, dragReal, dropTarget);
+                            return;
                         }
                         else
                         {
                             switch (_dragContext)
                             {
-                                case SelectedSlotContext.EquippedHead: _inventory.RpcRequestUnequipArmorToSlot((int)EquipmentSlot.Head, i); break;
-                                case SelectedSlotContext.EquippedChest: _inventory.RpcRequestUnequipArmorToSlot((int)EquipmentSlot.Chest, i); break;
-                                case SelectedSlotContext.EquippedLegs: _inventory.RpcRequestUnequipArmorToSlot((int)EquipmentSlot.Legs, i); break;
-                                case SelectedSlotContext.EquippedBoots: _inventory.RpcRequestUnequipArmorToSlot((int)EquipmentSlot.Boots, i); break;
-                                case SelectedSlotContext.EquippedAccessory: _inventory.RpcRequestUnequipAccessoryToSlot(i); break;
-                                case SelectedSlotContext.EquippedSkill: _inventory.RpcRequestUnequipSkillToSlot(i); break;
+                                case SelectedSlotContext.EquippedHead: _inventory.RpcRequestUnequipArmorToSlot((int)EquipmentSlot.Head, dropTarget); break;
+                                case SelectedSlotContext.EquippedChest: _inventory.RpcRequestUnequipArmorToSlot((int)EquipmentSlot.Chest, dropTarget); break;
+                                case SelectedSlotContext.EquippedLegs: _inventory.RpcRequestUnequipArmorToSlot((int)EquipmentSlot.Legs, dropTarget); break;
+                                case SelectedSlotContext.EquippedBoots: _inventory.RpcRequestUnequipArmorToSlot((int)EquipmentSlot.Boots, dropTarget); break;
+                                case SelectedSlotContext.EquippedAccessory: _inventory.RpcRequestUnequipAccessoryToSlot(dropTarget); break;
+                                case SelectedSlotContext.EquippedSkill: _inventory.RpcRequestUnequipSkillToSlot(dropTarget); break;
                             }
                         }
                         return;
@@ -230,11 +233,13 @@ namespace Attrition.UI
 
                     if (_dragContext == SelectedSlotContext.InventoryGrid)
                     {
+                        int dragReal = MapCell(_dragSlot);
+                        if (dragReal < 0) return;
                         switch (btnName)
                         {
-                            case "equip-accessory": _inventory.RpcRequestEquipAccessory(_dragSlot); break;
-                            case "equip-skill": _inventory.RpcRequestEquipSkill(_dragSlot); break;
-                            default: _inventory.RpcRequestEquip(_dragSlot); break;
+                            case "equip-accessory": _inventory.RpcRequestEquipAccessory(dragReal); break;
+                            case "equip-skill": _inventory.RpcRequestEquipSkill(dragReal); break;
+                            default: _inventory.RpcRequestEquip(dragReal); break;
                         }
                     }
                     return;
@@ -243,7 +248,7 @@ namespace Attrition.UI
 
             // 3. Vứt đồ (Kéo ra ngoài UI)
             var invRight = _root.Q<VisualElement>("inv-right");
-            var charLeft = _root.Q<VisualElement>("char-left");
+            var charLeft = _root.Q<VisualElement>("inv-left"); // panel trái tên là inv-left (trước gõ sai "char-left" → luôn null → kéo qua panel trái là vứt đồ)
             bool isOutside = true;
 
             if (invRight != null && invRight.worldBound.Contains(screenPos)) isOutside = false;
@@ -253,7 +258,8 @@ namespace Attrition.UI
             {
                 if (_dragContext == SelectedSlotContext.InventoryGrid)
                 {
-                    _inventory.RpcRequestDrop((int)_activeTab, _dragSlot);
+                    int dragReal = MapCell(_dragSlot);
+                    if (dragReal >= 0) _inventory.RpcRequestDrop((int)_activeTab, dragReal);
                 }
                 else
                 {

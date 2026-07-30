@@ -151,6 +151,7 @@ GameObject:
   - component: {fileID: -8304798322267633763}
   - component: {fileID: 4926934666965263351}
   - component: {fileID: 817566648311922267}
+  - component: {fileID: 8422190435671093344}
   m_Layer: 7
   m_Name: Player 1
   m_TagString: Player
@@ -376,6 +377,7 @@ MonoBehaviour:
   - {fileID: -8304798322267633763}
   - {fileID: 4926934666965263351}
   - {fileID: 817566648311922267}
+  - {fileID: 8422190435671093344}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &-9211217073537501404
 MonoBehaviour:
@@ -510,6 +512,22 @@ MonoBehaviour:
   _IsReviving:
     _value: 0
   _ReviveProgress: 0
+--- !u!114 &8422190435671093344
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6831727267532873526}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c850fd7ac540764789085118429eba2, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Player.AccessoryEffects
+  _ShieldReady:
+    _value: 0
+  _PostSkillArmed:
+    _value: 0
 --- !u!1 &7179476028545329090
 GameObject:
   m_ObjectHideFlags: 0

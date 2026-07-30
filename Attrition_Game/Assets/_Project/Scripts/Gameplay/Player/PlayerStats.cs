@@ -277,20 +277,18 @@ namespace Attrition.Gameplay.Player
         public void ApplyLoadout(int level, EquipmentSO[] equipped, AccessorySO[] damageAccessories)
         {
             if (_sheet == null) return;
-            // Lưu Max CŨ trước khi dựng lại gear để tính DELTA khi đồ đổi max.
-            int oldMaxHp = MaxHP, oldMaxMana = MaxMana;
             _sheet.SetLevel(level);
             _sheet.RebuildGear(equipped, damageAccessories, BuildItemModifierOverrides(equipped, damageAccessories));
             if (HasStateAuthority)
             {
                 Level = level;
-                // CỘNG delta max vào current: mặc đồ +HP thì current tăng ĐÚNG lượng đó (full→full = 110/110,
-                // đang thương 50/100 + đồ +10 → 60/110, không tự hồi phần thiếu). Tháo đồ giảm max thì
-                // current giảm theo rồi clamp. CurrentHP<=0 (chưa init) → set đầy.
-                if (CurrentHP <= 0) CurrentHP = MaxHP;
-                else CurrentHP = Mathf.Clamp(CurrentHP + (MaxHP - oldMaxHp), 1, MaxHP);
-                if (CurrentMana <= 0) CurrentMana = MaxMana;
-                else CurrentMana = Mathf.Clamp(CurrentMana + (MaxMana - oldMaxMana), 0, MaxMana);
+                // Trang bị CHỈ đổi Max, KHÔNG hồi máu: 100/100 + giáp +20HP → 100/120 (không phải 120/120).
+                // Trước đây cộng delta max vào current nên mặc đồ là tự hồi đầy, và load save cũng bị
+                // hồi thêm đúng lượng gear (CurrentHP nạp từ save TRƯỚC khi gear đắp vào — xem LoadFrom*).
+                // Tháo đồ giảm max thì clamp xuống, tối thiểu 1 (không giết người chơi vì tháo giáp).
+                // CurrentHP<=0 = chưa init (Spawned chưa set) → set đầy.
+                CurrentHP = CurrentHP <= 0 ? MaxHP : Mathf.Clamp(CurrentHP, 1, MaxHP);
+                CurrentMana = CurrentMana <= 0 ? MaxMana : Mathf.Min(CurrentMana, MaxMana);
             }
             OnStatsChanged?.Invoke();
         }
