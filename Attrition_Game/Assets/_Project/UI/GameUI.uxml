@@ -113,7 +113,7 @@
                 <!-- LEFT: character + equipment -->
                 <ui:VisualElement name="inv-left">
                     <ui:VisualElement class="ornate-header">
-                        <ui:Label name="inv-char-name" text="ARTORIAS"/>
+                        <ui:Label name="inv-char-name" text="Wanderer"/>
                         <ui:Label name="inv-char-level" text="LEVEL 1"/>
                     </ui:VisualElement>
                     

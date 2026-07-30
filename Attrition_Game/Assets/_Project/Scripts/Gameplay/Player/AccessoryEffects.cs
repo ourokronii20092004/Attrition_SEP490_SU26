@@ -11,21 +11,25 @@ namespace Attrition.Gameplay.Player
     ///
     /// Phân loại theo nơi kích hoạt:
     ///  - Khi ĐÁNH TRÚNG quái (máy có InputAuthority phát hiện) → Burn/Slow (RPC lên enemy),
-    ///    Lifesteal + DamageShield (RPC lên state authority của player này).
-    ///  - PASSIVE trên host: HealthRegen (hồi khi HP dưới ngưỡng).
+    ///    Lifesteal (RPC lên state authority của player này).
+    ///  - PASSIVE trên host: HealthRegen (hồi khi HP dưới ngưỡng), DamageShield (nạp lại lượt chặn).
     ///  - PotionBoost: PotionSystem (host) đọc PotionHealMultiplier khi uống bình máu.
     ///  - PostSkillDamage: PlayerSkillCaster gọi ArmPostSkill() khi cast → đòn đánh KẾ TIẾP nhân damage.
-    ///  - DamageShield: PlayerController.AbsorbWithShield() trừ vào Shield trước khi trừ HP.
+    ///  - DamageShield: PlayerController.AbsorbWithShield() chặn TRỌN 1 đòn trước khi trừ HP.
     ///
-    /// Chưa có asset/VFX riêng — chỉ logic + tham số đọc từ AccessorySO. Shield/postSkill là [Networked]
-    /// để đồng bộ; effect hiện tại đọc trực tiếp từ PlayerInventory.GetEquippedAccessorySO() (đã networked).
+    /// LƯU Ý: đây là NetworkBehaviour nên PHẢI có sẵn trên prefab. Trước đây script tồn tại nhưng
+    /// KHÔNG được gắn vào Player prefab nào → mọi GetComponent&lt;AccessoryEffects&gt;() trả null và
+    /// toàn bộ hiệu ứng accessory không bao giờ chạy.
     /// </summary>
     [RequireComponent(typeof(PlayerStats))]
     public class AccessoryEffects : NetworkBehaviour
     {
-        [Networked] public int Shield { get; set; }
-        [Networked] private TickTimer ShieldCooldown { get; set; }
+        /// <summary>DamageShield: đang có 1 lượt chặn sẵn sàng (chặn trọn 1 đòn rồi mất).</summary>
+        [Networked] public NetworkBool ShieldReady { get; set; }
+        [Networked] private TickTimer ShieldRecharge { get; set; }
         [Networked] public NetworkBool PostSkillArmed { get; set; }
+        /// <summary>HealthRegen: đếm tới nhịp hồi kế tiếp (effectCooldown giây).</summary>
+        [Networked] private TickTimer RegenTimer { get; set; }
 
         private PlayerStats _stats;
         private PlayerInventory _inventory;
@@ -51,24 +55,44 @@ namespace Attrition.Gameplay.Player
             if (!HasStateAuthority || _stats == null || _stats.CurrentHP <= 0) return;
 
             var acc = Current();
-            if (acc == null || acc.effect != DamageEffectType.HealthRegen) return;
+            TickShieldRecharge(acc);
 
-            int max = _stats.MaxHP;
-            int lowHp = Mathf.RoundToInt(max * acc.effectThreshold);
-            int stopHp = Mathf.RoundToInt(max * acc.effectThresholdStop);
-            if (_stats.CurrentHP >= lowHp) return; // chỉ hồi khi DƯỚI ngưỡng kích hoạt
+            if (acc == null || acc.effect != DamageEffectType.HealthRegen)
+            {
+                RegenTimer = TickTimer.None; // tháo charm → nhịp hồi bắt đầu lại từ đầu khi mặc lại
+                return;
+            }
 
-            // effectMagnitude = HP hồi mỗi giây. Hồi tới ngưỡng dừng thì thôi.
-            int perTick = Mathf.Max(1, Mathf.RoundToInt(acc.effectMagnitude * Runner.DeltaTime));
-            int target = Mathf.Min(stopHp, max);
-            if (_stats.CurrentHP < target)
-                _stats.CurrentHP = Mathf.Min(target, _stats.CurrentHP + perTick);
+            // HỒI THEO NHỊP: cứ effectCooldown giây hồi effectMagnitude HP, không phụ thuộc ngưỡng HP.
+            // (Trước đây effectMagnitude là HP/giây và chỉ chạy khi HP dưới effectThreshold.)
+            float interval = Mathf.Max(0.5f, acc.effectCooldown);
+            if (!RegenTimer.ExpiredOrNotRunning(Runner)) return;
+            RegenTimer = TickTimer.CreateFromSeconds(Runner, interval);
+
+            int gain = Mathf.Max(1, Mathf.RoundToInt(acc.effectMagnitude));
+            if (_stats.CurrentHP < _stats.MaxHP)
+                _stats.CurrentHP = Mathf.Min(_stats.MaxHP, _stats.CurrentHP + gain);
+        }
+
+        /// <summary>
+        /// DamageShield: cứ effectCooldown giây có LẠI 1 lượt chặn, lượt đó tồn tại tới khi bị đánh.
+        /// Vừa trang bị (chưa từng chặn) → có ngay 1 lượt. Tháo charm → mất lượt đang giữ.
+        /// </summary>
+        private void TickShieldRecharge(AccessorySO acc)
+        {
+            bool hasShieldCharm = acc != null && acc.effect == DamageEffectType.DamageShield;
+            if (!hasShieldCharm)
+            {
+                if (ShieldReady) ShieldReady = false;
+                return;
+            }
+            if (!ShieldReady && ShieldRecharge.ExpiredOrNotRunning(Runner)) ShieldReady = true;
         }
 
         // ─────────────────────── ĐÁNH TRÚNG QUÁI ───────────────────────
 
         /// <summary>Gọi khi player này ĐÁNH TRÚNG 1 quái (máy có InputAuthority). dmgDealt = damage đã gây.
-        /// Kích Burn/Slow lên quái + Lifesteal/Shield cho bản thân qua RPC lên host.</summary>
+        /// Kích Burn/Slow lên quái + Lifesteal cho bản thân qua RPC lên host.</summary>
         public void OnDealtDamageToEnemy(Attrition.Controllers.EnemyController enemy, int dmgDealt)
         {
             var acc = Current();
@@ -77,18 +101,17 @@ namespace Attrition.Gameplay.Player
             switch (acc.effect)
             {
                 case DamageEffectType.Burn:
+                    // Thiêu đốt: áp cho MỌI bậc quái, kể cả Elite/Boss.
                     if (enemy != null)
                         enemy.RpcApplyBurn(Mathf.RoundToInt(acc.effectMagnitude), acc.effectDuration);
                     break;
                 case DamageEffectType.Slow:
-                    if (enemy != null)
+                    // Làm chậm: CHỈ quái thường + Elite. Boss miễn nhiễm (khống chế boss quá mạnh).
+                    if (enemy != null && enemy.Tier != EnemyTier.Boss)
                         enemy.RpcApplySlow(Mathf.Clamp01(acc.effectMagnitude), acc.effectDuration);
                     break;
                 case DamageEffectType.Lifesteal:
                     RpcLifesteal(Mathf.Max(1, Mathf.RoundToInt(dmgDealt * acc.effectMagnitude)));
-                    break;
-                case DamageEffectType.DamageShield:
-                    RpcGrantShield(Mathf.Max(1, Mathf.RoundToInt(acc.effectMagnitude)), acc.effectDuration, acc.effectCooldown);
                     break;
             }
 
@@ -102,30 +125,22 @@ namespace Attrition.Gameplay.Player
             if (_stats != null) _stats.RestoreHP(amount);
         }
 
-        [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
-        private void RpcGrantShield(int amount, float duration, float cooldown)
-        {
-            if (!ShieldCooldown.ExpiredOrNotRunning(Runner)) return; // còn cooldown → không tạo khiên mới
-            Shield = amount;
-            ShieldCooldown = TickTimer.CreateFromSeconds(Runner, cooldown);
-            StartCoroutine(ExpireShield(duration));
-        }
+        // ─────────────────────── SHIELD (host, trong TakeDamage) ───────────────────────
 
-        private System.Collections.IEnumerator ExpireShield(float duration)
-        {
-            yield return new WaitForSeconds(duration);
-            if (HasStateAuthority) Shield = 0;
-        }
-
-        // ─────────────────────── SHIELD ABSORB (host, trong TakeDamage) ───────────────────────
-
-        /// <summary>Trừ sát thương vào lá chắn trước. Trả về damage CÒN LẠI sau khi khiên hấp thụ. Chỉ host.</summary>
+        /// <summary>
+        /// Chặn TRỌN 1 đòn nếu đang có lượt chặn (trả 0), rồi bắt đầu đếm effectCooldown giây để nạp lại.
+        /// Không có lượt → trả nguyên damage. Chỉ host.
+        /// </summary>
         public int AbsorbWithShield(int incoming)
         {
-            if (!HasStateAuthority || Shield <= 0 || incoming <= 0) return incoming;
-            int absorbed = Mathf.Min(Shield, incoming);
-            Shield -= absorbed;
-            return incoming - absorbed;
+            if (!HasStateAuthority || incoming <= 0 || !ShieldReady) return incoming;
+
+            var acc = Current();
+            if (acc == null || acc.effect != DamageEffectType.DamageShield) return incoming;
+
+            ShieldReady = false;
+            ShieldRecharge = TickTimer.CreateFromSeconds(Runner, Mathf.Max(1f, acc.effectCooldown));
+            return 0;
         }
 
         // ─────────────────────── POTION BOOST ───────────────────────

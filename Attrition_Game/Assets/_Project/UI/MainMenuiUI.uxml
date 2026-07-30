@@ -77,7 +77,7 @@
                     <ui:VisualElement name="name-entry-dim"/>
                     <ui:VisualElement name="name-entry-panel">
                         <ui:Label text="NAME YOUR CHARACTER" name="name-entry-title"/>
-                        <ui:Label text="3–16 ký tự, chỉ chữ và số." name="name-entry-hint"/>
+                        <ui:Label text="3-16 characters, letters and numbers only." name="name-entry-hint"/>
                         <ui:TextField name="name-entry-input" max-length="16" class="login-input"/>
                         <ui:Label text="" name="name-entry-error"/>
                         <ui:VisualElement name="name-entry-actions">

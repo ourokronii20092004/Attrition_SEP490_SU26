@@ -124,12 +124,30 @@ namespace Attrition.Persistence
             }
         }
 
+        /// <summary>
+        /// File inventory của 1 save slot SOLO. PlayerInventory ghi riêng ra đây (không nhét vào
+        /// slot_N.json), nên xoá nhân vật phải xoá cả file này — nếu không, tạo lại ở CÙNG slot sẽ
+        /// nạp nguyên túi đồ + trang bị của nhân vật cũ.
+        /// </summary>
+        public static string SoloInventoryPath(int slotIndex)
+            => Path.Combine(Application.persistentDataPath, $"inventory_solo_{slotIndex}.json");
+
+        /// <summary>Xoá TOÀN BỘ dữ liệu của 1 save slot solo: tiến trình + inventory.</summary>
         public static void DeleteSlot(int slotIndex)
         {
-            string filePath = Path.Combine(SaveDirectory, $"slot_{slotIndex}.json");
-            if (File.Exists(filePath))
+            TryDelete(Path.Combine(SaveDirectory, $"slot_{slotIndex}.json"));
+            TryDelete(SoloInventoryPath(slotIndex));
+        }
+
+        private static void TryDelete(string filePath)
+        {
+            try
             {
-                File.Delete(filePath);
+                if (File.Exists(filePath)) File.Delete(filePath);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Error deleting '{filePath}': {e.Message}");
             }
         }
 

@@ -24,7 +24,7 @@ namespace Attrition.Data
         Burn,             // Thiêu đốt: đánh trúng quái → gây sát thương theo thời gian.
         Slow,             // Làm chậm: đánh trúng quái → giảm tốc di chuyển quái trong effectDuration.
         Lifesteal,        // Hút máu: đánh trúng quái → hồi HP theo % sát thương gây ra.
-        HealthRegen,      // Hồi máu theo thời gian khi HP dưới ngưỡng, tới ngưỡng dừng thì thôi.
+        HealthRegen,      // Hồi máu theo NHỊP: cứ effectCooldown giây hồi effectMagnitude HP.
         PotionBoost,      // Tăng hiệu quả hồi HP khi uống bình máu (% cộng thêm).
         DamageShield,     // Gây sát thương → tạo lá chắn tạm (có cooldown).
         PostSkillDamage   // Sau khi dùng skill → đòn đánh KẾ TIẾP tăng sát thương.
@@ -51,7 +51,7 @@ namespace Attrition.Data
 
         [Header("---- THAM SỐ HIỆU ỨNG (dùng theo effect) ----")]
         [Tooltip("Burn: tổng sát thương thiêu đốt / Slow: (không dùng) / Lifesteal: % máu hút (0.2 = 20%) / "
-               + "HealthRegen: HP hồi mỗi giây / PotionBoost: % tăng hồi bình (0.3 = +30%) / "
+               + "HealthRegen: HP hồi MỖI NHỊP (nhịp = effectCooldown giây) / PotionBoost: % tăng hồi bình (0.3 = +30%) / "
                + "DamageShield: lượng lá chắn / PostSkillDamage: hệ số nhân (1.5 = +50%).")]
         public float effectMagnitude = 0f;
 
@@ -59,14 +59,15 @@ namespace Attrition.Data
                + "Không dùng cho Lifesteal/PostSkillDamage.")]
         public float effectDuration = 3f;
 
-        [Tooltip("Ngưỡng kích hoạt (theo tỉ lệ 0..1 của Max HP). HealthRegen: hồi khi HP DƯỚI ngưỡng này, "
-               + "dừng khi chạm ngưỡng dừng effectThresholdStop.")]
+        [Tooltip("Ngưỡng kích hoạt (tỉ lệ 0..1 của Max HP). HIỆN KHÔNG DÙNG — HealthRegen đã đổi sang hồi "
+               + "theo nhịp cố định, không phụ thuộc HP còn lại.")]
         public float effectThreshold = 0.5f;
 
-        [Tooltip("Ngưỡng dừng cho HealthRegen (tỉ lệ 0..1 Max HP). Hồi tới đây thì dừng.")]
+        [Tooltip("HIỆN KHÔNG DÙNG (xem effectThreshold).")]
         public float effectThresholdStop = 0.8f;
 
-        [Tooltip("Cooldown hồi hiệu ứng (giây). Dùng cho DamageShield (giãn cách giữa 2 lần tạo khiên).")]
+        [Tooltip("Cooldown hồi hiệu ứng (giây). DamageShield: giãn cách giữa 2 lần tạo khiên. "
+               + "HealthRegen: giãn cách giữa 2 nhịp hồi HP.")]
         public float effectCooldown = 8f;
 
         public override ItemCategory Category => ItemCategory.Accessory;

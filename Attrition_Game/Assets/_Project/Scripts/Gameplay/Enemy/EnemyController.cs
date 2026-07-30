@@ -591,11 +591,16 @@ namespace Attrition.Controllers
             burnTickTimer = TickTimer.CreateFromSeconds(Runner, BurnTickInterval);
         }
 
+        /// <summary>Tier của quái (Normal/Elite/Boss). Không có EnemyStats → coi như Normal.</summary>
+        public Attrition.Data.EnemyTier Tier =>
+            statsComp != null ? statsComp.Tier : Attrition.Data.EnemyTier.Normal;
+
         /// <summary>Áp hiệu ứng LÀM CHẬM: giảm tốc còn multiplier (0..1) trong duration giây. Lấy mức
-        /// chậm MẠNH hơn nếu đang có sẵn. Chỉ host.</summary>
+        /// chậm MẠNH hơn nếu đang có sẵn. CHỈ quái thường + Elite — BOSS miễn nhiễm. Chỉ host.</summary>
         public void ApplySlow(float multiplier, float duration)
         {
             if (!HasStateAuthority || isDeadNetworked || IsAwaitingRevive) return;
+            if (Tier == Attrition.Data.EnemyTier.Boss) return; // boss miễn nhiễm làm chậm
             multiplier = Mathf.Clamp01(multiplier);
             if (duration <= 0f || multiplier >= 1f) return;
 
@@ -618,6 +623,16 @@ namespace Attrition.Controllers
         /// <summary>Hệ số tốc độ hiện tại do slow (1 = bình thường). EnemyAI nhân vào tốc chạy/tuần tra.</summary>
         public float SlowMultiplier =>
             (Object != null && Object.IsValid && !slowTimer.ExpiredOrNotRunning(Runner)) ? slowMultiplier : 1f;
+
+        // Cờ đọc được trên MỌI máy (timer là [Networked]) → client cũng tô màu đúng, không cần RPC.
+        private bool TimerRunning(TickTimer t) =>
+            Object != null && Object.IsValid && Runner != null && !t.ExpiredOrNotRunning(Runner);
+
+        /// <summary>Đang cháy (accessory Burn) — dùng để tô màu cam nhạt.</summary>
+        public bool IsBurning => TimerRunning(burnTimer);
+
+        /// <summary>Đang bị làm chậm (accessory Slow) — dùng để tô màu xanh nhạt.</summary>
+        public bool IsSlowed => TimerRunning(slowTimer);
 
         /// <summary>Tick DoT thiêu đốt. Gọi trong FixedUpdateNetwork (host). Trả true nếu đã chết vì cháy.</summary>
         private void TickBurn()
