@@ -14,12 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.EnemyStatsSO
   enemyId: flying_demon
   tier: 0
-  maxHP: 20
-  ad: 10
+  webImage: {fileID: 0}
+  maxHP: 40
+  ad: 30
   ap: 0
   def: 0
   res: 0
   poise: 0
-  expReward: 10
+  poiseRecoveryTime: 3
+  patrolSpeed: 2
+  chaseSpeed: 5
+  attackSpeed: 1
+  expReward: 20
   coopHpMultiplier: 1.6
   coopDamageMultiplier: 1.2

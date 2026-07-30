@@ -79,6 +79,22 @@ public class EnemyAI : NetworkBehaviour
     [Tooltip("Độ cao của tia laser so với mặt đất (dời lên để không quét trúng sàn nhà)")]
     public float wallCheckHeightOffset = 0.5f;
 
+    [Header("---- LINE OF SIGHT ----")]
+    [Tooltip("Độ cao 'mắt' quái so với pivot khi quét tầm nhìn. Dời lên để tia không bắt đầu trong sàn.")]
+    public float eyeHeightOffset = 0.6f;
+    [Tooltip("Giữ mục tiêu thêm bao lâu khi bị tường che (giây) — tránh mất aggro vì che chớp nhoáng.")]
+    public float sightMemoryDuration = 1.5f;
+
+    [Header("---- STEP UP (leo bậc 1 ô) ----")]
+    [Tooltip("Bật để quái nhún lên bậc/ô cao khi đuổi player. Tắt = dừng trước mọi vật cản như cũ.")]
+    public bool canStepUp = true;
+    [Tooltip("Chiều cao bậc TỐI ĐA quái vượt được (units). ~1 ô tile.")]
+    public float stepUpMaxHeight = 1.2f;
+    [Tooltip("Tốc ngang tối thiểu khi nhún lên bậc.")]
+    public float stepUpForwardSpeed = 4f;
+    [Tooltip("Cooldown giữa 2 lần leo bậc (giây) — chống nhún liên tục vào chân tường.")]
+    public float stepUpCooldown = 0.6f;
+
     [Header("---- JUMP / EVADE (Elite) ----")]
     [Tooltip("Bật để quái có thể nhảy lùi né đòn (Backstep) khi player tới quá gần")]
     public bool canEvadeJump = false;
@@ -170,15 +186,45 @@ public class EnemyAI : NetworkBehaviour
     private bool _hasCommittedAttack;
     // Anti-jitter: đếm thời gian bị tường/vực chặn liên tục
     private float _chaseBlockedTimer;
+    // Sight memory: còn bao lâu vẫn giữ target sau khi mất tầm nhìn (giây, host-only)
+    private float _sightMemoryTimer;
+    // Chống spam nhún bậc
+    private float _stepUpCooldownTimer;
+    // Đang trong cú nhún leo bậc (giữ animation DI CHUYỂN, không phải animation nhảy)
+    private bool _isStepUpHop;
+    // Hướng + tốc ngang phải DUY TRÌ suốt cú nhún: thân tì vào vách bậc thì collision triệt tiêu
+    // vx ngay tick sau → nhảy thẳng lên rồi rơi tại chỗ, không lao được lên bậc.
+    private float _stepUpDirX;
+    private float _stepUpSpeed;
 
     // Render-side animation state (tránh gọi anim lặp)
     private bool localSleepHandled;
     private bool localWakeHandled;
 
+    // Material dùng CHUNG cho mọi quái (một instance duy nhất, không phải mỗi con một cái).
+    private static PhysicsMaterial2D _frictionlessBody;
+    private static PhysicsMaterial2D FrictionlessBody
+    {
+        get
+        {
+            if (_frictionlessBody == null)
+                _frictionlessBody = new PhysicsMaterial2D("EnemyBody_NoFriction") { friction = 0f, bounciness = 0f };
+            return _frictionlessBody;
+        }
+    }
+
 
     public override void Spawned()
     {
         rb = GetComponent<Rigidbody2D>();
+
+        // Prefab quái không gán PhysicsMaterial2D → dùng default friction 0.4 → thân CÀ vào tường,
+        // bị hãm lại khi nhún leo bậc và dính vào vách. Player đã dùng material friction 0; gán
+        // material dùng chung ở runtime thay vì sửa tay 25 prefab.
+        // ponytail: material tạo bằng code, không lộ ra Inspector. Nếu sau này cần bounciness/friction
+        // riêng theo loại quái thì tạo asset .physicsMaterial2D và gán trong prefab.
+        if (rb != null && rb.sharedMaterial == null) rb.sharedMaterial = FrictionlessBody;
+
         if (combatComp == null) combatComp = GetComponent<EnemyCombat>();
         if (controller == null) controller = GetComponent<EnemyController>();
         if (animationComp == null) animationComp = GetComponent<EnemyAnimation>();
@@ -575,15 +621,22 @@ public class EnemyAI : NetworkBehaviour
         float dist = Vector2.Distance(transform.position, currentTarget);
         float xDiff = currentTarget.x - transform.position.x;
 
-        if (!isFlying && playerTarget != null)
+        if (_stepUpCooldownTimer > 0f) _stepUpCooldownTimer -= Runner.DeltaTime;
+
+        PathObstacle obstacle = PathObstacle.None;
+        if (!isFlying)
         {
+            obstacle = ProbePath(xDiff > 0 ? 1f : -1f);
             float yDiff = Mathf.Abs(playerTarget.position.y - transform.position.y);
             float xDist = Mathf.Abs(xDiff);
-            bool blocked = IsPathBlocked(xDiff > 0 ? 1f : -1f);
 
             // Player quá cao (trên đầu quái) VÀ gần cùng cột X
-            // HOẶC bị tường chặn liên tục > 1 giây → bỏ đuổi.
-            if ((yDiff > 2.5f && xDist < 1.5f) || (blocked && _chaseBlockedTimer > 1f))
+            // HOẶC bị TƯỜNG (không leo được) chặn liên tục > 1 giây → bỏ đuổi.
+            // Bậc leo được (StepUp) KHÔNG tính là kẹt: dưới đây sẽ nhún lên, kể cả khi player cao
+            // hơn nhiều — leo từng bậc vẫn tới được, chỉ bỏ khi thật sự hết đường.
+            bool canClimbForward = canStepUp && obstacle == PathObstacle.StepUp;
+            if (!canClimbForward
+                && ((yDiff > 2.5f && xDist < 1.5f) || (obstacle == PathObstacle.Wall && _chaseBlockedTimer > 1f)))
             {
                 currentTarget = new Vector2(PickRandomPatrolX(), transform.position.y);
                 CurrentState = EnemyState.Patrol;
@@ -595,8 +648,8 @@ public class EnemyAI : NetworkBehaviour
             }
         }
 
-        // Kiểm tra tầm nhìn tới Player (không bị tường che)
-        bool hasLineOfSight = !Physics2D.Linecast(transform.position, playerTarget.position, obstacleLayer);
+        // Kiểm tra tầm nhìn tới Player (không bị tường/sàn che) — origin ở tầm mắt, xem HasLineOfSightTo.
+        bool hasLineOfSight = HasLineOfSightTo(playerTarget.position);
 
         if (hasLineOfSight)
         {
@@ -665,9 +718,18 @@ public class EnemyAI : NetworkBehaviour
         {
             // Đã bắt đầu teleport → RunAILogic sẽ xử lý ở elite override
         }
-        else if (!isFlying && IsPathBlocked(xDiff > 0 ? 1f : -1f))
+        else if (!isFlying && obstacle == PathObstacle.StepUp
+                 && canStepUp && _stepUpCooldownTimer <= 0f && IsGrounded())
         {
-            // Bị chặn bởi tường → tăng bộ đếm kẹt
+            // Bậc ~1 ô phía trước → nhún lên để tiếp tục đuổi (giữ animation di chuyển).
+            _chaseBlockedTimer = 0f;
+            ExecuteStepUpHop(xDiff);
+            return;
+        }
+        else if (!isFlying && obstacle != PathObstacle.None)
+        {
+            // Tường không vượt được (hoặc bậc đang cooldown) → ĐỨNG YÊN, không đập mặt vào tường.
+            // _chaseBlockedTimer sẽ đẩy quái về Patrol sau 1 giây (xem đầu StateChase).
             _chaseBlockedTimer += Runner.DeltaTime;
             rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
             UpdateFacing(xDiff);
@@ -823,6 +885,7 @@ public class EnemyAI : NetworkBehaviour
     {
         CurrentState = EnemyState.Jumping;
         IsJumping = true;
+        _isStepUpHop = false; // nhảy né có animation nhảy riêng
         jumpCooldownTimer = TickTimer.CreateFromSeconds(Runner, jumpCooldown);
         
         // Nhảy lùi (ngược hướng xDiff)
@@ -843,6 +906,7 @@ public class EnemyAI : NetworkBehaviour
     {
         CurrentState = EnemyState.Jumping;
         IsJumping = true;
+        _isStepUpHop = false; // nhảy lao có animation nhảy riêng
         jumpCooldownTimer = TickTimer.CreateFromSeconds(Runner, jumpCooldown);
 
         // Lao về phía player (cùng hướng xDiff)
@@ -856,15 +920,57 @@ public class EnemyAI : NetworkBehaviour
         RPC_PlayJumpAnim();
     }
 
+    /// <summary>
+    /// Nhún lên bậc ~1 ô để tiếp tục đuổi player ở trên cao.
+    /// KHÔNG gọi RPC_PlayJumpAnim: quái thường không có animation nhảy → giữ animation DI CHUYỂN
+    /// (NetSpeed > 0 suốt cú nhún, xem StateJumping).
+    /// Lực Y tính từ chiều cao bậc: v = sqrt(2 * g * h) + dư 25% cho ma sát/độ trễ tick.
+    /// </summary>
+    private void ExecuteStepUpHop(float xDiff)
+    {
+        CurrentState = EnemyState.Jumping;
+        IsJumping = true;
+        _isStepUpHop = true;
+        _stepUpCooldownTimer = stepUpCooldown;
+        // Dùng jumpCooldownTimer làm mốc "đã nhảy đủ lâu" cho StateJumping (không chặn evade/lunge lâu).
+        jumpCooldownTimer = TickTimer.CreateFromSeconds(Runner, Mathf.Min(jumpCooldown, 0.5f));
+
+        float dirX = xDiff > 0 ? 1f : -1f;
+        NetFacingDir = dirX;
+        AttackLockedFacingDir = dirX;
+
+        float g = Mathf.Abs(Physics2D.gravity.y) * Mathf.Max(0.01f, rb.gravityScale);
+        float vy = Mathf.Sqrt(2f * g * (stepUpMaxHeight + 0.35f)) * 1.25f;
+        float vx = Mathf.Max(stepUpForwardSpeed, Mathf.Abs(rb.linearVelocity.x));
+
+        _stepUpDirX = dirX;
+        _stepUpSpeed = vx;
+        rb.linearVelocity = new Vector2(dirX * vx, vy);
+    }
+
     private void StateJumping()
     {
         // Khóa hướng nhìn
         animationComp.FaceDirection(AttackLockedFacingDir);
-        NetSpeed = 0f;
+
+        if (_isStepUpHop)
+        {
+            // DUY TRÌ tốc ngang mỗi tick. Không làm vậy thì thân tì vào vách bậc → collision
+            // triệt tiêu vx ngay tick sau → quái nhảy thẳng lên rồi rơi đúng chỗ cũ, không lên bậc.
+            rb.linearVelocity = new Vector2(_stepUpDirX * _stepUpSpeed, rb.linearVelocity.y);
+            // Không có animation nhảy → giữ animation di chuyển bằng NetSpeed > 0.
+            NetSpeed = _stepUpSpeed;
+        }
+        else
+        {
+            NetSpeed = 0f;
+        }
 
         // An toàn: Phải nhảy được ít nhất 0.2 giây thì mới bắt đầu check rớt xuống chạm đất
         // Để tránh việc Frame 1 Physics chưa kịp đẩy lên đã bị coi là đang ở mặt đất
-        bool hasJumpedLongEnough = !jumpCooldownTimer.IsRunning || jumpCooldownTimer.RemainingTime(Runner) < (jumpCooldown - 0.2f);
+        bool hasJumpedLongEnough = _isStepUpHop
+            ? jumpCooldownTimer.RemainingTime(Runner).GetValueOrDefault() < 0.35f  // hop ngắn: mốc riêng
+            : (!jumpCooldownTimer.IsRunning || jumpCooldownTimer.RemainingTime(Runner) < (jumpCooldown - 0.2f));
 
         // Nếu rớt xuống (vận tốc Y <= 0.1) và chạm đất -> kết thúc nhảy
         if (hasJumpedLongEnough && rb.linearVelocity.y <= 0.1f && IsGrounded())
@@ -872,6 +978,7 @@ public class EnemyAI : NetworkBehaviour
             rb.linearVelocity = new Vector2(0f, 0f);
             CurrentState = EnemyState.Chase;
             IsJumping = false;
+            _isStepUpHop = false;
             noPlayerTimer = 0f;
         }
     }
@@ -1034,7 +1141,7 @@ public class EnemyAI : NetworkBehaviour
 
         // (1) Giữ khoảng hở tối thiểu với mặt đất ngay dưới vị trí target.
         LayerMask groundMask = flyGroundLayer.value != 0 ? flyGroundLayer : obstacleLayer;
-        RaycastHit2D ground = Physics2D.Raycast(new Vector2(rawTarget.x, desiredY), Vector2.down, 30f, groundMask);
+        RaycastHit2D ground = Phys.Raycast(new Vector2(rawTarget.x, desiredY), Vector2.down, 30f, groundMask);
         if (ground.collider != null)
         {
             float minAboveGround = ground.point.y + flyMinGroundClearance;
@@ -1127,8 +1234,12 @@ public class EnemyAI : NetworkBehaviour
             if (dst > viewRadius) continue;
             if (!IsInsideLeash(pObj.transform.position)) continue;   // elite: player đã ra khỏi phòng
 
+            // Không nhìn xuyên tường/mặt đất: phải THẤY mới được aggro mới.
+            if (!HasLineOfSightTo(pObj.transform.position)) continue;
+
             playerTarget = pObj.transform;
             cachedChasePlayer = player;
+            _sightMemoryTimer = sightMemoryDuration;
             break;
         }
     }
@@ -1171,9 +1282,52 @@ public class EnemyAI : NetworkBehaviour
         // theo player ra ngoài phòng.
         if (!IsInsideLeash(pObj.transform.position)) return false;
 
+        // Mất tầm nhìn → vẫn giữ target trong sightMemoryDuration (quái "nhớ" chỗ vừa thấy),
+        // hết bộ nhớ mà vẫn bị che → nhả target. Tránh vừa mất thấy đã quên (giật aggro).
+        if (HasLineOfSightTo(pObj.transform.position))
+        {
+            _sightMemoryTimer = sightMemoryDuration;
+        }
+        else
+        {
+            _sightMemoryTimer -= Runner.DeltaTime;
+            if (_sightMemoryTimer <= 0f) return false;
+        }
+
         playerTarget = pObj.transform;
         return true;
     }
+
+    /// <summary>
+    /// Tia từ "mắt" quái tới thân mục tiêu, chặn bởi obstacleLayer (đất + tường).
+    /// Origin dời lên eyeHeightOffset vì pivot quái thường nằm SÁT/TRONG collider sàn → tia tự chặn chính nó.
+    /// </summary>
+    protected bool HasLineOfSightTo(Vector2 worldPos)
+    {
+        if (obstacleLayer.value == 0) return true; // chưa cấu hình layer → không chặn (giữ hành vi cũ)
+        return Phys.Linecast(EyePosition, worldPos, obstacleLayer).collider == null;
+    }
+
+    /// <summary>
+    /// Vị trí "mắt": TÂM collider thân nếu có (chắc chắn nằm trên mặt sàn, không phụ thuộc pivot),
+    /// không thì pivot + eyeHeightOffset. Tia LOS bắt đầu từ trong sàn thì luôn báo bị chặn.
+    /// </summary>
+    private Vector2 EyePosition
+    {
+        get
+        {
+            var col = BodyCollider;
+            if (col != null) return col.bounds.center;
+            return (Vector2)transform.position + Vector2.up * eyeHeightOffset;
+        }
+    }
+
+    /// <summary>
+    /// Physics scene CỦA RUNNER. BẮT BUỘC dùng cái này thay cho Physics2D tĩnh: Fusion chạy
+    /// multi-peer thì mỗi peer có physics scene riêng, query tĩnh bắn vào scene rỗng → KHÔNG trúng gì
+    /// (LOS/quét tường/leo bậc im lặng vô hiệu). Xem PlayerController.IsGrounded cùng lý do.
+    /// </summary>
+    private PhysicsScene2D Phys => Runner != null ? Runner.GetPhysicsScene2D() : Physics2D.defaultPhysicsScene;
 
     /// <summary>
     /// Kiểm tra xem có player nào trong bán kính wakeRadius không (dùng cho sleep/wakeup).
@@ -1197,15 +1351,97 @@ public class EnemyAI : NetworkBehaviour
     }
 
 
+    /// <summary>Loại vật cản phía trước — quyết định nên nhún lên, hay bỏ đuổi.</summary>
+    protected enum PathObstacle
+    {
+        None,     // đường thông
+        StepUp,   // bậc thấp: nhún 1 cái là lên được
+        Wall      // tường cao/vực: không vượt được
+    }
+
+    /// <summary>
+    /// Collider THÂN (non-trigger) — thường nằm ở CHILD, không phải root. Cần bounds thật của nó vì:
+    /// - pivot quái nằm giữa thân, không phải ở chân → tia "sát chân" tính từ pivot lại nằm lưng lửng
+    /// - thân Slime rộng 1.7 mà wallCheckDistance chỉ 0.8 → tia chưa ra khỏi người đã hết tầm
+    /// </summary>
+    private Collider2D _bodyCol;
+    private bool _bodyColSearched;
+    private Collider2D BodyCollider
+    {
+        get
+        {
+            if (!_bodyColSearched)
+            {
+                _bodyColSearched = true;
+                foreach (var c in GetComponentsInChildren<Collider2D>(true))
+                {
+                    if (c == null || c.isTrigger) continue;
+                    _bodyCol = c;
+                    break;
+                }
+            }
+            return _bodyCol;
+        }
+    }
+
+    /// <summary>
+    /// Phân loại vật cản phía trước bằng 2 tia: tia THẤP (sát chân) và tia CAO (đỉnh bậc cho phép).
+    /// - thấp trúng + cao thông  → bậc thấp (StepUp)
+    /// - cao trúng              → tường (Wall)
+    /// Một tia duy nhất ở giữa thân không phân biệt được bậc 1 ô với tường 5 ô.
+    ///
+    /// MỌI mốc đều tính từ bounds collider THÂN (không phải pivot): tia bắt đầu ở RÌA thân và dài
+    /// wallCheckDistance TỪ RÌA, nếu không thì với quái to (Slime rộng 1.7) tia chết trong chính thân nó.
+    /// </summary>
+    protected PathObstacle ProbePath(float dirX)
+    {
+        if (obstacleLayer.value == 0) return PathObstacle.None;
+
+        Vector2 dir = new Vector2(dirX > 0 ? 1f : -1f, 0f);
+        var col = BodyCollider;
+
+        // Không có collider thân → quay về cách cũ (tính từ pivot).
+        Vector2 pos = transform.position;
+        float footY = col != null ? col.bounds.min.y : pos.y;
+        float frontX = col != null ? (dir.x > 0 ? col.bounds.max.x : col.bounds.min.x) : pos.x;
+        float headY = col != null ? col.bounds.max.y : pos.y + wallCheckHeightOffset;
+
+        // Chừa 0.02 để tia không bắt đầu ĐÚNG trên mặt collider của chính mình.
+        Vector2 front = new Vector2(frontX + dir.x * 0.02f, footY);
+        float reach = wallCheckDistance;
+
+        // Tia thấp: ngay trên mặt sàn đang đứng (0.1 để không quét trúng chính sàn đó).
+        bool lowHit = Phys.Raycast(front + Vector2.up * 0.1f, dir, reach, obstacleLayer).collider != null;
+
+        if (!lowHit)
+        {
+            // Chân thông nhưng thân có thể vẫn cấn (mỏm đá thấp lơ lửng) → quét thêm tia giữa thân.
+            float midY = Mathf.Min(footY + Mathf.Max(0.1f, wallCheckHeightOffset), headY - 0.05f);
+            bool midHit = Phys.Raycast(new Vector2(front.x, midY), dir, reach, obstacleLayer).collider != null;
+            return midHit ? PathObstacle.Wall : PathObstacle.None;
+        }
+
+        // Tia cao ở NGAY TRÊN mức bậc tối đa: nếu thông → bậc leo được.
+        bool highHit = Phys.Raycast(front + Vector2.up * (stepUpMaxHeight + 0.1f), dir, reach, obstacleLayer).collider != null;
+        if (highHit) return PathObstacle.Wall;
+
+        // Còn phải có CHỖ ĐỨNG phía trên bậc, không thì nhún lên rồi rơi ngược lại.
+        float bodyHalfW = col != null ? col.bounds.extents.x : 0.3f;
+        Vector2 landingProbe = new Vector2(front.x + dir.x * Mathf.Max(reach, bodyHalfW + 0.2f), footY + stepUpMaxHeight + 0.1f);
+        bool hasFloorAtLanding = Phys.Raycast(landingProbe, Vector2.down, stepUpMaxHeight + 0.4f, obstacleLayer).collider != null;
+
+        return hasFloorAtLanding ? PathObstacle.StepUp : PathObstacle.Wall;
+    }
+
+    /// <summary>
+    /// Kiểm tra vật cản ĐƠN GIẢN (1 tia giữa thân) — dùng cho Patrol/về ngủ: chỉ cần biết "có nên
+    /// quay đầu không". Chase dùng ProbePath để còn phân biệt bậc leo được.
+    /// </summary>
     private bool IsPathBlocked(float dirX)
     {
+        if (obstacleLayer.value == 0) return false;
         Vector2 origin = new Vector2(transform.position.x, transform.position.y + wallCheckHeightOffset);
-        Vector2 direction = new Vector2(dirX, 0);
-
-        RaycastHit2D hit = Physics2D.Raycast(origin, direction, wallCheckDistance, obstacleLayer);
-        Debug.DrawRay(origin, direction * wallCheckDistance, Color.red);
-
-        return hit.collider != null;
+        return Phys.Raycast(origin, new Vector2(dirX > 0 ? 1f : -1f, 0f), wallCheckDistance, obstacleLayer).collider != null;
     }
 
     private float PickRandomPatrolX()
@@ -1237,6 +1473,11 @@ public class EnemyAI : NetworkBehaviour
         cachedChasePlayer = default;
         playerTarget = null;
         noPlayerTimer = 0f;
+        _sightMemoryTimer = 0f;
+        _chaseBlockedTimer = 0f;
+        _stepUpCooldownTimer = 0f;
+        _isStepUpHop = false;
+        IsJumping = false;
 
         // Quái hồi sinh → không ngủ lại ngay
         if (enableSleep)
@@ -1265,7 +1506,7 @@ public class EnemyAI : NetworkBehaviour
         LayerMask surfaceMask = sleepSurfaceLayer.value != 0 ? sleepSurfaceLayer : obstacleLayer;
         if (surfaceMask.value == 0) return startPosition; // không có layer hợp lệ
 
-        RaycastHit2D hitSurface = Physics2D.Raycast(startPosition, rayDir, 30f, surfaceMask);
+        RaycastHit2D hitSurface = Phys.Raycast(startPosition, rayDir, 30f, surfaceMask);
         if (hitSurface.collider != null)
         {
             float offset = toCeiling ? -0.3f : 0.5f; // treo dưới trần / nằm trên sàn
@@ -1318,11 +1559,32 @@ public class EnemyAI : NetworkBehaviour
             Gizmos.DrawWireSphere(transform.position, 0.25f);
         }
 
-        // Tia quét tường - MAGENTA
+        // Tia quét tường - MAGENTA (tia giữa thân)
         Gizmos.color = Color.magenta;
         Vector2 wallOrigin = new Vector2(transform.position.x, transform.position.y + wallCheckHeightOffset);
         Gizmos.DrawRay(wallOrigin, Vector2.right * wallCheckDistance);
         Gizmos.DrawRay(wallOrigin, Vector2.left * wallCheckDistance);
+
+        // Cặp tia phân loại bậc/tường: THẤP (sát chân) + CAO (mức bậc tối đa) — xem ProbePath.
+        // Trúng tia thấp mà tia cao thông = bậc leo được.
+        // Gốc tia lấy từ BOUNDS collider thân (giống ProbePath) — pivot quái nằm giữa thân nên
+        // vẽ theo pivot sẽ lệch so với tia thật.
+        if (!isFlying)
+        {
+            var gcol = BodyCollider;
+            float gFootY = gcol != null ? gcol.bounds.min.y : transform.position.y;
+            float gRightX = gcol != null ? gcol.bounds.max.x : transform.position.x;
+            float gLeftX = gcol != null ? gcol.bounds.min.x : transform.position.x;
+
+            Gizmos.color = new Color(0f, 1f, 0.5f, 0.9f);
+            Gizmos.DrawRay(new Vector2(gRightX, gFootY + 0.1f), Vector2.right * wallCheckDistance);
+            Gizmos.DrawRay(new Vector2(gLeftX, gFootY + 0.1f), Vector2.left * wallCheckDistance);
+
+            Gizmos.color = new Color(1f, 0.35f, 0f, 0.9f);
+            float gHighY = gFootY + stepUpMaxHeight + 0.1f;
+            Gizmos.DrawRay(new Vector2(gRightX, gHighY), Vector2.right * wallCheckDistance);
+            Gizmos.DrawRay(new Vector2(gLeftX, gHighY), Vector2.left * wallCheckDistance);
+        }
 
         // Vị trí ngủ - BLUE (Sleep)
         if (enableSleep)

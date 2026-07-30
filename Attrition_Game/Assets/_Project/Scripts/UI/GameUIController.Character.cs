@@ -13,6 +13,10 @@ namespace Attrition.UI
         {
             if (_stats == null || _stats.Object == null || !_stats.Object.IsValid) return;
 
+            // Tên nhân vật: UXML để sẵn placeholder "ARTORIAS" và TRƯỚC ĐÂY không có code nào ghi đè,
+            // nên mọi nhân vật đều hiện "ARTORIAS". Lấy tên thật từ GameLaunch (set lúc chọn/tạo slot).
+            string charName = Attrition.Persistence.GameLaunch.CharacterName;
+            SetText("inv-char-name", string.IsNullOrEmpty(charName) ? "Wanderer" : charName);
             SetText("inv-char-level", $"LEVEL {_stats.Level}");
             SetText("stat-def", _stats.DEF.ToString());
             SetText("stat-res", _stats.RES.ToString());

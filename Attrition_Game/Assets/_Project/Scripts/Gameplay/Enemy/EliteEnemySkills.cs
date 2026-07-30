@@ -171,27 +171,21 @@ public class EliteEnemySkills : NetworkBehaviour
         if (teleportTriggerRange > 0 && distToPlayer > teleportTriggerRange) return false;
         if (playerTarget == null) return false;
 
-        ExecuteTeleport(playerTarget);
-        return true;
+        if (ExecuteTeleport(playerTarget)) return true;
+
+        // Không tìm được chỗ đứng hợp lệ (player đang ở hành lang kín/rìa map) → nghỉ 0.5s rồi thử lại.
+        // Không có backoff thì mỗi tick lại quét 8 điểm × 3 phép physics cho mỗi con elite.
+        teleportCooldownTimer = TickTimer.CreateFromSeconds(Runner, 0.5f);
+        return false;
     }
 
-    private void ExecuteTeleport(Transform playerTarget)
+    /// <summary>
+    /// Chọn điểm đến HỢP LỆ rồi mới teleport. Trả về false nếu không tìm được chỗ nào —
+    /// khi đó AI cứ đi bộ như thường, KHÔNG dịch chuyển ra khỏi map / vào trong tường.
+    /// </summary>
+    private bool ExecuteTeleport(Transform playerTarget)
     {
-        Vector2 playerPos = playerTarget.position;
-        float randomAngle = Random.Range(0f, 360f);
-        float randomDist = Random.Range(teleportMinDistance, teleportMaxDistance);
-        Vector2 offset = new Vector2(
-            Mathf.Cos(randomAngle * Mathf.Deg2Rad),
-            Mathf.Sin(randomAngle * Mathf.Deg2Rad)
-        ) * randomDist;
-        Vector2 targetPos = playerPos + offset;
-
-        // Nếu không bay, giữ nguyên Y
-        if (!isFlying)
-        {
-            float randomSide = Random.value > 0.5f ? 1f : -1f;
-            targetPos = new Vector2(playerPos.x + randomSide * randomDist, transform.position.y);
-        }
+        if (!TryFindTeleportSpot(playerTarget.position, out Vector2 targetPos)) return false;
 
         IsTeleporting = true;
         teleportTargetPos = targetPos;
@@ -206,7 +200,104 @@ public class EliteEnemySkills : NetworkBehaviour
         }
 
         RPC_PlayTeleportAnim();
+        return true;
     }
+
+    /// <summary>
+    /// Lấy mask vật cản: ưu tiên obstacleLayer của EnemyAI, fallback summonGroundLayer.
+    /// Cache vì TryFindTeleportSpot chạy trong tick AI.
+    /// </summary>
+    private LayerMask ObstacleMask
+    {
+        get
+        {
+            if (!_obstacleMaskReady)
+            {
+                var ai = GetComponent<EnemyAI>();
+                _obstacleMask = (ai != null && ai.obstacleLayer.value != 0) ? ai.obstacleLayer : summonGroundLayer;
+                _obstacleMaskReady = true;
+            }
+            return _obstacleMask;
+        }
+    }
+    private LayerMask _obstacleMask;
+    private bool _obstacleMaskReady;
+
+    /// <summary>
+    /// Thử vài điểm quanh player, trả điểm ĐẦU TIÊN thoả:
+    ///   1. có sàn bên dưới (không lơ lửng ngoài map — quái đi đất)
+    ///   2. chỗ đứng không nằm trong tường/đất
+    ///   3. không teleport XUYÊN tường (có đường thẳng từ player tới điểm đó)
+    /// Không có điểm nào hợp lệ → false, quái không teleport.
+    /// </summary>
+    private bool TryFindTeleportSpot(Vector2 playerPos, out Vector2 result)
+    {
+        result = transform.position;
+        LayerMask mask = ObstacleMask;
+
+        // Chưa cấu hình layer nào → không thể kiểm tra, giữ hành vi cũ (bên cạnh player, cùng cao độ).
+        if (mask.value == 0)
+        {
+            float side0 = Random.value > 0.5f ? 1f : -1f;
+            result = new Vector2(playerPos.x + side0 * teleportMaxDistance, transform.position.y);
+            return true;
+        }
+
+        float bodyRadius = GetBodyRadius();
+        const int Attempts = 8;
+        float firstSide = Random.value > 0.5f ? 1f : -1f;
+
+        for (int i = 0; i < Attempts; i++)
+        {
+            float dist = Random.Range(teleportMinDistance, teleportMaxDistance);
+            Vector2 candidate;
+
+            if (isFlying)
+            {
+                float ang = Random.Range(0f, 360f) * Mathf.Deg2Rad;
+                candidate = playerPos + new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * dist;
+            }
+            else
+            {
+                // Xen kẽ 2 bên player để không dồn hết lượt thử về một phía đang bị tường.
+                float side = (i % 2 == 0) ? firstSide : -firstSide;
+                candidate = new Vector2(playerPos.x + side * dist, playerPos.y);
+            }
+
+            // (1) Phải có sàn bên dưới → snap chân lên mặt sàn. Quái bay bỏ qua bước snap
+            // nhưng vẫn cần "trong map" (kiểm tra ở (2)+(3)).
+            if (!isFlying)
+            {
+                var ground = Runner.GetPhysicsScene2D().Raycast(
+                    candidate + Vector2.up * 1f, Vector2.down, teleportMaxDistance + 2f, mask);
+                if (ground.collider == null) continue;         // lơ lửng / ngoài map
+                candidate.y = ground.point.y + bodyRadius;     // đặt chân lên sàn
+            }
+
+            // (2) Chỗ đứng không được nằm trong tường/đất.
+            if (Runner.GetPhysicsScene2D().OverlapCircle(candidate, bodyRadius * 0.9f, mask) != null) continue;
+
+            // (3) Không xuyên tường: phải có đường thẳng từ player tới điểm đến.
+            if (Runner.GetPhysicsScene2D().Linecast(playerPos, candidate, mask).collider != null) continue;
+
+            result = candidate;
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>Bán kính thân xấp xỉ (nửa chiều cao collider) để snap chân và kiểm tra chồng lấn.</summary>
+    private float GetBodyRadius()
+    {
+        if (_bodyRadius <= 0f)
+        {
+            var col = GetComponent<Collider2D>();
+            _bodyRadius = col != null ? Mathf.Max(0.2f, col.bounds.extents.y) : 0.5f;
+        }
+        return _bodyRadius;
+    }
+    private float _bodyRadius;
 
     /// <summary>
     /// AI gọi mỗi tick khi đang teleport. Trả về true nếu vẫn đang teleport.

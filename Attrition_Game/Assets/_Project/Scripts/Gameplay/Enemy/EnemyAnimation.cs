@@ -11,11 +11,18 @@ public class EnemyAnimation : NetworkBehaviour
     [SerializeField] private SpriteRenderer telegraphRenderer;
     [Tooltip("Màu nhấp nháy khi báo đòn nặng.")]
     [SerializeField] private Color telegraphColor = new Color(1f, 0.4f, 0.4f);
+    [Header("---- MÀU TRẠNG THÁI (accessory) ----")]
+    [Tooltip("Màu khi bị thiêu đốt (Burn) — cam nhạt.")]
+    [SerializeField] private Color burnTint = new Color(1f, 0.62f, 0.30f);
+    [Tooltip("Màu khi bị làm chậm (Slow) — xanh nhạt.")]
+    [SerializeField] private Color slowTint = new Color(0.55f, 0.85f, 1f);
     private Vector3 originalScale;
     private float lastAppliedFacing;
     private Color _baseColor = Color.white;
     private bool _telegraphActive;
     private float _telegraphBlink;
+    private bool _hitFlashActive;
+    private Attrition.Controllers.EnemyController _owner;
 
     public override void Spawned()
     {
@@ -25,6 +32,7 @@ public class EnemyAnimation : NetworkBehaviour
         CacheClipLengths();
         if (telegraphRenderer == null) telegraphRenderer = FindBodyRenderer();
         if (telegraphRenderer != null) _baseColor = telegraphRenderer.color;
+        _owner = GetComponent<Attrition.Controllers.EnemyController>();
     }
 
     /// <summary>
@@ -60,15 +68,37 @@ public class EnemyAnimation : NetworkBehaviour
             _telegraphBlink += Time.deltaTime * 14f;
             float t = (Mathf.Sin(_telegraphBlink) + 1f) * 0.5f;
             telegraphRenderer.color = Color.Lerp(_baseColor, telegraphColor, t);
+            return;
         }
+        // Báo đòn và chớp đỏ khi trúng đòn ƯU TIÊN hơn màu trạng thái — nếu không, tint ghi màu
+        // mỗi frame sẽ đè mất cả hai. Hết cả hai mới tới lượt tint (hoặc trả về màu gốc).
+        if (_hitFlashActive) return;
+        telegraphRenderer.color = StatusTint();
     }
 
-    /// <summary>Bật/tắt nhấp nháy báo đòn (gọi từ EnemyAI khi vào/ra trạng thái telegraph).</summary>
+    /// <summary>
+    /// Màu theo trạng thái debuff: cháy (cam nhạt) ưu tiên hơn chậm (xanh nhạt); không có gì → màu gốc.
+    /// Đọc cờ [Networked] trên EnemyController nên MỌI máy tự tô đúng, không cần RPC riêng.
+    /// </summary>
+    private Color StatusTint()
+    {
+        if (_owner == null) return _baseColor;
+        if (_owner.IsBurning) return burnTint;
+        if (_owner.IsSlowed) return slowTint;
+        return _baseColor;
+    }
+
+    /// <summary>
+    /// Bật/tắt nhấp nháy báo đòn. EnemyAI.Render() gọi hàm này MỖI FRAME (kể cả khi không telegraph),
+    /// nên chỉ xử lý khi ĐỔI trạng thái và KHÔNG gán màu ở đây: trước đây nhánh tắt ghi _baseColor mỗi
+    /// frame, đè mất màu trạng thái (cháy/chậm) mà Update vừa ghi → quái không bao giờ đổi màu.
+    /// Update tự trả về màu đúng (tint hoặc màu gốc) ở frame kế.
+    /// </summary>
     public void SetTelegraph(bool on)
     {
+        if (_telegraphActive == on) return;
         _telegraphActive = on;
         _telegraphBlink = 0f;
-        if (telegraphRenderer != null && !on) telegraphRenderer.color = _baseColor;
     }
 
     // Cho phép đồng bộ duration (chết/hồi sinh/đánh/skill) theo đúng độ dài animation.
@@ -188,9 +218,12 @@ public class EnemyAnimation : NetworkBehaviour
 
     private System.Collections.IEnumerator HitFlashRoutine()
     {
+        _hitFlashActive = true;
         telegraphRenderer.color = Color.red;
         yield return new WaitForSeconds(0.1f);
-        if (!_telegraphActive) telegraphRenderer.color = _baseColor;
+        // Hạ cờ là đủ: Update sẽ tự trả về màu trạng thái (cháy/chậm) hoặc màu gốc ở frame kế.
+        // Gán _baseColor ở đây sẽ xoá màu debuff trong 1 frame → nháy trắng mỗi lần trúng đòn.
+        _hitFlashActive = false;
     }
 
     public void PlayDeath()
