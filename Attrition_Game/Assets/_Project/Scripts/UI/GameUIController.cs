@@ -170,6 +170,8 @@ namespace Attrition.UI
             if (Input.GetKeyDown(KeyCode.Escape) && _overlay != Overlay.GameOver && _overlay != Overlay.Loading)
             {
                 if (_overlay == Overlay.Settings) ShowOverlay(Overlay.Pause);          // Settings → lùi về Pause
+                // Inventory + đang mở bảng EQUIP/DROP → ESC chỉ đóng bảng đó, giữ nguyên inventory.
+                else if (_overlay == Overlay.Inventory && IsDetailOpen) CloseInventoryDetail();
                 else if (_overlay == Overlay.Inventory || _overlay == Overlay.FastTravel) ShowOverlay(Overlay.None);
                 else ToggleOverlay(Overlay.Pause);                                      // None ↔ Pause
             }

@@ -489,10 +489,13 @@ namespace Attrition.UI
                                     }
                                     else
                                     {
+                                        // Xoá nhân vật = xoá SẠCH mọi dấu vết của slot đó: file tiến trình,
+                                        // file inventory (DeleteSlot lo cả 2), và các cache static còn sống
+                                        // trong phiên. Thiếu bước cache → tạo lại ở CÙNG slot vẫn thấy boss
+                                        // đã hạ + bản đồ đã mở của nhân vật cũ.
                                         SaveManager.DeleteSlot(slotIndex);
-                                        // Xoá luôn danh sách boss đã hạ đang cache trong phiên — nếu không,
-                                        // tạo game mới ở CÙNG slot sẽ coi boss như đã chết sẵn.
                                         Attrition.Gameplay.Environment.BossDefeatState.Clear();
+                                        Attrition.Gameplay.Environment.WorldMapState.Clear();
                                         LoadSavesFromDisk();
                                     }
                                 }
@@ -590,6 +593,9 @@ namespace Attrition.UI
                         // SOLO cục bộ: lưu ý định + load thẳng scene gameplay (không cần login/mạng).
                         GameLaunch.Mode = LaunchMode.Solo;
                         GameLaunch.SelectedSlot = _selectedSaveSlot;
+                        // Chơi tiếp save cũ cũng phải set tên: nhánh này trước đây bỏ sót nên
+                        // CharacterName rỗng → Tab hiện tên placeholder trong UXML thay vì tên nhân vật.
+                        GameLaunch.CharacterName = _saveSlots[_selectedSaveSlot].characterName ?? "";
                         StartCoroutine(LoadGameplaySceneAsync(GameLaunch.GameplayScene));
                     }
                 });
@@ -736,6 +742,12 @@ namespace Attrition.UI
                 lastSavedUnix = 0
             };
 
+            // Nhân vật solo MỚI luôn bắt đầu với túi rỗng: dọn file inventory còn sót của slot này trước
+            // khi ghi save. Cần cả ở đây (không chỉ ở nút Delete) vì máy người chơi có thể đang có file
+            // mồ côi từ bản build cũ — bản đó xoá nhân vật mà không xoá inventory.
+            // Chỉ solo: ở coop, `slot` đánh số theo danh sách character online nên có thể trỏ vào slot
+            // solo của nhân vật khác — xoá inventory ở đó là xoá đồ của người không liên quan.
+            if (mode == LaunchMode.Solo) SaveManager.DeleteSlot(slot);
             SaveManager.SaveSlot(slot, newSave);
             _saveSlots[slot] = newSave;
             CloseNameEntry();

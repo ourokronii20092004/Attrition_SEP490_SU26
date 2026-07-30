@@ -9,44 +9,76 @@ namespace Attrition.UI
     /// <summary>Refresh + detail + equip/drop cho Character/Inventory.</summary>
     public partial class GameUIController
     {
+        // Map ô hiển thị (cell) → index THẬT trong NetworkArray.
+        // Tab Equipment và Skill dùng CHUNG mảng EquipmentSlots, nên nếu vẽ theo index thô thì ô chứa
+        // item của tab khác bị xoá icon nhưng VẪN hiện và VẪN bấm được: bấm vào tưởng chọn skill,
+        // thực ra chọn giáp → RpcRequestEquipSkill bị chặn ở "is not SkillSO" và im lặng không làm gì.
+        // Dồn item của tab về đầu grid, ghi index thật vào đây để equip/drop/swap tác động đúng ô mảng.
+        private readonly int[] _cellToSlot = new int[40];
+
         private void RefreshInventory()
         {
             if (_inventory == null || _db == null || _inventory.Object == null || !_inventory.Object.IsValid) return;
             var grid = _root?.Q<VisualElement>("inv-grid");
             if (grid == null) return;
 
-            int count = _activeTab == ItemCategory.Accessory ? 10 : 40;
+            int capacity = _activeTab == ItemCategory.Accessory ? 10 : 40;
             int filled = 0;
 
-            for (int i = 0; i < 40; i++)
+            for (int k = 0; k < 40; k++) _cellToSlot[k] = -1;
+
+            // 1) Ô có item thuộc tab hiện tại → dồn về đầu grid.
+            for (int src = 0; src < capacity && filled < 40; src++)
             {
-                var cell = grid.Q<VisualElement>($"cell-{i}");
-                if (cell == null) continue;
-                bool active = i < count;
-                SetVisible(cell, active);
-                if (!active) continue;
+                var s = GetRawSlot(src);
+                if (s.IsEmpty) continue;
+                if (_db.GetItem(s.ItemIndex) is not ItemSO it || !IsInTab(it)) continue;
 
-                var slot = GetSlot(i);
-                var icon = cell.Q<VisualElement>($"cell-icon-{i}");
-                var label = cell.Q<Label>($"cell-count-{i}");
-
-                if (!slot.IsEmpty && _db.GetItem(slot.ItemIndex) is ItemSO item && IsInTab(item))
-                {
-                    if (icon != null) icon.style.backgroundImage = item.icon != null ? new StyleBackground(item.icon) : (StyleBackground)StyleKeyword.None;
-                    if (label != null) label.text = slot.Amount > 1 ? slot.Amount.ToString() : "";
-                    filled++;
-                }
-                else
-                {
-                    if (icon != null) icon.style.backgroundImage = StyleKeyword.None;
-                    if (label != null) label.text = "";
-                }
-                cell.RemoveFromClassList("selected");
+                PaintCell(grid, filled, it, s.Amount);
+                _cellToSlot[filled] = src;
+                filled++;
             }
 
-            SetText("inv-weight-label", $"{filled}/{count}");
-            SetFill("inv-weight-fill", filled, count);
+            // 2) Ô còn lại: trống, nhưng vẫn map tới index THẬT đang trống để kéo-thả vào không lệch ô.
+            int nextFree = 0;
+            for (int c = filled; c < 40; c++)
+            {
+                if (c < capacity)
+                {
+                    while (nextFree < capacity && !GetRawSlot(nextFree).IsEmpty) nextFree++;
+                    if (nextFree < capacity) _cellToSlot[c] = nextFree++;
+                }
+                PaintCell(grid, c, null, 0, visible: c < capacity);
+            }
+
+            SetText("inv-weight-label", $"{filled}/{capacity}");
+            SetFill("inv-weight-fill", filled, capacity);
+
+            // Ô trang bị bên trái đọc từ EquippedHead/Skill/... — cũng đổi khi equip/unequip.
+            // OnInventoryChanged chỉ gọi RefreshInventory, nên nếu không refresh ở đây thì icon ô
+            // đã trang bị chỉ hiện sau khi đóng/mở lại panel (RefreshCharacterPanel).
+            RefreshEquipSlots();
         }
+
+        private void PaintCell(VisualElement grid, int cellIndex, ItemSO item, int amount, bool visible = true)
+        {
+            var cell = grid.Q<VisualElement>($"cell-{cellIndex}");
+            if (cell == null) return;
+            SetVisible(cell, visible);
+
+            var icon = cell.Q<VisualElement>($"cell-icon-{cellIndex}");
+            var label = cell.Q<Label>($"cell-count-{cellIndex}");
+            if (icon != null)
+                icon.style.backgroundImage = item != null && item.icon != null
+                    ? new StyleBackground(item.icon)
+                    : (StyleBackground)StyleKeyword.None;
+            if (label != null) label.text = amount > 1 ? amount.ToString() : "";
+            cell.RemoveFromClassList("selected");
+        }
+
+        /// <summary>Index THẬT trong NetworkArray của ô hiển thị thứ <paramref name="cellIndex"/>; -1 = không map.</summary>
+        private int MapCell(int cellIndex)
+            => cellIndex >= 0 && cellIndex < 40 ? _cellToSlot[cellIndex] : -1;
 
         private bool IsInTab(ItemSO item)
         {
@@ -59,17 +91,26 @@ namespace Attrition.UI
             }
         }
 
-        private InventorySlot GetSlot(int i)
+        /// <summary>Đọc slot theo index THẬT trong mảng (không qua map ô hiển thị).</summary>
+        private InventorySlot GetRawSlot(int i)
         {
             if (_activeTab == ItemCategory.Accessory) return _inventory.AccessorySlots.Get(i);
             return _inventory.EquipmentSlots.Get(i); // Equipment + Skill cùng mảng
+        }
+
+        /// <summary>Đọc slot theo ô hiển thị trên grid (đã dồn item của tab về đầu).</summary>
+        private InventorySlot GetSlot(int cellIndex)
+        {
+            int real = MapCell(cellIndex);
+            return real < 0 ? InventorySlot.Empty : GetRawSlot(real);
         }
 
         private void OnCellClicked(int i)
         {
             var slot = GetSlot(i);
             if (slot.IsEmpty) { SetVisible(_root.Q<VisualElement>("inv-detail"), false); _selectedSlot = -1; _selectedContext = SelectedSlotContext.None; return; }
-            _selectedSlot = i;
+            // Lưu index THẬT: equip/drop gửi thẳng qua RPC nên phải là index trong mảng, không phải số ô.
+            _selectedSlot = MapCell(i);
             _selectedContext = SelectedSlotContext.InventoryGrid;
             ShowDetail(slot);
 
@@ -124,11 +165,16 @@ namespace Attrition.UI
             if (equipBtn != null)
             {
                 equipBtn.text = _selectedContext == SelectedSlotContext.InventoryGrid ? "EQUIP" : "UNEQUIP";
+                // Accessory kiểu AbilityGrant tự áp dụng khi CHỈ CẦN có trong túi, không có ô để mặc:
+                // TryEquipAccessoryFromSlot chặn nó và trả false, nút bấm không phản hồi gì.
+                bool blocked = _selectedContext == SelectedSlotContext.InventoryGrid
+                               && item is AccessorySO a && a.kind != AccessoryKind.DamageEffect;
+                equipBtn.SetEnabled(!blocked);
             }
 
-            // Key item không drop được (BR-45)
-            var dropBtn = _root.Q<Button>("inv-detail-drop");
-            if (dropBtn != null) dropBtn.SetEnabled(!Attrition.Persistence.ItemRuntimeConfig.IsKeyItem(item));
+            // Skill / accessory / key item không vứt được → ẨN nút DROP hẳn (trước chỉ disable nên vẫn
+            // thấy nút xám, bấm không có gì xảy ra). Cùng một điều kiện host dùng để chặn RPC.
+            SetVisible(_root.Q<Button>("inv-detail-drop"), PlayerInventory.CanDrop(item));
         }
 
         private void AppendMods(VisualElement parent, ItemSO item)

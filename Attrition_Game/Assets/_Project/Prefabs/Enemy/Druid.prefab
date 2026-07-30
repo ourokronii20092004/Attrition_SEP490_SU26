@@ -238,7 +238,7 @@ MonoBehaviour:
     m_Bits: 0
   obstacleLayer:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 64
   wallCheckDistance: 0.8
   wallCheckHeightOffset: 0.5
   canEvadeJump: 0

@@ -151,6 +151,7 @@ GameObject:
   - component: {fileID: -8304798322267633763}
   - component: {fileID: 4926934666965263351}
   - component: {fileID: 817566648311922267}
+  - component: {fileID: 8422190435671093344}
   m_Layer: 7
   m_Name: Player
   m_TagString: Player
@@ -273,6 +274,7 @@ MonoBehaviour:
   skillCaster: {fileID: 0}
   statsComp: {fileID: 5532332673274492828}
   potionComp: {fileID: 2638378353840522064}
+  accessoryFx: {fileID: 0}
   rb: {fileID: 8158020556837803344}
   groundLayer:
     serializedVersion: 2
@@ -299,9 +301,8 @@ MonoBehaviour:
   _JumpCount: 0
   _HasDoubleJump:
     _value: 0
-  _NetworkPosition: {x: 0, y: 0}
-  _NetworkVelocity: {x: 0, y: 0}
-  _NetworkGravityScale: 0
+  _HasShadowDash:
+    _value: 0
   _DisplayName:
     _length: 0
     _data:
@@ -321,6 +322,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCombat
   animationComp: {fileID: 8805790379459285585}
   statsComp: {fileID: 5532332673274492828}
+  accessoryFx: {fileID: 0}
   attackPoint: {fileID: 7035351457917283103}
   attackRange: 3
   attackAngle: 75
@@ -376,6 +378,7 @@ MonoBehaviour:
   - {fileID: -8304798322267633763}
   - {fileID: 4926934666965263351}
   - {fileID: 817566648311922267}
+  - {fileID: 8422190435671093344}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &-9211217073537501404
 MonoBehaviour:
@@ -472,7 +475,16 @@ MonoBehaviour:
     _length: 0
     _data:
       Data: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-  startingItemIds: []
+  startingItemIds:
+  - acc_slow
+  - acc_burn
+  - acc_double_jump
+  - acc_lifesteal
+  - acc_shadow_dash
+  - acc_postskill
+  - acc_regen
+  - acc_stamina_charm
+  - acc_shield
   droppedItemPrefab:
     RawGuidValue: 12e1ff761e13b114e99dad527c7a0233
 --- !u!114 &4926934666965263351
@@ -510,6 +522,22 @@ MonoBehaviour:
   _IsReviving:
     _value: 0
   _ReviveProgress: 0
+--- !u!114 &8422190435671093344
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6831727267532873526}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c850fd7ac540764789085118429eba2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Player.AccessoryEffects
+  _ShieldReady:
+    _value: 0
+  _PostSkillArmed:
+    _value: 0
 --- !u!1 &7179476028545329090
 GameObject:
   m_ObjectHideFlags: 0
