@@ -26,5 +26,5 @@ MonoBehaviour:
   effectDuration: 3
   effectThreshold: 0.5
   effectThresholdStop: 0.8
-  effectCooldown: 8
+  effectCooldown: 10
   coopOnlyReward: 0

@@ -679,14 +679,23 @@ namespace Attrition.Gameplay.Player.Inventory
             return TryUnequipAccessory();
         }
 
+        /// <summary>
+        /// Vứt ra sàn được không? KHÔNG cho: key item (BR-45), skill và accessory — 3 loại này chỉ
+        /// mặc/gỡ, mất là không lấy lại được. Nguồn duy nhất cho cả 4 đường drop + UI (ẩn nút DROP).
+        /// </summary>
+        public static bool CanDrop(ItemSO item) =>
+            item != null
+            && !Attrition.Persistence.ItemRuntimeConfig.IsKeyItem(item)
+            && !(item is SkillSO) && !(item is AccessorySO);
+
         public bool TryDropEquippedArmor(EquipmentSlot armorSlot)
         {
             if (!HasStateAuthority || _db == null) return false;
             var equipped = GetEquipSlotValue(armorSlot);
             if (equipped.IsEmpty) return false;
-            
+
             var item = _db.GetItem(equipped.ItemIndex);
-            if (item == null || Attrition.Persistence.ItemRuntimeConfig.IsKeyItem(item)) return false;
+            if (!CanDrop(item)) return false;
 
             SpawnDroppedItem(equipped.ItemIndex, equipped.Amount, Object.InputAuthority);
             SetEquipSlot(armorSlot, InventorySlot.Empty);
@@ -701,7 +710,7 @@ namespace Attrition.Gameplay.Player.Inventory
             if (EquippedSkill.IsEmpty) return false;
 
             var item = _db.GetItem(EquippedSkill.ItemIndex);
-            if (item == null || Attrition.Persistence.ItemRuntimeConfig.IsKeyItem(item)) return false;
+            if (!CanDrop(item)) return false;
 
             SpawnDroppedItem(EquippedSkill.ItemIndex, EquippedSkill.Amount, Object.InputAuthority);
             EquippedSkill = InventorySlot.Empty;
@@ -715,7 +724,7 @@ namespace Attrition.Gameplay.Player.Inventory
             if (EquippedAccessory.IsEmpty) return false;
 
             var item = _db.GetItem(EquippedAccessory.ItemIndex);
-            if (item == null || Attrition.Persistence.ItemRuntimeConfig.IsKeyItem(item)) return false;
+            if (!CanDrop(item)) return false;
 
             SpawnDroppedItem(EquippedAccessory.ItemIndex, EquippedAccessory.Amount, Object.InputAuthority);
             EquippedAccessory = InventorySlot.Empty;
@@ -738,8 +747,7 @@ namespace Attrition.Gameplay.Player.Inventory
             if (slot.IsEmpty) return false;
 
             var item = _db.GetItem(slot.ItemIndex);
-            if (item == null) return false;
-            if (Attrition.Persistence.ItemRuntimeConfig.IsKeyItem(item)) return false; // BR-45
+            if (!CanDrop(item)) return false; // BR-45 + skill/accessory không vứt
 
             SpawnDroppedItem(slot.ItemIndex, slot.Amount, Object.InputAuthority);
 
@@ -902,19 +910,15 @@ namespace Attrition.Gameplay.Player.Inventory
         {
             // Solo: theo save slot đang chơi (mỗi nhân vật 1 file).
             // Coop: theo Owner + tên nhân vật (mỗi tài khoản/nhân vật riêng), tránh đè save solo.
-            var gl = Attrition.Persistence.GameLaunch.Mode;
-            string key;
-            if (gl == Attrition.Persistence.LaunchMode.Coop)
-            {
-                string owner = string.IsNullOrEmpty(Attrition.Persistence.GameLaunch.OwnerId) ? "guest" : Attrition.Persistence.GameLaunch.OwnerId;
-                string chr = string.IsNullOrEmpty(Attrition.Persistence.GameLaunch.CharacterName) ? "char" : Attrition.Persistence.GameLaunch.CharacterName;
-                key = $"coop_{owner}_{chr}";
-            }
-            else
-            {
-                key = $"solo_{Attrition.Persistence.GameLaunch.SelectedSlot}";
-            }
-            return System.IO.Path.Combine(Application.persistentDataPath, $"inventory_{key}.json");
+            // Solo: dùng CHUNG helper với SaveManager. Trước đây mỗi bên tự ghép chuỗi đường dẫn,
+            // nên SaveManager.DeleteSlot không biết file này tồn tại → xoá nhân vật xong tạo lại ở
+            // cùng slot vẫn nạp nguyên túi đồ cũ.
+            if (Attrition.Persistence.GameLaunch.Mode != Attrition.Persistence.LaunchMode.Coop)
+                return Attrition.Persistence.SaveManager.SoloInventoryPath(Attrition.Persistence.GameLaunch.SelectedSlot);
+
+            string owner = string.IsNullOrEmpty(Attrition.Persistence.GameLaunch.OwnerId) ? "guest" : Attrition.Persistence.GameLaunch.OwnerId;
+            string chr = string.IsNullOrEmpty(Attrition.Persistence.GameLaunch.CharacterName) ? "char" : Attrition.Persistence.GameLaunch.CharacterName;
+            return System.IO.Path.Combine(Application.persistentDataPath, $"inventory_coop_{owner}_{chr}.json");
         }
 
 

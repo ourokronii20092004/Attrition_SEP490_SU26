@@ -80,6 +80,8 @@ namespace Attrition.UI
             BindButton("equip-accessory", () => OnEquipSlotClicked(SelectedSlotContext.EquippedAccessory));
             BindButton("equip-skill", () => OnEquipSlotClicked(SelectedSlotContext.EquippedSkill));
 
+            SetupInventoryDetailDismiss();
+
             // Đăng ký kéo thả cho các ô trang bị
             if (_root.Q<Button>("equip-head") is Button headBtn) RegisterDragCallbacks(headBtn, SelectedSlotContext.EquippedHead);
             if (_root.Q<Button>("equip-chest") is Button chestBtn) RegisterDragCallbacks(chestBtn, SelectedSlotContext.EquippedChest);
@@ -90,6 +92,76 @@ namespace Attrition.UI
         }
 
 
+
+        /// <summary>Bảng detail (EQUIP/DROP) đang mở?</summary>
+        private bool IsDetailOpen
+        {
+            get
+            {
+                var d = _root?.Q<VisualElement>("inv-detail");
+                return d != null && !d.ClassListContains("hidden");
+            }
+        }
+
+        /// <summary>Đóng bảng detail + xoá lựa chọn (dùng cho click ra ngoài, ESC, đổi tab, sau equip/drop).</summary>
+        private void CloseInventoryDetail()
+        {
+            SetVisible(_root?.Q<VisualElement>("inv-detail"), false);
+            _selectedSlot = -1;
+            _selectedContext = SelectedSlotContext.None;
+            var grid = _root?.Q<VisualElement>("inv-grid");
+            if (grid != null)
+                for (int k = 0; k < 40; k++) grid.Q<VisualElement>($"cell-{k}")?.RemoveFromClassList("selected");
+        }
+
+        /// <summary>
+        /// Bấm ra ngoài bảng detail → đóng bảng. Bắt ở lớp NGOÀI CÙNG (inv-screen) trong pha bubble-up:
+        /// ô đồ / ô trang bị / chính bảng detail đã StopPropagation hoặc được loại bằng kiểm tra
+        /// "click có nằm trong bảng detail không", nên chỉ những click vào chỗ trống mới đóng.
+        /// </summary>
+        private void SetupInventoryDetailDismiss()
+        {
+            var screen = _root?.Q<VisualElement>("inv-screen");
+            if (screen == null || _detailDismissBound) return;
+            _detailDismissBound = true;
+
+            screen.RegisterCallback<PointerDownEvent>(evt =>
+            {
+                if (!IsDetailOpen) return;
+
+                // Click vào chính bảng detail (kể cả 2 nút) thì không đóng.
+                var detail = _root.Q<VisualElement>("inv-detail");
+                if (detail != null && detail.worldBound.Contains((Vector2)evt.position)) return;
+
+                // Click vào 1 ô đồ / ô trang bị: các ô tự mở lại detail cho item mới (hoặc đóng nếu ô
+                // trống) trong PointerUp — đóng ở đây sẽ nhấp nháy. Bỏ qua để chúng tự xử lý.
+                if (IsOverAnySlot((Vector2)evt.position)) return;
+
+                CloseInventoryDetail();
+            });
+        }
+
+        private bool _detailDismissBound;
+
+        /// <summary>Toạ độ có nằm trên 1 ô đồ trong grid hoặc 1 ô trang bị không?</summary>
+        private bool IsOverAnySlot(Vector2 pos)
+        {
+            var grid = _root.Q<VisualElement>("inv-grid");
+            if (grid != null)
+                for (int i = 0; i < 40; i++)
+                {
+                    var cell = grid.Q<VisualElement>($"cell-{i}");
+                    if (cell != null && cell.worldBound.Contains(pos)) return true;
+                }
+
+            foreach (var n in EquipSlotNames)
+                if (_root.Q<Button>(n) is Button b && b.worldBound.Contains(pos)) return true;
+
+            return false;
+        }
+
+        private static readonly string[] EquipSlotNames =
+            { "equip-head", "equip-chest", "equip-legs", "equip-boots", "equip-accessory", "equip-skill" };
 
         private void BindTab(string name, ItemCategory cat)
         {
