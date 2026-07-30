@@ -15,7 +15,7 @@ MonoBehaviour:
   itemId: emerald_legs
   displayName: Emerald Legguards
   description: 
-  icon: {fileID: 4130640169021434097, guid: ad2c473f3da123345a779c1d08fb6150, type: 3}
+  icon: {fileID: 132538112, guid: ad2c473f3da123345a779c1d08fb6150, type: 3}
   maxStack: 1
   isKeyItem: 0
   slot: 2

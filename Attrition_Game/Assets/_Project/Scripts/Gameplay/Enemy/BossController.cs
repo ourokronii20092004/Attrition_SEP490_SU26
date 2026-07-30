@@ -30,8 +30,9 @@ namespace Attrition.Controllers
         private EnemyController _enemy;
         private EnemyStats _stats;
         private EliteEnemySkills _skills;
-        private Attrition.Gameplay.Enemy.SeveredFang.SeveredFangAI _sfAI;
-        private Attrition.Gameplay.Enemy.Druid.DruidBossAI _druidAI;
+        // Bất kỳ AI boss nào implement IBossEncounter (SF/Druid/Elf/DemonKin/ArchDemon) — trước đây phải
+        // giữ 1 field cho mỗi loại AI rồi if-else, thêm boss là thêm nhánh ở mọi chỗ.
+        private Attrition.Core.IBossEncounter _bossEncounter;
         private int _maxHp;
         private bool _barShown;
         private int _lastShownHp = -1;
@@ -42,8 +43,7 @@ namespace Attrition.Controllers
         {
             get
             {
-                if (_sfAI != null) return _sfAI.EncounterStarted;
-                if (_druidAI != null) return _druidAI.EncounterStarted;
+                if (_bossEncounter != null) return _bossEncounter.EncounterStarted;
                 return true;
             }
         }
@@ -64,8 +64,7 @@ namespace Attrition.Controllers
             _stats = GetComponent<EnemyStats>();
             _skills = GetComponent<EliteEnemySkills>();
 
-            _sfAI = GetComponent<Attrition.Gameplay.Enemy.SeveredFang.SeveredFangAI>();
-            _druidAI = GetComponent<Attrition.Gameplay.Enemy.Druid.DruidBossAI>();
+            _bossEncounter = GetComponent<Attrition.Core.IBossEncounter>();
 
             _maxHp = _stats != null && _stats.MaxHP > 0 ? _stats.MaxHP : Mathf.Max(1, _enemy.maxHealth);
 

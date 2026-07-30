@@ -21,6 +21,9 @@ MonoBehaviour:
   worldMapOffset: {x: 0, y: 0}
   worldMapScale: 1
   fogCellSize: 2.5
+  mapTint: {r: 0.24, g: 0.53, b: 0.55, a: 1}
+  outlineTint: {r: 0.108, g: 0.239, b: 0.248, a: 1}
+  outlineThickness: 2
   checkpoints:
   - checkpointId: Test
     worldPos: {x: -14.607722, y: 20.793}

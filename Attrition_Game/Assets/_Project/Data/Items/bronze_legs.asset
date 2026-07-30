@@ -15,7 +15,7 @@ MonoBehaviour:
   itemId: bronze_legs
   displayName: Bronze Legguards
   description: 
-  icon: {fileID: 7680820834086852892, guid: 01e1f519b2d869643ba97a25649616f1, type: 3}
+  icon: {fileID: 628031032, guid: 01e1f519b2d869643ba97a25649616f1, type: 3}
   maxStack: 1
   isKeyItem: 0
   slot: 2

@@ -15,7 +15,7 @@ MonoBehaviour:
   itemId: gold_legs
   displayName: Gilded Legguards
   description: 
-  icon: {fileID: 7157561037332017152, guid: 1e06629c599bc254f843a6199d7e98fd, type: 3}
+  icon: {fileID: -911883818, guid: 1e06629c599bc254f843a6199d7e98fd, type: 3}
   maxStack: 1
   isKeyItem: 0
   slot: 2

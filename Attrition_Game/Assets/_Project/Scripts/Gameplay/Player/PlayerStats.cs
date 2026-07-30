@@ -357,7 +357,17 @@ namespace Attrition.Gameplay.Player
         {
             if (!HasStateAuthority || amount <= 0) return;
             if (CurrentHP <= 0) return;
+
+            int before = CurrentHP;
             CurrentHP = Mathf.Min(MaxHP, CurrentHP + amount);
+
+            // Hiệu ứng hồi máu — chỉ khi HP THỰC SỰ tăng (đầy máu rồi thì không chớp vô nghĩa).
+            // PlayerVfx tự broadcast RPC để mọi máy đều thấy; no-op nếu prefab chưa gắn component.
+            if (CurrentHP > before)
+            {
+                var vfx = GetComponent<PlayerVfx>();
+                if (vfx != null) vfx.PlayHeal();
+            }
         }
 
         /// <summary>Hồi Mana, clamp về MaxMana. Chỉ chạy trên state authority.</summary>

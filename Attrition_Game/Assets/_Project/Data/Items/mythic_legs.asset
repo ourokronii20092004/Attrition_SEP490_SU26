@@ -15,7 +15,7 @@ MonoBehaviour:
   itemId: mythic_legs
   displayName: Mythic Legguards
   description: 
-  icon: {fileID: 0}
+  icon: {fileID: 480751790, guid: 6add2319b5e5bd045af7af8f7806892c, type: 3}
   maxStack: 1
   isKeyItem: 0
   slot: 2

@@ -178,12 +178,18 @@
                         <ui:Button name="inv-tab-equipment" text="EQUIPMENT" class="inv-tab active"/>
                         <ui:Button name="inv-tab-accessory" text="ACCESSORY" class="inv-tab"/>
                         <ui:Button name="inv-tab-skill" text="SKILL" class="inv-tab"/>
+                        <ui:Button name="inv-tab-quest" text="QUEST" class="inv-tab"/>
                     </ui:VisualElement>
-                    
+
                     <ui:VisualElement class="fancy-divider" style="margin-top: -14px; margin-bottom: 10px; opacity: 0.5;"/>
 
                     <ui:ScrollView name="inv-grid-scroll" style="flex-grow: 1;">
                         <ui:VisualElement name="inv-grid"/>
+                    </ui:ScrollView>
+
+                    <!-- Log nhiệm vụ: dùng CHUNG vùng với lưới đồ, ẩn/hiện theo tab đang chọn -->
+                    <ui:ScrollView name="inv-quest-scroll" class="hidden" style="flex-grow: 1;">
+                        <ui:VisualElement name="inv-quest-list"/>
                     </ui:ScrollView>
                     <ui:VisualElement name="inv-weight-row">
                         <ui:Label text="SLOTS" class="inv-tab" style="padding: 0; border-bottom-width: 0;"/>

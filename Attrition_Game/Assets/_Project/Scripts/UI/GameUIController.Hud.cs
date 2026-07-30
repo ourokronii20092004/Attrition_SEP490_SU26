@@ -31,7 +31,13 @@ namespace Attrition.UI
             Time.timeScale = pause ? 0f : 1f;               // dừng Animator + Update non-network
             Attrition.Persistence.GamePause.IsPaused = pause; // dừng các sim Fusion
 
-            if (o == Overlay.Inventory) RefreshCharacterPanel();
+            if (o == Overlay.Inventory)
+            {
+                RefreshCharacterPanel();
+                // Log nhiệm vụ: dựng lại MỖI LẦN mở Tab. Tiến độ quest đổi trong lúc bảng đóng (giết quái)
+                // nên nếu chỉ dựng lúc bấm vào tab thì player mở Tab lại vẫn thấy số cũ.
+                if (_questTabActive) RefreshQuestLog();
+            }
             if (o == Overlay.FastTravel) RefreshFastTravelList();
         }
 
