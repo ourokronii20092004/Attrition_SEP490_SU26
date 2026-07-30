@@ -16,8 +16,8 @@ MonoBehaviour:
   tier: 0
   webImage: {fileID: 0}
   maxHP: 100
-  ad: 15
-  ap: 15
+  ad: 20
+  ap: 20
   def: 10
   res: 10
   poise: 0
@@ -25,6 +25,6 @@ MonoBehaviour:
   patrolSpeed: 2
   chaseSpeed: 5
   attackSpeed: 1
-  expReward: 10
+  expReward: 30
   coopHpMultiplier: 1.6
   coopDamageMultiplier: 1.2

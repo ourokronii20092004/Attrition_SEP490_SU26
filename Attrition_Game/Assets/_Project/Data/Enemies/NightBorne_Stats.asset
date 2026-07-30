@@ -15,9 +15,9 @@ MonoBehaviour:
   enemyId: nightborne
   tier: 1
   webImage: {fileID: 0}
-  maxHP: 300
-  ad: 20
-  ap: 20
+  maxHP: 400
+  ad: 25
+  ap: 25
   def: 10
   res: 10
   poise: 100
@@ -25,6 +25,6 @@ MonoBehaviour:
   patrolSpeed: 2
   chaseSpeed: 5
   attackSpeed: 1
-  expReward: 50
+  expReward: 60
   coopHpMultiplier: 1.6
   coopDamageMultiplier: 1.2
