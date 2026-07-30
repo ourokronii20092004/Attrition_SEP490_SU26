@@ -16,7 +16,7 @@ MonoBehaviour:
   tier: 1
   webImage: {fileID: 0}
   maxHP: 400
-  ad: 20
+  ad: 25
   ap: 30
   def: 10
   res: 10
