@@ -15,7 +15,7 @@ MonoBehaviour:
   itemId: diamond_legs
   displayName: Diamond Legguards
   description: 
-  icon: {fileID: 0}
+  icon: {fileID: -1236204454, guid: db8f667e5f36ff0459c18e55f95c6399, type: 3}
   maxStack: 1
   isKeyItem: 0
   slot: 2

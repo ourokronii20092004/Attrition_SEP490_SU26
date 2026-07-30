@@ -24,6 +24,8 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
     [SerializeField] private PotionSystem potionComp;
     [Tooltip("Tùy chọn: hub hiệu ứng accessory (lá chắn hấp thụ...). Bỏ trống = tự tìm.")]
     [SerializeField] private AccessoryEffects accessoryFx;
+    [Tooltip("Tùy chọn: slow/root do skill boss gây ra. Bỏ trống = tự tìm; không có = miễn nhiễm (prefab cũ).")]
+    [SerializeField] private PlayerStatusEffects statusFx;
     // Túi đồ — host quét để biết đã mở khoá double jump chưa (cache, không bắt buộc gán Inspector).
     private Attrition.Gameplay.Player.Inventory.PlayerInventory _inventory;
 
@@ -129,6 +131,20 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
     /// <summary>True khi player đang đứng trong vùng 1 checkpoint (UI hiện gợi ý [F] OPTIONS).</summary>
     public bool IsAtCheckpoint => _currentCheckpoint != null;
 
+    /// <summary>
+    /// Đang đứng trong vùng checkpoint — bản [Networked] để HOST đọc được.
+    ///
+    /// VÌ SAO CẦN: `_currentCheckpoint` chỉ được set trong OnTriggerEnter2D khi `HasInputAuthority`, tức
+    /// CHỈ tồn tại trên máy của chính người chơi đó. Trong coop, host là StateAuthority nhưng client giữ
+    /// InputAuthority của player mình → host luôn thấy `IsAtCheckpoint == false` cho client. Gate đổi
+    /// accessory chạy host-side nên phải có cờ sync này, không thì client không bao giờ đổi được.
+    /// </summary>
+    [Networked] public NetworkBool AtCheckpointNet { get; set; }
+
+    /// <summary>Máy có InputAuthority báo host khi VÀO/RA vùng checkpoint (chỉ gửi lúc ĐỔI trạng thái).</summary>
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RpcSetAtCheckpoint(NetworkBool inZone) => AtCheckpointNet = inZone;
+
     /// <summary>Tên checkpoint đang đứng (UI hiển thị). Rỗng nếu không ở checkpoint nào.</summary>
     public string CurrentCheckpointName => _currentCheckpoint != null ? _currentCheckpoint.DisplayName : "";
 
@@ -164,6 +180,7 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
         if (statsComp != null) maxHP = statsComp.MaxHP;
         if (potionComp == null) potionComp = GetComponent<PotionSystem>();
         if (accessoryFx == null) accessoryFx = GetComponent<AccessoryEffects>();
+        if (statusFx == null) statusFx = GetComponent<PlayerStatusEffects>();
         if (_inventory == null) _inventory = GetComponent<Attrition.Gameplay.Player.Inventory.PlayerInventory>();
         // statsComp tự init CurrentHP=MaxHP trong Spawned của nó. Chỉ tự init khi KHÔNG có statsComp.
         if (HasStateAuthority && statsComp == null) currentHP = maxHP;
@@ -485,16 +502,27 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
                     rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
                     IsMoving = false;
                 }
+                else if (statusFx != null && statusFx.Rooted)
+                {
+                    // ROOT (đất bọc của DemonKin): giam tại chỗ. Vẫn để trọng lực kéo xuống (không đổi
+                    // velocity.y) để player không treo lơ lửng nếu bị dính giữa không trung.
+                    rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+                    IsMoving = false;
+                }
                 else
                 {
                     float mSpeed = statsComp != null ? statsComp.MoveSpeed : 10f;
+                    // SLOW (lốc nước của ArchDemon): nhân hệ số còn lại; = 1 khi không bị gì.
+                    if (statusFx != null) mSpeed *= statusFx.MoveSpeedMultiplier;
                     float speed = IsCrouching ? mSpeed * crouchSpeedMultiplier : mSpeed;
                     rb.linearVelocity = new Vector2(data.horizontalInput * speed, rb.linearVelocity.y);
                     IsMoving = Mathf.Abs(data.horizontalInput) > 0.1f;
                 }
 
                 // --- JUMP LOGIC ---
-                if (pressed.IsSet(MyButtons.Jump) && !IsCrouching && !combatComp.IsHoldingAttack)
+                // ROOT chặn nhảy: bị đất bọc thì không thoát được bằng cách nhảy (đúng ý nghĩa khống chế).
+                bool rooted = statusFx != null && statusFx.Rooted;
+                if (pressed.IsSet(MyButtons.Jump) && !IsCrouching && !combatComp.IsHoldingAttack && !rooted)
                 {
                     // Số lần nhảy tối đa: luôn 1 (nhảy đất); +1 nếu đã mở khoá double jump (nhặt Feather Charm).
                     // Vẫn kẹp theo maxJumps cấu hình trên prefab (mặc định 2).
@@ -527,7 +555,10 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
             }
 
             // --- DASH / SLIDE LOGIC ---
-            if (pressed.IsSet(MyButtons.Dash) && !combatComp.IsHoldingAttack)
+            // ROOT chặn cả dash và slide — nếu không, dash là đường thoát khống chế miễn phí (dash còn
+            // bất tử khi có shadow dash), làm skill "đất bọc" của DemonKin vô nghĩa.
+            if (pressed.IsSet(MyButtons.Dash) && !combatComp.IsHoldingAttack
+                && (statusFx == null || !statusFx.Rooted))
             {
                 if (wantToCrouch)
                 {
@@ -785,6 +816,8 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
         if (!HasStateAuthority) return;
 
         isDeadNetworked = false;
+        // Xoá slow/root: chết trong lúc bị đất bọc mà không clear thì sống lại vẫn đứng cứng tại chỗ.
+        if (statusFx != null) statusFx.ClearAll();
         RPC_RestorePhysicsAfterRevive(spawn, doWarp: true);
         TeleportTo(spawn);
 
@@ -807,6 +840,7 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
     {
         if (!HasStateAuthority) return;
         isDeadNetworked = false;
+        if (statusFx != null) statusFx.ClearAll();   // xem ghi chú trong ReviveAndRestore
         RPC_RestorePhysicsAfterRevive(rb != null ? (Vector3)rb.position : transform.position, doWarp: false);
         if (statsComp != null) statsComp.CurrentHP = Mathf.Max(1, hp);
         else HP = Mathf.Max(1, hp);
@@ -1103,8 +1137,9 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
             var es = enemy.GetComponent<Attrition.Gameplay.Enemy.EnemyStats>();
             if (es == null || es.Tier != Attrition.Data.EnemyTier.Boss) continue;
 
-            var sfAI = enemy.GetComponent<Attrition.Gameplay.Enemy.SeveredFang.SeveredFangAI>();
-            var druidAI = enemy.GetComponent<Attrition.Gameplay.Enemy.Druid.DruidBossAI>();
+            // Mọi AI boss implement IBossEncounter (SF/Druid/Elf/DemonKin/ArchDemon) — một đường chung
+            // thay cho if-else từng loại.
+            var bossAI = enemy.GetComponent<Attrition.Core.IBossEncounter>();
 
             // Đã được gate xử lý ở bước 1 → bỏ qua để không reset hai lần.
             bool handledByGate = false;
@@ -1115,12 +1150,12 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
             enemy.ResetForEncounterRetry();
             var bc = enemy.GetComponent<Attrition.Controllers.BossController>();
             if (bc != null) bc.ResetPhases();
-            if (sfAI != null) sfAI.ResetEncounter();
-            if (druidAI != null) druidAI.ResetEncounter();
+            bossAI?.ResetEncounter();
 
-            // Cho phép kích hoạt lại trigger vào phòng.
+            // Cho phép kích hoạt lại trigger vào phòng. So sánh qua interface nên khớp được MỌI loại boss
+            // (trước chỉ so với sfAI → boss Druid trở đi không bao giờ được reset trigger).
             foreach (var trig in FindObjectsByType<Attrition.Gameplay.Environment.BossEncounterTrigger>(FindObjectsSortMode.None))
-                if (trig != null && trig.boss != null && (trig.boss == sfAI)) trig.ResetTrigger();
+                if (trig != null && bossAI != null && trig.BossEncounter == bossAI) trig.ResetTrigger();
         }
     }
 
@@ -1186,7 +1221,11 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
     {
         if (!HasInputAuthority) return;
         var cp = other.GetComponentInParent<Attrition.Gameplay.World.Checkpoint>();
-        if (cp != null) _currentCheckpoint = cp;
+        if (cp != null)
+        {
+            _currentCheckpoint = cp;
+            RpcSetAtCheckpoint(true);   // báo host: được phép đổi accessory
+        }
 
         var npc = other.GetComponentInParent<Attrition.Gameplay.NPC.NetworkNPC>();
         if (npc != null) _currentNPC = npc;
@@ -1196,7 +1235,11 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
     {
         if (!HasInputAuthority) return;
         var cp = other.GetComponentInParent<Attrition.Gameplay.World.Checkpoint>();
-        if (cp != null && cp == _currentCheckpoint) _currentCheckpoint = null;
+        if (cp != null && cp == _currentCheckpoint)
+        {
+            _currentCheckpoint = null;
+            RpcSetAtCheckpoint(false);   // rời checkpoint → khoá đổi accessory lại
+        }
 
         var npc = other.GetComponentInParent<Attrition.Gameplay.NPC.NetworkNPC>();
         if (npc != null && npc == _currentNPC) _currentNPC = null;

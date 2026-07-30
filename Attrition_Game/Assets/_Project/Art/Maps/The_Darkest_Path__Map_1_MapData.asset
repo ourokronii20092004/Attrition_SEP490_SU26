@@ -21,6 +21,9 @@ MonoBehaviour:
   worldMapOffset: {x: 0, y: 0}
   worldMapScale: 1
   fogCellSize: 2.5
+  mapTint: {r: 0.42, g: 0.29, b: 0.19, a: 1}
+  outlineTint: {r: 0.189, g: 0.131, b: 0.086, a: 1}
+  outlineThickness: 2
   checkpoints:
   - checkpointId: Rest 4 - Rainbow Plains
     worldPos: {x: 12.580017, y: 69.7}

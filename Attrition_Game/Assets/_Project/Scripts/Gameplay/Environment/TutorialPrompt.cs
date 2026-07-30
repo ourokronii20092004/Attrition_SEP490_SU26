@@ -102,8 +102,10 @@ namespace Attrition.Gameplay.Environment
             _shown.Add(tutorialId);
 
             // Có cấu hình credits → hiện góc phải-dưới NGAY SAU khi người chơi đóng bảng hướng dẫn.
+            // perLineDelay 1.1s: hiện tên TỪNG NGƯỜI, chậm rãi cho người xem đọc kịp (yêu cầu user —
+            // trước là 0.35s, các tên trôi qua gần như cùng lúc). holdSeconds 3.5s: giữ lại sau tên cuối.
             System.Action onClosed = (creditsMembers != null && creditsMembers.Length > 0)
-                ? () => TeamCreditsPanel.Show(tutorialId + "_credits", creditsTitle, creditsMembers, 0.35f, 3f)
+                ? () => TeamCreditsPanel.Show(tutorialId + "_credits", creditsTitle, creditsMembers, 1.1f, 3.5f)
                 : (System.Action)null;
 
             if (stepByStep) TutorialPanel.ShowSteps(title, lines, autoHideSeconds, onClosed);

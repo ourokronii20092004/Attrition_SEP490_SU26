@@ -19,7 +19,7 @@ MonoBehaviour:
   maxStack: 1
   isKeyItem: 0
   kind: 0
-  grantedAbility: 1
+  grantedAbility: 0
   modifiers:
   - stat: 2
     amount: 20
@@ -29,3 +29,4 @@ MonoBehaviour:
   effectThreshold: 0.5
   effectThresholdStop: 0.8
   effectCooldown: 8
+  coopOnlyReward: 0

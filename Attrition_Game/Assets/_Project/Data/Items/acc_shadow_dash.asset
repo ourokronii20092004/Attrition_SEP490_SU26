@@ -15,7 +15,7 @@ MonoBehaviour:
   itemId: acc_shadow_dash
   displayName: Shadow Cloak
   description: 
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: ecb0100391245f642825da88d07ffec5, type: 3}
   maxStack: 1
   isKeyItem: 0
   kind: 1
@@ -27,3 +27,4 @@ MonoBehaviour:
   effectThreshold: 0.5
   effectThresholdStop: 0.8
   effectCooldown: 8
+  coopOnlyReward: 0

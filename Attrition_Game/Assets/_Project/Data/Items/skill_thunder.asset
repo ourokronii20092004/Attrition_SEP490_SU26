@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.SkillSO
   itemId: skill_thunder
-  displayName: Chain Bolt
+  displayName: Thunder Skil
   description: 
   icon: {fileID: 0}
   maxStack: 1

@@ -27,6 +27,18 @@ namespace Attrition.Gameplay.Player
         [Networked] private TickTimer ShieldCooldown { get; set; }
         [Networked] public NetworkBool PostSkillArmed { get; set; }
 
+        /// <summary>
+        /// AttackBuff (acc_potion): còn hiệu lực tới hết timer này → đòn đánh THƯỜNG được nhân sát thương.
+        /// Kích NGAY KHI TRANG BỊ accessory (PlayerInventory gọi ArmBuffsOnEquip), chạy `effectDuration` (60s).
+        /// </summary>
+        [Networked] private TickTimer AttackBuffTimer { get; set; }
+
+        /// <summary>
+        /// SkillBuff (acc_postskill): còn hiệu lực tới hết timer này → mọi SKILL tung ra được nhân sát thương.
+        /// Cũng kích lúc TRANG BỊ (xem ArmBuffsOnEquip), không phải lúc tung skill.
+        /// </summary>
+        [Networked] private TickTimer SkillBuffTimer { get; set; }
+
         private PlayerStats _stats;
         private PlayerInventory _inventory;
 
@@ -151,12 +163,75 @@ namespace Attrition.Gameplay.Player
             if (acc != null && acc.effect == DamageEffectType.PostSkillDamage) PostSkillArmed = true;
         }
 
-        /// <summary>Nhân damage đòn đánh kế tiếp khi PostSkillDamage đang vũ trang (1× nếu không). PlayerCombat gọi.</summary>
+        /// <summary>
+        /// Nhân damage ĐÒN ĐÁNH THƯỜNG. Gộp 2 nguồn (mỗi lúc chỉ 1 accessory trang bị nên không cộng dồn):
+        ///  - PostSkillDamage: đòn KẾ TIẾP sau skill (cờ 1 lần).
+        ///  - AttackBuff (acc_potion): mọi đòn trong effectDuration giây kể từ lúc TRANG BỊ accessory.
+        /// PlayerCombat gọi.
+        /// </summary>
         public int ApplyAttackDamageMultiplier(int damage)
         {
-            if (!PostSkillArmed) return damage;
             var acc = Current();
-            if (acc == null || acc.effect != DamageEffectType.PostSkillDamage) return damage;
+            if (acc == null) return damage;
+
+            if (acc.effect == DamageEffectType.PostSkillDamage)
+                return PostSkillArmed ? Mathf.RoundToInt(damage * Mathf.Max(1f, acc.effectMagnitude)) : damage;
+
+            if (acc.effect == DamageEffectType.AttackBuff && IsBuffActive(AttackBuffTimer))
+                return Mathf.RoundToInt(damage * Mathf.Max(1f, acc.effectMagnitude));
+
+            return damage;
+        }
+
+        // ─────────────────────── BUFF CÓ THỜI HẠN (AttackBuff / SkillBuff) ───────────────────────
+
+        /// <summary>
+        /// Timer còn chạy? `ExpiredOrNotRunning` trả TRUE cả khi timer CHƯA từng chạy, nên phải kiểm
+        /// nghịch đảo — nếu dùng trực tiếp thì buff "luôn active" trước lần kích đầu tiên.
+        /// </summary>
+        private bool IsBuffActive(TickTimer t)
+        {
+            if (Object == null || !Object.IsValid) return false;
+            return !t.ExpiredOrNotRunning(Runner);
+        }
+
+        /// <summary>
+        /// PlayerInventory (host) gọi NGAY KHI VỪA TRANG BỊ accessory → bật buff có thời hạn.
+        ///
+        /// MỐC KÍCH HOẠT LÀ LÚC TRANG BỊ (user chốt 2026-07-30), không phải lúc uống bình / tung skill như
+        /// bản trước:
+        ///   • acc_potion   (AttackBuff) → tăng sát thương ĐÒN ĐÁNH THƯỜNG trong `effectDuration` (60s).
+        ///   • acc_postskill (SkillBuff) → tăng sát thương KĨ NĂNG trong `effectDuration` (60s).
+        ///
+        /// Vì buff chỉ chạy 1 phút sau khi mặc, và đổi accessory lại phải về checkpoint (xem
+        /// PlayerInventory.CanSwapAccessory), nên đây là loại buff "dùng trước khi vào trận" — hợp với việc
+        /// người chơi phải cân nhắc thời điểm mặc.
+        /// </summary>
+        public void ArmBuffsOnEquip()
+        {
+            if (!HasStateAuthority) return;
+
+            var acc = Current();
+            if (acc == null) return;
+
+            float dur = Mathf.Max(0.1f, acc.effectDuration);
+            if (acc.effect == DamageEffectType.AttackBuff)
+                AttackBuffTimer = TickTimer.CreateFromSeconds(Runner, dur);
+            else if (acc.effect == DamageEffectType.SkillBuff)
+                SkillBuffTimer = TickTimer.CreateFromSeconds(Runner, dur);
+        }
+
+        /// <summary>
+        /// Nhân damage SKILL khi SkillBuff đang hiệu lực (1× nếu không). PlayerSkillCaster gọi.
+        ///
+        /// Buff bật NGAY khi tung skill nên chính skill đó cũng được nhân — đúng ý "tăng sát thương kĩ năng
+        /// tung ra trong một khoảng thời gian".
+        /// </summary>
+        public int ApplySkillDamageMultiplier(int damage)
+        {
+            var acc = Current();
+            if (acc == null || acc.effect != DamageEffectType.SkillBuff) return damage;
+            if (!IsBuffActive(SkillBuffTimer)) return damage;
             return Mathf.RoundToInt(damage * Mathf.Max(1f, acc.effectMagnitude));
         }
 

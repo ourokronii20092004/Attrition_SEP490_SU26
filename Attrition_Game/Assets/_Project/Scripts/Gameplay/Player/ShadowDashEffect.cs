@@ -25,12 +25,22 @@ namespace Attrition.Gameplay.Player
         [SerializeField] private float smokeInterval = 0.07f;
         [Tooltip("Thời gian 1 cụm khói chạy hết 4 frame rồi tan (giây).")]
         [SerializeField] private float smokeLifetime = 0.28f;
-        [Tooltip("Vị trí khói so với gốc player — mặc định ở chân (đáy collider ~ -1.2).")]
-        [SerializeField] private Vector2 smokeOffset = new Vector2(-0.35f, -1.15f);
+        [Tooltip("Vị trí khói so với gốc player (TÂM khói, vì pivot sprite ở giữa).\n" +
+                 "TÍNH TỪ HÌNH THẬT: collider player đáy ở y ≈ -1.2 (size 2.397, center ~0). Sprite khói cao " +
+                 "9px @ PPU 16 = 0.5625 unit, nhân smokeScale 1.5 → cao ~0.84 unit.\n" +
+                 "Đặt tâm -0.7 thì khói trải -1.12..-0.28 = quấn quanh BÀN CHÂN, trông như chìm dưới người. " +
+                 "Đặt -0.45 → trải -0.87..-0.03, nằm ngang CẲNG CHÂN: thấy rõ, không lọt vào tile đất.")]
+        [SerializeField] private Vector2 smokeOffset = new Vector2(-0.35f, -0.45f);
         [Tooltip("Phóng to cụm khói (sprite gốc chỉ ~21x9px).")]
         [SerializeField] private float smokeScale = 1.5f;
         [Tooltip("Màu/độ đậm khói.")]
         [SerializeField] private Color smokeColor = new Color(1f, 1f, 1f, 0.75f);
+        [Tooltip("Sorting layer VẼ khói. PHẢI nằm sau 'Ground' trong danh sách Sorting Layers, nếu không " +
+                 "khói ở chân player sẽ bị tile đất vẽ đè (dash trên đất không thấy khói). Bỏ trống = dùng " +
+                 "layer của sprite player.")]
+        [SerializeField] private string smokeSortingLayer = "Player";
+        [Tooltip("Sorting order của khói TRONG layer trên. Dương = vẽ trên nền đất.")]
+        [SerializeField] private int smokeSortingOrder = 5;
 
         [Header("---- AFTERIMAGE ----")]
         [Tooltip("Giãn cách spawn mỗi vệt bóng (giây).")]
@@ -128,8 +138,25 @@ namespace Attrition.Gameplay.Player
 
             var sr = go.AddComponent<SpriteRenderer>();
             sr.sprite = smokeFrames[0];
-            sr.sortingLayerID = sourceSprite.sortingLayerID;
-            sr.sortingOrder = sourceSprite.sortingOrder + sortingOffset;
+
+            // VẼ TRÊN NỀN ĐẤT: sprite player nằm ở sorting layer "Default" (index 0) nhưng tilemap Ground ở
+            // index 4 → mọi thứ kế thừa layer của player đều bị đất VẼ ĐÈ. Khói bốc ở CHÂN nên lọt trong
+            // vùng tile đất và biến mất; dash trên không thì không có tile che nên vẫn thấy (đúng hiện tượng
+            // user báo). Vì vậy khói phải nằm ở layer SAU Ground.
+            int layerId = SortingLayer.NameToID(smokeSortingLayer);
+            bool layerOk = !string.IsNullOrEmpty(smokeSortingLayer) && SortingLayer.IsValid(layerId);
+            if (layerOk)
+            {
+                sr.sortingLayerID = layerId;
+                sr.sortingOrder = smokeSortingOrder;
+            }
+            else
+            {
+                // Không có layer đó trong project → giữ hành vi cũ để không vẽ sai chỗ hoàn toàn.
+                sr.sortingLayerID = sourceSprite.sortingLayerID;
+                sr.sortingOrder = sourceSprite.sortingOrder + sortingOffset;
+            }
+
             sr.color = smokeColor;
 
             go.AddComponent<DashSmokeAnim>().Init(smokeFrames, smokeLifetime, smokeColor);

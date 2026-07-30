@@ -67,6 +67,9 @@ namespace Attrition.Gameplay.Player
             if (fx != null) restore = Mathf.RoundToInt(restore * fx.PotionHealMultiplier);
             _stats.RestoreHP(restore);
             HealthCharges--;
+
+            // acc_potion (AttackBuff) KHÔNG kích ở đây nữa: buff bật lúc TRANG BỊ accessory và chạy 60s
+            // (xem AccessoryEffects.ArmBuffsOnEquip). Uống bình chỉ còn việc hồi máu.
             return true;
         }
 
