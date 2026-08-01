@@ -31,16 +31,16 @@ MonoBehaviour:
   tickInterval: 0
   sweetSpotRadius: 0
   sweetSpotMultiplier: 1.5
-  delivery: 0
+  delivery: 2
   hitShape: 2
   range: 3.5
   angle: 0
   rectSize: {x: 3, y: 1.5}
   hitboxOffset: {x: 1, y: 0}
   projectilePrefab:
-    RawGuidValue: 00000000000000000000000000000000
-  projectileSpeed: 12
-  projectileCount: 1
-  spreadAngle: 20
+    RawGuidValue: 5c1f8a3d7b2e4404c9d6a1f0e83b7d52
+  projectileSpeed: 0
+  projectileCount: 3
+  spreadAngle: 1.6
   castVfxPrefab: {fileID: 0}
   vfxLifetime: 1.5
