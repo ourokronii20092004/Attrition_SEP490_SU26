@@ -199,8 +199,8 @@ namespace Attrition.Gameplay.Enemy.Elf
             if (!HasStateAuthority || !waitForTrigger) return;
             waitForTrigger = false;
             EncounterStarted = true;
-            BroadcastIntroDialogue();
-            ChangeState(IdleState);
+            if (introDialogue != null) BroadcastIntroDialogue();
+            else ChangeState(IdleState);
         }
 
         /// <summary>
@@ -238,7 +238,16 @@ namespace Attrition.Gameplay.Enemy.Elf
         private void RPC_ShowIntroDialogue()
         {
             if (introDialogue == null) return;
-            Attrition.Data.DialogueEvents.OnOpenCustomDialogue?.Invoke(introDialogue, null);
+            var openDialogue = Attrition.Data.DialogueEvents.OnOpenCustomDialogue;
+            if (openDialogue == null)
+            {
+                if (HasStateAuthority) ChangeState(IdleState);
+                return;
+            }
+            openDialogue.Invoke(introDialogue, () =>
+            {
+                if (HasStateAuthority) ChangeState(IdleState);
+            });
         }
 
         // ═══════════════════════════════════════════════════════════════

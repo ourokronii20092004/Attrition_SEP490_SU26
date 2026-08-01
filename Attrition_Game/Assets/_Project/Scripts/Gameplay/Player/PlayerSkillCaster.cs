@@ -96,7 +96,30 @@ namespace Attrition.Gameplay.Player
             {
                 if (config.delivery == SkillDelivery.Projectile)
                 {
-                    if (!_projectileFired) { FireProjectiles(skill, config, isFacingRight); _projectileFired = true; }
+                    if (config.projectileInterval > 0f)
+                    {
+                        float activeElapsed = elapsedFrac * total - config.activeStartFrac * total;
+                        int wanted = Mathf.Min(Mathf.Max(1, config.projectileCount),
+                            Mathf.FloorToInt(activeElapsed / config.projectileInterval) + 1);
+                        while (_ticksDone < wanted)
+                        {
+                            FireProjectile(skill, config, isFacingRight);
+                            _ticksDone++;
+                        }
+                    }
+                    else if (!_projectileFired)
+                    {
+                        FireProjectiles(skill, config, isFacingRight);
+                        _projectileFired = true;
+                    }
+                }
+                else if (config.delivery == SkillDelivery.SpawnAoE)
+                {
+                    if (!_projectileFired)
+                    {
+                        SpawnAoEs(skill, config, isFacingRight);
+                        _projectileFired = true;
+                    }
                 }
                 else
                 {
@@ -143,6 +166,42 @@ namespace Attrition.Gameplay.Player
                 }
                 Vector2 dir = ((Vector2)hit.transform.position - origin).normalized;
                 dmg.TakeDamage(raw, new Vector2(dir.x, 0.4f).normalized, skill.knockbackForce, skill.damageType);
+            }
+        }
+
+        private int SkillRawDamage(Attrition.Persistence.SkillRuntimeConfig config)
+        {
+            int raw = config.baseDamage + Mathf.RoundToInt(_stats.AP * config.apScaling);
+            var accFx = GetComponent<AccessoryEffects>();
+            return accFx != null ? accFx.ApplySkillDamageMultiplier(raw) : raw;
+        }
+
+        private void FireProjectile(SkillSO skill, Attrition.Persistence.SkillRuntimeConfig config, bool isFacingRight)
+        {
+            if (!skill.projectilePrefab.IsValid) return;
+            Vector3 spawn = castPoint != null ? castPoint.position : transform.position;
+            Vector2 dir = isFacingRight ? Vector2.right : Vector2.left;
+            int raw = SkillRawDamage(config);
+            Runner.Spawn(skill.projectilePrefab, spawn, Quaternion.identity, null,
+                (r, obj) => ProjectileInitializer.Init(obj, dir, raw, config.projectileSpeed,
+                    config.damageType, config.knockbackForce));
+        }
+
+        private void SpawnAoEs(SkillSO skill, Attrition.Persistence.SkillRuntimeConfig config, bool isFacingRight)
+        {
+            if (!skill.projectilePrefab.IsValid) return;
+            int count = Mathf.Max(1, config.projectileCount);
+            float dir = isFacingRight ? 1f : -1f;
+            float spacing = Mathf.Max(0f, config.spreadAngle);
+            Vector3 origin = transform.position + new Vector3(config.hitboxOffset.x * dir, config.hitboxOffset.y, 0f);
+            int raw = SkillRawDamage(config);
+
+            for (int i = 0; i < count; i++)
+            {
+                Vector3 pos = origin + new Vector3(dir * spacing * i, 0f, 0f);
+                Runner.Spawn(skill.projectilePrefab, pos, Quaternion.identity, null,
+                    (r, obj) => ProjectileInitializer.Init(obj, Vector2.zero, raw, 0f,
+                        config.damageType, config.knockbackForce));
             }
         }
 

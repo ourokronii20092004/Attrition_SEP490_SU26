@@ -7,8 +7,8 @@ namespace Attrition.Data
     /// <summary>5 skill nguyên tố tương ứng 5 boss khu vực.</summary>
     public enum SkillElement { Fire, Wood, Earth, Thunder, Thrust }
 
-    /// <summary>Cách skill gây sát thương: vùng tức thời, hoặc bắn đạn.</summary>
-    public enum SkillDelivery { AreaInstant, Projectile }
+    /// <summary>Cách skill gây sát thương: vùng tức thời, đạn bay, hoặc spawn AoE networked.</summary>
+    public enum SkillDelivery { AreaInstant, Projectile, SpawnAoE }
 
     /// <summary>Hình dạng vùng đánh của skill (độc lập với enemy để tránh phụ thuộc assembly).</summary>
     public enum SkillHitShape { Cone, Circle, Rectangle }
@@ -76,9 +76,12 @@ namespace Attrition.Data
         [Tooltip("Prefab đạn (NetworkObject có EnemyProjectile/SpearProjectile, hitLayer = Enemy).")]
         public NetworkPrefabRef projectilePrefab;
         public float projectileSpeed = 12f;
-        [Tooltip("Số đạn 1 lần (>1 = toả quạt theo spreadAngle).")]
+        [Tooltip("Số đạn/AoE tạo ra.")]
         public int projectileCount = 1;
+        [Tooltip("Projectile: góc toả. SpawnAoE: khoảng cách ngang giữa các điểm.")]
         public float spreadAngle = 20f;
+        [Tooltip("Khoảng nghỉ giữa các projectile liên tiếp. 0 = tạo cùng lúc.")]
+        public float projectileInterval = 0f;
 
         [Header("---- VFX (riêng từng skill) ----")]
         [Tooltip("Prefab hiệu ứng tại điểm cast. Bỏ trống = không.")]

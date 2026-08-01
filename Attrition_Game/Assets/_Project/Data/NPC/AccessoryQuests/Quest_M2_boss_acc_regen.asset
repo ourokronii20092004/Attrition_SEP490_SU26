@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b5c8be0c0a09a34dad0f05f7e17282a, type: 3}
+  m_Name: Quest_M2_boss_acc_regen
+  m_EditorClassIdentifier: Attrition.Data::Attrition.Data.QuestSO
+  questId: q_m2_boss_regen
+  title: Warden of the Wood
+  description: '[Map 2] Defeat the boss (druid). Reward: Renewal Charm.'
+  objectiveType: 0
+  targetId: druid
+  requiredTargetIds: []
+  requiredAmount: 1
+  expReward: 650
+  itemRewards:
+  - itemId: acc_regen
+    amount: 1
+  dialogueNotStarted: {fileID: 11400000, guid: 692bfcf01f1a5a64eb5631d2e9da361e, type: 2}
+  dialogueInProgress: {fileID: 11400000, guid: 016558ef2f7a58e468e3215d1f9645a6, type: 2}
+  dialogueCompleted: {fileID: 11400000, guid: b35d15c89b2e8564cb850dd44cec5922, type: 2}
+  dialogueFinished: {fileID: 11400000, guid: dcc0b1ed6b250904c9ec3a9833640ec5, type: 2}

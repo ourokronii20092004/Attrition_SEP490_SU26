@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6e7a8772108ae50479f32453b8fea2c7, type: 3}
-  m_Name: 
+  m_Name: skill_thunder
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.SkillSO
   itemId: skill_thunder
-  displayName: Thunder Skil
-  description: 
-  icon: {fileID: 21300000, guid: 20db84bd0629e914596423d41acbddf8, type: 3}
+  displayName: Thunder Strike
+  description: Calls down three lightning strikes in a line ahead.
+  icon: {fileID: 21300000, guid: 479aa266e8a120b4a92f1b86b3551de9, type: 3}
   maxStack: 1
   isKeyItem: 0
   element: 3
@@ -25,22 +25,23 @@ MonoBehaviour:
   activeStartFrac: 0.35
   activeEndFrac: 0.6
   damageType: 1
-  baseDamage: 38
-  apScaling: 1
-  knockbackForce: 7
+  baseDamage: 14
+  apScaling: 0.55
+  knockbackForce: 3
   tickInterval: 0
   sweetSpotRadius: 0
   sweetSpotMultiplier: 1.5
-  delivery: 1
+  delivery: 2
   hitShape: 0
   range: 2.5
   angle: 120
   rectSize: {x: 3, y: 1.5}
-  hitboxOffset: {x: 1, y: 0}
+  hitboxOffset: {x: 1.5, y: 0}
   projectilePrefab:
-    RawGuidValue: 00000000000000000000000000000000
-  projectileSpeed: 12
-  projectileCount: 5
-  spreadAngle: 45
+    RawGuidValue: 8d1653b807e2d9f42bfbb7d80d020fc4
+  projectileSpeed: 0
+  projectileCount: 3
+  spreadAngle: 1.8
+  projectileInterval: 0
   castVfxPrefab: {fileID: 0}
   vfxLifetime: 1.5

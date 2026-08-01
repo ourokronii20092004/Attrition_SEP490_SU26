@@ -310,8 +310,8 @@ namespace Attrition.UI
             {
                 bool beingSaved = incoming >= 0f;
                 SetText("hud-downed-text", beingSaved
-                    ? "ĐỒNG ĐỘI ĐANG CỨU..."
-                    : "ĐÃ GỤC — CHỜ ĐỒNG ĐỘI CỨU");
+                    ? "A TEAMMATE IS REVIVING YOU..."
+                    : "DOWNED — WAIT FOR A TEAMMATE");
                 SetFill("hud-downed-fill", beingSaved ? incoming : 0f, 1f);
             }
 

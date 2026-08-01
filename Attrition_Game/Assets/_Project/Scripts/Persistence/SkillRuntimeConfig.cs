@@ -28,6 +28,7 @@ namespace Attrition.Persistence
         public float projectileSpeed;
         public int projectileCount;
         public float spreadAngle;
+        public float projectileInterval;
         public float vfxLifetime;
 
         public int ComputeTickCount()
@@ -48,7 +49,8 @@ namespace Attrition.Persistence
                 sweetSpotRadius = so.sweetSpotRadius, sweetSpotMultiplier = so.sweetSpotMultiplier,
                 delivery = so.delivery, hitShape = so.hitShape, range = so.range, angle = so.angle,
                 rectSize = so.rectSize, hitboxOffset = so.hitboxOffset, projectileSpeed = so.projectileSpeed,
-                projectileCount = so.projectileCount, spreadAngle = so.spreadAngle, vfxLifetime = so.vfxLifetime
+                projectileCount = so.projectileCount, spreadAngle = so.spreadAngle,
+                projectileInterval = so.projectileInterval, vfxLifetime = so.vfxLifetime
             };
             var provider = SkillConfigProvider.Instance;
             return provider != null ? provider.ApplyOverride(so.itemId, config) : config;

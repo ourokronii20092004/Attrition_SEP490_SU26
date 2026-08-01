@@ -25,7 +25,8 @@ namespace Attrition.Gameplay.Enemy.Druid.States
             ai.DetectPlayer();
             ai.FaceTowardsPlayer();
             ai.StopMovement();
-            ai.PlayAnim("Skill"); // trigger "Skill" nếu Animator có; thiếu = no-op
+            // Druid chưa có clip skill riêng; tái dùng clip Attack thay vì tạo trigger/controller thừa.
+            ai.PlayAnim("Attack");
         }
 
         public override void Update(DruidBossAI ai)

@@ -763,7 +763,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0c11d65c581388f438d47d2fcd451f9b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Attrition.Systems::Attrition.Systems.MenuMusicStarter
-  menuBgmClip: {fileID: 8300000, guid: be97317c6a1c2af499eaf91c268b4214, type: 3}
+  menuBgmClip: {fileID: 8300000, guid: 198d42d0c1734d14ba7a0444fecaf115, type: 3}
   volume: 1
   _fadeDuration: 0.8
 --- !u!4 &1926214594

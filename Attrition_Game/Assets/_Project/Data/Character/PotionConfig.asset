@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.PotionConfigSO
   startingHealthCharges: 2
   startingManaCharges: 2
-  hardMaxHealthCharges: 8
+  hardMaxHealthCharges: 11
   hardMaxManaCharges: 8

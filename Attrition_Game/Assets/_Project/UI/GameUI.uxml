@@ -83,7 +83,7 @@
 
             <!-- Coop revive prompt: hiện khi đứng gần đồng đội đã gục (giữ R để hồi sinh) -->
             <ui:VisualElement name="hud-revive" class="hidden">
-                <ui:Label name="hud-revive-text" text="[R] HỒI SINH ĐỒNG ĐỘI"/>
+                <ui:Label name="hud-revive-text" text="[R] REVIVE TEAMMATE"/>
                 <ui:VisualElement name="hud-revive-track">
                     <ui:VisualElement name="hud-revive-fill"/>
                 </ui:VisualElement>
@@ -92,7 +92,7 @@
             <!-- COOP — NGƯỜI ĐANG GỤC thấy: có ai đang cứu mình không + tiến trình.
                  Trước đây HUD người gục trống trơn nên không biết đồng đội có đang cứu hay không. -->
             <ui:VisualElement name="hud-downed" class="hidden">
-                <ui:Label name="hud-downed-text" text="ĐÃ GỤC — CHỜ ĐỒNG ĐỘI CỨU"/>
+                <ui:Label name="hud-downed-text" text="DOWNED — WAIT FOR A TEAMMATE"/>
                 <ui:VisualElement name="hud-downed-track">
                     <ui:VisualElement name="hud-downed-fill"/>
                 </ui:VisualElement>
@@ -101,7 +101,7 @@
             <!-- COOP — NGƯỜI CÒN SỐNG thấy: đồng đội đã gục (kể cả ở xa, ngoài tầm cứu).
                  Kèm khoảng cách để biết phải chạy tới đâu. -->
             <ui:VisualElement name="hud-ally-down" class="hidden">
-                <ui:Label name="hud-ally-down-text" text="ĐỒNG ĐỘI ĐÃ GỤC"/>
+                <ui:Label name="hud-ally-down-text" text="TEAMMATE DOWN"/>
                 <ui:Label name="hud-ally-down-dist" text="-- m"/>
             </ui:VisualElement>
         </ui:VisualElement>

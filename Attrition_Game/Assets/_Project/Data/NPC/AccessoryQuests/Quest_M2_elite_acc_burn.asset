@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b5c8be0c0a09a34dad0f05f7e17282a, type: 3}
+  m_Name: Quest_M2_elite_acc_burn
+  m_EditorClassIdentifier: Attrition.Data::Attrition.Data.QuestSO
+  questId: q_m2_elite_burn
+  title: Embers in the Grove
+  description: '[Map 2] Slay 1 gollux. Reward: Ember Charm (co-op only).'
+  objectiveType: 0
+  targetId: gollux
+  requiredTargetIds: []
+  requiredAmount: 1
+  expReward: 320
+  itemRewards:
+  - itemId: acc_burn
+    amount: 1
+  dialogueNotStarted: {fileID: 11400000, guid: 514892dcd57e4fa4db098c08050b6617, type: 2}
+  dialogueInProgress: {fileID: 11400000, guid: f7542ccf998c6b74eaf60ddf15647c84, type: 2}
+  dialogueCompleted: {fileID: 11400000, guid: bb35c1f0e3bdf2647a77091565e9cb01, type: 2}
+  dialogueFinished: {fileID: 11400000, guid: 289f18f687c464b40a9a46dadd36cffa, type: 2}

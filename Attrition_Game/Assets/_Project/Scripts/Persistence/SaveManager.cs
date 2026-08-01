@@ -13,6 +13,7 @@ namespace Attrition.Persistence
         public string questId;
         public byte state;     // 0=NotStarted, 1=Active, 2=Completed, 3=Rewarded
         public int progress;   // số mục tiêu đã hoàn thành
+        public int targetMask; // multi-target kill quest: bit các enemyId đã hạ
     }
 
     /// <summary>Bọc mảng quest để (de)serialize JSON ổn định (Unity/Newtonsoft) cho lưu server coop.</summary>
