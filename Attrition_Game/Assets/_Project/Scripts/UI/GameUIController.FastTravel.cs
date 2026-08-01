@@ -1,8 +1,11 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Attrition.Gameplay.World;
 using Attrition.Gameplay.Player;
+using Attrition.Gameplay.Environment;
+using Attrition.Persistence;
 
 namespace Attrition.UI
 {
@@ -12,7 +15,8 @@ namespace Attrition.UI
     /// </summary>
     public partial class GameUIController
     {
-        private Checkpoint _ftSelected;
+        private MapDataSO _ftMap;
+        private MapDataSO.CheckpointMarker? _ftSelected;
         
         // Provisional Level Up
         private int _provUnspent;
@@ -51,6 +55,8 @@ namespace Attrition.UI
             BindButton("ft-flasks-back", ShowBonfireMain);
             
             // Travel Menu
+            BindButton("ft-map-prev", () => ChangeFastTravelMap(-1));
+            BindButton("ft-map-next", () => ChangeFastTravelMap(1));
             BindButton("ft-go", TeleportToSelected);
             BindButton("ft-travel-back", ShowBonfireMain);
         }
@@ -187,6 +193,32 @@ namespace Attrition.UI
         {
             HideAllBonfireMenus();
             _root.Q<VisualElement>("ft-travel-menu")?.RemoveFromClassList("hidden");
+            _ftMap = MapRegistrySO.Load()?.GetByScene(GameLaunch.GameplayScene);
+            if (_ftMap == null) _ftMap = AvailableFastTravelMaps().FirstOrDefault();
+            RefreshFastTravelList();
+        }
+
+        private List<MapDataSO> AvailableFastTravelMaps()
+        {
+            var result = new List<MapDataSO>();
+            var registry = MapRegistrySO.Load();
+            if (registry == null) return result;
+
+            foreach (var map in registry.maps)
+            {
+                if (map == null) continue;
+                bool hasBeacon = map.checkpoints.Exists(cp => WorldMapState.IsCheckpointDiscovered(cp.checkpointId));
+                if (hasBeacon) result.Add(map);
+            }
+            return result;
+        }
+
+        private void ChangeFastTravelMap(int direction)
+        {
+            var maps = AvailableFastTravelMaps();
+            if (maps.Count == 0) return;
+            int index = Mathf.Max(0, maps.IndexOf(_ftMap));
+            _ftMap = maps[(index + direction + maps.Count) % maps.Count];
             RefreshFastTravelList();
         }
 
@@ -197,48 +229,79 @@ namespace Attrition.UI
             list.Clear();
             _ftSelected = null;
 
-            var all = FindObjectsByType<Checkpoint>(FindObjectsSortMode.None);
+            var maps = AvailableFastTravelMaps();
+            if (_ftMap == null || !maps.Contains(_ftMap)) _ftMap = maps.FirstOrDefault();
+
             int discovered = 0;
-
-            foreach (var cp in all)
+            int total = _ftMap != null ? _ftMap.checkpoints.Count : 0;
+            if (_ftMap != null)
             {
-                if (!cp.HasBeenActivated) continue;
-                discovered++;
-                var c = cp;
-
-                var row = new Button { text = c.DisplayName };
-                row.AddToClassList("ft-row");
-                row.clicked += () => SelectFtRow(c, row);
-                list.Add(row);
+                foreach (var marker in _ftMap.checkpoints)
+                {
+                    if (!WorldMapState.IsCheckpointDiscovered(marker.checkpointId)) continue;
+                    discovered++;
+                    var captured = marker;
+                    var row = new Button { text = captured.checkpointId };
+                    row.AddToClassList("ft-row");
+                    row.clicked += () => SelectFtRow(captured, row);
+                    list.Add(row);
+                }
             }
 
-            SetText("ft-count", $"{discovered} / {all.Length} DISCOVERED");
+            SetText("ft-count", $"{discovered} / {total} DISCOVERED");
             SetText("ft-preview-name", discovered > 0 ? "SELECT A BEACON" : "NO BEACONS YET");
             SetText("ft-preview-region", "");
             _root.Q<Button>("ft-go")?.SetEnabled(false);
+            _root.Q<Button>("ft-map-prev")?.SetEnabled(maps.Count > 1);
+            _root.Q<Button>("ft-map-next")?.SetEnabled(maps.Count > 1);
         }
 
-        private void SelectFtRow(Checkpoint cp, Button row)
+        private void SelectFtRow(MapDataSO.CheckpointMarker marker, Button row)
         {
-            _ftSelected = cp;
+            _ftSelected = marker;
             var list = _root.Q<ScrollView>("ft-list");
             if (list != null)
                 foreach (var b in list.Children())
                     b.RemoveFromClassList("selected");
             row.AddToClassList("selected");
 
-            SetText("ft-preview-name", cp.DisplayName.ToUpper());
-            SetText("ft-preview-region", cp.Region);
+            SetText("ft-preview-name", marker.checkpointId.ToUpper());
+            SetText("ft-preview-region", _ftMap != null
+                ? $"MAP: {(string.IsNullOrEmpty(_ftMap.displayName) ? _ftMap.sceneName : _ftMap.displayName)}"
+                : "");
             _root.Q<Button>("ft-go")?.SetEnabled(true);
         }
 
         private void TeleportToSelected()
         {
-            if (_ftSelected == null || _controller == null) return;
-            // Đóng overlay TRƯỚC (xem RestHere): host chạy RPC đồng bộ nên loading mở ra sẽ bị
-            // ShowOverlay(None) đè tắt nếu gọi sau → host không thấy loading.
+            if (_ftSelected == null || _ftMap == null || _controller == null) return;
+            var marker = _ftSelected.Value;
             ShowOverlay(Overlay.None);
-            _controller.RpcRequestFastTravelToCheckpoint(_ftSelected.RespawnPosition, _ftSelected.DisplayName);
+
+            if (_ftMap.sceneName == GameLaunch.GameplayScene)
+            {
+                Vector3 target = marker.worldPos;
+                foreach (var checkpoint in FindObjectsByType<Checkpoint>(FindObjectsSortMode.None))
+                    if (checkpoint != null && checkpoint.DisplayName == marker.checkpointId)
+                    {
+                        target = checkpoint.RespawnPosition;
+                        break;
+                    }
+                _controller.RpcRequestFastTravelToCheckpoint(target, marker.checkpointId);
+                return;
+            }
+
+            if (!Application.CanStreamedLevelBeLoaded(_ftMap.sceneName))
+            {
+                Debug.LogWarning($"[FastTravel] Scene '{_ftMap.sceneName}' chưa có trong Build Settings.");
+                return;
+            }
+
+            WorldMapState.PendingTravelScene = _ftMap.sceneName;
+            WorldMapState.PendingTravelCheckpointId = marker.checkpointId;
+            var launcher = Attrition.Networking.NetworkLauncher.Instance;
+            if (launcher != null) launcher.BeginGameplay(_ftMap.sceneName);
+            else Debug.LogWarning("[FastTravel] Không tìm thấy NetworkLauncher.");
         }
 
         /// <summary>

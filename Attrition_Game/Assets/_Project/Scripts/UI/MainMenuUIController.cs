@@ -596,6 +596,24 @@ namespace Attrition.UI
                         // Chơi tiếp save cũ cũng phải set tên: nhánh này trước đây bỏ sót nên
                         // CharacterName rỗng → Tab hiện tên placeholder trong UXML thay vì tên nhân vật.
                         GameLaunch.CharacterName = _saveSlots[_selectedSaveSlot].characterName ?? "";
+
+                        var save = _saveSlots[_selectedSaveSlot];
+                        string savedScene = save.checkpointScene;
+                        var checkpointMap = Attrition.Gameplay.Environment.MapRegistrySO.Load()?.GetByCheckpoint(save.checkpointId);
+                        if (checkpointMap != null && checkpointMap.sceneName != savedScene)
+                        {
+                            Debug.LogWarning($"[MainMenu] Save ghép checkpoint '{save.checkpointId}' sai scene '{savedScene}', sửa thành '{checkpointMap.sceneName}'.");
+                            savedScene = checkpointMap.sceneName;
+                            save.checkpointScene = savedScene;
+                            SaveManager.SaveSlot(_selectedSaveSlot, save);
+                        }
+
+                        GameLaunch.GameplayScene = !string.IsNullOrEmpty(savedScene) && Application.CanStreamedLevelBeLoaded(savedScene)
+                            ? savedScene
+                            : GameLaunch.DefaultGameplayScene;
+                        if (!string.IsNullOrEmpty(savedScene) && GameLaunch.GameplayScene != savedScene)
+                            Debug.LogWarning($"[MainMenu] Save trỏ tới scene không hợp lệ '{savedScene}', dùng '{GameLaunch.GameplayScene}'.");
+
                         StartCoroutine(LoadGameplaySceneAsync(GameLaunch.GameplayScene));
                     }
                 });

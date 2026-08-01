@@ -38,7 +38,11 @@ namespace Attrition.UI
                 // nên nếu chỉ dựng lúc bấm vào tab thì player mở Tab lại vẫn thấy số cũ.
                 if (_questTabActive) RefreshQuestLog();
             }
-            if (o == Overlay.FastTravel) RefreshFastTravelList();
+            if (o == Overlay.FastTravel)
+            {
+                ShowBonfireMain();
+                RefreshFastTravelList();
+            }
         }
 
         private void ToggleOverlay(Overlay o) => ShowOverlay(_overlay == o ? Overlay.None : o);

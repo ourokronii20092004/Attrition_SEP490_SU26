@@ -1,7 +1,6 @@
 using System.Collections;
 using Fusion;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace Attrition.Gameplay.Environment
 {
@@ -16,7 +15,7 @@ namespace Attrition.Gameplay.Environment
         {
             if (!HasStateAuthority) return;
 
-            string scene = SceneManager.GetActiveScene().name;
+            string scene = Attrition.Persistence.GameLaunch.GameplayScene;
             if (string.IsNullOrEmpty(WorldMapState.PendingTravelScene) || WorldMapState.PendingTravelScene != scene)
                 return;
 
@@ -25,7 +24,7 @@ namespace Attrition.Gameplay.Environment
 
         private IEnumerator PlaceAfterPlayersReady()
         {
-            string scene = SceneManager.GetActiveScene().name;
+            string scene = Attrition.Persistence.GameLaunch.GameplayScene;
             string wantId = WorldMapState.PendingTravelCheckpointId;
 
             // Tìm vị trí checkpoint đích: ưu tiên Checkpoint thật trong scene; fallback MapData marker.
