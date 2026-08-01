@@ -195,20 +195,81 @@ namespace Attrition.Gameplay.Player
                     config.damageType, config.knockbackForce));
         }
 
+        /// <summary>Tầm dò mục tiêu tự động của skill AoE (units = tile).</summary>
+        private const float AutoAimSearchRadius = 14f;
+
+        /// <summary>Không có mục tiêu → phóng ra trước mặt player đúng 5 tile (theo yêu cầu).</summary>
+        private const float NoTargetForwardTiles = 5f;
+
+        /// <summary>
+        /// Tìm quái/elite/boss GẦN NHẤT còn sống quanh player để skill AoE tự nhắm vào.
+        ///
+        /// Dùng `targetLayers` (đã gán trên prefab player) + physics scene của Fusion — cùng cách
+        /// <see cref="DealArea"/> quét, nên không cần cấu hình layer riêng cho phần auto-aim.
+        /// Bỏ qua collider đã chết để skill không giáng vào xác.
+        ///
+        /// Trả về null nếu không có mục tiêu nào trong <see cref="AutoAimSearchRadius"/>.
+        /// </summary>
+        private Transform FindNearestTarget()
+        {
+            var filter = new ContactFilter2D { useLayerMask = true, layerMask = targetLayers, useTriggers = false };
+            int n = Runner.GetPhysicsScene2D().OverlapCircle(
+                transform.position, AutoAimSearchRadius, filter, _hits);
+
+            Transform best = null;
+            float bestSqr = float.MaxValue;
+            for (int i = 0; i < n; i++)
+            {
+                var hit = _hits[i];
+                if (hit == null || hit.gameObject == gameObject) continue;
+
+                var dmg = hit.GetComponentInParent<IDamageable>();
+                if (dmg == null || dmg.IsDead) continue;
+
+                float sqr = ((Vector2)hit.transform.position - (Vector2)transform.position).sqrMagnitude;
+                if (sqr >= bestSqr) continue;
+                bestSqr = sqr;
+                best = hit.transform;
+            }
+            return best;
+        }
+
         private void SpawnAoEs(SkillSO skill, Attrition.Persistence.SkillRuntimeConfig config, bool isFacingRight)
         {
-            // ponytail: debug log — xóa sau khi xác nhận
             if (!skill.projectilePrefab.IsValid) { Debug.LogWarning($"[Skill] projectilePrefab KHÔNG HỢP LỆ trên {skill.name}"); return; }
             int count = Mathf.Max(1, config.projectileCount);
-            float dir = isFacingRight ? 1f : -1f;
             float spacing = Mathf.Max(0f, config.spreadAngle);
-            Vector3 origin = transform.position + new Vector3(config.hitboxOffset.x * dir, config.hitboxOffset.y, 0f);
             int raw = SkillRawDamage(config);
+
+            // TỰ NHẮM: có quái gần → cột đầu giáng NGAY trên đầu nó; không có → ra trước mặt 5 tile.
+            // Hướng rải các cột sau vẫn theo hướng "player → mục tiêu" để chuỗi cột chạy về phía địch,
+            // chứ không phải luôn theo hướng player đang nhìn (đứng sau lưng địch sẽ rải ra xa).
+            var target = FindNearestTarget();
+            float facing = isFacingRight ? 1f : -1f;
+
+            Vector3 origin;
+            float dir;
+            if (target != null)
+            {
+                // Giữ Y theo offset của skill so với CHÂN player: EnemyAoEDamage/AoE prefab của các skill
+                // này tự snap xuống nền, nên chỉ cần X của mục tiêu là đủ và tránh cột lơ lửng khi
+                // mục tiêu đang nhảy.
+                float toTarget = target.position.x - transform.position.x;
+                dir = Mathf.Abs(toTarget) < 0.01f ? facing : Mathf.Sign(toTarget);
+                origin = new Vector3(target.position.x,
+                                     transform.position.y + config.hitboxOffset.y,
+                                     transform.position.z);
+            }
+            else
+            {
+                dir = facing;
+                origin = transform.position
+                       + new Vector3(dir * NoTargetForwardTiles, config.hitboxOffset.y, 0f);
+            }
 
             for (int i = 0; i < count; i++)
             {
                 Vector3 pos = origin + new Vector3(dir * spacing * i, 0f, 0f);
-                Debug.Log($"[Skill] SpawnAoE #{i} tại {pos} prefab={skill.projectilePrefab}");
                 Runner.Spawn(skill.projectilePrefab, pos, Quaternion.identity, null,
                     (r, obj) => ProjectileInitializer.Init(obj, Vector2.zero, raw, 0f,
                         config.damageType, config.knockbackForce, targetLayers));
