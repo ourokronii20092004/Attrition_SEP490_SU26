@@ -29,7 +29,7 @@ namespace Attrition.Gameplay.Enemy.DemonKin.States
             ai.CurrentState = EnemyState.Attacking;
             _elapsed = 0f;
             _fired = 0;
-            _nextFireTime = ai.barrageChargeTime;
+            _nextFireTime = Mathf.Max(ai.barrageChargeTime, DemonKinBossAI.SkillAttackWindup);
 
             ai.DetectPlayer();
             ai.FaceTowardsPlayer();
@@ -55,6 +55,7 @@ namespace Attrition.Gameplay.Enemy.DemonKin.States
 
             if (_fired < ai.barrageCount && _elapsed >= _nextFireTime)
             {
+                if (_fired == 0) ai.PlayAnim("Idle");
                 if (ai.HasStateAuthority)
                 {
                     Vector2 pos = (Vector2)ai.transform.position + new Vector2(_dirX * 1.2f, 0.1f);
@@ -64,8 +65,7 @@ namespace Attrition.Gameplay.Enemy.DemonKin.States
                 _fired++;
                 _nextFireTime = _elapsed + ai.barrageInterval;
 
-                // Mỗi đòn chơi lại animation Attack để thấy rõ 4 nhịp vung tay.
-                if (_fired < ai.barrageCount) ai.PlayAnim("Attack");
+                // Một animation Attack hoàn chỉnh mở đầu cả loạt; không restart giữa từng viên.
             }
 
             if (_fired >= ai.barrageCount && _elapsed >= _nextFireTime)

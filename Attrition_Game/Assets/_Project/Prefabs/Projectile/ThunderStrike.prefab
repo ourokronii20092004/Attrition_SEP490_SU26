@@ -30,7 +30,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1, y: 2.5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -151,11 +151,11 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 128
   radius: 1.1
-  lifetime: 1.2
-  damageDelay: 0.3
+  lifetime: 1.8
+  damageDelay: 0.75
   knockbackForce: 4
   snapToGround: 1
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
-  groundOffset: 0.3
+  groundOffset: 0.1

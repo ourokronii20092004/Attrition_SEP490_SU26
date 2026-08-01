@@ -11,18 +11,27 @@ namespace Attrition.Gameplay.Enemy.DemonKin.States
     {
         public override void Enter(DemonKinBossAI ai)
         {
-            ai.CurrentState = EnemyState.Recovery;
-            ai.StopMovement();
+            ai.CurrentState = EnemyState.Chase; // Chase cho phép animation đi lại; Recovery sẽ đóng băng frame attack cuối
+            ai.PlayAnim("Idle"); // bắt animator thoát khỏi state Attack, chuyển về Idle/Walk
         }
 
         public override void Update(DemonKinBossAI ai)
         {
-            ai.StopMovement();
             ai.DetectPlayer();
             ai.FaceTowardsPlayer();
 
-            if (ai.PlayerTarget == null) return;
-            if (!ai.SkillCooldownTimer.ExpiredOrNotRunning(ai.Runner)) return;
+            if (ai.PlayerTarget == null) { ai.StopMovement(); return; }
+
+            if (!ai.SkillCooldownTimer.ExpiredOrNotRunning(ai.Runner))
+            {
+                // Nghỉ: chỉ TIẾN lại gần nếu đứng quá xa, KHÔNG lùi (boss lùi trông như bị đẩy).
+                float dist = ai.DistanceToPlayer();
+                float speed = ai.StatsComp != null ? ai.StatsComp.PatrolSpeed : 3f;
+                if (dist > ai.preferredDistance + 1f) ai.MoveTowardsPlayer(speed);
+                else ai.StopMovement();
+                return;
+            }
+            ai.StopMovement();
 
             if (ai.DistanceToPlayer() > ai.viewRadius * 0.98f) ai.ChangeState(DemonKinBossAI.ChaseState);
             else ai.PickRandomSkill();
@@ -62,6 +71,7 @@ namespace Attrition.Gameplay.Enemy.DemonKin.States
         {
             ai.CurrentState = EnemyState.Recovery;
             ai.StopMovement();
+            ai.PlayAnim("Idle");
             ai.StateLocalTimer = 0f;
         }
 
@@ -71,8 +81,9 @@ namespace Attrition.Gameplay.Enemy.DemonKin.States
             ai.StateLocalTimer += ai.Runner.DeltaTime;
             if (ai.StateLocalTimer >= ai.recoveryTime)
             {
+                // restTime (không phải 0.1s) = khoảng NGHỈ boss đi lại trước skill kế.
                 if (ai.HasStateAuthority)
-                    ai.SkillCooldownTimer = TickTimer.CreateFromSeconds(ai.Runner, 0.1f);
+                    ai.SkillCooldownTimer = TickTimer.CreateFromSeconds(ai.Runner, ai.restTime);
                 ai.ChangeState(DemonKinBossAI.IdleState);
             }
         }
@@ -127,7 +138,7 @@ namespace Attrition.Gameplay.Enemy.DemonKin.States
                 }
             }
 
-            if (ai.StateLocalTimer >= ai.meleeDuration)
+            if (ai.StateLocalTimer >= Mathf.Max(ai.meleeDuration, DemonKinBossAI.SkillAttackWindup))
                 ai.ChangeState(DemonKinBossAI.RecoveryState);
         }
 

@@ -153,6 +153,7 @@ namespace Attrition.Gameplay.Persistence
             if (data == null) return;          // chưa có slot (chưa từng lưu) → bỏ qua, mốc sau sẽ ghi
 
             Attrition.Gameplay.Environment.BossDefeatState.WriteTo(data);
+            data.quests = Attrition.Gameplay.NPC.NetworkNPC.CaptureAll();
             data.lastSavedUnix = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             SaveManager.SaveSlot(slot, data);
         }

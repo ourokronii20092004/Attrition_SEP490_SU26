@@ -132,6 +132,11 @@ namespace Attrition.Gameplay.Enemy.ArchDemon
         [Header("---- TIMING ----")]
         [Tooltip("Nghỉ giữa các skill (giây). Boss cuối → dồn dập nhất.")]
         public float recoveryTime = 0.4f;
+        [Tooltip("Thời gian ĐI LẠI tự do sau khi nghỉ, trước khi tung skill kế (giây). Trước đây cooldown để " +
+                 "0.1s nên skill chồng chéo, chưa xong đòn này đã tung đòn khác.")]
+        public float restTime = 1.3f;
+        [Tooltip("Khoảng cách (units) boss muốn giữ với player trong lúc nghỉ.")]
+        public float preferredDistance = 6.5f;
         [Tooltip("Chờ ban đầu trước skill đầu tiên (giây).")]
         public float initialDelay = 1.2f;
 
@@ -410,11 +415,17 @@ namespace Attrition.Gameplay.Enemy.ArchDemon
         /// Spawn AoE và TRẢ VỀ NetworkObject để state tự di chuyển nó (skill 3: lốc xoáy đi ra rồi quay về).
         /// Các skill khác dùng SpawnAoE (fire-and-forget) vì không cần giữ tham chiếu.
         /// </summary>
-        public NetworkObject SpawnAoETracked(NetworkPrefabRef prefab, Vector2 pos, int damage)
+        public NetworkObject SpawnAoETracked(NetworkPrefabRef prefab, Vector2 pos, int damage,
+                                             float lifetime = 0f)
         {
             if (!HasStateAuthority || !prefab.IsValid) return null;
             return Runner.Spawn(prefab, pos, Quaternion.identity, null, (runner, obj) =>
             {
+                if (lifetime > 0f)
+                {
+                    var aoe = obj.GetComponent<EnemyAoEDamage>();
+                    if (aoe != null) aoe.lifetime = lifetime;
+                }
                 Attrition.Gameplay.Combat.ProjectileInitializer.Init(
                     obj, Vector2.zero, damage,
                     Attrition.Gameplay.Combat.ProjectileInitializer.DefaultSpeed,
@@ -513,12 +524,14 @@ namespace Attrition.Gameplay.Enemy.ArchDemon
 
         private Coroutine _attackCutRoutine;
 
+        private const string IdleAnimState = "ArchDemon_Idle";
+
         private System.Collections.IEnumerator CutAttackAnim(Animator anim, float delay)
         {
             yield return new UnityEngine.WaitForSeconds(delay);
             _attackCutRoutine = null;
             if (anim == null) yield break;
-            if (!TrySetTrigger(anim, "Idle")) TrySetTrigger(anim, "idle");
+            anim.CrossFade(IdleAnimState, 0.05f, 0, 0f);
         }
 
         [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
@@ -527,6 +540,11 @@ namespace Attrition.Gameplay.Enemy.ArchDemon
             if (animationComp == null) return;
             var anim = animationComp.GetComponentInChildren<Animator>();
             if (anim == null || string.IsNullOrEmpty(triggerName)) return;
+            if (triggerName == "Idle")
+            {
+                anim.CrossFade(IdleAnimState, 0.05f, 0, 0f);
+                return;
+            }
 
             // Thử đúng tên trước, rồi bản chữ thường (animator ArchDemon dùng "attack").
             if (TrySetTrigger(anim, triggerName)) return;

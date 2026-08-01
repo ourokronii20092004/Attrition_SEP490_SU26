@@ -38,6 +38,10 @@ namespace Attrition.Gameplay.NPC
                  "VD Summer Fairy map 2: quest = elite(burn), extraQuests[0] = boss(regen). " +
                  "Bỏ trống = NPC chỉ có 1 nhiệm vụ.")]
         [SerializeField] private QuestSO[] extraQuests;
+        [Tooltip("Tự kích hoạt quest khi NPC spawn. Dùng cho objective cuối Map 5, không cần fairy giao quest.")]
+        [SerializeField] private bool autoStartQuest;
+        [Tooltip("Đủ objective thì chuyển thẳng Rewarded, không hiện Claim Reward và không phát thưởng.")]
+        [SerializeField] private bool autoFinishWithoutReward;
 
         /// <summary>Đang ở nhiệm vụ thứ mấy trong chuỗi (0 = `quest`, 1.. = `extraQuests[i-1]`).</summary>
         [Networked] public byte QuestChainIndex { get; set; }
@@ -264,6 +268,8 @@ namespace Attrition.Gameplay.NPC
             // Host khôi phục tiến trình quest đã lưu (solo local). Mỗi NPC tự đọc questId của mình
             // → không lệ thuộc thứ tự spawn. Online: server là nguồn, không nạp từ slot.
             RestoreSavedProgress();
+            if (HasStateAuthority && autoStartQuest && Quest != null && QuestState == 0)
+                QuestState = 1;
         }
 
         private void LateUpdate()
@@ -463,7 +469,7 @@ namespace Attrition.Gameplay.NPC
                 }
 
                 if (npc.QuestProgress >= active.requiredAmount)
-                    npc.QuestState = 2; // Completed
+                    npc.QuestState = npc.autoFinishWithoutReward ? (byte)3 : (byte)2;
             }
         }
 
@@ -485,7 +491,7 @@ namespace Attrition.Gameplay.NPC
 
                 npc.QuestProgress++;
                 if (npc.QuestProgress >= active.requiredAmount)
-                    npc.QuestState = 2; // Completed
+                    npc.QuestState = npc.autoFinishWithoutReward ? (byte)3 : (byte)2;
             }
         }
 

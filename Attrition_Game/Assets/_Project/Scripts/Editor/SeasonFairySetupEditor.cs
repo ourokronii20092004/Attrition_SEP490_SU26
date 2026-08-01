@@ -72,6 +72,11 @@ namespace Attrition.Editor
             }
 
             int map = MapOf(scene.name);
+            if (map == 5)
+            {
+                Map5EndingSetupEditor.Setup();
+                return;
+            }
             if (map == 0)
             {
                 EditorUtility.DisplayDialog("Season Fairies",

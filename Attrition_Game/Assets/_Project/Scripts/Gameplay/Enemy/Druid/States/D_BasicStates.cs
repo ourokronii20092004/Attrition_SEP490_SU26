@@ -4,31 +4,47 @@ using UnityEngine;
 namespace Attrition.Gameplay.Enemy.Druid.States
 {
     /// <summary>
-    /// IDLE: đứng chờ hết cooldown skill rồi PickRandomSkill. Nếu player ngoài melee range thì chuyển Chase
-    /// để lại gần (một số skill vẫn dùng được từ xa nên chỉ chase khi mất dấu / quá xa).
+    /// IDLE: khoảng NGHỈ giữa 2 skill — boss ĐI LẠI để giữ khoảng cách preferredDistance với player (quá
+    /// gần thì lùi, quá xa thì tiến), hết cooldown mới PickRandomSkill. Trước đây state này StopMovement mỗi
+    /// frame nên boss đứng chôn chân và bắn liên tục.
     /// </summary>
     public class D_IdleState : DruidBossState
     {
         public override void Enter(DruidBossAI ai)
         {
-            ai.CurrentState = EnemyState.Recovery; // đứng yên, khoá facing
-            ai.StopMovement();
+            ai.CurrentState = EnemyState.Chase; // cho phép animation đi lại trong lúc nghỉ
         }
 
         public override void Update(DruidBossAI ai)
         {
-            ai.StopMovement();
             ai.DetectPlayer();
             ai.FaceTowardsPlayer();
 
-            if (ai.PlayerTarget == null) return; // không có mục tiêu → chờ
+            if (ai.PlayerTarget == null) { ai.StopMovement(); return; } // không có mục tiêu → chờ
 
-            if (!ai.SkillCooldownTimer.ExpiredOrNotRunning(ai.Runner)) return;
+            if (!ai.SkillCooldownTimer.ExpiredOrNotRunning(ai.Runner))
+            {
+                // Nghỉ: đi lại giữ khoảng cách thay vì đứng im.
+                Reposition(ai);
+                return;
+            }
+            ai.StopMovement();
 
             // Mất dấu quá xa → chase lại gần; ngược lại tung skill.
             float dist = ai.DistanceToPlayer();
             if (dist > ai.viewRadius * 0.9f) ai.ChangeState(DruidBossAI.ChaseState);
             else ai.PickRandomSkill();
+        }
+
+        /// <summary>Giữ khoảng cách preferredDistance: gần quá thì lùi, xa quá thì tiến, vừa thì đứng.</summary>
+        private static void Reposition(DruidBossAI ai)
+        {
+            float dist = ai.DistanceToPlayer();
+            float speed = ai.StatsComp != null ? ai.StatsComp.PatrolSpeed : 3f;
+
+            // Chỉ TIẾN lại gần khi quá xa, KHÔNG lùi (lùi làm boss trông như bị đẩy — "đi lùi").
+            if (dist > ai.preferredDistance + 1f) ai.MoveTowardsPlayer(speed);
+            else ai.StopMovement();
         }
     }
 
@@ -79,8 +95,9 @@ namespace Attrition.Gameplay.Enemy.Druid.States
             ai.StateLocalTimer += ai.Runner.DeltaTime;
             if (ai.StateLocalTimer >= ai.recoveryTime)
             {
+                // restTime (không phải 0.1s) = khoảng NGHỈ boss đi lại trước skill kế.
                 if (ai.HasStateAuthority)
-                    ai.SkillCooldownTimer = TickTimer.CreateFromSeconds(ai.Runner, 0.1f);
+                    ai.SkillCooldownTimer = TickTimer.CreateFromSeconds(ai.Runner, ai.restTime);
                 ai.ChangeState(DruidBossAI.IdleState);
             }
         }

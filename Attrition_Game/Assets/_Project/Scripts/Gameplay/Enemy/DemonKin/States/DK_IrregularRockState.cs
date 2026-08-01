@@ -20,7 +20,7 @@ namespace Attrition.Gameplay.Enemy.DemonKin.States
     /// </summary>
     public class DK_IrregularRockState : DemonKinBossState
     {
-        private enum Phase { Enclosing, Rooted, Done }
+        private enum Phase { Windup, Enclosing, Rooted, Done }
 
         private Phase _phase;
         private float _elapsed;
@@ -30,7 +30,7 @@ namespace Attrition.Gameplay.Enemy.DemonKin.States
         public override void Enter(DemonKinBossAI ai)
         {
             ai.CurrentState = EnemyState.Attacking;
-            _phase = Phase.Enclosing;
+            _phase = Phase.Windup;
             _elapsed = 0f;
             _caught = false;
 
@@ -44,10 +44,6 @@ namespace Attrition.Gameplay.Enemy.DemonKin.States
                 : (Vector2)ai.transform.position + new Vector2(ai.DirToPlayerX() * 3f, 0f);
 
             ai.PlayAnim("Attack");
-
-            // Hình đất bọc + vụ nổ đều nằm trên prefab này (EnemyAoEDamage tự nổ sau damageDelay).
-            if (ai.HasStateAuthority)
-                ai.SpawnAoE(ai.IrregularRockPrefab, _center, ai.rockDamage);
         }
 
         public override void Update(DemonKinBossAI ai)
@@ -57,6 +53,15 @@ namespace Attrition.Gameplay.Enemy.DemonKin.States
 
             switch (_phase)
             {
+                case Phase.Windup:
+                    if (_elapsed < DemonKinBossAI.SkillAttackWindup) return;
+                    ai.PlayAnim("Idle");
+                    if (ai.HasStateAuthority)
+                        ai.SpawnAoE(ai.IrregularRockPrefab, _center, ai.rockDamage);
+                    _phase = Phase.Enclosing;
+                    _elapsed = 0f;
+                    return;
+
                 case Phase.Enclosing:
                     if (_elapsed < ai.rockEncloseTime) return;
                     // Đất khép lại → ai còn trong vùng thì bị giam.
