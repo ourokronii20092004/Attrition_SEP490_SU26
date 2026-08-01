@@ -36,6 +36,13 @@ namespace Attrition.Gameplay.Enemy.DemonKin
                  "collider ở layer Ground để chặn đạn player.")]
         [SerializeField] private NetworkPrefabRef earthWallPrefab;
 
+        public const float SkillAttackWindup = 1.5166667f; // đúng m_StopTime DemonKin_Basic_Attack.anim
+
+        [Header("---- ANIMATION STATES ----")]
+        [SerializeField] private string idleAnimState = "DemonKin_Idle";
+        [SerializeField] private string walkAnimState = "DemonKin_Walk";
+        [SerializeField] private string attackAnimState = "DemonKin_Basic_Attack";
+
         [Header("---- TARGETING (COOP) ----")]
         [Tooltip("Coop: bám 1 player trong khoảng này (giây) rồi mới xét lại ai gần nhất. Solo bỏ qua.")]
         [SerializeField] private float targetRetargetInterval = 4f;
@@ -109,6 +116,11 @@ namespace Attrition.Gameplay.Enemy.DemonKin
         [Header("---- TIMING ----")]
         [Tooltip("Nghỉ giữa các skill (giây). DemonKin dồn dày hơn Elf.")]
         public float recoveryTime = 0.5f;
+        [Tooltip("Thời gian ĐI LẠI tự do sau khi nghỉ, trước khi tung skill kế (giây). Trước đây cooldown để " +
+                 "0.1s nên boss dồn skill chồng chéo, không có nhịp nghỉ để player đọc đòn.")]
+        public float restTime = 1.4f;
+        [Tooltip("Khoảng cách (units) boss muốn giữ với player trong lúc nghỉ.")]
+        public float preferredDistance = 6f;
         [Tooltip("Chờ ban đầu trước skill đầu tiên (giây).")]
         public float initialDelay = 1.2f;
 
@@ -254,6 +266,8 @@ namespace Attrition.Gameplay.Enemy.DemonKin
                 return;
             }
             animationComp?.UpdateSpeed(NetSpeed);
+            if (CurrentState != EnemyState.Attacking)
+                animationComp?.PlayState(NetSpeed > 0.05f ? walkAnimState : idleAnimState);
             animationComp?.FaceDirection(NetFacingDir);
         }
 
@@ -410,6 +424,22 @@ namespace Attrition.Gameplay.Enemy.DemonKin
         /// OnBeforeSpawned để client nhận đúng kích thước ngay từ frame đầu — set sau Spawn thì host và
         /// client lệch nhau một nhịp.
         /// </summary>
+        public void SpawnAoEScaledFlipped(NetworkPrefabRef prefab, Vector2 pos, int damage, float scale, bool flipX)
+        {
+            if (!HasStateAuthority || !prefab.IsValid) return;
+            Runner.Spawn(prefab, pos, Quaternion.identity, null, (runner, obj) =>
+            {
+                // Đảo X bằng localScale âm thay vì SpriteRenderer.flipX: áp dụng cho cả collider child
+                // và không cần tham chiếu component cụ thể.
+                var s = obj.transform.localScale;
+                obj.transform.localScale = new Vector3(flipX ? -s.x * scale : s.x * scale, s.y * scale, s.z);
+                Attrition.Gameplay.Combat.ProjectileInitializer.Init(
+                    obj, Vector2.zero, damage,
+                    Attrition.Gameplay.Combat.ProjectileInitializer.DefaultSpeed,
+                    Attrition.Core.DamageType.Magic);
+            });
+        }
+
         public void SpawnAoEScaled(NetworkPrefabRef prefab, Vector2 pos, int damage, float scale)
         {
             if (!HasStateAuthority || !prefab.IsValid) return;
@@ -488,6 +518,18 @@ namespace Attrition.Gameplay.Enemy.DemonKin
         private void RPC_DK_PlayAnim(string triggerName)
         {
             if (animationComp == null) return;
+            if (triggerName == "Attack")
+            {
+                animationComp.PlayState(attackAnimState, restart: true);
+                return;
+            }
+            if (triggerName == "Idle")
+            {
+                animationComp.ReturnToIdle();
+                animationComp.PlayState(idleAnimState);
+                return;
+            }
+
             var anim = animationComp.GetComponentInChildren<Animator>();
             if (anim == null) return;
             foreach (var p in anim.parameters)

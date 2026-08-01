@@ -40,6 +40,13 @@ namespace Attrition.Gameplay.Enemy.Elf
         [Tooltip("SKILL 5 — cột sét giáng từ trên trời (art: Thunder Strike). Prefab có EnemyAoEDamage.")]
         [SerializeField] private NetworkPrefabRef thunderStrikePrefab;
 
+        public const float SkillAttackWindup = 0.85f; // đúng m_StopTime của Elf_Basic_Attack.anim
+
+        [Header("---- ANIMATION STATES ----")]
+        [SerializeField] private string idleAnimState = "Elf_Idle";
+        [SerializeField] private string walkAnimState = "Elf_Walk";
+        [SerializeField] private string attackAnimState = "Elf_Basic_Attack";
+
         [Header("---- TARGETING (COOP) ----")]
         [Tooltip("Coop: bám 1 player trong khoảng này (giây) rồi mới xét lại ai gần nhất. Solo bỏ qua.")]
         [SerializeField] private float targetRetargetInterval = 4f;
@@ -101,15 +108,15 @@ namespace Attrition.Gameplay.Enemy.Elf
         [Tooltip("Sát thương vệt sấm lúc dịch chuyển (0 = chỉ là hiệu ứng).")]
         public int splashDamage = 12;
 
-        [Header("---- SKILL 5: THUNDER STRIKE (sét khắp phòng, 2 lượt) ----")]
-        [Tooltip("Khoảng cách (units) giữa 2 cột sét — 2-3 tile để player có khe né.")]
-        public float strikeSpacing = 2.6f;
-        [Tooltip("Giãn cách thời gian (giây) giữa 2 cột sét trong cùng 1 lượt.")]
-        public float strikeInterval = 0.1f;
-        [Tooltip("Nghỉ giữa lượt 1 và lượt 2 (giây) — đủ để player thấy mình đã né xong.")]
-        public float strikeWaveGap = 0.8f;
-        [Tooltip("Số cột sét TRUY ĐUỔI ở lượt 2 (rơi vào chỗ player vừa né tới).")]
-        public int strikeChaseCount = 3;
+        [Header("---- SKILL 5: THUNDER STRIKE (2 lượt so le) ----")]
+        [Tooltip("Số cột sét mỗi lượt (mặc định 5). Lượt 2 giáng vào các KHE của lượt 1 (đảo lại).")]
+        public int strikeColumns = 5;
+        [Tooltip("Khoảng cách (units) giữa 2 cột sét — 3-4 tile để player có khe né.")]
+        public float strikeSpacing = 4.5f;
+        [Tooltip("Giãn cách thời gian (giây) giữa 2 cột sét trong cùng 1 lượt — thấy rõ cột hiện LẦN LƯỢT.")]
+        public float strikeInterval = 0.22f;
+        [Tooltip("Nghỉ giữa lượt 1 và lượt 2 (giây) — 1-2s để player kịp đổi chỗ né lượt đảo.")]
+        public float strikeWaveGap = 1.5f;
         [Tooltip("Nửa chiều rộng dự phòng (units) khi phòng chưa đặt CameraBoundsZone.")]
         public float strikeFallbackHalfWidth = 14f;
         [Tooltip("Độ cao spawn cột sét so với boss (units) — chỉ để hình rơi từ trên; AoE tự hạ xuống đất.")]
@@ -120,6 +127,11 @@ namespace Attrition.Gameplay.Enemy.Elf
         [Header("---- TIMING ----")]
         [Tooltip("Nghỉ giữa các skill (giây). Elf dồn skill nhanh → để ngắn hơn Druid.")]
         public float recoveryTime = 0.65f;
+        [Tooltip("Thời gian ĐI LẠI tự do sau khi nghỉ, trước khi tung skill kế (giây). Elf ít di chuyển nên " +
+                 "để ngắn hơn Druid, nhưng phải có nhịp nghỉ nếu không thành bắn liên tục.")]
+        public float restTime = 1.3f;
+        [Tooltip("Khoảng cách (units) Elf muốn giữ với player trong lúc đi lại nghỉ.")]
+        public float preferredDistance = 7f;
         [Tooltip("Chờ ban đầu trước skill đầu tiên (giây).")]
         public float initialDelay = 1.2f;
 
@@ -276,6 +288,8 @@ namespace Attrition.Gameplay.Enemy.Elf
                 return;
             }
             animationComp?.UpdateSpeed(NetSpeed);
+            if (CurrentState != EnemyState.Attacking)
+                animationComp?.PlayState(NetSpeed > 0.05f ? walkAnimState : idleAnimState);
             animationComp?.FaceDirection(NetFacingDir);
         }
 
@@ -368,6 +382,25 @@ namespace Attrition.Gameplay.Enemy.Elf
             NetSpeed = Mathf.Abs(rb.linearVelocity.x);
         }
 
+        /// <summary>Lùi xa player (giữ khoảng cách trong lúc nghỉ). Không lùi quá StartPos ±viewRadius*1.5.</summary>
+        public void MoveAwayFromPlayer(float speed)
+        {
+            if (playerTarget == null) return;
+            float xDiff = playerTarget.position.x - transform.position.x;
+            float dirX = xDiff > 0 ? -1f : 1f;
+
+            // Chặn lùi vô tận ra khỏi phòng boss: giới hạn quanh vị trí spawn.
+            float offsetFromStart = transform.position.x - StartPos.x;
+            if (Mathf.Abs(offsetFromStart) > viewRadius * 1.5f && Mathf.Sign(offsetFromStart) == Mathf.Sign(dirX))
+            {
+                StopMovement();
+                return;
+            }
+
+            rb.linearVelocity = new Vector2(dirX * speed, rb.linearVelocity.y);
+            NetSpeed = Mathf.Abs(rb.linearVelocity.x);
+        }
+
         public void StopMovement()
         {
             rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
@@ -429,6 +462,18 @@ namespace Attrition.Gameplay.Enemy.Elf
         private void RPC_Elf_PlayAnim(string triggerName)
         {
             if (animationComp == null) return;
+            if (triggerName == "Attack")
+            {
+                animationComp.PlayState(attackAnimState, restart: true);
+                return;
+            }
+            if (triggerName == "Idle")
+            {
+                animationComp.ReturnToIdle();
+                animationComp.PlayState(idleAnimState);
+                return;
+            }
+
             var anim = animationComp.GetComponentInChildren<Animator>();
             if (anim == null) return;
             foreach (var p in anim.parameters)

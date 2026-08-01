@@ -38,7 +38,7 @@ namespace Attrition.Gameplay.Enemy.Druid.States
             // Phase 1: charge.
             if (!_charged)
             {
-                if (_elapsed < ai.windSwordChargeTime) return;
+                if (_elapsed < Mathf.Max(ai.windSwordChargeTime, ai.meleeDuration)) return;
                 _charged = true;
                 _nextFireTime = _elapsed;
                 _spawnPos = (Vector2)ai.transform.position + new Vector2(ai.AttackLockedFacingDir * 0.8f, 0.5f);

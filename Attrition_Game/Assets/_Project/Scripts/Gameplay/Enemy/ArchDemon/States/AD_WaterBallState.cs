@@ -44,19 +44,21 @@ namespace Attrition.Gameplay.Enemy.ArchDemon.States
             _elapsed += ai.Runner.DeltaTime;
             ai.StopMovement();
 
-            if (!_fired && _elapsed >= ai.ballChargeTime)
+            float releaseTime = Mathf.Max(ai.ballChargeTime, ArchDemonBossAI.AttackAnimCutTime);
+            if (!_fired && _elapsed >= releaseTime)
             {
                 _fired = true;
+                ai.PlayAnim("Idle");
                 FireAll(ai);
             }
 
-            if (_fired && _elapsed >= ai.ballChargeTime + 0.4f)
+            if (_fired && _elapsed >= releaseTime + 0.4f)
                 ai.ChangeState(ArchDemonBossAI.RecoveryState);
         }
 
         private void FireAll(ArchDemonBossAI ai)
         {
-            Vector2 origin = ai.transform.position;
+            Vector2 origin = (Vector2)ai.transform.position + Vector2.up; // nâng toàn bộ skill nước 1 tile
 
             // 1) Quả từ BOSS bay về phía player.
             ai.SpawnProjectile(ai.WaterBallPrefab, origin + new Vector2(_dirX * 1.3f, 0.3f),

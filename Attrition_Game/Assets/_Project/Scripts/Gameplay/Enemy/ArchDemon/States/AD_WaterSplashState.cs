@@ -13,7 +13,7 @@ namespace Attrition.Gameplay.Enemy.ArchDemon.States
     /// </summary>
     public class AD_WaterSplashState : ArchDemonBossState
     {
-        private enum Phase { Telegraph, Wait }
+        private enum Phase { Windup, Telegraph, Wait }
 
         private Phase _phase;
         private float _elapsed;
@@ -28,8 +28,8 @@ namespace Attrition.Gameplay.Enemy.ArchDemon.States
             ai.DetectPlayer();
             ai.FaceTowardsPlayer();
             ai.PlayAttackAnimNoOrb();   // cắt trước frame 8 → không kéo theo cầu bóng tối
-
-            BeginTelegraph(ai);
+            _phase = Phase.Windup;
+            _elapsed = 0f;
         }
 
         public override void Update(ArchDemonBossAI ai)
@@ -39,6 +39,12 @@ namespace Attrition.Gameplay.Enemy.ArchDemon.States
 
             switch (_phase)
             {
+                case Phase.Windup:
+                    if (_elapsed < ArchDemonBossAI.AttackAnimCutTime) return;
+                    ai.PlayAnim("Idle");
+                    BeginTelegraph(ai);
+                    return;
+
                 case Phase.Telegraph:
                     // Hết cửa sổ báo trước → nổ tại chỗ đã đánh dấu (KHÔNG cập nhật lại: player phải được
                     // thưởng cho việc rời khỏi dấu).
@@ -60,7 +66,8 @@ namespace Attrition.Gameplay.Enemy.ArchDemon.States
                     ai.DetectPlayer();
                     ai.FaceTowardsPlayer();
                     ai.PlayAttackAnimNoOrb();   // cắt trước frame 8 → không kéo theo cầu bóng tối
-                    BeginTelegraph(ai);
+                    _phase = Phase.Windup;
+                    _elapsed = 0f;
                     return;
             }
         }
@@ -71,9 +78,10 @@ namespace Attrition.Gameplay.Enemy.ArchDemon.States
             _phase = Phase.Telegraph;
             _elapsed = 0f;
 
-            _mark = ai.PlayerTarget != null
+            _mark = (ai.PlayerTarget != null
                 ? (Vector2)ai.PlayerTarget.position
-                : (Vector2)ai.transform.position + new Vector2(ai.DirToPlayerX() * 3f, 0f);
+                : (Vector2)ai.transform.position + new Vector2(ai.DirToPlayerX() * 3f, 0f))
+                + Vector2.up; // nâng startup + splash 1 tile, tránh art chìm dưới nền
 
             ai.SpawnAoE(ai.WaterStartup2Prefab, _mark, 0);
         }

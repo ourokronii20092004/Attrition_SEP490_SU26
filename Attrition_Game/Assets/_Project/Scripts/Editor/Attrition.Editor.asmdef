@@ -5,6 +5,7 @@
         "Attrition.Core",
         "Attrition.Data",
         "Attrition.Gameplay",
+        "Attrition.Networking",
         "Attrition.UI",
         "Fusion.Unity",
         "Fusion.Unity.Editor",

@@ -4,29 +4,45 @@ using UnityEngine;
 namespace Attrition.Gameplay.Enemy.Elf.States
 {
     /// <summary>
-    /// IDLE: đứng chờ hết cooldown rồi PickRandomSkill. Elf ÍT DI CHUYỂN nên ngưỡng chase rất cao —
-    /// chỉ đuổi khi player gần như ra khỏi tầm nhìn, còn lại đứng tại chỗ dồn skill tầm xa.
+    /// IDLE: khoảng NGHỈ giữa 2 skill — Elf đi lại giữ khoảng cách preferredDistance (ít di chuyển nhưng
+    /// KHÔNG chôn chân), hết cooldown mới PickRandomSkill. Trước đây StopMovement mỗi frame + cooldown 0.1s
+    /// nên boss dồn skill liên tục không có nhịp nghỉ.
     /// </summary>
     public class E_IdleState : ElfBossState
     {
         public override void Enter(ElfBossAI ai)
         {
-            ai.CurrentState = EnemyState.Recovery; // đứng yên, khoá facing
-            ai.StopMovement();
+            ai.CurrentState = EnemyState.Chase; // cho phép animation đi lại trong lúc nghỉ
+            ai.PlayAnim("Idle"); // reset Attack/Skill trigger trên mọi peer rồi về Idle/Walk
         }
 
         public override void Update(ElfBossAI ai)
         {
-            ai.StopMovement();
             ai.DetectPlayer();
             ai.FaceTowardsPlayer();
 
-            if (ai.PlayerTarget == null) return;
-            if (!ai.SkillCooldownTimer.ExpiredOrNotRunning(ai.Runner)) return;
+            if (ai.PlayerTarget == null) { ai.StopMovement(); return; }
+            if (!ai.SkillCooldownTimer.ExpiredOrNotRunning(ai.Runner))
+            {
+                Reposition(ai);
+                return;
+            }
+            ai.StopMovement();
 
             float dist = ai.DistanceToPlayer();
             if (dist > ai.viewRadius * 0.95f) ai.ChangeState(ElfBossAI.ChaseState);
             else ai.PickRandomSkill();
+        }
+
+        /// <summary>Giữ khoảng cách preferredDistance: gần quá thì lùi, xa quá thì tiến, vừa thì đứng.</summary>
+        private static void Reposition(ElfBossAI ai)
+        {
+            float dist = ai.DistanceToPlayer();
+            float speed = ai.StatsComp != null ? ai.StatsComp.PatrolSpeed : 3f;
+
+            // Chỉ TIẾN lại gần khi quá xa, KHÔNG lùi.
+            if (dist > ai.preferredDistance + 1f) ai.MoveTowardsPlayer(speed);
+            else ai.StopMovement();
         }
     }
 
@@ -64,6 +80,7 @@ namespace Attrition.Gameplay.Enemy.Elf.States
         {
             ai.CurrentState = EnemyState.Recovery;
             ai.StopMovement();
+            ai.PlayAnim("Idle");
             ai.StateLocalTimer = 0f;
         }
 
@@ -73,8 +90,9 @@ namespace Attrition.Gameplay.Enemy.Elf.States
             ai.StateLocalTimer += ai.Runner.DeltaTime;
             if (ai.StateLocalTimer >= ai.recoveryTime)
             {
+                // restTime (không phải 0.1s) = khoảng NGHỈ boss đi lại trước skill kế.
                 if (ai.HasStateAuthority)
-                    ai.SkillCooldownTimer = TickTimer.CreateFromSeconds(ai.Runner, 0.1f);
+                    ai.SkillCooldownTimer = TickTimer.CreateFromSeconds(ai.Runner, ai.restTime);
                 ai.ChangeState(ElfBossAI.IdleState);
             }
         }
@@ -129,7 +147,7 @@ namespace Attrition.Gameplay.Enemy.Elf.States
                 }
             }
 
-            if (ai.StateLocalTimer >= ai.meleeDuration)
+            if (ai.StateLocalTimer >= Mathf.Max(ai.meleeDuration, ElfBossAI.SkillAttackWindup))
                 ai.ChangeState(ElfBossAI.RecoveryState);
         }
 

@@ -98,6 +98,30 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
     /// <summary>Đã mở khoá shadow dash chưa (sở hữu accessory AbilityGrant=ShadowDash). Host set, sync xuống client.</summary>
     [Networked] public NetworkBool HasShadowDash { get; set; }
 
+    /// <summary>
+    /// Chỉ player ĐANG nói chuyện nhận quest được miễn damage/knockback. Flag nằm trên từng NetworkObject
+    /// player nên coop không khoá hay bảo vệ người còn lại; quest vẫn shared vì state nằm trên NetworkNPC.
+    /// </summary>
+    [Networked] public NetworkBool IsQuestDialogueProtected { get; set; }
+
+    /// <summary>UI local bật/tắt bảo vệ khi mở/đóng hội thoại NPC.</summary>
+    public void SetQuestDialogueProtection(bool active)
+    {
+        if (!HasInputAuthority) return;
+        RpcSetQuestDialogueProtection(active);
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RpcSetQuestDialogueProtection(bool active)
+    {
+        IsQuestDialogueProtected = active;
+        if (active)
+        {
+            _knockbackTimer = default;
+            if (rb != null) rb.linearVelocity = Vector2.zero;
+        }
+    }
+
     /// <summary>Teleport chờ áp dụng TRONG FixedUpdateNetwork (in-sim). TeleportTo có thể được gọi từ
     /// coroutine (spawn checkpoint) hoặc RPC — cả hai đều KHÔNG phải lúc an toàn để gọi
     /// NetworkRigidbody2D.Teleport() (no-op khi chưa in-sim / ném lỗi trong RPC delivery). Nên chỉ ghi
@@ -759,14 +783,15 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
 
     public void TakeDamage(int damage, Vector2 knockbackDir, float knockbackForce, Attrition.Core.DamageType type = Attrition.Core.DamageType.Physical)
     {
-        if (isInvincible || isDeadNetworked || (hasShadowDash && IsDashing)) return;
+        if (IsQuestDialogueProtected || isInvincible || isDeadNetworked || (hasShadowDash && IsDashing)) return;
         RPC_TakeDamage(damage, knockbackDir, knockbackForce, (int)type);
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
     private void RPC_TakeDamage(int damage, Vector2 knockbackDir, float knockbackForce, int type)
     {
-        if (isDeadNetworked || (hasShadowDash && IsDashing)) return;
+        // Kiểm tra LẠI ở authority: request damage có thể đã nằm trên wire trước khi player mở dialogue.
+        if (IsQuestDialogueProtected || isDeadNetworked || (hasShadowDash && IsDashing)) return;
 
         // damage = chỉ số tấn công GỐC; defender tự áp DEF (Physical) hoặc RES (Magic).
         int def = statsComp != null ? statsComp.DEF : 0;
@@ -786,6 +811,8 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RPC_ApplyKnockback(Vector2 dir, float force)
     {
+        if (IsQuestDialogueProtected) return;
+        if (HasInputAuthority) Attrition.Systems.GameSfx.Instance.PlayHurt();
         if (force <= 0) 
         {
             // Không knockback, chỉ chớp sáng
@@ -991,14 +1018,14 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
     /// </summary>
     public void HazardHit()
     {
-        if (isInvincible || isDeadNetworked) return;
+        if (IsQuestDialogueProtected || isInvincible || isDeadNetworked) return;
         RPC_HazardHit();
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
     private void RPC_HazardHit()
     {
-        if (isDeadNetworked) return;
+        if (IsQuestDialogueProtected || isDeadNetworked) return;
 
         int max = statsComp != null ? statsComp.MaxHP : maxHP;
         int dmg = Mathf.Max(1, Mathf.RoundToInt(max * 0.15f)); // BR-38

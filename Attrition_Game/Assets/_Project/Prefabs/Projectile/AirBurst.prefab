@@ -151,8 +151,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 128
   radius: 1.6
-  lifetime: 1.2
-  damageDelay: 0.8
+  lifetime: 0.55
+  damageDelay: 0.08
   knockbackForce: 4
   snapToGround: 0
   groundLayer:

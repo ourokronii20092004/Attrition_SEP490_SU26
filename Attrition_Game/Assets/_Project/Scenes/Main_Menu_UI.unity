@@ -529,6 +529,15 @@ MonoBehaviour:
     pitch: 1
     pitchVariance: 0
     delay: 0
+  hurt:
+    clips:
+    - {fileID: 8300000, guid: 172dbdb01acc1494b8ab591d981c3d5a, type: 3}
+    - {fileID: 8300000, guid: 7ca282c1c696cc64e9e75c008d39a78a, type: 3}
+    - {fileID: 8300000, guid: 162969f4efec34a4b8fcaf9e1e33d6c1, type: 3}
+    volume: 0.85
+    pitch: 1
+    pitchVariance: 0.06
+    delay: 0
   jump:
     clips:
     - {fileID: 8300000, guid: 58b15e73d49c1a841957967507487856, type: 3}

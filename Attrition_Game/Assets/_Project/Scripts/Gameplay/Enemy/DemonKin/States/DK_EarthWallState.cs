@@ -29,7 +29,7 @@ namespace Attrition.Gameplay.Enemy.DemonKin.States
             ai.CurrentState = EnemyState.Attacking;
             _elapsed = 0f;
             _spawned = 0;
-            _nextSpawnTime = ai.wallChargeTime;
+            _nextSpawnTime = Mathf.Max(ai.wallChargeTime, DemonKinBossAI.SkillAttackWindup);
 
             ai.DetectPlayer();
             ai.FaceTowardsPlayer();
@@ -54,6 +54,7 @@ namespace Attrition.Gameplay.Enemy.DemonKin.States
             // nên toàn bộ state machine boss là host-only. Không cần nhánh riêng cho client.
             if (_spawned < ai.wallCount && _elapsed >= _nextSpawnTime)
             {
+                if (_spawned == 0) ai.PlayAnim("Idle");
                 float x = ai.transform.position.x
                           + _dirX * (ai.wallFirstOffset + ai.wallSpacing * _spawned);
 

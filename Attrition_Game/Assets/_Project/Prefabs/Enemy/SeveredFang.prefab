@@ -589,6 +589,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Controllers.BossController
   bossDisplayName: SeveredFang
+  bossMusic: {fileID: 8300000, guid: 5e1f3d907eeb5d94aaec6d0d4e95e319, type: 3}
   phaseThresholds:
   - 0.66
   - 0.33
