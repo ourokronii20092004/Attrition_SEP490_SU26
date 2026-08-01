@@ -573,11 +573,9 @@ namespace Attrition.Gameplay.Environment
 
             // Khác scene → đặt pending + load scene đích.
             string targetScene = _selectedMap.sceneName;
-            WorldMapState.PendingTravelScene = targetScene;
-            WorldMapState.PendingTravelCheckpointId = cp.checkpointId;
-            var launcher = FindFirstObjectByType<Attrition.Networking.NetworkLauncher>();
-            if (launcher != null) launcher.BeginGameplay(targetScene);
-            else Debug.LogWarning("[WorldMap] TRAVEL: không tìm thấy NetworkLauncher để load scene '" + targetScene + "'.");
+            var local = FindLocalController();
+            if (local != null) local.RpcRequestCrossMapFastTravel(targetScene, cp.checkpointId);
+            else Debug.LogWarning("[WorldMap] TRAVEL: không tìm thấy local PlayerController.");
         }
 
         private Attrition.Gameplay.World.Checkpoint FindCheckpointInScene(string id)
