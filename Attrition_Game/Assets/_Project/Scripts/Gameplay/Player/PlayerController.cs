@@ -221,6 +221,7 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
         if (HasInputAuthority)
         {
             SetCameraFollow(visualRoot != null ? visualRoot : transform);
+            RpcRequestWorldMapDiscovery();
 
             // Đặt tên hiển thị. Solo/host (có StateAuthority) set THẲNG; coop CLIENT mới gửi RPC.
             // KHÔNG gọi RPC khi đang có StateAuthority trong Spawned() → tránh exception làm hỏng init (player rơi).
@@ -1011,6 +1012,43 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
             TeleportTo(_lastStableGround);
 
         StartCoroutine(InvincibleCoroutine());
+    }
+
+    /// <summary>Client/host yêu cầu chuyển tới checkpoint ở scene khác; Host tự xác thực registry/discovery.</summary>
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    public void RpcRequestCrossMapFastTravel(string targetScene, string checkpointName)
+    {
+        var registry = Attrition.Gameplay.Environment.MapRegistrySO.Load();
+        var map = registry != null ? registry.GetByScene(targetScene) : null;
+        bool validCheckpoint = map != null && map.checkpoints.Exists(cp => cp.checkpointId == checkpointName);
+        if (!validCheckpoint
+            || !Attrition.Gameplay.Environment.WorldMapState.IsCheckpointDiscovered(checkpointName)
+            || !Application.CanStreamedLevelBeLoaded(targetScene))
+        {
+            Debug.LogWarning($"[FastTravel] Từ chối đích không hợp lệ/chưa khám phá: '{targetScene}' / '{checkpointName}'.");
+            return;
+        }
+
+        Attrition.Gameplay.Environment.WorldMapState.PendingTravelScene = targetScene;
+        Attrition.Gameplay.Environment.WorldMapState.PendingTravelCheckpointId = checkpointName;
+        RpcTravelLoading();
+
+        var launcher = Attrition.Networking.NetworkLauncher.Instance;
+        if (launcher != null) launcher.BeginGameplay(targetScene);
+        else Debug.LogWarning("[FastTravel] Không tìm thấy NetworkLauncher.");
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RpcRequestWorldMapDiscovery()
+    {
+        foreach (var checkpoint in Attrition.Gameplay.Environment.WorldMapState.AllDiscoveredCheckpoints)
+            RpcSyncDiscoveredCheckpoint(checkpoint);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RpcSyncDiscoveredCheckpoint(string checkpointName)
+    {
+        Attrition.Gameplay.Environment.WorldMapState.MarkCheckpointDiscovered(checkpointName);
     }
 
     /// <summary>Client/host yêu cầu Fast Travel (không save — dùng cho room transition).</summary>
