@@ -24,6 +24,9 @@ namespace Attrition.Networking
 
         private void Awake()
         {
+            // Object này thuộc scene gameplay thật, đáng tin cả khi Fusion giữ active scene ở menu/map cũ.
+            GameLaunch.GameplayScene = gameObject.scene.name;
+
             // Gán singleton sớm nhất để DroppedItem/PickupItem/UI dùng được.
             if (itemDatabase != null)
             {
