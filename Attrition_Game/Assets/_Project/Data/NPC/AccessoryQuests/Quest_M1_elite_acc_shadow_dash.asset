@@ -14,11 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.QuestSO
   questId: q_m1_elite_shadowdash
   title: Trial of Shadows
-  description: '[Map 1] Slay 4 cultist. Reward: Shadow Cloak.'
+  description: '[Map 1] Slay 1 cultist. Reward: Shadow Cloak.'
   objectiveType: 0
   targetId: cultist
   requiredTargetIds: []
-  requiredAmount: 4
+  requiredAmount: 1
   expReward: 180
   itemRewards:
   - itemId: acc_shadow_dash
