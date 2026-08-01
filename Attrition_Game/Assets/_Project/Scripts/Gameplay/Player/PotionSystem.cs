@@ -103,6 +103,41 @@ namespace Attrition.Gameplay.Player
             ManaCharges = MaxManaCharges;
         }
 
+        /// <summary>Tổng số bình (máu + mana) — đơn vị "sức chứa" dùng để so sánh giữa 2 player.</summary>
+        public int TotalCharges => MaxHealthCharges + MaxManaCharges;
+
+        /// <summary>
+        /// COOP: cân bằng số bình giữa mọi player tại thời điểm REST.
+        ///
+        /// Bình HP giấu trong map là pickup ĐƠN: chỉ người chạm vào được +1 cap ngay lúc nhặt, và pickup
+        /// despawn cho cả phòng nên người kia KHÔNG thể tự nhặt bản của mình. Theo yêu cầu "1 người nhặt
+        /// thì khi rest cả 2 đều tăng", rest sẽ bù cho ai đang thiếu cho bằng người có sức chứa cao nhất.
+        ///
+        /// So theo TỔNG (máu + mana), KHÔNG so riêng MaxHealthCharges: player tự đổi tỷ lệ máu/mana được
+        /// qua <see cref="RpcReallocateFlasks"/> (tổng giữ nguyên). Nếu so riêng thì người đã dồn bình sang
+        /// mana sẽ được nâng máu lên bằng người kia → tổng phồng lên, thành lỗi nhân bình mỗi lần rest.
+        ///
+        /// Phần bù cộng vào bình MÁU (đúng yêu cầu), giữ nguyên phần mana người đó đã tự chọn.
+        /// Chỉ host gọi, và gọi TRƯỚC RefillAll để bình vừa bù cũng được rót đầy ngay lượt rest này.
+        /// </summary>
+        public static void ShareFlaskCapacityOnRest()
+        {
+            var all = FindObjectsByType<PotionSystem>(FindObjectsSortMode.None);
+            if (all == null || all.Length < 2) return;   // solo: không có gì để chia sẻ
+
+            int best = 0;
+            foreach (var p in all)
+                if (p != null && p.TotalCharges > best) best = p.TotalCharges;
+
+            foreach (var p in all)
+            {
+                if (p == null || !p.HasStateAuthority) continue;
+                int deficit = best - p.TotalCharges;
+                if (deficit <= 0) continue;
+                p.MaxHealthCharges = Mathf.Min(p.hardMaxHealthCharges, p.MaxHealthCharges + deficit);
+            }
+        }
+
         /// <summary>Tăng cap bình máu (giết elite/giải mission). Clamp về hardMax. Chỉ host.</summary>
         public void IncreaseMaxHealthCharges(int by = 1)
         {
