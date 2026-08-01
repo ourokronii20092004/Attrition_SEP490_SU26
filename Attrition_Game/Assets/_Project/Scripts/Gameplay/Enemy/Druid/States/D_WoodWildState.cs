@@ -13,14 +13,12 @@ namespace Attrition.Gameplay.Enemy.Druid.States
     {
         private int _wavesDone;
         private float _waveTimer;
-        private bool _firstWaveSpawned;
 
         public override void Enter(DruidBossAI ai)
         {
             ai.CurrentState = EnemyState.Attacking;
             _wavesDone = 0;
-            _waveTimer = 0f;
-            _firstWaveSpawned = false;
+            _waveTimer = ai.meleeDuration; // boss chạy xong Attack rồi lượt gỗ đầu mới rơi
 
             ai.DetectPlayer();
             ai.FaceTowardsPlayer();
@@ -33,10 +31,9 @@ namespace Attrition.Gameplay.Enemy.Druid.States
             ai.StopMovement();
             _waveTimer -= ai.Runner.DeltaTime;
 
-            // Lượt đầu bắn ngay; các lượt sau chờ hết woodWaveGap.
-            if ((!_firstWaveSpawned || _waveTimer <= 0f) && _wavesDone < Mathf.Max(1, ai.woodWaves))
+            // Lượt đầu chờ animation Attack; các lượt sau chờ woodWaveGap.
+            if (_waveTimer <= 0f && _wavesDone < Mathf.Max(1, ai.woodWaves))
             {
-                _firstWaveSpawned = true;
                 SpawnWave(ai);
                 _wavesDone++;
                 _waveTimer = ai.woodWaveGap;

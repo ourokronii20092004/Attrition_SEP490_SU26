@@ -26,7 +26,7 @@ namespace Attrition.Gameplay.Enemy.Elf.States
             ai.CurrentState = EnemyState.Attacking;
             _elapsed = 0f;
             _spawned = 0;
-            _nextSpawnTime = 0.2f;   // nhịp nhỏ cho animation vung tay kịp bắt đầu
+            _nextSpawnTime = ElfBossAI.SkillAttackWindup;
 
             ai.DetectPlayer();
             ai.FaceTowardsPlayer();
@@ -48,6 +48,7 @@ namespace Attrition.Gameplay.Enemy.Elf.States
 
             if (_spawned < ai.waveCount && _elapsed >= _nextSpawnTime)
             {
+                if (_spawned == 0) ai.PlayAnim("Idle");
                 if (ai.HasStateAuthority)
                 {
                     float x = _origin.x + _dirX * ai.waveStepX * _spawned;

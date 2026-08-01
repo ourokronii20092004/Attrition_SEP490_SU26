@@ -529,7 +529,7 @@ namespace Attrition.Controllers
                     int qty = Random.Range(rule.minQty, rule.maxQty + 1);
                     if (qty <= 0) continue;
                     foreach (var inv in players)
-                        if (inv != null) inv.TryAddItem(idx, qty); // instanced cho từng player
+                        if (inv != null) inv.AddItemOrDrop(idx, qty); // instanced cho từng player; đầy túi thì rơi cạnh họ
                     granted.Add(rule.itemId);
                 }
 

@@ -10,8 +10,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 71a02887f9d289c47b546a0439067775, type: 3}
-  m_Name: Dialogue_SlimeQuest_Finished
+  m_Name: Dlg_M5_Spring_FinalQuest
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.DialogueSO
   lines:
   - speakerName: Spring Fairy
-    text: Thank you again for your help. Safe travels!
+    text: The last tyrant waits ahead. End this journey together.

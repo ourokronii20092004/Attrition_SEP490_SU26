@@ -41,7 +41,7 @@ namespace Attrition.Gameplay.Enemy.ArchDemon.States
             ai.CurrentState = EnemyState.Attacking;
             _elapsed = 0f;
             _spawned = 0;
-            _nextSpawnTime = ai.blastChargeTime;
+            _nextSpawnTime = Mathf.Max(ai.blastChargeTime, ArchDemonBossAI.AttackAnimCutTime);
             for (int i = 0; i < _blasts.Length; i++) _blasts[i] = default;
 
             ai.DetectPlayer();
@@ -68,6 +68,7 @@ namespace Attrition.Gameplay.Enemy.ArchDemon.States
             // ── Spawn lần lượt từng lốc ──
             if (_spawned < total && _elapsed >= _nextSpawnTime)
             {
+                if (_spawned == 0) ai.PlayAnim("Idle");
                 SpawnBlast(ai, _spawned, total);
                 _spawned++;
                 _nextSpawnTime = _elapsed + ai.blastInterval;
@@ -91,18 +92,22 @@ namespace Attrition.Gameplay.Enemy.ArchDemon.States
         /// <summary>Spawn lốc thứ i, lệch dọc để 3 lốc có khoảng cách nhìn thấy được.</summary>
         private void SpawnBlast(ArchDemonBossAI ai, int i, int total)
         {
-            Vector2 origin = ai.transform.position;
-            float y = origin.y + (i - (total - 1) * 0.5f) * ai.blastGapY;
-            Vector2 pos = new Vector2(origin.x + _dirX * 1.2f, y);
+            // Cả 3 lốc cùng một phương ngang, nâng 1 tile trên chân player.
+            float y = (ai.PlayerTarget != null ? ai.PlayerTarget.position.y : ai.transform.position.y) + 1f;
+            float spawnX = ai.transform.position.x + _dirX * 1.2f;
+            float targetX = _dirX > 0 ? _maxX - 0.5f : _minX + 0.5f;
+            Vector2 pos = new Vector2(spawnX, y);
+            float speed = Mathf.Max(0.1f, ai.blastMoveSpeed);
+            float roundTripLifetime = 2f * Mathf.Abs(targetX - spawnX) / speed + 2f;
 
-            var obj = ai.SpawnAoETracked(ai.WaterBlastPrefab, pos, ai.blastDamage);
+            var obj = ai.SpawnAoETracked(ai.WaterBlastPrefab, pos, ai.blastDamage, roundTripLifetime);
             if (obj == null) return;
 
             _blasts[i] = new Blast
             {
                 Obj = obj,
-                StartX = origin.x,
-                TargetX = _dirX > 0 ? _maxX - 0.5f : _minX + 0.5f,
+                StartX = ai.transform.position.x,
+                TargetX = targetX,
                 Y = y,
                 Returning = false,
                 Done = false

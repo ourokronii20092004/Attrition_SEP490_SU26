@@ -38,14 +38,15 @@ namespace Attrition.Gameplay.Enemy.Elf.States
             _elapsed += ai.Runner.DeltaTime;
             ai.StopMovement();
 
-            if (!_fired && _elapsed >= ai.arrowChargeTime)
+            float releaseTime = Mathf.Max(ai.arrowChargeTime, ElfBossAI.SkillAttackWindup);
+            if (!_fired && _elapsed >= releaseTime)
             {
                 _fired = true;
+                ai.PlayAnim("Idle"); // skill ra đúng lúc Attack kết thúc, không giữ frame cuối
                 if (ai.HasStateAuthority) FireVolley(ai);
             }
 
-            // Chờ thêm một nhịp cho animation bắn chạy xong rồi mới nghỉ.
-            if (_fired && _elapsed >= ai.arrowChargeTime + 0.35f)
+            if (_fired && _elapsed >= releaseTime + 0.35f)
                 ai.ChangeState(ElfBossAI.RecoveryState);
         }
 

@@ -167,6 +167,27 @@ public class EnemyAnimation : NetworkBehaviour
         transform.localScale = new Vector3(Mathf.Abs(originalScale.x) * snapped * facingMultiplier, originalScale.y, originalScale.z);
     }
 
+    /// <summary>Play/CrossFade trực tiếp tới state khi controller không có transition cho trigger.</summary>
+    public void PlayState(string stateName, float fade = 0.05f, bool restart = false)
+    {
+        if (anim == null || string.IsNullOrEmpty(stateName)) return;
+        int hash = Animator.StringToHash(stateName);
+        if (!restart && anim.GetCurrentAnimatorStateInfo(0).shortNameHash == hash) return;
+        anim.CrossFade(hash, fade, 0, 0f);
+    }
+
+    /// <summary>
+    /// Thoát dứt khoát khỏi Attack sau khi skill xong. Reset trigger Attack trước khi bật Idle để trigger
+    /// Attack còn xếp hàng không kéo Animator quay lại attack liên tục ở frame kế.
+    /// </summary>
+    public void ReturnToIdle()
+    {
+        if (anim == null) return;
+        if (HasParam("Attack")) anim.ResetTrigger("Attack");
+        if (HasParam("Skill")) anim.ResetTrigger("Skill");
+        if (HasParam("Idle")) anim.SetTrigger("Idle");
+    }
+
     public void PlayAttack(int attackIndex, float attackSpeed = 1f)
     {
         if (anim != null)

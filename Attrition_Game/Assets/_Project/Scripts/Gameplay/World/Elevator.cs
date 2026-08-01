@@ -1,11 +1,14 @@
 using Fusion;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Attrition.Gameplay.World
 {
     /// <summary>
-    /// Thang máy kiểu Hollow Knight (Map 5): 1 bệ (platform rắn) chạy giữa CÁC ĐIỂM DỪNG.
-    /// KHÔNG tự chạy — chờ <see cref="Lever"/> đánh vào để đi tới điểm dừng kế tiếp.
+    /// Thang máy tự chạy khi đủ player còn sống đứng trên bệ: solo cần 1; coop cần cả 2. Không cần lever.
+    /// Khi tới điểm dừng, player phải bước xuống rồi đứng lại để gọi chặng kế — tránh thang tự chạy vòng
+    /// liên tục khi mọi người vẫn đứng trên bệ.
+    /// </summary>
     ///
     /// NHIỀU ĐIỂM DỪNG: `stopOffsets` là danh sách offset so với vị trí đặt ban đầu. 2 phần tử = thang
     /// thường A↔B; 3 phần tử = thang có tầng giữa (Map 5 thang số 12). Mỗi lần gạt cần → đi tới điểm kế
@@ -45,8 +48,11 @@ namespace Attrition.Gameplay.World
         [Networked] private int Direction { get; set; }
 
         private Rigidbody2D _rb;
+        private Collider2D _platformCollider;
+        private readonly HashSet<PlayerController> _playersOnPlatform = new HashSet<PlayerController>();
         private Vector2 _origin;   // vị trí gốc lúc spawn (để tính các điểm dừng theo offset)
         private bool _originSet;
+        private bool _mustClearBeforeNextTrip;
 
         /// <summary>Số điểm dừng hợp lệ (luôn >= 1 để tránh chia 0 khi Inspector để trống).</summary>
         private int StopCount => stopOffsets != null ? stopOffsets.Length : 0;
@@ -54,6 +60,7 @@ namespace Attrition.Gameplay.World
         public override void Spawned()
         {
             _rb = GetComponent<Rigidbody2D>();
+            _platformCollider = GetComponent<Collider2D>();
             _rb.bodyType = RigidbodyType2D.Kinematic;
             _origin = _rb.position;
             _originSet = true;
@@ -72,10 +79,48 @@ namespace Attrition.Gameplay.World
             if (Object != null) Runner.SetIsSimulated(Object, true);
         }
 
+        private void OnCollisionStay2D(Collision2D collision)
+        {
+            if (!HasStateAuthority || _platformCollider == null) return;
+            var player = collision.collider.GetComponentInParent<PlayerController>();
+            if (player == null || player.isDeadNetworked) return;
+
+            // Chỉ tính player ĐỨNG TRÊN mặt bệ; chạm cạnh hoặc đầu vào gầm không được tính.
+            float platformTop = _platformCollider.bounds.max.y;
+            float playerBottom = collision.collider.bounds.min.y;
+            bool above = playerBottom >= platformTop - 0.35f;
+            if (above) _playersOnPlatform.Add(player);
+            else _playersOnPlatform.Remove(player);
+        }
+
+        private void OnCollisionExit2D(Collision2D collision)
+        {
+            if (!HasStateAuthority) return;
+            var player = collision.collider.GetComponentInParent<PlayerController>();
+            if (player != null) _playersOnPlatform.Remove(player);
+        }
+
+        private void TryAutoStart()
+        {
+            if (!HasStateAuthority || Progress < 0.999f) return;
+
+            _playersOnPlatform.RemoveWhere(p => p == null || p.isDeadNetworked);
+            if (_mustClearBeforeNextTrip)
+            {
+                if (_playersOnPlatform.Count == 0) _mustClearBeforeNextTrip = false;
+                return;
+            }
+
+            int required = Attrition.Persistence.GameLaunch.Mode == Attrition.Persistence.LaunchMode.Coop ? 2 : 1;
+            if (_playersOnPlatform.Count < required) return;
+
+            Toggle();
+            _mustClearBeforeNextTrip = true;
+        }
+
         /// <summary>
-        /// Lever gọi (host): đi tới điểm dừng KẾ TIẾP theo chiều hiện tại. Đang ở điểm cuối/đầu thì đảo
-        /// chiều rồi mới đi, nên thang luôn có chỗ để tới (không kẹt).
-        /// Đang di chuyển giữa đường thì bỏ qua — tránh giật ngược khi player gạt liên tục.
+        /// Đi tới điểm dừng kế tiếp. Public để giữ tương thích với Lever cũ trong scene, nhưng luồng chính
+        /// hiện tại gọi tự động từ TryAutoStart khi đủ player đứng trên bệ.
         /// </summary>
         public void Toggle()
         {
@@ -105,6 +150,8 @@ namespace Attrition.Gameplay.World
         public override void FixedUpdateNetwork()
         {
             if (!_originSet || StopCount == 0) return;
+
+            TryAutoStart();
 
             // Chỉ host điều khiển Progress; các peer khác chỉ ĐỌC giá trị đã sync.
             if (HasStateAuthority && Progress < 1f)

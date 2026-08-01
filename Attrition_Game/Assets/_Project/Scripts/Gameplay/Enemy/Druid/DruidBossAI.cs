@@ -33,8 +33,12 @@ namespace Attrition.Gameplay.Enemy.Druid
         [SerializeField] private NetworkPrefabRef windBeamPrefab;
         [Tooltip("Lưỡi dao gió bay về player (Skill 3). Prefab có EnemyProjectile.")]
         [SerializeField] private NetworkPrefabRef windSwordPrefab;
-        [Tooltip("Airburst tại điểm ngắm (Skill 4). Prefab có EnemyAoEDamage. Chọn damageDelay để khớp 'preparing'.")]
+        [Tooltip("AirBurst pull-in/telegraph trước khi nổ. Cosmetic, damage = 0.")]
+        [SerializeField] private NetworkPrefabRef airBurstPullInPrefab;
+        [Tooltip("Airburst tại điểm ngắm (Skill 4). Prefab có EnemyAoEDamage.")]
         [SerializeField] private NetworkPrefabRef airBurstPrefab;
+        [Tooltip("AirExplosion startup/repair trước khi nổ. Cosmetic, damage = 0.")]
+        [SerializeField] private NetworkPrefabRef airExplosionStartupPrefab;
         [Tooltip("Điểm nổ zigzag (Skill 5). Prefab có EnemyAoEDamage.")]
         [SerializeField] private NetworkPrefabRef airExplosionPrefab;
 
@@ -42,6 +46,10 @@ namespace Attrition.Gameplay.Enemy.Druid
         [Tooltip("Coop: bám 1 player trong khoảng này (giây) rồi mới xét lại ai gần nhất. Solo bỏ qua.")]
         [SerializeField] private float targetRetargetInterval = 4f;
         private float _retargetCooldown;
+        // Skill bag: mỗi khi hết, nạp lại đủ 5 chỉ số → boss tung hết 1 vòng mới lặp, không bị lặp lại
+        // cùng 1 skill nhiều lần liên tiếp (lỗi "hay bị lặp lại, không tung hết kĩ năng").
+        private readonly System.Collections.Generic.List<int> _skillBag =
+            new System.Collections.Generic.List<int>();
 
         [Header("---- MELEE (basic attack) ----")]
         [Tooltip("Phạm vi kích hoạt đòn cận chiến cơ bản.")]
@@ -100,8 +108,10 @@ namespace Attrition.Gameplay.Enemy.Druid
         public int airBurstCount = 6;
         [Tooltip("Bán kính rải điểm quanh player (units).")]
         public float airBurstScatter = 4f;
-        [Tooltip("Thời gian 'preparing' (giây) trước khi mọi điểm bung — khớp damageDelay của prefab.")]
+        [Tooltip("Thời gian Pull In báo trước trước khi mỗi AirBurst gây damage.")]
         public float airBurstPrepareTime = 0.8f;
+        [Tooltip("Thời gian nghỉ sau khi AirBurst kết thúc trước Pull In kế tiếp.")]
+        public float airBurstInterval = 0.55f;
         [Tooltip("Sát thương mỗi airburst.")]
         public int airBurstDamage = 20;
 
@@ -114,12 +124,19 @@ namespace Attrition.Gameplay.Enemy.Druid
         public float airExplosionAmplitudeY = 1.5f;
         [Tooltip("Giãn cách thời gian (giây) giữa 2 điểm nổ liên tiếp — nổ LẦN LƯỢT.")]
         public float airExplosionInterval = 0.18f;
+        [Tooltip("Thời gian Explosion Startup/repair hiện trước mỗi vụ nổ.")]
+        public float airExplosionStartupLead = 0.35f;
         [Tooltip("Sát thương mỗi điểm nổ.")]
         public int airExplosionDamage = 18;
 
         [Header("---- TIMING ----")]
         [Tooltip("Nghỉ giữa các skill (giây).")]
         public float recoveryTime = 1f;
+        [Tooltip("Thời gian ĐI LẠI tự do sau khi nghỉ, trước khi tung skill kế (giây). Boss dùng khoảng này " +
+                 "để giữ khoảng cách với player thay vì bắn liên tục.")]
+        public float restTime = 1.6f;
+        [Tooltip("Khoảng cách (units) boss muốn giữ với player trong lúc đi lại nghỉ.")]
+        public float preferredDistance = 6f;
         [Tooltip("Chờ ban đầu trước skill đầu tiên (giây).")]
         public float initialDelay = 1.5f;
 
@@ -345,6 +362,25 @@ namespace Attrition.Gameplay.Enemy.Druid
             NetSpeed = Mathf.Abs(rb.linearVelocity.x);
         }
 
+        /// <summary>Lùi xa player (giữ khoảng cách trong lúc nghỉ). Không lùi quá leash/StartPos ±viewRadius.</summary>
+        public void MoveAwayFromPlayer(float speed)
+        {
+            if (playerTarget == null) return;
+            float xDiff = playerTarget.position.x - transform.position.x;
+            float dirX = xDiff > 0 ? -1f : 1f;
+
+            // Chặn lùi vô tận ra khỏi phòng boss: giới hạn quanh vị trí spawn.
+            float offsetFromStart = transform.position.x - StartPos.x;
+            if (Mathf.Abs(offsetFromStart) > viewRadius * 1.5f && Mathf.Sign(offsetFromStart) == Mathf.Sign(dirX))
+            {
+                StopMovement();
+                return;
+            }
+
+            rb.linearVelocity = new Vector2(dirX * speed, rb.linearVelocity.y);
+            NetSpeed = Mathf.Abs(rb.linearVelocity.x);
+        }
+
         public void StopMovement()
         {
             rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
@@ -379,11 +415,29 @@ namespace Attrition.Gameplay.Enemy.Druid
             });
         }
 
+        /// <summary>Spawn AoE có art mặc định nhìn sang phải và đảo hình theo hướng tấn công.</summary>
+        public void SpawnAoEOriented(NetworkPrefabRef prefab, Vector2 pos, int damage, float dirX)
+        {
+            if (!HasStateAuthority || !prefab.IsValid) return;
+            Runner.Spawn(prefab, pos, Quaternion.identity, null, (runner, obj) =>
+            {
+                var s = obj.transform.localScale;
+                // WindBreath/AirBurst source art nhìn sang phải: bắn phải giữ X dương, bắn trái đảo X.
+                obj.transform.localScale = new Vector3(dirX > 0f ? Mathf.Abs(s.x) : -Mathf.Abs(s.x), s.y, s.z);
+                Attrition.Gameplay.Combat.ProjectileInitializer.Init(
+                    obj, Vector2.zero, damage,
+                    Attrition.Gameplay.Combat.ProjectileInitializer.DefaultSpeed,
+                    Attrition.Core.DamageType.Magic);
+            });
+        }
+
         // Public prefab accessors cho state.
         public NetworkPrefabRef WoodProjectilePrefab => woodProjectilePrefab;
         public NetworkPrefabRef WindBeamPrefab => windBeamPrefab;
         public NetworkPrefabRef WindSwordPrefab => windSwordPrefab;
+        public NetworkPrefabRef AirBurstPullInPrefab => airBurstPullInPrefab;
         public NetworkPrefabRef AirBurstPrefab => airBurstPrefab;
+        public NetworkPrefabRef AirExplosionStartupPrefab => airExplosionStartupPrefab;
         public NetworkPrefabRef AirExplosionPrefab => airExplosionPrefab;
 
         // ═══════════════════════════════════════════════════════════════
@@ -423,8 +477,15 @@ namespace Attrition.Gameplay.Enemy.Druid
                 return;
             }
 
-            // Player xa → 5 skill tầm xa ngang nhau.
-            int pick = Random.Range(0, 5);
+            // Player xa → RÚT THĂM KHÔNG TRÙNG (skill bag) như Elf/DemonKin: Random.Range thuần khiến boss
+            // lặp lại 1-2 skill và có skill cả trận không thấy — đúng lỗi "không tung hết kĩ năng, hay bị lặp".
+            if (_skillBag.Count == 0)
+                for (int i = 0; i < 5; i++) _skillBag.Add(i);
+
+            int idx = Random.Range(0, _skillBag.Count);
+            int pick = _skillBag[idx];
+            _skillBag.RemoveAt(idx);
+
             switch (pick)
             {
                 case 0: ChangeState(WoodWildState); break;

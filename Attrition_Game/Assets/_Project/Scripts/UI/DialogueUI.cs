@@ -55,6 +55,7 @@ namespace Attrition.UI
 
         private bool _isDialogueOpen;
         private NetworkNPC _currentNPC;
+        private PlayerController _protectedPlayer;
         private DialogueSO _currentDialogue;
         private int _currentLineIndex;
         private bool _isTyping;
@@ -146,6 +147,7 @@ namespace Attrition.UI
             RewardEvents.OnRewardBatchComplete -= OnRewardBatchComplete;
 
             Attrition.Persistence.DialogueState.IsActive = false;
+            SetLocalQuestProtection(false);
         }
 
         private void OnDestroy()
@@ -294,6 +296,7 @@ namespace Attrition.UI
             _currentDialogue = npc.GetCurrentDialogue();
             if (_currentDialogue == null || _currentDialogue.lines == null || _currentDialogue.lines.Length == 0)
                 return;
+            if (_currentNPC.DisplayQuest != null) SetLocalQuestProtection(true);
 
             _currentLineIndex = -1;
             _isDialogueOpen = true;
@@ -448,6 +451,7 @@ namespace Attrition.UI
             _isDialogueOpen = false;
             _isTyping = false;
             Attrition.Persistence.DialogueState.IsActive = false;
+            SetLocalQuestProtection(false);
             SetCursorFree(false);
 
             _dialoguePanel.RemoveFromClassList("visible");
@@ -484,6 +488,25 @@ namespace Attrition.UI
             _btnAccept.AddToClassList("hidden");
             _btnDecline.AddToClassList("hidden");
             _btnContinue.AddToClassList("hidden");
+        }
+
+        private void SetLocalQuestProtection(bool active)
+        {
+            if (!active)
+            {
+                if (_protectedPlayer != null) _protectedPlayer.SetQuestDialogueProtection(false);
+                _protectedPlayer = null;
+                return;
+            }
+
+            // Chỉ bảo vệ player local đã mở NPC. Player coop còn lại không bị khoá hay miễn damage.
+            foreach (var player in FindObjectsByType<PlayerController>(FindObjectsSortMode.None))
+            {
+                if (player.Object == null || !player.Object.HasInputAuthority) continue;
+                _protectedPlayer = player;
+                _protectedPlayer.SetQuestDialogueProtection(true);
+                return;
+            }
         }
 
         /// <summary>

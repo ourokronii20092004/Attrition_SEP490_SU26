@@ -37,6 +37,7 @@ namespace Attrition.Gameplay.Enemy
         [Networked] private NetworkBool DamageDealt { get; set; }
 
         private float _elapsed;
+        private Vector2 _damageCenter;
         private readonly HashSet<IDamageable> _hit = new HashSet<IDamageable>();
 
         public void Init(int dmg, Attrition.Core.DamageType type = Attrition.Core.DamageType.Magic, LayerMask? overrideHitLayer = null)
@@ -49,8 +50,9 @@ namespace Attrition.Gameplay.Enemy
         public override void Spawned()
         {
             _elapsed = 0f;
+            _damageCenter = transform.position;
 
-            // HẠ XUỐNG MẶT ĐẤT tại đây (sau khi NetworkTransform đã đặt vị trí spawn) — host sửa Y rồi
+            // snapToGround thường hạ cả root. ThunderStrike giữ visual trên cao nhưng lưu damageCenter ở nền.
             // NetworkTransform sync xuống client. Khắc phục nổ lơ lửng do spawn ở tâm boss / NT ghi đè.
             if (HasStateAuthority && snapToGround)
                 SnapToGround();
@@ -81,9 +83,8 @@ namespace Attrition.Gameplay.Enemy
             // Chỉ snap XUỐNG — không đẩy lên nếu ground cao hơn vị trí spawn (vd ceiling/platform).
             if (found && bestY + groundOffset < transform.position.y)
             {
-                var p = transform.position;
-                p.y = bestY + groundOffset;
-                transform.position = p;
+                _damageCenter = new Vector2(transform.position.x, bestY + groundOffset);
+                transform.position = new Vector3(_damageCenter.x, _damageCenter.y, transform.position.z);
             }
         }
 
@@ -107,9 +108,12 @@ namespace Attrition.Gameplay.Enemy
 
         private void DealAreaDamage()
         {
+            // Damage 0 = VFX cosmetic (PullIn/Startup): không query, không knockback player.
+            if (Damage <= 0) return;
+
             var filter = new ContactFilter2D { useLayerMask = true, layerMask = hitLayer, useTriggers = true };
             var results = new Collider2D[10];
-            int count = Runner.GetPhysicsScene2D().OverlapCircle(transform.position, radius, filter, results);
+            int count = Runner.GetPhysicsScene2D().OverlapCircle(_damageCenter, radius, filter, results);
 
             for (int i = 0; i < count; i++)
             {
@@ -119,7 +123,7 @@ namespace Attrition.Gameplay.Enemy
                 if (dmg == null || dmg.IsDead || _hit.Contains(dmg)) continue;
                 _hit.Add(dmg);
 
-                Vector2 dir = ((Vector2)col.transform.position - (Vector2)transform.position).normalized;
+                Vector2 dir = ((Vector2)col.transform.position - _damageCenter).normalized;
                 Vector2 pushDir = new Vector2(dir.x, 0.5f).normalized;
                 dmg.TakeDamage(Damage, pushDir, knockbackForce, (Attrition.Core.DamageType)DamageTypeRaw);
             }

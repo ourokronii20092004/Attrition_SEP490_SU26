@@ -12,24 +12,23 @@ namespace Attrition.Editor
 {
     /// <summary>
     /// Dựng ĐẦY ĐỦ 12 thang máy đã có sẵn trong `Castle - Map 5` (`Elevator_01..12`): biến mỗi Tilemap
-    /// thành bệ đứng được + tạo cần gạt riêng cho từng thang.
+    /// thành bệ đứng được và tự chạy khi đủ player đứng lên (solo 1, coop cả 2).
     ///
-    /// VÌ SAO CẦN: 12 object `Elevator_01..12` trong scene hiện CHỈ có Transform + Tilemap +
-    /// TilemapRenderer — không Rigidbody2D, không Collider2D, không NetworkObject, không script
-    /// `Elevator`, và KHÔNG có cần gạt nào. Nghĩa là chúng chỉ là hình vẽ: player rơi xuyên qua.
+    /// VÌ SAO CẦN: 12 object `Elevator_01..12` trong scene ban đầu CHỈ có Transform + Tilemap +
+    /// TilemapRenderer — không Rigidbody2D, Collider2D, NetworkObject hay script `Elevator`.
     ///
     /// Tool gắn cho mỗi thang:
     ///   • `TilemapCollider2D` (KHÔNG trigger) + layer `Ground` → player ĐỨNG được, CheckGround nhận là đất.
     ///   • `Rigidbody2D` Kinematic → bệ đẩy player theo khi chạy (Elevator.MovePosition).
-    ///   • `NetworkObject` + `Elevator` với danh sách điểm dừng.
-    ///   • 1 `Lever` (cần gạt) đặt cạnh điểm dừng ĐẦU, layer `Enemy` để đòn đánh của player quét trúng.
+    ///   • `NetworkObject` + `Elevator` với danh sách điểm dừng và tự nhận biết player đứng trên bệ.
+    ///   • Xoá `Lever_*` cũ nếu từng chạy bản tool dùng cần gạt.
     ///
     /// ĐIỂM DỪNG: mặc định 2 điểm (chỗ đặt → lên cao `DefaultRise`). Riêng **thang 12 có 3 điểm dừng**
     /// theo yêu cầu — xem `ThreeStopElevator`. Sau khi chạy tool, chỉnh `stopOffsets` trong Inspector cho
     /// khớp địa hình thật của từng thang (tool không đoán được độ cao mỗi trục thang).
     ///
-    /// Menu: Tools/Attrition/World/Setup Map 5 Elevators (12 thang + can gat)
-    /// Idempotent: chạy lại không thêm trùng component, không tạo trùng cần gạt.
+    /// Menu: Tools/Attrition/World/Setup Map 5 Elevators (12 thang tu dong)
+    /// Idempotent: chạy lại không thêm trùng component; lever cũ được xoá.
     /// </summary>
     public static class Map5ElevatorSetupEditor
     {
@@ -45,10 +44,7 @@ namespace Attrition.Editor
         private const float MidRise = 6f;
         private const float TopRise = 12f;
 
-        /// <summary>Cần gạt đặt lệch sang bên bệ bao nhiêu unit.</summary>
-        private const float LeverOffsetX = 3.2f;
-
-        [MenuItem("Tools/Attrition/World/Setup Map 5 Elevators (12 thang + can gat)")]
+        [MenuItem("Tools/Attrition/World/Setup Map 5 Elevators (12 thang tu dong)")]
         public static void Setup()
         {
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
@@ -65,7 +61,6 @@ namespace Attrition.Editor
             }
 
             int groundLayer = LayerMask.NameToLayer("Ground");
-            int enemyLayer = LayerMask.NameToLayer("Enemy");
 
             var done = new List<string>();
             var report = new System.Text.StringBuilder();
@@ -116,14 +111,15 @@ namespace Attrition.Editor
                     : new[] { Vector2.zero, new Vector2(0f, DefaultRise) };
                 SetStopOffsets(elevator, stops);
 
-                // ── Cần gạt riêng cho thang này ──
+                // Không cần lever: Elevator tự đếm player đứng trên bệ (solo=1, coop=2) rồi chạy.
                 string leverName = $"Lever_{name.Substring("Elevator_".Length)}";
-                bool leverCreated = EnsureLever(leverName, go, elevator, enemyLayer);
+                var obsoleteLever = GameObject.Find(leverName);
+                if (obsoleteLever != null) Undo.DestroyObjectImmediate(obsoleteLever);
 
                 done.Add(name);
                 report.AppendLine($"  {name,-12} stops={stops.Length}"
                                   + (threeStop ? " (3 TANG)" : "")
-                                  + (leverCreated ? $"  + {leverName} (moi)" : $"  + {leverName} (da co)"));
+                                  + "  auto-run");
             }
 
             if (done.Count == 0)
@@ -135,61 +131,13 @@ namespace Attrition.Editor
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
 
-            Debug.Log($"[Map5Elevator] Xong {done.Count} thang máy:\n" + report +
+            Debug.Log($"[Map5Elevator] Xong {done.Count} thang máy tự chạy:\n" + report +
                       "\nVIỆC CÒN LẠI (tool không đoán được địa hình):\n" +
                       "• Chỉnh 'stopOffsets' từng thang cho khớp trục thang thật — Gizmo vẽ đường đi + các\n" +
                       "  điểm dừng ngay trong Scene view khi chọn thang.\n" +
                       $"• Thang {ThreeStopElevator} đã có 3 điểm dừng ({MidRise} và {TopRise}) — sửa lại nếu 3 tầng ở độ cao khác.\n" +
-                      "• Kéo cần gạt Lever_* tới chỗ player với tới được, gán sprite cho nó.\n" +
+                      "• Solo: 1 player đứng lên; coop: cả 2 player còn sống đứng lên thì thang tự chạy.\n" +
                       "• SAVE scene lần nữa nếu có sửa tay (Fusion cần bake NetworkObject).");
-        }
-
-        /// <summary>
-        /// Tạo cần gạt cho 1 thang nếu chưa có. Trả về true nếu vừa tạo mới.
-        ///
-        /// Cần gạt đặt cạnh vị trí GỐC của thang (điểm dừng đầu) — đó là chỗ player đứng lần đầu để gọi
-        /// thang. Collider KHÔNG trigger vì `PlayerCombat` quét đòn đánh với `useTriggers = false`; layer
-        /// `Enemy` để nằm trong `targetLayers` của đòn đánh.
-        /// </summary>
-        private static bool EnsureLever(string leverName, GameObject elevatorGo, Elevator elevator, int enemyLayer)
-        {
-            var existing = GameObject.Find(leverName);
-            if (existing != null)
-            {
-                // Đã có → chỉ đảm bảo còn nối đúng thang (scene có thể đã bị sửa tay).
-                var lv = existing.GetComponent<Lever>();
-                if (lv != null) SetPrivate(lv, "elevator", elevator);
-                return false;
-            }
-
-            var go = new GameObject(leverName);
-            Undo.RegisterCreatedObjectUndo(go, "Create Elevator Lever");
-
-            // Đặt cạnh bệ, hơi cao lên cho khỏi lún vào sàn.
-            go.transform.position = elevatorGo.transform.position + new Vector3(LeverOffsetX, 0.8f, 0f);
-
-            go.AddComponent<NetworkObject>();
-
-            var col = go.AddComponent<BoxCollider2D>();
-            col.size = new Vector2(0.8f, 1.5f);
-            col.isTrigger = false;
-
-            if (enemyLayer >= 0) go.layer = enemyLayer;
-
-            // Hình tạm (khối vàng) — designer thay sprite thật sau.
-            var visual = new GameObject("LeverVisual");
-            visual.transform.SetParent(go.transform, false);
-            var sr = visual.AddComponent<SpriteRenderer>();
-            sr.color = new Color(0.7f, 0.6f, 0.2f);
-            sr.drawMode = SpriteDrawMode.Sliced;
-            sr.size = new Vector2(0.5f, 1.5f);
-            sr.sortingOrder = 5;
-
-            var lever = go.AddComponent<Lever>();
-            SetPrivate(lever, "elevator", elevator);
-            SetPrivate(lever, "shakeTarget", visual.transform);
-
-            return true;
         }
 
         /// <summary>Ghi mảng `stopOffsets` (private [SerializeField] Vector2[]) qua SerializedObject.</summary>
@@ -210,18 +158,6 @@ namespace Attrition.Editor
             so.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        private static void SetPrivate(Object target, string field, Object value)
-        {
-            var so = new SerializedObject(target);
-            var prop = so.FindProperty(field);
-            if (prop == null)
-            {
-                Debug.LogWarning($"[Map5Elevator] Field '{field}' không thấy trên {target.GetType().Name}");
-                return;
-            }
-            prop.objectReferenceValue = value;
-            so.ApplyModifiedPropertiesWithoutUndo();
-        }
     }
 }
 #endif

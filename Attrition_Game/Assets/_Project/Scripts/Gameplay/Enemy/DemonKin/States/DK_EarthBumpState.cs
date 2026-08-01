@@ -26,7 +26,7 @@ namespace Attrition.Gameplay.Enemy.DemonKin.States
             ai.CurrentState = EnemyState.Attacking;
             _elapsed = 0f;
             _ring = 0;
-            _nextSpawnTime = ai.bumpChargeTime;
+            _nextSpawnTime = Mathf.Max(ai.bumpChargeTime, DemonKinBossAI.SkillAttackWindup);
 
             ai.DetectPlayer();
             ai.FaceTowardsPlayer();
@@ -42,17 +42,19 @@ namespace Attrition.Gameplay.Enemy.DemonKin.States
 
             if (_ring < ai.bumpPerSide && _elapsed >= _nextSpawnTime)
             {
+                if (_ring == 0) ai.PlayAnim("Idle");
                 if (ai.HasStateAuthority)
                 {
                     float dist = ai.bumpFirstOffset + ai.bumpStepX * _ring;
                     float scale = Mathf.Pow(Mathf.Max(1f, ai.bumpScaleStep), _ring);
                     Vector2 origin = ai.transform.position;
 
-                    // Mỗi hướng 1 cục ở cùng khoảng cách → đối xứng.
-                    ai.SpawnAoEScaled(ai.EarthBumpPrefab, origin + new Vector2(dist, 0f),
-                                      ai.bumpDamage, scale);
-                    ai.SpawnAoEScaled(ai.EarthBumpPrefab, origin + new Vector2(-dist, 0f),
-                                      ai.bumpDamage, scale);
+                    // Cục PHẢI: scale x > 0 → nhìn sang phải (mọc lên bên phải boss).
+                    ai.SpawnAoEScaledFlipped(ai.EarthBumpPrefab, origin + new Vector2(dist, 0f),
+                                             ai.bumpDamage, scale, flipX: false);
+                    // Cục TRÁI: scale x âm → nhìn sang trái (đối xứng, không cần sprite riêng).
+                    ai.SpawnAoEScaledFlipped(ai.EarthBumpPrefab, origin + new Vector2(-dist, 0f),
+                                             ai.bumpDamage, scale, flipX: true);
                 }
                 _ring++;
                 _nextSpawnTime = _elapsed + ai.bumpInterval;

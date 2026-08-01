@@ -28,7 +28,7 @@ namespace Attrition.Gameplay.Enemy.ArchDemon.States
             _elapsed = 0f;
             _startupSpawned = 0;
             _spikeSpawned = 0;
-            _nextStartupTime = 0.2f;
+            _nextStartupTime = ArchDemonBossAI.AttackAnimCutTime;
 
             ai.DetectPlayer();
             ai.FaceTowardsPlayer();
@@ -59,6 +59,7 @@ namespace Attrition.Gameplay.Enemy.ArchDemon.States
             // ── Dấu báo: hiện trước, rải theo nhịp spikeInterval ──
             if (_startupSpawned < _total && _elapsed >= _nextStartupTime)
             {
+                if (_startupSpawned == 0) ai.PlayAnim("Idle");
                 ai.SpawnAoE(ai.WaterStartup1Prefab, PositionAt(ai, _startupSpawned), 0);
                 _startupSpawned++;
                 _nextStartupTime = _elapsed + ai.spikeInterval;
@@ -67,8 +68,9 @@ namespace Attrition.Gameplay.Enemy.ArchDemon.States
             // ── Cọc mọc: đi sau dấu đúng spikeStartupLead giây ──
             if (_spikeSpawned < _startupSpawned)
             {
-                // Mốc dấu thứ i xuất hiện ở 0.2 + i*interval → cọc thứ i mọc ở mốc đó + lead.
-                float dueTime = 0.2f + _spikeSpawned * ai.spikeInterval + ai.spikeStartupLead;
+                // Marker i xuất hiện ở attackWindup + i*interval; spike theo sau đúng startupLead.
+                float dueTime = ArchDemonBossAI.AttackAnimCutTime
+                    + _spikeSpawned * ai.spikeInterval + ai.spikeStartupLead;
                 if (_elapsed >= dueTime)
                 {
                     ai.SpawnAoE(ai.WaterSpikePrefab, PositionAt(ai, _spikeSpawned), ai.spikeDamage);
@@ -84,7 +86,9 @@ namespace Attrition.Gameplay.Enemy.ArchDemon.States
         private Vector2 PositionAt(ArchDemonBossAI ai, int i)
         {
             float x = ai.transform.position.x + _dirX * (ai.spikeFirstOffset + ai.spikeSpacing * i);
-            return new Vector2(Mathf.Clamp(x, _minX, _maxX), ai.transform.position.y);
+            // Y theo chân PLAYER + 1 tile để art không chìm dưới nền.
+            float y = (ai.PlayerTarget != null ? ai.PlayerTarget.position.y : ai.transform.position.y) + 1f;
+            return new Vector2(Mathf.Clamp(x, _minX, _maxX), y);
         }
 
         public override void Exit(ArchDemonBossAI ai) => ai.StopMovement();

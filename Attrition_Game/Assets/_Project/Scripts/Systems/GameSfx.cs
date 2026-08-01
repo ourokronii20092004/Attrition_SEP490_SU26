@@ -80,6 +80,8 @@ namespace Attrition.Systems
         [SerializeField] private SfxEntry attack = new();
         [SerializeField] private SfxEntry charge = new();
         [SerializeField] private SfxEntry hit = new();
+        [Tooltip("Âm player bị trúng đòn; tách khỏi hit = vũ khí đánh trúng enemy.")]
+        [SerializeField] private SfxEntry hurt = new();
 
         [Header("Di chuyển")]
         [SerializeField] private SfxEntry jump = new();
@@ -193,6 +195,7 @@ namespace Attrition.Systems
         public void PlayAttack() => Play(attack);
         public void PlayCharge() => Play(charge);
         public void PlayHit() => Play(hit);
+        public void PlayHurt() => Play(hurt);
         public void PlayJump() => Play(jump);
         public void PlayLand() => Play(land);
         public void PlayDash() => Play(dash);
