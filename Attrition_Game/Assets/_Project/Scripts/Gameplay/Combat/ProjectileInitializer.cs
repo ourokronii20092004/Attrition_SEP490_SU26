@@ -14,7 +14,7 @@ namespace Attrition.Gameplay.Combat
         public const float DefaultSpeed = 0f;
         public const float DefaultKnockback = 4f;
 
-        public static void Init(NetworkObject obj, Vector2 dir, int damage, float speed = DefaultSpeed, Attrition.Core.DamageType type = Attrition.Core.DamageType.Physical, float knockback = DefaultKnockback)
+        public static void Init(NetworkObject obj, Vector2 dir, int damage, float speed = DefaultSpeed, Attrition.Core.DamageType type = Attrition.Core.DamageType.Physical, float knockback = DefaultKnockback, LayerMask? overrideHitLayer = null)
         {
             if (obj == null) return;
 
@@ -35,7 +35,7 @@ namespace Attrition.Gameplay.Combat
             // Đòn nổ AoE đứng yên (FireExplosion): không bay, quét vùng tròn gây damage.
             var aoe = obj.GetComponent<Attrition.Gameplay.Enemy.EnemyAoEDamage>();
             if (aoe != null)
-                aoe.Init(damage, type);
+                aoe.Init(damage, type, overrideHitLayer);
         }
     }
 }

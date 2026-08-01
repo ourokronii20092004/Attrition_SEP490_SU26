@@ -38,7 +38,7 @@ MonoBehaviour:
   rectSize: {x: 3, y: 1.5}
   hitboxOffset: {x: 1.5, y: 0}
   projectilePrefab:
-    RawGuidValue: 8d1653b807e2d9f42bfbb7d80d020fc4
+    RawGuidValue: 44162708978b7cd4d87694fbf9157ad7
   projectileSpeed: 0
   projectileCount: 3
   spreadAngle: 1.8

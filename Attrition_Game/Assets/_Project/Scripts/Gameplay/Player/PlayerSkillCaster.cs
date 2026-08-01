@@ -65,6 +65,8 @@ namespace Attrition.Gameplay.Player
             if (!_stats.HasMana(config.manaCost)) return;
             if (!_stats.TryConsumeMana(config.manaCost)) return;
 
+            Debug.Log($"[Skill] CAST {skill.name} delivery={config.delivery} prefabValid={skill.projectilePrefab.IsValid} isStateAuth={HasStateAuthority}");
+
             _activeSkill = skill;
             _activeConfig = config;
             IsCasting = true;
@@ -96,7 +98,8 @@ namespace Attrition.Gameplay.Player
             {
                 if (config.delivery == SkillDelivery.Projectile)
                 {
-                    if (config.projectileInterval > 0f)
+                    if (!HasStateAuthority) { /* proxy: chờ host spawn rồi replicate */ }
+                    else if (config.projectileInterval > 0f)
                     {
                         float activeElapsed = elapsedFrac * total - config.activeStartFrac * total;
                         int wanted = Mathf.Min(Mathf.Max(1, config.projectileCount),
@@ -115,7 +118,7 @@ namespace Attrition.Gameplay.Player
                 }
                 else if (config.delivery == SkillDelivery.SpawnAoE)
                 {
-                    if (!_projectileFired)
+                    if (HasStateAuthority && !_projectileFired)
                     {
                         SpawnAoEs(skill, config, isFacingRight);
                         _projectileFired = true;
@@ -123,11 +126,15 @@ namespace Attrition.Gameplay.Player
                 }
                 else
                 {
-                    int tickCount = config.ComputeTickCount();
-                    int wantTicks = Mathf.Min(tickCount,
-                        Mathf.FloorToInt((elapsedFrac - config.activeStartFrac) / Mathf.Max(0.0001f,
-                            (config.activeEndFrac - config.activeStartFrac)) * tickCount) + 1);
-                    if (_ticksDone < wantTicks) { DealArea(config, isFacingRight); _ticksDone++; }
+                    // AreaInstant: chỉ host tính damage
+                    if (HasStateAuthority)
+                    {
+                        int tickCount = config.ComputeTickCount();
+                        int wantTicks = Mathf.Min(tickCount,
+                            Mathf.FloorToInt((elapsedFrac - config.activeStartFrac) / Mathf.Max(0.0001f,
+                                (config.activeEndFrac - config.activeStartFrac)) * tickCount) + 1);
+                        if (_ticksDone < wantTicks) { DealArea(config, isFacingRight); _ticksDone++; }
+                    }
                 }
             }
 
@@ -178,7 +185,8 @@ namespace Attrition.Gameplay.Player
 
         private void FireProjectile(SkillSO skill, Attrition.Persistence.SkillRuntimeConfig config, bool isFacingRight)
         {
-            if (!skill.projectilePrefab.IsValid) return;
+            // ponytail: debug log — xóa sau khi xác nhận prefab hợp lệ
+            if (!skill.projectilePrefab.IsValid) { Debug.LogWarning($"[Skill] projectilePrefab KHÔNG HỢP LỆ trên {skill.name} — kiểm tra NetworkPrefabTable"); return; }
             Vector3 spawn = castPoint != null ? castPoint.position : transform.position;
             Vector2 dir = isFacingRight ? Vector2.right : Vector2.left;
             int raw = SkillRawDamage(config);
@@ -189,7 +197,8 @@ namespace Attrition.Gameplay.Player
 
         private void SpawnAoEs(SkillSO skill, Attrition.Persistence.SkillRuntimeConfig config, bool isFacingRight)
         {
-            if (!skill.projectilePrefab.IsValid) return;
+            // ponytail: debug log — xóa sau khi xác nhận
+            if (!skill.projectilePrefab.IsValid) { Debug.LogWarning($"[Skill] projectilePrefab KHÔNG HỢP LỆ trên {skill.name}"); return; }
             int count = Mathf.Max(1, config.projectileCount);
             float dir = isFacingRight ? 1f : -1f;
             float spacing = Mathf.Max(0f, config.spreadAngle);
@@ -199,15 +208,17 @@ namespace Attrition.Gameplay.Player
             for (int i = 0; i < count; i++)
             {
                 Vector3 pos = origin + new Vector3(dir * spacing * i, 0f, 0f);
+                Debug.Log($"[Skill] SpawnAoE #{i} tại {pos} prefab={skill.projectilePrefab}");
                 Runner.Spawn(skill.projectilePrefab, pos, Quaternion.identity, null,
                     (r, obj) => ProjectileInitializer.Init(obj, Vector2.zero, raw, 0f,
-                        config.damageType, config.knockbackForce));
+                        config.damageType, config.knockbackForce, targetLayers));
             }
         }
 
         private void FireProjectiles(SkillSO skill, Attrition.Persistence.SkillRuntimeConfig config, bool isFacingRight)
         {
-            if (!skill.projectilePrefab.IsValid) return;
+            // ponytail: debug log — xóa sau khi xác nhận
+            if (!skill.projectilePrefab.IsValid) { Debug.LogWarning($"[Skill] projectilePrefab KHÔNG HỢP LỆ trên {skill.name}"); return; }
             Vector3 spawn = castPoint != null ? castPoint.position : transform.position;
             int raw = config.baseDamage + Mathf.RoundToInt(_stats.AP * config.apScaling);
 
@@ -229,7 +240,7 @@ namespace Attrition.Gameplay.Player
             }
         }
 
-        [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+        [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
         private void RPC_PlayVfx(int element, float lifetime)
         {
             var skill = _inventory != null ? _inventory.GetEquippedSkillSO() : null;
