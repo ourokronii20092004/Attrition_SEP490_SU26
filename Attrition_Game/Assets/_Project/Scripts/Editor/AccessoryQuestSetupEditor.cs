@@ -73,7 +73,7 @@ namespace Attrition.Editor
             // ── MAP 1 ── hai kỹ năng di chuyển nền tảng (mở đường cho toàn bộ game về sau)
             new Q { map = 1, kind = QKind.Elite, questId = "q_m1_elite_shadowdash",
                     title = "Trial of Shadows",
-                    targetId = "cultist", amount = 4,
+                    targetId = "cultist", amount = 1,
                     rewardItemId = "acc_shadow_dash", rewardName = "Shadow Cloak", exp = 180,
                     npcName = "Summer Fairy",
                     flavor = "The cultists bend the dark to their will. Break them, and the dark will carry you instead." },
