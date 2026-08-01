@@ -107,6 +107,12 @@ namespace Attrition.Gameplay.World
             // 1) Hồi đầy + refill bình + DỊCH CHUYỂN mọi player về điểm rest.
             // Loading "Resting..." bắn về CẢ HAI máy ngay khi rest hợp lệ (trước teleport) để không giật.
             RpcRestTeleportLoading();
+
+            // COOP: bình HP giấu là pickup ĐƠN (chỉ người chạm được +1 cap, pickup despawn cho cả phòng).
+            // Rest là mốc chia sẻ: ai đang thiếu được bù cho bằng người có sức chứa cao nhất. Gọi TRƯỚC
+            // vòng lặp refill để bình vừa được bù cũng rót đầy ngay lượt rest này (kể cả player đã chết,
+            // vì ReviveAndRestore cũng RefillAll bên trong).
+            PotionSystem.ShareFlaskCapacityOnRest();
             foreach (var pc in FindObjectsByType<PlayerController>(FindObjectsSortMode.None))
             {
                 if (pc == null) continue;
