@@ -151,7 +151,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
   SortKey: 2797244285
   ObjectInterest: 1
@@ -177,7 +177,7 @@ Animator:
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
-  m_WarningMessage: 
+  m_WarningMessage:
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
@@ -192,7 +192,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8bf02a20e98d77a4ead2dd33d096ec20, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.NPC.NetworkNPC
   npcName: Autumn_Fairy
   quest: {fileID: 11400000, guid: f85552ad0f1ae0146b5fbc83f95d4bdb, type: 2}
@@ -200,7 +200,7 @@ MonoBehaviour:
   _QuestChainIndex: 0
   idleDialogue: {fileID: 11400000, guid: a1c4e7f0b2d3496a8e5f1c2d3b4a5e60, type: 2}
   claimForNpc: {fileID: 0}
-  turnInObjectiveKey: 
+  turnInObjectiveKey:
   turnInDialogue: {fileID: 0}
   turnInDoneDialogue: {fileID: 0}
   _QuestState: 0

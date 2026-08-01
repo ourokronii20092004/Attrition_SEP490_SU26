@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.SkillSO
   itemId: skill_fire
-  displayName: Fire Skill
-  description: 
+  displayName: Fireball
+  description: Launches one fireball forward.
   icon: {fileID: 21300000, guid: 20db84bd0629e914596423d41acbddf8, type: 3}
   maxStack: 1
   isKeyItem: 0
@@ -25,9 +25,9 @@ MonoBehaviour:
   activeStartFrac: 0.35
   activeEndFrac: 0.6
   damageType: 1
-  baseDamage: 35
-  apScaling: 1
-  knockbackForce: 7
+  baseDamage: 12
+  apScaling: 0.65
+  knockbackForce: 3
   tickInterval: 0
   sweetSpotRadius: 0
   sweetSpotMultiplier: 1.5
@@ -38,9 +38,10 @@ MonoBehaviour:
   rectSize: {x: 3, y: 1.5}
   hitboxOffset: {x: 1, y: 0}
   projectilePrefab:
-    RawGuidValue: 00000000000000000000000000000000
-  projectileSpeed: 12
-  projectileCount: 3
-  spreadAngle: 30
+    RawGuidValue: 44162708978b7cd4d87694fbf9157ad7
+  projectileSpeed: 10
+  projectileCount: 1
+  spreadAngle: 0
+  projectileInterval: 0
   castVfxPrefab: {fileID: 0}
   vfxLifetime: 1.5

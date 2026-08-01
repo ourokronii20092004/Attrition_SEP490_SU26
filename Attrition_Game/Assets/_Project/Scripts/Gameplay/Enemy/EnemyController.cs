@@ -523,6 +523,9 @@ namespace Attrition.Controllers
                     if (Random.value > rule.dropChance) continue;
                     int idx = db.GetIndex(rule.itemId);
                     if (idx < 0) continue;
+                    var item = db.GetItem(idx);
+                    if (item is Attrition.Data.AccessorySO acc && acc.coopOnlyReward &&
+                        Attrition.Persistence.GameLaunch.Mode != Attrition.Persistence.LaunchMode.Coop) continue;
                     int qty = Random.Range(rule.minQty, rule.maxQty + 1);
                     if (qty <= 0) continue;
                     foreach (var inv in players)
@@ -576,7 +579,8 @@ namespace Attrition.Controllers
             Collider2D col = GetComponent<Collider2D>();
             if (col != null) col.enabled = false;
 
-            animationComp.PlayDeath();
+            // BossGateController giữ pose cuối để thoại chạy trước animation death.
+            if (!HoldDespawn) animationComp.PlayDeath();
         }
 
         /// <summary>

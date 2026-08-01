@@ -41,6 +41,15 @@ namespace Attrition.Editor
         /// <summary>Số bình HP GIẤU trong mỗi map (map 1-4 mỗi map 1; map 5 không có).</summary>
         private static int HiddenFlasksIn(int map) => map >= 1 && map <= 4 ? 1 : 0;
 
+        private static string NextRegion(int map) => map switch
+        {
+            1 => "the corrupted forest",
+            2 => "the fallen elf valley",
+            3 => "the dark forest",
+            4 => "the demon castle",
+            _ => "the end of this journey",
+        };
+
         /// <summary>Tên scene → số map. Khớp danh sách trong HazardTilemapSetupEditor.</summary>
         private static int MapOf(string sceneName)
         {
@@ -98,12 +107,12 @@ namespace Attrition.Editor
 
                 int hidden = HiddenFlasksIn(map);
                 string flaskLine = hidden > 0
-                    ? $"Trong vùng này có {hidden} bình sức sống bị giấu, nằm ngoài những lối đi thường."
-                    : "Vùng này không còn bình sức sống nào bị giấu — chỉ còn thứ lấy được từ kẻ mạnh.";
+                    ? $"There {(hidden == 1 ? "is" : "are")} {hidden} hidden health flask{(hidden == 1 ? "" : "s")} in this region, beyond the usual paths."
+                    : "No hidden health flasks remain here; only rewards taken from powerful foes.";
 
                 SetObject(springNpc, "idleDialogue",
                     MakeDialogue($"Dlg_M{map}_Spring_Idle", "Spring Fairy",
-                        $"Ta kể lại những gì vùng đất này đã trải qua. {flaskLine}"));
+                        $"This land is losing itself to corruption. {flaskLine}"));
 
                 // Quest ELITE do Spring giao. Map 3 thêm quest ĐƯA TIN vào chuỗi (làm sau elite).
                 var eliteQ = FindQuest(map, "elite", warn);
@@ -129,7 +138,7 @@ namespace Attrition.Editor
 
                 SetObject(summerNpc, "idleDialogue",
                     MakeDialogue($"Dlg_M{map}_Summer_Idle", "Summer Fairy",
-                        "Sức mạnh trong vùng này không tự tìm đến ai. Hãy đi và giành lấy."));
+                        "Power in this region will not come willingly. Go and claim it."));
             }
 
             // ── AUTUMN: NHẬN NỘP quest boss (của Summer) ──
@@ -141,7 +150,7 @@ namespace Attrition.Editor
                 SetObject(autumnNpc, "claimForNpc", summerNpc);   // trao thưởng hộ Summer (boss)
                 SetObject(autumnNpc, "idleDialogue",
                     MakeDialogue($"Dlg_M{map}_Autumn_Idle", "Autumn Fairy",
-                        "Mang chiến công về đây, ta sẽ trao phần thưởng xứng đáng."));
+                        $"Defeat the guardian ahead and return. Beyond it lies {NextRegion(map)}."));
 
                 // Map 3: Autumn (cuối map) là NPC NHẬN TIN của nhiệm vụ đưa tin do Spring (đầu map) giao.
                 if (map == 3)
@@ -149,10 +158,10 @@ namespace Attrition.Editor
                     SetString(autumnNpc, "turnInObjectiveKey", "deliver_m3_report");
                     SetObject(autumnNpc, "turnInDialogue",
                         MakeDialogue("Dlg_M3_Autumn_TurnIn", "Autumn Fairy",
-                            "Vậy là chị ta đã thấy tận mắt... Ta ghi nhận lời nhắn này."));
+                            "So she witnessed it herself... Her report has reached me."));
                     SetObject(autumnNpc, "turnInDoneDialogue",
                         MakeDialogue("Dlg_M3_Autumn_TurnInDone", "Autumn Fairy",
-                            "Lời nhắn đã tới nơi. Phần còn lại là việc của chúng ta."));
+                            "The message has arrived. What follows is our burden."));
                 }
             }
 
@@ -164,7 +173,7 @@ namespace Attrition.Editor
                 SetString(winterNpc, "npcName", "Winter Fairy");
                 SetObject(winterNpc, "idleDialogue",
                     MakeDialogue($"Dlg_M{map}_Winter_Idle", "Winter Fairy",
-                        "Đường đi không phải lúc nào cũng ở phía trước. Hãy tìm chỗ tường nghe rỗng."));
+                        "The hidden health flask lies away from the main road. Listen for a hollow wall and search beyond it."));
             }
 
             AssetDatabase.SaveAssets();

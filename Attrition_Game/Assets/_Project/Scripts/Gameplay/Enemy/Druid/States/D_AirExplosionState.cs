@@ -35,7 +35,8 @@ namespace Attrition.Gameplay.Enemy.Druid.States
                 : (ai.NetFacingDir > 0 ? 1f : -1f);
             _origin = (Vector2)ai.transform.position + new Vector2(_dirX * ai.airExplosionStepX, 0f);
 
-            ai.PlayAnim("Skill");
+            // Druid chưa có clip skill riêng; tái dùng clip Attack thay vì tạo trigger/controller thừa.
+            ai.PlayAnim("Attack");
         }
 
         public override void Update(DruidBossAI ai)

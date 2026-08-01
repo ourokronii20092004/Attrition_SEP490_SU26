@@ -148,7 +148,7 @@ Rigidbody2D:
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 0
+  m_Constraints: 4
 --- !u!70 &4760481864510570001
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -318,13 +318,13 @@ MonoBehaviour:
     _value: 0
   _AttackLockedFacingDir: 1
   earthProjectilePrefab:
-    RawGuidValue: 00000000000000000000000000000000
+    RawGuidValue: d908295cd400a8546aa6154150564793
   irregularRockPrefab:
-    RawGuidValue: 00000000000000000000000000000000
+    RawGuidValue: c9e5b4f2840542d43a12d08a16773d99
   earthBumpPrefab:
-    RawGuidValue: 00000000000000000000000000000000
+    RawGuidValue: 835f12c8783352541aa3def077895c29
   earthWallPrefab:
-    RawGuidValue: 00000000000000000000000000000000
+    RawGuidValue: 98b1c607d9fa66142994dc32766ab42a
   targetRetargetInterval: 4
   meleeRange: 2.4
   meleeDamage: 22
@@ -378,10 +378,11 @@ MonoBehaviour:
   eliteSkills: {fileID: 0}
   extraLivesAfterHpZero: 0
   reviveDelaySeconds: 2.5
-  deathClipName: 
+  deathClipName: DemonKin_Death
   despawnFallback: 1.5
-  lootItemIds: []
-  normalDropChance: 0.35
+  lootItemIds:
+  - skill_earth
+  normalDropChance: 1
   droppedItemPrefab:
     RawGuidValue: 00000000000000000000000000000000
   isRematchBoss: 0

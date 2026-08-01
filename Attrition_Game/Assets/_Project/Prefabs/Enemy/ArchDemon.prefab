@@ -148,7 +148,7 @@ Rigidbody2D:
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 0
+  m_Constraints: 4
 --- !u!70 &4760481864515761786
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -318,21 +318,21 @@ MonoBehaviour:
     _value: 0
   _AttackLockedFacingDir: 1
   waterBallPrefab:
-    RawGuidValue: 00000000000000000000000000000000
+    RawGuidValue: 14c39f4c2a770524c8ded5d76414b525
   waterBallImpactPrefab:
-    RawGuidValue: 00000000000000000000000000000000
+    RawGuidValue: b503610317d16d24db87fc0be1ca3249
   waterBlastPrefab:
-    RawGuidValue: 00000000000000000000000000000000
+    RawGuidValue: 7379c4831aa92ec42a54ccf55a8f1b83
   waterBlastEndPrefab:
-    RawGuidValue: 00000000000000000000000000000000
+    RawGuidValue: f3ba9e2a9acfffb4e94c1c1a88faadcb
   waterStartup1Prefab:
-    RawGuidValue: 00000000000000000000000000000000
+    RawGuidValue: 36beca301e242f249ac0c05976850d68
   waterSpikePrefab:
-    RawGuidValue: 00000000000000000000000000000000
+    RawGuidValue: 69656599b04e8ee4a9b22c68eb31b798
   waterStartup2Prefab:
-    RawGuidValue: 00000000000000000000000000000000
+    RawGuidValue: 46056601924d30d42bee6f246d124793
   waterSplashPrefab:
-    RawGuidValue: 00000000000000000000000000000000
+    RawGuidValue: 2dcdbc7fbb798de45aa4bee3aad32419
   targetRetargetInterval: 4
   meleeRange: 2.6
   meleeDamage: 26
@@ -390,7 +390,7 @@ MonoBehaviour:
   eliteSkills: {fileID: 0}
   extraLivesAfterHpZero: 0
   reviveDelaySeconds: 2.5
-  deathClipName: 
+  deathClipName: ArchDemon_Death
   despawnFallback: 1.5
   lootItemIds: []
   normalDropChance: 0.35

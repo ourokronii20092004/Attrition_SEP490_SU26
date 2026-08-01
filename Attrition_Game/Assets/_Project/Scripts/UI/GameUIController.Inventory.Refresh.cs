@@ -212,7 +212,7 @@ namespace Attrition.UI
             if (_controller == null) return false;
             if (_controller.IsAtCheckpoint) return false;
 
-            ShowToast("Chỉ đổi phụ kiện được khi đang nghỉ tại điểm checkpoint.",
+            ShowToast("Accessories can only be changed while resting at a checkpoint.",
                       new Color(0.55f, 0.35f, 0.12f), 2.5f);
             return true;
         }

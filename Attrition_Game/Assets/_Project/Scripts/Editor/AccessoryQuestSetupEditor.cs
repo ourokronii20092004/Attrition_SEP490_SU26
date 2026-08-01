@@ -51,6 +51,7 @@ namespace Attrition.Editor
             public string questId;
             public string title;
             public string targetId;     // Elite/Boss: enemyId. Deliver: custom key.
+            public string[] targetIds;  // Elite multi-target: mỗi enemyId chỉ tính 1 lần.
             public int amount;
             public string rewardItemId; // accessory thưởng
             public string rewardName;   // tên hiển thị (dùng trong thoại)
@@ -86,10 +87,10 @@ namespace Attrition.Editor
             // ── MAP 2 ── công cụ tấn công + duy trì
             new Q { map = 2, kind = QKind.Elite, questId = "q_m2_elite_burn",
                     title = "Embers in the Grove",
-                    targetId = "frogger", amount = 8,
+                    targetId = "gollux", amount = 1,
                     rewardItemId = "acc_burn", rewardName = "Ember Charm", exp = 320,
                     npcName = "Summer Fairy",
-                    flavor = "The marsh-spawn multiply unchecked. Burn them out and take the ember for yourself." },
+                    flavor = "A stone giant guards the grove. Break it, and take its ember for yourself." },
             new Q { map = 2, kind = QKind.Boss, questId = "q_m2_boss_regen",
                     title = "Warden of the Wood",
                     targetId = "druid", amount = 1,
@@ -100,10 +101,10 @@ namespace Attrition.Editor
             // ── MAP 3 ── phòng thủ + thể lực + nhiệm vụ đưa tin
             new Q { map = 3, kind = QKind.Elite, questId = "q_m3_elite_shield",
                     title = "Stillness in the Valley",
-                    targetId = "crab", amount = 10,
+                    targetId = "crab_frogger", targetIds = new[] { "crab", "frogger" }, amount = 2,
                     rewardItemId = "acc_shield", rewardName = "Aegis Charm", exp = 520,
                     npcName = "Summer Fairy",
-                    flavor = "The shelled ones swarm the shallows. Break their shells, and their ward becomes yours." },
+                    flavor = "The crab and the frogger guard opposite sides of the valley. Defeat one of each, and their ward becomes yours." },
             new Q { map = 3, kind = QKind.Boss, questId = "q_m3_boss_stamina",
                     title = "The Fallen Archer",
                     targetId = "elf", amount = 1,
@@ -123,24 +124,16 @@ namespace Attrition.Editor
             // ── MAP 4 ── kiểm soát + thưởng kỹ năng
             new Q { map = 4, kind = QKind.Elite, questId = "q_m4_elite_slow",
                     title = "Shadows of the Dark Wood",
-                    targetId = "nightborne", amount = 8,
+                    targetId = "undead", amount = 1,
                     rewardItemId = "acc_slow", rewardName = "Frost Charm", exp = 780,
                     npcName = "Summer Fairy",
-                    flavor = "Night-born things hunt too quickly in the dark. Slow them, and frost will heed your strikes." },
+                    flavor = "The dead still walk beneath the dark wood. Lay one to rest, and frost will heed your strikes." },
             new Q { map = 4, kind = QKind.Boss, questId = "q_m4_boss_postskill",
                     title = "Kin of the Abyss",
                     targetId = "demon_kin", amount = 1,
                     rewardItemId = "acc_postskill", rewardName = "Focus Charm", exp = 1300,
                     npcName = "Summer Fairy",
                     flavor = "My kin rules this wood by force. Unseat it, and your focus will never falter again." },
-
-            // ── MAP 5 ── phần thưởng cuối cùng (chỉ có quest elite; boss cuối là kết game)
-            new Q { map = 5, kind = QKind.Elite, questId = "q_m5_elite_lifesteal",
-                    title = "Blood of the Castle",
-                    targetId = "gollux", amount = 6,
-                    rewardItemId = "acc_lifesteal", rewardName = "Vampiric Charm", exp = 1500,
-                    npcName = "Summer Fairy",
-                    flavor = "The castle feeds on those who enter. Turn that hunger outward and drink from it yourself." },
         };
 
         [MenuItem("Tools/Attrition/NPC/Generate Accessory Quests (theo tien trinh)")]
@@ -160,7 +153,11 @@ namespace Attrition.Editor
                 if (db != null && !HasItem(db, q.rewardItemId)) missingItems.Add(q.rewardItemId);
 
                 // Deliver dùng CUSTOM key (không phải enemyId) → không kiểm trong Data/Enemies.
-                if (q.kind != QKind.Deliver && !EnemyIdExists(q.targetId)) missingEnemies.Add(q.targetId);
+                if (q.kind != QKind.Deliver)
+                {
+                    var ids = q.targetIds != null && q.targetIds.Length > 0 ? q.targetIds : new[] { q.targetId };
+                    foreach (var id in ids) if (!EnemyIdExists(id)) missingEnemies.Add(id);
+                }
 
                 created.Add(BuildQuest(q));
 
@@ -197,7 +194,9 @@ namespace Attrition.Editor
         private static QuestSO BuildQuest(Q q)
         {
             string tag = q.kind == QKind.Boss ? "boss" : q.kind == QKind.Deliver ? "deliver" : "elite";
-            string prettyTarget = q.targetId.Replace('_', ' ');
+            string prettyTarget = q.targetIds != null && q.targetIds.Length > 0
+                ? string.Join(" and ", q.targetIds)
+                : q.targetId.Replace('_', ' ');
             bool coopOnly = CoopOnlyRewards.Contains(q.rewardItemId);
 
             // Câu mô tả mục tiêu — khác nhau theo loại nhiệm vụ.
@@ -205,6 +204,8 @@ namespace Attrition.Editor
             {
                 QKind.Boss => $"Slay it, and I will give you the {q.rewardName}.",
                 QKind.Deliver => $"Carry my words to the far end of this valley. Do that, and the {q.rewardName} is yours.",
+                _ when q.targetIds != null && q.targetIds.Length > 0 =>
+                    $"Defeat one {q.targetIds[0]} and one {q.targetIds[1]}. The {q.rewardName} will be yours.",
                 _ => $"Slay {q.amount} {prettyTarget}, and the {q.rewardName} is yours.",
             };
 
@@ -241,6 +242,8 @@ namespace Attrition.Editor
             {
                 QKind.Boss => $"Defeat the boss ({prettyTarget}).",
                 QKind.Deliver => "Deliver the report to the fairy at the far end of the valley.",
+                _ when q.targetIds != null && q.targetIds.Length > 0 =>
+                    $"Defeat one {q.targetIds[0]} and one {q.targetIds[1]}.",
                 _ => $"Slay {q.amount} {prettyTarget}.",
             };
 
@@ -255,6 +258,7 @@ namespace Attrition.Editor
                 ? QuestObjectiveType.Custom
                 : QuestObjectiveType.Kill;
             quest.targetId = q.targetId;
+            quest.requiredTargetIds = q.targetIds ?? new string[0];
             quest.requiredAmount = q.amount;
             quest.expReward = q.exp;
             quest.itemRewards = new[] { new QuestItemReward { itemId = q.rewardItemId, amount = 1 } };

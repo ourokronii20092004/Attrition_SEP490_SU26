@@ -281,7 +281,7 @@ MonoBehaviour:
   fireBoltPrefab:
     RawGuidValue: e5ac07bdad8d05c4fad4d9d96d9e85ac
   fireBreathPrefab:
-    RawGuidValue: 00000000000000000000000000000000
+    RawGuidValue: a8822fb17b441b24b9aa8ed0f8af8d17
   targetRetargetInterval: 4
   dashSpeed: 18
   dashDuration: 0.45
@@ -555,8 +555,10 @@ MonoBehaviour:
   reviveDelaySeconds: 2.5
   deathClipName: 
   despawnFallback: 4.5
-  lootItemIds: []
-  normalDropChance: 0.35
+  lootItemIds:
+  - iron_chest
+  - skill_fire
+  normalDropChance: 1
   droppedItemPrefab:
     RawGuidValue: 00000000000000000000000000000000
   isRematchBoss: 0

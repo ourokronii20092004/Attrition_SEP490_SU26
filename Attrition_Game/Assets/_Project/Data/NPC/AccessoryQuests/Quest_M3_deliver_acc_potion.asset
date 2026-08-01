@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b5c8be0c0a09a34dad0f05f7e17282a, type: 3}
+  m_Name: Quest_M3_deliver_acc_potion
+  m_EditorClassIdentifier: Attrition.Data::Attrition.Data.QuestSO
+  questId: q_m3_deliver_potion
+  title: Word from the Valley's Mouth
+  description: '[Map 3] Deliver the report to the fairy at the far end of the valley.
+    Reward: Alchemist Charm (co-op only).'
+  objectiveType: 1
+  targetId: deliver_m3_report
+  requiredTargetIds: []
+  requiredAmount: 1
+  expReward: 600
+  itemRewards:
+  - itemId: acc_potion
+    amount: 1
+  dialogueNotStarted: {fileID: 11400000, guid: 257e821f5c9417e43b003bb1591f223f, type: 2}
+  dialogueInProgress: {fileID: 11400000, guid: 81d045308280fa84b9ae57572fcd18d1, type: 2}
+  dialogueCompleted: {fileID: 11400000, guid: ace97b71f3abf6948a6f5da1d5fcf933, type: 2}
+  dialogueFinished: {fileID: 11400000, guid: 0903312526086bf408c3de2c5ee5e9ee, type: 2}

@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71a02887f9d289c47b546a0439067775, type: 3}
+  m_Name: Dlg_q_m3_elite_shield_Offer
+  m_EditorClassIdentifier: Attrition.Data::Attrition.Data.DialogueSO
+  lines:
+  - speakerName: Summer Fairy
+    text: The crab and the frogger guard opposite sides of the valley. Defeat one
+      of each, and their ward becomes yours.
+  - speakerName: Summer Fairy
+    text: Defeat one crab and one frogger. The Aegis Charm will be yours.
+  - speakerName: Summer Fairy
+    text: But a charm like this only binds when two souls walk together. Alone, you
+      will earn nothing but the deed.
