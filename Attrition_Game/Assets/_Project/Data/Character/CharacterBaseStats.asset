@@ -22,8 +22,8 @@ MonoBehaviour:
   moveSpeed: 8
   dashSpeed: 15
   slideSpeed: 10
-  jumpForce: 11
-  doubleJumpForce: 8
+  jumpForce: 12
+  doubleJumpForce: 9
   attackSpeed: 1
   chargeDamageMultiplier: 1.5
   normalAttackCooldown: 0.5
