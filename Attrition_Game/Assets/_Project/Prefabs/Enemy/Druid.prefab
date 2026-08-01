@@ -232,7 +232,7 @@ MonoBehaviour:
   wakeUpRadius: 0
   sleepReturnDelay: 3
   returnToSleepSpeed: 6
-  sleepOnCeiling: 1
+  sleepOnCeiling: 0
   sleepSurfaceLayer:
     serializedVersion: 2
     m_Bits: 0
@@ -241,6 +241,12 @@ MonoBehaviour:
     m_Bits: 64
   wallCheckDistance: 0.8
   wallCheckHeightOffset: 0.5
+  eyeHeightOffset: 0.6
+  sightMemoryDuration: 1.5
+  canStepUp: 0
+  stepUpMaxHeight: 1.2
+  stepUpForwardSpeed: 4
+  stepUpCooldown: 0.6
   canEvadeJump: 0
   evadeTriggerDistance: 2
   jumpForce: 12
@@ -252,6 +258,8 @@ MonoBehaviour:
   lungeForwardSpeed: 11
   lungeJumpForce: 10
   facingDeadZone: 0.3
+  leashToRoom: 0
+  leashPadding: 1.5
   _CurrentState: 0
   _NetSpeed: 0
   _NetFacingDir: 1
