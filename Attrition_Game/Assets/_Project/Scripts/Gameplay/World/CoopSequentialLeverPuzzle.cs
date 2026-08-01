@@ -4,22 +4,21 @@ using UnityEngine;
 namespace Attrition.Gameplay.World
 {
     /// <summary>
-    /// Puzzle COOP "gạt cần nối tiếp" (chỉ coop, ẩn ở solo — giống <see cref="CoopPlateDoorController"/>):
-    ///   - Chặng i gồm 1 Lever + 1 Door. Gạt lever[i] → door[i] mở.
-    ///   - Bố trí sao cho lever[i+1] nằm SAU door[i]: P1 gạt lever[0] mở door[0] cho P2 đi vào,
-    ///     P2 gạt lever[1] mở door[1] để cả hai đi tiếp. Tính "nối tiếp" đến từ gating vật lý (cửa chặn).
+    /// Puzzle COOP "dẫm plate nối tiếp" (chỉ coop, ẩn ở solo — giống <see cref="CoopPlateDoorController"/>):
+    ///   - Chặng i gồm 1 PuzzlePlate + 1 Door. Dẫm plate[i] → door[i] mở.
+    ///   - Bố trí sao cho plate[i+1] nằm SAU door[i]: P1 dẫm plate[0] mở door[0] cho P2 đi vào,
+    ///     P2 dẫm plate[1] mở door[1] để cả hai đi tiếp. Tính "nối tiếp" đến từ gating vật lý.
     ///
-    /// SOLO: ẩn toàn bộ lever + MỞ SẴN mọi cửa để 1 người không bị kẹt.
-    ///
-    /// Host đọc Lever.FlipCount rồi mở Door tương ứng; client thấy cửa mở qua Door.IsOpen (đã networked).
-    /// Gắn lên 1 GameObject (NetworkObject). Kéo lever[] và door[] KHỚP INDEX (lever[i] ↔ door[i]).
+    /// SOLO: ẩn toàn bộ plate + cửa để một người đi qua, giống CoopPlateDoorController.
+    /// Host đọc PuzzlePlate.IsActive rồi mở Door tương ứng; cửa đã mở không đóng lại.
+    /// Kéo plates[] và doors[] KHỚP INDEX (plate[i] ↔ door[i]).
     /// </summary>
     public class CoopSequentialLeverPuzzle : NetworkBehaviour
     {
-        [Header("---- CÁC CHẶNG (lever[i] ↔ door[i], khớp index) ----")]
-        [Tooltip("Cần gạt từng chặng. Gạt lever[i] → mở door[i].")]
-        [SerializeField] private Lever[] levers = new Lever[0];
-        [Tooltip("Cửa từng chặng. Phải cùng số lượng + khớp index với levers.")]
+        [Header("---- CÁC CHẶNG (plate[i] ↔ door[i], khớp index) ----")]
+        [Tooltip("Plate từng chặng. Dẫm plate[i] → mở door[i].")]
+        [SerializeField] private PuzzlePlate[] plates = new PuzzlePlate[0];
+        [Tooltip("Cửa từng chặng. Phải cùng số lượng + khớp index với plates.")]
         [SerializeField] private Door[] doors = new Door[0];
 
         private bool _soloHandled;
@@ -29,9 +28,9 @@ namespace Attrition.Gameplay.World
             // SOLO: puzzle 2 người vô nghĩa → ẩn lever + mở sẵn mọi cửa để đi qua thoải mái.
             if (Attrition.Persistence.GameLaunch.Mode != Attrition.Persistence.LaunchMode.Coop)
             {
-                if (levers != null)
-                    foreach (var l in levers)
-                        if (l != null) l.gameObject.SetActive(false);
+                if (plates != null)
+                    foreach (var plate in plates)
+                        if (plate != null) plate.gameObject.SetActive(false);
 
                 if (doors != null)
                     foreach (var d in doors)
@@ -43,12 +42,12 @@ namespace Attrition.Gameplay.World
 
         public override void FixedUpdateNetwork()
         {
-            if (_soloHandled || !HasStateAuthority || levers == null || doors == null) return;
+            if (_soloHandled || !HasStateAuthority || plates == null || doors == null) return;
 
-            int n = Mathf.Min(levers.Length, doors.Length);
+            int n = Mathf.Min(plates.Length, doors.Length);
             for (int i = 0; i < n; i++)
             {
-                if (levers[i] != null && doors[i] != null && levers[i].FlipCount > 0)
+                if (plates[i] != null && doors[i] != null && plates[i].IsActive)
                     doors[i].Open(); // idempotent; mở vĩnh viễn (không đóng lại)
             }
         }

@@ -148,7 +148,7 @@ Rigidbody2D:
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 0
+  m_Constraints: 4
 --- !u!70 &4760481864510571001
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -318,15 +318,15 @@ MonoBehaviour:
     _value: 0
   _AttackLockedFacingDir: 1
   thunderArrowPrefab:
-    RawGuidValue: 00000000000000000000000000000000
+    RawGuidValue: 78277545f2a2d674a8af479979e9959c
   thunderBirdPrefab:
-    RawGuidValue: 00000000000000000000000000000000
+    RawGuidValue: 890cbc0bd8a535b48b6a790481128800
   thunderHitPrefab:
-    RawGuidValue: 00000000000000000000000000000000
+    RawGuidValue: 499f7efe70e6e4646a5bf9dbb6a70d4c
   thunderSplashPrefab:
-    RawGuidValue: 00000000000000000000000000000000
+    RawGuidValue: b65d71607d1849d4c8709e470a6d5829
   thunderStrikePrefab:
-    RawGuidValue: 00000000000000000000000000000000
+    RawGuidValue: 8dbb5a8d6eb01864e93729b99efbdaed
   targetRetargetInterval: 4
   meleeRange: 2
   meleeDamage: 18
@@ -383,10 +383,11 @@ MonoBehaviour:
   eliteSkills: {fileID: 0}
   extraLivesAfterHpZero: 0
   reviveDelaySeconds: 2.5
-  deathClipName: 
+  deathClipName: Elf_Death
   despawnFallback: 1.5
-  lootItemIds: []
-  normalDropChance: 0.35
+  lootItemIds:
+  - skill_thunder
+  normalDropChance: 1
   droppedItemPrefab:
     RawGuidValue: 00000000000000000000000000000000
   isRematchBoss: 0

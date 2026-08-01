@@ -73,6 +73,7 @@ namespace Attrition.Gameplay.NPC
 
         /// <summary>Tiến độ hiện tại (VD: số quái đã giết).</summary>
         [Networked] public int QuestProgress { get; set; }
+        [Networked] private int QuestTargetMask { get; set; }
 
         //  PUBLIC ACCESSORS (DialogueUI đọc)
 
@@ -315,7 +316,8 @@ namespace Attrition.Gameplay.NPC
 
                 QuestChainIndex = (byte)i;
                 QuestState = found.state;
-                QuestProgress = found.progress;
+                QuestProgress = DecodeProgress(Quest, found.progress);
+                QuestTargetMask = DecodeTargetMask(Quest, found.progress, found.targetMask);
 
                 if (found.state != 3) return;  // đang dở → giữ nguyên vị trí chuỗi
 
@@ -325,9 +327,24 @@ namespace Attrition.Gameplay.NPC
                     QuestChainIndex = (byte)(i + 1);
                     QuestState = 0;
                     QuestProgress = 0;
+                QuestTargetMask = 0;
                 }
             }
         }
+
+        private static bool IsMultiTarget(QuestSO q) =>
+            q != null && q.requiredTargetIds != null && q.requiredTargetIds.Length > 0;
+
+        // Keep backend compatibility: world-state only stores one progress integer.
+        // Low byte = visible progress, remaining bits = completed target mask.
+        private static int EncodeProgress(QuestSO q, int progress, int targetMask) =>
+            IsMultiTarget(q) ? (progress & 0xff) | (targetMask << 8) : progress;
+
+        private static int DecodeProgress(QuestSO q, int saved) =>
+            IsMultiTarget(q) ? saved & 0xff : saved;
+
+        private static int DecodeTargetMask(QuestSO q, int saved, int explicitMask) =>
+            !IsMultiTarget(q) ? 0 : explicitMask != 0 ? explicitMask : saved >> 8;
 
         private static Attrition.Persistence.QuestProgressEntry FindEntry(
             Attrition.Persistence.QuestProgressEntry[] entries, string questId)
@@ -409,6 +426,7 @@ namespace Attrition.Gameplay.NPC
                 QuestChainIndex = (byte)(QuestChainIndex + 1);
                 QuestState = 0;      // nhiệm vụ mới: chờ player nhận
                 QuestProgress = 0;
+                QuestTargetMask = 0;
             }
         }
 
@@ -425,12 +443,26 @@ namespace Attrition.Gameplay.NPC
             foreach (var npc in npcs)
             {
                 if (!npc.HasStateAuthority) continue;
-                if (npc.quest == null || npc.QuestState != 1) continue;
-                if (npc.quest.objectiveType != QuestObjectiveType.Kill) continue;
-                if (npc.quest.targetId != enemyId) continue;
+                var active = npc.Quest;
+                if (active == null || npc.QuestState != 1) continue;
+                if (active.objectiveType != QuestObjectiveType.Kill) continue;
 
-                npc.QuestProgress++;
-                if (npc.QuestProgress >= npc.Quest.requiredAmount)
+                if (active.requiredTargetIds != null && active.requiredTargetIds.Length > 0)
+                {
+                    int targetIndex = System.Array.IndexOf(active.requiredTargetIds, enemyId);
+                    if (targetIndex < 0 || targetIndex >= 31) continue;
+                    int bit = 1 << targetIndex;
+                    if ((npc.QuestTargetMask & bit) != 0) continue;
+                    npc.QuestTargetMask |= bit;
+                    npc.QuestProgress++;
+                }
+                else
+                {
+                    if (active.targetId != enemyId) continue;
+                    npc.QuestProgress++;
+                }
+
+                if (npc.QuestProgress >= active.requiredAmount)
                     npc.QuestState = 2; // Completed
             }
         }
@@ -446,12 +478,13 @@ namespace Attrition.Gameplay.NPC
             foreach (var npc in npcs)
             {
                 if (!npc.HasStateAuthority) continue;
-                if (npc.quest == null || npc.QuestState != 1) continue;
-                if (npc.quest.objectiveType != QuestObjectiveType.Custom) continue;
-                if (npc.quest.targetId != objectiveKey) continue;
+                var active = npc.Quest;
+                if (active == null || npc.QuestState != 1) continue;
+                if (active.objectiveType != QuestObjectiveType.Custom) continue;
+                if (active.targetId != objectiveKey) continue;
 
                 npc.QuestProgress++;
-                if (npc.QuestProgress >= npc.Quest.requiredAmount)
+                if (npc.QuestProgress >= active.requiredAmount)
                     npc.QuestState = 2; // Completed
             }
         }
@@ -486,7 +519,10 @@ namespace Attrition.Gameplay.NPC
                     {
                         questId = q.questId,
                         state = state,
-                        progress = isCurrent ? npc.QuestProgress : q.requiredAmount
+                        progress = isCurrent
+                            ? EncodeProgress(q, npc.QuestProgress, npc.QuestTargetMask)
+                            : q.requiredAmount,
+                        targetMask = isCurrent ? npc.QuestTargetMask : 0
                     });
                 }
             }

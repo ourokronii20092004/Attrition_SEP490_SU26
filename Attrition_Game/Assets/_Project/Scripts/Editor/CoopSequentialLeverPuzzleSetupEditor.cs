@@ -6,14 +6,14 @@ using Attrition.Gameplay.World;
 namespace Attrition.Editor
 {
     /// <summary>
-    /// Tool tạo nhanh puzzle COOP "gạt cần nối tiếp" 2 chặng: 2 Lever + 2 Door + 1 controller.
-    /// Menu: Tools/Attrition/Create Coop Sequential Lever Puzzle
-    /// Bố trí gợi ý: Lever_0 + Door_0 ở phòng ngoài; Lever_1 + Door_1 nằm SAU Door_0 (P2 chỉ vào được
-    /// khi P1 gạt Lever_0 mở Door_0). Sau khi chạy: đặt lại vị trí, gán sprite, SAVE scene để Fusion bake.
+    /// Tool tạo nhanh puzzle COOP "dẫm plate nối tiếp" 2 chặng: 2 PuzzlePlate + 2 Door + 1 controller.
+    /// Menu: Tools/Attrition/Create Coop Sequential Plate Puzzle
+    /// Bố trí gợi ý: Plate_0 + Door_0 ở phòng ngoài; Plate_1 + Door_1 nằm SAU Door_0 (P2 chỉ vào được
+    /// khi P1 dẫm Plate_0 mở Door_0). Sau khi chạy: đặt lại vị trí, gán sprite, SAVE scene để Fusion bake.
     /// </summary>
     public static class CoopSequentialLeverPuzzleSetupEditor
     {
-        [MenuItem("Tools/Attrition/Create Coop Sequential Lever Puzzle")]
+        [MenuItem("Tools/Attrition/Create Coop Sequential Plate Puzzle")]
         public static void CreatePuzzle()
         {
             var root = new GameObject("CoopSequentialLeverPuzzle");
@@ -23,22 +23,22 @@ namespace Attrition.Editor
             if (sv != null) root.transform.position = sv.pivot;
 
             var door0 = CreateDoor(root, "Door_0", new Vector3(3f, 1.5f, 0f));
-            var lever0 = CreateLever(root, "Lever_0", new Vector3(-2f, 0f, 0f));
+            var plate0 = CreatePlate(root, "Plate_0", new Vector3(-2f, 0f, 0f));
             var door1 = CreateDoor(root, "Door_1", new Vector3(9f, 1.5f, 0f));
-            var lever1 = CreateLever(root, "Lever_1", new Vector3(6f, 0f, 0f));
+            var plate1 = CreatePlate(root, "Plate_1", new Vector3(6f, 0f, 0f));
 
             var ctrlGo = new GameObject("Controller");
             ctrlGo.transform.SetParent(root.transform);
             ctrlGo.transform.localPosition = Vector3.zero;
             ctrlGo.AddComponent<NetworkObject>();
             var ctrl = ctrlGo.AddComponent<CoopSequentialLeverPuzzle>();
-            SetPrivateArray(ctrl, "levers", new Object[] { lever0, lever1 });
+            SetPrivateArray(ctrl, "plates", new Object[] { plate0, plate1 });
             SetPrivateArray(ctrl, "doors", new Object[] { door0, door1 });
 
             Selection.activeGameObject = root;
             EditorGUIUtility.PingObject(root);
-            Debug.Log("[Attrition] Đã tạo Coop Sequential Lever Puzzle (2 chặng). Đặt Lever_1/Door_1 SAU " +
-                      "Door_0 để cần P2 vào sau khi P1 mở cửa. Gán sprite, SAVE scene để Fusion bake NetworkObject.");
+            Debug.Log("[Attrition] Đã tạo Coop Sequential Plate Puzzle (2 chặng). Đặt Plate_1/Door_1 SAU " +
+                      "Door_0 để P2 vào sau khi P1 mở cửa. Gán sprite, SAVE scene để Fusion bake NetworkObject.");
         }
 
         private static Door CreateDoor(GameObject root, string name, Vector3 localPos)
@@ -58,21 +58,17 @@ namespace Attrition.Editor
             return door;
         }
 
-        private static Lever CreateLever(GameObject root, string name, Vector3 localPos)
+        private static PuzzlePlate CreatePlate(GameObject root, string name, Vector3 localPos)
         {
             var go = new GameObject(name);
             go.transform.SetParent(root.transform);
             go.transform.localPosition = localPos;
-            int enemyLayer = LayerMask.NameToLayer("Enemy");
-            if (enemyLayer >= 0) go.layer = enemyLayer; // để đòn đánh player (targetLayers) quét trúng
             go.AddComponent<NetworkObject>();
             var col = go.AddComponent<BoxCollider2D>();
-            col.size = new Vector2(0.6f, 1.4f);
-            col.isTrigger = false;
-            var visual = CreateVisual(go, "LeverVisual", new Vector2(0.5f, 1.4f), new Color(0.7f, 0.6f, 0.2f));
-            var lever = go.AddComponent<Lever>();
-            SetPrivate(lever, "shakeTarget", visual.transform);
-            return lever;
+            col.size = new Vector2(1.2f, 0.4f);
+            col.isTrigger = true;
+            CreateVisual(go, "PlateVisual", new Vector2(1.2f, 0.25f), new Color(0.7f, 0.6f, 0.2f));
+            return go.AddComponent<PuzzlePlate>();
         }
 
         private static GameObject CreateVisual(GameObject parent, string name, Vector2 size, Color color)

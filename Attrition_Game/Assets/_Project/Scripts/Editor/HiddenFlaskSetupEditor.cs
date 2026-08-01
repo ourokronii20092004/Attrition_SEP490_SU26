@@ -1,14 +1,16 @@
 #if UNITY_EDITOR
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Fusion;
 using Attrition.Gameplay.World;
 
 namespace Attrition.Editor
 {
     /// <summary>
-    /// Dựng prefab "BÌNH HP GIẤU TRONG MAP" (4 cái, map 1-4) + bật hiệu ứng NHẤP NHÔ cho mọi vật phẩm
-    /// nằm dưới sàn.
+    /// Dựng prefab "BÌNH HP GIẤU TRONG MAP" (9 cái: map 1-4 mỗi map 2, map 5 có 1) + bật hiệu ứng
+    /// NHẤP NHÔ cho mọi vật phẩm nằm dưới sàn.
     ///
     /// CƠ CHẾ SEKIRO (đã có sẵn trong code, tool chỉ nối lại):
     ///   nhặt → `PickupItem` kind = MaxHealthCharge → `PotionSystem.IncreaseMaxHealthCharges(+1)`
@@ -17,9 +19,7 @@ namespace Attrition.Editor
     ///        → lúc này mới thấy bình mới.
     /// Đúng như yêu cầu: nhặt được → đi rest → bình HP mới cộng thêm.
     ///
-    /// Cap cứng là `PotionConfigSO.hardMaxHealthCharges` (mặc định 8). Tổng thiết kế 9 bình
-    /// (5 elite + 4 giấu) nên PHẢI nâng cap ≥ 9, nếu không bình thứ 9 bị `Mathf.Min` bỏ im lặng —
-    /// tool tự nâng và báo lại.
+    /// Có 9 pickup giấu. Cap cần ít nhất = số bình khởi đầu + 9; tool tự nâng và báo lại.
     ///
     /// Menu: Tools/Attrition/World/Setup Hidden HP Flasks (+ hieu ung noi)
     /// </summary>
@@ -28,8 +28,51 @@ namespace Attrition.Editor
         private const string PrefabDir = "Assets/_Project/Prefabs";
         private const string FlaskPrefabPath = PrefabDir + "/HiddenHealthFlask.prefab";
 
-        /// <summary>Tổng số bình thiết kế: 5 rơi từ elite + 4 giấu trong map 1-4.</summary>
-        private const int TotalFlasks = 9;
+        /// <summary>Tổng pickup giấu: map 1-4 mỗi map 2, map 5 có 1.</summary>
+        private const int HiddenFlaskCount = 9;
+
+        [MenuItem("Tools/Attrition/World/Add Hidden HP Flasks To Current Map")]
+        public static void AddToCurrentMap()
+        {
+            var scene = SceneManager.GetActiveScene();
+            int wanted = scene.name.Contains("Map 5") ? 1 : scene.name.Contains("Map ") ? 2 : 0;
+            if (wanted == 0)
+            {
+                Debug.LogError("[HiddenFlask] Scene hiện tại không phải Map 1-5.");
+                return;
+            }
+
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(FlaskPrefabPath);
+            if (prefab == null)
+            {
+                Setup();
+                prefab = AssetDatabase.LoadAssetAtPath<GameObject>(FlaskPrefabPath);
+            }
+            if (prefab == null)
+            {
+                Debug.LogError($"[HiddenFlask] Không tạo được prefab: {FlaskPrefabPath}");
+                return;
+            }
+
+            int existing = 0;
+            foreach (var root in scene.GetRootGameObjects())
+                if (root.name.StartsWith("HiddenHealthFlask")) existing++;
+
+            Vector3 origin = SceneView.lastActiveSceneView != null
+                ? SceneView.lastActiveSceneView.pivot
+                : Vector3.zero;
+            for (int i = existing; i < wanted; i++)
+            {
+                var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
+                instance.name = $"HiddenHealthFlask_{i + 1}";
+                instance.transform.position = origin + Vector3.right * (i - existing);
+                Undo.RegisterCreatedObjectUndo(instance, "Add Hidden HP Flask");
+            }
+
+            if (existing < wanted) EditorSceneManager.MarkSceneDirty(scene);
+            Debug.Log($"[HiddenFlask] {scene.name}: {Mathf.Max(existing, wanted)}/{wanted} bình. " +
+                      "Di chuyển bình mới vào đường ẩn rồi Save scene để Fusion bake NetworkObject.");
+        }
 
         [MenuItem("Tools/Attrition/World/Setup Hidden HP Flasks (+ hieu ung noi)")]
         public static void Setup()
@@ -46,13 +89,14 @@ namespace Attrition.Editor
                 "[HiddenFlask] XONG.\n" +
                 $"• Prefab bình giấu: {FlaskPrefabPath}\n" +
                 "• Hiệu ứng nhấp nhô: đã gắn FloatBobEffect vào DroppedItem + PickupItem (item rơi ra & bình nhặt).\n\n" +
-                "CÁCH ĐẶT 4 BÌNH GIẤU (làm tay, tool không đoán được đường ẩn):\n" +
-                "  1. Mở map 1..4, kéo HiddenHealthFlask vào scene.\n" +
-                "  2. Đặt ở CUỐI ĐƯỜNG ẨN — chỗ phải phá tường (BreakableObject), đi qua HiddenGround,\n" +
+                "CÁCH ĐẶT 9 BÌNH GIẤU (làm tay, tool không đoán được đường ẩn):\n" +
+                "  1. Mở từng map và kéo HiddenHealthFlask vào scene.\n" +
+                "  2. Map 1-4: mỗi map ĐÚNG 2 bình. Map 5: ĐÚNG 1 bình.\n" +
+                "  3. Đặt ở cuối đường ẩn — chỗ phải phá tường (BreakableObject), đi qua HiddenGround,\n" +
                 "     hoặc nhảy tới bằng double jump / shadow dash.\n" +
-                "  3. SAVE scene (Fusion bake NetworkObject).\n" +
-                "  4. Mỗi map ĐÚNG 1 bình → tổng 4 (map 5 không có, vì 5 bình còn lại rơi từ elite).\n\n" +
-                "LƯU Ý: nhặt xong bình mới KHÔNG hiện ngay — phải đi REST mới thấy (đúng kiểu Sekiro).");
+                "  4. SAVE scene và bake Fusion scene objects.\n" +
+                "  5. Tổng cả 5 map phải là 9 bình.\n\n" +
+                "LƯU Ý: nhặt xong bình mới KHÔNG hiện ngay — phải đi REST mới thấy.");
         }
 
         /// <summary>
@@ -81,7 +125,9 @@ namespace Attrition.Editor
                 var visual = new GameObject("BobVisual");
                 visual.transform.SetParent(go.transform, false);
                 var sr = visual.AddComponent<SpriteRenderer>();
-                sr.color = new Color(1f, 0.45f, 0.5f);   // đỏ hồng — gán sprite bình thật sau
+                sr.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(
+                    "Assets/_Project/Art/UI_Elements/16x16/hp potion.png");
+                sr.color = Color.white;
                 sr.drawMode = SpriteDrawMode.Sliced;
                 sr.size = new Vector2(0.7f, 0.9f);
                 int playerLayer = SortingLayer.NameToID("Player");
@@ -91,8 +137,7 @@ namespace Attrition.Editor
                 go.AddComponent<FloatBobEffect>();
 
                 PrefabUtility.SaveAsPrefabAsset(go, FlaskPrefabPath);
-                Debug.Log($"[HiddenFlask] Đã tạo {FlaskPrefabPath} (PickupItem: MaxHealthCharge +1). " +
-                          "Gán sprite bình thật vào child 'BobVisual'.");
+                Debug.Log($"[HiddenFlask] Đã tạo {FlaskPrefabPath} (PickupItem: MaxHealthCharge +1).");
             }
             finally
             {
@@ -129,10 +174,8 @@ namespace Attrition.Editor
         }
 
         /// <summary>
-        /// Nâng cap bình máu lên >= tổng số bình thiết kế.
-        ///
-        /// VÌ SAO: `PotionSystem.IncreaseMaxHealthCharges` kẹp bằng `Mathf.Min(hardMaxHealthCharges, ...)`.
-        /// Cap mặc định 8 < 9 bình thiết kế → bình cuối cùng bị bỏ IM LẶNG, player nhặt mà không tăng gì.
+        /// Nâng cap bình máu lên >= số bình khởi đầu + tổng pickup giấu.
+        /// `IncreaseMaxHealthCharges` kẹp bằng hard cap nên cap thiếu sẽ làm pickup biến mất mà không tăng.
         /// </summary>
         private static void RaiseFlaskCap()
         {
@@ -142,23 +185,25 @@ namespace Attrition.Editor
                 var cfg = AssetDatabase.LoadAssetAtPath<Attrition.Data.PotionConfigSO>(path);
                 if (cfg == null) continue;
 
+                int requiredCap = cfg.startingHealthCharges + HiddenFlaskCount;
                 var so = new SerializedObject(cfg);
                 var prop = so.FindProperty("hardMaxHealthCharges");
                 if (prop == null) continue;
 
-                if (prop.intValue >= TotalFlasks)
+                if (prop.intValue >= requiredCap)
                 {
                     Debug.Log($"[HiddenFlask] {System.IO.Path.GetFileName(path)}: cap bình máu = "
-                              + $"{prop.intValue} (>= {TotalFlasks}) — không cần sửa.");
+                              + $"{prop.intValue} (>= {requiredCap}) — không cần sửa.");
                     continue;
                 }
 
                 int old = prop.intValue;
-                prop.intValue = TotalFlasks;
+                prop.intValue = requiredCap;
                 so.ApplyModifiedPropertiesWithoutUndo();
                 EditorUtility.SetDirty(cfg);
                 Debug.Log($"[HiddenFlask] {System.IO.Path.GetFileName(path)}: nâng cap bình máu "
-                          + $"{old} → {TotalFlasks} (5 elite + 4 giấu). Không nâng thì bình thứ 9 bị bỏ im lặng.");
+                          + $"{old} → {requiredCap} ({cfg.startingHealthCharges} khởi đầu + "
+                          + $"{HiddenFlaskCount} pickup giấu).");
             }
         }
 

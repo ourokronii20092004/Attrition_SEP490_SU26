@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.SkillSO
   itemId: skill_earth
-  displayName: Stone Skill
-  description: 
-  icon: {fileID: 21300000, guid: 20db84bd0629e914596423d41acbddf8, type: 3}
+  displayName: Earth Bump
+  description: Erupts the ground and knocks enemies away.
+  icon: {fileID: 21300000, guid: 834ee2f84e8ab3d4abf757d550db5cfd, type: 3}
   maxStack: 1
   isKeyItem: 0
   element: 2
@@ -25,22 +25,23 @@ MonoBehaviour:
   activeStartFrac: 0.35
   activeEndFrac: 0.6
   damageType: 1
-  baseDamage: 45
-  apScaling: 1
-  knockbackForce: 7
+  baseDamage: 16
+  apScaling: 0.6
+  knockbackForce: 8
   tickInterval: 0
   sweetSpotRadius: 0
   sweetSpotMultiplier: 1.5
-  delivery: 0
+  delivery: 2
   hitShape: 1
   range: 2.5
   angle: 360
   rectSize: {x: 3, y: 1.5}
-  hitboxOffset: {x: 1, y: 0}
+  hitboxOffset: {x: 1.3, y: 0}
   projectilePrefab:
-    RawGuidValue: 00000000000000000000000000000000
-  projectileSpeed: 12
+    RawGuidValue: 72e9c36856e47dc4b94fa50888b41d79
+  projectileSpeed: 0
   projectileCount: 1
-  spreadAngle: 20
+  spreadAngle: 0
+  projectileInterval: 0
   castVfxPrefab: {fileID: 0}
   vfxLifetime: 1.5

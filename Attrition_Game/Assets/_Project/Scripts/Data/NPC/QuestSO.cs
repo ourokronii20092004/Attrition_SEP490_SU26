@@ -45,6 +45,9 @@ namespace Attrition.Data
         public QuestObjectiveType objectiveType = QuestObjectiveType.Kill;
         [Tooltip("Kill: enemyId (VD: 'slime').\nCustom: key tùy ý (VD: 'puzzle_gate_1').")]
         public string targetId;
+        [Tooltip("Kill quest only: optional distinct enemy IDs. Each ID counts once; all are required. " +
+                 "Leave empty to use targetId + requiredAmount.")]
+        public string[] requiredTargetIds = new string[0];
         [Tooltip("Số lượng cần hoàn thành. VD: 5 = giết 5 con.")]
         public int requiredAmount = 1;
 

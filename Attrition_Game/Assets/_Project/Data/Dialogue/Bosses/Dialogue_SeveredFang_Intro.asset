@@ -14,12 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.DialogueSO
   lines:
   - speakerName: Severed Fang
-    text: "L\u1EA1i c\xF3 k\u1EBB l\u1EA1 m\u1EB7t d\xE1m b\u01B0\u1EDBc ch\xE2n
-      v\xE0o l\xE3nh \u0111\u1ECBa c\u1EE7a ta sao?"
+    text: Another trespasser steps into my domain.
   - speakerName: Severed Fang
-    text: "H\u01A1i th\u1EDF c\u1EE7a k\u1EBB y\u1EBFu \u0111u\u1ED1i... Th\u1EADt
-      n\u1EF1c c\u01B0\u1EDDi!"
-  - speakerName: Severed Fang
-    text: "H\xE3y \u0111\u1EC3 thanh ki\u1EBFm n\xE0y k\u1EBFt th\xFAc s\u1EF1 \u0111au
-      kh\u1ED5 c\u1EE7a ng\u01B0\u01A1i. B\u1ECF m\u1EA1ng t\u1EA1i \u0111\xE2y \u0111i,
-      k\u1EBB ngo\u1EA1i \u0111\u1EA1o!"
+    text: Your fear gives you away. Draw your weapon.

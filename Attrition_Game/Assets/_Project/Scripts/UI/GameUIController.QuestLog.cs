@@ -44,7 +44,7 @@ namespace Attrition.UI
 
             if (shown == 0)
             {
-                var empty = new Label("Chưa nhận nhiệm vụ nào.");
+                var empty = new Label("No active quests.");
                 empty.AddToClassList("tracker-entry-progress");
                 empty.style.paddingLeft = 6;
                 empty.style.paddingTop = 10;
@@ -73,9 +73,9 @@ namespace Attrition.UI
 
             // Xong mục tiêu → nhắc đi nộp (player hay quên phải quay lại NPC nào).
             var progress = new Label(isComplete
-                ? $"Hoàn thành — quay lại {npc.NpcName} để nhận thưởng"
+                ? $"Complete — return to {npc.NpcName} to claim your reward"
                 : $"{npc.QuestProgress}/{q.requiredAmount} "
-                  + (q.objectiveType == QuestObjectiveType.Kill ? "đã tiêu diệt" : "đã hoàn thành"));
+                  + (q.objectiveType == QuestObjectiveType.Kill ? "defeated" : "completed"));
             progress.AddToClassList("tracker-entry-progress");
             progress.style.whiteSpace = WhiteSpace.Normal;
             entry.Add(progress);

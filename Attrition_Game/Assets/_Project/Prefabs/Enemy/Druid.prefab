@@ -15,6 +15,11 @@ GameObject:
   - component: {fileID: 4555258441647066427}
   - component: {fileID: 6845569757427119661}
   - component: {fileID: 950538800078509192}
+  - component: {fileID: -4787869486262244591}
+  - component: {fileID: 5797850475781491458}
+  - component: {fileID: 6700211940102640366}
+  - component: {fileID: 4747612980675242751}
+  - component: {fileID: 2282225257019099070}
   m_Layer: 0
   m_Name: Druid
   m_TagString: Untagged
@@ -145,7 +150,7 @@ Rigidbody2D:
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 0
+  m_Constraints: 4
 --- !u!70 &4555258441647066427
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -212,9 +217,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8c81968cd96973f49a1f243829b882bc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Enemy.Druid.DruidBossAI
-  animationComp: {fileID: 0}
+  animationComp: {fileID: 6700211940102640366}
   combatComp: {fileID: 0}
-  controller: {fileID: 0}
+  controller: {fileID: 4747612980675242751}
   eliteSkills: {fileID: 0}
   viewRadius: 5
   patrolRadius: 3
@@ -267,15 +272,15 @@ MonoBehaviour:
     _value: 0
   _AttackLockedFacingDir: 1
   woodProjectilePrefab:
-    RawGuidValue: 00000000000000000000000000000000
+    RawGuidValue: 5f91460e4a2e9ae4ea1bf20874d8d57e
   windBeamPrefab:
-    RawGuidValue: 00000000000000000000000000000000
+    RawGuidValue: 7d9620d7a35ac764bbbb7ef0795fdd81
   windSwordPrefab:
-    RawGuidValue: 00000000000000000000000000000000
+    RawGuidValue: 244e5800fa69986439014e8041774391
   airBurstPrefab:
-    RawGuidValue: 00000000000000000000000000000000
+    RawGuidValue: 329f701bf2d215d4282e7106743ad40f
   airExplosionPrefab:
-    RawGuidValue: 00000000000000000000000000000000
+    RawGuidValue: 1e4b8dc1b8615bc40aaba34e96f435f0
   targetRetargetInterval: 4
   meleeRange: 2.2
   meleeDamage: 16
@@ -315,6 +320,129 @@ MonoBehaviour:
   _EncounterStarted:
     _value: 0
   StateLocalTimer: 0
+--- !u!114 &-4787869486262244591
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 680963846886948012}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 2975410962
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 950538800078509192}
+  - {fileID: 5797850475781491458}
+  - {fileID: 6700211940102640366}
+  - {fileID: 4747612980675242751}
+  - {fileID: 2282225257019099070}
+  ForceRemoteRenderTimeframe: 0
+--- !u!114 &5797850475781491458
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 680963846886948012}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bde3acf5f2a5191498de3b6e774d849c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Enemy.EnemyStats
+  statsSO: {fileID: 11400000, guid: b7d3c9e15a4f68024c8b1d7e3f905a26, type: 2}
+  _MaxHP: 0
+  _AD: 0
+  _AP: 0
+  _DEF: 0
+  _RES: 0
+  _Poise: 0
+  _PoiseRecoveryTime: 0
+  _PatrolSpeed: 0
+  _ChaseSpeed: 0
+  _AttackSpeed: 0
+  _RuntimeExpReward: 0
+--- !u!114 &6700211940102640366
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 680963846886948012}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 501014430ac2fca4c9aa96bf9efc23cc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::EnemyAnimation
+  anim: {fileID: 6134936363096510129}
+  defaultFacingLeft: 0
+  telegraphRenderer: {fileID: 0}
+  telegraphColor: {r: 1, g: 0.4, b: 0.4, a: 1}
+  burnTint: {r: 1, g: 0.62, b: 0.3, a: 1}
+  slowTint: {r: 0.55, g: 0.85, b: 1, a: 1}
+--- !u!114 &4747612980675242751
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 680963846886948012}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 700cca239293a354095d0e6f048f06c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Controllers.EnemyController
+  aiComp: {fileID: 950538800078509192}
+  animationComp: {fileID: 6700211940102640366}
+  combatComp: {fileID: 0}
+  eliteSkills: {fileID: 0}
+  extraLivesAfterHpZero: 0
+  reviveDelaySeconds: 2.5
+  deathClipName: Druid_Death
+  despawnFallback: 1.5
+  lootItemIds:
+  - skill_wind
+  normalDropChance: 1
+  droppedItemPrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  isRematchBoss: 0
+  canBeKnockedBack: 1
+  stunDuration: 0.4
+  _Health: 0
+  _CurrentPoise: 0
+  _isDeadNetworked:
+    _value: 0
+  _IsKnockbackActive:
+    _value: 0
+  _IsAwaitingRevive:
+    _value: 0
+  _HoldDespawn:
+    _value: 0
+  maxHealth: 1
+  statsComp: {fileID: 5797850475781491458}
+--- !u!114 &2282225257019099070
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 680963846886948012}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f1cf63d8e8f065b4493e300ad22b7313, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Controllers.BossController
+  bossDisplayName: Nameless Tyrant
+  phaseThresholds:
+  - 0.66
+  - 0.33
+  speedMultiplierPerPhase: 1.15
+  _CurrentPhase: 0
 --- !u!1 &4153679582645008929
 GameObject:
   m_ObjectHideFlags: 0

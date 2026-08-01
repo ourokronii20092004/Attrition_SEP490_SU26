@@ -10,13 +10,13 @@ using Attrition.Gameplay.Enemy;
 namespace Attrition.Editor
 {
     /// <summary>
-    /// Dựng TOÀN BỘ phần "khung" cho moveset của boss 3 (Elf), 4 (DemonKin), 5 (ArchDemon):
+    /// Dựng TOÀN BỘ phần "khung" cho boss 2–5:
     /// gắn NetworkObject + EnemyController + EnemyStats + EnemyAnimation + AI riêng vào prefab, nối các ô
     /// inject cho nhau, và BỔ SUNG THAM SỐ ANIMATOR còn thiếu.
     ///
     /// VÌ SAO CẦN TOOL NÀY (đã kiểm tra thực tế trong repo):
-    ///  1. Ba prefab Elf/DemonKin/ArchDemon hiện CHỈ có SpriteRenderer + Animator + Rigidbody2D +
-    ///     CapsuleCollider2D — không có NetworkObject/EnemyController nên chúng không thể chết, không chạy AI.
+    ///  1. Druid thiếu EnemyController/EnemyStats/EnemyAnimation dù đã có Animator + controller; ba prefab
+    ///     Elf/DemonKin/ArchDemon ban đầu cũng chỉ có phần hình/physics nên chưa chạy đủ vòng đời boss.
     ///  2. Animator của Elf và DemonKin có `m_AnimatorParameters: []` — KHÔNG có tham số nào. Mọi lệnh
     ///     `PlayAnim("Attack")` sẽ là no-op, boss "tung skill" mà đứng bất động. ArchDemon có tham số nhưng
     ///     tên CHỮ THƯỜNG ("attack") nên cũng không khớp quy ước "Attack" của boss 1/2.
@@ -26,7 +26,7 @@ namespace Attrition.Editor
     /// Tool KHÔNG gán prefab skill — việc đó do `BossSkillPrefabSetupEditor` (menu kế bên) lo, để hai việc
     /// độc lập: đổi art skill thì chạy lại tool kia, không cần dựng lại boss.
     ///
-    /// Menu: Tools/Attrition/Enemy/Setup Boss Moveset (Elf + DemonKin + ArchDemon)
+    /// Menu: Tools/Attrition/Enemy/Setup Boss Moveset (Druid + Elf + DemonKin + ArchDemon)
     /// Idempotent: chạy lại không thêm trùng component, không thêm trùng tham số animator.
     /// </summary>
     public static class BossMovesetSetupEditor
@@ -50,28 +50,41 @@ namespace Attrition.Editor
             ("Resurrect",   AnimatorControllerParameterType.Trigger),
         };
 
-        [MenuItem("Tools/Attrition/Enemy/Setup Boss Moveset (Elf + DemonKin + ArchDemon)")]
+        [MenuItem("Tools/Attrition/Enemy/Setup Druid Boss (animation + controller)")]
+        public static void SetupDruid()
+        {
+            bool done = SetupBoss<Attrition.Gameplay.Enemy.Druid.DruidBossAI>("Druid", "Druid_Stats", "Druid_Death");
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log(done
+                ? "[BossMoveset] Druid đã có Animator + Druid.controller + EnemyAnimation/Controller/Stats/BossController. " +
+                  "Không thêm EnemyCombat vì state Druid tự gây damage."
+                : "[BossMoveset] Setup Druid thất bại — xem lỗi phía trên.");
+        }
+
+        [MenuItem("Tools/Attrition/Enemy/Setup Boss Moveset (Druid + Elf + DemonKin + ArchDemon)")]
         public static void Setup()
         {
             int done = 0;
-            done += SetupBoss<Attrition.Gameplay.Enemy.Elf.ElfBossAI>("Elf", "Elf_Stats") ? 1 : 0;
-            done += SetupBoss<Attrition.Gameplay.Enemy.DemonKin.DemonKinBossAI>("DemonKin", "DemonKin_Stats") ? 1 : 0;
-            done += SetupBoss<Attrition.Gameplay.Enemy.ArchDemon.ArchDemonBossAI>("ArchDemon", "ArchDemon_Stats") ? 1 : 0;
+            done += SetupBoss<Attrition.Gameplay.Enemy.Druid.DruidBossAI>("Druid", "Druid_Stats", "Druid_Death") ? 1 : 0;
+            done += SetupBoss<Attrition.Gameplay.Enemy.Elf.ElfBossAI>("Elf", "Elf_Stats", "Elf_Death") ? 1 : 0;
+            done += SetupBoss<Attrition.Gameplay.Enemy.DemonKin.DemonKinBossAI>("DemonKin", "DemonKin_Stats", "DemonKin_Death") ? 1 : 0;
+            done += SetupBoss<Attrition.Gameplay.Enemy.ArchDemon.ArchDemonBossAI>("ArchDemon", "ArchDemon_Stats", "ArchDemon_Death") ? 1 : 0;
 
             int players = EnsurePlayerStatusEffects();
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            Debug.Log($"[BossMoveset] Xong {done}/3 boss; {players} prefab player có PlayerStatusEffects.\n" +
+            Debug.Log($"[BossMoveset] Xong {done}/4 boss; {players} prefab player có PlayerStatusEffects.\n" +
                       "BƯỚC TIẾP: chạy Tools/Attrition/Enemy/Setup Boss Skill Prefabs để sinh prefab skill.\n" +
                       "• Boss/player đặt sẵn trong scene: mở scene rồi SAVE để Fusion bake NetworkObject.\n" +
                       "• Gán 'boss' của BossEncounterTrigger + 'bossAI' của BossGateController = AI boss (ô nhận " +
                       "MonoBehaviour nên mọi boss đều kéo vào được).");
         }
 
-        /// <summary>Dựng 1 boss. TAI là kiểu AI riêng của boss đó (ElfBossAI / DemonKinBossAI / ArchDemonBossAI).</summary>
-        private static bool SetupBoss<TAI>(string prefabName, string statsName) where TAI : EnemyAI
+        /// <summary>Dựng 1 boss. TAI là kiểu AI riêng của boss đó (DruidBossAI / ElfBossAI / DemonKinBossAI / ArchDemonBossAI).</summary>
+        private static bool SetupBoss<TAI>(string prefabName, string statsName, string deathStateName) where TAI : EnemyAI
         {
             string path = $"{PrefabDir}/{prefabName}.prefab";
             var root = PrefabUtility.LoadPrefabContents(path);
@@ -94,9 +107,17 @@ namespace Attrition.Editor
                 // ─── EnemyAnimation (cần cho FaceDirection/UpdateSpeed/Freeze) ───
                 var anim = root.GetComponent<EnemyAnimation>() ?? root.AddComponent<EnemyAnimation>();
                 var animator = root.GetComponentInChildren<Animator>();
-                if (animator != null) SetRef(anim, "anim", animator);
+                if (animator != null)
+                {
+                    // Druid đã có controller đầy đủ trong project; chỉ gắn lại nếu ô Controller bị mất.
+                    if (prefabName == "Druid" && animator.runtimeAnimatorController == null)
+                        animator.runtimeAnimatorController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(
+                            "Assets/_Project/Animations/Druid/Druid.controller");
+                    SetRef(anim, "anim", animator);
+                }
 
-                // ─── AI riêng của boss ───
+                // Boss 2–5 tự gây damage trong state/prefab skill, KHÔNG thêm EnemyCombat: thêm vào sẽ tạo
+                // đường damage thứ hai ngoài hitbox riêng của boss (Druid melee đã quét PhysicsScene2D trực tiếp).
                 var ai = root.GetComponent<TAI>() ?? root.AddComponent<TAI>();
 
                 // ─── EnemyController + nối các ô inject ───
@@ -113,6 +134,8 @@ namespace Attrition.Editor
 
                 // ─── Animator: bổ sung tham số còn thiếu ───
                 int added = EnsureAnimatorParams(animator);
+                if (!EnsureDeathTransition(animator, deathStateName)) return false;
+                SetString(ctrl, "deathClipName", deathStateName);
 
                 PrefabUtility.SaveAsPrefabAsset(root, path);
                 Debug.Log($"[BossMoveset] {prefabName}: NetworkObject + EnemyController + EnemyStats + " +
@@ -157,6 +180,36 @@ namespace Attrition.Editor
 
             if (added > 0) EditorUtility.SetDirty(ac);
             return added;
+        }
+
+        private static bool EnsureDeathTransition(Animator animator, string stateName)
+        {
+            var ac = animator != null ? animator.runtimeAnimatorController as AnimatorController : null;
+            if (ac == null || ac.layers.Length == 0) return false;
+
+            var machine = ac.layers[0].stateMachine;
+            AnimatorState death = null;
+            foreach (var child in machine.states)
+                if (child.state.name == stateName) death = child.state;
+
+            if (death == null || death.motion == null)
+            {
+                Debug.LogError($"[BossMoveset] Thiếu state/clip death '{stateName}'.");
+                return false;
+            }
+
+            AnimatorStateTransition transition = null;
+            foreach (var existing in machine.anyStateTransitions)
+                if (existing.destinationState == death) transition = existing;
+
+            if (transition == null) transition = machine.AddAnyStateTransition(death);
+            transition.conditions = System.Array.Empty<AnimatorCondition>();
+            transition.AddCondition(AnimatorConditionMode.If, 0f, "DieTrigger");
+            transition.hasExitTime = false;
+            transition.duration = 0f;
+            transition.canTransitionToSelf = false;
+            EditorUtility.SetDirty(ac);
+            return true;
         }
 
         /// <summary>
@@ -244,6 +297,15 @@ namespace Attrition.Editor
             Debug.Log($"[BossMoveset] Đã TẠO {statsName}.asset (enemyId='{so.enemyId}', HP {so.maxHP}) — " +
                       "chỉnh lại trong Inspector nếu muốn. Cần enemyId để quest 'giết boss' đếm được.");
             return so;
+        }
+
+        private static void SetString(Object target, string field, string value)
+        {
+            var so = new SerializedObject(target);
+            var prop = so.FindProperty(field);
+            if (prop == null) return;
+            prop.stringValue = value;
+            so.ApplyModifiedPropertiesWithoutUndo();
         }
 
         /// <summary>Set 1 field private [SerializeField] qua SerializedObject.</summary>

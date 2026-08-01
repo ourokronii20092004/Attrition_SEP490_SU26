@@ -193,7 +193,24 @@ namespace Attrition.Gameplay.Enemy.Druid
             if (!HasStateAuthority || !waitForTrigger) return;
             waitForTrigger = false;
             EncounterStarted = true;
-            ChangeState(IdleState);
+            if (introDialogue != null) RPC_ShowIntroDialogue();
+            else ChangeState(IdleState);
+        }
+
+        [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+        private void RPC_ShowIntroDialogue()
+        {
+            if (introDialogue == null) return;
+            var openDialogue = Attrition.Data.DialogueEvents.OnOpenCustomDialogue;
+            if (openDialogue == null)
+            {
+                if (HasStateAuthority) ChangeState(IdleState);
+                return;
+            }
+            openDialogue.Invoke(introDialogue, () =>
+            {
+                if (HasStateAuthority) ChangeState(IdleState);
+            });
         }
 
         /// <summary>
