@@ -22,7 +22,7 @@ namespace Attrition.Editor
             var t = go.AddComponent<TutorialPrompt>();
             SetStr(t, "tutorialId", "map1_basics");
             SetEnum(t, "trigger", (int)TutorialPrompt.TriggerMode.OnEnterZone);
-            SetStr(t, "title", "ĐIỀU KHIỂN CƠ BẢN");
+            SetStr(t, "title", "BASIC CONTROLS");
             // stepByStep: hiện LẦN LƯỢT — WASD trước, xong mới tới các phím sau.
             SetBool(t, "stepByStep", true);
             SetLines(t, new[]

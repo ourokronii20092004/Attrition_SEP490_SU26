@@ -15,7 +15,7 @@ MonoBehaviour:
   itemId: acc_potion
   displayName: Alchemist Charm
   description: Uong binh mau se tang suc manh don danh thuong trong mot luc.
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: f5e0b8e3774ac364688a0b05319748fd, type: 3}
   maxStack: 1
   isKeyItem: 0
   kind: 0

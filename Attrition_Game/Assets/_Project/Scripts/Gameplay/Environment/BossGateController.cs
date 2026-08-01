@@ -8,7 +8,7 @@ namespace Attrition.Gameplay.Environment
 {
     /// <summary>
     /// Cổng Boss + chuỗi sự kiện KHI BOSS CHẾT, theo đúng luồng:
-    ///   Boss hết máu → ANIMATION DEATH chạy → xong anim → DIALOGUE hiện → đọc hết thoại →
+    ///   Boss hết máu → DIALOGUE hiện → đọc hết thoại → ANIMATION DEATH chạy →
     ///   boss PHAI MỜ DẦN rồi biến mất → MỞ entryDoor + exitDoor + bật vùng chuyển scene.
     ///
     /// Boss KHÔNG tự despawn (HoldDespawn=true); controller này điều khiển toàn bộ thời điểm.
@@ -33,9 +33,9 @@ namespace Attrition.Gameplay.Environment
         [SerializeField] private RoomTransitionZone exitZone;
 
         [Header("---- CHUỖI CHẾT ----")]
-        [Tooltip("Thời gian cho animation Death chạy xong trước khi hiện thoại (giây).")]
+        [Tooltip("Thời gian animation Death chạy trước khi boss phai mờ (giây).")]
         [SerializeField] private float deathAnimTime = 2f;
-        [Tooltip("Thoại boss nói sau khi gục (player đọc xong boss mới phai mờ). Bỏ trống = bỏ qua thoại.")]
+        [Tooltip("Thoại boss nói trước animation chết. Bỏ trống = bỏ qua thoại.")]
         [SerializeField] private Attrition.Data.DialogueSO deathDialogue;
         [Tooltip("Thời gian phai mờ (fade out) trước khi boss biến mất (giây).")]
         [SerializeField] private float fadeOutTime = 1f;
@@ -61,6 +61,7 @@ namespace Attrition.Gameplay.Environment
         public override void Spawned()
         {
             if (!HasStateAuthority) return;
+            if (boss != null) boss.HoldDespawn = true;
 
             // Nạp lazy (thứ tự Spawned vs FogTracker.Start không đảm bảo).
             BossDefeatState.EnsureLoadedForSolo();
@@ -144,7 +145,7 @@ namespace Attrition.Gameplay.Environment
                 if (trig != null && trig.boss == bossAI) trig.ResetTrigger();
         }
 
-        /// <summary>Chạy chuỗi chết trên mọi máy: chờ anim death → thoại → fade. Host kết thúc bằng mở cửa + despawn.</summary>
+        /// <summary>Chạy trên mọi máy: thoại → death anim → fade. Host mở cửa + despawn.</summary>
         [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
         private void RpcRunDeathSequence()
         {
@@ -153,24 +154,23 @@ namespace Attrition.Gameplay.Environment
 
         private IEnumerator DeathSequence()
         {
-            // PHA 1: Animation Death (EnemyController.HandleDeathVisuals đã set trigger; ép thêm cho chắc).
-            ForcePlayDeathAnim();
-            yield return new WaitForSeconds(deathAnimTime);
-
-            // PHA 2: Dialogue — chờ ĐỌC XONG. Solo: chờ callback. Coop: mỗi máy tự chờ thoại của mình.
-            if (deathDialogue != null)
+            // PHA 1: Dialogue — animation chỉ chạy sau khi player đọc xong.
+            if (deathDialogue != null && Attrition.Data.DialogueEvents.OnOpenCustomDialogue != null)
             {
                 bool done = false;
-                Attrition.Data.DialogueEvents.OnOpenCustomDialogue?.Invoke(deathDialogue, () => done = true);
-                // Nếu không có UI nghe bus (không mở được) → timeout an toàn 8s.
-                float t = 0f;
-                while (!done && t < 8f) { t += Time.deltaTime; yield return null; }
+                Attrition.Data.DialogueEvents.OnOpenCustomDialogue.Invoke(deathDialogue, () => done = true);
+                while (!done) yield return null;
             }
+
+            // PHA 2: Animation Death.
+            ForcePlayDeathAnim();
+            yield return new WaitForSeconds(deathAnimTime);
 
             // PHA 3: Phai mờ dần.
             yield return FadeOutBoss();
 
             // PHA 4 (chỉ HOST): boss biến mất + mở cửa + bật vùng chuyển.
+            // ponytail: host chưa đợi ACK thoại từ mọi client; thêm RPC ACK nếu cần đồng bộ tuyệt đối.
             if (Object.HasStateAuthority)
                 FinishDefeat();
         }

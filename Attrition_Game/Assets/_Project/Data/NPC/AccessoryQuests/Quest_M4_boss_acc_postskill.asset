@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b5c8be0c0a09a34dad0f05f7e17282a, type: 3}
+  m_Name: Quest_M4_boss_acc_postskill
+  m_EditorClassIdentifier: Attrition.Data::Attrition.Data.QuestSO
+  questId: q_m4_boss_postskill
+  title: Kin of the Abyss
+  description: '[Map 4] Defeat the boss (demon kin). Reward: Focus Charm.'
+  objectiveType: 0
+  targetId: demon_kin
+  requiredTargetIds: []
+  requiredAmount: 1
+  expReward: 1300
+  itemRewards:
+  - itemId: acc_postskill
+    amount: 1
+  dialogueNotStarted: {fileID: 11400000, guid: 5f74ed8f6b1d56144a52ff513148ea40, type: 2}
+  dialogueInProgress: {fileID: 11400000, guid: a0d8a96aad1a3ba4cb3286c9bcbc87b3, type: 2}
+  dialogueCompleted: {fileID: 11400000, guid: 6a67b956ff7acf44b867222a3376fa7b, type: 2}
+  dialogueFinished: {fileID: 11400000, guid: 7413023b04f2d324ab602b338120af58, type: 2}

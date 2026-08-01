@@ -35,7 +35,7 @@ public class LoginManager : MonoBehaviour
 
     private void HandleGoogleLogin()
     {
-        statusText.text = "Đang chờ đăng nhập từ trình duyệt...";
+        statusText.text = "Waiting for browser sign-in...";
         
         // Mở cổng lắng nghe
         if (LocalAuthServer.Instance != null)
@@ -48,7 +48,7 @@ public class LoginManager : MonoBehaviour
 
     private void HandleTokenReceived(string token, string refreshToken)
     {
-        statusText.text = "Đang xác thực tài khoản Google...";
+        statusText.text = "Verifying Google account...";
         loginButton.interactable = false;
         if (googleLoginButton != null) googleLoginButton.interactable = false;
 
@@ -66,7 +66,7 @@ public class LoginManager : MonoBehaviour
             }
             else
             {
-                statusText.text = "<color=red>Đăng nhập Google thất bại!</color>";
+                statusText.text = "<color=red>Google sign-in failed.</color>";
             }
         }));
     }
@@ -78,11 +78,11 @@ public class LoginManager : MonoBehaviour
 
         if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
         {
-            statusText.text = "Vui lòng nhập đầy đủ thông tin!";
+            statusText.text = "Please enter both email and password.";
             return;
         }
 
-        statusText.text = "Đang đăng nhập...";
+        statusText.text = "Signing in...";
         loginButton.interactable = false;
 
         StartCoroutine(APIManager.Instance.Login(email, password, (userId) => {
@@ -98,7 +98,7 @@ public class LoginManager : MonoBehaviour
             }
             else
             {
-                statusText.text = "<color=red>Sai tài khoản hoặc mật khẩu!</color>";
+                statusText.text = "<color=red>Incorrect email or password.</color>";
             }
         }));
     }

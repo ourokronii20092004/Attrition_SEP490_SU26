@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b5c8be0c0a09a34dad0f05f7e17282a, type: 3}
+  m_Name: Quest_M3_boss_acc_stamina_charm
+  m_EditorClassIdentifier: Attrition.Data::Attrition.Data.QuestSO
+  questId: q_m3_boss_stamina
+  title: The Fallen Archer
+  description: '[Map 3] Defeat the boss (elf). Reward: Vigor Charm.'
+  objectiveType: 0
+  targetId: elf
+  requiredTargetIds: []
+  requiredAmount: 1
+  expReward: 900
+  itemRewards:
+  - itemId: acc_stamina_charm
+    amount: 1
+  dialogueNotStarted: {fileID: 11400000, guid: d245e600442c2f242a97b42f971d6bfd, type: 2}
+  dialogueInProgress: {fileID: 11400000, guid: 2cab98e7c5f05154599742847d1dc787, type: 2}
+  dialogueCompleted: {fileID: 11400000, guid: 24523eae2894d094495b779ddebddfb3, type: 2}
+  dialogueFinished: {fileID: 11400000, guid: 0b179efd11eebeb48b3b9d7c2f9623dc, type: 2}

@@ -44,7 +44,7 @@ namespace Attrition.Gameplay.Environment
 
         [Header("---- NỘI DUNG ----")]
         [Tooltip("Tiêu đề bảng (vd 'ĐIỀU KHIỂN CƠ BẢN').")]
-        [SerializeField] private string title = "ĐIỀU KHIỂN CƠ BẢN";
+        [SerializeField] private string title = "BASIC CONTROLS";
         [SerializeField] private Line[] lines = new Line[0];
 
         [Header("---- HÀNH VI ----")]

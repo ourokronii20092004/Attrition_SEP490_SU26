@@ -352,12 +352,11 @@ MonoBehaviour:
   deathClipName: 
   despawnFallback: 1.5
   lootItemIds:
-  - leather_boots
-  - leather_chest
   - leather_helm
-  normalDropChance: 0.35
+  normalDropChance: 0.2
   droppedItemPrefab:
     RawGuidValue: 12e1ff761e13b114e99dad527c7a0233
+  isRematchBoss: 0
   canBeKnockedBack: 1
   stunDuration: 0.4
   _Health: 0
@@ -413,6 +412,12 @@ MonoBehaviour:
     m_Bits: 64
   wallCheckDistance: 0.8
   wallCheckHeightOffset: 0.5
+  eyeHeightOffset: 0.6
+  sightMemoryDuration: 1.5
+  canStepUp: 1
+  stepUpMaxHeight: 1.2
+  stepUpForwardSpeed: 4
+  stepUpCooldown: 0.6
   canEvadeJump: 0
   evadeTriggerDistance: 2
   jumpForce: 12
@@ -424,6 +429,8 @@ MonoBehaviour:
   lungeForwardSpeed: 11
   lungeJumpForce: 10
   facingDeadZone: 0.3
+  leashToRoom: 0
+  leashPadding: 1.5
   _CurrentState: 0
   _NetSpeed: 0
   _NetFacingDir: 1
@@ -446,6 +453,8 @@ MonoBehaviour:
   defaultFacingLeft: 0
   telegraphRenderer: {fileID: 0}
   telegraphColor: {r: 1, g: 0.4, b: 0.4, a: 1}
+  burnTint: {r: 1, g: 0.62, b: 0.3, a: 1}
+  slowTint: {r: 0.55, g: 0.85, b: 1, a: 1}
 --- !u!114 &1734034752248236828
 MonoBehaviour:
   m_ObjectHideFlags: 0

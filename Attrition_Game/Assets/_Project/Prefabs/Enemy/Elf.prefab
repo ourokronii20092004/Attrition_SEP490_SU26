@@ -148,7 +148,7 @@ Rigidbody2D:
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 0
+  m_Constraints: 4
 --- !u!70 &4760481864510571001
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -249,6 +249,8 @@ MonoBehaviour:
   defaultFacingLeft: 0
   telegraphRenderer: {fileID: 0}
   telegraphColor: {r: 1, g: 0.4, b: 0.4, a: 1}
+  burnTint: {r: 1, g: 0.62, b: 0.3, a: 1}
+  slowTint: {r: 0.55, g: 0.85, b: 1, a: 1}
 --- !u!114 &1502889893757204786
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -290,6 +292,12 @@ MonoBehaviour:
     m_Bits: 0
   wallCheckDistance: 0.8
   wallCheckHeightOffset: 0.5
+  eyeHeightOffset: 0.6
+  sightMemoryDuration: 1.5
+  canStepUp: 1
+  stepUpMaxHeight: 1.2
+  stepUpForwardSpeed: 4
+  stepUpCooldown: 0.6
   canEvadeJump: 0
   evadeTriggerDistance: 2
   jumpForce: 12
@@ -301,6 +309,8 @@ MonoBehaviour:
   lungeForwardSpeed: 11
   lungeJumpForce: 10
   facingDeadZone: 0.3
+  leashToRoom: 0
+  leashPadding: 1.5
   _CurrentState: 0
   _NetSpeed: 0
   _NetFacingDir: 1
@@ -308,15 +318,15 @@ MonoBehaviour:
     _value: 0
   _AttackLockedFacingDir: 1
   thunderArrowPrefab:
-    RawGuidValue: 00000000000000000000000000000000
+    RawGuidValue: 78277545f2a2d674a8af479979e9959c
   thunderBirdPrefab:
-    RawGuidValue: 00000000000000000000000000000000
+    RawGuidValue: 890cbc0bd8a535b48b6a790481128800
   thunderHitPrefab:
-    RawGuidValue: 00000000000000000000000000000000
+    RawGuidValue: 499f7efe70e6e4646a5bf9dbb6a70d4c
   thunderSplashPrefab:
-    RawGuidValue: 00000000000000000000000000000000
+    RawGuidValue: b65d71607d1849d4c8709e470a6d5829
   thunderStrikePrefab:
-    RawGuidValue: 00000000000000000000000000000000
+    RawGuidValue: 8dbb5a8d6eb01864e93729b99efbdaed
   targetRetargetInterval: 4
   meleeRange: 2
   meleeDamage: 18
@@ -373,12 +383,14 @@ MonoBehaviour:
   eliteSkills: {fileID: 0}
   extraLivesAfterHpZero: 0
   reviveDelaySeconds: 2.5
-  deathClipName: 
+  deathClipName: Elf_Death
   despawnFallback: 1.5
-  lootItemIds: []
-  normalDropChance: 0.35
+  lootItemIds:
+  - skill_thunder
+  normalDropChance: 1
   droppedItemPrefab:
     RawGuidValue: 00000000000000000000000000000000
+  isRematchBoss: 0
   canBeKnockedBack: 1
   stunDuration: 0.4
   _Health: 0

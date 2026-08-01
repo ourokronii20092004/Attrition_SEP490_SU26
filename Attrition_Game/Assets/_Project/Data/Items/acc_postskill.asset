@@ -15,7 +15,7 @@ MonoBehaviour:
   itemId: acc_postskill
   displayName: Focus Charm
   description: Tung ki nang se tang suc manh cac ki nang tung ra trong mot luc.
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 0c582741012cfa645890b387986ba879, type: 3}
   maxStack: 1
   isKeyItem: 0
   kind: 0
