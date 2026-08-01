@@ -39,10 +39,11 @@ namespace Attrition.Gameplay.Enemy
         private float _elapsed;
         private readonly HashSet<IDamageable> _hit = new HashSet<IDamageable>();
 
-        public void Init(int dmg, Attrition.Core.DamageType type = Attrition.Core.DamageType.Magic)
+        public void Init(int dmg, Attrition.Core.DamageType type = Attrition.Core.DamageType.Magic, LayerMask? overrideHitLayer = null)
         {
             Damage = dmg;
             DamageTypeRaw = (int)type;
+            if (overrideHitLayer.HasValue) hitLayer = overrideHitLayer.Value;
         }
 
         public override void Spawned()
@@ -55,6 +56,9 @@ namespace Attrition.Gameplay.Enemy
                 SnapToGround();
 
             if (HasStateAuthority) LifeTimer = TickTimer.CreateFromSeconds(Runner, lifetime);
+
+            // ponytail: debug — xóa sau khi xác nhận AoE hoạt động
+            Debug.Log($"[AoE] Spawned {name} pos={transform.position} hitLayer={hitLayer.value} radius={radius} lifetime={lifetime} dmg={Damage}");
         }
 
         private void SnapToGround()
@@ -74,7 +78,8 @@ namespace Attrition.Gameplay.Enemy
                 if (results[i].collider == null) continue;
                 if (results[i].point.y > bestY) { bestY = results[i].point.y; found = true; }
             }
-            if (found)
+            // Chỉ snap XUỐNG — không đẩy lên nếu ground cao hơn vị trí spawn (vd ceiling/platform).
+            if (found && bestY + groundOffset < transform.position.y)
             {
                 var p = transform.position;
                 p.y = bestY + groundOffset;
