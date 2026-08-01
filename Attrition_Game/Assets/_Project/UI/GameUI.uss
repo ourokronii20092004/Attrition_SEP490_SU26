@@ -752,8 +752,21 @@
     margin-bottom: 12px;
 }
 
-#ft-preview-name { color: #ebdcb1; font-size: 18px; letter-spacing: 3px; }
-#ft-preview-region { color: rgba(255,255,255,0.4); font-size: 11px; }
+#ft-preview-name {
+    color: #ebdcb1;
+    font-size: 18px;
+    letter-spacing: 3px;
+    white-space: normal;
+    max-width: 220px;
+    -unity-text-align: middle-center;
+}
+#ft-preview-region {
+    color: rgba(255,255,255,0.4);
+    font-size: 11px;
+    white-space: normal;
+    max-width: 220px;
+    -unity-text-align: middle-center;
+}
 
 .ft-btn.go {
     background-color: rgba(201, 168, 76, 0.2);

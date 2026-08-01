@@ -17,8 +17,10 @@ namespace Attrition.Persistence
         /// <summary>Save slot người chơi chọn (0..2). Dùng khi load tiến trình.</summary>
         public static int SelectedSlot = 0;
 
-        /// <summary>Tên scene gameplay sẽ load khi bắt đầu (test: Enemy_Axe_Demon).</summary>
-        public static string GameplayScene = "The Darkest Path - Map 1";
+        public const string DefaultGameplayScene = "The Darkest Path - Map 1";
+
+        /// <summary>Tên scene gameplay hiện tại hoặc sẽ load.</summary>
+        public static string GameplayScene = DefaultGameplayScene;
 
         /// <summary>UserId (OwnerId) từ đăng nhập. Rỗng = chưa login → chỉ lưu local.</summary>
         public static string OwnerId = "";

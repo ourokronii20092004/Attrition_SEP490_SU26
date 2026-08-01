@@ -42,6 +42,20 @@ namespace Attrition.Gameplay.Environment
 
         public static IReadOnlyCollection<string> AllDiscoveredCheckpoints => _checkpoints;
 
+        public static bool IsMapDiscovered(MapDataSO map)
+        {
+            if (map == null) return false;
+
+            string prefix = map.sceneName + ":";
+            foreach (var key in _fog)
+                if (key.StartsWith(prefix, System.StringComparison.Ordinal)) return true;
+
+            foreach (var checkpoint in map.checkpoints)
+                if (IsCheckpointDiscovered(checkpoint.checkpointId)) return true;
+
+            return false;
+        }
+
         public static void LoadFrom(Attrition.Persistence.SaveSlotData data)
         {
             _fog.Clear();
