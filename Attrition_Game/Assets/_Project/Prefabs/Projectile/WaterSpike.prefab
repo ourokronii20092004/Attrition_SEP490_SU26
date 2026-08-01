@@ -158,4 +158,4 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
-  groundOffset: 0.3
+  groundOffset: 1.1

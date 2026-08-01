@@ -11,18 +11,27 @@ namespace Attrition.Gameplay.Enemy.ArchDemon.States
     {
         public override void Enter(ArchDemonBossAI ai)
         {
-            ai.CurrentState = EnemyState.Recovery;
-            ai.StopMovement();
+            ai.CurrentState = EnemyState.Chase; // Chase cho phép animation walk; Recovery đóng băng frame attack
+            ai.PlayAnim("Idle"); // thoát state Attack về Idle/Walk
         }
 
         public override void Update(ArchDemonBossAI ai)
         {
-            ai.StopMovement();
             ai.DetectPlayer();
             ai.FaceTowardsPlayer();
 
-            if (ai.PlayerTarget == null) return;
-            if (!ai.SkillCooldownTimer.ExpiredOrNotRunning(ai.Runner)) return;
+            if (ai.PlayerTarget == null) { ai.StopMovement(); return; }
+
+            if (!ai.SkillCooldownTimer.ExpiredOrNotRunning(ai.Runner))
+            {
+                // Nghỉ: chỉ TIẾN lại gần nếu quá xa, KHÔNG lùi.
+                float dist = ai.DistanceToPlayer();
+                float speed = ai.StatsComp != null ? ai.StatsComp.PatrolSpeed : 3f;
+                if (dist > ai.preferredDistance + 1f) ai.MoveTowardsPlayer(speed);
+                else ai.StopMovement();
+                return;
+            }
+            ai.StopMovement();
 
             if (ai.DistanceToPlayer() > ai.viewRadius * 0.99f) ai.ChangeState(ArchDemonBossAI.ChaseState);
             else ai.PickRandomSkill();
@@ -62,6 +71,7 @@ namespace Attrition.Gameplay.Enemy.ArchDemon.States
         {
             ai.CurrentState = EnemyState.Recovery;
             ai.StopMovement();
+            ai.PlayAnim("Idle");
             ai.StateLocalTimer = 0f;
         }
 
@@ -71,8 +81,9 @@ namespace Attrition.Gameplay.Enemy.ArchDemon.States
             ai.StateLocalTimer += ai.Runner.DeltaTime;
             if (ai.StateLocalTimer >= ai.recoveryTime)
             {
+                // restTime (không phải 0.1s) = khoảng NGHỈ boss đi lại trước skill kế.
                 if (ai.HasStateAuthority)
-                    ai.SkillCooldownTimer = TickTimer.CreateFromSeconds(ai.Runner, 0.1f);
+                    ai.SkillCooldownTimer = TickTimer.CreateFromSeconds(ai.Runner, ai.restTime);
                 ai.ChangeState(ArchDemonBossAI.IdleState);
             }
         }
@@ -127,7 +138,7 @@ namespace Attrition.Gameplay.Enemy.ArchDemon.States
                 }
             }
 
-            if (ai.StateLocalTimer >= ai.meleeDuration)
+            if (ai.StateLocalTimer >= Mathf.Max(ai.meleeDuration, ArchDemonBossAI.AttackAnimCutTime))
                 ai.ChangeState(ArchDemonBossAI.RecoveryState);
         }
 

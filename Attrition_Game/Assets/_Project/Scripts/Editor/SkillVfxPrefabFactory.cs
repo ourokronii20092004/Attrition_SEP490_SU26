@@ -41,6 +41,9 @@ namespace Attrition.Editor
             public float hitboxRadius;    // projectile: bán kính va chạm
             public bool blockingWall;     // thêm EnemyBlockingWall + collider chặn đạn (Earth Wall)
             public float wallHeight;      // blockingWall: chiều cao tường
+            public float scale;           // phóng to đều (0 = giữ nguyên 1)
+            public float scaleY;          // kéo riêng chiều cao (0 = dùng scale/1)
+            public float groundOffset;    // AoE snap: nhô khỏi nền (0 = mặc định 0.3)
         }
 
         /// <summary>
@@ -65,6 +68,9 @@ namespace Attrition.Editor
             try
             {
                 go.AddComponent<NetworkObject>();
+
+                float uniform = spec.scale > 0f ? spec.scale : 1f;
+                go.transform.localScale = new Vector3(uniform, spec.scaleY > 0f ? spec.scaleY : uniform, uniform);
 
                 var sr = go.AddComponent<SpriteRenderer>();
                 sr.sprite = frames[0];
@@ -95,6 +101,7 @@ namespace Attrition.Editor
                     aoe.lifetime = spec.lifetime > 0f ? spec.lifetime : 0.8f;
                     aoe.damageDelay = spec.damageDelay;
                     aoe.snapToGround = spec.snapToGround;
+                    aoe.groundOffset = spec.groundOffset > 0f ? spec.groundOffset : 0.3f;
                     aoe.groundLayer = groundMask;
                 }
 

@@ -183,8 +183,8 @@ CapsuleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 1.9375}
-  m_Size: {x: 2.6875, y: 3.875}
+  m_Offset: {x: 0.050979614, y: 1.5126913}
+  m_Size: {x: 1.2261658, y: 3.0253825}
   m_Direction: 0
 --- !u!114 &747415955058258738
 MonoBehaviour:
@@ -267,8 +267,8 @@ MonoBehaviour:
   combatComp: {fileID: 0}
   controller: {fileID: 643089187529445467}
   eliteSkills: {fileID: 0}
-  viewRadius: 5
-  patrolRadius: 3
+  viewRadius: 15
+  patrolRadius: 15
   isFlying: 0
   flyHoverOffsetY: 0.8
   flyMinGroundClearance: 1.2
@@ -355,7 +355,7 @@ MonoBehaviour:
   blastTouchRadius: 1.2
   blastDamage: 22
   spikeCount: 7
-  spikeSpacing: 2.4
+  spikeSpacing: 3.2
   spikeFirstOffset: 2
   spikeInterval: 0.16
   spikeStartupLead: 0.35
@@ -366,6 +366,8 @@ MonoBehaviour:
   splashDamage: 26
   roomFallbackHalfWidth: 15
   recoveryTime: 0.4
+  restTime: 1.3
+  preferredDistance: 6.5
   initialDelay: 1.2
   waitForTrigger: 1
   introDialogue: {fileID: 0}
@@ -392,8 +394,9 @@ MonoBehaviour:
   reviveDelaySeconds: 2.5
   deathClipName: ArchDemon_Death
   despawnFallback: 1.5
-  lootItemIds: []
-  normalDropChance: 0.35
+  lootItemIds:
+  - skill_water
+  normalDropChance: 1
   droppedItemPrefab:
     RawGuidValue: 00000000000000000000000000000000
   isRematchBoss: 0
@@ -423,7 +426,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f1cf63d8e8f065b4493e300ad22b7313, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Controllers.BossController
-  bossDisplayName: Nameless Tyrant
+  bossDisplayName: ARCH DEMON
+  bossMusic: {fileID: 8300000, guid: 2c7ab09d74784b54cb081f01b418d9c9, type: 3}
   phaseThresholds:
   - 0.66
   - 0.33

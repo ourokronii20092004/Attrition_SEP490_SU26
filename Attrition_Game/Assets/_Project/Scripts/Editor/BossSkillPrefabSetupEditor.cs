@@ -100,13 +100,26 @@ namespace Attrition.Editor
                 }, "Druid", "windSwordPrefab"),
 
                 (new SkillVfxPrefabFactory.Spec {
+                    prefabName = "AirBurstPullIn",
+                    sheetPath = $"{Art}/Wind Effect 02/Pull in.png",
+                    isProjectile = false, fps = 14f, loop = false,
+                    radius = 0.1f, lifetime = 0.8f, damageDelay = 0f, snapToGround = false,
+                }, "Druid", "airBurstPullInPrefab"),
+
+                (new SkillVfxPrefabFactory.Spec {
                     prefabName = "AirBurst",
                     sheetPath = $"{Art}/Wind Effect 02/Air Burst.png",
                     isProjectile = false, fps = 16f, loop = false,
-                    // damageDelay 0.8 = khớp `airBurstPrepareTime` của DruidBossAI: hình "preparing" chạy
-                    // xong mới bung damage, cho player kịp rời khỏi điểm ngắm.
-                    radius = 1.6f, lifetime = 1.2f, damageDelay = 0.8f, snapToGround = false,
+                    // PullIn state đã lo telegraph; damaging clip gây damage gần đầu rồi chạy hết 0.44s.
+                    radius = 1.6f, lifetime = 0.55f, damageDelay = 0.08f, snapToGround = false,
                 }, "Druid", "airBurstPrefab"),
+
+                (new SkillVfxPrefabFactory.Spec {
+                    prefabName = "AirExplosionStartup",
+                    sheetPath = $"{Art}/Wind Effect 02/Explosion Startup .png",
+                    isProjectile = false, fps = 14f, loop = false,
+                    radius = 0.1f, lifetime = 0.45f, damageDelay = 0f, snapToGround = false,
+                }, "Druid", "airExplosionStartupPrefab"),
 
                 (new SkillVfxPrefabFactory.Spec {
                     prefabName = "AirExplosion",
@@ -126,30 +139,38 @@ namespace Attrition.Editor
                 (new SkillVfxPrefabFactory.Spec {
                     prefabName = "ThunderBird",
                     sheetPath = $"{Art}/Projectile 2/Projectile 2 w blur.png",
-                    isProjectile = true, fps = 20f, loop = true,
+                    // loop = false: chim sấm chỉ vỗ cánh MỘT lần rồi giữ frame cuối (trước đây loop làm nó "bay
+                    // lặp lại"). fps 8 thay vì 20 để kéo dài animation ra cho nhìn rõ (16 frame ≈ 2s).
+                    isProjectile = true, fps = 8f, loop = false,
                     speed = 11f, lifetime = 4f, hitboxRadius = 0.6f,
                 }, "Elf", "thunderBirdPrefab"),
 
                 (new SkillVfxPrefabFactory.Spec {
                     prefabName = "ThunderHit",
                     sheetPath = $"{Art}/Thunder Hit/Thunder hit w blur.png",
-                    isProjectile = false, fps = 18f, loop = false,
-                    radius = 1.3f, lifetime = 0.6f, damageDelay = 0.12f, snapToGround = false,
+                    // fps 9 (was 18): 5 frame trong 0.22s là quá nhanh không nhìn rõ → giãn ra ~0.55s.
+                    // lifetime phải >= độ dài clip, nếu không prefab bị Despawn giữa animation.
+                    isProjectile = false, fps = 9f, loop = false,
+                    radius = 1.3f, lifetime = 0.75f, damageDelay = 0.12f, snapToGround = false,
                 }, "Elf", "thunderHitPrefab"),
 
                 (new SkillVfxPrefabFactory.Spec {
                     prefabName = "ThunderSplash",
                     sheetPath = $"{Art}/Thunder Splash/Thunder splash w blur.png",
-                    isProjectile = false, fps = 20f, loop = false,
-                    radius = 1.2f, lifetime = 0.9f, damageDelay = 0.08f, snapToGround = false,
+                    // fps 14 (was 20): sprite splash chỉ ~1.3-2.4 unit, chạy trong 0.5s thì gần như không thấy.
+                    // Giãn ra ~0.79s + scale 2 (ở Elf.prefab spawn) cho player nhận ra boss vừa dịch chuyển.
+                    isProjectile = false, fps = 14f, loop = false,
+                    radius = 1.2f, lifetime = 1f, damageDelay = 0.08f, snapToGround = false,
+                    scale = 2f,
                 }, "Elf", "thunderSplashPrefab"),
 
                 (new SkillVfxPrefabFactory.Spec {
                     prefabName = "ThunderStrike",
                     sheetPath = $"{Art}/Thunder Strike/Thunderstrike w blur.png",
                     isProjectile = false, fps = 22f, loop = false,
-                    // damageDelay lớn hơn: cột sét phải "rơi xuống" trước khi gây damage, cho player kịp né.
-                    radius = 1.1f, lifetime = 1.2f, damageDelay = 0.3f, snapToGround = true,
+                    // Cột sét được kéo DÀI theo Y; vẫn snap cả visual + damage xuống cùng mặt đất.
+                    radius = 1.1f, lifetime = 1.8f, damageDelay = 0.75f, snapToGround = true,
+                    scaleY = 2.5f, groundOffset = 0.1f,
                 }, "Elf", "thunderStrikePrefab"),
 
                 // ═══ BOSS 4 — DEMONKIN (4 skill) ═══
@@ -229,6 +250,7 @@ namespace Attrition.Editor
                     sheetPath = $"{Art}/Water Effect SpriteSheet/Water Spike 01 - SpriteSheet.png",
                     isProjectile = false, fps = 24f, loop = false,
                     radius = 1.2f, lifetime = 1.1f, damageDelay = 0.15f, snapToGround = true,
+                    groundOffset = 1.1f,
                 }, "ArchDemon", "waterSpikePrefab"),
 
                 (new SkillVfxPrefabFactory.Spec {
@@ -243,6 +265,7 @@ namespace Attrition.Editor
                     sheetPath = $"{Art}/Water Effect SpriteSheet/Water Splash 01 - Spritesheet.png",
                     isProjectile = false, fps = 22f, loop = false,
                     radius = 1.5f, lifetime = 1f, damageDelay = 0.1f, snapToGround = true,
+                    groundOffset = 1.5f,
                 }, "ArchDemon", "waterSplashPrefab"),
             };
         }

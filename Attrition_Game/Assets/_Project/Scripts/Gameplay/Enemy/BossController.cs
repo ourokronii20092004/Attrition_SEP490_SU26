@@ -18,6 +18,8 @@ namespace Attrition.Controllers
     {
         [Header("---- IDENTITY ----")]
         [SerializeField] private string bossDisplayName = "Nameless Tyrant";
+        [Tooltip("Nhạc riêng của phòng/boss này. Trống = dùng bossBgmClip của SceneMusicController.")]
+        [SerializeField] private AudioClip bossMusic;
 
         [Header("---- PHASES (ngưỡng % HP kích hoạt, giảm dần) ----")]
         [Tooltip("Ví dụ 0.66, 0.33 = 3 phase. Mỗi lần HP rớt dưới ngưỡng → sang phase mới.")]
@@ -117,6 +119,7 @@ namespace Attrition.Controllers
                     _barShown = false;
                     _lastShownHp = -1;
                     BossEvents.RaiseDespawned();
+                    Attrition.Systems.SceneMusicController.NotifyBossEnded();
                 }
                 return;
             }
@@ -128,16 +131,22 @@ namespace Attrition.Controllers
                 _lastShownHp = -1; // ép phát lại HpChanged với mẫu số đúng
             }
 
+            if (_enemy.IsDead)
+            {
+                if (_barShown)
+                {
+                    _barShown = false;
+                    BossEvents.RaiseDespawned();
+                    Attrition.Systems.SceneMusicController.NotifyBossEnded();
+                }
+                return;
+            }
+
             if (!_barShown)
             {
                 BossEvents.RaiseSpawned(bossDisplayName, _maxHp);
+                Attrition.Systems.SceneMusicController.NotifyBossStarted(bossMusic);
                 _barShown = true;
-            }
-
-            if (_enemy.IsDead)
-            {
-                BossEvents.RaiseDespawned();
-                return;
             }
 
             int hp = _enemy.CurrentHealth;
@@ -151,6 +160,7 @@ namespace Attrition.Controllers
         private void OnDestroy()
         {
             BossEvents.RaiseDespawned();
+            Attrition.Systems.SceneMusicController.NotifyBossEnded();
         }
     }
 }

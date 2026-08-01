@@ -4,11 +4,13 @@ namespace Attrition.Gameplay.Enemy.Druid.States
 {
     /// <summary>
     /// SKILL 2: Wind Breath — boss hít hơi (charge) rồi phun 1 LUỒNG GIÓ DÀI theo đường thẳng ngang,
-    /// kéo dài về phía player hết sân rồi biến mất. Cài đặt bằng windBreathSegments đốt gió AoE spawn
-    /// TUẦN TỰ (windBreathInterval giây/đốt) từ gần boss ra xa → cảm giác luồng gió lan tới trước.
+    /// kéo dài về phía player hết sân rồi biến mất. windBreathSegments đốt gió AoE spawn TUẦN TỰ
+    /// (windBreathInterval giây/đốt) từ gần boss ra xa → thấy rõ đốt 1-2-3-4-5 lan tới.
     ///
-    /// Hướng cố định (chốt lúc bắt đầu phun) theo hướng nhìn — luồng gió KHÔNG bám theo player khi đã phun,
-    /// đúng mô tả "cố định 1 đường thẳng". Mỗi đốt là EnemyAoEDamage (snapToGround tùy prefab).
+    /// HƯỚNG: chốt theo VỊ TRÍ PLAYER lúc bắt đầu phun (không dùng facing — facing có deadZone 1.2 nên khi
+    /// player đứng gần/vừa vượt qua thì facing còn hướng cũ → luồng gió phun ngược, đó là lý do "không trúng").
+    /// CAO ĐỘ: lấy theo CHÂN PLAYER, không theo chân boss (boss có thể đứng cao/thấp hơn bậc nền).
+    /// Đốt đầu bắt đầu ngay sát boss (i = 0) để luồng liền mạch, không hở 2 units như trước.
     /// </summary>
     public class D_WindBreathState : DruidBossState
     {
@@ -41,10 +43,20 @@ namespace Attrition.Gameplay.Enemy.Druid.States
             // Phase 1: charge (hít hơi) — chốt hướng + cao độ luồng khi charge xong.
             if (!_charged)
             {
-                if (_elapsed < ai.windBreathChargeTime) return;
+                // Không cho beam xuất hiện trước khi animation Attack của boss chạy xong.
+                if (_elapsed < Mathf.Max(ai.windBreathChargeTime, ai.meleeDuration)) return;
                 _charged = true;
-                _dirX = ai.AttackLockedFacingDir >= 0 ? 1f : -1f;
-                _baseY = ai.transform.position.y + ai.windBreathHeight;
+                // Hướng theo VỊ TRÍ player (không dùng facing — deadZone làm facing lệch khi player ở gần).
+                _dirX = ai.PlayerTarget != null
+                    ? (ai.PlayerTarget.position.x >= ai.transform.position.x ? 1f : -1f)
+                    : (ai.AttackLockedFacingDir >= 0 ? 1f : -1f);
+                // Cập nhật facing để sprite quay ĐÚNG HƯỚNG beam; không cập nhật ở Enter vì lúc đó
+                // player có thể đang ở sau boss nhưng boss đang charge, sẽ lật sprite ngược.
+                ai.NetFacingDir = _dirX;
+                ai.AttackLockedFacingDir = _dirX;
+                // Cao độ theo CHÂN PLAYER để luồng gió đi ngang qua người player.
+                float feetY = ai.PlayerTarget != null ? ai.PlayerTarget.position.y : ai.transform.position.y;
+                _baseY = feetY + ai.windBreathHeight;
                 _nextSpawnTime = _elapsed;
             }
 
@@ -53,8 +65,10 @@ namespace Attrition.Gameplay.Enemy.Druid.States
             {
                 if (_elapsed >= _nextSpawnTime && ai.HasStateAuthority)
                 {
-                    float x = ai.transform.position.x + _dirX * ai.windBreathSpacing * (_spawned + 1);
-                    ai.SpawnAoE(ai.WindBeamPrefab, new Vector2(x, _baseY), ai.windBreathDamage);
+                    // Đốt 0 sát boss → luồng liền mạch, không hở khoảng trước mặt boss.
+                    float x = ai.transform.position.x + _dirX * (0.8f + ai.windBreathSpacing * _spawned);
+                    ai.SpawnAoEOriented(ai.WindBeamPrefab, new Vector2(x, _baseY),
+                                        ai.windBreathDamage, _dirX);
                     _spawned++;
                     _nextSpawnTime = _elapsed + ai.windBreathInterval;
                 }

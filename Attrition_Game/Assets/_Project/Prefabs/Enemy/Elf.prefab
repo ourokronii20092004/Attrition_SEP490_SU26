@@ -183,8 +183,8 @@ CapsuleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 1.375}
-  m_Size: {x: 1.375, y: 2.75}
+  m_Offset: {x: 0, y: -0.09158182}
+  m_Size: {x: 1.375, y: 2.6821737}
   m_Direction: 0
 --- !u!114 &6437086433502861758
 MonoBehaviour:
@@ -267,8 +267,8 @@ MonoBehaviour:
   combatComp: {fileID: 0}
   controller: {fileID: 5707874604750983181}
   eliteSkills: {fileID: 0}
-  viewRadius: 5
-  patrolRadius: 3
+  viewRadius: 15
+  patrolRadius: 15
   isFlying: 0
   flyHoverOffsetY: 0.8
   flyMinGroundClearance: 1.2
@@ -327,6 +327,9 @@ MonoBehaviour:
     RawGuidValue: b65d71607d1849d4c8709e470a6d5829
   thunderStrikePrefab:
     RawGuidValue: 8dbb5a8d6eb01864e93729b99efbdaed
+  idleAnimState: Elf_Idle
+  walkAnimState: Elf_Walk
+  attackAnimState: Elf_Basic_Attack
   targetRetargetInterval: 4
   meleeRange: 2
   meleeDamage: 18
@@ -349,16 +352,18 @@ MonoBehaviour:
   splashVanishTime: 0.3
   splashAppearTime: 0.35
   splashArriveOffsetX: 0.6
-  splashShootDelay: 0.25
+  splashShootDelay: 1
   splashDamage: 12
-  strikeSpacing: 2.6
-  strikeInterval: 0.1
-  strikeWaveGap: 0.8
-  strikeChaseCount: 3
+  strikeColumns: 5
+  strikeSpacing: 4.5
+  strikeInterval: 0.4
+  strikeWaveGap: 1
   strikeFallbackHalfWidth: 14
-  strikeSpawnHeight: 6
+  strikeSpawnHeight: 0
   strikeDamage: 24
   recoveryTime: 0.65
+  restTime: 1.3
+  preferredDistance: 7
   initialDelay: 1.2
   waitForTrigger: 1
   introDialogue: {fileID: 0}
@@ -417,7 +422,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f1cf63d8e8f065b4493e300ad22b7313, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Controllers.BossController
-  bossDisplayName: Nameless Tyrant
+  bossDisplayName: ELF
+  bossMusic: {fileID: 8300000, guid: 4478e6ab8c552744d8b6f4d0d2a3b9fd, type: 3}
   phaseThresholds:
   - 0.66
   - 0.33

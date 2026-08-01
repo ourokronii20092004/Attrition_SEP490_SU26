@@ -183,8 +183,8 @@ CapsuleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 1.5625}
-  m_Size: {x: 2.5625, y: 3.125}
+  m_Offset: {x: 0.36637053, y: -0.31662583}
+  m_Size: {x: 0.90792376, y: 2.5104432}
   m_Direction: 0
 --- !u!114 &4689570821851852471
 MonoBehaviour:
@@ -267,8 +267,8 @@ MonoBehaviour:
   combatComp: {fileID: 0}
   controller: {fileID: 1260199025878287003}
   eliteSkills: {fileID: 0}
-  viewRadius: 5
-  patrolRadius: 3
+  viewRadius: 15
+  patrolRadius: 15
   isFlying: 0
   flyHoverOffsetY: 0.8
   flyMinGroundClearance: 1.2
@@ -325,6 +325,9 @@ MonoBehaviour:
     RawGuidValue: 835f12c8783352541aa3def077895c29
   earthWallPrefab:
     RawGuidValue: 98b1c607d9fa66142994dc32766ab42a
+  idleAnimState: DemonKin_Idle
+  walkAnimState: DemonKin_Walk
+  attackAnimState: DemonKin_Basic_Attack
   targetRetargetInterval: 4
   meleeRange: 2.4
   meleeDamage: 22
@@ -354,6 +357,8 @@ MonoBehaviour:
   wallDamage: 18
   roomFallbackHalfWidth: 14
   recoveryTime: 0.5
+  restTime: 1.4
+  preferredDistance: 6
   initialDelay: 1.2
   waitForTrigger: 1
   introDialogue: {fileID: 0}
@@ -412,7 +417,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f1cf63d8e8f065b4493e300ad22b7313, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Controllers.BossController
-  bossDisplayName: Nameless Tyrant
+  bossDisplayName: DEMON KIN
+  bossMusic: {fileID: 8300000, guid: 1fae62bbcf9a71249864c9bf15acd3de, type: 3}
   phaseThresholds:
   - 0.66
   - 0.33

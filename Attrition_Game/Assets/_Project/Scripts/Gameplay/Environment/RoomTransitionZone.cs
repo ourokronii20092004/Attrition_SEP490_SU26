@@ -38,6 +38,10 @@ namespace Attrition.Gameplay.Environment
         [Tooltip("Bật sẵn khi spawn? Để FALSE nếu vùng chỉ mở sau khi đánh boss.")]
         [SerializeField] private bool startActive = false;
 
+        [Header("---- ENDING (tùy chọn, Map 5) ----")]
+        [SerializeField] private Attrition.Data.DialogueSO endingDialogue;
+        [SerializeField] private bool showEndingTitle;
+
         [Header("---- FADE ----")]
         [SerializeField] private float fadeOutDuration = 0.6f;
 
@@ -134,12 +138,23 @@ namespace Attrition.Gameplay.Environment
 
         private IEnumerator TransitionRoutine(string entryId)
         {
+            // ponytail: host waits for its local dialogue only; add per-player RPC ACK if exact co-op
+            // dialogue completion synchronization becomes required.
+            if (endingDialogue != null && Attrition.Data.DialogueEvents.OnOpenCustomDialogue != null)
+            {
+                bool done = false;
+                Attrition.Data.DialogueEvents.OnOpenCustomDialogue.Invoke(endingDialogue, () => done = true);
+                while (!done) yield return null;
+            }
+
             // Ghi điểm vào cho scene ĐÍCH trên MỌI máy (static local, không networked).
             // NetworkSpawner (host) đọc để đặt player đúng cửa nối; client dùng cho camera/entry sau load.
             SceneEntryRegistry.PendingEntryId = string.IsNullOrEmpty(entryId) ? null : entryId;
 
             // Màn đen dần trên MỌI máy.
             yield return SceneFader.FadeOut(fadeOutDuration);
+            if (showEndingTitle)
+                yield return EndingTitleCard.Show("ATTRITION");
 
             // Chỉ HOST ra lệnh load scene; client tự follow scene của host qua Fusion.
             var launcher = Attrition.Networking.NetworkLauncher.Instance;

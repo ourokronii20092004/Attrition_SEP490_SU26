@@ -36,6 +36,40 @@ namespace Attrition.Editor
         private const string ManaPotionIcon = "Assets/_Project/Art/UI_Elements/16x16/mana potion.png";
         private const string CampfireIcon = "Assets/_Project/Art/UI_Elements/Sprite-sheet-campfire.png";
 
+        /// <summary>Cả 5 scene gameplay — dùng cho menu "All Gameplay Scenes".</summary>
+        private static readonly string[] GameplayScenes =
+        {
+            "Assets/_Project/Scenes/The Darkest Path - Map 1.unity",
+            "Assets/_Project/Scenes/Forest - Map 2.unity",
+            "Assets/_Project/Scenes/Elf Valley -Map 3.unity",
+            "Assets/_Project/Scenes/Dark Forest - Map 4.unity",
+            "Assets/_Project/Scenes/Castle - Map 5.unity",
+        };
+
+        /// <summary>
+        /// Chạy 1 lượt cho CẢ 5 map rồi save luôn — trước đây phải mở từng scene bấm tay, dễ bỏ sót
+        /// (đã kiểm: Map 4 và Map 5 THIẾU DialogueUI → giết boss xong không có popup "Congratulations!"
+        /// dù loot vẫn vào túi, vì DialogueUI chính là thứ vẽ popup đó).
+        /// </summary>
+        [MenuItem("Tools/Attrition/Scene UI/Setup Game UI For All Gameplay Scenes")]
+        public static void SetupAllScenes()
+        {
+            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+
+            int done = 0;
+            foreach (var path in GameplayScenes)
+            {
+                var scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
+                if (!scene.IsValid()) { Debug.LogWarning($"[Attrition] Không mở được {path}."); continue; }
+
+                SetupCurrent();
+                EditorSceneManager.SaveScene(scene);
+                done++;
+            }
+
+            Debug.Log($"[Attrition] Đã dựng UI bundle cho {done}/{GameplayScenes.Length} scene gameplay và SAVE.");
+        }
+
         [MenuItem("Tools/Attrition/Scene UI/Setup Game UI For Current Scene")]
         public static void SetupCurrent()
         {

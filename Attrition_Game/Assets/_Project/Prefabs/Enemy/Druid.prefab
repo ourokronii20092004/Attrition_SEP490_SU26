@@ -221,8 +221,8 @@ MonoBehaviour:
   combatComp: {fileID: 0}
   controller: {fileID: 4747612980675242751}
   eliteSkills: {fileID: 0}
-  viewRadius: 5
-  patrolRadius: 3
+  viewRadius: 15
+  patrolRadius: 15
   isFlying: 0
   flyHoverOffsetY: 0.8
   flyMinGroundClearance: 1.2
@@ -277,8 +277,12 @@ MonoBehaviour:
     RawGuidValue: 7d9620d7a35ac764bbbb7ef0795fdd81
   windSwordPrefab:
     RawGuidValue: 244e5800fa69986439014e8041774391
+  airBurstPullInPrefab:
+    RawGuidValue: 8d561c193adb74b4892981dc4903ab70
   airBurstPrefab:
     RawGuidValue: 329f701bf2d215d4282e7106743ad40f
+  airExplosionStartupPrefab:
+    RawGuidValue: 005d835fb9d005d4db78b261b041a1d4
   airExplosionPrefab:
     RawGuidValue: 1e4b8dc1b8615bc40aaba34e96f435f0
   targetRetargetInterval: 4
@@ -288,14 +292,14 @@ MonoBehaviour:
   woodWaves: 3
   woodPerWave: 3
   woodSpacing: 2
-  woodSpawnHeight: 8
+  woodSpawnHeight: 12
   woodWaveGap: 0.9
   woodSpeed: 12
   woodDamage: 14
   windBreathChargeTime: 0.6
   windBreathSegments: 10
   windBreathSpacing: 2
-  windBreathInterval: 0.05
+  windBreathInterval: 0.18
   windBreathHeight: 1
   windBreathDamage: 18
   windSwordCount: 4
@@ -306,14 +310,18 @@ MonoBehaviour:
   windSwordDamage: 15
   airBurstCount: 6
   airBurstScatter: 4
-  airBurstPrepareTime: 0.8
+  airBurstPrepareTime: 0.4
+  airBurstInterval: 0
   airBurstDamage: 20
   airExplosionCount: 7
   airExplosionStepX: 2
   airExplosionAmplitudeY: 1.5
-  airExplosionInterval: 0.18
+  airExplosionInterval: 0
+  airExplosionStartupLead: 0.2
   airExplosionDamage: 18
   recoveryTime: 1
+  restTime: 1.6
+  preferredDistance: 4
   initialDelay: 1.5
   waitForTrigger: 1
   introDialogue: {fileID: 0}
@@ -437,7 +445,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f1cf63d8e8f065b4493e300ad22b7313, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Controllers.BossController
-  bossDisplayName: Nameless Tyrant
+  bossDisplayName: DRUID
+  bossMusic: {fileID: 8300000, guid: 8832f14424da86641908869a02a2f9ae, type: 3}
   phaseThresholds:
   - 0.66
   - 0.33

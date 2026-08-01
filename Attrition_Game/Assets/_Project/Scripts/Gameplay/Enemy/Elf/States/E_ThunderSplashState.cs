@@ -16,7 +16,7 @@ namespace Attrition.Gameplay.Enemy.Elf.States
     public class E_ThunderSplashState : ElfBossState
     {
         // Pha của skill — tách enum cho dễ đọc thay vì đếm mốc thời gian rải rác.
-        private enum Phase { Vanish, Arrive, Shoot, Done }
+        private enum Phase { Vanish, Arrive, Attack, Shoot, Done }
 
         private Phase _phase;
         private float _elapsed;
@@ -41,7 +41,7 @@ namespace Attrition.Gameplay.Enemy.Elf.States
             }
             else _destination = ai.transform.position;
 
-            ai.PlayAnim("Skill");
+            // Không dùng Attack lúc biến mất/di chuyển; chỉ đánh sau khi đã tới cạnh player.
 
             // Vệt sấm tại chỗ ĐI (báo cho player biết boss vừa rời khỏi đây).
             if (ai.HasStateAuthority)
@@ -69,10 +69,16 @@ namespace Attrition.Gameplay.Enemy.Elf.States
                     return;
 
                 case Phase.Arrive:
-                    // Đứng lại một nhịp cho player thấy boss đã hiện hình trước khi bị bắn.
                     if (_elapsed < ai.splashAppearTime + ai.splashShootDelay) return;
-                    if (ai.HasStateAuthority) FireBothWays(ai);
                     ai.PlayAnim("Attack");
+                    _phase = Phase.Attack;
+                    _elapsed = 0f;
+                    return;
+
+                case Phase.Attack:
+                    if (_elapsed < ElfBossAI.SkillAttackWindup) return;
+                    if (ai.HasStateAuthority) FireBothWays(ai);
+                    ai.PlayAnim("Idle");
                     _phase = Phase.Shoot;
                     _elapsed = 0f;
                     return;

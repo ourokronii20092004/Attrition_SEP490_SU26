@@ -3,13 +3,8 @@ using UnityEngine;
 namespace Attrition.Gameplay.Enemy.Elf.States
 {
     /// <summary>
-    /// SKILL 2: Thunder Bird — VẬN SỨC vào mũi tên (6 frame đầu giữ ở đầu cung, animation CHỮNG lại) rồi
-    /// bắn ra 1 CHIM SẤM to bay về phía player.
-    ///
-    /// Cách làm animation "chững": gọi `FreezeAnimation()` trên EnemyAnimation ngay khi vào state (đóng
-    /// băng animator tại frame đang giơ cung), giữ suốt `birdChargeTime`, rồi `UnfreezeAnimation()` để các
-    /// frame còn lại chạy tiếp lúc bắn. Hai hàm này đã có sẵn trong EnemyAnimation — không cần clip riêng.
-    /// Người dựng chỉ cần đặt Animation Event `FreezeAnimation` ở frame 6 nếu muốn khớp chính xác hơn.
+    /// SKILL 2: Thunder Bird — boss chạy trọn animation Attack rồi bắn 1 chim sấm lớn về phía player.
+    /// `birdChargeTime` vẫn có thể kéo dài windup, nhưng không được ngắn hơn clip Attack 0.85s.
     ///
     /// CAO/THẤP ngẫu nhiên: bay CAO (birdHighOffsetY) buộc player NGỒI xuống né; bay THẤP (birdLowOffsetY)
     /// buộc player NHẢY qua. Chọn 50/50 mỗi lần dùng nên player không học vẹt được.
@@ -18,7 +13,6 @@ namespace Attrition.Gameplay.Enemy.Elf.States
     {
         private float _elapsed;
         private bool _fired;
-        private bool _unfroze;
         private float _dirX;
         private float _offsetY;
 
@@ -27,7 +21,6 @@ namespace Attrition.Gameplay.Enemy.Elf.States
             ai.CurrentState = EnemyState.Attacking;
             _elapsed = 0f;
             _fired = false;
-            _unfroze = false;
 
             ai.DetectPlayer();
             ai.FaceTowardsPlayer();
@@ -41,7 +34,6 @@ namespace Attrition.Gameplay.Enemy.Elf.States
             _offsetY = Random.value < 0.5f ? ai.birdHighOffsetY : ai.birdLowOffsetY;
 
             ai.PlayAnim("Attack");
-            ai.FreezeAnim();     // chững lại ở đầu cung để "vận sức"
         }
 
         public override void Update(ElfBossAI ai)
@@ -49,16 +41,12 @@ namespace Attrition.Gameplay.Enemy.Elf.States
             _elapsed += ai.Runner.DeltaTime;
             ai.StopMovement();
 
-            // Hết thời gian vận sức → rã đông animation cho các frame bắn chạy tiếp.
-            if (!_unfroze && _elapsed >= ai.birdChargeTime)
-            {
-                _unfroze = true;
-                ai.UnfreezeAnim();
-            }
+            float releaseTime = Mathf.Max(ai.birdChargeTime, ElfBossAI.SkillAttackWindup);
 
-            if (!_fired && _elapsed >= ai.birdChargeTime)
+            if (!_fired && _elapsed >= releaseTime)
             {
                 _fired = true;
+                ai.PlayAnim("Idle");
                 if (ai.HasStateAuthority)
                 {
                     Vector2 pos = (Vector2)ai.transform.position + new Vector2(_dirX * 1.2f, _offsetY);
@@ -67,16 +55,10 @@ namespace Attrition.Gameplay.Enemy.Elf.States
                 }
             }
 
-            if (_fired && _elapsed >= ai.birdChargeTime + 0.4f)
+            if (_fired && _elapsed >= releaseTime + 0.4f)
                 ai.ChangeState(ElfBossAI.RecoveryState);
         }
 
-        public override void Exit(ElfBossAI ai)
-        {
-            // An toàn: nếu state bị cắt giữa lúc đang đóng băng (boss trúng knockback), phải rã đông,
-            // nếu không animator đứng cứng vĩnh viễn.
-            ai.UnfreezeAnim();
-            ai.StopMovement();
-        }
+        public override void Exit(ElfBossAI ai) => ai.StopMovement();
     }
 }
