@@ -196,6 +196,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.NPC.NetworkNPC
   npcName: Autumn_Fairy
   quest: {fileID: 11400000, guid: f85552ad0f1ae0146b5fbc83f95d4bdb, type: 2}
+  extraQuests: []
+  _QuestChainIndex: 0
   idleDialogue: {fileID: 11400000, guid: a1c4e7f0b2d3496a8e5f1c2d3b4a5e60, type: 2}
+  claimForNpc: {fileID: 0}
+  turnInObjectiveKey: 
+  turnInDialogue: {fileID: 0}
+  turnInDoneDialogue: {fileID: 0}
   _QuestState: 0
   _QuestProgress: 0
