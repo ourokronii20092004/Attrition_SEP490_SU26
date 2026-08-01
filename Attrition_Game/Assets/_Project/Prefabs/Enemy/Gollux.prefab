@@ -245,7 +245,7 @@ MonoBehaviour:
   wallCheckHeightOffset: 0.5
   eyeHeightOffset: 0.6
   sightMemoryDuration: 1.5
-  canStepUp: 1
+  canStepUp: 0
   stepUpMaxHeight: 1.2
   stepUpForwardSpeed: 4
   stepUpCooldown: 0.6
@@ -260,7 +260,7 @@ MonoBehaviour:
   lungeForwardSpeed: 11
   lungeJumpForce: 10
   facingDeadZone: 0.3
-  leashToRoom: 1
+  leashToRoom: 0
   leashPadding: 1.5
   _CurrentState: 0
   _NetSpeed: 0
@@ -300,7 +300,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyCombat
   attacks:
   - hitboxShape: 2
-    engageRange: 0
+    engageRange: 3
     range: 1.5
     angle: 90
     rectSize: {x: 3, y: 3}
@@ -329,7 +329,7 @@ MonoBehaviour:
   dashSlashAttacks: 
   dashSpeed: 10
   dashDuration: 0.3
-  enableLeapAttack: 1
+  enableLeapAttack: 0
   leapAttacks: 0001
   leapHeight: 3
   leapDuration: 1.5

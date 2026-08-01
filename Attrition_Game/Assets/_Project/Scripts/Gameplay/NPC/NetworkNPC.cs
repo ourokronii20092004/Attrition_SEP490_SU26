@@ -24,6 +24,11 @@ namespace Attrition.Gameplay.NPC
         [Header("──── NPC IDENTITY ────")]
         [Tooltip("Tên NPC hiển thị trong hội thoại.")]
         [SerializeField] private string npcName = "NPC";
+        [Tooltip("Bật nếu sprite gốc của NPC quay mặt sang phải và cần lật sang trái.")]
+        [SerializeField] private bool defaultFacingLeft;
+
+        private Transform _nameLabel;
+        private float _nameLabelScaleSign;
 
         [Header("──── QUEST (tùy chọn) ────")]
         [Tooltip("Nhiệm vụ ĐẦU TIÊN NPC giao. Bỏ trống = NPC chỉ nói chuyện thường.")]
@@ -243,14 +248,39 @@ namespace Attrition.Gameplay.NPC
 
         public override void Spawned()
         {
+            if (defaultFacingLeft)
+            {
+                var scale = transform.localScale;
+                transform.localScale = new Vector3(-Mathf.Abs(scale.x), scale.y, scale.z);
+            }
+
             // Nhãn tên nổi trên đầu NPC (world-space, mọi máy thấy giống nhau). Vàng kim cho NPC.
             string display = string.IsNullOrEmpty(npcName) ? "NPC" : npcName;
-            Attrition.Gameplay.WorldNameLabel.Attach(
+            var label = Attrition.Gameplay.WorldNameLabel.Attach(
                 transform, display, new Vector3(0f, 0.95f, 0f), new Color(0.91f, 0.78f, 0.41f), 3f);
+            _nameLabel = label != null ? label.transform : null;
+            UpdateNameLabelFacing();
 
             // Host khôi phục tiến trình quest đã lưu (solo local). Mỗi NPC tự đọc questId của mình
             // → không lệ thuộc thứ tự spawn. Online: server là nguồn, không nạp từ slot.
             RestoreSavedProgress();
+        }
+
+        private void LateUpdate()
+        {
+            UpdateNameLabelFacing();
+        }
+
+        private void UpdateNameLabelFacing()
+        {
+            if (_nameLabel == null) return;
+
+            float sign = transform.localScale.x < 0f ? -1f : 1f;
+            if (sign == _nameLabelScaleSign) return;
+
+            _nameLabelScaleSign = sign;
+            var scale = _nameLabel.localScale;
+            _nameLabel.localScale = new Vector3(Mathf.Abs(scale.x) * sign, scale.y, scale.z);
         }
 
         /// <summary>

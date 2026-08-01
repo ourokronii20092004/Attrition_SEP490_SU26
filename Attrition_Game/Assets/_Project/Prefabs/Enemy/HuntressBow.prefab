@@ -291,6 +291,7 @@ MonoBehaviour:
   normalDropChance: 0.35
   droppedItemPrefab:
     RawGuidValue: 12e1ff761e13b114e99dad527c7a0233
+  isRematchBoss: 0
   canBeKnockedBack: 0
   stunDuration: 0.2
   _Health: 0
@@ -300,6 +301,8 @@ MonoBehaviour:
   _IsKnockbackActive:
     _value: 0
   _IsAwaitingRevive:
+    _value: 0
+  _HoldDespawn:
     _value: 0
   maxHealth: 15
   statsComp: {fileID: 0}
@@ -344,6 +347,12 @@ MonoBehaviour:
     m_Bits: 64
   wallCheckDistance: 0.8
   wallCheckHeightOffset: 0.5
+  eyeHeightOffset: 0.6
+  sightMemoryDuration: 1.5
+  canStepUp: 0
+  stepUpMaxHeight: 1.2
+  stepUpForwardSpeed: 4
+  stepUpCooldown: 0.6
   canEvadeJump: 1
   evadeTriggerDistance: 3
   jumpForce: 3
@@ -355,6 +364,8 @@ MonoBehaviour:
   lungeForwardSpeed: 11
   lungeJumpForce: 10
   facingDeadZone: 0.3
+  leashToRoom: 0
+  leashPadding: 1.5
   _CurrentState: 0
   _NetSpeed: 0
   _NetFacingDir: 1
@@ -377,6 +388,8 @@ MonoBehaviour:
   defaultFacingLeft: 0
   telegraphRenderer: {fileID: 0}
   telegraphColor: {r: 1, g: 0.4, b: 0.4, a: 1}
+  burnTint: {r: 1, g: 0.62, b: 0.3, a: 1}
+  slowTint: {r: 0.55, g: 0.85, b: 1, a: 1}
 --- !u!114 &5876798167884690251
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -391,6 +404,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyCombat
   attacks:
   - hitboxShape: 0
+    engageRange: 0
     range: 15
     angle: 360
     rectSize: {x: 0, y: 0}
@@ -592,6 +606,7 @@ MonoBehaviour:
   _PatrolSpeed: 0
   _ChaseSpeed: 0
   _AttackSpeed: 0
+  _RuntimeExpReward: 0
 --- !u!1 &4318073950527655983
 GameObject:
   m_ObjectHideFlags: 0

@@ -283,7 +283,7 @@ MonoBehaviour:
   wakeUpRadius: 0
   sleepReturnDelay: 3
   returnToSleepSpeed: 6
-  sleepOnCeiling: 1
+  sleepOnCeiling: 0
   sleepSurfaceLayer:
     serializedVersion: 2
     m_Bits: 0
@@ -294,7 +294,7 @@ MonoBehaviour:
   wallCheckHeightOffset: 0.5
   eyeHeightOffset: 0.6
   sightMemoryDuration: 1.5
-  canStepUp: 1
+  canStepUp: 0
   stepUpMaxHeight: 1.2
   stepUpForwardSpeed: 4
   stepUpCooldown: 0.6

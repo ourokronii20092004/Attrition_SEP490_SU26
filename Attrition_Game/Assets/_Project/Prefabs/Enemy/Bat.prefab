@@ -313,8 +313,7 @@ MonoBehaviour:
   reviveDelaySeconds: 5
   deathClipName: 
   despawnFallback: 1.5
-  lootItemIds:
-  - 
+  lootItemIds: []
   normalDropChance: 0.35
   droppedItemPrefab:
     RawGuidValue: 00000000000000000000000000000000
@@ -376,7 +375,7 @@ MonoBehaviour:
   wallCheckHeightOffset: 0.5
   eyeHeightOffset: 0.6
   sightMemoryDuration: 1.5
-  canStepUp: 1
+  canStepUp: 0
   stepUpMaxHeight: 1.2
   stepUpForwardSpeed: 4
   stepUpCooldown: 0.6
