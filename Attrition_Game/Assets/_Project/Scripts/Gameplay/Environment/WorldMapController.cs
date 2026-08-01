@@ -45,10 +45,13 @@ namespace Attrition.Gameplay.Environment
         private MapDataSO _openMap;        // map hiện hành, cache lúc mở để reposition icon khỏi tính lại mỗi frame
         private TextMeshProUGUI _title;
         private Button _travelBtn;
+        private Button _previousMapBtn;
+        private Button _nextMapBtn;
         private readonly List<GameObject> _spawned = new List<GameObject>();
         private readonly List<GameObject> _constantScale = new List<GameObject>();
 
         private MapRegistrySO _registry;
+        private MapDataSO _viewedMap;
         private MapDataSO.CheckpointMarker? _selected;
         private MapDataSO _selectedMap;
         private bool _open;
@@ -123,6 +126,8 @@ namespace Attrition.Gameplay.Environment
             _title.raycastTarget = false;
 
             _travelBtn = MakeButton(_panel.transform, "TRAVEL", new Vector2(0.5f, 0f), new Vector2(0, 60), DoTravel);
+            _previousMapBtn = MakeButton(_panel.transform, "< MAP", new Vector2(0f, 0.5f), new Vector2(70, 0), () => ChangeViewedMap(-1));
+            _nextMapBtn = MakeButton(_panel.transform, "MAP >", new Vector2(1f, 0.5f), new Vector2(-70, 0), () => ChangeViewedMap(1));
             MakeButton(_panel.transform, "X (M)", new Vector2(1f, 1f), new Vector2(-70, -40), () => SetOpen(false));
         }
 
@@ -189,8 +194,9 @@ namespace Attrition.Gameplay.Environment
             {
                 Cursor.visible = true;
                 Cursor.lockState = CursorLockMode.None;
+                _viewedMap = CurrentMap();
                 RefreshContent();
-                CenterOnPlayer();
+                CenterOnViewedMap();
             }
         }
 
@@ -203,9 +209,9 @@ namespace Attrition.Gameplay.Environment
             return local * PixelsPerUnit;
         }
 
-        private void CenterOnPlayer()
+        private void CenterOnViewedMap()
         {
-            var map = CurrentMap();
+            var map = _viewedMap ?? CurrentMap();
 
             // Zoom sao cho thấy ~15 ô fog mỗi bên (ngang) tính từ player. Quy ra world units rồi ra px.
             float cell = (map != null && map.fogCellSize > 0.01f) ? map.fogCellSize : 2.5f;
@@ -218,10 +224,12 @@ namespace Attrition.Gameplay.Environment
             _content.localScale = new Vector3(_zoom, _zoom, 1f);
 
             var player = FindLocalPlayer();
-            if (map != null && player != null)
+            if (map != null)
             {
-                Vector2 pc = MapToContent(map, player.position);
-                _content.anchoredPosition = -pc * _zoom;   // đưa player vào giữa viewport
+                Vector2 focus = map == CurrentMap() && player != null
+                    ? MapToContent(map, player.position)
+                    : MapToContent(map, map.worldBounds.center);
+                _content.anchoredPosition = -focus * _zoom;
             }
             else _content.anchoredPosition = Vector2.zero;
 
@@ -245,49 +253,49 @@ namespace Attrition.Gameplay.Environment
             if (_travelBtn != null) _travelBtn.interactable = false;
 
             var cur = CurrentMap();
-            _title.text = cur != null ? (string.IsNullOrEmpty(cur.displayName) ? cur.sceneName : cur.displayName) : "WORLD MAP";
+            if (_viewedMap == null) _viewedMap = cur;
+            var shown = _viewedMap;
+            string shownName = shown != null
+                ? (string.IsNullOrEmpty(shown.displayName) ? shown.sceneName : shown.displayName)
+                : "UNKNOWN";
+            _title.text = $"MAP: {shownName}";
 
             if (_registry == null)
             {
                 Debug.LogWarning("[WorldMap] MapRegistry NULL — tạo asset 'MapRegistry' trong thư mục Resources và kéo các MapData vào.");
                 return;
             }
-            // Nhiều map dùng CHUNG worldMapOffset (0,0) → chúng vẽ ĐÈ LÊN NHAU tại cùng một chỗ, và fog
-            // của map chưa đi (alpha = 1, đục kín) che hết silhouette map đang chơi → "mở bảng mà không
-            // thấy map". Chỉ ghép nhiều map vào bản đồ tổng khi designer ĐÃ đặt offset khác nhau.
-            bool offsetsConfigured = HasDistinctOffsets(_registry.maps);
 
-            foreach (var map in _registry.maps)
-            {
-                if (map == null) continue;
-                if (map.worldBounds.size.sqrMagnitude < 0.01f) continue; // chưa bake bounds → bỏ
-                // Chưa cấu hình offset → CHỈ vẽ map đang chơi (không có gì che nó nữa).
-                if (!offsetsConfigured && map != cur) continue;
-                DrawMap(map);
-            }
-            BuildPlayerDot();
+            if (shown != null && shown.worldBounds.size.sqrMagnitude >= 0.01f) DrawMap(shown);
+            if (shown == cur) BuildPlayerDot();
+            else { _playerDots.Clear(); _openMap = null; }
+
+            int mapCount = AvailableMaps().Count;
+            if (_previousMapBtn != null) _previousMapBtn.interactable = mapCount > 1;
+            if (_nextMapBtn != null) _nextMapBtn.interactable = mapCount > 1;
         }
 
-        /// <summary>
-        /// Các map đã được đặt worldMapOffset KHÁC NHAU chưa? Nếu mọi map (từ 2 cái trở lên) đều dùng
-        /// cùng một offset (mặc định 0,0) thì chúng sẽ vẽ đè lên nhau → coi như CHƯA cấu hình bản đồ tổng.
-        /// </summary>
-        private static bool HasDistinctOffsets(List<MapDataSO> maps)
+        private List<MapDataSO> AvailableMaps()
         {
-            if (maps == null) return false;
+            var result = new List<MapDataSO>();
+            if (_registry == null) return result;
 
-            Vector2? first = null;
-            int counted = 0;
-            foreach (var m in maps)
-            {
-                if (m == null) continue;
-                if (m.worldBounds.size.sqrMagnitude < 0.01f) continue;
-                counted++;
-                if (first == null) { first = m.worldMapOffset; continue; }
-                if ((m.worldMapOffset - first.Value).sqrMagnitude > 0.01f) return true; // có cái lệch → đã cấu hình
-            }
-            // 0-1 map hợp lệ: không có gì đè nhau → cứ vẽ bình thường.
-            return counted <= 1;
+            var current = CurrentMap();
+            foreach (var map in _registry.maps)
+                if (map != null && map.worldBounds.size.sqrMagnitude >= 0.01f
+                    && (map == current || WorldMapState.IsMapDiscovered(map)))
+                    result.Add(map);
+            return result;
+        }
+
+        private void ChangeViewedMap(int direction)
+        {
+            var maps = AvailableMaps();
+            if (maps.Count == 0) return;
+            int index = Mathf.Max(0, maps.IndexOf(_viewedMap));
+            _viewedMap = maps[(index + direction + maps.Count) % maps.Count];
+            RefreshContent();
+            CenterOnViewedMap();
         }
 
         private void DrawMap(MapDataSO map)
@@ -491,8 +499,12 @@ namespace Attrition.Gameplay.Environment
         private MapDataSO CurrentMap()
         {
             if (_registry == null) return null;
-            string scene = SceneManager.GetActiveScene().name;
+            string scene = Attrition.Persistence.GameLaunch.GameplayScene;
             var byName = _registry.GetByScene(scene);
+            if (byName != null) return byName;
+
+            // Fallback cho scene test chạy trực tiếp / save cũ chưa có gameplay scene hợp lệ.
+            byName = _registry.GetByScene(SceneManager.GetActiveScene().name);
             if (byName != null) return byName;
 
             // FALLBACK: sceneName trong MapData có thể lệch tên scene thật → tìm map mà worldBounds

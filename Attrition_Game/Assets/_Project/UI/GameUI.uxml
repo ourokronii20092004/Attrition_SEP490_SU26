@@ -279,6 +279,10 @@
             <ui:VisualElement name="ft-travel-menu" class="bonfire-popup hidden" style="width: 500px;">
                 <ui:Label text="FAST TRAVEL" class="popup-title"/>
                 <ui:VisualElement class="fancy-divider"/>
+                <ui:VisualElement style="flex-direction: row; align-items: center; justify-content: center; margin-bottom: 8px;">
+                    <ui:Button name="ft-map-prev" text="&lt;" class="stepper-btn"/>
+                    <ui:Button name="ft-map-next" text="&gt;" class="stepper-btn"/>
+                </ui:VisualElement>
                 <ui:VisualElement name="ft-panel" style="background-color: transparent; border-width: 0;">
                     <ui:VisualElement name="ft-list-col">
                         <ui:Label name="ft-count" text="0 / 0 DISCOVERED"/>

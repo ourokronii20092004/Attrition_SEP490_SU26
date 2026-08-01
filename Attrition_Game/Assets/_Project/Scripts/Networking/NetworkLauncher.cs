@@ -171,7 +171,11 @@ namespace Attrition.Networking
             _gameplaySpawned = false;
 
             int idx = SceneUtility.GetBuildIndexByScenePath($"Assets/_Project/Scenes/{sceneName}.unity");
-            if (idx >= 0) _runner.LoadScene(SceneRef.FromIndex(idx));
+            if (idx >= 0)
+            {
+                Attrition.Persistence.GameLaunch.GameplayScene = sceneName;
+                _runner.LoadScene(SceneRef.FromIndex(idx));
+            }
             else Debug.LogError($"[NetworkLauncher] Scene '{sceneName}' chưa có trong Build Settings.");
         }
 

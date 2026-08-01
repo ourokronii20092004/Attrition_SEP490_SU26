@@ -82,10 +82,10 @@ public class NetworkSpawner : MonoBehaviour
         if (!Attrition.Persistence.GameLaunch.IsOnline)
         {
             var data = Attrition.Persistence.SaveManager.LoadSlot(Attrition.Persistence.GameLaunch.SelectedSlot);
-            string activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            string gameplayScene = Attrition.Persistence.GameLaunch.GameplayScene;
             if (data != null
                 && !string.IsNullOrEmpty(data.checkpointId)
-                && data.checkpointScene == activeScene)
+                && data.checkpointScene == gameplayScene)
             {
                 spawnPos = new Vector3(data.checkpointX, data.checkpointY, data.checkpointZ);
             }

@@ -30,5 +30,20 @@ namespace Attrition.Gameplay.Environment
                 if (m != null && m.sceneName == sceneName) return m;
             return null;
         }
+
+        /// <summary>Trả map sở hữu checkpoint khi ID là duy nhất; null nếu thiếu hoặc bị trùng.</summary>
+        public MapDataSO GetByCheckpoint(string checkpointId)
+        {
+            if (string.IsNullOrEmpty(checkpointId)) return null;
+
+            MapDataSO found = null;
+            foreach (var map in maps)
+            {
+                if (map == null || !map.checkpoints.Exists(cp => cp.checkpointId == checkpointId)) continue;
+                if (found != null) return null;
+                found = map;
+            }
+            return found;
+        }
     }
 }
