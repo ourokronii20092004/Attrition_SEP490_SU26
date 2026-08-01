@@ -77,9 +77,10 @@ namespace Attrition.Persistence
             if (!_cache.TryGetValue(skillId, out var d)) return config;
             if (!Enum.TryParse(d.Element, out SkillElement element) ||
                 !Enum.TryParse(d.DamageType, out DamageType damageType) ||
-                !Enum.TryParse(d.Delivery, out SkillDelivery delivery) ||
                 !Enum.TryParse(d.HitShape, out SkillHitShape hitShape)) return config;
-            config.element = element; config.damageType = damageType; config.delivery = delivery; config.hitShape = hitShape;
+            // delivery và hitShape không override từ server — SkillSO là nguồn duy nhất để tránh
+            // server trả sai kiểu gây mất projectile/AoE.
+            config.element = element; config.damageType = damageType;
             config.manaCost = d.ManaCost; config.castTime = d.CastTime; config.cooldown = d.Cooldown;
             config.activeStartFrac = d.ActiveStartFrac; config.activeEndFrac = d.ActiveEndFrac;
             config.baseDamage = d.BaseDamage; config.apScaling = d.ApScaling; config.knockbackForce = d.KnockbackForce;
