@@ -297,11 +297,7 @@ namespace Attrition.UI
                 return;
             }
 
-            WorldMapState.PendingTravelScene = _ftMap.sceneName;
-            WorldMapState.PendingTravelCheckpointId = marker.checkpointId;
-            var launcher = Attrition.Networking.NetworkLauncher.Instance;
-            if (launcher != null) launcher.BeginGameplay(_ftMap.sceneName);
-            else Debug.LogWarning("[FastTravel] Không tìm thấy NetworkLauncher.");
+            _controller.RpcRequestCrossMapFastTravel(_ftMap.sceneName, marker.checkpointId);
         }
 
         /// <summary>

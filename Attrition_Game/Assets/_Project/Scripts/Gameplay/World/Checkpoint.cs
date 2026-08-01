@@ -172,6 +172,8 @@ namespace Attrition.Gameplay.World
         [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
         private void RpcOnRested()
         {
+            // RPC chạy trên mọi peer: static WorldMapState là local nên mỗi máy phải tự đánh dấu.
+            Attrition.Gameplay.Environment.WorldMapState.MarkCheckpointDiscovered(DisplayName);
             // Dùng chung cho CẢ F (activate+save) lẫn nút Rest → chỉ bật beacon, KHÔNG hiện loading.
             // Loading "Resting..." chỉ bắn riêng từ DoRest (nút Rest thật) qua RpcRestTeleportLoading.
             if (activeVisual != null) activeVisual.SetActive(true);
