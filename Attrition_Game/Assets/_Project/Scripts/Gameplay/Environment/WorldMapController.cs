@@ -573,8 +573,8 @@ namespace Attrition.Gameplay.Environment
 
             // Khác scene → đặt pending + load scene đích.
             string targetScene = _selectedMap.sceneName;
-            var local = FindLocalController();
-            if (local != null) local.RpcRequestCrossMapFastTravel(targetScene, cp.checkpointId);
+            var controller = FindLocalController();
+            if (controller != null) controller.RpcRequestCrossMapFastTravel(targetScene, cp.checkpointId);
             else Debug.LogWarning("[WorldMap] TRAVEL: không tìm thấy local PlayerController.");
         }
 
