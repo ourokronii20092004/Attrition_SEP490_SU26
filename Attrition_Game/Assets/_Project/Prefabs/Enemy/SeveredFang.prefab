@@ -251,6 +251,12 @@ MonoBehaviour:
     m_Bits: 64
   wallCheckDistance: 0.8
   wallCheckHeightOffset: 0.5
+  eyeHeightOffset: 0.6
+  sightMemoryDuration: 1.5
+  canStepUp: 0
+  stepUpMaxHeight: 1.2
+  stepUpForwardSpeed: 4
+  stepUpCooldown: 0.6
   canEvadeJump: 0
   evadeTriggerDistance: 2
   jumpForce: 12
@@ -262,6 +268,8 @@ MonoBehaviour:
   lungeForwardSpeed: 11
   lungeJumpForce: 10
   facingDeadZone: 0.3
+  leashToRoom: 0
+  leashPadding: 1.5
   _CurrentState: 0
   _NetSpeed: 0
   _NetFacingDir: 1
@@ -272,10 +280,14 @@ MonoBehaviour:
     RawGuidValue: b8b7878c310b6e8488743d3e5691f2a3
   fireBoltPrefab:
     RawGuidValue: e5ac07bdad8d05c4fad4d9d96d9e85ac
+  fireBreathPrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  targetRetargetInterval: 4
   dashSpeed: 18
   dashDuration: 0.45
   dashExplosionCount: 4
   dashExplosionInterval: 0.1
+  dashExplosionSpacing: 3
   dashExplosionDamage: 20
   sheatheChargeTime: 0.6
   sheatheFireboltDamage: 25
@@ -284,6 +296,23 @@ MonoBehaviour:
   shortDashDuration: 0.25
   shortDashFireboltDamage: 20
   shortDashFireboltSpeed: 0
+  fireBreathChargeTime: 0.5
+  fireBreathStreakCount: 6
+  fireBreathSpacing: 2.2
+  fireBreathInterval: 0.12
+  fireBreathDamage: 18
+  splitCarrierSpeed: 12
+  splitCarrierDamage: 20
+  splitTravelTime: 0.55
+  splitFireballCount: 4
+  splitSpreadAngle: 60
+  splitFireballDamage: 15
+  splitFireballSpeed: 0
+  volleyCount: 3
+  volleyInterval: 0.22
+  volleyChargeTime: 0.4
+  volleyDamage: 16
+  volleyFireboltSpeed: 0
   meleeRange: 2
   meleeDamage: 15
   skillCooldown: 2.5
@@ -394,6 +423,7 @@ MonoBehaviour:
   _PatrolSpeed: 0
   _ChaseSpeed: 0
   _AttackSpeed: 0
+  _RuntimeExpReward: 0
 --- !u!70 &1494089205846838339
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -447,6 +477,8 @@ MonoBehaviour:
   defaultFacingLeft: 0
   telegraphRenderer: {fileID: 0}
   telegraphColor: {r: 1, g: 0.4, b: 0.4, a: 1}
+  burnTint: {r: 1, g: 0.62, b: 0.3, a: 1}
+  slowTint: {r: 0.55, g: 0.85, b: 1, a: 1}
 --- !u!114 &3265679129314310001
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -521,12 +553,13 @@ MonoBehaviour:
   eliteSkills: {fileID: 0}
   extraLivesAfterHpZero: 0
   reviveDelaySeconds: 2.5
-  deathClipName:
+  deathClipName: 
   despawnFallback: 4.5
   lootItemIds: []
   normalDropChance: 0.35
   droppedItemPrefab:
     RawGuidValue: 00000000000000000000000000000000
+  isRematchBoss: 0
   canBeKnockedBack: 1
   stunDuration: 0.4
   _Health: 0
@@ -536,6 +569,8 @@ MonoBehaviour:
   _IsKnockbackActive:
     _value: 0
   _IsAwaitingRevive:
+    _value: 0
+  _HoldDespawn:
     _value: 0
   maxHealth: 3
   statsComp: {fileID: 0}
