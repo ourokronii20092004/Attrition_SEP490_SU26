@@ -11,7 +11,7 @@ internal static class SkillRules
     internal static bool OwnedImage(string? value) => value == null || value.StartsWith("/api/assets/media/", StringComparison.Ordinal);
     internal static readonly string[] Elements = ["Fire", "Wood", "Earth", "Thunder", "Thrust"];
     internal static readonly string[] DamageTypes = ["Physical", "Magic", "True"];
-    internal static readonly string[] Deliveries = ["AreaInstant", "Projectile"];
+    internal static readonly string[] Deliveries = ["AreaInstant", "Projectile", "SpawnAoE"];
     internal static readonly string[] Shapes = ["Cone", "Circle", "Rectangle"];
 }
 

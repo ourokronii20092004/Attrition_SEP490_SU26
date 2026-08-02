@@ -85,7 +85,14 @@ namespace Attrition.Editor
             items.Add(AbilityAcc("acc_shadow_dash", "Shadow Cloak", GrantedAbility.ShadowDash));
             items.Add(DamageAcc("acc_stamina_charm", "Vigor Charm", Icon("bùa thể lực"), (StatType.MaxStamina, 20)));
 
-            // ─── ACCESSORY HIỆU ỨNG (chưa có art — icon null, chỉnh tham số trong Inspector nếu cần) ───
+            // ─── SKILL LOCKED: index 15..19 đã phát hành, không được chèn item trước block này ───
+            items.Add(SkillProjectile("skill_fire", "Fireball", SkillElement.Fire, 20, 0.7f, 35, skillProjectile, count: 3, spread: 30f, icon: Icon("fire_ball_skill")));
+            items.Add(AssetDatabase.LoadAssetAtPath<SkillSO>(DataDir + "/skill_wind.asset"));
+            items.Add(SkillArea("skill_earth", "Stone Spike", SkillElement.Earth, 25, 0.9f, 45, SkillHitShape.Circle, range: 2.5f, angle: 360f));
+            items.Add(SkillProjectile("skill_thunder", "Chain Bolt", SkillElement.Thunder, 22, 0.6f, 38, skillProjectile, count: 5, spread: 45f));
+            items.Add(AssetDatabase.LoadAssetAtPath<SkillSO>(DataDir + "/skill_water.asset"));
+
+            // Item mới chỉ được append sau contract legacy 0..19.
             items.Add(EffectAcc("acc_burn",       "Ember Charm",    DamageEffectType.Burn,          magnitude: 30, duration: 3f));
             items.Add(EffectAcc("acc_slow",       "Frost Charm",    DamageEffectType.Slow,          magnitude: 0.5f, duration: 2.5f));
             items.Add(EffectAcc("acc_lifesteal",  "Vampiric Charm", DamageEffectType.Lifesteal,     magnitude: 0.2f));
@@ -93,13 +100,6 @@ namespace Attrition.Editor
             items.Add(EffectAcc("acc_potion",     "Alchemist Charm",DamageEffectType.PotionBoost,   magnitude: 0.3f));
             items.Add(EffectAcc("acc_shield",     "Aegis Charm",    DamageEffectType.DamageShield,  magnitude: 40, duration: 4f, cooldown: 8f));
             items.Add(EffectAcc("acc_postskill",  "Focus Charm",    DamageEffectType.PostSkillDamage,magnitude: 1.5f));
-
-            // ─── SKILL ───
-            items.Add(SkillProjectile("skill_fire", "Fireball", SkillElement.Fire, 20, 0.7f, 35, skillProjectile, count: 3, spread: 30f, icon: Icon("fire_ball_skill")));
-            items.Add(SkillArea("skill_wood", "Thorn Lash", SkillElement.Wood, 18, 0.6f, 30, SkillHitShape.Cone, range: 3f, angle: 100f));
-            items.Add(SkillArea("skill_earth", "Stone Spike", SkillElement.Earth, 25, 0.9f, 45, SkillHitShape.Circle, range: 2.5f, angle: 360f));
-            items.Add(SkillProjectile("skill_thunder", "Chain Bolt", SkillElement.Thunder, 22, 0.6f, 38, skillProjectile, count: 5, spread: 45f));
-            items.Add(SkillArea("skill_thrust", "Phantom Thrust", SkillElement.Thrust, 15, 0.5f, 28, SkillHitShape.Rectangle, range: 3.5f, angle: 0f));
 
             // ─── TRANG BỊ BỔ SUNG (APPEND CUỐI để không lệch index mạng của item cũ) ───
             AddExtraEquipment(items);
@@ -378,8 +378,16 @@ namespace Attrition.Editor
                 db = ScriptableObject.CreateInstance<ItemDatabaseSO>();
                 AssetDatabase.CreateAsset(db, path);
             }
-            db.EditorItems.Clear();
-            db.EditorItems.AddRange(items);
+            if (db.EditorItems.Count == 0)
+            {
+                db.EditorItems.AddRange(items);
+            }
+            else
+            {
+                foreach (var item in items)
+                    if (item != null && !db.EditorItems.Contains(item))
+                        db.EditorItems.Add(item);
+            }
             EditorUtility.SetDirty(db);
         }
 
