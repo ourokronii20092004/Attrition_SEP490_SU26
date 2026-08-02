@@ -149,14 +149,28 @@ MonoBehaviour:
   eliteSkills: {fileID: 0}
   extraLivesAfterHpZero: 0
   reviveDelaySeconds: 5
+  deathClipName: 
+  despawnFallback: 1.5
+  lootItemIds:
+  - emerald_chest
+  - emerald_boots
+  - emerald_legs
+  - emerald_helm
+  normalDropChance: 0.2
+  droppedItemPrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  isRematchBoss: 0
   canBeKnockedBack: 1
   stunDuration: 0.4
   _Health: 0
+  _CurrentPoise: 0
   _isDeadNetworked:
     _value: 0
   _IsKnockbackActive:
     _value: 0
   _IsAwaitingRevive:
+    _value: 0
+  _HoldDespawn:
     _value: 0
   maxHealth: 4
   statsComp: {fileID: 0}
@@ -176,11 +190,15 @@ MonoBehaviour:
   combatComp: {fileID: 1903515082012468754}
   controller: {fileID: 4812439829016025068}
   eliteSkills: {fileID: 0}
-  patrolSpeed: 2
-  chaseSpeed: 5
   viewRadius: 15
   patrolRadius: 3
   isFlying: 0
+  flyHoverOffsetY: 0.8
+  flyMinGroundClearance: 1.2
+  flyMaxOffsetFromPlayer: 2.5
+  flyGroundLayer:
+    serializedVersion: 2
+    m_Bits: 0
   flyMeleeRetreat: 0
   flyMeleeRetreatAltitude: 3
   flyMeleeRetreatSpeed: 8
@@ -197,12 +215,25 @@ MonoBehaviour:
     m_Bits: 64
   wallCheckDistance: 0.8
   wallCheckHeightOffset: 0.5
+  eyeHeightOffset: 0.6
+  sightMemoryDuration: 1.5
+  canStepUp: 1
+  stepUpMaxHeight: 1.2
+  stepUpForwardSpeed: 4
+  stepUpCooldown: 0.6
   canEvadeJump: 0
   evadeTriggerDistance: 2
   jumpForce: 12
   evadeBackwardSpeed: 8
   jumpCooldown: 3
+  canLungeJump: 0
+  lungeMinDistance: 2.5
+  lungeMaxDistance: 7
+  lungeForwardSpeed: 11
+  lungeJumpForce: 10
   facingDeadZone: 0.3
+  leashToRoom: 0
+  leashPadding: 1.5
   _CurrentState: 0
   _NetSpeed: 0
   _NetFacingDir: 1
@@ -223,6 +254,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAnimation
   anim: {fileID: 0}
   defaultFacingLeft: 0
+  telegraphRenderer: {fileID: 0}
+  telegraphColor: {r: 1, g: 0.4, b: 0.4, a: 1}
+  burnTint: {r: 1, g: 0.62, b: 0.3, a: 1}
+  slowTint: {r: 0.55, g: 0.85, b: 1, a: 1}
 --- !u!114 &1903515082012468754
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -237,13 +272,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyCombat
   attacks:
   - hitboxShape: 0
+    engageRange: 0
     range: 2.5
     angle: 90
     rectSize: {x: 1, y: 1}
     damage: 1
+    damageType: 0
+    clipName: 
     duration: 0.5
     cooldown: 1.5
     recoveryDuration: 0.25
+    telegraphDuration: 0
+    weight: 1
   enableDashSlash: 0
   dashSlashAttacks: 
   dashSpeed: 15
@@ -258,7 +298,6 @@ MonoBehaviour:
   playerLayer:
     serializedVersion: 2
     m_Bits: 128
-  currentAttackSpeed: 1
   isRanged: 0
   projectilePrefab:
     RawGuidValue: 00000000000000000000000000000000
@@ -425,6 +464,11 @@ MonoBehaviour:
   _DEF: 0
   _RES: 0
   _Poise: 0
+  _PoiseRecoveryTime: 0
+  _PatrolSpeed: 0
+  _ChaseSpeed: 0
+  _AttackSpeed: 0
+  _RuntimeExpReward: 0
 --- !u!1 &5940408243040217464
 GameObject:
   m_ObjectHideFlags: 0

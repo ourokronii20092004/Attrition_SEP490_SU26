@@ -21970,6 +21970,8 @@ MonoBehaviour:
   nextSceneName: Elf Valley -Map 3
   entryPointId: from_map2
   startActive: 0
+  endingDialogue: {fileID: 0}
+  showEndingTitle: 0
   fadeOutDuration: 0.6
   _IsActive:
     _value: 0
@@ -28401,6 +28403,52 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1158622663}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &513638489
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 513638491}
+  - component: {fileID: 513638490}
+  m_Layer: 0
+  m_Name: SceneAreaIntro
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &513638490
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 513638489}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f572c087fc73c4347980380fc782658c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Environment.SceneAreaIntro
+  areaName: Forest Of Life
+  delay: 1.3
+--- !u!4 &513638491
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 513638489}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &527183474
 GameObject:
@@ -44572,7 +44620,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 0}
+    m_TransformParent: {fileID: 1191109465}
     m_Modifications:
     - target: {fileID: 3616569936948720178, guid: e56fdef71520bbb46b82db9c48acade3, type: 3}
       propertyPath: m_Name
@@ -44596,15 +44644,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8091828833475503689, guid: e56fdef71520bbb46b82db9c48acade3, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 8091828833475503689, guid: e56fdef71520bbb46b82db9c48acade3, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 8091828833475503689, guid: e56fdef71520bbb46b82db9c48acade3, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 8091828833475503689, guid: e56fdef71520bbb46b82db9c48acade3, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -44623,6 +44671,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e56fdef71520bbb46b82db9c48acade3, type: 3}
+--- !u!4 &824873065 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8091828833475503689, guid: e56fdef71520bbb46b82db9c48acade3, type: 3}
+  m_PrefabInstance: {fileID: 824873064}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &852912661
 GameObject:
   m_ObjectHideFlags: 0
@@ -45877,6 +45930,8 @@ MonoBehaviour:
   nextSceneName: The Darkest Path - Map 1
   entryPointId: from_map2
   startActive: 1
+  endingDialogue: {fileID: 0}
+  showEndingTitle: 0
   fadeOutDuration: 0.6
   _IsActive:
     _value: 0
@@ -46414,7 +46469,9 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1829717420}
+  - {fileID: 824873065}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1194470195
@@ -191158,12 +191215,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1829717417}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1191109465}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1831184288
 GameObject:
@@ -193327,8 +193384,6 @@ SceneRoots:
   - {fileID: 1414899477}
   - {fileID: 1158622663}
   - {fileID: 1191109465}
-  - {fileID: 1829717420}
-  - {fileID: 824873064}
   - {fileID: 1418284782}
   - {fileID: 1965572868}
   - {fileID: 1915542053}
@@ -193336,3 +193391,4 @@ SceneRoots:
   - {fileID: 345037466}
   - {fileID: 582432897}
   - {fileID: 633036438}
+  - {fileID: 513638491}

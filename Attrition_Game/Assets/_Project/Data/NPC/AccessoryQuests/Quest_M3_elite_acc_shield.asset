@@ -22,7 +22,7 @@ MonoBehaviour:
   - crab
   - frogger
   requiredAmount: 2
-  expReward: 520
+  expReward: 500
   itemRewards:
   - itemId: acc_shield
     amount: 1

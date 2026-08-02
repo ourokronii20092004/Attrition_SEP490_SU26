@@ -308,7 +308,10 @@ MonoBehaviour:
   reviveDelaySeconds: 5
   deathClipName: 
   despawnFallback: 1.5
-  lootItemIds: []
+  lootItemIds:
+  - emerald_helm
+  - emerald_boots
+  - emerald_legs
   normalDropChance: 0.35
   droppedItemPrefab:
     RawGuidValue: 00000000000000000000000000000000

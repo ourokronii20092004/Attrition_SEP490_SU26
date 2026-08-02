@@ -415,6 +415,7 @@ MonoBehaviour:
   despawnFallback: 1.5
   lootItemIds:
   - skill_wind
+  - emerald_chest
   normalDropChance: 1
   droppedItemPrefab:
     RawGuidValue: 00000000000000000000000000000000

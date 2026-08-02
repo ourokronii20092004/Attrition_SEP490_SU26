@@ -131,8 +131,8 @@ Transform:
   m_GameObject: {fileID: 6812451834404064305}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -36.95, y: 48.72, z: 0}
-  m_LocalScale: {x: 0.5741661, y: 0.5, z: 0.16208908}
+  m_LocalPosition: {x: -37.9668, y: 47.4222, z: 0}
+  m_LocalScale: {x: 0.26721692, y: 0.2474, z: 0.16208908}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 683336405131911001}
@@ -283,8 +283,11 @@ MonoBehaviour:
   deathClipName: 
   despawnFallback: 1.5
   lootItemIds:
-  - leather_chest
-  normalDropChance: 1
+  - bronze_chest
+  - bronze_helm
+  - bronze_boots
+  - bronze_legs
+  normalDropChance: 0.35
   droppedItemPrefab:
     RawGuidValue: 00000000000000000000000000000000
   isRematchBoss: 0
