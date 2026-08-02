@@ -49,7 +49,8 @@ public class AlbumService : IAlbumService
             album.CoverPath, album.IsCoverUserDefined, album.ReleaseDate, album.AlbumType, album.Genre,
             album.TrackCount, album.TotalDuration, album.CreatedAt,
             tracks.Select(t => new MusicTrackDto(t.TrackId, t.AlbumId, t.Title, t.Slug, t.TrackNumber,
-                t.Artists, t.Duration, t.Genre, t.CoverPath, t.PlayCount, t.IsFeatured, t.FileSize ?? 0)));
+                t.Artists, t.Duration, t.Genre, t.CoverPath, t.PlayCount, t.IsFeatured, t.FileSize ?? 0,
+                GameUsages: t.GameUsages)));
     }
 
     public async Task<MusicAlbumDto> CreateAlbumAsync(CreateAlbumRequest req)

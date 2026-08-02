@@ -12,6 +12,7 @@ public interface ITrackService
     Task<bool> IncrementPlayCountAsync(int id);
     Task<(bool success, string? error, ScanTrackResponse? data)> ScanTrackAsync(Microsoft.AspNetCore.Http.IFormFile file);
     Task<(bool success, string? error, MusicTrackDto? data)> UploadTrackAsync(UploadTrackRequest req);
+    Task<(bool success, string? error, MusicTrackDto? data)> UploadUnityTrackAsync(UnityTrackUploadRequest req);
     Task<(bool success, string? error, MusicTrackDto? data)> UpdateTrackAsync(int id, UpdateTrackRequest req);
     Task<bool> DeleteTrackAsync(int id);
     Task<int> CountAsync();

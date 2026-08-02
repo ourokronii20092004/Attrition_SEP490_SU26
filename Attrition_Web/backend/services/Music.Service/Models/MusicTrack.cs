@@ -16,5 +16,7 @@ public class MusicTrack
     public int? Bpm { get; set; }
     public int PlayCount { get; set; }
     public bool IsFeatured { get; set; }
+    public string? UnitySourceKey { get; set; }
+    public List<string> GameUsages { get; set; } = new();
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

@@ -26,10 +26,18 @@ public record UpdateTrackRequest(
     bool? IsFeatured
 );
 
+public class UnityTrackUploadRequest
+{
+    public string SourceKey { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
+    public List<string> GameUsages { get; set; } = new();
+    public IFormFile? File { get; set; }
+}
+
 public record MusicTrackDto(
     int TrackId, int AlbumId, string Title, string Slug, int TrackNumber, List<string> Artists,
     int Duration, string? Genre, string? CoverPath, int PlayCount, bool IsFeatured, long FileSize,
-    string? AlbumTitle = null, string? AlbumCoverPath = null
+    string? AlbumTitle = null, string? AlbumCoverPath = null, List<string>? GameUsages = null
 );
 
 public record FeaturedTracksResponse(

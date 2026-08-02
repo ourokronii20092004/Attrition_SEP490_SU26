@@ -18,7 +18,8 @@ public class GameDataImportRepository(EnemyDbContext db) : IGameDataImportReposi
             await using var tx = await db.Database.BeginTransactionAsync();
             var now = DateTime.UtcNow;
             var itemCounts = await ImportItems(request.Items, now);
-            var enemyCounts = await ImportEnemies(request.Enemies, now);
+            var itemNames = request.Items.ToDictionary(x => x.ItemId, x => x.Name, StringComparer.Ordinal);
+            var enemyCounts = await ImportEnemies(request.Enemies, itemNames, now);
             await db.SaveChangesAsync();
             await tx.CommitAsync();
             return (itemCounts, enemyCounts);
@@ -55,10 +56,10 @@ public class GameDataImportRepository(EnemyDbContext db) : IGameDataImportReposi
         return new(created, updated, unchanged);
     }
 
-    private async Task<ImportCounts> ImportEnemies(List<UnityEnemyImport> input, DateTime now)
+    private async Task<ImportCounts> ImportEnemies(List<UnityEnemyImport> input, IReadOnlyDictionary<string, string> itemNames, DateTime now)
     {
         var ids = input.Select(x => x.EnemyId).ToList();
-        var existing = await db.Enemies.Where(x => ids.Contains(x.EnemyId)).ToDictionaryAsync(x => x.EnemyId, StringComparer.Ordinal);
+        var existing = await db.Enemies.Include(x => x.LootTable).Where(x => ids.Contains(x.EnemyId)).ToDictionaryAsync(x => x.EnemyId, StringComparer.Ordinal);
         var created = 0; var updated = 0; var unchanged = 0;
         foreach (var dto in input)
         {
@@ -66,12 +67,12 @@ public class GameDataImportRepository(EnemyDbContext db) : IGameDataImportReposi
             if (!existing.TryGetValue(dto.EnemyId, out var enemy))
             {
                 enemy = new EnemyEntity { EnemyId = dto.EnemyId, UnityBaselineJson = baseline, ImportedAt = now, CreatedAt = now, UpdatedAt = now };
-                Apply(enemy, dto);
+                Apply(enemy, dto, itemNames);
                 db.Enemies.Add(enemy); created++;
             }
             else if (Signature(enemy) != Signature(dto, enemy.ImageUrl))
             {
-                Apply(enemy, dto);
+                Apply(enemy, dto, itemNames);
                 enemy.UnityBaselineJson = baseline; enemy.ImportedAt = now; enemy.UpdatedAt = now; updated++;
             }
             else unchanged++;
@@ -90,13 +91,18 @@ public class GameDataImportRepository(EnemyDbContext db) : IGameDataImportReposi
         item.Modifiers.AddRange(dto.Modifiers?.Select(x => new ItemModifierEntry { Stat = x.Stat, Amount = x.Amount }) ?? []);
     }
 
-    private static void Apply(EnemyEntity enemy, UnityEnemyImport dto)
+    private static void Apply(EnemyEntity enemy, UnityEnemyImport dto, IReadOnlyDictionary<string, string> itemNames)
     {
         enemy.Name = dto.Name; enemy.Tier = dto.Tier; enemy.Hp = dto.Hp; enemy.Ad = dto.Ad; enemy.Ap = dto.Ap;
         enemy.Def = dto.Def; enemy.Res = dto.Res; enemy.Poise = dto.Poise;
         enemy.PoiseRecoveryTime = dto.PoiseRecoveryTime; enemy.PatrolSpeed = dto.PatrolSpeed;
         enemy.ChaseSpeed = dto.ChaseSpeed; enemy.AttackSpeed = dto.AttackSpeed; enemy.ExpReward = dto.ExpReward;
         enemy.ImageUrl = dto.ImageUrl ?? enemy.ImageUrl;
+        enemy.LootTable.Clear();
+        enemy.LootTable.AddRange((dto.LootTable ?? []).Select(x => new EnemyLootEntry {
+            ItemName = itemNames.GetValueOrDefault(x.ItemId, x.ItemId), IconKey = x.ItemId,
+            DropChance = x.DropChance, MinQty = x.MinQty, MaxQty = x.MaxQty
+        }));
     }
 
     // Đổi hay không thì so GIÁ TRỊ THẬT trên web với giá trị Unity sắp ghi, không so
@@ -113,11 +119,13 @@ public class GameDataImportRepository(EnemyDbContext db) : IGameDataImportReposi
 
     private static string Signature(EnemyEntity e) => JsonSerializer.Serialize(new object?[] {
         e.Name, e.Tier, e.Hp, e.Ad, e.Ap, e.Def, e.Res, e.Poise, e.PoiseRecoveryTime,
-        e.PatrolSpeed, e.ChaseSpeed, e.AttackSpeed, e.ExpReward, e.ImageUrl }, JsonOptions);
+        e.PatrolSpeed, e.ChaseSpeed, e.AttackSpeed, e.ExpReward, e.ImageUrl,
+        e.LootTable.OrderBy(x => x.IconKey).Select(x => new object?[] { x.IconKey, x.DropChance, x.MinQty, x.MaxQty }) }, JsonOptions);
 
     private static string Signature(UnityEnemyImport d, string? currentImage) => JsonSerializer.Serialize(new object?[] {
         d.Name, d.Tier, d.Hp, d.Ad, d.Ap, d.Def, d.Res, d.Poise, d.PoiseRecoveryTime,
-        d.PatrolSpeed, d.ChaseSpeed, d.AttackSpeed, d.ExpReward, d.ImageUrl ?? currentImage }, JsonOptions);
+        d.PatrolSpeed, d.ChaseSpeed, d.AttackSpeed, d.ExpReward, d.ImageUrl ?? currentImage,
+        (d.LootTable ?? []).OrderBy(x => x.ItemId).Select(x => new object?[] { x.ItemId, x.DropChance, x.MinQty, x.MaxQty }) }, JsonOptions);
 
     private static string? Clean(string? value) => value == null ? null : ContentSanitizer.Sanitize(value);
     private static async Task<(DateTime? max, int count)> VersionInfo(IQueryable<DateTime> query) { var count = await query.CountAsync(); return count == 0 ? (null, 0) : (await query.MaxAsync(x => (DateTime?)x), count); }

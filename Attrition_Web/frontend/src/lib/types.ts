@@ -628,6 +628,7 @@ export interface MusicTrackDto {
   fileSize: number;
   albumTitle: string | null;
   albumCoverPath: string | null;
+  gameUsages?: string[] | null;
 }
 
 export interface AlbumDetailDto {
