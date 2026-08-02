@@ -133,11 +133,46 @@ namespace Attrition.Persistence
         public static string SoloInventoryPath(int slotIndex)
             => Path.Combine(Application.persistentDataPath, $"inventory_solo_{slotIndex}.json");
 
-        /// <summary>Xoá TOÀN BỘ dữ liệu của 1 save slot solo: tiến trình + inventory.</summary>
-        public static void DeleteSlot(int slotIndex)
+        /// <summary>Xoá đúng dữ liệu tại một slot, không thay đổi chỉ số các slot khác.</summary>
+        public static void ClearSlot(int slotIndex)
         {
+            if (slotIndex < 0 || slotIndex >= SlotCount) return;
             TryDelete(Path.Combine(SaveDirectory, $"slot_{slotIndex}.json"));
             TryDelete(SoloInventoryPath(slotIndex));
+        }
+
+        /// <summary>Xoá slot solo và dồn toàn bộ slot phía sau lên, giữ inventory đi cùng nhân vật.</summary>
+        public static void DeleteSlot(int slotIndex)
+        {
+            if (slotIndex < 0 || slotIndex >= SlotCount) return;
+
+            ClearSlot(slotIndex);
+
+            int destination = slotIndex;
+            for (int source = slotIndex + 1; source < SlotCount; source++)
+            {
+                string sourceSave = Path.Combine(SaveDirectory, $"slot_{source}.json");
+                if (!File.Exists(sourceSave)) continue;
+
+                MoveReplacing(sourceSave, Path.Combine(SaveDirectory, $"slot_{destination}.json"));
+                MoveReplacing(SoloInventoryPath(source), SoloInventoryPath(destination));
+                destination++;
+            }
+
+            for (int i = destination; i < SlotCount; i++) ClearSlot(i);
+        }
+
+        private static void MoveReplacing(string source, string destination)
+        {
+            try
+            {
+                if (File.Exists(destination)) File.Delete(destination);
+                if (File.Exists(source)) File.Move(source, destination);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Error moving '{source}' to '{destination}': {e.Message}");
+            }
         }
 
         private static void TryDelete(string filePath)

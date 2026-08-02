@@ -114,6 +114,9 @@ namespace Attrition.Gameplay.Environment
 
         private bool AlreadyShown() => _shown.Contains(tutorialId);
 
+        /// <summary>Bắt đầu nhân vật mới trong cùng process phải được xem hướng dẫn lại.</summary>
+        public static void ClearShown() => _shown.Clear();
+
         private static Attrition.Gameplay.Player.Inventory.PlayerInventory FindLocalPlayerInventory()
         {
             foreach (var pc in FindObjectsByType<PlayerController>(FindObjectsSortMode.None))

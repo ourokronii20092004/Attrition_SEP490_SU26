@@ -3379,6 +3379,8 @@ MonoBehaviour:
   nextSceneName: Forest - Map 2
   entryPointId: from_map1
   startActive: 0
+  endingDialogue: {fileID: 0}
+  showEndingTitle: 0
   fadeOutDuration: 0.6
   _IsActive:
     _value: 0

@@ -163,8 +163,8 @@ Transform:
   m_GameObject: {fileID: 8275392326269774209}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -36.6874, y: 48.48665, z: 0}
-  m_LocalScale: {x: 1.7224984, y: 1.5, z: 0.48626724}
+  m_LocalPosition: {x: -52.89, y: 3.92, z: 0}
+  m_LocalScale: {x: 1.2229738, y: 1.0649999, z: 0.34524974}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 6904719395874627402}
@@ -352,7 +352,7 @@ MonoBehaviour:
   controller: {fileID: 571092413513245563}
   eliteSkills: {fileID: 2747201605660612576}
   viewRadius: 10
-  patrolRadius: 4
+  patrolRadius: 10
   isFlying: 0
   flyHoverOffsetY: 0.8
   flyMinGroundClearance: 1.2

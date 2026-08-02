@@ -1138,24 +1138,29 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
     public void RpcRequestRespawnAll()
     {
-        // Hồi sinh tại checkpoint REST/SAVE gần nhất (MostRecentlyActivated), không phải checkpoint
-        // activated đầu danh sách. Fallback: checkpoint activated bất kỳ → gốc scene.
+        // Checkpoint chỉ hợp lệ khi object đó còn thuộc scene hiện tại. Qua map mới mà chưa rest thì
+        // dùng spawnPoint của map mới, không kéo người chơi về checkpoint map cũ hoặc Vector3.zero.
         var recent = Attrition.Gameplay.World.Checkpoint.MostRecentlyActivated;
-        Vector3 spawn;
-        if (recent != null && recent.HasBeenActivated)
+        bool hasCheckpoint = recent != null
+                             && recent.gameObject.scene.name == Attrition.Persistence.GameLaunch.GameplayScene
+                             && recent.HasBeenActivated;
+        if (!hasCheckpoint)
         {
-            spawn = recent.RespawnPosition;
-        }
-        else
-        {
-            var checkpoints = FindObjectsByType<Attrition.Gameplay.World.Checkpoint>(FindObjectsSortMode.None);
-            var active = checkpoints.FirstOrDefault(cp => cp.HasBeenActivated);
-            spawn = active != null ? active.RespawnPosition : Vector3.zero;
+            recent = FindObjectsByType<Attrition.Gameplay.World.Checkpoint>(FindObjectsSortMode.None)
+                .FirstOrDefault(cp => cp != null && cp.HasBeenActivated);
+            hasCheckpoint = recent != null;
         }
 
+        var spawner = FindFirstObjectByType<NetworkSpawner>();
         var players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
         foreach (var p in players)
         {
+            Vector3 spawn = hasCheckpoint ? recent.RespawnPosition : p.transform.position;
+            if (!hasCheckpoint && spawner != null && p.Object != null
+                && !spawner.TryGetDefaultSpawn(p.Object.InputAuthority, out spawn))
+            {
+                Debug.LogError("[Respawn] Map hiện tại chưa cấu hình spawn point; giữ vị trí player thay vì dịch về (0,0).");
+            }
             p.ReviveAndRestore(spawn);
         }
 
@@ -1164,7 +1169,6 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
         // sau khi loading tắt (ReviveAndRestore đã set cam.Follow + warp).
         RpcTravelLoading();
 
-        var spawner = FindFirstObjectByType<NetworkSpawner>();
         if (spawner != null)
         {
             // Despawn quái còn sống (trừ boss) TRƯỚC khi spawn lại → tránh nhân đôi.
