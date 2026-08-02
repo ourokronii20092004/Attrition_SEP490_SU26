@@ -13,7 +13,9 @@ namespace Attrition.Gameplay.Environment
     public class TutorialPanel : MonoBehaviour
     {
         private static TutorialPanel _instance;
+        private static bool _suppressed;
 
+        private Canvas _canvas;
         private CanvasGroup _group;
         private TextMeshProUGUI _titleLabel;
         private TextMeshProUGUI _bodyLabel;
@@ -38,6 +40,13 @@ namespace Attrition.Gameplay.Environment
             _instance.ShowStepsInternal(title, lines, autoHideSeconds, onClosed);
         }
 
+        public static void SetSuppressed(bool suppressed)
+        {
+            _suppressed = suppressed;
+            if (_instance != null && _instance._canvas != null)
+                _instance._canvas.enabled = !suppressed;
+        }
+
         private static void EnsureInstance()
         {
             if (_instance != null) return;
@@ -52,6 +61,8 @@ namespace Attrition.Gameplay.Environment
             scaler.referenceResolution = new Vector2(1920, 1080);
 
             _instance = canvasObj.AddComponent<TutorialPanel>();
+            _instance._canvas = canvas;
+            canvas.enabled = !_suppressed;
             _instance.BuildUI(canvasObj.transform);
         }
 
@@ -160,6 +171,13 @@ namespace Attrition.Gameplay.Environment
                 float shownAt = Time.unscaledTime;
                 while (true)
                 {
+                    if (_suppressed)
+                    {
+                        float pausedAt = Time.unscaledTime;
+                        while (_suppressed) yield return null;
+                        shownAt += Time.unscaledTime - pausedAt;
+                    }
+
                     bool timedOut = autoHideSeconds > 0f && Time.unscaledTime - shownAt >= autoHideSeconds;
 
                     // Trễ 0.4s để phím vừa bấm ở bước trước không lật luôn bước này.
@@ -276,6 +294,13 @@ namespace Attrition.Gameplay.Environment
             float shownAt = Time.unscaledTime;
             while (true)
             {
+                if (_suppressed)
+                {
+                    float pausedAt = Time.unscaledTime;
+                    while (_suppressed) yield return null;
+                    shownAt += Time.unscaledTime - pausedAt;
+                }
+
                 bool timedOut = autoHideSeconds > 0f && Time.unscaledTime - shownAt >= autoHideSeconds;
                 bool dismissed = Time.unscaledTime - shownAt > 0.4f
                                  && (Input.anyKeyDown || Input.GetMouseButtonDown(0));

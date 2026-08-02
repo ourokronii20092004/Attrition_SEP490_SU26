@@ -36,6 +36,8 @@ namespace Attrition.Gameplay.Environment
             _instance.ShowInternal(title, members, perLineDelay, holdSeconds);
         }
 
+        public static void ClearShown() => _shown.Clear();
+
         private static void EnsureInstance()
         {
             if (_instance != null) return;
