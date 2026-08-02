@@ -1,4 +1,3 @@
-using System.Linq;
 using Fusion;
 using UnityEngine;
 using Attrition.Gameplay.Player;
@@ -46,6 +45,8 @@ namespace Attrition.Gameplay.World
         /// nhầm về điểm đầu danh sách thay vì điểm save gần nhất.
         /// </summary>
         public static Checkpoint MostRecentlyActivated { get; internal set; }
+
+        public static void ClearRuntimeState() => MostRecentlyActivated = null;
 
         private Vector3 RestPoint => respawnPoint != null ? respawnPoint.position : transform.position;
 
@@ -102,7 +103,6 @@ namespace Attrition.Gameplay.World
         private bool DoRest()
         {
             if (!HasStateAuthority) return false;
-            if (AnyEnemyAggressive()) return false;
 
             // 1) Hồi đầy + refill bình + DỊCH CHUYỂN mọi player về điểm rest.
             // Loading "Resting..." bắn về CẢ HAI máy ngay khi rest hợp lệ (trước teleport) để không giật.
@@ -167,12 +167,6 @@ namespace Attrition.Gameplay.World
 
             RpcOnRested();
             return true;
-        }
-
-        private bool AnyEnemyAggressive()
-        {
-            var enemies = FindObjectsByType<EnemyAI>(FindObjectsSortMode.None);
-            return enemies.Any(e => e != null && e.IsAggressive);
         }
 
         [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
