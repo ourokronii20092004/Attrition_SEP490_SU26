@@ -227,7 +227,7 @@ MonoBehaviour:
   controller: {fileID: 1235433722097304107}
   eliteSkills: {fileID: 1849073570393339323}
   viewRadius: 20
-  patrolRadius: 3
+  patrolRadius: 10
   isFlying: 0
   flyHoverOffsetY: 0.8
   flyMinGroundClearance: 1.2
@@ -308,8 +308,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyCombat
   attacks:
   - hitboxShape: 2
-    engageRange: 0
-    range: 1.5
+    engageRange: 4.5
+    range: 4.5
     angle: 90
     rectSize: {x: 4.5, y: 1}
     damage: 1
@@ -321,8 +321,8 @@ MonoBehaviour:
     telegraphDuration: 0
     weight: 1
   - hitboxShape: 2
-    engageRange: 0
-    range: 1.5
+    engageRange: 4.5
+    range: 4.5
     angle: 90
     rectSize: {x: 4.5, y: 1}
     damage: 1

@@ -13,7 +13,9 @@ namespace Attrition.Gameplay.Environment
     public class TutorialPanel : MonoBehaviour
     {
         private static TutorialPanel _instance;
+        private static bool _suppressed;
 
+        private Canvas _canvas;
         private CanvasGroup _group;
         private TextMeshProUGUI _titleLabel;
         private TextMeshProUGUI _bodyLabel;
@@ -38,6 +40,13 @@ namespace Attrition.Gameplay.Environment
             _instance.ShowStepsInternal(title, lines, autoHideSeconds, onClosed);
         }
 
+        public static void SetSuppressed(bool suppressed)
+        {
+            _suppressed = suppressed;
+            if (_instance != null && _instance._canvas != null)
+                _instance._canvas.enabled = !suppressed;
+        }
+
         private static void EnsureInstance()
         {
             if (_instance != null) return;
@@ -52,6 +61,8 @@ namespace Attrition.Gameplay.Environment
             scaler.referenceResolution = new Vector2(1920, 1080);
 
             _instance = canvasObj.AddComponent<TutorialPanel>();
+            _instance._canvas = canvas;
+            canvas.enabled = !_suppressed;
             _instance.BuildUI(canvasObj.transform);
         }
 
@@ -144,23 +155,37 @@ namespace Attrition.Gameplay.Environment
                                          System.Action onClosed)
         {
             var panel = _group.gameObject;
-            panel.SetActive(true);
+    panel.SetActive(true);
 
-            for (int i = 0; i < lines.Length; i++)
-            {
-                _bodyLabel.text = BuildStepText(lines, i);
-                yield return Fade(0f, 1f, StepFadeSeconds);
-                yield return new WaitForSecondsRealtime(StepHoldSeconds);
-                yield return Fade(1f, 0f, StepFadeSeconds);
-            }
+    for (int i = 0; i < lines.Length; i++)
+    {
+        _bodyLabel.text = BuildStepText(lines, i);
 
-            panel.SetActive(false);
-            _routine = null;
-            onClosed?.Invoke();
-        }
+        yield return Fade(0f, 1f, StepFadeSeconds);
+        yield return WaitWhileSuppressed(StepHoldSeconds);
+        yield return Fade(1f, 0f, StepFadeSeconds);
+    }
 
-        private const float StepFadeSeconds = 1.5f;
-        private const float StepHoldSeconds = 2.5f;
+    panel.SetActive(false);
+    _routine = null;
+    onClosed?.Invoke();
+}
+
+private IEnumerator WaitWhileSuppressed(float duration)
+{
+    float elapsed = 0f;
+
+    while (elapsed < duration)
+    {
+        if (!_suppressed)
+            elapsed += Time.unscaledDeltaTime;
+
+        yield return null;
+    }
+}
+
+private const float StepFadeSeconds = 1.5f;
+private const float StepHoldSeconds = 2.5f;
 
         /// <summary>
         /// Đọc chuỗi phím trong Inspector thành danh sách KeyCode. Hỗ trợ nhiều phím cách nhau bởi
@@ -252,6 +277,13 @@ namespace Attrition.Gameplay.Environment
             float shownAt = Time.unscaledTime;
             while (true)
             {
+                if (_suppressed)
+                {
+                    float pausedAt = Time.unscaledTime;
+                    while (_suppressed) yield return null;
+                    shownAt += Time.unscaledTime - pausedAt;
+                }
+
                 bool timedOut = autoHideSeconds > 0f && Time.unscaledTime - shownAt >= autoHideSeconds;
                 bool dismissed = Time.unscaledTime - shownAt > 0.4f
                                  && (Input.anyKeyDown || Input.GetMouseButtonDown(0));
