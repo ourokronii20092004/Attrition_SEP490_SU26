@@ -19,7 +19,7 @@ MonoBehaviour:
   targetId: cultist
   requiredTargetIds: []
   requiredAmount: 1
-  expReward: 180
+  expReward: 100
   itemRewards:
   - itemId: acc_shadow_dash
     amount: 1

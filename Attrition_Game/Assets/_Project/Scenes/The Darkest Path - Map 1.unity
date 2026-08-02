@@ -3379,6 +3379,8 @@ MonoBehaviour:
   nextSceneName: Forest - Map 2
   entryPointId: from_map1
   startActive: 0
+  endingDialogue: {fileID: 0}
+  showEndingTitle: 0
   fadeOutDuration: 0.6
   _IsActive:
     _value: 0
@@ -4099,10 +4101,11 @@ MonoBehaviour:
   autoHideSeconds: 0
   creditsTitle: "ATTRITION \u2014 SEP490"
   creditsMembers:
-  - "Nguy\u1EC5n V\u0103n A \u2014 Team Lead"
-  - "Tr\u1EA7n Th\u1ECB B \u2014 Gameplay"
-  - "L\xEA V\u0103n C \u2014 Networking"
-  - "Ph\u1EA1m Th\u1ECB D \u2014 Art / UI"
+  - "Nguy\u1EC5n Thi\u1EC7n Nh\u01A1n"
+  - "L\xEA Trung H\u1EADu"
+  - "Nguy\u1EC5n Nh\u1EADt \u0110\u0103ng"
+  - "Tr\u1EA7n Thi\xEAn \u0110\u0103ng"
+  - "Phan Ph\xFAc B\xECnh"
 --- !u!61 &880451395
 BoxCollider2D:
   m_ObjectHideFlags: 0

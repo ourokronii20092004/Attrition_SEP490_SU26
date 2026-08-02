@@ -247,7 +247,10 @@ MonoBehaviour:
   despawnFallback: 1.5
   lootItemIds:
   - leather_legs
-  normalDropChance: 0.35
+  - leather_chest
+  - leather_boots
+  - leather_legs
+  normalDropChance: 0.2
   droppedItemPrefab:
     RawGuidValue: 00000000000000000000000000000000
   isRematchBoss: 0

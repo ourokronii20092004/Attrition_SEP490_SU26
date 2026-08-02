@@ -284,10 +284,10 @@ MonoBehaviour:
   deathClipName: 
   despawnFallback: 1.5
   lootItemIds:
-  - leather_helm
-  - bronze_boots
-  - iron_chest
-  - leather_helm
+  - mythic_helm
+  - mythic_chest
+  - mythic_legs
+  - mythic_boots
   normalDropChance: 0.35
   droppedItemPrefab:
     RawGuidValue: 12e1ff761e13b114e99dad527c7a0233

@@ -183,7 +183,11 @@ MonoBehaviour:
   reviveDelaySeconds: 5
   deathClipName: 
   despawnFallback: 1.5
-  lootItemIds: []
+  lootItemIds:
+  - gold_chest
+  - gold_legs
+  - gold_boots
+  - gold_helm
   normalDropChance: 0.35
   droppedItemPrefab:
     RawGuidValue: 00000000000000000000000000000000

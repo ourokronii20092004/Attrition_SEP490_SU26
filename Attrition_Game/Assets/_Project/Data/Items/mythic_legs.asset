@@ -23,6 +23,6 @@ MonoBehaviour:
   - stat: 5
     amount: 29
   - stat: 0
-    amount: 60
+    amount: 40
   - stat: 6
     amount: 12

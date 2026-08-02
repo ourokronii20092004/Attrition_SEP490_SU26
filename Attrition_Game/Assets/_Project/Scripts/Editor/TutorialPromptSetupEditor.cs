@@ -37,13 +37,42 @@ namespace Attrition.Editor
             SetStr(t, "creditsTitle", "ATTRITION — SEP490");
             SetStrArray(t, "creditsMembers", new[]
             {
-                "Nguyễn Văn A — Team Lead",
-                "Trần Thị B — Gameplay",
-                "Lê Văn C — Networking",
-                "Phạm Thị D — Art / UI",
+                "Nguyễn Thiện Nhơn",
+                "Lê Trung Hậu",
+                "Nguyễn Nhật Đăng",
+                "Trần Thiên Đăng",
+                "Phan Phúc Bình",
             });
             Finish(go, "Đặt vùng này ở ĐẦU Map 1. Player local đi vào → hiện hướng dẫn 1 lần/lượt chơi. " +
                        "Credits team hiện góc phải-dưới NGAY SAU khi đóng bảng — sửa creditsMembers thành tên thật.");
+        }
+
+        [MenuItem("Tools/Attrition/Update Tutorial - Map 1 Intro Sequence")]
+        public static void UpdateMap1Intro()
+        {
+            var go = GameObject.Find("Tutorial_Map1_Basics");
+            var t = go != null ? go.GetComponent<TutorialPrompt>() : null;
+            if (t == null)
+            {
+                Debug.LogError("[Attrition] Không thấy Tutorial_Map1_Basics trong scene Map 1.");
+                return;
+            }
+
+            SetBool(t, "stepByStep", true);
+            SetStr(t, "creditsTitle", "ATTRITION — SEP490");
+            SetStrArray(t, "creditsMembers", new[]
+            {
+                "Nguyễn Thiện Nhơn",
+                "Lê Trung Hậu",
+                "Nguyễn Nhật Đăng",
+                "Trần Thiên Đăng",
+                "Phan Phúc Bình",
+            });
+
+            EditorUtility.SetDirty(t);
+            UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(t.gameObject.scene);
+            Selection.activeGameObject = go;
+            Debug.Log("[Attrition] Đã cập nhật intro Map 1: tutorial từng bước, sau đó 5 tên thành viên lần lượt.");
         }
 
         [MenuItem("Tools/Attrition/Create Tutorial - Map 2 Abilities")]
