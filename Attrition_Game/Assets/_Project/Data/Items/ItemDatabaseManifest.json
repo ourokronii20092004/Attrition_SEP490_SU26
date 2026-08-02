@@ -78,5 +78,145 @@
   {
     "index": 19,
     "itemId": "skill_water"
+  },
+  {
+    "index": 20,
+    "itemId": "acc_burn"
+  },
+  {
+    "index": 21,
+    "itemId": "acc_slow"
+  },
+  {
+    "index": 22,
+    "itemId": "acc_lifesteal"
+  },
+  {
+    "index": 23,
+    "itemId": "acc_regen"
+  },
+  {
+    "index": 24,
+    "itemId": "acc_potion"
+  },
+  {
+    "index": 25,
+    "itemId": "acc_shield"
+  },
+  {
+    "index": 26,
+    "itemId": "acc_postskill"
+  },
+  {
+    "index": 27,
+    "itemId": "leather_legs"
+  },
+  {
+    "index": 28,
+    "itemId": "bronze_legs"
+  },
+  {
+    "index": 29,
+    "itemId": "iron_legs"
+  },
+  {
+    "index": 30,
+    "itemId": "gold_legs"
+  },
+  {
+    "index": 31,
+    "itemId": "amethyst_helm"
+  },
+  {
+    "index": 32,
+    "itemId": "amethyst_chest"
+  },
+  {
+    "index": 33,
+    "itemId": "amethyst_legs"
+  },
+  {
+    "index": 34,
+    "itemId": "amethyst_boots"
+  },
+  {
+    "index": 35,
+    "itemId": "emerald_helm"
+  },
+  {
+    "index": 36,
+    "itemId": "emerald_chest"
+  },
+  {
+    "index": 37,
+    "itemId": "emerald_legs"
+  },
+  {
+    "index": 38,
+    "itemId": "emerald_boots"
+  },
+  {
+    "index": 39,
+    "itemId": "diamond_helm"
+  },
+  {
+    "index": 40,
+    "itemId": "diamond_chest"
+  },
+  {
+    "index": 41,
+    "itemId": "diamond_legs"
+  },
+  {
+    "index": 42,
+    "itemId": "diamond_boots"
+  },
+  {
+    "index": 43,
+    "itemId": "obsidian_helm"
+  },
+  {
+    "index": 44,
+    "itemId": "obsidian_chest"
+  },
+  {
+    "index": 45,
+    "itemId": "obsidian_legs"
+  },
+  {
+    "index": 46,
+    "itemId": "obsidian_boots"
+  },
+  {
+    "index": 47,
+    "itemId": "ancient_helm"
+  },
+  {
+    "index": 48,
+    "itemId": "ancient_chest"
+  },
+  {
+    "index": 49,
+    "itemId": "ancient_legs"
+  },
+  {
+    "index": 50,
+    "itemId": "ancient_boots"
+  },
+  {
+    "index": 51,
+    "itemId": "mythic_helm"
+  },
+  {
+    "index": 52,
+    "itemId": "mythic_chest"
+  },
+  {
+    "index": 53,
+    "itemId": "mythic_legs"
+  },
+  {
+    "index": 54,
+    "itemId": "mythic_boots"
   }
 ]

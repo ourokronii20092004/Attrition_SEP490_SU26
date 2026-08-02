@@ -1,4 +1,5 @@
 using Fusion;
+using System.Collections.Generic;
 using UnityEngine;
 using Attrition.Gameplay.Enemy;
 
@@ -29,6 +30,11 @@ namespace Attrition.Controllers
         [Range(0f, 1f)][SerializeField] private float normalDropChance = 0.35f;
         [Tooltip("Prefab DroppedItem để rơi ra thế giới (quái THƯỜNG). Bỏ trống = không rơi.")]
         [SerializeField] private Fusion.NetworkPrefabRef droppedItemPrefab;
+
+#if UNITY_EDITOR
+        public IReadOnlyList<string> EditorLootItemIds => lootItemIds;
+        public float EditorNormalDropChance => normalDropChance;
+#endif
 
         [Header("---- BOSS ĐÁNH LẠI (rematch) ----")]
         [Tooltip("Bật cho các BOSS CŨ đặt lại ở room khác (Map 5 có boss 2/3/4, Map 4 có boss 1).\n" +
