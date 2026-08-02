@@ -19,7 +19,7 @@ MonoBehaviour:
   targetId: demon_kin
   requiredTargetIds: []
   requiredAmount: 1
-  expReward: 1300
+  expReward: 900
   itemRewards:
   - itemId: acc_postskill
     amount: 1

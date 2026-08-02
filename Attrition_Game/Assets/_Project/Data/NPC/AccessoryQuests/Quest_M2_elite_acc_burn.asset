@@ -19,7 +19,7 @@ MonoBehaviour:
   targetId: gollux
   requiredTargetIds: []
   requiredAmount: 1
-  expReward: 320
+  expReward: 300
   itemRewards:
   - itemId: acc_burn
     amount: 1

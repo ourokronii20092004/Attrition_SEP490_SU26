@@ -19,7 +19,7 @@ MonoBehaviour:
   targetId: elf
   requiredTargetIds: []
   requiredAmount: 1
-  expReward: 900
+  expReward: 600
   itemRewards:
   - itemId: acc_stamina_charm
     amount: 1

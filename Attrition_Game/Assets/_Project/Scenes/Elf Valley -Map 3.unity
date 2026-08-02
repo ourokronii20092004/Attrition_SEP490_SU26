@@ -924,6 +924,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 11400000, guid: 357eba7014a6f5e4c9202a7ee00adcec, type: 2}
     - target: {fileID: 8952502176480242383, guid: 57e43c88fb242bc459ba1b3f79f2ccf5, type: 3}
+      propertyPath: defaultFacingLeft
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8952502176480242383, guid: 57e43c88fb242bc459ba1b3f79f2ccf5, type: 3}
       propertyPath: turnInDoneDialogue
       value: 
       objectReference: {fileID: 11400000, guid: 5a27be7f581b1a14594419c6668d6e95, type: 2}
@@ -19212,6 +19216,8 @@ MonoBehaviour:
   nextSceneName: Forest - Map 2
   entryPointId: from_map3
   startActive: 1
+  endingDialogue: {fileID: 0}
+  showEndingTitle: 0
   fadeOutDuration: 0.6
   _IsActive:
     _value: 0
@@ -260878,6 +260884,52 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1916134306}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1701474521
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1701474523}
+  - component: {fileID: 1701474522}
+  m_Layer: 0
+  m_Name: SceneAreaIntro
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1701474522
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1701474521}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f572c087fc73c4347980380fc782658c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.Environment.SceneAreaIntro
+  areaName: Elf Valley
+  delay: 1.3
+--- !u!4 &1701474523
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1701474521}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1773710118
 GameObject:
   m_ObjectHideFlags: 0
@@ -261546,6 +261598,10 @@ PrefabInstance:
       propertyPath: idleDialogue
       value: 
       objectReference: {fileID: 11400000, guid: b324cf1b90d87da4e913fc31041e76b1, type: 2}
+    - target: {fileID: 8952502176480242383, guid: ee324b2e47908084c9e694d8fe317740, type: 3}
+      propertyPath: defaultFacingLeft
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 9026379213444578090, guid: ee324b2e47908084c9e694d8fe317740, type: 3}
       propertyPath: m_LocalPosition.x
       value: 30.17
@@ -263533,6 +263589,8 @@ MonoBehaviour:
   nextSceneName: Dark Forest - Map 4
   entryPointId: from_map3
   startActive: 0
+  endingDialogue: {fileID: 0}
+  showEndingTitle: 0
   fadeOutDuration: 0.6
   _IsActive:
     _value: 0
@@ -264094,3 +264152,4 @@ SceneRoots:
   - {fileID: 655091658}
   - {fileID: 386269894}
   - {fileID: 480595142}
+  - {fileID: 1701474523}

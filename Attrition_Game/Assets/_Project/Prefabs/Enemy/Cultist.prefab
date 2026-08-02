@@ -283,8 +283,11 @@ MonoBehaviour:
   deathClipName: 
   despawnFallback: 1.5
   lootItemIds:
-  - leather_chest
-  normalDropChance: 1
+  - bronze_chest
+  - bronze_helm
+  - bronze_boots
+  - bronze_legs
+  normalDropChance: 0.35
   droppedItemPrefab:
     RawGuidValue: 00000000000000000000000000000000
   isRematchBoss: 0

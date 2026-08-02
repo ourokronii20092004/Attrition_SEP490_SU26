@@ -155,54 +155,37 @@ namespace Attrition.Gameplay.Environment
                                          System.Action onClosed)
         {
             var panel = _group.gameObject;
-            panel.SetActive(true);
+    panel.SetActive(true);
 
-            yield return Fade(0f, 1f, 0.25f);
+    for (int i = 0; i < lines.Length; i++)
+    {
+        _bodyLabel.text = BuildStepText(lines, i);
 
-            for (int i = 0; i < lines.Length; i++)
-            {
-                _bodyLabel.text = BuildStepText(lines, i);
+        yield return Fade(0f, 1f, StepFadeSeconds);
+        yield return WaitWhileSuppressed(StepHoldSeconds);
+        yield return Fade(1f, 0f, StepFadeSeconds);
+    }
 
-                // Phím CỦA BƯỚC NÀY. Rỗng (không nhận ra phím nào) → chấp nhận phím bất kỳ, để dòng dạng
-                // "Di chuyển" không có phím thật vẫn qua được.
-                var expected = ParseKeys(lines[i].key);
+    panel.SetActive(false);
+    _routine = null;
+    onClosed?.Invoke();
+}
 
-                // Chờ người chơi bấm ĐÚNG phím đang hướng dẫn mới sang bước kế.
-                float shownAt = Time.unscaledTime;
-                while (true)
-                {
-                    if (_suppressed)
-                    {
-                        float pausedAt = Time.unscaledTime;
-                        while (_suppressed) yield return null;
-                        shownAt += Time.unscaledTime - pausedAt;
-                    }
+private IEnumerator WaitWhileSuppressed(float duration)
+{
+    float elapsed = 0f;
 
-                    bool timedOut = autoHideSeconds > 0f && Time.unscaledTime - shownAt >= autoHideSeconds;
+    while (elapsed < duration)
+    {
+        if (!_suppressed)
+            elapsed += Time.unscaledDeltaTime;
 
-                    // Trễ 0.4s để phím vừa bấm ở bước trước không lật luôn bước này.
-                    bool ready = Time.unscaledTime - shownAt > 0.4f;
-                    bool advanced = ready && (expected.Count > 0
-                        ? AnyKeyDown(expected)
-                        : (Input.anyKeyDown || Input.GetMouseButtonDown(0)));
+        yield return null;
+    }
+}
 
-                    if (timedOut || advanced) break;
-                    yield return null;
-                }
-
-                // Nhịp nghỉ ngắn giữa các bước: hiện LẦN LƯỢT, CHẬM RÃI (yêu cầu user) chứ không nháy
-                // sang bước sau ngay khi vừa nhả phím.
-                yield return new WaitForSecondsRealtime(StepGapSeconds);
-            }
-
-            yield return Fade(1f, 0f, 0.25f);
-            panel.SetActive(false);
-            _routine = null;
-            onClosed?.Invoke();
-        }
-
-        /// <summary>Nghỉ giữa 2 bước hướng dẫn (giây thực) — để các bước hiện chậm rãi, không nháy liên tiếp.</summary>
-        private const float StepGapSeconds = 0.45f;
+private const float StepFadeSeconds = 1.5f;
+private const float StepHoldSeconds = 2.5f;
 
         /// <summary>
         /// Đọc chuỗi phím trong Inspector thành danh sách KeyCode. Hỗ trợ nhiều phím cách nhau bởi

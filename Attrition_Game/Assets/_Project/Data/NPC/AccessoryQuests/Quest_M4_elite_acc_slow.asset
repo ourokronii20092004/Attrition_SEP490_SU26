@@ -19,7 +19,7 @@ MonoBehaviour:
   targetId: undead
   requiredTargetIds: []
   requiredAmount: 1
-  expReward: 780
+  expReward: 800
   itemRewards:
   - itemId: acc_slow
     amount: 1

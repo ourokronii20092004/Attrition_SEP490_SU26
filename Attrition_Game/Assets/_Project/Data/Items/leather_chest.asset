@@ -21,6 +21,6 @@ MonoBehaviour:
   slot: 1
   modifiers:
   - stat: 5
-    amount: 4
+    amount: 1
   - stat: 0
     amount: 10

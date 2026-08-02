@@ -189,6 +189,15 @@ MonoBehaviour:
   reviveDelaySeconds: 5
   deathClipName: 
   despawnFallback: 1.5
+  lootItemIds:
+  - ancient_chest
+  - ancient_helm
+  - ancient_legs
+  - ancient_boots
+  normalDropChance: 0.2
+  droppedItemPrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  isRematchBoss: 0
   canBeKnockedBack: 0
   stunDuration: 0.2
   _Health: 0
@@ -198,6 +207,8 @@ MonoBehaviour:
   _IsKnockbackActive:
     _value: 0
   _IsAwaitingRevive:
+    _value: 0
+  _HoldDespawn:
     _value: 0
   maxHealth: 15
   statsComp: {fileID: 0}
@@ -242,6 +253,12 @@ MonoBehaviour:
     m_Bits: 64
   wallCheckDistance: 0.8
   wallCheckHeightOffset: 0.5
+  eyeHeightOffset: 0.6
+  sightMemoryDuration: 1.5
+  canStepUp: 1
+  stepUpMaxHeight: 1.2
+  stepUpForwardSpeed: 4
+  stepUpCooldown: 0.6
   canEvadeJump: 0
   evadeTriggerDistance: 3
   jumpForce: 3
@@ -253,6 +270,8 @@ MonoBehaviour:
   lungeForwardSpeed: 10
   lungeJumpForce: 3
   facingDeadZone: 0.3
+  leashToRoom: 0
+  leashPadding: 1.5
   _CurrentState: 0
   _NetSpeed: 0
   _NetFacingDir: 1
@@ -275,6 +294,8 @@ MonoBehaviour:
   defaultFacingLeft: 0
   telegraphRenderer: {fileID: 0}
   telegraphColor: {r: 1, g: 0.4, b: 0.4, a: 1}
+  burnTint: {r: 1, g: 0.62, b: 0.3, a: 1}
+  slowTint: {r: 0.55, g: 0.85, b: 1, a: 1}
 --- !u!114 &6447189514915797972
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -289,6 +310,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyCombat
   attacks:
   - hitboxShape: 0
+    engageRange: 0
     range: 3
     angle: 326
     rectSize: {x: 1, y: 1}
@@ -301,6 +323,7 @@ MonoBehaviour:
     telegraphDuration: 0
     weight: 1
   - hitboxShape: 0
+    engageRange: 0
     range: 3
     angle: 117
     rectSize: {x: 3, y: 4.5}
@@ -440,6 +463,7 @@ MonoBehaviour:
   canUseSkills: 1
   skills:
   - skillName: "n\xE9m lao"
+    weight: 1
     damage: 2
     damageType: 0
     range: 15
@@ -455,14 +479,6 @@ MonoBehaviour:
     isRanged: 1
     projectilePrefab:
       RawGuidValue: ff45600064efb6548b4df92532a1251f
-    projectileCount: 1
-    spreadAngle: 30
-    projectileSpeed: 0
-    knockbackForce: 4
-    hitCount: 1
-    hitInterval: 0.12
-    sweetSpotRadius: 0
-    sweetSpotMultiplier: 1.5
   skillChance: 0.8
   canSummon: 0
   summonPrefab:
@@ -509,6 +525,7 @@ MonoBehaviour:
   _PatrolSpeed: 0
   _ChaseSpeed: 0
   _AttackSpeed: 0
+  _RuntimeExpReward: 0
 --- !u!1 &3827784312759404011
 GameObject:
   m_ObjectHideFlags: 0
