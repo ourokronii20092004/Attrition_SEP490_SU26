@@ -10,6 +10,11 @@ namespace Attrition.UI
         private void ShowOverlay(Overlay o)
         {
             _overlay = o;
+            bool pauseOnTop = o == Overlay.Pause || o == Overlay.Settings;
+            if (_doc != null)
+                _doc.sortingOrder = pauseOnTop ? 2000f : _defaultSortingOrder;
+            Attrition.Gameplay.Environment.TutorialPanel.SetSuppressed(pauseOnTop);
+
             SetVisible(_invScreen, o == Overlay.Inventory);
             SetVisible(_ftScreen, o == Overlay.FastTravel);
             SetVisible(_goScreen, o == Overlay.GameOver);

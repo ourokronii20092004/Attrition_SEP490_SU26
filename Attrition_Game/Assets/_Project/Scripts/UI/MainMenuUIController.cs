@@ -494,8 +494,7 @@ namespace Attrition.UI
                                         // trong phiên. Thiếu bước cache → tạo lại ở CÙNG slot vẫn thấy boss
                                         // đã hạ + bản đồ đã mở của nhân vật cũ.
                                         SaveManager.DeleteSlot(slotIndex);
-                                        Attrition.Gameplay.Environment.BossDefeatState.Clear();
-                                        Attrition.Gameplay.Environment.WorldMapState.Clear();
+                                        ResetFreshCharacterState();
                                         LoadSavesFromDisk();
                                     }
                                 }
@@ -765,7 +764,8 @@ namespace Attrition.UI
             // mồ côi từ bản build cũ — bản đó xoá nhân vật mà không xoá inventory.
             // Chỉ solo: ở coop, `slot` đánh số theo danh sách character online nên có thể trỏ vào slot
             // solo của nhân vật khác — xoá inventory ở đó là xoá đồ của người không liên quan.
-            if (mode == LaunchMode.Solo) SaveManager.DeleteSlot(slot);
+            if (mode == LaunchMode.Solo) SaveManager.ClearSlot(slot);
+            ResetFreshCharacterState();
             SaveManager.SaveSlot(slot, newSave);
             _saveSlots[slot] = newSave;
             CloseNameEntry();
@@ -834,6 +834,18 @@ namespace Attrition.UI
                     });
                 }
             }
+        }
+
+        private static void ResetFreshCharacterState()
+        {
+            Attrition.Gameplay.Environment.TutorialPrompt.ClearShown();
+            Attrition.Gameplay.Environment.TeamCreditsPanel.ClearShown();
+            Attrition.Gameplay.Environment.BossDefeatState.Clear();
+            Attrition.Gameplay.Environment.WorldMapState.Clear();
+            Attrition.Controllers.EnemyLootTracker.Clear();
+            Attrition.Gameplay.World.Checkpoint.ClearRuntimeState();
+            SceneEntryRegistry.ClearPending();
+            GameLaunch.ClearSessionInventoryCache();
         }
 
         /// <summary>Slot trống đầu tiên (theo dữ liệu đã lọc của chế độ hiện tại).</summary>
