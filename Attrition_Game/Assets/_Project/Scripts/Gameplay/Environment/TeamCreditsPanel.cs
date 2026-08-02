@@ -23,9 +23,8 @@ namespace Attrition.Gameplay.Environment
         private TextMeshProUGUI _bodyLabel;
         private Coroutine _routine;
 
-        /// <summary>Hiện credits nhóm. creditsId: chỉ hiện 1 lần/lượt chơi cho mỗi id. members: tên từng dòng.
-        /// perLineDelay: giãn cách hiện từng tên (0 = hiện cùng lúc). holdSeconds: giữ trước khi mờ.</summary>
-        public static void Show(string creditsId, string title, string[] members, float perLineDelay, float holdSeconds)
+        /// <summary>Hiện từng thành viên riêng: fade in 1.5s, giữ 2.5s, fade out 1.5s.</summary>
+        public static void Show(string creditsId, string title, string[] members)
         {
             if (!string.IsNullOrEmpty(creditsId))
             {
@@ -33,7 +32,7 @@ namespace Attrition.Gameplay.Environment
                 _shown.Add(creditsId);
             }
             EnsureInstance();
-            _instance.ShowInternal(title, members, perLineDelay, holdSeconds);
+            _instance.ShowInternal(title, members);
         }
 
         public static void ClearShown() => _shown.Clear();
@@ -98,7 +97,7 @@ namespace Attrition.Gameplay.Environment
             panelGo.SetActive(false);
         }
 
-        private void ShowInternal(string title, string[] members, float perLineDelay, float holdSeconds)
+        private void ShowInternal(string title, string[] members)
         {
             if (_titleLabel == null) return;
             _titleLabel.text = string.IsNullOrEmpty(title) ? "TEAM" : title;
@@ -106,33 +105,31 @@ namespace Attrition.Gameplay.Environment
             _group.gameObject.SetActive(true);
 
             if (_routine != null) StopCoroutine(_routine);
-            _routine = StartCoroutine(ShowRoutine(members ?? new string[0], perLineDelay, holdSeconds));
+            _routine = StartCoroutine(ShowRoutine(members ?? new string[0]));
         }
 
-        private IEnumerator ShowRoutine(string[] members, float perLineDelay, float holdSeconds)
+        private IEnumerator ShowRoutine(string[] members)
         {
             var panel = _group.gameObject;
             panel.SetActive(true);
             _group.alpha = 0f;
 
-            yield return Fade(0f, 1f, 0.4f);
-
-            // Hiện từng tên lần lượt (perLineDelay > 0) hoặc cùng lúc.
-            var sb = new System.Text.StringBuilder();
-            for (int i = 0; i < members.Length; i++)
+            foreach (var member in members)
             {
-                if (string.IsNullOrEmpty(members[i])) continue;
-                if (sb.Length > 0) sb.Append('\n');
-                sb.Append(members[i]);
-                _bodyLabel.text = sb.ToString();
-                if (perLineDelay > 0f) yield return new WaitForSecondsRealtime(perLineDelay);
+                if (string.IsNullOrWhiteSpace(member)) continue;
+
+                _bodyLabel.text = member;
+                yield return Fade(0f, 1f, FadeSeconds);
+                yield return new WaitForSecondsRealtime(HoldSeconds);
+                yield return Fade(1f, 0f, FadeSeconds);
             }
 
-            yield return new WaitForSecondsRealtime(Mathf.Max(0f, holdSeconds));
-            yield return Fade(1f, 0f, 0.6f);
             panel.SetActive(false);
             _routine = null;
         }
+
+        private const float FadeSeconds = 1.5f;
+        private const float HoldSeconds = 2.5f;
 
         private IEnumerator Fade(float from, float to, float duration)
         {

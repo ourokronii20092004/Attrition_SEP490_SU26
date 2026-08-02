@@ -317,6 +317,9 @@ MonoBehaviour:
   lootItemIds:
   - skill_water
   - acc_lifesteal
+  - amethyst_helm
+  - amethyst_legs
+  - amethyst_boots
   normalDropChance: 1
   droppedItemPrefab:
     RawGuidValue: 00000000000000000000000000000000

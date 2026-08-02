@@ -313,8 +313,12 @@ MonoBehaviour:
   reviveDelaySeconds: 5
   deathClipName: 
   despawnFallback: 1.5
-  lootItemIds: []
-  normalDropChance: 0.35
+  lootItemIds:
+  - diamond_helm
+  - diamond_chest
+  - diamond_legs
+  - diamond_boots
+  normalDropChance: 1
   droppedItemPrefab:
     RawGuidValue: 00000000000000000000000000000000
   isRematchBoss: 0

@@ -554,3 +554,11 @@ _(không có dòng thoại)_
 - **Spring Fairy:** Ah, a living soul wanders the Ashen Threshold once more.
 - **Spring Fairy:** I am the last warden of this spring. While my light holds, the rot cannot cross these stones.
 - **Spring Fairy:** Rest by the water if your bones grow weary, wanderer. The dark beyond is patient, and far less kind than I.
+
+### Dlg_M5_Room4_Autumn_Explain
+
+`Data/NPC/FairyDialogue/Dlg_M5_Room4_Autumn_Explain.asset`
+
+- **Autumn Fairy:** Three fallen guardians wait here: one above, one in this hall, and one below.
+- **Autumn Fairy:** Choose any room first. Its door will seal only while that battle is being fought.
+- **Autumn Fairy:** Defeat all three and the sealed door beside me will open the road onward.

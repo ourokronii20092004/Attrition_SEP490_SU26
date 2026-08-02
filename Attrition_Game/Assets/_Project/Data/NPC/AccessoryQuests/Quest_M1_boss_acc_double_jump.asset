@@ -19,7 +19,7 @@ MonoBehaviour:
   targetId: severed_fang
   requiredTargetIds: []
   requiredAmount: 1
-  expReward: 400
+  expReward: 200
   itemRewards:
   - itemId: acc_double_jump
     amount: 1

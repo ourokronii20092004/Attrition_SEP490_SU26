@@ -19,7 +19,7 @@ MonoBehaviour:
   targetId: druid
   requiredTargetIds: []
   requiredAmount: 1
-  expReward: 650
+  expReward: 400
   itemRewards:
   - itemId: acc_regen
     amount: 1

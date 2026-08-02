@@ -20,7 +20,7 @@ MonoBehaviour:
   targetId: deliver_m3_report
   requiredTargetIds: []
   requiredAmount: 1
-  expReward: 600
+  expReward: 400
   itemRewards:
   - itemId: acc_potion
     amount: 1
