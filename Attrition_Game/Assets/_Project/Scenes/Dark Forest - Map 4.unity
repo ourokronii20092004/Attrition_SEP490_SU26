@@ -22898,7 +22898,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ec903fb882f23da49903a647f0a48beb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Attrition.Systems::Attrition.Systems.SceneMusicController
-  sceneBgmClip: {fileID: 8300000, guid: f6c845a2a1f4a9c49bbce8fb478beba8, type: 3}
+  sceneBgmClip: {fileID: 8300000, guid: 1e1ab20a46ce93743abfef91f0557f18, type: 3}
   bossBgmClip: {fileID: 0}
   volume: 1
   fadeDuration: 0.8
