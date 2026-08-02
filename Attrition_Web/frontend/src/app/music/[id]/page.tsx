@@ -160,7 +160,12 @@ export default function AlbumPage() {
                     </>
                   )}
                 </span>
-                <span className={`truncate text-sm ${active ? "font-medium text-accent" : "text-fg"}`}>{track.title}</span>
+                <span className="min-w-0 flex-1">
+                  <span className={`block truncate text-sm ${active ? "font-medium text-accent" : "text-fg"}`}>{track.title}</span>
+                  {!!track.gameUsages?.length && (
+                    <span className="mt-0.5 block truncate text-xs text-fg-subtle">Used in game: {track.gameUsages.join(" · ")}</span>
+                  )}
+                </span>
               </button>
               <span className="hidden shrink-0 items-center gap-1 text-xs tabular-nums text-fg-subtle sm:inline-flex" title={`${track.playCount} plays`}>
                 <Headphones size={12} /> {formatPlays(track.playCount)}

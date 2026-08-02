@@ -27,6 +27,7 @@ public class MusicDbContext : DbContext
         {
             e.HasKey(mt => mt.TrackId);
             e.HasIndex(t => new { t.AlbumId, t.TrackNumber }).IsUnique();
+            e.HasIndex(t => t.UnitySourceKey).IsUnique();
             e.HasOne<MusicAlbum>().WithMany(a => a.Tracks).HasForeignKey(t => t.AlbumId).OnDelete(DeleteBehavior.Cascade);
         });
 

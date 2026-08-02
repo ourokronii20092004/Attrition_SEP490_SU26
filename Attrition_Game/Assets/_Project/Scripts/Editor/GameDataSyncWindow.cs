@@ -10,8 +10,10 @@ using Fusion.Editor;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.SceneManagement;
 
 namespace Attrition.Editor
 {
@@ -32,6 +34,69 @@ namespace Attrition.Editor
 
         [MenuItem("Tools/Attrition/Game Data Sync")]
         private static void Open() => GetWindow<GameDataSyncWindow>("Game Data Sync");
+
+        public static void BatchExportBundle()
+        {
+            try
+            {
+                var scan = Scan();
+                if (scan.Errors.Count > 0) throw new InvalidOperationException(string.Join("\n", scan.Errors));
+                var root = Path.GetFullPath(Path.Combine(Application.dataPath, "../../game-data-bundle"));
+                if (Directory.Exists(root)) Directory.Delete(root, true);
+                Directory.CreateDirectory(Path.Combine(root, "files"));
+                foreach (var image in scan.Images) CopyBundleFile(root, image.Key, image.Path, image.Type, image.Id, scan.BundleFiles);
+                foreach (var music in scan.Music) CopyBundleFile(root, "music:" + music.SourceKey, music.Path, "music", music.SourceKey, scan.BundleFiles, music.Title, music.Usages);
+                var itemById = FindAssets<ItemSO>().ToDictionary(x => x.itemId, StringComparer.Ordinal);
+                File.WriteAllText(Path.Combine(root, "manifest.json"), JsonConvert.SerializeObject(new {
+                    items = scan.Items, enemies = scan.Enemies, skills = BuildSkills(scan, itemById), files = scan.BundleFiles
+                }, Formatting.Indented));
+                Debug.Log($"[GameDataSync] BUNDLE SUCCESS: {root} ({scan.Items.Count} items, {scan.Enemies.Count} enemies, {scan.Skills.Count} skills, {scan.Music.Count} music)");
+                EditorApplication.Exit(0);
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+                EditorApplication.Exit(1);
+            }
+        }
+
+        private static void CopyBundleFile(string root, string key, string source, string type, string id,
+            List<BundleFile> output, string title = null, List<string> usages = null)
+        {
+            var name = $"{output.Count:D3}{Path.GetExtension(source).ToLowerInvariant()}";
+            File.Copy(source, Path.Combine(root, "files", name), true);
+            output.Add(new BundleFile { key = key, path = "files/" + name, type = type, id = id, title = title, usages = usages });
+        }
+
+        public static void BatchSyncProduction()
+        {
+            var username = Environment.GetEnvironmentVariable("ATTRITION_ADMIN_USERNAME");
+            var password = Environment.GetEnvironmentVariable("ATTRITION_ADMIN_PASSWORD");
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrEmpty(password))
+            {
+                Debug.LogError("Set ATTRITION_ADMIN_USERNAME and ATTRITION_ADMIN_PASSWORD before batch sync.");
+                EditorApplication.Exit(1);
+                return;
+            }
+            var window = CreateInstance<GameDataSyncWindow>();
+            window._username = username;
+            window._password = password;
+            window.StartEditorCoroutine(window.LoginAndSyncBatch());
+        }
+
+        private IEnumerator LoginAndSyncBatch()
+        {
+            yield return Login();
+            if (string.IsNullOrWhiteSpace(_token))
+            {
+                Debug.LogError(_report);
+                EditorApplication.Exit(1);
+                yield break;
+            }
+            yield return Sync();
+            Debug.Log(_report);
+            EditorApplication.Exit(_report.StartsWith("SYNC SUCCESS", StringComparison.Ordinal) ? 0 : 1);
+        }
 
         private void OnDisable()
         {
@@ -109,7 +174,7 @@ namespace Attrition.Editor
         {
             var scan = Scan();
             _report = scan.Errors.Count == 0
-                ? $"VALID\nItems: {scan.Items.Count}\nEnemies: {scan.Enemies.Count}\nSkills: {scan.Skills.Count}\nImages: {scan.Images.Count}\nNo records will be deleted. Existing admin values/images will not be overwritten."
+                ? $"VALID\nItems: {scan.Items.Count}\nEnemies: {scan.Enemies.Count}\nSkills: {scan.Skills.Count}\nImages: {scan.Images.Count}\nMusic: {scan.Music.Count}\nNo records will be deleted. Existing admin values/images will not be overwritten."
                 : "INVALID — sync blocked\n\n" + string.Join("\n", scan.Errors.Select(x => "• " + x));
         }
 
@@ -148,8 +213,14 @@ namespace Attrition.Editor
             }
 
             var imageUrls = new Dictionary<string, string>(StringComparer.Ordinal);
+            _report = $"Uploading images 0/{scan.Images.Count}...";
+            Debug.Log("[GameDataSync] " + _report);
+            var imageIndex = 0;
             foreach (var image in scan.Images)
             {
+                _report = $"Uploading images {++imageIndex}/{scan.Images.Count}: {image.Key}";
+                Debug.Log("[GameDataSync] " + _report);
+                Repaint();
                 yield return UploadImage(image, (url, error) =>
                 {
                     if (error != null) scan.Errors.Add(error);
@@ -184,40 +255,49 @@ namespace Attrition.Editor
                 }
             }
 
-            var skills = scan.Skills.Select(skill =>
-            {
-                var item = itemById[skill.skillId];
-                return new SkillImport
-                {
-                    skillId = skill.skillId, name = item.displayName, description = item.description,
-                    iconKey = item.itemId, rarity = "Common", element = skill.element,
-                    manaCost = skill.manaCost, castTime = skill.castTime, cooldown = skill.cooldown,
-                    activeStartFrac = skill.activeStartFrac, activeEndFrac = skill.activeEndFrac,
-                    damageType = skill.damageType, baseDamage = skill.baseDamage, apScaling = skill.apScaling,
-                    knockbackForce = skill.knockbackForce, tickInterval = skill.tickInterval,
-                    sweetSpotRadius = skill.sweetSpotRadius, sweetSpotMultiplier = skill.sweetSpotMultiplier,
-                    delivery = skill.delivery, hitShape = skill.hitShape, range = skill.range, angle = skill.angle,
-                    rectWidth = skill.rectWidth, rectHeight = skill.rectHeight, offsetX = skill.offsetX,
-                    offsetY = skill.offsetY, projectileSpeed = skill.projectileSpeed,
-                    projectileCount = skill.projectileCount, spreadAngle = skill.spreadAngle,
-                    vfxLifetime = skill.vfxLifetime, imageUrl = skill.imageUrl
-                };
-            }).ToList();
+            var skills = BuildSkills(scan, itemById);
             using (var req = AuthorizedRequest($"{_baseUrl}/admin/skill-data/import", "POST"))
             {
                 req.uploadHandler = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { skills })));
                 req.SetRequestHeader("Content-Type", "application/json");
                 yield return req.SendWebRequest();
                 if (req.result != UnityWebRequest.Result.Success)
-                    _report = "Skill import failed; enemy/item metadata is already safe and retrying will not duplicate it.\n" + req.downloadHandler.text;
-                else
                 {
-                    File.WriteAllText(ManifestPath, JsonConvert.SerializeObject(scan.Manifest, Formatting.Indented));
-                    AssetDatabase.ImportAsset(ManifestPath);
-                    _report = "SYNC SUCCESS\n" + req.downloadHandler.text;
+                    _report = "Skill import failed; enemy/item metadata is already safe and retrying will not duplicate it.\n" + req.downloadHandler.text;
+                    _busy = false; Repaint(); yield break;
                 }
             }
+
+            foreach (var music in scan.Music)
+            {
+                yield return UploadMusic(music, error => { if (error != null) scan.Errors.Add(error); });
+                if (scan.Errors.Count > 0) break;
+            }
+            if (scan.Errors.Count > 0)
+                _report = "Music sync failed; prior metadata is safe and retrying will not duplicate it.\n" + string.Join("\n", scan.Errors);
+            else
+            {
+                File.WriteAllText(ManifestPath, JsonConvert.SerializeObject(scan.Manifest, Formatting.Indented));
+                AssetDatabase.ImportAsset(ManifestPath);
+                _report = $"SYNC SUCCESS\nItems: {scan.Items.Count}, Enemies: {scan.Enemies.Count}, Skills: {scan.Skills.Count}, Music: {scan.Music.Count}";
+            }
             _busy = false; Repaint();
+        }
+
+        private IEnumerator UploadMusic(MusicUpload music, Action<string> done)
+        {
+            var form = new List<IMultipartFormSection>
+            {
+                new MultipartFormFileSection("file", File.ReadAllBytes(music.Path), Path.GetFileName(music.Path), MusicMime(music.Path)),
+                new MultipartFormDataSection("sourceKey", music.SourceKey),
+                new MultipartFormDataSection("title", music.Title)
+            };
+            foreach (var usage in music.Usages) form.Add(new MultipartFormDataSection("gameUsages", usage));
+            using var req = UnityWebRequest.Post($"{_baseUrl}/music/tracks/unity-source", form);
+            req.SetRequestHeader("Authorization", "Bearer " + _token);
+            req.timeout = 120;
+            yield return req.SendWebRequest();
+            done(req.result == UnityWebRequest.Result.Success ? null : $"music:{music.Title}: {req.downloadHandler.text}");
         }
 
         private IEnumerator UploadImage(ImageUpload image, Action<string, string> done)
@@ -275,13 +355,106 @@ namespace Attrition.Editor
                 AddImage(result, "item", item.itemId, item.icon);
             }
 
+            var itemIds = new HashSet<string>(items.Where(x => x != null).Select(x => x.itemId), StringComparer.Ordinal);
+            var enemyControllers = AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/_Project/Prefabs/Enemy" })
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .Select(AssetDatabase.LoadAssetAtPath<GameObject>)
+                .Select(x => x.GetComponent<Attrition.Controllers.EnemyController>())
+                .Where(x => x != null)
+                .Select(x => new { Controller = x, Stats = x.GetComponent<Attrition.Gameplay.Enemy.EnemyStats>()?.StatsSO })
+                .Where(x => x.Stats != null)
+                .GroupBy(x => x.Stats.enemyId, StringComparer.Ordinal)
+                .ToDictionary(x => x.Key, x => x.First().Controller, StringComparer.Ordinal);
+
             foreach (var enemy in enemies)
             {
-                result.Enemies.Add(new EnemyImport { enemyId = enemy.enemyId, name = Nicify(enemy.enemyId), tier = enemy.tier.ToString(), hp = enemy.maxHP, ad = enemy.ad, ap = enemy.ap, def = enemy.def, res = enemy.res, poise = enemy.poise, poiseRecoveryTime = enemy.poiseRecoveryTime, patrolSpeed = enemy.patrolSpeed, chaseSpeed = enemy.chaseSpeed, attackSpeed = enemy.attackSpeed, expReward = enemy.expReward });
+                var loot = new List<LootImport>();
+                if (enemyControllers.TryGetValue(enemy.enemyId, out var controller))
+                {
+                    foreach (var itemId in controller.EditorLootItemIds.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.Ordinal))
+                    {
+                        if (!itemIds.Contains(itemId)) result.Errors.Add($"Enemy '{enemy.enemyId}' references unknown loot item '{itemId}'.");
+                        else
+                        {
+                            var chance = enemy.tier == EnemyTier.Normal ? controller.EditorNormalDropChance : 1f;
+                            if (!IsFinite(chance) || chance < 0f || chance > 1f) result.Errors.Add($"Enemy '{enemy.enemyId}' has invalid drop chance {chance}.");
+                            else if (chance > 0f) loot.Add(new LootImport { itemId = itemId, dropChance = chance, minQty = 1, maxQty = 1 });
+                        }
+                    }
+                }
+                result.Enemies.Add(new EnemyImport { enemyId = enemy.enemyId, name = Nicify(enemy.enemyId), tier = enemy.tier.ToString(), hp = enemy.maxHP, ad = enemy.ad, ap = enemy.ap, def = enemy.def, res = enemy.res, poise = enemy.poise, poiseRecoveryTime = enemy.poiseRecoveryTime, patrolSpeed = enemy.patrolSpeed, chaseSpeed = enemy.chaseSpeed, attackSpeed = enemy.attackSpeed, expReward = enemy.expReward, lootTable = loot });
                 AddImage(result, "enemy", enemy.enemyId, enemy.webImage);
             }
             ValidateBiomes(result.Errors);
+            ScanMusic(result);
             return result;
+        }
+
+        private static List<SkillImport> BuildSkills(ScanResult scan, IReadOnlyDictionary<string, ItemSO> itemById) => scan.Skills.Select(skill =>
+        {
+            var item = itemById[skill.skillId];
+            return new SkillImport
+            {
+                skillId = skill.skillId, name = item.displayName, description = item.description,
+                iconKey = item.itemId, rarity = "Common", element = skill.element,
+                manaCost = skill.manaCost, castTime = skill.castTime, cooldown = skill.cooldown,
+                activeStartFrac = skill.activeStartFrac, activeEndFrac = skill.activeEndFrac,
+                damageType = skill.damageType, baseDamage = skill.baseDamage, apScaling = skill.apScaling,
+                knockbackForce = skill.knockbackForce, tickInterval = skill.tickInterval,
+                sweetSpotRadius = skill.sweetSpotRadius, sweetSpotMultiplier = skill.sweetSpotMultiplier,
+                delivery = skill.delivery, hitShape = skill.hitShape, range = skill.range, angle = skill.angle,
+                rectWidth = skill.rectWidth, rectHeight = skill.rectHeight, offsetX = skill.offsetX,
+                offsetY = skill.offsetY, projectileSpeed = skill.projectileSpeed,
+                projectileCount = skill.projectileCount, spreadAngle = skill.spreadAngle,
+                vfxLifetime = skill.vfxLifetime, imageUrl = skill.imageUrl
+            };
+        }).ToList();
+
+        private static void ScanMusic(ScanResult result)
+        {
+            var clips = new Dictionary<string, MusicUpload>(StringComparer.Ordinal);
+            void Add(AudioClip clip, string usage)
+            {
+                if (clip == null) return;
+                var path = AssetDatabase.GetAssetPath(clip);
+                var ext = Path.GetExtension(path).ToLowerInvariant();
+                if (!File.Exists(path) || ext is not (".mp3" or ".flac" or ".ogg" or ".m4a" or ".wav"))
+                {
+                    result.Errors.Add($"Music '{clip.name}' must be a source MP3/FLAC/OGG/M4A/WAV file.");
+                    return;
+                }
+                var key = AssetDatabase.AssetPathToGUID(path);
+                if (!clips.TryGetValue(key, out var music)) clips[key] = music = new MusicUpload { SourceKey = key, Title = clip.name, Path = path };
+                if (!music.Usages.Contains(usage)) music.Usages.Add(usage);
+            }
+
+            var setup = EditorSceneManager.GetSceneManagerSetup();
+            try
+            {
+                foreach (var scenePath in AssetDatabase.FindAssets("t:Scene", new[] { "Assets/_Project/Scenes" }).Select(AssetDatabase.GUIDToAssetPath))
+                {
+                    var scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
+                    foreach (var component in scene.GetRootGameObjects().SelectMany(x => x.GetComponentsInChildren<Component>(true)).Where(x => x != null))
+                    {
+                        var serialized = new SerializedObject(component);
+                        Add(serialized.FindProperty("sceneBgmClip")?.objectReferenceValue as AudioClip, $"Scene: {scene.name}");
+                        Add(serialized.FindProperty("bossBgmClip")?.objectReferenceValue as AudioClip, $"Boss in scene: {scene.name}");
+                        Add(serialized.FindProperty("menuBgmClip")?.objectReferenceValue as AudioClip, "Main menu");
+                    }
+                }
+            }
+            finally { EditorSceneManager.RestoreSceneManagerSetup(setup); }
+
+            foreach (var prefabPath in AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/_Project/Prefabs" }).Select(AssetDatabase.GUIDToAssetPath))
+            {
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+                foreach (var component in prefab.GetComponentsInChildren<Component>(true).Where(x => x != null))
+                {
+                    var clip = new SerializedObject(component).FindProperty("bossMusic")?.objectReferenceValue as AudioClip;
+                    Add(clip, $"Boss: {prefab.name}");
+                }
+            }
+            result.Music.AddRange(clips.Values.OrderBy(x => x.Title));
         }
 
         private static void ValidateDatabase(ItemDatabaseSO db, List<ItemSO> all, ScanResult result)
@@ -376,12 +549,16 @@ namespace Attrition.Editor
         private static List<T> FindAssets<T>() where T : UnityEngine.Object => AssetDatabase.FindAssets($"t:{typeof(T).Name}").Select(AssetDatabase.GUIDToAssetPath).Select(AssetDatabase.LoadAssetAtPath<T>).Where(x => x != null).ToList();
         private static string Nicify(string id) => ObjectNames.NicifyVariableName(id ?? "Enemy");
         private static string Mime(string path) => Path.GetExtension(path).ToLowerInvariant() switch { ".png" => "image/png", ".webp" => "image/webp", _ => "image/jpeg" };
+        private static string MusicMime(string path) => Path.GetExtension(path).ToLowerInvariant() switch { ".mp3" => "audio/mpeg", ".flac" => "audio/flac", ".ogg" => "audio/ogg", ".m4a" => "audio/mp4", _ => "audio/wav" };
 
-        [Serializable] private class ScanResult { public readonly List<string> Errors = new(); public readonly List<ItemImport> Items = new(); public readonly List<EnemyImport> Enemies = new(); public readonly List<SkillImport> Skills = new(); public readonly List<ImageUpload> Images = new(); public List<ManifestEntry> Manifest = new(); }
+        [Serializable] private class ScanResult { public readonly List<string> Errors = new(); public readonly List<ItemImport> Items = new(); public readonly List<EnemyImport> Enemies = new(); public readonly List<SkillImport> Skills = new(); public readonly List<ImageUpload> Images = new(); public readonly List<MusicUpload> Music = new(); public readonly List<BundleFile> BundleFiles = new(); public List<ManifestEntry> Manifest = new(); }
         [Serializable] private class ItemImport { public string itemId, name, category, description, imageUrl; public int maxStack; public bool isKeyItem; public List<object> modifiers; }
-        [Serializable] private class EnemyImport { public string enemyId, name, tier, imageUrl; public int hp, ad, ap, def, res, poise, expReward; public float poiseRecoveryTime, patrolSpeed, chaseSpeed, attackSpeed; }
+        [Serializable] private class EnemyImport { public string enemyId, name, tier, imageUrl; public int hp, ad, ap, def, res, poise, expReward; public float poiseRecoveryTime, patrolSpeed, chaseSpeed, attackSpeed; public List<LootImport> lootTable; }
+        [Serializable] private class LootImport { public string itemId; public float dropChance; public short minQty, maxQty; }
         [Serializable] private class SkillImport { public string skillId, name, description, iconKey, rarity, element, damageType, delivery, hitShape, imageUrl; public int manaCost, baseDamage, projectileCount; public float castTime, cooldown, activeStartFrac, activeEndFrac, apScaling, knockbackForce, tickInterval, sweetSpotRadius, sweetSpotMultiplier, range, angle, rectWidth, rectHeight, offsetX, offsetY, projectileSpeed, spreadAngle, vfxLifetime; }
         [Serializable] private class ManifestEntry { public int index; public string itemId; }
         private class ImageUpload { public string Type, Id, Path; public string Key => Type + ":" + Id; }
+        private class MusicUpload { public string SourceKey, Title, Path; public readonly List<string> Usages = new(); }
+        [Serializable] private class BundleFile { public string key, path, type, id, title; public List<string> usages; }
     }
 }

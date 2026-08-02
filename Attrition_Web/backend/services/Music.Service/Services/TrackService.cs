@@ -71,7 +71,7 @@ public class TrackService : ITrackService
         {
             albumMap.TryGetValue(t.AlbumId, out var album);
             return new MusicTrackDto(t.TrackId, t.AlbumId, t.Title, t.Slug, t.TrackNumber, t.Artists,
-                t.Duration, t.Genre, t.CoverPath, t.PlayCount, t.IsFeatured, t.FileSize ?? 0, album?.Title, album?.CoverPath);
+                t.Duration, t.Genre, t.CoverPath, t.PlayCount, t.IsFeatured, t.FileSize ?? 0, album?.Title, album?.CoverPath, t.GameUsages);
         }).ToList();
     }
 
@@ -95,7 +95,7 @@ public class TrackService : ITrackService
         {
             albumMap.TryGetValue(t.AlbumId, out var album);
             return new MusicTrackDto(t.TrackId, t.AlbumId, t.Title, t.Slug, t.TrackNumber, t.Artists,
-                t.Duration, t.Genre, t.CoverPath, t.PlayCount, t.IsFeatured, t.FileSize ?? 0, album?.Title, album?.CoverPath);
+                t.Duration, t.Genre, t.CoverPath, t.PlayCount, t.IsFeatured, t.FileSize ?? 0, album?.Title, album?.CoverPath, t.GameUsages);
         }).ToList();
         return new PaginatedResponse<MusicTrackDto>(items, total, page, pageSize);
     }
@@ -120,7 +120,7 @@ public class TrackService : ITrackService
         {
             albumMap.TryGetValue(t.AlbumId, out var album);
             return new MusicTrackDto(t.TrackId, t.AlbumId, t.Title, t.Slug, t.TrackNumber, t.Artists,
-                t.Duration, t.Genre, t.CoverPath, t.PlayCount, t.IsFeatured, t.FileSize ?? 0, album?.Title, album?.CoverPath);
+                t.Duration, t.Genre, t.CoverPath, t.PlayCount, t.IsFeatured, t.FileSize ?? 0, album?.Title, album?.CoverPath, t.GameUsages);
         }).ToList();
 
         // Newest albums: compute per-album track count + most-recent track date in the database,
@@ -238,6 +238,45 @@ public class TrackService : ITrackService
         }
 
         return (true, null, new ScanTrackResponse(tempFileKey, title, albumTitle, artists, genre, trackNumber, duration, tempCoverPath));
+    }
+
+    public async Task<(bool success, string? error, MusicTrackDto? data)> UploadUnityTrackAsync(UnityTrackUploadRequest req)
+    {
+        if (string.IsNullOrWhiteSpace(req.SourceKey) || req.SourceKey.Length > 128)
+            return (false, "A valid Unity source key is required", null);
+        if (req.GameUsages.Count is 0 or > 100 || req.GameUsages.Any(x => string.IsNullOrWhiteSpace(x) || x.Length > 200))
+            return (false, "Game usages are required and must be under 200 characters", null);
+
+        var existing = (await _repository.Tracks.ListAsync(t => t.UnitySourceKey == req.SourceKey)).SingleOrDefault();
+        if (existing != null)
+        {
+            existing.GameUsages = req.GameUsages.Distinct(StringComparer.Ordinal).Order().ToList();
+            await _repository.Tracks.UpdateAsync(existing);
+            var album = await _repository.Albums.GetByIdAsync(existing.AlbumId);
+            return (true, null, new MusicTrackDto(existing.TrackId, existing.AlbumId, existing.Title, existing.Slug,
+                existing.TrackNumber, existing.Artists, existing.Duration, existing.Genre, existing.CoverPath,
+                existing.PlayCount, existing.IsFeatured, existing.FileSize ?? 0, album?.Title, album?.CoverPath, existing.GameUsages));
+        }
+        if (req.File == null) return (false, "Audio file is required for a new Unity track", null);
+
+        var albums = await _repository.Albums.ListAsync(a => a.Slug == "attrition-game-ost");
+        var gameAlbum = albums.SingleOrDefault();
+        if (gameAlbum == null)
+        {
+            gameAlbum = new MusicAlbum { Title = "Attrition Game OST", Slug = "attrition-game-ost", Artists = ["Attrition OST"] };
+            await _repository.Albums.AddAsync(gameAlbum);
+        }
+        var albumTracks = await _repository.Tracks.ListAsync(t => t.AlbumId == gameAlbum.AlbumId);
+        var upload = await UploadTrackAsync(new UploadTrackRequest { AlbumId = gameAlbum.AlbumId, Title = req.Title,
+            Artists = ["Attrition OST"], TrackNumber = albumTracks.Count == 0 ? 1 : albumTracks.Max(x => x.TrackNumber) + 1, File = req.File });
+        if (!upload.success || upload.data == null) return upload;
+
+        var created = await _repository.Tracks.GetByIdAsync(upload.data.TrackId);
+        if (created == null) return (false, "Uploaded track could not be loaded", null);
+        created.UnitySourceKey = req.SourceKey;
+        created.GameUsages = req.GameUsages.Distinct(StringComparer.Ordinal).Order().ToList();
+        await _repository.Tracks.UpdateAsync(created);
+        return (true, null, upload.data with { GameUsages = created.GameUsages });
     }
 
     public async Task<(bool success, string? error, MusicTrackDto? data)> UploadTrackAsync(UploadTrackRequest req)

@@ -243,6 +243,14 @@ public class MusicController : ControllerBase
     }
 
     [Authorize(Roles = Roles.Admin)]
+    [HttpPost("tracks/unity-source")]
+    public async Task<IActionResult> UploadUnityTrack([FromForm] UnityTrackUploadRequest req)
+    {
+        var (success, error, data) = await _tracks.UploadUnityTrackAsync(req);
+        return success ? Ok(ApiResponse<MusicTrackDto>.Ok(data!)) : BadRequest(ApiResponse.Fail(error!));
+    }
+
+    [Authorize(Roles = Roles.Admin)]
     [HttpPost("tracks")]
     public async Task<IActionResult> UploadTrack([FromForm] UploadTrackRequest req)
     {
