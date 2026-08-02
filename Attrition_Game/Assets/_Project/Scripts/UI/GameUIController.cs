@@ -53,12 +53,15 @@ namespace Attrition.UI
 
         private enum Overlay { None, Inventory, FastTravel, GameOver, Loading, Pause, Settings }
         private Overlay _overlay = Overlay.None;
+        private Overlay _overlayBeforePause = Overlay.None;
+        private float _defaultSortingOrder;
 
         private float _runStartTime;
 
         private void OnEnable()
         {
             _doc = GetComponent<UIDocument>();
+            _defaultSortingOrder = _doc.sortingOrder;
             _root = _doc.rootVisualElement;
             if (_root == null) return;
 
@@ -96,6 +99,7 @@ namespace Attrition.UI
         private void OnDisable()
         {
             Time.timeScale = 1f; // tránh để MainMenu bị đứng hình nếu quit lúc đang pause (solo)
+            Attrition.Gameplay.Environment.TutorialPanel.SetSuppressed(false);
             Attrition.Persistence.GamePause.IsPaused = false;
             Attrition.Persistence.CoopSession.Reset();
             // Reset cờ hội thoại (static, sống xuyên phiên). Thoát/đổi scene lúc đang mở hội thoại →
@@ -166,14 +170,18 @@ namespace Attrition.UI
                 }
             }
 
-            // ESC = menu tạm dừng, hoặc lùi/đóng overlay đang mở.
-            if (Input.GetKeyDown(KeyCode.Escape) && _overlay != Overlay.GameOver && _overlay != Overlay.Loading)
+            // ESC luôn mở Pause trên cùng; Loading là trạng thái duy nhất không cho can thiệp.
+            if (Input.GetKeyDown(KeyCode.Escape) && _overlay != Overlay.Loading)
             {
-                if (_overlay == Overlay.Settings) ShowOverlay(Overlay.Pause);          // Settings → lùi về Pause
+                if (_overlay == Overlay.Settings) ShowOverlay(Overlay.Pause);
+                else if (_overlay == Overlay.Pause) ResumeFromPause();
                 // Inventory + đang mở bảng EQUIP/DROP → ESC chỉ đóng bảng đó, giữ nguyên inventory.
                 else if (_overlay == Overlay.Inventory && IsDetailOpen) CloseInventoryDetail();
-                else if (_overlay == Overlay.Inventory || _overlay == Overlay.FastTravel) ShowOverlay(Overlay.None);
-                else ToggleOverlay(Overlay.Pause);                                      // None ↔ Pause
+                else
+                {
+                    _overlayBeforePause = _overlay;
+                    ShowOverlay(Overlay.Pause);
+                }
             }
         }
 

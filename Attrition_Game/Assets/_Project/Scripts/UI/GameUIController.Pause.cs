@@ -13,9 +13,16 @@ namespace Attrition.UI
     {
         private void SetupPauseControls()
         {
-            BindButton("pause-resume", () => ShowOverlay(Overlay.None));
+            BindButton("pause-resume", ResumeFromPause);
             BindButton("pause-settings", () => ShowOverlay(Overlay.Settings));
             BindButton("pause-quit", OnPauseQuit);
+        }
+
+        private void ResumeFromPause()
+        {
+            var target = _overlayBeforePause;
+            _overlayBeforePause = Overlay.None;
+            ShowOverlay(target == Overlay.Pause || target == Overlay.Settings ? Overlay.None : target);
         }
 
         private void OnPauseQuit()

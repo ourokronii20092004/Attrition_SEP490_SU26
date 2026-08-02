@@ -59,6 +59,18 @@ public class NetworkSpawner : MonoBehaviour
          : (_runner = Attrition.Networking.NetworkLauncher.Instance != null
               ? Attrition.Networking.NetworkLauncher.Instance.Runner : null);
 
+    public bool TryGetDefaultSpawn(PlayerRef player, out Vector3 position)
+    {
+        if (spawnPoints != null && spawnPoints.Length > 0)
+        {
+            position = spawnPoints[player.RawEncoded % spawnPoints.Length].position;
+            return true;
+        }
+
+        position = default;
+        return false;
+    }
+
     /// <summary>Host spawn 1 nhân vật gameplay cho 1 peer. Gọi bởi NetworkLauncher.</summary>
     public void ServerSpawnPlayer(NetworkRunner runner, PlayerRef player)
     {
@@ -69,9 +81,7 @@ public class NetworkSpawner : MonoBehaviour
         NetworkPrefabRef prefabToSpawn = isHostPlayer ? playerPrefab : player1Prefab;
 
         Vector3 spawnPos;
-        if (spawnPoints != null && spawnPoints.Length > 0)
-            spawnPos = spawnPoints[player.RawEncoded % spawnPoints.Length].position;
-        else
+        if (!TryGetDefaultSpawn(player, out spawnPos))
             spawnPos = new Vector3(UnityEngine.Random.Range(-2f, 2f), 48f, 0);
 
         // [TỐI ƯU LOAD] Solo: spawn THẲNG tại checkpoint đã lưu — NHƯNG chỉ khi checkpoint đó

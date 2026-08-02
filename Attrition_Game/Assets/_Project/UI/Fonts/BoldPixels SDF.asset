@@ -177,6 +177,46 @@ MonoBehaviour:
   m_AtlasRenderMode: 4118
   m_UsedGlyphRects:
   - m_X: 0
+    m_Y: 23
+    m_Width: 8
+    m_Height: 10
+  - m_X: 0
+    m_Y: 33
+    m_Width: 8
+    m_Height: 9
+  - m_X: 0
+    m_Y: 42
+    m_Width: 8
+    m_Height: 9
+  - m_X: 0
+    m_Y: 51
+    m_Width: 3
+    m_Height: 3
+  - m_X: 0
+    m_Y: 54
+    m_Width: 10
+    m_Height: 10
+  - m_X: 8
+    m_Y: 16
+    m_Width: 8
+    m_Height: 9
+  - m_X: 8
+    m_Y: 25
+    m_Width: 8
+    m_Height: 12
+  - m_X: 8
+    m_Y: 37
+    m_Width: 10
+    m_Height: 10
+  - m_X: 16
+    m_Y: 16
+    m_Width: 8
+    m_Height: 9
+  - m_X: 16
+    m_Y: 25
+    m_Width: 10
+    m_Height: 9
+  - m_X: 22
     m_Y: 0
     m_Width: 10
     m_Height: 4
@@ -201,6 +241,10 @@ MonoBehaviour:
     m_Y: 0
     m_Width: 490
     m_Height: 512
+  - m_X: 67
+    m_Y: 20
+    m_Width: 445
+    m_Height: 492
   m_FontFeatureTable:
     m_MultipleSubstitutionRecords: []
     m_LigatureSubstitutionRecords: []
