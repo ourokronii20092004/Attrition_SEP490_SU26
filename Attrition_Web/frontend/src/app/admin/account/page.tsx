@@ -8,6 +8,9 @@ import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Toggle } from "@/components/ui/toggle";
+import { SaveStatus } from "@/components/account-sections";
+import { useAutoSave } from "@/lib/hooks/use-auto-save";
+import type { UpdateProfileRequest } from "@/lib/types";
 import { ImageCropper } from "@/components/image-cropper";
 import { PageLoader } from "@/components/ui/spinner";
 import { resolveMediaUrl } from "@/lib/api/media";
@@ -33,7 +36,6 @@ export default function AdminAccountPage() {
   const [bio, setBio] = useState("");
   const [notifyReply, setNotifyReply] = useState(true);
   const [notifyMention, setNotifyMention] = useState(true);
-  const [savingProfile, setSavingProfile] = useState(false);
   const [profileInit, setProfileInit] = useState(false);
 
   // Avatar
@@ -66,15 +68,16 @@ export default function AdminAccountPage() {
     setProfileInit(true);
   }
 
-  const saveProfile = async () => {
-    setSavingProfile(true);
-    try {
-      const res = await accountApi.updateProfile({ bio, notifyOnReply: notifyReply, notifyOnMention: notifyMention });
+  // Saves as each control changes, so nothing is lost by navigating away mid-edit. Patches carry
+  // only the field that changed; the API leaves omitted fields alone.
+  const { save: saveProfile, state: profileSaveState } = useAutoSave<UpdateProfileRequest>({
+    onSave: async (patch) => {
+      const res = await accountApi.updateProfile(patch);
       if (res.success && res.data) setUser(res.data);
-      toast("Profile saved.", "success");
-    } catch { toast("Failed to save profile.", "error"); }
-    setSavingProfile(false);
-  };
+      else throw new Error(res.error ?? "save failed");
+    },
+    onError: (message) => toast(message, "error"),
+  });
 
   const onCropped = async (file: File) => {
     setCropFile(null);
@@ -180,13 +183,26 @@ export default function AdminAccountPage() {
             <textarea
               value={bio}
               onChange={(e) => setBio(e.target.value)}
+              onBlur={() => { if (bio !== (user.bio ?? "")) saveProfile({ bio }); }}
               rows={3}
               placeholder="Bio"
+              aria-label="Bio"
               className="w-full resize-y rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-fg outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent"
             />
-            <Toggle checked={notifyReply} onChange={setNotifyReply} label="Notify on replies" />
-            <Toggle checked={notifyMention} onChange={setNotifyMention} label="Notify on mentions" />
-            <Button size="sm" onClick={saveProfile} loading={savingProfile}>Save Profile</Button>
+            <Toggle
+              checked={notifyReply}
+              onChange={(next) => { setNotifyReply(next); saveProfile({ notifyOnReply: next }, () => setNotifyReply(!next)); }}
+              label="Notify on replies"
+            />
+            <Toggle
+              checked={notifyMention}
+              onChange={(next) => { setNotifyMention(next); saveProfile({ notifyOnMention: next }, () => setNotifyMention(!next)); }}
+              label="Notify on mentions"
+            />
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-fg-subtle">Changes save automatically.</span>
+              <SaveStatus state={profileSaveState} />
+            </div>
           </div>
         </Panel>
 

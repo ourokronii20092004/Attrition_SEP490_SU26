@@ -7,6 +7,7 @@ import { resolveMediaUrl } from "@/lib/api/media";
 import { useToast } from "@/lib/providers";
 import { Avatar } from "@/components/ui/avatar";
 import { ImageCropper } from "@/components/image-cropper";
+import { useInlineEdit } from "@/lib/hooks/use-inline-edit";
 import type { UserDto } from "@/lib/types";
 
 interface EditProps {
@@ -150,35 +151,35 @@ export function ProfileAvatar({ profile, isOwner, onEdited }: EditProps) {
 
 /** Display name with inline owner editing (pencil → input → save/cancel). */
 export function ProfileName({ profile, isOwner, onEdited }: EditProps) {
-  const [editing, setEditing] = useState(false);
-  const [value, setValue] = useState(profile.displayName ?? "");
-  const [busy, setBusy] = useState(false);
   const { toast } = useToast();
+  const edit = useInlineEdit({
+    initial: profile.displayName ?? "",
+    onCommit: async (next) => {
+      try {
+        await accountApi.updateProfile({ displayName: next });
+        await onEdited();
+        toast("Name updated.", "success");
+      } catch {
+        toast("Failed to update name. Please try again.", "error");
+      }
+    },
+  });
 
-  const save = async () => {
-    setBusy(true);
-    try {
-      await accountApi.updateProfile({ displayName: value.trim() });
-      setEditing(false);
-      await onEdited();
-      toast("Name updated.", "success");
-    } catch {
-      toast("Failed to update name. Please try again.", "error");
-    } finally { setBusy(false); }
-  };
-
-  if (editing) {
+  if (edit.editing) {
     return (
       <div className="flex items-center justify-center gap-2 sm:justify-start">
         <input
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
+          value={edit.value}
+          onChange={(e) => edit.setValue(e.target.value)}
+          onBlur={edit.onBlur}
+          onKeyDown={edit.onKeyDown(true)}
           maxLength={50}
           autoFocus
+          aria-label="Display name"
           className="w-64 max-w-full rounded-lg border border-border bg-surface-2 px-2.5 py-1 font-display text-3xl font-bold text-fg outline-none focus:border-accent"
         />
-        <button onClick={save} disabled={busy} className="text-success transition-opacity hover:opacity-80 disabled:opacity-50" aria-label="Save name"><Check size={22} /></button>
-        <button onClick={() => { setEditing(false); setValue(profile.displayName ?? ""); }} className="text-fg-muted transition-opacity hover:opacity-80" aria-label="Cancel"><X size={22} /></button>
+        <button {...edit.armButton} onClick={edit.commit} disabled={edit.busy} className="text-success transition-opacity hover:opacity-80 disabled:opacity-50" aria-label="Save name"><Check size={22} /></button>
+        <button {...edit.armButton} onClick={edit.cancel} className="text-fg-muted transition-opacity hover:opacity-80" aria-label="Cancel"><X size={22} /></button>
       </div>
     );
   }
@@ -187,7 +188,7 @@ export function ProfileName({ profile, isOwner, onEdited }: EditProps) {
     <h1 className="group flex items-center justify-center gap-2 font-display text-3xl font-bold tracking-tight text-fg sm:justify-start sm:text-4xl">
       <span className="break-words">{profile.displayName ?? profile.username}</span>
       {isOwner && (
-        <button onClick={() => setEditing(true)} className="shrink-0 text-fg-subtle opacity-0 transition-opacity hover:text-accent group-hover:opacity-100" aria-label="Edit name">
+        <button onClick={edit.start} className="shrink-0 text-fg-subtle opacity-0 transition-opacity hover:text-accent group-hover:opacity-100" aria-label="Edit name">
           <Pencil size={18} />
         </button>
       )}
@@ -200,44 +201,45 @@ export function ProfileName({ profile, isOwner, onEdited }: EditProps) {
  * when empty, nothing); owners get an inline textarea editor and an add-bio prompt.
  */
 export function ProfileBio({ profile, isOwner, onEdited }: EditProps) {
-  const [editing, setEditing] = useState(false);
-  const [value, setValue] = useState(profile.bio ?? "");
-  const [busy, setBusy] = useState(false);
   const { toast } = useToast();
+  const edit = useInlineEdit({
+    initial: profile.bio ?? "",
+    onCommit: async (next) => {
+      try {
+        await accountApi.updateProfile({ bio: next });
+        await onEdited();
+        toast("Bio updated.", "success");
+      } catch {
+        toast("Failed to update bio. Please try again.", "error");
+      }
+    },
+  });
 
-  const save = async () => {
-    setBusy(true);
-    try {
-      await accountApi.updateProfile({ bio: value.trim() });
-      setEditing(false);
-      await onEdited();
-      toast("Bio updated.", "success");
-    } catch {
-      toast("Failed to update bio. Please try again.", "error");
-    } finally { setBusy(false); }
-  };
-
-  if (editing) {
+  if (edit.editing) {
     return (
       <div>
         <textarea
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
+          value={edit.value}
+          onChange={(e) => edit.setValue(e.target.value)}
+          onBlur={edit.onBlur}
+          onKeyDown={edit.onKeyDown(false)}
           rows={4}
           maxLength={500}
           autoFocus
+          aria-label="Bio"
           placeholder="Tell the archive who you are…"
           className="w-full resize-y rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm leading-relaxed text-fg outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent"
         />
         <div className="mt-2 flex items-center gap-2">
-          <button onClick={save} disabled={busy} className="inline-flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-xs font-semibold text-accent-fg transition-[filter] hover:brightness-105 disabled:opacity-50">
-            <Check size={14} /> {busy ? "Saving…" : "Save"}
+          <button {...edit.armButton} onClick={edit.commit} disabled={edit.busy} className="inline-flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-xs font-semibold text-accent-fg transition-[filter] hover:brightness-105 disabled:opacity-50">
+            <Check size={14} /> {edit.busy ? "Saving…" : "Save"}
           </button>
-          <button onClick={() => { setEditing(false); setValue(profile.bio ?? ""); }} className="rounded-md border border-border px-3 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:text-fg">
+          <button {...edit.armButton} onClick={edit.cancel} className="rounded-md border border-border px-3 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:text-fg">
             Cancel
           </button>
-          <span className="ml-auto text-[11px] tabular-nums text-fg-subtle">{value.length}/500</span>
+          <span className="ml-auto text-[11px] tabular-nums text-fg-subtle">{edit.value.length}/500</span>
         </div>
+        <p className="mt-1.5 text-[11px] text-fg-subtle">Saves when you click away. Escape discards.</p>
       </div>
     );
   }
@@ -245,7 +247,7 @@ export function ProfileBio({ profile, isOwner, onEdited }: EditProps) {
   if (!profile.bio) {
     if (!isOwner) return null;
     return (
-      <button onClick={() => setEditing(true)} className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-2 text-sm text-fg-subtle transition-colors hover:border-accent/50 hover:text-fg">
+      <button onClick={edit.start} className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-2 text-sm text-fg-subtle transition-colors hover:border-accent/50 hover:text-fg">
         <Pencil size={14} /> Add a bio
       </button>
     );
@@ -255,7 +257,7 @@ export function ProfileBio({ profile, isOwner, onEdited }: EditProps) {
     <div className="group relative">
       <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-fg-muted">{profile.bio}</p>
       {isOwner && (
-        <button onClick={() => setEditing(true)} className="mt-3 inline-flex items-center gap-1.5 text-xs text-fg-subtle transition-colors hover:text-accent" aria-label="Edit bio">
+        <button onClick={edit.start} className="mt-3 inline-flex items-center gap-1.5 text-xs text-fg-subtle transition-colors hover:text-accent" aria-label="Edit bio">
           <Pencil size={13} /> Edit
         </button>
       )}

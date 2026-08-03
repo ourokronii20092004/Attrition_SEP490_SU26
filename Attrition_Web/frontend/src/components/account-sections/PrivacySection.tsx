@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { accountApi } from "@/lib/api/account";
 import { useToast } from "@/lib/providers";
-import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
+import { useAutoSave } from "@/lib/hooks/use-auto-save";
 import type { UserDto } from "@/lib/types";
 import { SettingsCard } from "./SettingsCard";
+import { SaveStatus } from "./SaveStatus";
 
 /**
- * Profile visibility controls.
+ * Profile visibility controls. Saves as soon as a switch is flipped.
  *
  * "Show profile" is the stronger of the two: with it off, the profile page is withheld from
  * everyone but the owner and admins, and visitors are told the user has hidden their profile.
@@ -20,31 +21,38 @@ export function PrivacySection({ user, setUser }: { user: UserDto; setUser: (u: 
   const { toast } = useToast();
   const [showBio, setShowBio] = useState(user.showBio ?? true);
   const [showActivity, setShowActivity] = useState(user.showActivity ?? true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
 
-  const save = async () => {
-    setSaving(true);
-    setError("");
-    try {
-      const res = await accountApi.updateProfile({ showBio, showActivity });
+  const { save, state } = useAutoSave<{ showBio?: boolean; showActivity?: boolean }>({
+    onSave: async (patch) => {
+      const res = await accountApi.updateProfile(patch);
       if (res.success && res.data) setUser(res.data);
-      toast("Privacy settings saved.", "success");
-    } catch {
-      setError("Failed to save settings. Please try again.");
-      toast("Failed to save settings. Please try again.", "error");
-    }
-    setSaving(false);
-  };
+      else throw new Error(res.error ?? "save failed");
+    },
+    onError: (message) => toast(message, "error"),
+  });
 
   return (
     <SettingsCard title="Privacy">
       <div className="space-y-4">
         <div className="space-y-3 rounded-lg border border-border bg-surface-2/40 p-4">
-          <Toggle checked={showBio} onChange={setShowBio} label="Show my profile"
-            description="When off, visitors are told you've hidden your profile. You and admins can still see it." />
-          <Toggle checked={showActivity} onChange={setShowActivity} label="Show my activity"
-            description="Your threads, replies, and wiki contributions on your profile page. They stay visible in the forum and wiki themselves." />
+          <Toggle
+            checked={showBio}
+            onChange={(next) => {
+              setShowBio(next);
+              save({ showBio: next }, () => setShowBio(!next));
+            }}
+            label="Show my profile"
+            description="When off, visitors are told you've hidden your profile. You and admins can still see it."
+          />
+          <Toggle
+            checked={showActivity}
+            onChange={(next) => {
+              setShowActivity(next);
+              save({ showActivity: next }, () => setShowActivity(!next));
+            }}
+            label="Show my activity"
+            description="Your threads, replies, and wiki contributions on your profile page. They stay visible in the forum and wiki themselves."
+          />
         </div>
         {!showBio && (
           <p className="rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-fg-muted">
@@ -52,8 +60,7 @@ export function PrivacySection({ user, setUser }: { user: UserDto; setUser: (u: 
             forum and wiki — this only hides your profile page.
           </p>
         )}
-        <Button onClick={save} loading={saving}>Save</Button>
-        {error && <p className="text-sm text-danger">{error}</p>}
+        <SaveStatus state={state} />
       </div>
     </SettingsCard>
   );
