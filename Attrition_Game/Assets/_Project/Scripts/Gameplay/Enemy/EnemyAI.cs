@@ -1215,6 +1215,18 @@ public class EnemyAI : NetworkBehaviour
     }
 
 
+    /// <summary>
+    /// Target còn là player SỐNG không? Boss giữ mục tiêu theo `currentValid` chỉ xét null + khoảng cách,
+    /// nên xác player vẫn nằm trong viewRadius và boss cắm mặt vào đó suốt targetRetargetInterval (4s)
+    /// thay vì đổi sang người còn sống — coop bị nặng nhất vì boss đứng canh xác, chặn luôn việc hồi sinh.
+    /// </summary>
+    protected bool IsLivingPlayer(Transform target)
+    {
+        if (target == null) return false;
+        var pc = target.GetComponent<PlayerController>();
+        return pc != null && !pc.IsDead;
+    }
+
     protected void FindPlayer()
     {
         if (TryUseCachedChaseTarget()) return;

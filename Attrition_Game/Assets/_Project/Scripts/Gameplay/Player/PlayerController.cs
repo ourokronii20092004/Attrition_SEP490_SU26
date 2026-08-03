@@ -140,6 +140,13 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
     [Networked] private TickTimer _knockbackTimer { get; set; }
     [Networked] private Vector2 _lastStableGround { get; set; }
 
+    /// <summary>
+    /// Chống trúng hazard 2 lần cho CÙNG một lần rơi. `Hazard` là MonoBehaviour chạy trên MỌI peer nên
+    /// host và client đều gọi RPC → trước đây 15% HP bị trừ 2 lần (30%) trong coop. Timer này [Networked]
+    /// và chỉ host ghi, nên mỗi lần rơi chỉ ăn damage một lần bất kể có mấy peer báo về.
+    /// </summary>
+    [Networked] private TickTimer _hazardCooldown { get; set; }
+
     // NetworkPosition/NetworkVelocity/NetworkGravityScale ĐÃ BỎ: NetworkRigidbody2D (addon) đã sync
     // transform + velocity rồi, 3 field này host ghi mỗi tick nhưng KHÔNG ai đọc → chỉ tốn băng thông
     // và làm snapshot to hơn (client nhận/rollback nhiều dữ liệu vô ích mỗi tick).
@@ -1015,11 +1022,15 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
 
     /// <summary>
     /// BR-38/39: rơi vào bẫy môi trường. Trừ 15% Max HP rồi đưa về điểm đất an toàn cuối.
-    /// Gọi từ Hazard (trigger). Bỏ qua nếu đang bất tử/đã chết.
+    /// Gọi từ Hazard (trigger).
+    ///
+    /// KHÔNG chặn theo `isInvincible`: hazard là RANH GIỚI MAP, không phải damage thường. Trước đây player
+    /// rơi xuống trong lúc đang bất tử (vừa trúng đòn / vừa hồi sinh 3s) thì hazard bị bỏ qua HOÀN TOÀN
+    /// nên không ai kéo player lên → kẹt dưới map. Giờ vẫn luôn được kéo lên; phần damage mới xét bất tử.
     /// </summary>
     public void HazardHit()
     {
-        if (IsQuestDialogueProtected || isInvincible || isDeadNetworked) return;
+        if (IsQuestDialogueProtected || isDeadNetworked) return;
         RPC_HazardHit();
     }
 
@@ -1028,17 +1039,27 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
     {
         if (IsQuestDialogueProtected || isDeadNetworked) return;
 
+        // Mọi peer đều gọi RPC này cho cùng một lần rơi → chốt ở host để chỉ tính một lần.
+        if (!_hazardCooldown.ExpiredOrNotRunning(Runner)) return;
+        _hazardCooldown = TickTimer.CreateFromSeconds(Runner, 1f);
+
+        // BR-39: KÉO LÊN TRƯỚC khi xét damage. Nếu teleport nằm sau `Die()` thì cú hazard chí mạng để lại
+        // xác DƯỚI map, mà collider tắt khi chết nên đồng đội không tới đủ gần để hồi sinh → mất tiến trình.
+        if (_lastStableGround != Vector2.zero) TeleportTo(_lastStableGround);
+        else if (Attrition.Gameplay.World.Checkpoint.MostRecentlyActivated != null)
+            TeleportTo(Attrition.Gameplay.World.Checkpoint.MostRecentlyActivated.RespawnPosition);
+
+        // Bất tử từ combat/hồi sinh vẫn miễn damage — chỉ không còn ngăn việc được kéo lên.
+        if (isInvincible) return;
+
         int max = statsComp != null ? statsComp.MaxHP : maxHP;
         int dmg = Mathf.Max(1, Mathf.RoundToInt(max * 0.15f)); // BR-38
         HP -= dmg;
 
-        if (HP <= 0) { Die(); return; }
+        if (HP <= 0) Die();
 
-        // BR-39: đưa về điểm đất an toàn cuối (nếu có).
-        if (_lastStableGround != Vector2.zero)
-            TeleportTo(_lastStableGround);
-
-        StartCoroutine(InvincibleCoroutine());
+        // ponytail: chỉ cứu được khi hazard bắt được player. Trần: rơi lọt quá mép hazard thì KHÔNG hệ
+        // thống nào phát hiện. Nâng cấp: thêm fall-plane (kill-Y) cho mỗi map.
     }
 
     /// <summary>Client/host yêu cầu chuyển tới checkpoint ở scene khác; Host tự xác thực registry/discovery.</summary>
