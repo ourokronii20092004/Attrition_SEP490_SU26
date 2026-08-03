@@ -98,7 +98,16 @@ public sealed class GatewayErrorMiddleware
         };
         context.Response.StatusCode = status;
         context.Response.ContentType = "application/json";
+
         // Web defaults → {"success":false,"data":null,"error":"..."}, same shape as ApiResponse.
-        return context.Response.WriteAsync(JsonSerializer.Serialize(new { Success = false, Data = (object?)null, Error = message }, Json));
+        var payload = JsonSerializer.SerializeToUtf8Bytes(
+            new { Success = false, Data = (object?)null, Error = message }, Json);
+
+        // Set the length to what we're about to write. A proxied error arrives with the upstream's
+        // own Content-Length — commonly 0 for a bare 404 — and Kestrel enforces it, so writing the
+        // envelope over an inherited "0" throws and the client receives an empty body with a JSON
+        // content type: the one shape the SPA's error parsing can't read.
+        context.Response.ContentLength = payload.Length;
+        return context.Response.Body.WriteAsync(payload, 0, payload.Length);
     }
 }
