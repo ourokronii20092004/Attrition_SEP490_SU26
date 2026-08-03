@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,16 +8,18 @@ import { z } from "zod";
 import { Sparkles } from "lucide-react";
 import { useAuth } from "@/lib/providers";
 import { skillsApi } from "@/lib/api/skills";
-import { resolveMediaUrl } from "@/lib/api/media";
 import { parseApiError } from "@/lib/api/parse-error";
 import { qk } from "@/lib/query-keys";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Modal } from "@/components/ui/modal";
+import { EmptyState } from "@/components/ui/empty-state";
 import { PageLoader } from "@/components/ui/spinner";
-import { AdminPageHeader, AdminTable, AdminRow } from "@/components/admin/admin-table";
+import { AdminPageHeader } from "@/components/admin/admin-table";
 import { AssetImageField } from "@/components/admin/asset-image-field";
+import { SkillTree } from "@/components/skill-tree";
+import { buildSkillTree } from "@/lib/skill-tree";
 import type { SkillResponse, SkillUpdateRequest } from "@/lib/types";
 
 const finite = z.coerce.number().finite();
@@ -47,22 +49,18 @@ export default function AdminSkillsPage() {
     queryKey: qk.admin.skills(), enabled: user?.role === "Admin",
     queryFn: async () => { const r = await skillsApi.list(); return r.success ? r.data : []; },
   });
+  // Same tree the players see, so tuning a skill happens in the shape it ships in.
+  const branches = useMemo(() => buildSkillTree(skills ?? []), [skills]);
   if (!user || user.role !== "Admin") return null;
   if (isPending) return <PageLoader />;
   return <div>
-    <AdminPageHeader title="Skills" />
+    <AdminPageHeader title="Skill Tree" />
     <Modal open={!!editing} onClose={() => setEditing(null)} title={editing ? `Edit ${editing.name || editing.skillId}` : "Edit Skill"} size="lg" dirty={dirty}>
       {editing && <SkillForm initial={editing} onDirtyChange={setDirty} onDone={() => { setDirty(false); setEditing(null); client.invalidateQueries({ queryKey: qk.admin.skills() }); }} onCancel={() => { setDirty(false); setEditing(null); }} />}
     </Modal>
-    <AdminTable columns={[{ key: "img", label: "" }, { key: "name", label: "Skill" }, { key: "damage", label: "Damage" }, { key: "timing", label: "Timing" }, { key: "action", label: "", align: "right" }]} empty={!skills.length}>
-      {skills.map((s) => <AdminRow key={s.skillId} onClick={() => setEditing(s)}>
-        <td className="px-3 py-2">{s.imageUrl ? <img src={resolveMediaUrl(s.imageUrl) ?? ""} alt="" className="h-9 w-9 rounded object-cover" /> : <Sparkles size={20} />}</td>
-        <td className="px-3 py-2 font-medium">{s.name || s.skillId}<div className="text-xs text-fg-muted">{s.skillId} · {s.element} · {s.delivery}</div></td>
-        <td className="px-3 py-2 text-fg-muted">{s.baseDamage} + AP×{s.apScaling}</td>
-        <td className="px-3 py-2 text-fg-muted">Cast {s.castTime}s · CD {s.cooldown}s</td>
-        <td className="px-3 py-2 text-right"><Button size="sm" variant="secondary">Edit</Button></td>
-      </AdminRow>)}
-    </AdminTable>
+    {!skills?.length
+      ? <EmptyState icon={Sparkles} title="No skills yet" description="Skills appear here once they sync from the game." />
+      : <SkillTree branches={branches} onSelect={setEditing} />}
   </div>;
 }
 
