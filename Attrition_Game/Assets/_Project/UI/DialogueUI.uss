@@ -98,7 +98,7 @@
 }
 
 .speaker-name {
-    font-size: 30px;
+    font-size: 36px;
     color: #E8C869;
     -unity-font-style: bold;
     letter-spacing: 1px;
@@ -107,7 +107,7 @@
 
 /* ──── DIALOGUE TEXT ──── */
 .dialogue-text {
-    font-size: 24px;
+    font-size: 32px;
     color: #D8D3C8;
     white-space: normal;
     min-height: 48px;
@@ -134,14 +134,14 @@
 }
 
 .quest-title {
-    font-size: 24px;
+    font-size: 30px;
     color: #F0D878;
     -unity-font-style: bold;
     margin-bottom: 4px;
 }
 
 .quest-desc {
-    font-size: 20px;
+    font-size: 26px;
     color: #B0A890;
     white-space: normal;
 }
@@ -159,7 +159,7 @@
     border-color: rgba(200, 170, 80, 0.4);
     border-radius: 6px;
     color: #E8D8A8;
-    font-size: 22px;
+    font-size: 28px;
     -unity-font-style: bold;
     padding: 8px 24px;
     margin: 0 6px;
@@ -204,7 +204,7 @@
 
 /* ──── KEY HINT ──── */
 .key-hint {
-    font-size: 18px;
+    font-size: 22px;
     color: rgba(180, 170, 150, 0.5);
     -unity-text-align: middle-center;
     margin-top: 6px;
@@ -388,17 +388,21 @@
     border-color: rgba(200, 170, 80, 0.12);
 }
 
+/* Cỡ chữ KHỚP GameUI.uss (.tracker-entry-*): hai file cùng style một bộ class cho 2 UI khác nhau
+   (tracker HUD ở DialogueUI, bảng quest Tab ở GameUIController). Lệch cỡ là người chơi thấy ngay. */
 .tracker-entry-title {
-    font-size: 20px;
+    font-size: 24px;
     color: #D8D0B8;
     -unity-font-style: bold;
     margin-bottom: 4px;
+    white-space: normal;
 }
 
 .tracker-entry-progress {
-    font-size: 18px;
+    font-size: 20px;
     color: #A8A088;
     margin-bottom: 4px;
+    white-space: normal;
 }
 
 .tracker-progress-bar-bg {
@@ -576,9 +580,9 @@ Label, Button, TextElement {
    ĐẶT CUỐI FILE để thắng cascade.
    ============================================================ */
 
-/* Panel thoại: cao hơn cho chữ 24px + nhiều dòng. */
+/* Panel thoại: min-height (KHÔNG phải height) để chữ to hơn thì khung tự cao thêm, không bị cắt. */
 .dialogue-panel {
-    height: 52%;                             /* 45% → 52% */
+    min-height: 52%;
     padding-left: 70px; padding-right: 70px;
     padding-top: 44px; padding-bottom: 26px;
 }
@@ -587,9 +591,9 @@ Label, Button, TextElement {
 .reward-panel  { width: 520px; padding-left: 34px; padding-right: 34px; }
 .quest-tracker { width: 340px; padding-left: 20px; padding-right: 20px; }
 
-/* Nút thoại: cao + rộng hơn cho chữ 22px. */
+/* Nút thoại: cao + rộng hơn cho chữ 28px. */
 .dlg-btn {
-    min-height: 52px;
+    min-height: 62px;
     padding-left: 32px; padding-right: 32px;
     padding-top: 12px; padding-bottom: 12px;
 }

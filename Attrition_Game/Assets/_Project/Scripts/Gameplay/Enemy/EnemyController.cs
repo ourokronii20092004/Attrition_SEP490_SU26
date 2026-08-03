@@ -482,7 +482,15 @@ namespace Attrition.Controllers
             string enemyId = statsComp != null ? statsComp.EnemyId : name;
 
             var rules = ResolveLootRules(enemyId);
-            if (rules == null || rules.Count == 0) return;
+            if (rules == null || rules.Count == 0)
+            {
+                // Boss/Elite mà không có rule nào = cấu hình sai, KHÔNG phải thiết kế. Trước đây return
+                // im lặng nên "boss không rơi đồ" không để lại dấu vết nào để truy.
+                if (tier != Attrition.Data.EnemyTier.Normal)
+                    Debug.LogWarning($"[Loot] '{enemyId}' ({tier}) không có loot rule nào — " +
+                                     "web override rỗng VÀ lootItemIds trên prefab cũng rỗng.");
+                return;
+            }
 
             if (tier == Attrition.Data.EnemyTier.Normal)
             {
@@ -528,7 +536,14 @@ namespace Attrition.Controllers
                 {
                     if (Random.value > rule.dropChance) continue;
                     int idx = db.GetIndex(rule.itemId);
-                    if (idx < 0) continue;
+                    if (idx < 0)
+                    {
+                        // Tên trên web KHÔNG khớp itemId nào trong ItemDatabase → trước đây bỏ qua im lặng,
+                        // popup không hiện và không để lại dấu vết nào để truy.
+                        Debug.LogWarning($"[Loot] '{enemyId}': itemId '{rule.itemId}' không có trong " +
+                                         "ItemDatabase → bỏ qua. Kiểm tra lại tên ở web admin.");
+                        continue;
+                    }
                     var item = db.GetItem(idx);
                     if (item is Attrition.Data.AccessorySO acc && acc.coopOnlyReward &&
                         Attrition.Persistence.GameLaunch.Mode != Attrition.Persistence.LaunchMode.Coop) continue;

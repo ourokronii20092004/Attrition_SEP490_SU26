@@ -311,7 +311,7 @@ namespace Attrition.Gameplay.Enemy.ArchDemon
             }
 
             _retargetCooldown -= Runner.DeltaTime;
-            bool currentValid = playerTarget != null
+            bool currentValid = IsLivingPlayer(playerTarget)
                 && Vector2.Distance(transform.position, playerTarget.position) <= viewRadius * 1.05f;
             if (currentValid && _retargetCooldown > 0f) return;
 

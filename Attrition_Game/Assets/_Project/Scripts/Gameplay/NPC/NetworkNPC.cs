@@ -469,7 +469,10 @@ namespace Attrition.Gameplay.NPC
                 }
 
                 if (npc.QuestProgress >= active.requiredAmount)
+                {
                     npc.QuestState = npc.autoFinishWithoutReward ? (byte)3 : (byte)2;
+                    if (npc.QuestState == 2) npc.RpcNotifyObjectiveComplete(active.title);
+                }
             }
         }
 
@@ -491,8 +494,22 @@ namespace Attrition.Gameplay.NPC
 
                 npc.QuestProgress++;
                 if (npc.QuestProgress >= active.requiredAmount)
+                {
                     npc.QuestState = npc.autoFinishWithoutReward ? (byte)3 : (byte)2;
+                    if (npc.QuestState == 2) npc.RpcNotifyObjectiveComplete(active.title);
+                }
             }
+        }
+
+        /// <summary>
+        /// Host → MỌI máy: quest vừa đủ mục tiêu, chờ nộp. Toast là UI CỤC BỘ của từng người chơi nên phải
+        /// đi bằng RPC; nếu để mỗi peer tự suy ra từ `QuestState` thì client bỏ lỡ đúng khoảnh khắc chuyển
+        /// trạng thái (nó chỉ thấy giá trị mới, không thấy lúc đổi).
+        /// </summary>
+        [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+        private void RpcNotifyObjectiveComplete(string questTitle)
+        {
+            Attrition.Controllers.QuestNotifyEvents.RaiseObjectiveComplete(questTitle, NpcName);
         }
 
         //  SAVE / LOAD — Host gom & khôi phục tiến trình quest

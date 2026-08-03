@@ -174,11 +174,25 @@ namespace Attrition.UI
                 return;
             }
 
+            // Đang ở bảng mời nhận quest? Phải tính TRƯỚC khi phân nhánh: OnAcceptClicked/OnDeclineClicked
+            // đều gọi CloseDialogue() làm nút bị ẩn lại, đọc sau sẽ luôn ra false.
+            bool choosing = _isDialogueOpen && !_isTyping
+                            && _btnAccept != null && !_btnAccept.ClassListContains("hidden");
+
+            // N = từ chối quest. Chỉ nhận khi bảng mời đang hiện, nên không đụng luồng thoại thường.
+            if (choosing && Input.GetKeyDown(KeyCode.N))
+            {
+                OnDeclineClicked();
+                return;
+            }
+
             if (_isDialogueOpen
                 && (Input.GetKeyDown(interactKey) || Input.GetKeyDown(KeyCode.Space)))
             {
                 if (_isTyping)
                     CompleteTyping();
+                else if (choosing)
+                    OnAcceptClicked();   // ở bảng mời: F = Accept thay vì lật sang dòng kế
                 else
                     AdvanceLine();
             }
@@ -291,6 +305,20 @@ namespace Attrition.UI
             }
         }
 
+        /// <summary>Phím Interact hiện tại. Đọc từ GameSettings vì player rebind được — KHÔNG ghi cứng "F".</summary>
+        private static KeyCode InteractKey => Attrition.Persistence.GameSettings.GetKey(
+            Attrition.Persistence.GameSettings.InputAction.Interact);
+
+        /// <summary>Đổi dòng gợi ý phím dưới khung thoại. UXML ghi cứng "[F] or [Space]" nên phải ghi lại
+        /// theo ngữ cảnh, nếu không bảng mời quest sẽ hiện nhầm hướng dẫn.</summary>
+        private void SetKeyHint(string text)
+        {
+            if (_keyHint != null) _keyHint.text = text;
+        }
+
+        private void ResetKeyHint() =>
+            SetKeyHint($"[{FormatKey(InteractKey)}] or [SPACE] to continue");
+
         /// <summary>Mở hội thoại với NPC cụ thể.</summary>
         public void OpenDialogue(NetworkNPC npc)
         {
@@ -389,6 +417,7 @@ namespace Attrition.UI
                     _btnAccept.RemoveFromClassList("hidden");
                     _btnDecline.RemoveFromClassList("hidden");
                     _btnContinue.AddToClassList("hidden");
+                    SetKeyHint($"[{FormatKey(InteractKey)}] Accept   ·   [N] Decline");
                     return;
                 }
                 if (state == 2) // Completed → show claim (Continue sẽ claim)
@@ -397,6 +426,7 @@ namespace Attrition.UI
                     _btnContinue.RemoveFromClassList("hidden");
                     _btnAccept.AddToClassList("hidden");
                     _btnDecline.AddToClassList("hidden");
+                    SetKeyHint($"[{FormatKey(InteractKey)}] Claim reward");
                     return;
                 }
             }
@@ -414,6 +444,7 @@ namespace Attrition.UI
 
             _btnAccept.AddToClassList("hidden");
             _btnDecline.AddToClassList("hidden");
+            ResetKeyHint();
         }
 
         /// <summary>Hết dòng hội thoại — xử lý theo trạng thái quest.</summary>
@@ -744,11 +775,14 @@ namespace Attrition.UI
             title.text = isComplete ? $"✓ {q.title}" : q.title;
             entry.Add(title);
 
-            // Progress text
+            // Progress text. Xong mục tiêu → nhắc quay lại ĐÚNG NPC nào (player hay quên bước nộp).
+            // Dùng lại nguyên văn của bảng quest Tab (GameUIController.QuestLog) để hai chỗ không lệch chữ.
             var progress = new Label();
             progress.AddToClassList("tracker-entry-progress");
             string objText = q.objectiveType == QuestObjectiveType.Kill ? "defeated" : "completed";
-            progress.text = $"{npc.QuestProgress}/{q.requiredAmount} {objText}";
+            progress.text = isComplete
+                ? $"Complete — return to {npc.NpcName} to claim your reward"
+                : $"{npc.QuestProgress}/{q.requiredAmount} {objText}";
             entry.Add(progress);
 
             // Progress bar

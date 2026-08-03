@@ -301,7 +301,7 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
             // Tránh đổi mục tiêu liên tục khi 2 player ra-vào tầm.
             _retargetCooldown -= Runner.DeltaTime;
 
-            bool currentValid = playerTarget != null
+            bool currentValid = IsLivingPlayer(playerTarget)
                 && Vector2.Distance(transform.position, playerTarget.position) <= viewRadius * 1.05f;
 
             // Còn trong thời gian khoá mục tiêu VÀ mục tiêu hiện tại còn hợp lệ → giữ nguyên.

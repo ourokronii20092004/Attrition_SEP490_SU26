@@ -20,6 +20,7 @@ namespace Attrition.UI
             Attrition.Controllers.SaveNotifyEvents.OnSaveOk += ShowSaveOk;
             Attrition.Controllers.SaveNotifyEvents.OnSaveFailed += ShowSaveFailed;
             Attrition.Controllers.SaveNotifyEvents.OnSessionExpired += ShowSessionExpired;
+            Attrition.Controllers.QuestNotifyEvents.OnObjectiveComplete += ShowObjectiveComplete;
         }
 
         private void UnhookSaveToast()
@@ -27,7 +28,17 @@ namespace Attrition.UI
             Attrition.Controllers.SaveNotifyEvents.OnSaveOk -= ShowSaveOk;
             Attrition.Controllers.SaveNotifyEvents.OnSaveFailed -= ShowSaveFailed;
             Attrition.Controllers.SaveNotifyEvents.OnSessionExpired -= ShowSessionExpired;
+            Attrition.Controllers.QuestNotifyEvents.OnObjectiveComplete -= ShowObjectiveComplete;
         }
+
+        /// <summary>
+        /// Quest vừa đủ mục tiêu → nhắc quay lại ĐÚNG NPC để nộp. Người test hay bỏ qua bước nộp nên
+        /// toast phải nêu tên NPC, không chỉ nói "hoàn thành". Vàng kim để phân biệt với toast lưu.
+        /// 6s vì câu dài hơn toast lưu.
+        /// </summary>
+        private void ShowObjectiveComplete(string questTitle, string npcName)
+            => ShowToast($"\"{questTitle}\" complete — return to {npcName} to claim your reward",
+                         new Color(0.72f, 0.55f, 0.12f), 6f);
 
         private void ShowSaveOk(string message) => ShowToast(message, new Color(0.18f, 0.65f, 0.32f), 2.5f);
         private void ShowSaveFailed(string message) => ShowToast(message, new Color(0.78f, 0.20f, 0.20f), 5f);
