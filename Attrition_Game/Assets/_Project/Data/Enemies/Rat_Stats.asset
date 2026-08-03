@@ -16,11 +16,11 @@ MonoBehaviour:
   tier: 0
   webImage: {fileID: 0}
   maxHP: 50
-  ad: 40
-  ap: 40
+  ad: 60
+  ap: 60
   def: 0
   res: 0
-  poise: 0
+  poise: 200
   poiseRecoveryTime: 3
   patrolSpeed: 2
   chaseSpeed: 5

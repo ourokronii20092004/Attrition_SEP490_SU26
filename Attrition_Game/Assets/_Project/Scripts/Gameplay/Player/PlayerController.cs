@@ -1100,22 +1100,24 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
     public void RpcRequestFastTravelToCheckpoint(Vector3 destination, string checkpointName)
     {
-        var players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
-        foreach (var p in players)
-        {
-            // Fast-travel đến checkpoint = như rest: player chết được hồi sinh full HP/Mana/bình tại đích.
-            if (p.IsDead) p.ReviveAndRestore(destination);
-            else p.TeleportTo(destination);
-        }
+        // Fast-travel đến checkpoint = ĐÚNG NHƯ REST (yêu cầu user): hồi đầy HP/Mana/Stamina + refill
+        // bình cho mọi player, người đang gục thì hồi sinh tại đích.
+        Attrition.Gameplay.World.Checkpoint.RestoreAllPlayersAt(destination);
+
+        // Quái cũng reset y như rest: quái đã chết sống lại, quái đang aggro về vị trí gốc. Thiếu bước
+        // này thì teleport về checkpoint xong thế giới vẫn giữ nguyên trạng — đúng lỗi user báo.
+        Attrition.Gameplay.World.Checkpoint.ResetEnemiesExceptBoss();
+
         RpcTravelLoading();
 
-        // Cập nhật MostRecentlyActivated → respawn / Game Over hồi sinh đúng checkpoint mới.
+        // Đặt checkpoint đích làm lastCheckpoint (RespawnPosition + HasBeenActivated + MostRecently).
+        // Thiếu 2 cờ đầu thì chết sau khi teleport sẽ hồi sinh về checkpoint khác trong scene.
         var checkpoints = FindObjectsByType<Attrition.Gameplay.World.Checkpoint>(FindObjectsSortMode.None);
         foreach (var cp in checkpoints)
         {
             if (cp != null && cp.DisplayName == checkpointName)
             {
-                Attrition.Gameplay.World.Checkpoint.MostRecentlyActivated = cp;
+                cp.MarkAsLastCheckpoint();
                 break;
             }
         }
@@ -1169,18 +1171,8 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
         // sau khi loading tắt (ReviveAndRestore đã set cam.Follow + warp).
         RpcTravelLoading();
 
-        if (spawner != null)
-        {
-            // Despawn quái còn sống (trừ boss) TRƯỚC khi spawn lại → tránh nhân đôi.
-            foreach (var enemy in FindObjectsByType<Attrition.Controllers.EnemyController>(FindObjectsSortMode.None))
-            {
-                if (enemy == null) continue;
-                var es = enemy.GetComponent<Attrition.Gameplay.Enemy.EnemyStats>();
-                if (es != null && es.Tier == Attrition.Data.EnemyTier.Boss) continue; // boss: bỏ qua
-                spawner.DespawnObject(enemy.Object);
-            }
-            spawner.RespawnConfiguredEnemies();
-        }
+        // Despawn quái còn sống (trừ boss) rồi spawn lại — dùng chung với rest/fast-travel.
+        Attrition.Gameplay.World.Checkpoint.ResetEnemiesExceptBoss();
 
         // BOSS: đặt sẵn trong scene nên KHÔNG despawn/respawn như quái thường → phải reset tay.
         // Hồi đầy HP + trả AI về chờ trigger (ẩn thanh máu) + MỞ LẠI cửa phòng boss, nếu không player

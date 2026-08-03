@@ -15,12 +15,12 @@ MonoBehaviour:
   enemyId: gollux
   tier: 1
   webImage: {fileID: 0}
-  maxHP: 300
-  ad: 20
-  ap: 20
-  def: 20
-  res: 20
-  poise: 100
+  maxHP: 1000
+  ad: 40
+  ap: 40
+  def: 35
+  res: 35
+  poise: 500
   poiseRecoveryTime: 3
   patrolSpeed: 2
   chaseSpeed: 5

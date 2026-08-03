@@ -146,7 +146,11 @@ namespace Attrition.UI
             RewardEvents.OnExpReceived -= OnExpReceived;
             RewardEvents.OnRewardBatchComplete -= OnRewardBatchComplete;
 
-            Attrition.Persistence.DialogueState.IsActive = false;
+            // Thoát/đổi scene lúc đang mở thoại: hạ CẢ hai cờ rồi tính lại → không để kẹt
+            // DialogueState.IsActive (khóa di chuyển) hay solo-freeze (game đứng hình) sang phiên sau.
+            _isDialogueOpen = false;
+            _isRewardShowing = false;
+            RefreshBlockingState();
             SetLocalQuestProtection(false);
         }
 
@@ -301,8 +305,7 @@ namespace Attrition.UI
             _currentLineIndex = -1;
             _isDialogueOpen = true;
             _onDialogueComplete = null;
-            Attrition.Persistence.DialogueState.IsActive = true;
-            SetCursorFree(true);
+            RefreshBlockingState();
 
             _dialogueOverlay.RemoveFromClassList("hidden");
             // Delay 1 frame để CSS transition chạy từ trạng thái ẩn → hiện
@@ -324,9 +327,8 @@ namespace Attrition.UI
             _currentLineIndex = -1;
             _isDialogueOpen = true;
             _onDialogueComplete = onComplete;
-            
-            Attrition.Persistence.DialogueState.IsActive = true;
-            SetCursorFree(true);
+
+            RefreshBlockingState();
 
             _dialogueOverlay.RemoveFromClassList("hidden");
             _dialoguePanel.schedule.Execute(() => _dialoguePanel.AddToClassList("visible")).ExecuteLater(20);
@@ -450,9 +452,9 @@ namespace Attrition.UI
 
             _isDialogueOpen = false;
             _isTyping = false;
-            Attrition.Persistence.DialogueState.IsActive = false;
             SetLocalQuestProtection(false);
-            SetCursorFree(false);
+            // Tính lại từ cờ: nếu popup thưởng vừa mở (host claim chạy đồng bộ) thì chuột VẪN tự do.
+            RefreshBlockingState();
 
             _dialoguePanel.RemoveFromClassList("visible");
 
@@ -510,14 +512,30 @@ namespace Attrition.UI
         }
 
         /// <summary>
-        /// Mở (free=true) → chuột hiện + unlock để bấm nút; đóng → khóa lại về gameplay.
-        /// Set CẢ visible lẫn lockState giống Inventory/HUD — chỉ set visible là không đủ
-        /// khi lockState đang Locked (chuột kẹt giữa màn, không bấm được nút).
+        /// Áp trạng thái "đang có UI hội thoại/thưởng chặn gameplay" từ HAI cờ `_isDialogueOpen` và
+        /// `_isRewardShowing` — chuột, khóa di chuyển, và dừng game (solo).
+        ///
+        /// VÌ SAO TÍNH LẠI TỪ CỜ, KHÔNG SET TRỰC TIẾP: trên HOST (và solo — solo là host), `RpcClaimReward`
+        /// chạy ĐỒNG BỘ ngay trong lời gọi → popup thưởng mở TRƯỚC khi `CloseDialogue` chạy xong, nên
+        /// `CloseDialogue` khóa lại chuột đè lên popup vừa mở → bảng thưởng treo, không có chuột bấm OK.
+        /// Client không lỗi vì RPC tới muộn hơn (đúng thứ tự) — vì thế bug chỉ thấy ở solo/host.
+        /// Tính lại từ cờ thì thứ tự gọi không còn quan trọng.
         /// </summary>
-        private void SetCursorFree(bool free)
+        private void RefreshBlockingState()
         {
-            UnityEngine.Cursor.visible = free;
-            UnityEngine.Cursor.lockState = free ? CursorLockMode.None : CursorLockMode.Locked;
+            bool blocking = _isDialogueOpen || _isRewardShowing;
+
+            UnityEngine.Cursor.visible = blocking;
+            UnityEngine.Cursor.lockState = blocking ? CursorLockMode.None : CursorLockMode.Locked;
+
+            // Khóa di chuyển player local (PlayerController đọc cờ này). Popup thưởng cũng là modal —
+            // chuột đang tự do, không nên cho chạy nhảy phía sau.
+            Attrition.Persistence.DialogueState.IsActive = blocking;
+
+            // SOLO: dừng hẳn game khi đang nói chuyện NPC → quái không đánh mất HP lúc đọc thoại.
+            // COOP: SetSoloFreeze tự no-op (online — dừng sẽ phá đồng bộ), giữ nguyên hành vi cũ.
+            Attrition.Persistence.GamePause.SetSoloFreeze(
+                Attrition.Persistence.GamePause.Freeze.Dialogue, blocking);
         }
 
         private void UpdateQuestInfoVisibility()
@@ -582,7 +600,7 @@ namespace Attrition.UI
         private void ShowRewardPopup()
         {
             _isRewardShowing = true;
-            SetCursorFree(true);
+            RefreshBlockingState();
 
             _rewardItems.Clear();
             _rewardExp.AddToClassList("hidden");
@@ -660,7 +678,7 @@ namespace Attrition.UI
         private void CloseRewardPopup()
         {
             _isRewardShowing = false;
-            SetCursorFree(false);
+            RefreshBlockingState();
 
             _rewardPanel.RemoveFromClassList("visible");
             _rewardOverlay.RemoveFromClassList("visible");

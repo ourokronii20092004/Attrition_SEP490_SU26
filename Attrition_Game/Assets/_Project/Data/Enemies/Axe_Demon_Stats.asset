@@ -15,12 +15,12 @@ MonoBehaviour:
   enemyId: axe_demon
   tier: 0
   webImage: {fileID: 0}
-  maxHP: 40
-  ad: 20
+  maxHP: 70
+  ad: 30
   ap: 20
   def: 2
   res: 2
-  poise: 30
+  poise: 200
   poiseRecoveryTime: 3
   patrolSpeed: 1
   chaseSpeed: 3
