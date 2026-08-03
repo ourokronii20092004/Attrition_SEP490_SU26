@@ -10,6 +10,8 @@ public interface INotificationRepository
     Task<int> UnreadCountAsync(Guid userId);
     Task MarkReadAsync(Guid userId, Guid notificationId);
     Task MarkAllReadAsync(Guid userId);
+    /// <summary>Marks read every notification of this user's that deep-links into the given thread. Returns how many were cleared.</summary>
+    Task<int> MarkThreadReadAsync(Guid userId, Guid threadId);
     Task CreateAsync(CreateNotificationRequest request);
     Task CreateManyAsync(CreateNotificationsBulkRequest request);
 }

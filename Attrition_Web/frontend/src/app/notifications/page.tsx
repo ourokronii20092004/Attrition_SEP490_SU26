@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
-import { Bell, CheckCheck, MessageSquare, AtSign, Megaphone } from "lucide-react";
+import { Bell, BellOff, CheckCheck, MessageSquare, AtSign, Megaphone } from "lucide-react";
 import { notificationsApi } from "@/lib/api/notifications";
-import { useAuth } from "@/lib/providers";
+import { forumApi } from "@/lib/api/forum";
+import { useAuth, useToast } from "@/lib/providers";
+import { threadIdFromNotificationLink } from "@/lib/notification-link";
 import { PageShell } from "@/components/ui/page-shell";
 import { PageTitle } from "@/components/ui/page-title";
 import { Select } from "@/components/ui/select";
@@ -130,6 +132,24 @@ export default function NotificationsPage() {
 
 function NotificationRow({ notification: n, onMarkRead }: { notification: NotificationDto; onMarkRead: () => void }) {
   const Icon = typeIcon(n.type);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  // Only reply notifications carry a thread link; a mention elsewhere has nothing to mute.
+  const threadId = threadIdFromNotificationLink(n.link);
+
+  const mute = useMutation({
+    // Mute the thread and clear the pile it already produced — stopping new notifications while
+    // leaving the old ones sitting unread would only half-solve the annoyance.
+    mutationFn: async (id: string) => {
+      await forumApi.setThreadMuted(id, true);
+      await notificationsApi.markThreadRead(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      toast("Muted. You won't get notifications from that thread.", "success");
+    },
+    onError: () => toast("Couldn't mute that thread. Please try again.", "error"),
+  });
 
   const body = (
     <div
@@ -160,9 +180,26 @@ function NotificationRow({ notification: n, onMarkRead }: { notification: Notifi
   // Clicking a linked notification marks it read and navigates; unlinked ones just toggle read.
   const handleClick = () => { if (!n.isRead) onMarkRead(); };
 
-  return n.link ? (
-    <Link href={n.link} onClick={handleClick} className="block">{body}</Link>
-  ) : (
-    <button onClick={handleClick} className="block w-full text-left">{body}</button>
+  return (
+    <div className="group/row relative">
+      {n.link ? (
+        <Link href={n.link} onClick={handleClick} className="block">{body}</Link>
+      ) : (
+        <button onClick={handleClick} className="block w-full text-left">{body}</button>
+      )}
+      {threadId && (
+        // Sits above the row's own link, so muting never navigates you into the thread you're
+        // trying to escape. Always visible on touch, where there is no hover.
+        <button
+          type="button"
+          onClick={() => mute.mutate(threadId)}
+          disabled={mute.isPending}
+          title="Stop notifications from this thread"
+          className="absolute bottom-2 right-2 inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-2 py-1 text-[11px] font-medium text-fg-subtle transition-colors hover:border-accent/50 hover:text-fg disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:opacity-0 sm:group-hover/row:opacity-100 sm:focus-visible:opacity-100"
+        >
+          <BellOff size={12} aria-hidden /> Mute thread
+        </button>
+      )}
+    </div>
   );
 }

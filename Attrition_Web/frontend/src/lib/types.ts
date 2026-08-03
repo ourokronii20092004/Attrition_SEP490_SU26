@@ -450,6 +450,8 @@ export interface ForumThreadDto {
   likeCount: number;
   dislikeCount: number;
   currentUserReaction: string | null;
+  /** Whether the signed-in viewer muted this thread. Always false when not signed in. */
+  isMuted: boolean;
 }
 
 export interface ForumPostDto {

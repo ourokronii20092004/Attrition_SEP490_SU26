@@ -8,7 +8,10 @@ public record ForumThreadListDto(Guid Id, string Title, Guid AuthorId, string Au
 public record ForumThreadDto(Guid Id, string Title, string CategorySlug, Guid AuthorId, string AuthorName,
     bool IsPinned, bool IsLocked, int ReplyCount, DateTime CreatedAt, string Content,
     IReadOnlyList<string> Attachments, string? AuthorAvatar, string AuthorRole, DateTime? UpdatedAt,
-    int LikeCount, int DislikeCount, string? CurrentUserReaction);
+    int LikeCount, int DislikeCount, string? CurrentUserReaction,
+    // Whether the signed-in viewer has muted this thread. Always false for anonymous viewers,
+    // who receive no notifications and so have nothing to mute.
+    bool IsMuted = false);
 
 public record ForumPostDto(Guid Id, Guid ThreadId, Guid? ParentPostId, int Depth, Guid AuthorId, string AuthorName, string? AuthorAvatar,
     string AuthorRole, string Content, IReadOnlyList<string> Attachments, DateTime CreatedAt, DateTime? UpdatedAt,
@@ -24,6 +27,9 @@ public record CreatePostRequest(string Content, Guid? ParentPostId = null, List<
 public record UpdatePostRequest(string Content);
 public record ReactRequest(string ReactionType);       // like | dislike
 public record ReportPostReq(string Reason);
+// Mute (or un-mute) a thread. Explicit state rather than a toggle, so a retried or double-clicked
+// request can't leave the user on the opposite setting from the one they chose.
+public record MuteThreadReq(bool Muted);
 
 // Category management (admin)
 public record ForumCategoryRequest(string Name, string? Description);

@@ -22,4 +22,8 @@ export const notificationsApi = {
 
   markAllRead: () =>
     apiFetch<ApiResponse<void>>("/api/notifications/read-all", { method: "PUT" }),
+
+  /** Clears this user's unread notifications for one thread. Returns how many were cleared. */
+  markThreadRead: (threadId: string) =>
+    apiFetch<ApiResponse<number>>(`/api/notifications/thread/${threadId}/read`, { method: "PUT" }),
 };

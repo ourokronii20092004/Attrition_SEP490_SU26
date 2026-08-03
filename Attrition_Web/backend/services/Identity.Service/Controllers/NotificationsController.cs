@@ -60,4 +60,16 @@ public class NotificationsController : ControllerBase
         await _notifications.MarkAllReadAsync(userId);
         return Ok(ApiResponse.Ok());
     }
+
+    /// <summary>
+    /// Clears this user's unread notifications for one thread. Paired with muting: silencing a
+    /// thread should also clear the pile it already produced, not just stop new ones.
+    /// </summary>
+    [HttpPut("thread/{threadId:guid}/read")]
+    public async Task<IActionResult> MarkThreadRead(Guid threadId)
+    {
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        var cleared = await _notifications.MarkThreadReadAsync(userId, threadId);
+        return Ok(ApiResponse<int>.Ok(cleared));
+    }
 }

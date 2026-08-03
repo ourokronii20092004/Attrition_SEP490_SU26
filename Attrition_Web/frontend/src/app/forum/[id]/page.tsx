@@ -22,6 +22,7 @@ import { makeOptimisticPost, addPostToPage, replacePostInPage, removePostFromPag
 import { buildTree, indentsChildren, type PostNode } from "@/lib/forum-tree";
 import { LIVE_FAST, liveWhenFocused } from "@/lib/live";
 import { useLoginHref } from "@/lib/hooks/use-login-href";
+import { ThreadMuteToggle } from "@/components/thread-mute-toggle";
 import type { ForumPostDto, ForumThreadDto, PaginatedResponse } from "@/lib/types";
 
 // First reply page size. Beyond this, a "Load more replies" button grows the pool and the tree
@@ -294,9 +295,16 @@ export default function ThreadPage() {
 
           {/* Replies stay in the compact comment style, below the post. */}
           <div className="mt-8">
-            <h2 className="font-display text-lg font-semibold tracking-tight text-fg">
-              {totalReplies} {totalReplies === 1 ? "Reply" : "Replies"}
-            </h2>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="font-display text-lg font-semibold tracking-tight text-fg">
+                {totalReplies} {totalReplies === 1 ? "Reply" : "Replies"}
+              </h2>
+              {/* Sits with the replies because that's what it silences — and it's where you are
+                  when the notifications get annoying. */}
+              {user && thread && (
+                <ThreadMuteToggle threadId={thread.id} isMuted={thread.isMuted} />
+              )}
+            </div>
             <div className="mt-4 space-y-3">
               {tree.map((node) => (
                 <PostNodeView

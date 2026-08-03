@@ -87,7 +87,7 @@ public class ForumController : ControllerBase
     [HttpGet("wiki-thread/{articleId:guid}")]
     public async Task<IActionResult> GetWikiThread(Guid articleId, [FromQuery] string? title)
     {
-        var result = await _forum.GetOrCreateWikiThreadAsync(articleId, title ?? "Article comments");
+        var result = await _forum.GetOrCreateWikiThreadAsync(articleId, title ?? "Article comments", _user.UserId);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
@@ -167,12 +167,16 @@ public class ForumController : ControllerBase
         return result.Success ? Ok(result) : MapWriteFailure(result);
     }
 
+    /// <summary>
+    /// Follow or mute a thread. Muting stops reply notifications for it, including the ones you'd
+    /// otherwise get for owning the thread or for a reply to your own post.
+    /// </summary>
     [Authorize]
-    [HttpPost("threads/{id:guid}/subscribe")]
-    public async Task<IActionResult> Subscribe(Guid id)
+    [HttpPost("threads/{id:guid}/mute")]
+    public async Task<IActionResult> SetMuted(Guid id, [FromBody] MuteThreadReq req)
     {
         if (this.RequireUserId(_user, out var userId) is { } error) return error;
-        var result = await _forum.ToggleThreadSubscriptionAsync(id, userId);
+        var result = await _forum.SetThreadMutedAsync(id, userId, req.Muted);
         return result.Success ? Ok(result) : MapWriteFailure(result);
     }
 

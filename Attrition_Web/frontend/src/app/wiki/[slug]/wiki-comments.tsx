@@ -19,6 +19,7 @@ import { makeOptimisticPost, addPostToPage, replacePostInPage, applyReactionToPa
 import { buildTree, indentsChildren, type PostNode } from "@/lib/forum-tree";
 import { LIVE_FAST, liveWhenFocused } from "@/lib/live";
 import { useLoginHref } from "@/lib/hooks/use-login-href";
+import { ThreadMuteToggle } from "@/components/thread-mute-toggle";
 import type { ForumPostDto, PaginatedResponse } from "@/lib/types";
 
 const PAGE_SIZE = 50;
@@ -115,9 +116,16 @@ export function WikiComments({ articleId, articleTitle }: { articleId: string; a
 
   return (
     <section className="mt-10 border-t border-border pt-6">
-      <h2 className="flex items-center gap-2 font-display text-xl font-bold text-fg">
-        <MessageSquare size={18} /> Comments {total > 0 && <span className="text-sm font-normal text-fg-muted">({total})</span>}
-      </h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="flex items-center gap-2 font-display text-xl font-bold text-fg">
+          <MessageSquare size={18} /> Comments {total > 0 && <span className="text-sm font-normal text-fg-muted">({total})</span>}
+        </h2>
+        {/* Commenting on an article auto-follows its thread, so the way out belongs right here. */}
+        {user && thread && (
+          <ThreadMuteToggle threadId={thread.id} isMuted={thread.isMuted}
+            invalidateKey={qk.wiki.commentThread(articleId)} />
+        )}
+      </div>
 
       {user ? (
         <Card className="mt-4 p-4">

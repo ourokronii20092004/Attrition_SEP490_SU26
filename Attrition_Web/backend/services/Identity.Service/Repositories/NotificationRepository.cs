@@ -28,6 +28,19 @@ public class NotificationRepository(IdentityDbContext db) : INotificationReposit
     public Task MarkAllReadAsync(Guid userId) => db.Notifications.Where(n => n.UserId == userId && !n.IsRead)
         .ExecuteUpdateAsync(s => s.SetProperty(n => n.IsRead, true));
 
+    /// <summary>
+    /// Clears the backlog for one thread, so muting it also silences the notifications it already
+    /// produced. Matched on the deep link (<c>/forum/{threadId}...</c>) because notifications store
+    /// a link rather than a thread id — Identity owns this table and has no forum schema to join.
+    /// </summary>
+    public Task<int> MarkThreadReadAsync(Guid userId, Guid threadId)
+    {
+        var prefix = $"/forum/{threadId}";
+        return db.Notifications
+            .Where(n => n.UserId == userId && !n.IsRead && n.Link != null && n.Link.StartsWith(prefix))
+            .ExecuteUpdateAsync(s => s.SetProperty(n => n.IsRead, true));
+    }
+
     public async Task CreateAsync(CreateNotificationRequest request)
     {
         var user = request.UserId is { } id

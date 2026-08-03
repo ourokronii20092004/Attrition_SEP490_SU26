@@ -119,16 +119,28 @@ public class ForumService : IForumService
 
         var category = thread.CategoryId is { } categoryId ? await _threadRepo.GetCategoryByIdAsync(categoryId) : null;
         var reactions = await _threadRepo.Reactions.ListAsync(r => r.PostId == thread.Id);
+
+        // Only look up the mute flag for a signed-in viewer; anonymous readers get no notifications
+        // and so have nothing to mute.
+        var isMuted = false;
+        if (currentUserId is { } viewerId)
+        {
+            var (subs, _) = await _threadRepo.Subscriptions.GetPagedAsync(1, 1,
+                ts => ts.ThreadId == threadId && ts.UserId == viewerId);
+            isMuted = subs.FirstOrDefault()?.IsMuted ?? false;
+        }
+
         return new ForumThreadDto(thread.Id, thread.Title ?? "Discussion", category?.Slug ?? string.Empty,
             thread.AuthorId, thread.AuthorName ?? "Unknown", thread.IsPinned, thread.IsLocked,
             thread.ReplyCount, thread.CreatedAt, thread.Content, ParseAttachments(thread.Attachments),
             thread.AuthorAvatar, thread.AuthorRole, thread.UpdatedAt,
             reactions.Count(r => r.ReactionType == ReactionType.Like),
             reactions.Count(r => r.ReactionType == ReactionType.Dislike),
-            currentUserId.HasValue ? reactions.FirstOrDefault(r => r.UserId == currentUserId.Value)?.ReactionType : null);
+            currentUserId.HasValue ? reactions.FirstOrDefault(r => r.UserId == currentUserId.Value)?.ReactionType : null,
+            isMuted);
     }
 
-    public async Task<ApiResponse<ForumThreadDto>> GetOrCreateWikiThreadAsync(Guid articleId, string articleTitle)
+    public async Task<ApiResponse<ForumThreadDto>> GetOrCreateWikiThreadAsync(Guid articleId, string articleTitle, Guid? currentUserId = null)
     {
         // QOLF-3b: one comment thread per article, created lazily on first view. Unlike a forum
         // thread it has no "first post" (the article is the content) and no category.
@@ -152,10 +164,19 @@ public class ForumService : IForumService
         }
         if (existing == null) return ApiResponse<ForumThreadDto>.Fail("Could not open the comment thread.");
 
+        // Same mute lookup as a forum thread, so the article's comment header can offer the toggle.
+        var isMuted = false;
+        if (currentUserId is { } viewerId)
+        {
+            var (subs, _) = await _threadRepo.Subscriptions.GetPagedAsync(1, 1,
+                ts => ts.ThreadId == existing.Id && ts.UserId == viewerId);
+            isMuted = subs.FirstOrDefault()?.IsMuted ?? false;
+        }
+
         return ApiResponse<ForumThreadDto>.Ok(new ForumThreadDto(existing.Id, existing.Title ?? "Article comments", string.Empty,
             existing.AuthorId, existing.AuthorName ?? "Wiki", existing.IsPinned, existing.IsLocked,
             existing.ReplyCount, existing.CreatedAt, existing.Content, ParseAttachments(existing.Attachments),
-            existing.AuthorAvatar, existing.AuthorRole, existing.UpdatedAt, 0, 0, null));
+            existing.AuthorAvatar, existing.AuthorRole, existing.UpdatedAt, 0, 0, null, isMuted));
     }
 
     public async Task<PaginatedResponse<ForumPostDto>> GetPostsAsync(Guid threadId, int page, int pageSize, Guid? currentUserId)
@@ -259,7 +280,8 @@ public class ForumService : IForumService
 
         await _threadRepo.IncrementReplyCountAsync(threadId, DateTime.UtcNow);
 
-        // Auto-subscribe the replier if not already subscribed.
+        // Auto-subscribe the replier if they have no row yet. An existing row is left untouched,
+        // so replying to a thread you muted does not quietly re-follow it.
         var (existing, _) = await _threadRepo.Subscriptions.GetPagedAsync(1, 1, sub => sub.ThreadId == threadId && sub.UserId == author.Id);
         if (existing.Count == 0)
             await _threadRepo.Subscriptions.AddAsync(new ThreadSubscription { ThreadId = threadId, UserId = author.Id });
@@ -276,6 +298,14 @@ public class ForumService : IForumService
         // because wiki-article threads carry a synthetic "Wiki" author that owns no account.
         var sent = new HashSet<Guid> { author.Id, Guid.Empty };
 
+        // Anyone who muted this thread is excluded up front, so an opt-out holds even when the
+        // person would otherwise be notified for a stronger reason — being the thread's author, or
+        // the author of the post being replied to. Without this the mute button would appear to
+        // work while notifications kept arriving.
+        var subscriptions = await _threadRepo.Subscriptions.ListAsync(sub => sub.ThreadId == threadId);
+        foreach (var sub in subscriptions)
+            if (sub.IsMuted) sent.Add(sub.UserId);
+
         // The author of the post being replied to.
         if (parentAuthorId is { } pa && sent.Add(pa))
             await _notify.NotifyUserAsync(pa, NotifyType.Reply,
@@ -291,10 +321,9 @@ public class ForumService : IForumService
         // Everyone else following the thread. Subscriptions were being written on every reply but
         // never read, so participants heard nothing about later activity. Sent as one bulk call so
         // a well-followed thread doesn't put a round-trip per subscriber on this request.
-        var subscribers = await _threadRepo.Subscriptions.ListAsync(sub => sub.ThreadId == threadId);
         var followers = new List<Guid>();
-        foreach (var sub in subscribers)
-            if (sent.Add(sub.UserId)) followers.Add(sub.UserId);
+        foreach (var sub in subscriptions)
+            if (!sub.IsMuted && sent.Add(sub.UserId)) followers.Add(sub.UserId);
         await _notify.NotifyUsersAsync(followers, NotifyType.Reply,
             $"{author.Name} replied in a thread you follow", link, author.Name, default);
 
@@ -376,7 +405,15 @@ public class ForumService : IForumService
         return ApiResponse.Ok();
     }
 
-    public async Task<ApiResponse> ToggleThreadSubscriptionAsync(Guid threadId, Guid userId)
+    /// <summary>
+    /// Follow or mute a thread. Takes the desired state rather than toggling, so a double-click or
+    /// a retried request can't land the user on the opposite setting from the one they clicked.
+    ///
+    /// Muting writes a row with IsMuted set, rather than deleting the subscription: replying
+    /// auto-subscribes, so a deleted row would quietly re-follow the thread on the user's next post
+    /// and the mute would never hold.
+    /// </summary>
+    public async Task<ApiResponse> SetThreadMutedAsync(Guid threadId, Guid userId, bool muted)
     {
         if (await _threadRepo.GetByIdAsync(threadId) is null)
             return ApiResponse.Fail("Thread not found.");
@@ -386,12 +423,22 @@ public class ForumService : IForumService
 
         if (sub != null)
         {
-            await _threadRepo.Subscriptions.DeleteAsync(sub);
-            return new ApiResponse(true, "Unsubscribed successfully.");
+            if (sub.IsMuted != muted)
+            {
+                sub.IsMuted = muted;
+                await _threadRepo.Subscriptions.UpdateAsync(sub);
+            }
+            return new ApiResponse(true, muted ? "Muted this thread." : "Following this thread.");
         }
+
         // Race-safe against the unique (ThreadId,UserId) index; a duplicate is idempotent success.
-        await _threadRepo.Subscriptions.TryAddAsync(new ThreadSubscription { ThreadId = threadId, UserId = userId });
-        return new ApiResponse(true, "Subscribed successfully.");
+        await _threadRepo.Subscriptions.TryAddAsync(new ThreadSubscription
+        {
+            ThreadId = threadId,
+            UserId = userId,
+            IsMuted = muted,
+        });
+        return new ApiResponse(true, muted ? "Muted this thread." : "Following this thread.");
     }
 
     public async Task<ApiResponse> ReportPostAsync(Guid postId, string reason, Author reporter)
