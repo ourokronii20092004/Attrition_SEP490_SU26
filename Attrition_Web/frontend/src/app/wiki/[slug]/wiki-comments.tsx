@@ -18,6 +18,7 @@ import { qk } from "@/lib/query-keys";
 import { makeOptimisticPost, addPostToPage, replacePostInPage, applyReactionToPage } from "@/lib/forum-cache";
 import { buildTree, indentsChildren, type PostNode } from "@/lib/forum-tree";
 import { LIVE_FAST, liveWhenFocused } from "@/lib/live";
+import { useLoginHref } from "@/lib/hooks/use-login-href";
 import type { ForumPostDto, PaginatedResponse } from "@/lib/types";
 
 const PAGE_SIZE = 50;
@@ -26,6 +27,7 @@ export function WikiComments({ articleId, articleTitle }: { articleId: string; a
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const loginHref = useLoginHref();
   const [limit, setLimit] = useState(PAGE_SIZE);
 
   // Resolve (creating on first view) the article's comment thread.
@@ -123,7 +125,7 @@ export function WikiComments({ articleId, articleTitle }: { articleId: string; a
         </Card>
       ) : (
         <p className="mt-4 text-sm text-fg-muted">
-          <Link href="/login" className="text-accent hover:underline">Sign in</Link> to join the discussion.
+          <Link href={loginHref} className="text-accent hover:underline">Sign in</Link> to join the discussion.
         </p>
       )}
 

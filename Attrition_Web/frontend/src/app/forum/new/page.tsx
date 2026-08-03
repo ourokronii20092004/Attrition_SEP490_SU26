@@ -19,6 +19,7 @@ import { Select } from "@/components/ui/select";
 import { EmptyState } from "@/components/ui/empty-state";
 import { MarkdownContent } from "@/components/post-content";
 import { qk } from "@/lib/query-keys";
+import { useLoginHref } from "@/lib/hooks/use-login-href";
 
 const schema = z.object({
   title: z.string().min(3, "Title too short").max(200),
@@ -29,6 +30,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export default function NewThreadPage() {
+  const loginHref = useLoginHref();
   const { user } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
@@ -101,7 +103,7 @@ export default function NewThreadPage() {
         <EmptyState
           title="Sign in required"
           description="You must be signed in to create a thread."
-          action={<Link href="/login"><Button variant="secondary">Sign in</Button></Link>}
+          action={<Link href={loginHref}><Button variant="secondary">Sign in</Button></Link>}
         />
       </PageShell>
     );

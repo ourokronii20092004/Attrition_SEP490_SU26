@@ -16,6 +16,7 @@ import { Pagination } from "@/components/ui/pagination";
 import { useClientPagination } from "@/lib/hooks/use-client-pagination";
 import { qk } from "@/lib/query-keys";
 import type { MusicTrackDto, FavoriteTrackDto } from "@/lib/types";
+import { useLoginHref } from "@/lib/hooks/use-login-href";
 
 const formatDuration = (s: number) => {
   const m = Math.floor(s / 60);
@@ -35,6 +36,7 @@ function toPlayable(f: FavoriteTrackDto): MusicTrackDto {
 }
 
 export default function FavoritesPage() {
+  const loginHref = useLoginHref();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { play, pause, resume, currentTrack, isPlaying } = useAudioStore();
@@ -64,7 +66,7 @@ export default function FavoritesPage() {
           icon={Heart}
           title="Sign in to see your favorites"
           description="Favorite tracks you love and they'll collect here."
-          action={<Link href="/login"><Button variant="secondary">Sign in</Button></Link>}
+          action={<Link href={loginHref}><Button variant="secondary">Sign in</Button></Link>}
         />
       </PageShell>
     );

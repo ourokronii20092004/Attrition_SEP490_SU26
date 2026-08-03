@@ -21,6 +21,7 @@ import { qk } from "@/lib/query-keys";
 import { makeOptimisticPost, addPostToPage, replacePostInPage, removePostFromPage } from "@/lib/forum-cache";
 import { buildTree, indentsChildren, type PostNode } from "@/lib/forum-tree";
 import { LIVE_FAST, liveWhenFocused } from "@/lib/live";
+import { useLoginHref } from "@/lib/hooks/use-login-href";
 import type { ForumPostDto, ForumThreadDto, PaginatedResponse } from "@/lib/types";
 
 // First reply page size. Beyond this, a "Load more replies" button grows the pool and the tree
@@ -28,6 +29,7 @@ import type { ForumPostDto, ForumThreadDto, PaginatedResponse } from "@/lib/type
 const REPLY_PAGE_SIZE = 50;
 
 export default function ThreadPage() {
+  const loginHref = useLoginHref();
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const { user } = useAuth();
@@ -226,7 +228,7 @@ export default function ThreadPage() {
   // Reacting needs an account. Rather than firing a doomed 401, send anonymous users to sign in
   // (returning them to this thread afterwards).
   const handleReact = (postId: string, type: "like" | "dislike") => {
-    if (!user) { router.push(`/login?redirect=/forum/${params.id}`); return; }
+    if (!user) { router.push(loginHref); return; }
     setActionError("");
     reactMutation.mutate({ postId, type });
   };
@@ -285,7 +287,7 @@ export default function ThreadPage() {
             </p>
           ) : !user ? (
             <p className="mt-5 rounded-lg border border-border bg-surface-2 px-4 py-3 text-center text-sm text-fg-muted">
-              <Link href={`/login?redirect=/forum/${params.id}`} className="font-medium text-accent hover:underline">Sign in</Link>{" "}
+              <Link href={loginHref} className="font-medium text-accent hover:underline">Sign in</Link>{" "}
               to join the discussion.
             </p>
           ) : null}

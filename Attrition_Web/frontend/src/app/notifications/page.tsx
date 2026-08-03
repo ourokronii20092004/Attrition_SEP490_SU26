@@ -16,6 +16,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { RelativeTime } from "@/components/ui/relative-time";
 import type { NotificationDto } from "@/lib/types";
 import { LIVE_FAST, liveWhenFocused } from "@/lib/live";
+import { useLoginHref } from "@/lib/hooks/use-login-href";
 
 const PAGE_SIZE = 20;
 
@@ -30,6 +31,7 @@ function typeIcon(type: string) {
 }
 
 export default function NotificationsPage() {
+  const loginHref = useLoginHref();
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -39,7 +41,7 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user) router.push("/login");
+    if (!user) router.push(loginHref);
   }, [user, authLoading, router]);
 
   const { data, isPending } = useQuery({

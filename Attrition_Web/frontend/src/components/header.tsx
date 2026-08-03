@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Search, Menu, X, User, LogOut, Shield, Gamepad2, Settings as SettingsIcon, ListMusic, Heart } from "lucide-react";
 import { useAuth } from "@/lib/providers";
 import { SITE_NAME } from "@/lib/config";
+import { loginHref } from "@/lib/post-login-redirect";
 import { Avatar } from "@/components/ui/avatar";
 import { IconButton } from "@/components/ui/icon-button";
 import { NotificationBell } from "./notification-bell";
@@ -79,7 +80,7 @@ export function Header() {
 
             {!loading && !user && (
               <Link
-                href="/login"
+                href={loginHref(pathname)}
                 className="rounded-md bg-accent px-4 py-2 text-xs font-semibold uppercase tracking-[0.15em] text-accent-fg shadow-[0_0_0_1px_color-mix(in_srgb,var(--color-accent)_40%,transparent)] transition-[transform,box-shadow,filter] duration-200 hover:shadow-[var(--shadow-glow)] hover:brightness-105 active:scale-[0.97]"
               >
                 Sign In

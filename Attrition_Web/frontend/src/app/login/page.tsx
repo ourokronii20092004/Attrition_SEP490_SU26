@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { GoogleButton } from "@/components/google-button";
 import { ApiError } from "@/lib/api/client";
 import { parseApiError } from "@/lib/api/parse-error";
+import { safeRedirectTarget } from "@/lib/post-login-redirect";
 
 const schema = z.object({
   username: z.string().trim().min(1, "Username is required"),
@@ -53,10 +54,10 @@ function LoginForm() {
     setLoading(true);
     try {
       const loggedIn = await login(data);
-      const redirect = searchParams.get("redirect");
-      // Admins are confined to the admin panel; everyone else honors ?redirect or lands home.
+      // Admins are confined to the admin panel; everyone else returns to wherever they were.
+      // safeRedirectTarget rejects off-origin values, so ?redirect can't bounce anyone off-site.
       if (loggedIn?.role === "Admin") router.push("/admin");
-      else router.push(redirect || "/");
+      else router.push(safeRedirectTarget(searchParams.get("redirect")));
     } catch (e) {
       if (e instanceof ApiError && e.status === 429) {
         // Rate limited — show a countdown, not the generic credentials error.

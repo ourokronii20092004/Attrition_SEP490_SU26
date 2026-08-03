@@ -48,7 +48,11 @@ public class AccountService : IAccountService
         var user = await _userRepo.GetByIdAsync(userId);
         if (user == null) return ApiResponse<UserDto>.Fail("User not found.");
 
-        user.Bio = request.Bio;
+        // Every field here is patch-style: absent means "leave alone", so a caller that only
+        // updates one setting can't clear the others. Bio used to be assigned unconditionally,
+        // which meant saving a toggle or renaming yourself silently wiped your bio. An explicit
+        // empty string still clears it — only a missing field is ignored.
+        if (request.Bio != null) user.Bio = request.Bio;
         if (request.DisplayName != null)
         {
             var trimmed = request.DisplayName.Trim();

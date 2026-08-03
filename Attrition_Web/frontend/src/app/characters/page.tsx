@@ -18,14 +18,16 @@ import { Pagination } from "@/components/ui/pagination";
 import { useClientPagination } from "@/lib/hooks/use-client-pagination";
 import { qk } from "@/lib/query-keys";
 import type { CharacterSummaryDto, SnapshotDto } from "@/lib/types";
+import { useLoginHref } from "@/lib/hooks/use-login-href";
 
 export default function CharactersPage() {
+  const loginHref = useLoginHref();
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user) router.push("/login");
+    if (!user) router.push(loginHref);
   }, [user, authLoading, router]);
 
   const { data: characters = [], isPending } = useQuery({
