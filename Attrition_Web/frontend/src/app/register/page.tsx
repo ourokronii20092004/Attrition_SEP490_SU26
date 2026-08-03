@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { GoogleButton } from "@/components/google-button";
 import { ApiError } from "@/lib/api/client";
 import { parseApiError } from "@/lib/api/parse-error";
+import { PasswordChecklist } from "@/components/password-checklist";
+import { passwordSchema } from "@/lib/password-rules";
 
 // Mirrors the server-side policy (Identity.Service validators) so the user gets clear, specific
 // feedback BEFORE submitting instead of a generic "registration failed" from the API.
@@ -23,13 +25,7 @@ const schema = z.object({
     .max(20, "Username must be at most 20 characters.")
     .regex(/^[a-z0-9_]+$/, "Use lowercase letters, numbers, and underscores only — no spaces or symbols."),
   email: z.string().trim().min(1, "Email is required.").email("Enter a valid email address."),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters.")
-    .regex(/[A-Z]/, "Add at least one uppercase letter.")
-    .regex(/[a-z]/, "Add at least one lowercase letter.")
-    .regex(/[0-9]/, "Add at least one number.")
-    .regex(/[^A-Za-z0-9]/, "Add at least one special character."),
+  password: passwordSchema,
   confirmPassword: z.string(),
   acceptTerms: z.boolean().refine((v) => v === true, {
     message: "Please accept the Terms of Service and Privacy Policy to continue.",
@@ -47,7 +43,7 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
 
@@ -92,7 +88,10 @@ export default function RegisterPage() {
           </div>
           <Input label="Email" type="email" autoComplete="email" {...register("email")} error={errors.email?.message} />
           <div>
-            <Input label="Password" type="password" autoComplete="new-password" {...register("password")} error={errors.password?.message} />
+            <div>
+              <Input label="Password" type="password" autoComplete="new-password" {...register("password")} error={errors.password?.message} />
+              <PasswordChecklist value={watch("password") ?? ""} />
+            </div>
             {!errors.password && <p className="mt-1 text-xs text-fg-subtle">At least 8 characters with an uppercase, lowercase, number, and symbol.</p>}
           </div>
           <Input label="Confirm Password" type="password" autoComplete="new-password" {...register("confirmPassword")} error={errors.confirmPassword?.message} />

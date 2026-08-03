@@ -11,9 +11,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLoader } from "@/components/ui/spinner";
 import { ApiError } from "@/lib/api/client";
+import { PasswordChecklist } from "@/components/password-checklist";
+import { passwordSchema } from "@/lib/password-rules";
 
 const schema = z.object({
-  newPassword: z.string().min(6, "At least 6 characters"),
+  newPassword: passwordSchema,
   confirmPassword: z.string(),
 }).refine((d) => d.newPassword === d.confirmPassword, {
   message: "Passwords don't match",
@@ -37,7 +39,7 @@ function ResetPasswordContent() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
 
@@ -90,7 +92,10 @@ function ResetPasswordContent() {
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
-          <Input label="New Password" type="password" autoComplete="new-password" {...register("newPassword")} error={errors.newPassword?.message} />
+          <div>
+            <Input label="New Password" type="password" autoComplete="new-password" {...register("newPassword")} error={errors.newPassword?.message} />
+            <PasswordChecklist value={watch("newPassword") ?? ""} />
+          </div>
           <Input label="Confirm Password" type="password" autoComplete="new-password" {...register("confirmPassword")} error={errors.confirmPassword?.message} />
           <Button type="submit" loading={loading} className="w-full">
             Reset Password

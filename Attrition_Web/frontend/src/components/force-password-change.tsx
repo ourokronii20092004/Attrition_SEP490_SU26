@@ -7,6 +7,8 @@ import { parseApiError } from "@/lib/api/parse-error";
 import { useAuth, useToast } from "@/lib/providers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordChecklist } from "@/components/password-checklist";
+import { isPasswordValid } from "@/lib/password-rules";
 
 /**
  * Blocking gate for accounts an admin has reset (mustChangePassword). It renders a full-screen
@@ -22,6 +24,11 @@ export function ForcePasswordChange() {
   const [confirm, setConfirm] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  // Checked client-side too: this overlay blocks the whole app, so learning the rules from a
+  // rejected submit is a dead end rather than an inconvenience.
+  const strongEnough = isPasswordValid(newPw);
+  const mismatch = confirm.length > 0 && newPw !== confirm;
 
   if (!user?.mustChangePassword) return null;
 
@@ -57,16 +64,20 @@ export function ForcePasswordChange() {
         <form onSubmit={submit} className="space-y-3">
           <Input label="Current (temporary) password" type="password" autoComplete="current-password"
             value={current} onChange={(e) => setCurrent(e.target.value)} />
-          <Input label="New password" type="password" autoComplete="new-password"
-            value={newPw} onChange={(e) => setNewPw(e.target.value)} />
+          <div>
+            <Input label="New password" type="password" autoComplete="new-password"
+              value={newPw} onChange={(e) => setNewPw(e.target.value)} />
+            <PasswordChecklist value={newPw} />
+          </div>
           <Input label="Confirm new password" type="password" autoComplete="new-password"
-            value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+            value={confirm} onChange={(e) => setConfirm(e.target.value)}
+            error={mismatch ? "The new passwords don't match." : undefined} />
           {error && <p className="text-sm text-danger">{error}</p>}
           <div className="flex items-center justify-between gap-2 pt-1">
             <button type="button" onClick={logout} className="text-sm text-fg-muted transition-colors hover:text-fg">
               Sign out
             </button>
-            <Button type="submit" loading={saving} disabled={!current || !newPw || !confirm}>Update password</Button>
+            <Button type="submit" loading={saving} disabled={!current || !strongEnough || !confirm || mismatch}>Update password</Button>
           </div>
         </form>
       </div>
