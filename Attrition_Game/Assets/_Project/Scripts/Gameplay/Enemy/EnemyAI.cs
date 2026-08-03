@@ -1397,10 +1397,16 @@ public class EnemyAI : NetworkBehaviour
     }
 
     /// <summary>
-    /// Phân loại vật cản phía trước bằng 2 tia: tia THẤP (sát chân) và tia CAO (đỉnh bậc cho phép).
-    /// - thấp trúng + cao thông  → bậc thấp (StepUp)
-    /// - cao trúng              → tường (Wall)
-    /// Một tia duy nhất ở giữa thân không phân biệt được bậc 1 ô với tường 5 ô.
+    /// Phân loại vật cản phía trước bằng các tia quét THEO CẢ CHIỀU CAO THÂN:
+    /// - dải TRÊN mức bậc trúng  → tường (Wall) — thân trên cấn, không vượt được
+    /// - chỉ tia sát chân trúng  → bậc thấp (StepUp)
+    /// - dải giữa trúng          → tường (mỏm đá lơ lửng)
+    ///
+    /// VÌ SAO QUÉT CẢ DẢI, không phải 2 tia cố định: trước đây chỉ quét ở footY+0.1, footY+0.5 và
+    /// footY+stepUpMaxHeight(+0.1) — bộ mốc hợp với quái cao ~1 unit. Quái to như Gollux cao 2.6 unit
+    /// nên TOÀN BỘ nửa thân trên (trên footY+1.3) KHÔNG được quét: vật cản chỉ cấn phần thân trên thì
+    /// ProbePath trả None → AI tưởng đường thông, đặt vận tốc ngang bình thường, rồi physics chặn thân
+    /// lại. NetSpeed vẫn = tốc chạy nên animation chạy hết cỡ mà quái đứng nguyên = "kẹt chạy tại chỗ".
     ///
     /// MỌI mốc đều tính từ bounds collider THÂN (không phải pivot): tia bắt đầu ở RÌA thân và dài
     /// wallCheckDistance TỪ RÌA, nếu không thì với quái to (Slime rộng 1.7) tia chết trong chính thân nó.
@@ -1419,42 +1425,62 @@ public class EnemyAI : NetworkBehaviour
         float headY = col != null ? col.bounds.max.y : pos.y + wallCheckHeightOffset;
 
         // Chừa 0.02 để tia không bắt đầu ĐÚNG trên mặt collider của chính mình.
-        Vector2 front = new Vector2(frontX + dir.x * 0.02f, footY);
+        float originX = frontX + dir.x * 0.02f;
         float reach = wallCheckDistance;
 
+        float stepTopY = footY + stepUpMaxHeight + 0.1f;   // mốc trên cùng của bậc leo được
+        float bodyTopY = Mathf.Max(headY - 0.05f, footY + 0.1f);
+
+        // Dải THÂN TRÊN (trên mức bậc): trúng bất cứ đâu → tường, kể cả khi chân thông.
+        if (RayBandHits(originX, dir, reach, stepTopY, bodyTopY)) return PathObstacle.Wall;
+
         // Tia thấp: ngay trên mặt sàn đang đứng (0.1 để không quét trúng chính sàn đó).
-        bool lowHit = Phys.Raycast(front + Vector2.up * 0.1f, dir, reach, obstacleLayer).collider != null;
+        bool lowHit = Phys.Raycast(new Vector2(originX, footY + 0.1f), dir, reach, obstacleLayer).collider != null;
 
         if (!lowHit)
         {
-            // Chân thông nhưng thân có thể vẫn cấn (mỏm đá thấp lơ lửng) → quét thêm tia giữa thân.
-            float midY = Mathf.Min(footY + Mathf.Max(0.1f, wallCheckHeightOffset), headY - 0.05f);
-            bool midHit = Phys.Raycast(new Vector2(front.x, midY), dir, reach, obstacleLayer).collider != null;
-            return midHit ? PathObstacle.Wall : PathObstacle.None;
+            // Chân thông nhưng thân có thể vẫn cấn (mỏm đá thấp lơ lửng) → quét dải giữa.
+            return RayBandHits(originX, dir, reach, footY + 0.1f, Mathf.Min(stepTopY, bodyTopY))
+                ? PathObstacle.Wall
+                : PathObstacle.None;
         }
 
-        // Tia cao ở NGAY TRÊN mức bậc tối đa: nếu thông → bậc leo được.
-        bool highHit = Phys.Raycast(front + Vector2.up * (stepUpMaxHeight + 0.1f), dir, reach, obstacleLayer).collider != null;
-        if (highHit) return PathObstacle.Wall;
-
-        // Còn phải có CHỖ ĐỨNG phía trên bậc, không thì nhún lên rồi rơi ngược lại.
+        // Chân trúng mà thân trên thông → bậc leo được, miễn là có CHỖ ĐỨNG phía trên bậc
+        // (không thì nhún lên rồi rơi ngược lại).
         float bodyHalfW = col != null ? col.bounds.extents.x : 0.3f;
-        Vector2 landingProbe = new Vector2(front.x + dir.x * Mathf.Max(reach, bodyHalfW + 0.2f), footY + stepUpMaxHeight + 0.1f);
+        Vector2 landingProbe = new Vector2(originX + dir.x * Mathf.Max(reach, bodyHalfW + 0.2f), footY + stepUpMaxHeight + 0.1f);
         bool hasFloorAtLanding = Phys.Raycast(landingProbe, Vector2.down, stepUpMaxHeight + 0.4f, obstacleLayer).collider != null;
 
         return hasFloorAtLanding ? PathObstacle.StepUp : PathObstacle.Wall;
     }
 
     /// <summary>
-    /// Kiểm tra vật cản ĐƠN GIẢN (1 tia giữa thân) — dùng cho Patrol/về ngủ: chỉ cần biết "có nên
-    /// quay đầu không". Chase dùng ProbePath để còn phân biệt bậc leo được.
+    /// Có tia nào trong dải cao độ [yFrom..yTo] trúng vật cản không? Khoảng cách giữa các tia ~0.4 unit
+    /// (đủ dày để không lọt tile 1 ô) và chặn tối đa 8 tia để quái to không tốn quá nhiều query.
     /// </summary>
-    private bool IsPathBlocked(float dirX)
+    private bool RayBandHits(float originX, Vector2 dir, float reach, float yFrom, float yTo)
     {
-        if (obstacleLayer.value == 0) return false;
-        Vector2 origin = new Vector2(transform.position.x, transform.position.y + wallCheckHeightOffset);
-        return Phys.Raycast(origin, new Vector2(dirX > 0 ? 1f : -1f, 0f), wallCheckDistance, obstacleLayer).collider != null;
+        if (yTo <= yFrom) return false;
+
+        int steps = Mathf.Clamp(Mathf.CeilToInt((yTo - yFrom) / 0.4f), 1, 8);
+        for (int i = 0; i <= steps; i++)
+        {
+            float y = Mathf.Lerp(yFrom, yTo, (float)i / steps);
+            if (Phys.Raycast(new Vector2(originX, y), dir, reach, obstacleLayer).collider != null) return true;
+        }
+        return false;
     }
+
+    /// <summary>
+    /// Có vật cản phía trước không? — dùng cho Patrol/về ngủ: chỉ cần biết "có nên quay đầu không",
+    /// nên bậc leo được cũng tính là chặn (patrol không nhún bậc).
+    ///
+    /// Dùng CHUNG hình học với ProbePath thay vì 1 tia riêng từ pivot. Tia cũ bắt đầu ở
+    /// transform.position.x và chỉ dài wallCheckDistance (0.8) — với quái to như Gollux (thân rộng 2.84,
+    /// nửa thân 1.42) tia CHẾT BÊN TRONG chính thân nó, không bao giờ tới được tường, nên hàm luôn trả
+    /// false: quái tuần tra đi thẳng vào vách rồi đẩy mãi tại chỗ (animation chạy nhưng không nhích).
+    /// </summary>
+    private bool IsPathBlocked(float dirX) => ProbePath(dirX) != PathObstacle.None;
 
     private float PickRandomPatrolX()
     {

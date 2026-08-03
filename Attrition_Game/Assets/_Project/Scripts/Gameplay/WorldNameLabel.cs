@@ -24,10 +24,33 @@ namespace Attrition.Gameplay
             tm.fontSize = fontSize;
             tm.alignment = TextAlignmentOptions.Center;
             tm.color = color;
-            tm.sortingOrder = 80;
             tm.textWrappingMode = TextWrappingModes.NoWrap;
-            
+            SetTopSortingLayer(tm.renderer, 80);
+
             return go;
+        }
+
+        /// <summary>
+        /// Đẩy renderer lên sorting layer TRÊN CÙNG (dùng cho mọi UI world-space tạo bằng code).
+        ///
+        /// VÌ SAO CẦN: renderer tạo runtime mặc định rơi vào sorting layer "Default" — trong project này
+        /// Default là layer THẤP NHẤT, nằm dưới cả Ground/Decor/Foreground tilemap, nên nhãn tên và thanh
+        /// máu bị tile sàn che kín (đúng lỗi "quái thường không thấy thanh máu"). Đặt sortingOrder cao
+        /// KHÔNG cứu được vì order chỉ so sánh trong CÙNG một sorting layer.
+        /// </summary>
+        private static int _topLayerId;
+        private static bool _topLayerResolved;
+        public static void SetTopSortingLayer(Renderer r, int order)
+        {
+            if (r == null) return;
+            if (!_topLayerResolved)
+            {
+                _topLayerResolved = true;
+                var layers = SortingLayer.layers;
+                _topLayerId = layers.Length > 0 ? layers[layers.Length - 1].id : 0;
+            }
+            r.sortingLayerID = _topLayerId;
+            r.sortingOrder = order;
         }
 
         /// <summary>

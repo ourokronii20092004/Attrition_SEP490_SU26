@@ -6,7 +6,7 @@ using Attrition.Persistence;
 namespace Attrition.Gameplay.Enemy
 {
     /// <summary>
-    /// UI thế-giới gắn trên quái: thanh máu dưới chân + số sát thương nổi khi bị đánh.
+    /// UI thế-giới gắn trên quái: thanh máu TRÊN ĐẦU + số sát thương nổi khi bị đánh.
     /// Tự dựng runtime (không cần prefab). Đọc HP từ EnemyController, chạy trên mọi máy.
     /// Số sát thương chỉ hiện khi GameSettings.ShowDamageNumbers bật.
     /// </summary>
@@ -14,13 +14,10 @@ namespace Attrition.Gameplay.Enemy
     public class EnemyWorldUI : MonoBehaviour
     {
         [Header("---- VỊ TRÍ ----")]
-        [Tooltip("Lệch thanh máu so với gốc quái (dưới chân = y âm).")]
-        [SerializeField] private Vector3 barOffset = new Vector3(0f, -0.6f, 0f);
-        [Tooltip("Lệch điểm số sát thương nổi (trên đầu).")]
-        [SerializeField] private Vector3 popupOffset = new Vector3(0f, 1.2f, 0f);
-        [Tooltip("Lệch nhãn tên (trên đầu quái).")]
-        [SerializeField] private Vector3 nameOffset = new Vector3(0f, 0.95f, 0f);
-        [SerializeField] private Vector2 barSize = new Vector2(1.2f, 0.14f);
+        [Tooltip("Khoảng hở giữa ĐỈNH sprite quái và đáy thanh máu (units).")]
+        [SerializeField] private float barHeadGap = 0.3f;
+        [Tooltip("Kích thước thanh máu trước khi nhân hệ số theo tier.")]
+        [SerializeField] private Vector2 barSize = new Vector2(1.6f, 0.28f);
 
         private EnemyController _enemy;
         private EnemyStats _stats;
@@ -31,11 +28,18 @@ namespace Attrition.Gameplay.Enemy
         private float _trailFraction = 1f;
         private bool _everDamaged;
         private Transform _nameLabel;
+        private float _headLocalY;
+        private float _barScale = 1f;
 
         private void Awake()
         {
             _enemy = GetComponent<EnemyController>();
             _stats = GetComponent<EnemyStats>();
+
+            // Đo TRƯỚC khi tạo quad con: HeadLocalY quét SpriteRenderer trong children nên dựng
+            // thanh máu trước sẽ khiến nó tự bắt vào chính mình.
+            _headLocalY = HeadLocalY();
+
             BuildBar();
             BuildNameLabel();
         }
@@ -68,7 +72,12 @@ namespace Attrition.Gameplay.Enemy
                 default:                             color = new Color(0.85f, 0.82f, 0.78f); size = 3f; break;
             }
 
-            var labelObj = WorldNameLabel.Attach(transform, display, nameOffset, color, size);
+            // Tên nằm NGAY TRÊN thanh máu. Chiều cao thanh trong local space = barSize.y * mul / scaleY
+            // (xem NormalizedScale), nên phải chia lại cho scale của quái mới không đè lên thanh.
+            float scaleY = Mathf.Abs(transform.lossyScale.y);
+            if (scaleY < 0.0001f) scaleY = 1f;
+            float nameY = _headLocalY + (barSize.y * _barScale + 0.18f) / scaleY;
+            var labelObj = WorldNameLabel.Attach(transform, display, new Vector3(0f, nameY, 0f), color, size);
             if (labelObj != null) _nameLabel = labelObj.transform;
         }
 
@@ -82,53 +91,75 @@ namespace Attrition.Gameplay.Enemy
             var stats = GetComponent<EnemyStats>();
             var tier = stats != null ? stats.Tier : Attrition.Data.EnemyTier.Normal;
 
-            if (tier == Attrition.Data.EnemyTier.Boss)
+            // Boss to nhất, elite to hơn quái thường. Thanh máu giờ nằm TRÊN ĐẦU mọi tier
+            // (trước đây boss/quái thường đặt dưới chân → chìm trong tile sàn, không nhìn thấy).
+            _barScale = tier switch
             {
-                _barRoot.localPosition = new Vector3(0f, -2.2f, 0f);
-                _barRoot.localScale = new Vector3(3.5f, 2.0f, 1f);
-                _barRoot.gameObject.SetActive(true);
-                _everDamaged = true;
-            }
-            else
-            {
-                // Vị trí lấy theo ĐÁY SPRITE THẬT, không phải offset cố định: quái elite cao/to hơn nên
-                // barOffset (-0.6) cũ rơi vào giữa bụng — đúng lỗi user báo. Tính trước khi tạo các quad
-                // con để GetComponentInChildren không bắt vào chính thanh máu.
-                _barRoot.localPosition = new Vector3(barOffset.x, FeetLocalY(), barOffset.z);
+                Attrition.Data.EnemyTier.Boss  => 2.6f,
+                Attrition.Data.EnemyTier.Elite => 1.9f,
+                _                              => 1.4f,
+            };
 
-                // To hơn cho dễ thấy; elite to hơn nữa vì thân hình lớn làm thanh cũ trông tí xíu.
-                float mul = tier == Attrition.Data.EnemyTier.Elite ? 2.2f : 1.6f;
-                _barRoot.localScale = new Vector3(mul, mul, 1f);
+            _barRoot.localPosition = new Vector3(0f, _headLocalY, 0f);
+            _barRoot.localScale = NormalizedScale(_barScale);
 
-                _barRoot.gameObject.SetActive(false); // ẩn tới khi bị đánh lần đầu
-            }
+            // Boss luôn hiện thanh máu; quái thường/elite ẩn tới khi bị đánh lần đầu.
+            bool alwaysVisible = tier == Attrition.Data.EnemyTier.Boss;
+            _everDamaged = alwaysVisible;
+            _barRoot.gameObject.SetActive(alwaysVisible);
 
-            var bg = CreateQuad("BG", _barRoot, new Color(0f, 0f, 0f, 0.7f), barSize, 0);
+            // Fill/Trail là EM của BG, KHÔNG phải con: CreateQuad đặt kích thước bằng localScale, nên
+            // làm con của BG sẽ bị nhân dồn scale (rộng 1.6 × 1.56 = 2.5 → tràn hẳn ra ngoài khung đen,
+            // đúng lỗi "khung đen ngắn hơn thanh máu"). Là em thì cùng hệ toạ độ _barRoot, sortingOrder
+            // vẫn lo thứ tự vẽ.
+            CreateQuad("BG", _barRoot, new Color(0f, 0f, 0f, 0.75f), barSize, 0);
             var fillSize = new Vector2(barSize.x - 0.04f, barSize.y - 0.04f);
-            _trailFill = CreateQuad("Trail", bg.transform, new Color(1f, 0.85f, 0.3f, 1f), fillSize, 1).transform;
-            _fill = CreateQuad("Fill", bg.transform, new Color(0.7f, 0.16f, 0.16f, 1f), fillSize, 2).transform;
+            _trailFill = CreateQuad("Trail", _barRoot, new Color(1f, 0.85f, 0.3f, 1f), fillSize, 1).transform;
+            _fill = CreateQuad("Fill", _barRoot, new Color(0.78f, 0.15f, 0.15f, 1f), fillSize, 2).transform;
         }
 
         /// <summary>
-        /// Y (local) ngay DƯỚI CHÂN quái, suy từ bounds sprite thật thay vì hằng số.
-        /// Quái elite cao gấp mấy lần quái thường nên một offset cố định (-0.6) hợp với quái thường sẽ
-        /// nằm giữa bụng elite. Gọi TRƯỚC khi tạo các quad con để không tự bắt vào thanh máu.
-        /// Fallback về barOffset.y nếu quái không có SpriteRenderer.
+        /// Scale local để thanh máu có kích thước THẬT (world units) bằng barSize * mul, bất kể quái
+        /// được scale bao nhiêu.
+        ///
+        /// VÌ SAO CẦN: thanh máu là con của quái nên nó thừa hưởng localScale của quái, mà scale này
+        /// chênh nhau tới 5 lần giữa các prefab (Cultist 0.32 / Gollux 0.82 / Crab 1.72). Dùng chung
+        /// một hệ số nhân thì cùng "elite" mà Cultist ra thanh nhỏ hơn Crab 5 lần — đúng lỗi "elite
+        /// thanh máu quá nhỏ". Chia lại cho scale của quái → mọi con cùng tier ra thanh bằng nhau.
         /// </summary>
-        private float FeetLocalY()
+        private Vector3 NormalizedScale(float mul)
         {
-            float lowest = float.MaxValue;
+            var ls = transform.lossyScale;
+            float sx = Mathf.Abs(ls.x) < 0.0001f ? 1f : Mathf.Abs(ls.x);
+            float sy = Mathf.Abs(ls.y) < 0.0001f ? 1f : Mathf.Abs(ls.y);
+            return new Vector3(mul / sx, mul / sy, 1f);
+        }
+
+        /// <summary>
+        /// Y (local) ngay TRÊN ĐẦU quái, suy từ bounds sprite thật thay vì hằng số.
+        /// Quái elite cao gấp mấy lần quái thường nên một offset cố định sẽ rơi vào giữa bụng elite.
+        /// Gọi TRƯỚC khi tạo các quad con để không tự bắt vào thanh máu.
+        /// </summary>
+        private float HeadLocalY()
+        {
+            float highest = float.MinValue;
             foreach (var sr in GetComponentsInChildren<SpriteRenderer>())
-                if (sr != null && sr.sprite != null) lowest = Mathf.Min(lowest, sr.bounds.min.y);
+                if (sr != null && sr.sprite != null) highest = Mathf.Max(highest, sr.bounds.max.y);
 
-            if (lowest == float.MaxValue) return barOffset.y;
+            // Không có sprite → dựa vào collider thân, cuối cùng mới tới hằng số.
+            if (highest == float.MinValue)
+            {
+                var col = GetComponentInChildren<Collider2D>();
+                if (col != null) highest = col.bounds.max.y;
+            }
+            if (highest == float.MinValue) return 1.2f;
 
-            // bounds là world-space; localPosition của _barRoot nằm trong local space của quái (đã bị
-            // localScale của quái nhân vào) → chia lại cho scale, chặn chia 0.
+            // bounds là world-space; localPosition nằm trong local space của quái (đã bị localScale
+            // của quái nhân vào) → chia lại cho scale, chặn chia 0.
             float scaleY = Mathf.Abs(transform.lossyScale.y);
-            if (scaleY < 0.0001f) return barOffset.y;
+            if (scaleY < 0.0001f) return 1.2f;
 
-            return (lowest - transform.position.y) / scaleY + barOffset.y;
+            return (highest - transform.position.y) / scaleY + barHeadGap;
         }
 
         private GameObject CreateQuad(string name, Transform parent, Color color, Vector2 size, int order)
@@ -138,7 +169,7 @@ namespace Attrition.Gameplay.Enemy
             var sr = go.AddComponent<SpriteRenderer>();
             sr.sprite = WhiteSprite();
             sr.color = color;
-            sr.sortingOrder = 50 + order;
+            WorldNameLabel.SetTopSortingLayer(sr, 50 + order);
             go.transform.localScale = new Vector3(size.x, size.y, 1f);
             return go;
         }
@@ -165,30 +196,46 @@ namespace Attrition.Gameplay.Enemy
         private void SpawnPopup(int amount)
         {
             var go = new GameObject("DmgPopup");
-            go.transform.position = transform.position + popupOffset;
+            // Nổi lên từ ngay trên đầu quái (cùng mốc với thanh máu) thay vì offset cố định.
+            go.transform.position = transform.position
+                + Vector3.up * (_headLocalY * Mathf.Abs(transform.lossyScale.y) + 0.45f);
             var tm = go.AddComponent<TextMeshPro>();
             tm.text = amount.ToString();
             tm.fontSize = 4f;
             tm.alignment = TextAlignmentOptions.Center;
             tm.color = new Color(1f, 0.85f, 0.3f, 1f);
-            tm.sortingOrder = 60;
+            WorldNameLabel.SetTopSortingLayer(tm.renderer, 60);
             go.AddComponent<FloatingNumber>();
         }
 
-        // Chữ ký frame trước: thanh máu chỉ đổi khi HP đổi / trail đang chạy / quái quay mặt. Ghi lại
-        // 4 transform (mỗi con quái, mỗi frame) khi chẳng có gì đổi là chi phí thuần vô ích — Unity còn
-        // phải đánh dấu transform dirty và đồng bộ lại toàn bộ hierarchy đó.
+        // Chữ ký frame trước: thanh máu chỉ đổi khi HP đổi / trail đang chạy. Ghi lại các transform
+        // (mỗi con quái, mỗi frame) khi chẳng có gì đổi là chi phí thuần vô ích — Unity còn phải đánh
+        // dấu transform dirty và đồng bộ lại toàn bộ hierarchy đó.
         private float _lastSig = float.NaN;
+        private float _lastSignX;
 
         private void Update()
         {
-            if (!_everDamaged || _enemy == null || _fill == null) return;
+            if (_enemy == null) return;
+
+            // CHỐNG LẬT: quái quay mặt bằng cách lật localScale.x âm (xem EnemyAnimation.FaceDirection),
+            // con của nó — nhãn tên + thanh máu — bị lộn ngược trái phải theo. Phải xử lý ĐỘC LẬP với
+            // thanh máu: nhãn tên hiện ngay từ lúc spawn, nên nếu gộp vào nhánh _everDamaged bên dưới
+            // thì quái chưa bị đánh mà đang nhìn sang trái sẽ hiện tên viết ngược.
+            float signXNow = Mathf.Sign(transform.localScale.x);
+            if (signXNow != _lastSignX)
+            {
+                _lastSignX = signXNow;
+                UnflipX(_nameLabel, signXNow);
+                UnflipX(_barRoot, signXNow);
+            }
+
+            if (!_everDamaged || _fill == null) return;
 
             int max = MaxHpForBar();
             float target = Mathf.Clamp01((float)_enemy.CurrentHealth / max);
 
-            float signXNow = Mathf.Sign(transform.localScale.x);
-            float sig = target * 4096f + _trailFraction * 16f + signXNow;
+            float sig = target * 4096f + _trailFraction * 16f;
             if (sig == _lastSig) return;
             _lastSig = sig;
 
@@ -207,20 +254,14 @@ namespace Attrition.Gameplay.Enemy
             _trailFill.localPosition = new Vector3(-tmissing * 0.5f, 0f, 0f);
 
             if (_enemy.IsDead && _barRoot != null) _barRoot.gameObject.SetActive(false);
+        }
 
-            // Chống lật UI (khi enemy quay mặt, transform.localScale.x bị lật âm, 
-            // khiến chữ và thanh máu bị lộn ngược trái phải).
-            float signX = signXNow;
-            if (_nameLabel != null)
-            {
-                var ns = _nameLabel.localScale;
-                _nameLabel.localScale = new Vector3(Mathf.Abs(ns.x) * signX, ns.y, ns.z);
-            }
-            if (_barRoot != null)
-            {
-                var bs = _barRoot.localScale;
-                _barRoot.localScale = new Vector3(Mathf.Abs(bs.x) * signX, bs.y, bs.z);
-            }
+        /// <summary>Giữ hướng đọc xuôi khi quái lật: chỉ đổi DẤU của scale.x, giữ nguyên độ lớn.</summary>
+        private static void UnflipX(Transform t, float signX)
+        {
+            if (t == null) return;
+            var s = t.localScale;
+            t.localScale = new Vector3(Mathf.Abs(s.x) * signX, s.y, s.z);
         }
     }
 
