@@ -15,12 +15,12 @@ MonoBehaviour:
   enemyId: nightborne
   tier: 1
   webImage: {fileID: 0}
-  maxHP: 400
-  ad: 25
-  ap: 25
+  maxHP: 2000
+  ad: 45
+  ap: 45
   def: 10
   res: 10
-  poise: 100
+  poise: 500
   poiseRecoveryTime: 3
   patrolSpeed: 2
   chaseSpeed: 5

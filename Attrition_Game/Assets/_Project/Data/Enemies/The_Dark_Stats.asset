@@ -15,12 +15,12 @@ MonoBehaviour:
   enemyId: the_dark
   tier: 0
   webImage: {fileID: 0}
-  maxHP: 100
-  ad: 20
-  ap: 20
+  maxHP: 200
+  ad: 40
+  ap: 40
   def: 5
   res: 5
-  poise: 100
+  poise: 300
   poiseRecoveryTime: 3
   patrolSpeed: 2
   chaseSpeed: 5

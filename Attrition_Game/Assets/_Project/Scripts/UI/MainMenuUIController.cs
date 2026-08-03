@@ -92,11 +92,22 @@ namespace Attrition.UI
             SetupGlobalProfile();
             SetupSessionSelection();
 
-            // Khôi phục trạng thái login nếu APIManager (DontDestroyOnLoad) vẫn còn token hợp lệ
-            if (APIManager.Instance != null && !string.IsNullOrEmpty(APIManager.Instance.AccessToken))
+            // Khôi phục trạng thái login. TRƯỚC ĐÂY chỉ xét AccessToken — thứ CHỈ sống trong RAM và
+            // hết hạn sau ~15 phút (xem GameSaveService.SaveAllOnline). Nên mọi đường làm mất RAM đó
+            // (đóng game rồi mở lại) hoặc chỉ cần ngồi trong phòng chờ quá 15 phút là menu hiện
+            // "Not Logged in" và bắt login lại — dù refresh token (sống 7 NGÀY) vẫn nằm trong
+            // PlayerPrefs. Giờ coi như CÒN đăng nhập khi có BẤT KỲ token nào, và đổi refresh → access
+            // ở nền. Chỉ khi refresh thất bại (hết 7 ngày / bị revoke) mới bắt login lại.
+            if (APIManager.Instance != null)
             {
-                _isLoggedIn = true;
-                _currentUserId = PlayerPrefs.GetString("SavedUserId", null);
+                bool hasAccess = !string.IsNullOrEmpty(APIManager.Instance.AccessToken);
+                bool hasRefresh = !string.IsNullOrEmpty(APIManager.Instance.RefreshToken);
+                if (hasAccess || hasRefresh)
+                {
+                    _isLoggedIn = true;
+                    _currentUserId = PlayerPrefs.GetString("SavedUserId", null);
+                    if (!hasAccess) StartCoroutine(RestoreSessionFromRefreshToken());
+                }
             }
 
             LoadSavesFromDisk();
@@ -115,6 +126,31 @@ namespace Attrition.UI
         {
             if (LocalAuthServer.Instance != null)
                 LocalAuthServer.Instance.OnTokenReceived.RemoveListener(HandleGoogleTokenReceived);
+        }
+
+        /// <summary>
+        /// Còn refresh token nhưng mất access token (RAM) → đổi lấy access token mới ở nền, giữ nguyên
+        /// phiên đăng nhập. Thất bại = refresh token hết hạn/bị revoke → hạ cờ, bắt login lại.
+        /// Chạy sau khi UI đã hiện "Logged in" nên người chơi không thấy nháy trạng thái.
+        /// </summary>
+        private System.Collections.IEnumerator RestoreSessionFromRefreshToken()
+        {
+            bool ok = false;
+            yield return APIManager.Instance.RefreshAccessToken(r => ok = r);
+
+            if (!ok)
+            {
+                _isLoggedIn = false;
+                _currentUserId = null;
+                UpdateGlobalProfileVisibility();
+                yield break;
+            }
+
+            UpdateGlobalProfileVisibility();
+            // LoadSavesFromDisk (nhánh _isOnlineMode) bỏ qua fetch khi chưa có AccessToken → nếu nó đã
+            // chạy TRƯỚC lúc refresh xong thì màn chọn nhân vật coop trống trơn. Tải lại khi đang đứng ở
+            // đó. Solo đọc từ đĩa, không phụ thuộc token → không cần.
+            if (_isOnlineMode && _currentScreen == "save-selection") LoadSavesFromDisk();
         }
 
         private void ShowScreen(string screenName)
@@ -776,6 +812,11 @@ namespace Attrition.UI
                 GameLaunch.Mode = LaunchMode.Solo;
                 GameLaunch.SelectedSlot = slot;
                 GameLaunch.CharacterName = name;
+                // Nhân vật MỚI luôn bắt đầu ở map đầu. `GameplayScene` là static sống suốt PROCESS và
+                // được GameBootstrap ghi = scene đang chơi, nên nếu phiên trước vừa chơi Map 3 rồi về
+                // menu tạo nhân vật mới thì nhánh này (trước đây KHÔNG set) đọc lại đúng "Map 3" —
+                // đồ thì reset (ClearSlot) mà map thì không. Đúng bug user báo.
+                GameLaunch.GameplayScene = GameLaunch.DefaultGameplayScene;
                 StartCoroutine(LoadGameplaySceneAsync(GameLaunch.GameplayScene));
             }
             else
@@ -1284,8 +1325,12 @@ namespace Attrition.UI
                 newBtn.RegisterCallback<ClickEvent>(evt =>
                 {
                     PlayClickSound();
+                    // -1 = "chưa chọn phòng cũ" → OnSessionContinue đi nhánh sinh room code MỚI.
+                    // Vào game LUÔN thay vì chỉ bỏ chọn: nút này trước đây chỉ deselect nên người chơi
+                    // phải bấm tiếp CONTINUE mới tạo phòng — không ai đoán được bước thứ hai đó.
                     _selectedSessionIndex = -1;
                     HighlightSelectedSession();
+                    OnSessionContinue();
                 });
             }
 
@@ -1494,6 +1539,16 @@ namespace Attrition.UI
                 GameLaunch.RoomCode = _currentRoomCode;
                 GameLaunch.RoomName = _currentRoomName ?? "";
 
+                // MAP của phòng cũ nằm trong session.currentScene (server ghi mỗi lần save). Trước đây
+                // nhánh này KHÔNG set nên map lấy theo GameplayScene static còn sót của process → mở lại
+                // phòng đang ở Map 3 mà lần trước vừa chơi Map 1 thì vào lại Map 1, tiến trình đúng
+                // nhưng map sai. Scene không hợp lệ (build cũ thiếu map) → về map đầu.
+                GameLaunch.GameplayScene =
+                    !string.IsNullOrEmpty(session.currentScene)
+                    && Application.CanStreamedLevelBeLoaded(session.currentScene)
+                        ? session.currentScene
+                        : GameLaunch.DefaultGameplayScene;
+
                 CreateHostSessionOnServer();
                 StartFusionNetwork(GameMode.Host, _currentRoomCode, (ok, err) =>
                 {
@@ -1511,6 +1566,10 @@ namespace Attrition.UI
                 _currentRoomName = $"Room {_currentRoomCode}";
                 GameLaunch.RoomCode = _currentRoomCode;
                 GameLaunch.RoomName = _currentRoomName;
+
+                // Phòng MỚI luôn bắt đầu ở map đầu — cùng lý do như tạo nhân vật mới solo: GameplayScene
+                // là static sống suốt process, không set lại thì phòng mới mở ra ở map của phiên trước.
+                GameLaunch.GameplayScene = GameLaunch.DefaultGameplayScene;
 
                 CreateHostSessionOnServer();
                 StartFusionNetwork(GameMode.Host, _currentRoomCode, (ok, err) =>

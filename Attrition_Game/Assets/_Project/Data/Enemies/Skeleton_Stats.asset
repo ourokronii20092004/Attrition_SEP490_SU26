@@ -15,12 +15,12 @@ MonoBehaviour:
   enemyId: skeleton_sword
   tier: 0
   webImage: {fileID: 0}
-  maxHP: 60
-  ad: 20
-  ap: 20
+  maxHP: 70
+  ad: 30
+  ap: 30
   def: 2
   res: 2
-  poise: 30
+  poise: 100
   poiseRecoveryTime: 3
   patrolSpeed: 2
   chaseSpeed: 5

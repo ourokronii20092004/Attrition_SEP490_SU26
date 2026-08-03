@@ -40,14 +40,16 @@ namespace Attrition.Gameplay.Environment
                 if (!found) { Clear(); yield break; }
             }
 
-            // Chờ tới khi có ít nhất 1 player spawned (mọi peer), rồi teleport tất cả.
+            // Chờ tới khi có ít nhất 1 player spawned (mọi peer), rồi hồi phục + đặt tất cả tại đích.
             float timeout = 5f;
             while (timeout > 0f)
             {
                 var players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
                 if (players.Length > 0)
                 {
-                    foreach (var p in players) if (p != null) p.TeleportTo(target);
+                    // Fast-travel cross-map cũng là REST (yêu cầu user): hồi đầy + refill bình, người
+                    // đang gục hồi sinh tại đích — thay vì chỉ TeleportTo như trước.
+                    Attrition.Gameplay.World.Checkpoint.RestoreAllPlayersAt(target);
                     break;
                 }
                 timeout -= Time.deltaTime;
@@ -61,7 +63,9 @@ namespace Attrition.Gameplay.Environment
                 {
                     if (cp != null && cp.DisplayName == wantId)
                     {
-                        Attrition.Gameplay.World.Checkpoint.MostRecentlyActivated = cp;
+                        // Đặt làm lastCheckpoint ĐẦY ĐỦ (RespawnPosition + HasBeenActivated), không chỉ
+                        // MostRecentlyActivated — thiếu 2 cờ kia thì chết sau khi travel hồi sinh sai chỗ.
+                        cp.MarkAsLastCheckpoint();
                         break;
                     }
                 }

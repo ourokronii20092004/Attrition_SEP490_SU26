@@ -85,6 +85,75 @@ namespace Attrition.Gameplay.World
         }
 
         /// <summary>
+        /// Host: đặt checkpoint này làm ĐIỂM HỒI SINH hiện hành (lastCheckpoint) — dùng bởi fast-travel.
+        ///
+        /// VÌ SAO CẦN: fast-travel trước đây chỉ set <see cref="MostRecentlyActivated"/> mà KHÔNG bật
+        /// <see cref="HasBeenActivated"/>/<see cref="RespawnPosition"/>. Respawn sau Game Over đòi CẢ BA
+        /// (xem PlayerController.RpcRequestRespawnAll), nên teleport tới checkpoint chưa từng rest rồi
+        /// chết sẽ rơi vào nhánh fallback "checkpoint activated ĐẦU TIÊN trong scene" → hồi sinh sai chỗ.
+        /// Đây đúng là lỗi user báo: chết sau khi teleport không về điểm vừa teleport.
+        /// </summary>
+        public void MarkAsLastCheckpoint()
+        {
+            if (!HasStateAuthority) return;
+
+            RespawnPosition = RestPoint;
+            HasBeenActivated = true;
+            MostRecentlyActivated = this;
+            Attrition.Gameplay.Environment.WorldMapState.MarkCheckpointDiscovered(DisplayName);
+            RpcOnRested();   // bật beacon trên mọi máy + đánh dấu đã khám phá (WorldMapState là local)
+        }
+
+        /// <summary>
+        /// Host: hồi đầy HP/Mana/Stamina + refill bình cho MỌI player, và hồi sinh người đang gục, tại
+        /// <paramref name="destination"/>. Fast-travel dùng chung với rest theo yêu cầu "fast travel
+        /// giống như rest". Tách riêng khỏi <see cref="DoRest"/> vì rest còn reset quái + lưu game.
+        /// </summary>
+        public static void RestoreAllPlayersAt(Vector3 destination)
+        {
+            PotionSystem.ShareFlaskCapacityOnRest();
+            foreach (var pc in FindObjectsByType<PlayerController>(FindObjectsSortMode.None))
+            {
+                if (pc == null) continue;
+                if (pc.IsDead) { pc.ReviveAndRestore(destination); continue; }
+
+                var stats = pc.GetComponent<PlayerStats>();
+                if (stats != null)
+                {
+                    stats.RestoreFull();
+                    var potions = pc.GetComponent<PotionSystem>();
+                    if (potions != null) potions.RefillAll();
+                }
+                pc.TeleportTo(destination);
+            }
+        }
+
+        /// <summary>
+        /// Host: despawn mọi quái thường + elite CÒN SỐNG rồi spawn lại theo config. Boss KHÔNG hồi sinh
+        /// (boss đặt sẵn trong scene, không nằm trong enemySpawnConfigs nên RespawnConfiguredEnemies
+        /// không chạm tới).
+        ///
+        /// Dùng chung bởi rest, fast-travel và respawn sau Game Over — cả ba đều là "về checkpoint, thế
+        /// giới nạp lại". Trước đây logic này bị copy ở 2 nơi (DoRest + RpcRequestRespawnAll) và
+        /// fast-travel thì THIẾU HẲN → teleport về checkpoint xong quái vẫn nằm chết / vẫn đang aggro.
+        /// </summary>
+        public static void ResetEnemiesExceptBoss()
+        {
+            var spawner = FindFirstObjectByType<NetworkSpawner>();
+            if (spawner == null) return;
+
+            // Despawn TRƯỚC khi spawn lại → tránh nhân đôi quái.
+            foreach (var enemy in FindObjectsByType<Attrition.Controllers.EnemyController>(FindObjectsSortMode.None))
+            {
+                if (enemy == null) continue;
+                var es = enemy.GetComponent<Attrition.Gameplay.Enemy.EnemyStats>();
+                if (es != null && es.Tier == Attrition.Data.EnemyTier.Boss) continue; // boss: bỏ qua
+                spawner.DespawnObject(enemy.Object);
+            }
+            spawner.RespawnConfiguredEnemies();
+        }
+
+        /// <summary>
         /// Gọi bởi player đang đứng trong vùng khi nhấn R (bất kỳ peer nào).
         /// Tự định tuyến: client → RPC lên host; host xử lý trực tiếp.
         /// </summary>
@@ -108,64 +177,21 @@ namespace Attrition.Gameplay.World
             // Loading "Resting..." bắn về CẢ HAI máy ngay khi rest hợp lệ (trước teleport) để không giật.
             RpcRestTeleportLoading();
 
-            // COOP: bình HP giấu là pickup ĐƠN (chỉ người chạm được +1 cap, pickup despawn cho cả phòng).
-            // Rest là mốc chia sẻ: ai đang thiếu được bù cho bằng người có sức chứa cao nhất. Gọi TRƯỚC
-            // vòng lặp refill để bình vừa được bù cũng rót đầy ngay lượt rest này (kể cả player đã chết,
-            // vì ReviveAndRestore cũng RefillAll bên trong).
-            PotionSystem.ShareFlaskCapacityOnRest();
-            foreach (var pc in FindObjectsByType<PlayerController>(FindObjectsSortMode.None))
-            {
-                if (pc == null) continue;
-
-                // Player ĐÃ CHẾT: rest = hồi sinh hoàn toàn (clear cờ chết + bật lại physics/collider +
-                // teleport + full HP/Mana/Stamina + refill bình) qua 1 path chung ReviveAndRestore. Nếu
-                // chỉ RestoreFull như player sống thì xác vẫn nằm (isDeadNetworked=true) → không sống lại.
-                if (pc.IsDead)
-                {
-                    pc.ReviveAndRestore(RestPoint);
-                    continue;
-                }
-
-                var stats = pc.GetComponent<PlayerStats>();
-                if (stats != null)
-                {
-                    stats.RestoreFull();
-                    var potions = pc.GetComponent<PotionSystem>();
-                    if (potions != null) potions.RefillAll();
-                }
-                pc.TeleportTo(RestPoint);
-            }
+            // Hồi đầy + refill bình + teleport mọi player (kể cả người đang gục) — dùng chung với
+            // fast-travel qua RestoreAllPlayersAt.
+            RestoreAllPlayersAt(RestPoint);
 
             // 2) Reset/hồi sinh quái thường + elite (boss đã đánh chết KHÔNG hồi sinh).
-            var spawner = FindFirstObjectByType<NetworkSpawner>();
-            if (spawner != null)
-            {
-                // Despawn mọi quái còn sống TRỪ boss (boss giữ nguyên), rồi spawn lại theo config.
-                foreach (var enemy in FindObjectsByType<Attrition.Controllers.EnemyController>(FindObjectsSortMode.None))
-                {
-                    if (enemy == null) continue;
-                    var es = enemy.GetComponent<Attrition.Gameplay.Enemy.EnemyStats>();
-                    if (es != null && es.Tier == Attrition.Data.EnemyTier.Boss) continue; // boss: bỏ qua
-                    spawner.DespawnObject(enemy.Object);
-                }
-                spawner.RespawnConfiguredEnemies();
-            }
+            ResetEnemiesExceptBoss();
 
-            RespawnPosition = RestPoint;
-            HasBeenActivated = true;
-
-            // Rest gần nhất → điểm hồi sinh hiện hành cho Game Over respawn.
-            MostRecentlyActivated = this;
-
-            // Đánh dấu đã khám phá (World Map + fast-travel nhớ qua phiên).
-            Attrition.Gameplay.Environment.WorldMapState.MarkCheckpointDiscovered(DisplayName);
+            // Rest gần nhất → điểm hồi sinh hiện hành + bật beacon trên mọi máy (đã gồm RpcOnRested).
+            MarkAsLastCheckpoint();
 
             // LƯU game SAU khi đã hồi đầy máu và bình (quan trọng: đè lên file save cũ để nhớ 100% HP)
             var saver = Attrition.Gameplay.Persistence.GameSaveService.EnsureExists();
             saver.Save(Attrition.Gameplay.Persistence.GameSaveService.SaveEvent.Rest,
                        DisplayName, RestPoint);
 
-            RpcOnRested();
             return true;
         }
 

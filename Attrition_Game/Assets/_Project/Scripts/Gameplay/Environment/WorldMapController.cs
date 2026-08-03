@@ -189,6 +189,12 @@ namespace Attrition.Gameplay.Environment
         {
             _open = open;
             IsOpen = open;   // khóa di chuyển player khi map mở
+
+            // SOLO: dừng game khi mở bản đồ → quái không đánh mất HP lúc đang xem map.
+            // COOP: SetSoloFreeze tự no-op (online — dừng sẽ phá đồng bộ), map chỉ khóa di chuyển.
+            Attrition.Persistence.GamePause.SetSoloFreeze(
+                Attrition.Persistence.GamePause.Freeze.WorldMap, open);
+
             if (_panel != null) _panel.SetActive(open);
             if (open)
             {
@@ -200,7 +206,13 @@ namespace Attrition.Gameplay.Environment
             }
         }
 
-        private void OnDisable() { IsOpen = false; }
+        private void OnDisable()
+        {
+            IsOpen = false;
+            // Đổi scene / huỷ object lúc map đang mở: nhả freeze, nếu không phiên sau vào game đứng hình.
+            Attrition.Persistence.GamePause.SetSoloFreeze(
+                Attrition.Persistence.GamePause.Freeze.WorldMap, false);
+        }
 
         // Map-space: 1 world-unit → PixelsPerUnit px. Vị trí 1 điểm world của map m trên content.
         private Vector2 MapToContent(MapDataSO m, Vector2 world)

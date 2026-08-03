@@ -65,10 +65,15 @@ namespace Attrition.Gameplay.Player
                 if (Object == null || !Object.IsValid) return -1f;
                 var me = Object.InputAuthority;
 
-                foreach (var rs in FindObjectsByType<CoopReviveSystem>(FindObjectsSortMode.None))
+                // Dùng CHUNG cache player với FindDeadPlayerInRadius (UI gọi mỗi frame). CoopReviveSystem
+                // luôn nằm cùng GameObject với PlayerController ([RequireComponent]) nên quét player rồi
+                // GetComponent là tương đương với FindObjectsByType<CoopReviveSystem> mà KHÔNG cấp phát.
+                foreach (var p in GetPlayers())
                 {
+                    if (p == null || p == _myController) continue;
+                    if (p.Object == null || !p.Object.IsValid) continue;
+                    var rs = p.GetComponent<CoopReviveSystem>();
                     if (rs == null || rs == this) continue;
-                    if (rs.Object == null || !rs.Object.IsValid) continue;
                     if (!rs.IsReviving) continue;
                     if (rs.TargetPlayerToRevive != me) continue;
                     return rs.ReviveFraction;
@@ -86,9 +91,12 @@ namespace Attrition.Gameplay.Player
         {
             if (_myController == null || Object == null || !Object.IsValid) return null;
 
-            foreach (var p in FindObjectsByType<PlayerController>(FindObjectsSortMode.None))
+            // GetPlayers() (cache 0.5s) thay cho FindObjectsByType: HUD gọi hàm này MỖI FRAME trong coop
+            // khi còn sống, nên quét toàn scene + cấp phát mảng mới ở 144fps là rác GC liên tục — đúng
+            // kiểu giật chỉ xảy ra khi chơi coop mà solo không có.
+            foreach (var p in GetPlayers())
             {
-                if (p == _myController) continue;
+                if (p == null || p == _myController) continue;
                 if (p.Object == null || !p.Object.IsValid) continue;   // chưa Spawned → đọc IsDead sẽ ném
                 if (p.IsDead) return p;
             }

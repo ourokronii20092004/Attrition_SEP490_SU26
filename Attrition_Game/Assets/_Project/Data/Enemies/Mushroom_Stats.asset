@@ -15,12 +15,12 @@ MonoBehaviour:
   enemyId: mushroom
   tier: 0
   webImage: {fileID: 0}
-  maxHP: 80
-  ad: 20
-  ap: 20
+  maxHP: 120
+  ad: 30
+  ap: 30
   def: 2
   res: 2
-  poise: 0
+  poise: 200
   poiseRecoveryTime: 3
   patrolSpeed: 2
   chaseSpeed: 5

@@ -98,9 +98,9 @@ namespace Attrition.UI
 
         private void OnDisable()
         {
-            Time.timeScale = 1f; // tránh để MainMenu bị đứng hình nếu quit lúc đang pause (solo)
+            // Xoá MỌI lý do dừng (overlay/thoại/map) — tránh MainMenu đứng hình nếu quit lúc đang pause.
+            Attrition.Persistence.GamePause.ResetFreeze();
             Attrition.Gameplay.Environment.TutorialPanel.SetSuppressed(false);
-            Attrition.Persistence.GamePause.IsPaused = false;
             Attrition.Persistence.CoopSession.Reset();
             // Reset cờ hội thoại (static, sống xuyên phiên). Thoát/đổi scene lúc đang mở hội thoại →
             // IsActive kẹt true → phiên sau PlayerController đọc thấy → KHÓA di chuyển. Reset ở đây.
@@ -149,8 +149,11 @@ namespace Attrition.UI
 
             CheckGameOver();
 
-            // Tab = mở/đóng Character/Inventory (không khi đang Game Over/Loading)
-            if (Input.GetKeyDown(KeyCode.Tab) && _overlay != Overlay.GameOver && _overlay != Overlay.Loading)
+            // Tab = mở/đóng Character/Inventory (không khi đang Game Over/Loading).
+            // Chặn khi đang thoại NPC: hai bên đều tự quản chuột + solo-freeze, mở lồng nhau thì đóng
+            // Inventory sẽ gỡ freeze của hội thoại (quái đánh lại trong lúc đang đọc thoại).
+            if (Input.GetKeyDown(KeyCode.Tab) && _overlay != Overlay.GameOver && _overlay != Overlay.Loading
+                && !Attrition.Persistence.DialogueState.IsActive)
                 ToggleOverlay(Overlay.Inventory);
 
             // F (Interact) = mở UI checkpoint (Rest + Fast Travel) khi đang đứng trong vùng checkpoint.

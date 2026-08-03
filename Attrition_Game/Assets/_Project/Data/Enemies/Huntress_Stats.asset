@@ -20,7 +20,7 @@ MonoBehaviour:
   ap: 30
   def: 2
   res: 2
-  poise: 0
+  poise: 200
   poiseRecoveryTime: 3
   patrolSpeed: 2
   chaseSpeed: 5

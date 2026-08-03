@@ -15,12 +15,12 @@ MonoBehaviour:
   enemyId: cultist
   tier: 1
   webImage: {fileID: 0}
-  maxHP: 200
+  maxHP: 1000
   ad: 25
   ap: 20
   def: 10
   res: 10
-  poise: 100
+  poise: 300
   poiseRecoveryTime: 3
   patrolSpeed: 2
   chaseSpeed: 5

@@ -14,9 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.EnemyStatsSO
   enemyId: druid
   tier: 2
-  maxHP: 2100
-  ad: 30
-  ap: 38
+  webImage: {fileID: 0}
+  maxHP: 2500
+  ad: 60
+  ap: 60
   def: 18
   res: 20
   poise: 360

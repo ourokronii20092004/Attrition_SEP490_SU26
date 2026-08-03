@@ -15,12 +15,12 @@ MonoBehaviour:
   enemyId: undead
   tier: 1
   webImage: {fileID: 0}
-  maxHP: 500
-  ad: 20
-  ap: 30
+  maxHP: 2000
+  ad: 60
+  ap: 60
   def: 5
   res: 5
-  poise: 100
+  poise: 600
   poiseRecoveryTime: 3
   patrolSpeed: 2
   chaseSpeed: 5

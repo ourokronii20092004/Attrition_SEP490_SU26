@@ -14,9 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.EnemyStatsSO
   enemyId: demon_kin
   tier: 2
-  maxHP: 3600
-  ad: 44
-  ap: 52
+  webImage: {fileID: 0}
+  maxHP: 3500
+  ad: 100
+  ap: 100
   def: 26
   res: 28
   poise: 500

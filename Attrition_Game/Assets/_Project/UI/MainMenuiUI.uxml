@@ -187,7 +187,7 @@
 
                 <ui:VisualElement name="session-actions">
                     <ui:Button text="← BACK" name="btn-session-back" class="save-action-btn back"/>
-                    <ui:Button text="+ NEW JOURNEY" name="btn-session-new" class="save-action-btn create" style="display: none;"/>
+                    <ui:Button text="+ NEW JOURNEY" name="btn-session-new" class="save-action-btn create"/>
                     <ui:Button text="CONTINUE →" name="btn-session-continue" class="save-action-btn continue"/>
                 </ui:VisualElement>
 

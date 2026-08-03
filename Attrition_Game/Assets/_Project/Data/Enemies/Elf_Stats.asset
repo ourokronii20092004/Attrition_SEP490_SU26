@@ -14,9 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.EnemyStatsSO
   enemyId: elf
   tier: 2
+  webImage: {fileID: 0}
   maxHP: 2800
-  ad: 36
-  ap: 44
+  ad: 100
+  ap: 100
   def: 22
   res: 24
   poise: 420

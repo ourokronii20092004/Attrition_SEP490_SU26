@@ -29,12 +29,12 @@ namespace Attrition.UI
             UnityEngine.Cursor.lockState = wantCursor ? CursorLockMode.None : CursorLockMode.Locked;
 
             // SOLO: dừng game khi mở bất kỳ overlay nào (ESC/map/inventory/checkpoint).
-            // Fusion physics bỏ qua Time.timeScale → phải dùng GamePause cho các sim tự đóng băng.
-            // COOP: KHÔNG bao giờ dừng (online — dừng sẽ phá đồng bộ).
-            bool solo = Attrition.Persistence.GameLaunch.Mode == Attrition.Persistence.LaunchMode.Solo;
-            bool pause = solo && o != Overlay.None && o != Overlay.Loading;
-            Time.timeScale = pause ? 0f : 1f;               // dừng Animator + Update non-network
-            Attrition.Persistence.GamePause.IsPaused = pause; // dừng các sim Fusion
+            // Fusion physics bỏ qua Time.timeScale → SetSoloFreeze set cả timeScale lẫn GamePause.
+            // COOP: SetSoloFreeze tự no-op (online — dừng sẽ phá đồng bộ).
+            // Chỉ khai báo lý do CỦA MÌNH — hội thoại NPC giữ freeze riêng, đóng overlay không gỡ của nó.
+            Attrition.Persistence.GamePause.SetSoloFreeze(
+                Attrition.Persistence.GamePause.Freeze.Overlay,
+                o != Overlay.None && o != Overlay.Loading);
 
             if (o == Overlay.Inventory)
             {

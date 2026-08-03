@@ -91,7 +91,15 @@ namespace Attrition.Gameplay.Enemy
             }
             else
             {
-                _barRoot.localPosition = barOffset;
+                // Vị trí lấy theo ĐÁY SPRITE THẬT, không phải offset cố định: quái elite cao/to hơn nên
+                // barOffset (-0.6) cũ rơi vào giữa bụng — đúng lỗi user báo. Tính trước khi tạo các quad
+                // con để GetComponentInChildren không bắt vào chính thanh máu.
+                _barRoot.localPosition = new Vector3(barOffset.x, FeetLocalY(), barOffset.z);
+
+                // To hơn cho dễ thấy; elite to hơn nữa vì thân hình lớn làm thanh cũ trông tí xíu.
+                float mul = tier == Attrition.Data.EnemyTier.Elite ? 2.2f : 1.6f;
+                _barRoot.localScale = new Vector3(mul, mul, 1f);
+
                 _barRoot.gameObject.SetActive(false); // ẩn tới khi bị đánh lần đầu
             }
 
@@ -99,6 +107,28 @@ namespace Attrition.Gameplay.Enemy
             var fillSize = new Vector2(barSize.x - 0.04f, barSize.y - 0.04f);
             _trailFill = CreateQuad("Trail", bg.transform, new Color(1f, 0.85f, 0.3f, 1f), fillSize, 1).transform;
             _fill = CreateQuad("Fill", bg.transform, new Color(0.7f, 0.16f, 0.16f, 1f), fillSize, 2).transform;
+        }
+
+        /// <summary>
+        /// Y (local) ngay DƯỚI CHÂN quái, suy từ bounds sprite thật thay vì hằng số.
+        /// Quái elite cao gấp mấy lần quái thường nên một offset cố định (-0.6) hợp với quái thường sẽ
+        /// nằm giữa bụng elite. Gọi TRƯỚC khi tạo các quad con để không tự bắt vào thanh máu.
+        /// Fallback về barOffset.y nếu quái không có SpriteRenderer.
+        /// </summary>
+        private float FeetLocalY()
+        {
+            float lowest = float.MaxValue;
+            foreach (var sr in GetComponentsInChildren<SpriteRenderer>())
+                if (sr != null && sr.sprite != null) lowest = Mathf.Min(lowest, sr.bounds.min.y);
+
+            if (lowest == float.MaxValue) return barOffset.y;
+
+            // bounds là world-space; localPosition của _barRoot nằm trong local space của quái (đã bị
+            // localScale của quái nhân vào) → chia lại cho scale, chặn chia 0.
+            float scaleY = Mathf.Abs(transform.lossyScale.y);
+            if (scaleY < 0.0001f) return barOffset.y;
+
+            return (lowest - transform.position.y) / scaleY + barOffset.y;
         }
 
         private GameObject CreateQuad(string name, Transform parent, Color color, Vector2 size, int order)

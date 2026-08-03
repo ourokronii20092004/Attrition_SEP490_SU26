@@ -27,6 +27,8 @@ public class APIManager : MonoBehaviour
     public string Username { get; private set; }
 
     private const string RefreshTokenPrefKey = "AttritionRefreshToken";
+    private const string AccessTokenPrefKey = "AttritionAccessToken";
+    private const string UsernamePrefKey = "AttritionUsername";
 
     void Awake()
     {
@@ -38,6 +40,12 @@ public class APIManager : MonoBehaviour
         LoadBaseUrl();
         LoadWebUrl();
         RefreshToken = PlayerPrefs.GetString(RefreshTokenPrefKey, null);
+        // Access token + username cũng đọc lại từ đĩa: chúng CHỈ nằm trong RAM của singleton này, nên
+        // bất kỳ đường nào làm mất instance (đổi scene về menu, domain reload trong Editor, duplicate
+        // singleton tự huỷ) đều khiến menu hiện "Not Logged in" NGAY LẬP TỨC — không cần chờ hết hạn.
+        // Đây là lý do rời phòng chờ về menu chưa tới 1 phút đã thấy logout.
+        AccessToken = PlayerPrefs.GetString(AccessTokenPrefKey, null);
+        Username = PlayerPrefs.GetString(UsernamePrefKey, null);
     }
 
     /// <summary>
@@ -93,12 +101,21 @@ public class APIManager : MonoBehaviour
     private void StoreTokens(string accessToken, string refreshToken)
     {
         AccessToken = accessToken;
+        PlayerPrefs.SetString(AccessTokenPrefKey, accessToken ?? "");
         if (!string.IsNullOrEmpty(refreshToken))
         {
             RefreshToken = refreshToken;
             PlayerPrefs.SetString(RefreshTokenPrefKey, refreshToken);
-            PlayerPrefs.Save();
         }
+        PlayerPrefs.Save();
+    }
+
+    /// <summary>Ghi username xuống đĩa cùng lúc set RAM — mất instance thì vẫn đọc lại được tên.</summary>
+    private void StoreUsername(string username)
+    {
+        Username = username;
+        PlayerPrefs.SetString(UsernamePrefKey, username ?? "");
+        PlayerPrefs.Save();
     }
 
     /// <summary>Xoá token khỏi RAM + đĩa (logout).</summary>
@@ -106,7 +123,10 @@ public class APIManager : MonoBehaviour
     {
         AccessToken = null;
         RefreshToken = null;
+        Username = null;
         PlayerPrefs.DeleteKey(RefreshTokenPrefKey);
+        PlayerPrefs.DeleteKey(AccessTokenPrefKey);
+        PlayerPrefs.DeleteKey(UsernamePrefKey);
         PlayerPrefs.Save();
     }
 
@@ -133,6 +153,10 @@ public class APIManager : MonoBehaviour
                 if (resp != null && resp.success && resp.data != null)
                 {
                     StoreTokens(resp.data.accessToken, resp.data.refreshToken);
+                    // Username cũng chỉ nằm trong RAM: khôi phục phiên bằng refresh token mà không lấy
+                    // lại tên thì player hiển thị thành "Wanderer" dù đã đăng nhập.
+                    if (resp.data.user != null && !string.IsNullOrEmpty(resp.data.user.username))
+                        StoreUsername(resp.data.user.username);
                     callback?.Invoke(true);
                     yield break;
                 }
@@ -187,7 +211,7 @@ public class APIManager : MonoBehaviour
                 {
                     string userId = response.data.user.id;
                     StoreTokens(response.data.accessToken, response.data.refreshToken);
-                    Username = response.data.user.username;
+                    StoreUsername(response.data.user.username);
                     callback?.Invoke(userId);
                 }
                 else
@@ -223,7 +247,7 @@ public class APIManager : MonoBehaviour
                 {
                     StoreTokens(token, refreshToken);
                     string userId = response.data.id;
-                    Username = response.data.username;
+                    StoreUsername(response.data.username);
                     callback?.Invoke(userId);
                 }
                 else
