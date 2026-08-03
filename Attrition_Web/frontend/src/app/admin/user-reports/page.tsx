@@ -15,6 +15,7 @@ import { Pagination } from "@/components/ui/pagination";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { formatDate } from "@/lib/format-date";
 import type { AdminUserReportDto } from "@/lib/types";
+import { LIVE_NORMAL, liveWhenFocused } from "@/lib/live";
 
 export default function AdminUserReportsPage() {
   const { user: me } = useAuth();
@@ -29,6 +30,8 @@ export default function AdminUserReportsPage() {
 
   const { data, isPending } = useQuery({
     queryKey: ["admin", "user-reports", status, page] as const,
+    // New user reports should appear in the queue without a refresh.
+    refetchInterval: liveWhenFocused(LIVE_NORMAL),
     enabled: me?.role === "Admin",
     queryFn: async () => {
       const res = await userReportsApi.adminList({ status, page, pageSize: 20 });

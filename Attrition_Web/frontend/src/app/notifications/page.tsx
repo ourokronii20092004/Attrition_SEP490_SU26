@@ -15,6 +15,7 @@ import { SkeletonList } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { RelativeTime } from "@/components/ui/relative-time";
 import type { NotificationDto } from "@/lib/types";
+import { LIVE_FAST, liveWhenFocused } from "@/lib/live";
 
 const PAGE_SIZE = 20;
 
@@ -43,6 +44,8 @@ export default function NotificationsPage() {
 
   const { data, isPending } = useQuery({
     queryKey: ["notifications", "paged", page, filter],
+    // The full notification list, kept in step with the bell.
+    refetchInterval: liveWhenFocused(LIVE_FAST),
     enabled: !!user && !authLoading,
     placeholderData: keepPreviousData,
     queryFn: async () => {

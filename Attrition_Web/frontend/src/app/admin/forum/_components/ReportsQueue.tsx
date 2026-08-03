@@ -9,6 +9,7 @@ import { AdminPageHeader, AdminFilterBar, AdminTable, AdminRow } from "@/compone
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { formatDate } from "@/lib/format-date";
 import { qk } from "@/lib/query-keys";
+import { LIVE_NORMAL, liveWhenFocused } from "@/lib/live";
 import { Pager } from "./Pager";
 
 export function ReportsQueue() {
@@ -20,6 +21,8 @@ export function ReportsQueue() {
 
   const { data, isPending: loading } = useQuery({
     queryKey: qk.admin.forum.reports(`${statusFilter}-${page}`),
+    // New post reports should surface in the queue without a refresh.
+    refetchInterval: liveWhenFocused(LIVE_NORMAL),
     queryFn: async () => {
       const res = await forumApi.getReports({ status: statusFilter, page, pageSize: 20 });
       return res.success ? res.data : null;

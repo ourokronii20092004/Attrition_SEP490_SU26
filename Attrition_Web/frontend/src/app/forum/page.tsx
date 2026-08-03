@@ -19,6 +19,7 @@ import { RelativeTime } from "@/components/ui/relative-time";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { useAuth } from "@/lib/providers";
 import { qk } from "@/lib/query-keys";
+import { LIVE_NORMAL, liveWhenFocused } from "@/lib/live";
 
 export default function ForumPage() {
   const { user } = useAuth();
@@ -37,6 +38,8 @@ export default function ForumPage() {
 
   const { data: threads, isPending } = useQuery({
     queryKey: qk.forum.threads({ selectedCategory, search, page }),
+    // Keeps the thread list and its reply counts current.
+    refetchInterval: liveWhenFocused(LIVE_NORMAL),
     queryFn: async () => {
       const res = await forumApi.getThreads({ category: selectedCategory || undefined, search: search || undefined, page, pageSize: 15 });
       return res.success ? res.data : null;

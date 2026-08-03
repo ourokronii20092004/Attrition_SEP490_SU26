@@ -12,6 +12,7 @@ import { Card } from "@/components/ui/card";
 import { PageTitle } from "@/components/ui/page-title";
 import { Skeleton } from "@/components/ui/skeleton";
 import { qk } from "@/lib/query-keys";
+import { LIVE_NORMAL, liveWhenFocused } from "@/lib/live";
 import { getLastAdminPage } from "./admin-top-bar";
 import { adminLabelFor } from "./admin-routes";
 
@@ -26,6 +27,8 @@ export default function AdminPage() {
 
   const { data: stats, isPending: loading } = useQuery({
     queryKey: qk.admin.stats(),
+    // Dashboard counters move as users post and reports arrive.
+    refetchInterval: liveWhenFocused(LIVE_NORMAL),
     queryFn: async () => {
       const res = await adminApi.getStats();
       return res.success ? res.data : null;

@@ -21,6 +21,7 @@ import { makeOptimisticPost, addPostToPage, replacePostInPage, removePostFromPag
 import { useAdminPageLabel } from "@/lib/hooks/use-admin-page-label";
 import { buildTree, indentsChildren, type PostNode } from "@/lib/forum-tree";
 import type { ForumPostDto, ForumThreadDto, PaginatedResponse } from "@/lib/types";
+import { LIVE_FAST, liveWhenFocused } from "@/lib/live";
 
 const REPLY_PAGE_SIZE = 50;
 
@@ -48,6 +49,8 @@ export default function AdminThreadPostsPage() {
   const postsKey = qk.forum.postsWindow(threadId, limit);
   const { data: posts, isPending } = useQuery({
     queryKey: postsKey,
+    // Moderators watch active threads; new replies should land without a refresh.
+    refetchInterval: liveWhenFocused(LIVE_FAST),
     enabled: user?.role === "Admin" && !!threadId,
     queryFn: async () => {
       const res = await forumApi.getPosts(threadId, { page: 1, pageSize: limit });

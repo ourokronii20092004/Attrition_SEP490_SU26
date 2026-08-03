@@ -14,6 +14,7 @@ import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { useClientPagination } from "@/lib/hooks/use-client-pagination";
 import { formatDate } from "@/lib/format-date";
 import { qk } from "@/lib/query-keys";
+import { LIVE_NORMAL, liveWhenFocused } from "@/lib/live";
 
 const STATUS_OPTIONS = [
   { value: "Pending", label: "Pending" },
@@ -32,6 +33,8 @@ export function ContributionQueue() {
 
   const { data: items = [], isPending: loading } = useQuery({
     queryKey: qk.admin.wiki.contributions(),
+    // Contributions arrive while moderators work through the queue.
+    refetchInterval: liveWhenFocused(LIVE_NORMAL),
     queryFn: async () => {
       const res = await wikiApi.getContributions();
       return res.success ? res.data : [];

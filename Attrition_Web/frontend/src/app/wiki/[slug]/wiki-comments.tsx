@@ -17,6 +17,7 @@ import { MarkdownContent } from "@/components/post-content";
 import { qk } from "@/lib/query-keys";
 import { makeOptimisticPost, addPostToPage, replacePostInPage, applyReactionToPage } from "@/lib/forum-cache";
 import { buildTree, indentsChildren, type PostNode } from "@/lib/forum-tree";
+import { LIVE_FAST, liveWhenFocused } from "@/lib/live";
 import type { ForumPostDto, PaginatedResponse } from "@/lib/types";
 
 const PAGE_SIZE = 50;
@@ -44,6 +45,8 @@ export function WikiComments({ articleId, articleTitle }: { articleId: string; a
     enabled: !!threadId,
     // Briefly fresh so an optimistically-added comment isn't refetched away if the read side lags.
     staleTime: 30_000,
+    // New comments from other readers should appear without a manual refresh.
+    refetchInterval: liveWhenFocused(LIVE_FAST),
     queryFn: async () => {
       const res = await forumApi.getPosts(threadId!, { page: 1, pageSize: limit });
       return res.success ? res.data : null;

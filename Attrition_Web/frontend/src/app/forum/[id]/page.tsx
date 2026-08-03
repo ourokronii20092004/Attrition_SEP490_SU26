@@ -20,6 +20,7 @@ import { resolveMediaUrl } from "@/lib/api/media";
 import { qk } from "@/lib/query-keys";
 import { makeOptimisticPost, addPostToPage, replacePostInPage, removePostFromPage } from "@/lib/forum-cache";
 import { buildTree, indentsChildren, type PostNode } from "@/lib/forum-tree";
+import { LIVE_FAST, liveWhenFocused } from "@/lib/live";
 import type { ForumPostDto, ForumThreadDto, PaginatedResponse } from "@/lib/types";
 
 // First reply page size. Beyond this, a "Load more replies" button grows the pool and the tree
@@ -55,6 +56,9 @@ export default function ThreadPage() {
     queryKey: postsKey,
     enabled: !!params.id,
     staleTime: 30_000,
+    // New replies should appear while you're reading the thread, not on manual refresh.
+    // Optimistic updates still show your own reply instantly; this catches everyone else's.
+    refetchInterval: liveWhenFocused(LIVE_FAST),
     queryFn: async () => {
       const res = await forumApi.getPosts(params.id, { page: 1, pageSize: limit });
       return res.success ? res.data : null;
