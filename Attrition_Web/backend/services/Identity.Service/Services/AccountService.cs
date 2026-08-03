@@ -182,7 +182,14 @@ public class AccountService : IAccountService
             var clientUrl = _config["App:ClientUrl"] ?? "http://localhost:3000";
             var verifyUrl = $"{clientUrl}/verify-email?token={Uri.EscapeDataString(verifyToken)}";
             await _email.SendAsync(request.NewEmail, "Verify Your New Email Address",
-                $"Hi {user.Username},\n\nPlease verify your new email address: {verifyUrl}");
+                $"Hi {user.Username},\n\nPlease verify your new email address: {verifyUrl}",
+                EmailTemplate.Wrap("Verify your new email address",
+                    "Confirm this address to finish moving your Attrition account to it.",
+                    EmailTemplate.Text($"Hi {user.Username},"),
+                    EmailTemplate.Text("You asked to change the email address on your Attrition account to this one. Confirm it here:"),
+                    EmailTemplate.Button("Verify this address", verifyUrl),
+                    EmailTemplate.Muted("Until you confirm, your account keeps using its previous address."),
+                    EmailTemplate.Muted("If you didn't request this, you can ignore this email.")));
         }
         catch (Exception ex) { _logger.LogWarning(ex, "Failed to send email-change verification"); }
 
@@ -212,7 +219,15 @@ public class AccountService : IAccountService
                 $"If this was you, confirm here (link valid 24 hours):\n\n{confirmUrl}\n\n" +
                 "After confirming, your account is deactivated and permanently deleted 90 days later. " +
                 "Sign back in any time within those 90 days to cancel and restore your account.\n\n" +
-                "If you didn't request this, you can ignore this email — nothing will change.");
+                "If you didn't request this, you can ignore this email — nothing will change.",
+                EmailTemplate.Wrap("Confirm account deletion",
+                    "Confirm you want to delete your Attrition account.",
+                    EmailTemplate.Text($"Hi {user.Username},"),
+                    EmailTemplate.Text("We received a request to delete your Attrition account. Confirm below if that was you:"),
+                    EmailTemplate.Button("Confirm deletion", confirmUrl, danger: true),
+                    EmailTemplate.Muted("This link is valid for 24 hours."),
+                    EmailTemplate.Text("After confirming, your account is deactivated immediately and permanently deleted 90 days later. Sign back in any time within those 90 days to cancel and restore it."),
+                    EmailTemplate.Muted("If you didn't request this, you can ignore this email — nothing will change.")));
         }
         catch (Exception ex) { _logger.LogWarning(ex, "Failed to send deletion-confirmation email"); }
 

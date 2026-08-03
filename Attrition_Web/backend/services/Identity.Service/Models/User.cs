@@ -12,6 +12,12 @@ public class User
     // OAuth
     public string? GoogleId { get; set; }
     public string? GoogleAvatarUrl { get; set; }
+    /// <summary>
+    /// Email of the linked Google account. Recorded separately from <see cref="Email"/> because the
+    /// two can legitimately differ — linking google-b@ to an account registered as a@ is allowed —
+    /// and without storing it the UI can only say "connected", never to what.
+    /// </summary>
+    public string? GoogleEmail { get; set; }
     public string AuthProvider { get; set; } = "local";
 
     // Profile
@@ -22,7 +28,9 @@ public class User
     public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
 
     // UI Config
-    public string ThemeMode { get; set; } = "system";
+    // "light" | "dark". Was "system", which the web client has no handling for — its ThemeMode
+    // is light|dark only, so a new account's stored value never matched and silently fell back.
+    public string ThemeMode { get; set; } = "light";
     public string ThemeAccent { get; set; } = "ember";
 
     // Stats (denormalized counters maintained by Forum/Wiki via Admin or events)

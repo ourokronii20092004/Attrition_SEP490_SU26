@@ -38,6 +38,8 @@ export interface UserDto {
   showActivity: boolean;
   hasPassword: boolean;
   isGoogleLinked: boolean;
+  /** Email of the linked Google account; may differ from `email`. Null when not linked. */
+  googleEmail: string | null;
 }
 
 export interface AuthResponse {

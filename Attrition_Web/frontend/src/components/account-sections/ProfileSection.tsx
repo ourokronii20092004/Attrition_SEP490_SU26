@@ -30,6 +30,12 @@ export function ProfileSection({ user, setUser }: { user: UserDto; setUser: (u: 
   return (
     <SettingsCard title="Notifications">
       <div className="space-y-4">
+        {/* These are in-app only. Email is reserved for account and security events
+            (verification, password reset, account deletion) — nothing here sends mail. */}
+        <p className="-mt-2 text-sm text-fg-muted">
+          These appear in the bell menu and on your notifications page. We don&apos;t email you
+          about forum activity.
+        </p>
         {/* Bio, avatar, and cover live on your profile page — not duplicated here. */}
         <div className="space-y-3 rounded-lg border border-border bg-surface-2/40 p-4">
           <Toggle
@@ -39,7 +45,7 @@ export function ProfileSection({ user, setUser }: { user: UserDto; setUser: (u: 
               save({ notifyOnReply: next }, () => setNotifyOnReply(!next));
             }}
             label="Notify on replies"
-            description="Email me when someone replies to my threads."
+            description="Show a notification when someone replies to my posts."
           />
           <Toggle
             checked={notifyOnMention}
@@ -48,7 +54,7 @@ export function ProfileSection({ user, setUser }: { user: UserDto; setUser: (u: 
               save({ notifyOnMention: next }, () => setNotifyOnMention(!next));
             }}
             label="Notify on mentions"
-            description="Email me when someone @mentions me."
+            description="Show a notification when someone @mentions me."
           />
         </div>
         <SaveStatus state={state} />

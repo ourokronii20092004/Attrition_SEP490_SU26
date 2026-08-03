@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="dark" data-accent="corruption" suppressHydrationWarning>
+    <html lang="en" data-theme="light" data-accent="ember" suppressHydrationWarning>
       <body className="font-sans antialiased">
         {/* Apply the saved theme before first paint so nothing (incl. the boot splash) flashes the
             default dark/corruption theme before ThemeProvider's effects run. Mirrors the keys in
@@ -26,7 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "(function(){try{var r=document.documentElement;r.setAttribute('data-theme',localStorage.getItem('attrition:themeMode')||'dark');r.setAttribute('data-accent',localStorage.getItem('attrition:themeAccent')||'corruption');}catch(e){}})();",
+              "(function(){try{var r=document.documentElement;r.setAttribute('data-theme',localStorage.getItem('attrition:themeMode')||'light');r.setAttribute('data-accent',localStorage.getItem('attrition:themeAccent')||'ember');}catch(e){}})();",
           }}
         />
         <Providers>

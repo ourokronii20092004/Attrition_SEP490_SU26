@@ -23,7 +23,10 @@ public record UserDto(
     bool ShowBio,
     bool ShowActivity,
     bool HasPassword,
-    bool IsGoogleLinked
+    bool IsGoogleLinked,
+    // Which Google account is attached. Shown in settings so "Connected" names the address rather
+    // than leaving the user guessing which of their Google accounts they linked.
+    string? GoogleEmail = null
 );
 
 public record UserListItem(Guid Id, string Username, string Role, bool IsBanned, bool IsDeleted, DateTime JoinedAt);

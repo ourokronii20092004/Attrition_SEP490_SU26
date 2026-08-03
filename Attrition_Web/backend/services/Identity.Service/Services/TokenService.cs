@@ -62,7 +62,7 @@ public sealed class TokenService
         u.PostCount, u.ContributionCount, u.MustChangePassword,
         u.IsEmailVerified, u.PendingEmail, u.NotifyOnReply, u.NotifyOnMention,
         u.ShowBio, u.ShowActivity,
-        !string.IsNullOrEmpty(u.PasswordHash), !string.IsNullOrEmpty(u.GoogleId));
+        !string.IsNullOrEmpty(u.PasswordHash), !string.IsNullOrEmpty(u.GoogleId), u.GoogleEmail);
 
     public static PublicProfileDto MapToPublicProfile(User u) => new(
         u.Id, u.Username, u.DisplayName, u.Role,

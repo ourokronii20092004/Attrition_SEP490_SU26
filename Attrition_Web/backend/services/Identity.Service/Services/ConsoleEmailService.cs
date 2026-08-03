@@ -7,9 +7,10 @@ public class ConsoleEmailService : IEmailService
 
     public ConsoleEmailService(ILogger<ConsoleEmailService> logger) => _logger = logger;
 
-    public Task SendAsync(string to, string subject, string body)
+    public Task SendAsync(string to, string subject, string body, string? htmlBody = null)
     {
         // Body may contain reset/verify URLs with raw tokens — never log it at Information.
+        // htmlBody carries the same tokens, so it is likewise never logged.
         _logger.LogInformation("EMAIL → {To}\nSubject: {Subject}", to, subject);
         return Task.CompletedTask;
     }

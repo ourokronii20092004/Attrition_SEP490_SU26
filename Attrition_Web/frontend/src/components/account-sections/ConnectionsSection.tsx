@@ -67,8 +67,20 @@ export function ConnectionsSection() {
         <div className="min-w-0">
           <p className="font-medium text-fg">Google</p>
           <p className="text-sm text-fg-muted">
-            {linked ? "Connected — you can sign in with Google." : "Not connected."}
+            {linked
+              ? user.googleEmail
+                // Name the account: it can legitimately differ from the account's own email, and
+                // "Connected" alone leaves you guessing which Google account you attached.
+                ? `Connected as ${user.googleEmail} — you can sign in with Google.`
+                : "Connected — you can sign in with Google."
+              : "Not connected."}
           </p>
+          {linked && user.googleEmail && user.email && user.googleEmail !== user.email && (
+            <p className="mt-1 text-xs text-fg-subtle">
+              This differs from your account email ({user.email}). Sign-in works either way; account
+              notices go to your account email.
+            </p>
+          )}
         </div>
         {linked ? (
           <Button variant="secondary" onClick={unlink} loading={busy}>
