@@ -42,4 +42,31 @@ public class NotificationRepository(IdentityDbContext db) : INotificationReposit
             Link = request.Link, ActorName = request.ActorName });
         await db.SaveChangesAsync();
     }
+
+    public async Task CreateManyAsync(CreateNotificationsBulkRequest request)
+    {
+        var ids = request.UserIds.Distinct().ToList();
+        if (ids.Count == 0) return;
+
+        // Resolve in one round-trip and honour the same per-user opt-outs as the single create.
+        var recipients = await db.Users
+            .Where(u => ids.Contains(u.Id))
+            .Select(u => new { u.Id, u.NotifyOnReply, u.NotifyOnMention })
+            .ToListAsync();
+
+        var wanted = recipients.Where(u => request.Type switch
+        {
+            NotificationType.Reply => u.NotifyOnReply,
+            NotificationType.Mention => u.NotifyOnMention,
+            _ => true,
+        }).Select(u => u.Id).ToList();
+        if (wanted.Count == 0) return;
+
+        db.Notifications.AddRange(wanted.Select(userId => new Notification
+        {
+            UserId = userId, Type = request.Type, Message = request.Message,
+            Link = request.Link, ActorName = request.ActorName,
+        }));
+        await db.SaveChangesAsync();
+    }
 }

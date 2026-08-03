@@ -11,4 +11,5 @@ public interface INotificationRepository
     Task MarkReadAsync(Guid userId, Guid notificationId);
     Task MarkAllReadAsync(Guid userId);
     Task CreateAsync(CreateNotificationRequest request);
+    Task CreateManyAsync(CreateNotificationsBulkRequest request);
 }

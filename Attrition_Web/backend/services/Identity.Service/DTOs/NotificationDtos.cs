@@ -8,3 +8,9 @@ public record NotificationDto(Guid Id, string Type, string Message, string? Link
 /// Identity resolves it, since it owns users). Exactly one is required.</summary>
 public record CreateNotificationRequest(string Type, string Message, string? Link, string? ActorName,
     Guid? UserId = null, string? Username = null);
+
+/// <summary>Fan-out create: one row per recipient, all sharing the same text. Used for thread
+/// subscriber notifications, where a per-recipient HTTP call would put one round-trip per
+/// subscriber on the reply request's critical path.</summary>
+public record CreateNotificationsBulkRequest(string Type, string Message, string? Link,
+    string? ActorName, List<Guid> UserIds);

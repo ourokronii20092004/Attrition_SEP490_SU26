@@ -10,6 +10,10 @@ namespace Forum.Service.Clients;
 /// </summary>
 public class NotificationClient
 {
+    /// <summary>Recipients per bulk request. Must stay at or below Identity's
+    /// InternalNotificationsController.MaxBulkRecipients, which rejects anything larger.</summary>
+    private const int BulkBatchSize = 500;
+
     private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web);
     private readonly HttpClient _http;
     private readonly ILogger<NotificationClient> _logger;
@@ -31,11 +35,23 @@ public class NotificationClient
     public Task NotifyUsernameAsync(string username, string type, string message, string? link, string? actorName, CancellationToken ct)
         => SendAsync(new { type, message, link, actorName, username }, ct);
 
-    private async Task SendAsync(object payload, CancellationToken ct)
+    /// <summary>
+    /// Notify many recipients with one shared message. Used for thread-subscriber fan-out, where
+    /// per-recipient calls would add one round-trip each to the reply request. Sent in batches so a
+    /// heavily-followed thread stays under Identity's per-request recipient cap instead of being
+    /// rejected wholesale. No-op for an empty list.
+    /// </summary>
+    public async Task NotifyUsersAsync(IReadOnlyCollection<Guid> userIds, string type, string message, string? link, string? actorName, CancellationToken ct)
+    {
+        foreach (var batch in userIds.Chunk(BulkBatchSize))
+            await SendAsync(new { type, message, link, actorName, userIds = batch }, ct, "api/internal/notifications/bulk");
+    }
+
+    private async Task SendAsync(object payload, CancellationToken ct, string path = "api/internal/notifications")
     {
         try
         {
-            await _http.PostAsJsonAsync("api/internal/notifications", payload, JsonOpts, ct);
+            await _http.PostAsJsonAsync(path, payload, JsonOpts, ct);
         }
         catch (OperationCanceledException) { throw; }
         catch (Exception ex)

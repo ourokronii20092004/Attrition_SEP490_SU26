@@ -264,17 +264,39 @@ public class ForumService : IForumService
         if (existing.Count == 0)
             await _threadRepo.Subscriptions.AddAsync(new ThreadSubscription { ThreadId = threadId, UserId = author.Id });
 
-        // NOTE: reply-notification emails dropped — Forum no longer has access to subscriber emails
-        // (lives in Identity now). Subscriptions are kept as data for a future notification service.
         await InvalidateCategoriesAsync();
 
         // Dispatch notifications (fire-and-forget; never blocks/fails the post).
         // Deep-link to the exact post that triggered it (QOLF-4), not just the thread.
         var link = $"/forum/{threadId}#post-{newPost.Id}";
-        // Reply: notify the parent post's author, unless replying to oneself.
-        if (parentAuthorId is { } pa && pa != author.Id)
-            await _notify.NotifyUserAsync(pa, "reply",
+
+        // Fan out to everyone with a stake in this reply, most specific reason first. Each user is
+        // notified at most once per reply — `sent` collapses the overlap (the thread author is
+        // usually also a subscriber, and may be the parent author too). Guid.Empty is seeded in
+        // because wiki-article threads carry a synthetic "Wiki" author that owns no account.
+        var sent = new HashSet<Guid> { author.Id, Guid.Empty };
+
+        // The author of the post being replied to.
+        if (parentAuthorId is { } pa && sent.Add(pa))
+            await _notify.NotifyUserAsync(pa, NotifyType.Reply,
                 $"{author.Name} replied to your post", link, author.Name, default);
+
+        // The thread owner, when this is a direct comment on the thread. A top-level reply has no
+        // parent post, so without this the owner is never told their thread was commented on. For
+        // nested replies the owner is reached below as a subscriber, with wording that fits better.
+        if (parentPostId is null && sent.Add(thread.AuthorId))
+            await _notify.NotifyUserAsync(thread.AuthorId, NotifyType.Reply,
+                $"{author.Name} commented on your post", link, author.Name, default);
+
+        // Everyone else following the thread. Subscriptions were being written on every reply but
+        // never read, so participants heard nothing about later activity. Sent as one bulk call so
+        // a well-followed thread doesn't put a round-trip per subscriber on this request.
+        var subscribers = await _threadRepo.Subscriptions.ListAsync(sub => sub.ThreadId == threadId);
+        var followers = new List<Guid>();
+        foreach (var sub in subscribers)
+            if (sent.Add(sub.UserId)) followers.Add(sub.UserId);
+        await _notify.NotifyUsersAsync(followers, NotifyType.Reply,
+            $"{author.Name} replied in a thread you follow", link, author.Name, default);
 
         // @mentions: notify each distinct mentioned username (skip self-mention).
         var mentioned = MentionPattern.Matches(request.Content)
@@ -282,7 +304,7 @@ public class ForumService : IForumService
             .Where(u => !string.Equals(u, author.Name, StringComparison.OrdinalIgnoreCase))
             .Distinct(StringComparer.OrdinalIgnoreCase);
         foreach (var username in mentioned)
-            await _notify.NotifyUsernameAsync(username, "mention",
+            await _notify.NotifyUsernameAsync(username, NotifyType.Mention,
                 $"{author.Name} mentioned you in a post", link, author.Name, default);
 
         return ApiResponse<ForumPostDto>.Ok(new ForumPostDto(newPost.Id, threadId, newPost.ParentPostId,
