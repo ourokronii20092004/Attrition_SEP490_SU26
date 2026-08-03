@@ -29,6 +29,8 @@ $RECYCLE.BIN/
 *.log
 *.pdb
 *.tsbuildinfo
+__pycache__/
+*.py[cod]
 
 # =============================================
 # Node.js / Next.js
