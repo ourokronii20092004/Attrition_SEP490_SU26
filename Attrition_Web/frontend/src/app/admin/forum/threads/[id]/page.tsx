@@ -19,22 +19,10 @@ import { resolveMediaUrl } from "@/lib/api/media";
 import { qk } from "@/lib/query-keys";
 import { makeOptimisticPost, addPostToPage, replacePostInPage, removePostFromPage } from "@/lib/forum-cache";
 import { useAdminPageLabel } from "@/lib/hooks/use-admin-page-label";
+import { buildTree, indentsChildren, type PostNode } from "@/lib/forum-tree";
 import type { ForumPostDto, ForumThreadDto, PaginatedResponse } from "@/lib/types";
 
-type PostNode = ForumPostDto & { children: PostNode[] };
 const REPLY_PAGE_SIZE = 50;
-
-function buildTree(posts: ForumPostDto[]): PostNode[] {
-  const byId = new Map<string, PostNode>();
-  for (const post of posts) byId.set(post.id, { ...post, children: [] });
-  const roots: PostNode[] = [];
-  for (const node of byId.values()) {
-    const parent = node.parentPostId ? byId.get(node.parentPostId) : null;
-    if (parent) parent.children.push(node);
-    else roots.push(node);
-  }
-  return roots;
-}
 
 export default function AdminThreadPostsPage() {
   const { user } = useAuth();
@@ -215,12 +203,14 @@ function ThreadPost({ post, thread, replyCount, removing, onReact, onRemove }: {
   </Card>;
 }
 
-function PostNodeView({ node, canReply, replying, removingId, onReact, onReply, onRemove }: { node: PostNode; canReply: boolean; replying: boolean; removingId?: string; onReact: (postId: string, type: "like" | "dislike") => void; onReply: (content: string, parentPostId: string, attachments: string[]) => void; onRemove: (postId: string) => void }) {
+function PostNodeView({ node, level = 0, replyingToName, canReply, replying, removingId, onReact, onReply, onRemove }: { node: PostNode; level?: number; replyingToName?: string; canReply: boolean; replying: boolean; removingId?: string; onReact: (postId: string, type: "like" | "dislike") => void; onReply: (content: string, parentPostId: string, attachments: string[]) => void; onRemove: (postId: string) => void }) {
   const [replyOpen, setReplyOpen] = useState(false);
-  return <div><Card id={`post-${node.id}`} className="p-4 transition-shadow"><div className="flex items-start gap-3"><Avatar src={node.authorAvatar} name={node.authorName} size="md" /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><Link href={`/u/${encodeURIComponent(node.authorName)}`} className="text-sm font-medium text-fg hover:text-accent">{node.authorName}</Link>{node.authorRole === "Admin" && <span className="rounded bg-accent-soft px-1.5 py-0.5 text-xs font-medium text-accent">Admin</span>}<span className="text-xs text-fg-subtle"><RelativeTime iso={node.createdAt} /></span></div><MarkdownContent content={node.content} className="prose-content mt-2 text-sm" /><Attachments urls={node.attachments} />
+  // Past the indent cap, deeper replies render flush instead of nesting further (see forum-tree).
+  const indent = indentsChildren(level);
+  return <div><Card id={`post-${node.id}`} className="p-4 transition-shadow"><div className="flex items-start gap-3"><Avatar src={node.authorAvatar} name={node.authorName} size="md" /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><Link href={`/u/${encodeURIComponent(node.authorName)}`} className="text-sm font-medium text-fg hover:text-accent">{node.authorName}</Link>{node.authorRole === "Admin" && <span className="rounded bg-accent-soft px-1.5 py-0.5 text-xs font-medium text-accent">Admin</span>}<span className="text-xs text-fg-subtle"><RelativeTime iso={node.createdAt} /></span>{replyingToName && <span className="inline-flex items-center gap-1 text-xs text-fg-subtle"><Reply size={11} aria-hidden /> replying to <span className="font-medium text-fg-muted">@{replyingToName}</span></span>}</div><MarkdownContent content={node.content} className="prose-content mt-2 text-sm" /><Attachments urls={node.attachments} />
     <div className="mt-3 flex flex-wrap items-center gap-1"><ReplyAction active={node.currentUserReaction === "like"} onClick={() => onReact(node.id, "like")}><ThumbsUp size={14} /> {node.likeCount}</ReplyAction><ReplyAction active={node.currentUserReaction === "dislike"} danger onClick={() => onReact(node.id, "dislike")}><ThumbsDown size={14} /> {node.dislikeCount}</ReplyAction>{canReply && <ReplyAction onClick={() => setReplyOpen((value) => !value)}><Reply size={14} /> Reply</ReplyAction>}<Button size="sm" variant="danger" loading={removingId === node.id} onClick={() => onRemove(node.id)}><EyeOff size={14} className="mr-1" /> Remove</Button></div>
     {replyOpen && <div className="mt-3"><ReplyBox placeholder={`Reply to @${node.authorName}…`} loading={replying} autoFocus onSubmit={(content, attachments) => { onReply(content, node.id, attachments); setReplyOpen(false); }} /></div>}</div></div></Card>
-    {!!node.children.length && <div className="mt-3 space-y-3 border-l border-border pl-3 sm:pl-5">{node.children.map((child) => <PostNodeView key={child.id} node={child} canReply={canReply} replying={replying} removingId={removingId} onReact={onReact} onReply={onReply} onRemove={onRemove} />)}</div>}
+    {!!node.children.length && <div className={indent ? "mt-3 space-y-3 border-l border-border pl-3 sm:pl-5" : "mt-3 space-y-3"}>{node.children.map((child) => <PostNodeView key={child.id} node={child} level={level + 1} replyingToName={indent ? undefined : node.authorName} canReply={canReply} replying={replying} removingId={removingId} onReact={onReact} onReply={onReply} onRemove={onRemove} />)}</div>}
   </div>;
 }
 

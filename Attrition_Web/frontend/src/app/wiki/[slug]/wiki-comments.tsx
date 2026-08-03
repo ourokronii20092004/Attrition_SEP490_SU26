@@ -16,21 +16,8 @@ import { RelativeTime } from "@/components/ui/relative-time";
 import { MarkdownContent } from "@/components/post-content";
 import { qk } from "@/lib/query-keys";
 import { makeOptimisticPost, addPostToPage, replacePostInPage, applyReactionToPage } from "@/lib/forum-cache";
+import { buildTree, indentsChildren, type PostNode } from "@/lib/forum-tree";
 import type { ForumPostDto, PaginatedResponse } from "@/lib/types";
-
-type PostNode = ForumPostDto & { children: PostNode[] };
-
-function buildTree(posts: ForumPostDto[]): PostNode[] {
-  const byId = new Map<string, PostNode>();
-  for (const p of posts) byId.set(p.id, { ...p, children: [] });
-  const roots: PostNode[] = [];
-  for (const node of byId.values()) {
-    const parent = node.parentPostId ? byId.get(node.parentPostId) : null;
-    if (parent) parent.children.push(node);
-    else roots.push(node);
-  }
-  return roots;
-}
 
 const PAGE_SIZE = 50;
 
@@ -223,14 +210,16 @@ function CommentBox({ loading, onSubmit, autoFocus, placeholder }: {
   );
 }
 
-function CommentNode({ node, canReply, showReport, onReact, onReport, onReply, replying }: {
-  node: PostNode; canReply: boolean; showReport: boolean;
+function CommentNode({ node, level = 0, replyingToName, canReply, showReport, onReact, onReport, onReply, replying }: {
+  node: PostNode; level?: number; replyingToName?: string; canReply: boolean; showReport: boolean;
   onReact: (postId: string, type: "like" | "dislike") => void;
   onReport: (postId: string) => void;
   onReply: (content: string, parentPostId: string) => void;
   replying: boolean;
 }) {
   const [replyOpen, setReplyOpen] = useState(false);
+  // Past the indent cap, deeper replies render flush instead of nesting further (see forum-tree).
+  const indent = indentsChildren(level);
   return (
     <div>
       <Card className="p-4">
@@ -243,6 +232,12 @@ function CommentNode({ node, canReply, showReport, onReact, onReport, onReply, r
               </Link>
               {node.authorRole === "Admin" && <span className="rounded bg-accent-soft px-1.5 py-0.5 text-xs font-medium text-accent">Admin</span>}
               <span className="text-xs text-fg-subtle"><RelativeTime iso={node.createdAt} /></span>
+              {replyingToName && (
+                <span className="inline-flex items-center gap-1 text-xs text-fg-subtle">
+                  <Reply size={11} aria-hidden /> replying to
+                  <span className="font-medium text-fg-muted">@{replyingToName}</span>
+                </span>
+              )}
             </div>
             <MarkdownContent content={node.content} className="prose-content mt-2 text-sm" />
             <div className="mt-2 flex items-center gap-1">
@@ -275,9 +270,11 @@ function CommentNode({ node, canReply, showReport, onReact, onReport, onReply, r
         </div>
       </Card>
       {node.children.length > 0 && (
-        <div className="mt-3 space-y-3 border-l border-border pl-3 sm:pl-5">
+        <div className={indent ? "mt-3 space-y-3 border-l border-border pl-3 sm:pl-5" : "mt-3 space-y-3"}>
           {node.children.map((child) => (
-            <CommentNode key={child.id} node={child} canReply={canReply} showReport={showReport}
+            <CommentNode key={child.id} node={child} level={level + 1}
+              replyingToName={indent ? undefined : node.authorName}
+              canReply={canReply} showReport={showReport}
               onReact={onReact} onReport={onReport} onReply={onReply} replying={replying} />
           ))}
         </div>

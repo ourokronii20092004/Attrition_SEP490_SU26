@@ -19,23 +19,8 @@ import { MarkdownContent } from "@/components/post-content";
 import { resolveMediaUrl } from "@/lib/api/media";
 import { qk } from "@/lib/query-keys";
 import { makeOptimisticPost, addPostToPage, replacePostInPage, removePostFromPage } from "@/lib/forum-cache";
+import { buildTree, indentsChildren, type PostNode } from "@/lib/forum-tree";
 import type { ForumPostDto, ForumThreadDto, PaginatedResponse } from "@/lib/types";
-
-type PostNode = ForumPostDto & { children: PostNode[] };
-
-/** Build a reply tree from the flat, chronological post list. Orphans (parent missing/removed)
- * fall back to top-level so nothing is hidden. */
-function buildTree(posts: ForumPostDto[]): PostNode[] {
-  const byId = new Map<string, PostNode>();
-  for (const p of posts) byId.set(p.id, { ...p, children: [] });
-  const roots: PostNode[] = [];
-  for (const node of byId.values()) {
-    const parent = node.parentPostId ? byId.get(node.parentPostId) : null;
-    if (parent) parent.children.push(node);
-    else roots.push(node);
-  }
-  return roots;
-}
 
 // First reply page size. Beyond this, a "Load more replies" button grows the pool and the tree
 // rebuilds incrementally (orphans fall back to top-level, so partial loads stay coherent).
@@ -553,8 +538,8 @@ function ReplyBox({ label, placeholder, loading, onSubmit, autoFocus }: {
   );
 }
 
-function PostNodeView({ node, canReply, showReport, currentUserId, onReact, onReport, onReply, onDelete, replying }: {
-  node: PostNode; canReply: boolean; showReport: boolean; currentUserId?: string;
+function PostNodeView({ node, level = 0, replyingToName, canReply, showReport, currentUserId, onReact, onReport, onReply, onDelete, replying }: {
+  node: PostNode; level?: number; replyingToName?: string; canReply: boolean; showReport: boolean; currentUserId?: string;
   onReact: (postId: string, type: "like" | "dislike") => void;
   onReport: (postId: string) => void;
   onReply: (content: string, parentPostId: string, attachments: string[]) => void;
@@ -563,6 +548,8 @@ function PostNodeView({ node, canReply, showReport, currentUserId, onReact, onRe
 }) {
   const [replyOpen, setReplyOpen] = useState(false);
   const canDelete = !!currentUserId && node.authorId === currentUserId;
+  // Past the indent cap, deeper replies render flush instead of nesting further (see forum-tree).
+  const indent = indentsChildren(level);
   return (
     <div>
       <Card id={`post-${node.id}`} className="p-4 transition-shadow">
@@ -577,6 +564,12 @@ function PostNodeView({ node, canReply, showReport, currentUserId, onReact, onRe
                 <span className="rounded bg-accent-soft px-1.5 py-0.5 text-xs font-medium text-accent">Admin</span>
               )}
               <span className="text-xs text-fg-subtle"><RelativeTime iso={node.createdAt} /></span>
+              {replyingToName && (
+                <span className="inline-flex items-center gap-1 text-xs text-fg-subtle">
+                  <Reply size={11} aria-hidden /> replying to
+                  <span className="font-medium text-fg-muted">@{replyingToName}</span>
+                </span>
+              )}
             </div>
             <MarkdownContent content={node.content} className="prose-content mt-2 text-sm" />
 
@@ -634,11 +627,15 @@ function PostNodeView({ node, canReply, showReport, currentUserId, onReact, onRe
       </Card>
 
       {node.children.length > 0 && (
-        <div className="mt-3 space-y-3 border-l border-border pl-3 sm:pl-5">
+        <div className={indent ? "mt-3 space-y-3 border-l border-border pl-3 sm:pl-5" : "mt-3 space-y-3"}>
           {node.children.map((child) => (
             <PostNodeView
               key={child.id}
               node={child}
+              level={level + 1}
+              // Once the indent stops, the visual nesting no longer says who is being answered,
+              // so name the parent explicitly on those replies.
+              replyingToName={indent ? undefined : node.authorName}
               canReply={canReply}
               showReport={showReport}
               currentUserId={currentUserId}
