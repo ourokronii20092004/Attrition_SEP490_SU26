@@ -7,7 +7,7 @@ import { PageShell } from "@/components/ui/page-shell";
 import { PageTitle } from "@/components/ui/page-title";
 import { PageLoader } from "@/components/ui/spinner";
 import {
-  ProfileSection, PasswordSection, ConnectionsSection, EmailSection, DangerSection,
+  ProfileSection, PrivacySection, PasswordSection, ConnectionsSection, EmailSection, DangerSection,
 } from "@/components/account-sections";
 
 export default function SettingsPage() {
@@ -27,6 +27,7 @@ export default function SettingsPage() {
         {/* Bio, avatar, and cover live on the profile page; theme lives in the navbar — this
             section is notification prefs only (UIBD-6). */}
         <ProfileSection user={user} setUser={setUser} />
+        <PrivacySection user={user} setUser={setUser} />
         <PasswordSection />
         <ConnectionsSection />
         <EmailSection user={user} refreshUser={refreshUser} />

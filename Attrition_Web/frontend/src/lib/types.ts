@@ -34,6 +34,8 @@ export interface UserDto {
   pendingEmail: string | null;
   notifyOnReply: boolean;
   notifyOnMention: boolean;
+  showBio: boolean;
+  showActivity: boolean;
   hasPassword: boolean;
   isGoogleLinked: boolean;
 }
@@ -87,6 +89,8 @@ export interface UpdateProfileRequest {
   email?: string;
   notifyOnReply?: boolean;
   notifyOnMention?: boolean;
+  showBio?: boolean;
+  showActivity?: boolean;
   displayName?: string;
 }
 

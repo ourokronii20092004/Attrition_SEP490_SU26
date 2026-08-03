@@ -2,6 +2,7 @@
 
 export { SettingsCard } from "./SettingsCard";
 export { ProfileSection } from "./ProfileSection";
+export { PrivacySection } from "./PrivacySection";
 export { AvatarSection } from "./AvatarSection";
 export { ThemeSection } from "./ThemeSection";
 export { PasswordSection } from "./PasswordSection";

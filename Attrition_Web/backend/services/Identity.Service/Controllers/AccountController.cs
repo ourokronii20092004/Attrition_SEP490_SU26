@@ -19,11 +19,17 @@ public class AccountController : ControllerBase
         _user = user;
     }
 
+    /// <summary>
+    /// Public profile. Anonymous-friendly: <see cref="ICurrentUser"/> simply reports no user when
+    /// the request carries no token, and the owner/admin exemption falls out of that.
+    /// A profile the owner has hidden answers 403 (not 404) so the client can say so plainly.
+    /// </summary>
     [HttpGet("profile/{username}")]
     public async Task<IActionResult> GetProfile(string username)
     {
-        var result = await _account.GetProfileByUsernameAsync(username);
-        return result.Success ? Ok(result) : NotFound(result);
+        var result = await _account.GetProfileByUsernameAsync(username, _user.UserId, _user.IsAdmin);
+        if (result.Success) return Ok(result);
+        return result.Error == ProfileErrors.Hidden ? StatusCode(StatusCodes.Status403Forbidden, result) : NotFound(result);
     }
 
     [Authorize]

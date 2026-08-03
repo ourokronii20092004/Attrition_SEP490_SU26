@@ -23,12 +23,24 @@ public class AccountService : IAccountService
         _logger = logger;
     }
 
-    public async Task<ApiResponse<PublicProfileDto>> GetProfileByUsernameAsync(string username)
+    /// <summary>
+    /// Public profile lookup, honouring the owner's privacy setting.
+    ///
+    /// With ShowBio off the profile is withheld from everyone but the owner and admins; the
+    /// controller turns that into a 403 so the client can show a "hidden profile" page rather
+    /// than a generic not-found.
+    /// </summary>
+    public async Task<ApiResponse<PublicProfileDto>> GetProfileByUsernameAsync(
+        string username, Guid? viewerId = null, bool viewerIsAdmin = false)
     {
         var user = await _userRepo.GetByUsernameAsync(username);
-        return user == null
-            ? ApiResponse<PublicProfileDto>.Fail("User not found.")
-            : ApiResponse<PublicProfileDto>.Ok(TokenService.MapToPublicProfile(user));
+        if (user == null) return ApiResponse<PublicProfileDto>.Fail("User not found.");
+
+        var isOwner = viewerId is { } id && id == user.Id;
+        if (!user.ShowBio && !isOwner && !viewerIsAdmin)
+            return ApiResponse<PublicProfileDto>.Fail(ProfileErrors.Hidden);
+
+        return ApiResponse<PublicProfileDto>.Ok(TokenService.MapToPublicProfile(user));
     }
 
     public async Task<ApiResponse<UserDto>> UpdateProfileAsync(Guid userId, UpdateProfileRequest request)
@@ -44,6 +56,8 @@ public class AccountService : IAccountService
         }
         if (request.NotifyOnReply.HasValue) user.NotifyOnReply = request.NotifyOnReply.Value;
         if (request.NotifyOnMention.HasValue) user.NotifyOnMention = request.NotifyOnMention.Value;
+        if (request.ShowBio.HasValue) user.ShowBio = request.ShowBio.Value;
+        if (request.ShowActivity.HasValue) user.ShowActivity = request.ShowActivity.Value;
         user.UpdatedAt = DateTime.UtcNow;
         await _userRepo.UpdateAsync(user);
 

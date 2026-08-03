@@ -2,9 +2,10 @@
 
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { MessagesSquare, BookOpen, CalendarDays, Shield, Clock, UserX, BarChart3, ScrollText } from "lucide-react";
+import { MessagesSquare, BookOpen, CalendarDays, Shield, Clock, UserX, EyeOff, BarChart3, ScrollText } from "lucide-react";
 import { useAuth } from "@/lib/providers";
 import { accountApi } from "@/lib/api/account";
+import { ApiError } from "@/lib/api/client";
 import { forumApi } from "@/lib/api/forum";
 import { wikiApi } from "@/lib/api/wiki";
 import { PageShell } from "@/components/ui/page-shell";
@@ -21,14 +22,18 @@ export default function ProfilePage() {
   const params = useParams<{ username: string }>();
   const { user, refreshUser } = useAuth();
 
-  const { data: profile, isPending, refetch } = useQuery({
+  const { data: profile, isPending, error, refetch } = useQuery({
     queryKey: qk.profile(params.username),
     enabled: !!params.username,
+    // A hidden profile answers 403; let that surface as an error so the two cases can be told
+    // apart below (403 = "they hid it", anything else = "not found"). Retrying won't help either.
+    retry: false,
     queryFn: async () => {
       const res = await accountApi.getProfile(params.username);
       return res.success ? res.data : null;
     },
   });
+  const isHidden = error instanceof ApiError && error.status === 403;
 
   // The Identity service stores postCount/contributionCount as denormalized columns, but nothing
   // maintains them (forum posts & wiki articles live in other services), so they're always 0.
@@ -57,6 +62,16 @@ export default function ProfilePage() {
 
   if (isPending) return <ProfileSkeleton />;
 
+  if (isHidden) {
+    return (
+      <PageShell size="lg">
+        <div className="mb-4"><BackButton label="Back" fallbackHref="/" /></div>
+        <EmptyState icon={EyeOff} title="This profile is private"
+          description="This user has hidden their profile." />
+      </PageShell>
+    );
+  }
+
   if (!profile) {
     return (
       <PageShell size="lg">
@@ -70,6 +85,13 @@ export default function ProfilePage() {
   // PII-free public profile. Only non-sensitive fields are rendered below either way.
   const display = isOwner && user ? user : profile;
   const t = tenure(display.joinedAt);
+  // The owner always sees their own feed; for everyone else the server's flag decides.
+  // ponytail: presentation-level gate — the feed's own endpoints (forum threads/replies, wiki
+  // contributions) live in other services and stay publicly queryable by userId, so this hides
+  // the feed from the profile page but does not make the data private. To enforce it properly,
+  // those services need to consult the flag (Forum.Service already has an IdentityClient seam)
+  // or Identity needs to expose it on the internal user-summary lookup they already call.
+  const showActivity = isOwner || profile.showActivity !== false;
 
   return (
     <PageShell size="lg">
@@ -124,7 +146,14 @@ export default function ProfilePage() {
         </aside>
 
         <div className="min-w-0">
-          <ProfileActivity userId={display.id} username={display.username} />
+          {showActivity ? (
+            <ProfileActivity userId={display.id} username={display.username} />
+          ) : (
+            <EmptyState icon={EyeOff} title="Activity hidden"
+              description={isOwner
+                ? "Your activity is hidden from other people. You can change this in account settings."
+                : "This user has chosen not to show their activity."} />
+          )}
         </div>
       </div>
     </PageShell>
