@@ -58,10 +58,16 @@ namespace Attrition.Gameplay.Environment
             }
         }
 
+        // Cache id lúc Spawned: sau khi boss despawn thì `boss == null` nên BossId trả null, không tra
+        // BossDefeatState được nữa. Cũng tránh GetComponent mỗi tick.
+        private string _cachedBossId;
+
         public override void Spawned()
         {
             if (!HasStateAuthority) return;
             if (boss != null) boss.HoldDespawn = true;
+
+            _cachedBossId = BossId;
 
             // Nạp lazy (thứ tự Spawned vs FogTracker.Start không đảm bảo).
             BossDefeatState.EnsureLoadedForSolo();
@@ -82,6 +88,17 @@ namespace Attrition.Gameplay.Environment
         public override void FixedUpdateNetwork()
         {
             if (!HasStateAuthority) return;
+
+            // COOP: danh sách boss đã hạ tới TỪ SERVER (GET /sessions/{id}) nên có thể về SAU Spawned()
+            // — lúc đó `IsDefeated` còn false và boss sẽ sống lại nguyên máu. Nên kiểm lại mỗi tick cho
+            // tới khi khớp, cùng tinh thần "tự chữa" như khối mở cửa bên dưới.
+            // Chỉ chạy chiều false→true: không bao giờ hồi sinh boss vừa bị hạ trong phiên này.
+            if (!BossDefeated && !DeathStarted && BossDefeatState.IsDefeated(_cachedBossId))
+            {
+                BossDefeated = true;
+                DeathStarted = true;
+                EntrySealed = false;
+            }
 
             // Boss đã hạ từ lần chơi/lần load trước → dọn xác + MỞ LẠI đường đi.
             // Chạy ở FUN (sau mọi Spawned) nên không bị Door/Zone ghi đè mặc định.

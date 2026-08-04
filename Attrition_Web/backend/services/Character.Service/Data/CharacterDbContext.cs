@@ -52,6 +52,9 @@ public class CharacterDbContext : DbContext
             e.Property(x => x.RoomCode).HasMaxLength(8);
             e.Property(x => x.Name).HasMaxLength(60);
             e.Property(x => x.CurrentScene).HasMaxLength(100);
+            // Fog-of-war is room-level (the party explores one shared map), so it lives here rather
+            // than duplicated per character. Array of "scene:cellX:cellY" keys.
+            e.Property(x => x.FogJson).HasColumnType("jsonb");
             e.HasIndex(x => x.OwnerId);
             e.HasIndex(x => x.RoomCode).IsUnique();
         });
@@ -80,11 +83,18 @@ public class CharacterDbContext : DbContext
                 b.Property(c => c.AttackSpeed).HasColumnName("AttackSpeed");
                 b.Property(c => c.PotionMaxFlasks).HasColumnName("PotionMaxFlasks");
                 b.Property(c => c.PotionMaxManaFlasks).HasColumnName("PotionMaxManaFlasks");
+                b.Property(c => c.HealthCharges).HasColumnName("HealthCharges");
+                b.Property(c => c.ManaCharges).HasColumnName("ManaCharges");
+                b.Property(c => c.Ad).HasColumnName("Ad");
+                b.Property(c => c.Ap).HasColumnName("Ap");
+                b.Property(c => c.Def).HasColumnName("Def");
+                b.Property(c => c.Res).HasColumnName("Res");
             });
             e.OwnsOne(x => x.Position, b =>
             {
                 b.Property(p => p.PosX).HasColumnName("PosX");
                 b.Property(p => p.PosY).HasColumnName("PosY");
+                b.Property(p => p.PosZ).HasColumnName("PosZ");
                 b.Property(p => p.LastRestPointId).HasColumnName("LastRestPointId").HasMaxLength(50);
             });
 

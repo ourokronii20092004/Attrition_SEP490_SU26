@@ -60,8 +60,14 @@ namespace Attrition.Gameplay.World
 
         private void RestoreActivatedFromSave()
         {
-            // Online (coop) khôi phục từ server — bỏ qua local.
-            if (Attrition.Persistence.GameLaunch.IsOnline) return;
+            // COOP: nguồn sự thật là WorldMapState (đã nạp từ server trong PlayerInventory). Có thể
+            // fetch CHƯA xong lúc này → khi xong, ApplyCoopDiscovered() quét lại toàn bộ checkpoint.
+            if (Attrition.Persistence.GameLaunch.IsOnline)
+            {
+                if (Attrition.Gameplay.Environment.WorldMapState.IsCheckpointDiscovered(DisplayName))
+                    ApplyDiscovered();
+                return;
+            }
 
             var data = Attrition.Persistence.SaveManager.LoadSlot(Attrition.Persistence.GameLaunch.SelectedSlot);
             if (data == null) return;
@@ -75,12 +81,35 @@ namespace Attrition.Gameplay.World
                               || data.checkpointId == DisplayName;
             if (discovered)
             {
-                HasBeenActivated = true;
-                RespawnPosition = RestPoint;
-                Attrition.Gameplay.Environment.WorldMapState.MarkCheckpointDiscovered(DisplayName);
+                ApplyDiscovered();
 
                 // Checkpoint khớp đúng cái save gần nhất → đặt làm điểm hồi sinh hiện hành.
                 if (data.checkpointId == DisplayName) MostRecentlyActivated = this;
+            }
+        }
+
+        /// <summary>Bật beacon + điểm hồi sinh cho checkpoint đã khám phá (host-side).</summary>
+        private void ApplyDiscovered()
+        {
+            HasBeenActivated = true;
+            RespawnPosition = RestPoint;
+            Attrition.Gameplay.Environment.WorldMapState.MarkCheckpointDiscovered(DisplayName);
+            if (activeVisual != null) activeVisual.SetActive(true);
+        }
+
+        /// <summary>
+        /// COOP: gọi SAU khi nạp xong world-state từ server. `Spawned()` của checkpoint có thể đã chạy
+        /// TRƯỚC khi request về (thứ tự không đảm bảo) — lúc đó WorldMapState còn rỗng nên beacon không
+        /// bật, fast-travel mất điểm đến và hồi sinh về sai chỗ. Quét lại một lượt là đủ, rẻ hơn cho
+        /// mỗi checkpoint tự kiểm mỗi tick.
+        /// </summary>
+        public static void ApplyCoopDiscovered()
+        {
+            foreach (var cp in FindObjectsByType<Checkpoint>(FindObjectsSortMode.None))
+            {
+                if (cp == null || !cp.HasStateAuthority || cp.HasBeenActivated) continue;
+                if (Attrition.Gameplay.Environment.WorldMapState.IsCheckpointDiscovered(cp.DisplayName))
+                    cp.ApplyDiscovered();
             }
         }
 

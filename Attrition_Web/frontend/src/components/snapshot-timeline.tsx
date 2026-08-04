@@ -1,5 +1,6 @@
 import type { SnapshotDto } from "@/lib/types";
 import { formatDateTime } from "@/lib/format-date";
+import { formatPlaytime } from "@/lib/format-duration";
 
 export function SnapshotTimeline({ snapshots }: { snapshots: SnapshotDto[] }) {
   if (snapshots.length === 0) {
@@ -22,10 +23,4 @@ export function SnapshotTimeline({ snapshots }: { snapshots: SnapshotDto[] }) {
       ))}
     </ol>
   );
-}
-
-function formatPlaytime(seconds: number): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }

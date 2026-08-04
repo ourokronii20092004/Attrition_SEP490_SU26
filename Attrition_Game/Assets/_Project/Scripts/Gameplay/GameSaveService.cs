@@ -159,9 +159,13 @@ namespace Attrition.Gameplay.Persistence
         }
 
         /// <summary>
-        /// Host-authoritative: HOST lưu hộ MỌI player (host + client) lên server, mỗi người theo
-        /// character của CHÍNH HỌ (OwnerUserId/OwnerCharacterId networked trên PlayerInventory).
-        /// Quest world-state chỉ đính kèm 1 lần vào snapshot của nhân vật HOST.
+        /// Host-authoritative: HOST gom TOÀN BỘ dữ liệu của MỌI player (host + client) thành 1 payload
+        /// và đẩy lên server bằng ĐÚNG 1 request (`sessions/bulk`). Server ghi tất cả trong 1
+        /// transaction nên không còn cảnh player A lưu xong, player B lỗi mạng.
+        ///
+        /// Trước đây: N snapshot + N character-session + 1 meta = 3~4 request mỗi lần save, và snapshot
+        /// CHỈ ghi cho nhân vật host (server lấy OwnerId từ JWT) nên tiến trình client không lên web.
+        /// Nay mỗi entry mang ownerId riêng và server tự đối chiếu bảng characters trước khi ghi.
         /// </summary>
         private IEnumerator SaveAllOnline(SaveEvent evt, string checkpointId = null, Vector3? checkpointPos = null)
         {
@@ -180,11 +184,16 @@ namespace Attrition.Gameplay.Persistence
                 yield return APIManager.Instance.RefreshAccessToken(_ => { });
             }
 
-            // Theo dõi kết quả mọi call để báo người chơi 1 lần ở cuối (tránh spam toast mỗi player).
-            bool anyFailed = false;
+            // Không có SessionId (tạo room trên server thất bại) thì không biết ghi vào phòng nào.
+            if (string.IsNullOrEmpty(GameLaunch.SessionId))
+            {
+                Debug.LogWarning("[Save:ONLINE] BỎ QUA: chưa có SessionId (host chưa tạo được room trên server).");
+                Attrition.Controllers.SaveNotifyEvents.RaiseFailed(
+                    "Failed to save progress: this room isn't registered on the server.");
+                yield break;
+            }
 
-            // Quest world-state là của host → gom 1 lần, gắn vào nhân vật host.
-            string questsJson = Attrition.Gameplay.NPC.NetworkNPC.CaptureAllJson();
+            var characters = new System.Collections.Generic.List<APIManager.BulkCharacterDto>();
 
             foreach (var player in FindObjectsByType<PlayerController>(FindObjectsSortMode.None))
             {
@@ -193,119 +202,191 @@ namespace Attrition.Gameplay.Persistence
                 if (stats == null) continue;
                 var prog = player.GetComponent<PlayerProgression>();
                 var inv = player.GetComponent<Attrition.Gameplay.Player.Inventory.PlayerInventory>();
+                var potions = player.GetComponent<PotionSystem>();
 
-                // Danh tính chủ nhân nhân vật này (host ghi/đọc qua networked field).
+                // Danh tính chủ nhân nhân vật này. PHẢI đọc từ networked field trên PlayerInventory —
+                // GameLaunch.* là static LOCAL của host, dùng nó sẽ gán cả 2 player về host.
                 string ownerId = inv != null ? inv.OwnerUserId.ToString() : "";
                 string charId = inv != null ? inv.OwnerCharacterId.ToString() : "";
 
-                // Không có danh tính (chưa kịp sync / player lạ) → bỏ qua, tránh ghi nhầm.
-                if (string.IsNullOrEmpty(ownerId)) continue;
+                // Thiếu danh tính (chưa kịp sync / player lạ) → bỏ qua, tránh ghi nhầm người.
+                if (string.IsNullOrEmpty(ownerId) || string.IsNullOrEmpty(charId))
+                {
+                    Debug.LogWarning($"[Save:BULK] BỎ QUA 1 player: ownerId='{ownerId}' charId='{charId}' "
+                                     + "(client chưa resolve characterId trên server).");
+                    continue;
+                }
 
-                // Nhân vật host = peer vừa có InputAuthority vừa StateAuthority (host điều khiển).
+                // Nhân vật host = peer có InputAuthority (trên máy host chỉ player của host có).
                 bool isHostOwnPlayer = player.Object != null && player.Object.HasInputAuthority;
 
-                string invJson = inv != null ? inv.ExportJson() : null;
+                // Vị trí: checkpoint (khi rest) hoặc vị trí hiện tại. checkpointPos là của HOST nên chỉ
+                // áp cho player host; client vẫn lưu đúng chỗ nó đang đứng.
+                Vector3 pos = (isHostOwnPlayer && checkpointPos.HasValue)
+                    ? checkpointPos.Value
+                    : player.transform.position;
 
-                // SNAPSHOT (bảng characters global) CHỈ cho nhân vật HOST. Snapshot dùng JWT host →
-                // server lấy OwnerId từ token, host không ghi được global của client. Tiến trình client
-                // nằm trọn trong character_session (đẩy bên dưới). Đúng mô hình DST host-authoritative.
-                if (isHostOwnPlayer)
+                characters.Add(new APIManager.BulkCharacterDto
                 {
-                    var req = new APIManager.SnapshotIngestRequest
-                    {
-                        ownerId = ownerId,
-                        characterId = string.IsNullOrEmpty(charId) ? null : charId,
-                        name = string.IsNullOrEmpty(player.DisplayName.Value) ? "Wanderer" : player.DisplayName.Value,
-                        archetype = "default",
-                        level = prog != null ? prog.Level : stats.Level,
-                        hp = stats.CurrentHP,
-                        maxHp = stats.MaxHP,
-                        gold = 0,
-                        isAlive = !player.IsDead,
-                        roomCode = GameLaunch.RoomCode,
-                        eventType = evt.ToString().ToLowerInvariant(),
-                        playtimeSeconds = TotalPlaytimeSeconds,
-                        inventoryJson = invJson,
-                        questsJson = questsJson
-                    };
-
-                    yield return APIManager.Instance.PostSnapshot(req, ok =>
-                    {
-                        if (!ok) anyFailed = true;
-                    });
-                }
-
-                // PER-ROOM: ngoài snapshot (lịch sử theo character), đẩy tiến trình đầy đủ vào
-                // character_session theo (charId, SessionId) — stat/điểm cộng/bình/vị trí/đồ của
-                // ĐÚNG người trong ĐÚNG room. Chỉ khi host đã có SessionId (tạo room server OK)
-                // và character này có id (đã resolve trên server). Thiếu 1 trong 2 → bỏ qua phần này,
-                // snapshot ở trên vẫn lưu nên không mất tiến trình cốt lõi.
-                if (!string.IsNullOrEmpty(GameLaunch.SessionId) && !string.IsNullOrEmpty(charId))
-                {
-                    var potions = player.GetComponent<PotionSystem>();
-                    Vector3 pos = checkpointPos ?? player.transform.position;
-
-                    var csReq = new APIManager.SaveCharacterSessionRequest
-                    {
-                        characterId = charId,
-                        sessionId = GameLaunch.SessionId,
-                        playerRole = (short)(isHostOwnPlayer ? 0 : 1),
-                        currentLevel = prog != null ? prog.Level : stats.Level,
-                        currentExp = prog != null ? prog.CurrentExp : 0,
-                        allocatedPointsJson = JsonConvert.SerializeObject(CaptureAllocated(stats)),
-                        maxHp = stats.MaxHP,
-                        currentHp = stats.CurrentHP,
-                        maxMana = stats.MaxMana,
-                        currentMana = stats.CurrentMana,
-                        maxStamina = stats.MaxStamina,
-                        potionMaxFlasks = potions != null ? potions.MaxHealthCharges : 0,
-                        potionMaxManaFlasks = potions != null ? potions.MaxManaCharges : 0,
-                        attackSpeed = stats.AttackSpeed,
-                        posX = pos.x,
-                        posY = pos.y,
-                        lastRestPointId = checkpointId,
-                        // Đồ đẩy lại cùng giá trị với snapshot (đã export ở trên); null = giữ nguyên.
-                        inventoryJson = invJson,
-                        equipmentJson = null
-                    };
-
-                    yield return APIManager.Instance.SaveCharacterSession(csReq, ok =>
-                    {
-                        if (!ok) anyFailed = true;
-                    });
-                }
-                else
-                {
-                    // Bỏ qua per-room save → bình/stat client KHÔNG được lưu. Log rõ lý do để chẩn đoán.
-                    Debug.LogWarning($"[Save:ROOM] BỎ QUA (không lưu bình/stat): sessionId='{GameLaunch.SessionId}' charId='{charId}' isHostOwn={isHostOwnPlayer}. "
-                                     + "charId rỗng = client chưa resolve characterId server → per-room save bị skip.");
-                }
+                    characterId = charId,
+                    ownerId = ownerId,
+                    playerRole = (short)(isHostOwnPlayer ? 0 : 1),
+                    name = string.IsNullOrEmpty(player.DisplayName.Value) ? "Wanderer" : player.DisplayName.Value,
+                    archetype = "default",
+                    currentLevel = prog != null ? prog.Level : stats.Level,
+                    currentExp = prog != null ? prog.CurrentExp : 0,
+                    allocatedPointsJson = JsonConvert.SerializeObject(CaptureAllocated(stats)),
+                    maxHp = stats.MaxHP,
+                    currentHp = stats.CurrentHP,
+                    maxMana = stats.MaxMana,
+                    currentMana = stats.CurrentMana,
+                    maxStamina = stats.MaxStamina,
+                    potionMaxFlasks = potions != null ? potions.MaxHealthCharges : 0,
+                    potionMaxManaFlasks = potions != null ? potions.MaxManaCharges : 0,
+                    healthCharges = potions != null ? potions.HealthCharges : 0,
+                    manaCharges = potions != null ? potions.ManaCharges : 0,
+                    attackSpeed = stats.AttackSpeed,
+                    // Chỉ số cuối đã gộp base + điểm cộng + đồ. Web không tính lại được nên gửi sẵn.
+                    ad = stats.AD,
+                    ap = stats.AP,
+                    def = stats.DEF,
+                    res = stats.RES,
+                    posX = pos.x,
+                    posY = pos.y,
+                    posZ = pos.z,
+                    // checkpointId là của host (điểm host vừa rest) → chỉ gán cho host, tránh ghi
+                    // sai điểm hồi sinh của client. null = server giữ giá trị cũ.
+                    lastRestPointId = isHostOwnPlayer ? checkpointId : null,
+                    inventoryJson = inv != null ? inv.ExportJson() : null,
+                    equipmentJson = null,   // đồ đang trang bị nằm trong inventoryJson (equipped*)
+                    deathCount = stats.DeathCount,
+                    isAlive = !player.IsDead
+                });
             }
 
-            // PER-ROOM quest world-state: host đẩy meta phòng (playtime/scene) khi có SessionId.
-            if (!string.IsNullOrEmpty(GameLaunch.SessionId))
+            // World flags của PHÒNG (host-authoritative, không theo từng player):
+            //  - quest  : stateValue/progress thật từ NetworkNPC.
+            //  - boss   : đã hạ (stateValue 1).
+            //  - cp:*   : checkpoint đã khám phá (prefix để không đụng namespace của quest/boss).
+            var worldStates = new System.Collections.Generic.List<APIManager.BulkWorldStateDto>();
+            AppendQuestStates(worldStates);
+
+            foreach (var bossId in Attrition.Gameplay.Environment.BossDefeatState.AllDefeated)
+                if (!string.IsNullOrEmpty(bossId))
+                    worldStates.Add(new APIManager.BulkWorldStateDto { eventId = bossId, stateValue = 1, progress = 0 });
+
+            foreach (var cp in Attrition.Gameplay.Environment.WorldMapState.AllDiscoveredCheckpoints)
+                if (!string.IsNullOrEmpty(cp))
+                    worldStates.Add(new APIManager.BulkWorldStateDto { eventId = CheckpointEventId(cp), stateValue = 1, progress = 0 });
+
+            var req = new APIManager.BulkSaveRequest
             {
+                sessionId = GameLaunch.SessionId,
+                playTimeSeconds = TotalPlaytimeSeconds,
                 // Ghi GameLaunch.GameplayScene — nguồn DUY NHẤT đáng tin cho tên map đang chơi. KHÔNG
                 // dùng SceneManager.GetActiveScene() (coop load additive nên có thể trả menu) hay
-                // gameObject.scene (trả scene runner riêng của Fusion). Load-back (PlayerInventory) so
-                // khớp CÙNG giá trị này → luôn nhất quán, tránh "spawn về điểm gốc" do lệch tên scene.
-                var metaReq = new APIManager.UpdateSessionRequest
-                {
-                    sessionId = GameLaunch.SessionId,
-                    playTimeSeconds = TotalPlaytimeSeconds,
-                    currentScene = GameLaunch.GameplayScene
-                };
-                yield return APIManager.Instance.UpdateSessionMeta(metaReq, ok => { if (ok == null) anyFailed = true; });
-            }
+                // gameObject.scene (trả scene runner riêng của Fusion). Load-back so khớp CÙNG giá trị.
+                currentScene = GameLaunch.GameplayScene,
+                fogJson = JsonConvert.SerializeObject(
+                    new System.Collections.Generic.List<string>(Attrition.Gameplay.Environment.WorldMapState.AllFog)),
+                eventType = evt.ToString().ToLowerInvariant(),
+                roomCode = GameLaunch.RoomCode,
+                characters = characters,
+                worldStates = worldStates
+            };
 
-            // Báo người chơi 1 lần: thành công hết → toast xanh; có call hỏng → toast đỏ (data đoạn
-            // này chưa lên server, nên người chơi biết để kiểm tra mạng / thử lại).
-            if (anyFailed)
+            APIManager.BulkSaveResultDto result = null;
+            yield return APIManager.Instance.SaveBulk(req, r => result = r);
+
+            if (result == null)
+            {
                 Attrition.Controllers.SaveNotifyEvents.RaiseFailed(
                     "Failed to save progress. Check your connection — your latest progress may not be saved.");
-            else
-                Attrition.Controllers.SaveNotifyEvents.RaiseOk("Progress saved.");
+                yield break;
+            }
+
+            // Server trả 200 nhưng có thể TỪ CHỐI một số nhân vật (ownerId không khớp bảng characters).
+            // Không log thì lỗi này vô hình: người chơi thấy "saved" mà tiến trình 1 người không lên.
+            if (result.skipped != null && result.skipped.Count > 0)
+            {
+                Debug.LogError($"[Save:BULK] Server TỪ CHỐI {result.skipped.Count} nhân vật (ownerId không khớp): "
+                               + string.Join(", ", result.skipped));
+                Attrition.Controllers.SaveNotifyEvents.RaiseFailed(
+                    "Some progress could not be saved — a character wasn't recognised by the server.");
+                yield break;
+            }
+
+            // Gửi player nhưng server không ghi được ai → coi là thất bại, đừng báo xanh.
+            if (characters.Count > 0 && result.charactersSaved == 0)
+            {
+                Debug.LogError("[Save:BULK] Không nhân vật nào được ghi dù payload có dữ liệu.");
+                Attrition.Controllers.SaveNotifyEvents.RaiseFailed(
+                    "Failed to save progress. Please try again.");
+                yield break;
+            }
+
+            Attrition.Controllers.SaveNotifyEvents.RaiseOk("Progress saved.");
         }
+
+        /// <summary>
+        /// Quest world-state: NetworkNPC lưu dạng JSON (questId/state/progress). Parse ra từng row để
+        /// server giữ được state + progress thật, thay vì nhét cả khối JSON vào snapshot như trước.
+        /// JSON hỏng → bỏ qua quest, các phần còn lại của save vẫn đi.
+        /// </summary>
+        private void AppendQuestStates(System.Collections.Generic.List<APIManager.BulkWorldStateDto> dest)
+        {
+            string questsJson = Attrition.Gameplay.NPC.NetworkNPC.CaptureAllJson();
+            if (string.IsNullOrEmpty(questsJson)) return;
+            try
+            {
+                var list = JsonConvert.DeserializeObject<QuestProgressList>(questsJson);
+                if (list?.quests == null) return;
+                foreach (var q in list.quests)
+                {
+                    if (q == null || string.IsNullOrEmpty(q.questId)) continue;
+                    dest.Add(new APIManager.BulkWorldStateDto
+                    {
+                        eventId = QuestEventId(q.questId),
+                        stateValue = q.state,
+                        progress = q.progress
+                    });
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"[Save:BULK] Parse quest JSON lỗi, bỏ qua quest: {e.Message}");
+            }
+        }
+
+        // Prefix để 3 loại world-state (quest / boss / checkpoint) không đụng eventId của nhau.
+        // Cột EventId chỉ 50 ký tự nên prefix phải ngắn.
+        private const string QuestPrefix = "q:";
+        private const string CheckpointPrefix = "cp:";
+        private static string QuestEventId(string questId) => QuestPrefix + questId;
+        private static string CheckpointEventId(string checkpointId) => CheckpointPrefix + checkpointId;
+
+        /// <summary>Bóc prefix "cp:" → id checkpoint. Trả null nếu không phải row checkpoint.</summary>
+        public static string ParseCheckpointEventId(string eventId)
+            => !string.IsNullOrEmpty(eventId) && eventId.StartsWith(CheckpointPrefix, System.StringComparison.Ordinal)
+                ? eventId.Substring(CheckpointPrefix.Length)
+                : null;
+
+        /// <summary>
+        /// Bóc prefix "q:" → questId. Trả null nếu KHÔNG phải row quest.
+        /// Row cũ (lưu trước khi có prefix) không có "q:" nhưng cũng không có "cp:" và không phải boss
+        /// nào — không phân biệt được với boss, nên coi row-không-prefix là boss (xem IsBossEventId) và
+        /// quest cũ sẽ mất 1 lần; lần save kế tiếp ghi lại đúng prefix.
+        /// </summary>
+        public static string ParseQuestEventId(string eventId)
+            => !string.IsNullOrEmpty(eventId) && eventId.StartsWith(QuestPrefix, System.StringComparison.Ordinal)
+                ? eventId.Substring(QuestPrefix.Length)
+                : null;
+
+        /// <summary>True nếu row world-state là boss đã hạ (không prefix, stateValue = 1).</summary>
+        public static bool IsBossEventId(string eventId)
+            => !string.IsNullOrEmpty(eventId)
+               && !eventId.StartsWith(QuestPrefix, System.StringComparison.Ordinal)
+               && !eventId.StartsWith(CheckpointPrefix, System.StringComparison.Ordinal);
 
         private int[] CaptureAllocated(PlayerStats stats)
         {

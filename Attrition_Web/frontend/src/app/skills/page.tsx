@@ -12,7 +12,7 @@ import { Select } from "@/components/ui/select";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SkeletonGrid } from "@/components/ui/skeleton";
 import { SkillTree } from "@/components/skill-tree";
-import { buildSkillTree } from "@/lib/skill-tree";
+import { buildSkillTree, ELEMENTS } from "@/lib/skill-tree";
 
 export default function SkillsPage() {
   const [search, setSearch] = useState("");
@@ -33,7 +33,7 @@ export default function SkillsPage() {
     <PageTitle description="Player abilities synced from the game, branching by element and deepening with rarity.">Skill Tree</PageTitle>
     <div className="flex flex-wrap items-end gap-3">
       <div className="relative min-w-56 flex-1"><Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-fg-subtle" /><Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search skills..." aria-label="Search skills" className="pl-9" /></div>
-      <Select value={element} onChange={(e) => setElement(e.target.value)} aria-label="Filter by element"><option value="">All elements</option>{["Fire","Wood","Earth","Thunder","Thrust"].map((x) => <option key={x}>{x}</option>)}</Select>
+      <Select value={element} onChange={(e) => setElement(e.target.value)} aria-label="Filter by element"><option value="">All elements</option>{ELEMENTS.map((x) => <option key={x}>{x}</option>)}</Select>
       <Select value={damageType} onChange={(e) => setDamageType(e.target.value)} aria-label="Filter by damage type"><option value="">All damage</option>{["Physical","Magic","True"].map((x) => <option key={x}>{x}</option>)}</Select>
     </div>
     {isPending ? <SkeletonGrid count={6} className="mt-6 lg:grid-cols-3" /> : !filtered.length ?

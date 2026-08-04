@@ -967,11 +967,18 @@
     scale: 1.02;
 }
 
-/* Create account text */
+/* Create account text — clickable link mở trang register của web. Trước đây để opacity 0.2 nên
+   trông như text bị disable; nâng lên + hover sáng để người chơi biết bấm được. */
 #login-create-account {
-    color: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.7);
     font-size: 16px;
     -unity-text-align: middle-center;
+    margin-top: 8px;
+    padding: 4px;
+}
+
+#login-create-account:hover {
+    color: rgb(255, 255, 255);
 }
 
 /* ============================================================

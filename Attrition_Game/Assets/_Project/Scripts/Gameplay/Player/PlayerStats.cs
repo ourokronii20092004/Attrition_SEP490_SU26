@@ -23,6 +23,12 @@ namespace Attrition.Gameplay.Player
         [Networked] public float CurrentStamina { get; set; }
         [Networked] public int Level { get; set; }
 
+        /// <summary>
+        /// Số lần nhân vật này chết trong phiên/phòng hiện tại. Networked để host đọc được của CẢ
+        /// client khi bulk save. KHÔNG reset khi hồi sinh — chỉ reset khi bắt đầu phòng/save mới.
+        /// </summary>
+        [Networked] public int DeathCount { get; set; }
+
         // Điểm tự cộng (Option 2) — host-authoritative, sync xuống client.
         // Index = (int)StatType (0..6). UI đọc để hiện, gọi RpcRequestAllocate để cộng.
         [Networked, Capacity(7)] public NetworkArray<int> AllocatedPoints { get; }
@@ -157,9 +163,19 @@ namespace Attrition.Gameplay.Player
             {
                 potions.MaxHealthCharges = cs.potionMaxFlasks;
                 potions.MaxManaCharges = cs.potionMaxManaFlasks;
-                potions.HealthCharges = potions.MaxHealthCharges;
-                potions.ManaCharges = potions.MaxManaCharges;
+                // Bình HIỆN CÒN: record cũ (trước bulk save) không có field này → cả 2 = 0 nên khôi
+                // phục full như hành vi cũ. Record mới thì trả đúng số bình còn lại lúc save.
+                bool hasCharges = (cs.healthCharges + cs.manaCharges) > 0;
+                potions.HealthCharges = hasCharges
+                    ? Mathf.Clamp(cs.healthCharges, 0, potions.MaxHealthCharges)
+                    : potions.MaxHealthCharges;
+                potions.ManaCharges = hasCharges
+                    ? Mathf.Clamp(cs.manaCharges, 0, potions.MaxManaCharges)
+                    : potions.MaxManaCharges;
             }
+
+            // Số lần chết đã lưu của phòng này (giữ tally khi reopen).
+            if (cs.deathCount > 0) DeathCount = cs.deathCount;
 
             // HP/Mana hiện tại (clamp sau khi đồ đã đắp có thể đổi MaxHP; ReviveFull/rest sẽ hồi đầy).
             CurrentHP = cs.currentHp > 0 ? cs.currentHp : MaxHP;

@@ -10,7 +10,8 @@ namespace Attrition.Gameplay.Environment
     /// Map 1 (load lại scene) hay out game vào lại thì boss đã chết lại spawn nguyên máu.
     ///
     /// - SOLO: nạp từ save slot (LoadFrom) + ghi ngược vào slot (WriteTo) → bền qua các lần chơi.
-    /// - COOP: chỉ giữ trong phiên của host (không đụng API/DB) theo quyết định 2026-07-28.
+    /// - COOP: nạp/ghi qua world-state của phòng trên server (bulk save). Trước 2026-08 coop chỉ giữ
+    ///   trong RAM host nên reopen phòng là boss đã hạ sống lại — nay đã bền.
     ///
     /// Khoá (bossId) = `EnemyStats.EnemyId` (vd "severed_fang"). Boss là duy nhất toàn game nên đủ phân biệt.
     /// </summary>
@@ -35,6 +36,18 @@ namespace Attrition.Gameplay.Environment
             _defeated.Clear();
             if (data?.defeatedBosses == null) return;
             foreach (var id in data.defeatedBosses)
+                if (!string.IsNullOrEmpty(id)) _defeated.Add(id);
+        }
+
+        /// <summary>
+        /// COOP: nạp từ world-state của phòng (server) thay vì save slot. Trước đây coop chỉ giữ
+        /// trong RAM host nên reopen phòng là boss sống lại — giờ bulk save đẩy lên DB nên nạp lại được.
+        /// </summary>
+        public static void LoadFromIds(IEnumerable<string> bossIds)
+        {
+            _defeated.Clear();
+            if (bossIds == null) return;
+            foreach (var id in bossIds)
                 if (!string.IsNullOrEmpty(id)) _defeated.Add(id);
         }
 

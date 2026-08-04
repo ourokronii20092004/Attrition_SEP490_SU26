@@ -20,6 +20,10 @@ public class CharacterSessionEntity
     public int CurrentLevel { get; set; } = 1;
     public int CurrentExp { get; set; }
 
+    // Times this character died in THIS room. Scoped per journey like level/stats above, so a new
+    // room starts at 0 and re-opening an existing one keeps the tally.
+    public int DeathCount { get; set; }
+
     // 7 self-allocated points [hp,mana,sta,ad,ap,def,res] as a JSON array.
     public string? AllocatedPointsJson { get; set; }
 

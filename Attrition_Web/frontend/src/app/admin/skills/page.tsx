@@ -19,7 +19,7 @@ import { PageLoader } from "@/components/ui/spinner";
 import { AdminPageHeader } from "@/components/admin/admin-table";
 import { AssetImageField } from "@/components/admin/asset-image-field";
 import { SkillTree } from "@/components/skill-tree";
-import { buildSkillTree } from "@/lib/skill-tree";
+import { buildSkillTree, ELEMENTS } from "@/lib/skill-tree";
 import type { SkillResponse, SkillUpdateRequest } from "@/lib/types";
 
 const finite = z.coerce.number().finite();
@@ -27,7 +27,7 @@ const nonNegative = finite.min(0);
 const schema = z.object({
   skillId: z.string(), name: z.string().min(1, "Required").max(100), description: z.string().max(2000),
   iconKey: z.string().nullable(), rarity: z.string().min(1).max(50),
-  element: z.enum(["Fire", "Wood", "Earth", "Thunder", "Thrust"]), manaCost: z.coerce.number().int().min(0),
+  element: z.enum(ELEMENTS), manaCost: z.coerce.number().int().min(0),
   castTime: nonNegative, cooldown: nonNegative, activeStartFrac: finite.min(0).max(1), activeEndFrac: finite.min(0).max(1),
   damageType: z.enum(["Physical", "Magic", "True"]), baseDamage: z.coerce.number().int().min(0), apScaling: nonNegative,
   knockbackForce: nonNegative, tickInterval: nonNegative, sweetSpotRadius: nonNegative, sweetSpotMultiplier: nonNegative,
@@ -87,7 +87,7 @@ function SkillForm({ initial, onDone, onCancel, onDirtyChange }: { initial: Skil
       <label className="block text-sm font-medium text-fg-muted">Description<textarea rows={3} {...register("description")} className="mt-1 w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-fg outline-none focus:border-accent" /></label>
     </Section>
     <Section title="Cost & timing"><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      <Select label="Element" {...register("element")}><option>Fire</option><option>Wood</option><option>Earth</option><option>Thunder</option><option>Thrust</option></Select>
+      <Select label="Element" {...register("element")}>{ELEMENTS.map((x) => <option key={x}>{x}</option>)}</Select>
       {number("manaCost", "Mana cost")}{number("castTime", "Cast time")}{number("cooldown", "Cooldown")}{number("activeStartFrac", "Active start")}{number("activeEndFrac", "Active end")}
     </div></Section>
     <Section title="Damage"><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

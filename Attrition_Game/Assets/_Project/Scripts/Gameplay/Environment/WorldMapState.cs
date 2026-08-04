@@ -72,6 +72,25 @@ namespace Attrition.Gameplay.Environment
             data.discoveredCheckpoints = new List<string>(_checkpoints);
         }
 
+        /// <summary>
+        /// COOP: nạp từ dữ liệu phòng trên server (fog lưu ở SessionEntity.FogJson, checkpoint lưu
+        /// thành world-state row). Trước đây coop mất sạch fog + checkpoint khi reopen phòng.
+        /// Truyền null cho phần nào không có để giữ nguyên phần đó.
+        /// </summary>
+        public static void LoadFromCoop(IEnumerable<string> fogCells, IEnumerable<string> checkpointIds)
+        {
+            if (fogCells != null)
+            {
+                _fog.Clear();
+                foreach (var k in fogCells) if (!string.IsNullOrEmpty(k)) _fog.Add(k);
+            }
+            if (checkpointIds != null)
+            {
+                _checkpoints.Clear();
+                foreach (var c in checkpointIds) if (!string.IsNullOrEmpty(c)) _checkpoints.Add(c);
+            }
+        }
+
         /// <summary>Xoá sạch (vd khi bắt đầu game mới). Không đụng save.</summary>
         public static void Clear()
         {

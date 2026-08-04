@@ -63,6 +63,11 @@ export const qk = {
     detail: (id: string) => ["character", id] as const,
   },
 
+  sessions: {
+    mine: () => ["sessions", "mine"] as const,
+    detail: (id: string) => ["session", id] as const,
+  },
+
   search: (q: string) => ["search", q] as const,
   profile: (username: string) => ["profile", username] as const,
   // Live-derived forum/wiki counts for a profile (the Identity DB counters aren't maintained).

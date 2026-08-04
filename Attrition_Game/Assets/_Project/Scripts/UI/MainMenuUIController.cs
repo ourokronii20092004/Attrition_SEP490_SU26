@@ -1086,6 +1086,31 @@ namespace Attrition.UI
                     Application.OpenURL(APIManager.Instance.WebLoginUrl);
                 });
             }
+
+            // "No account? Create one" → mở trang register của web (kèm client=unity như login, nên
+            // đăng ký xong browser trả token về game qua LocalAuthServer y hệt luồng Google login).
+            var createAccountLabel = _root.Q<Label>("login-create-account");
+            if (createAccountLabel != null)
+            {
+                createAccountLabel.RegisterCallback<PointerEnterEvent>(evt => PlayHoverSound());
+                createAccountLabel.RegisterCallback<ClickEvent>(evt =>
+                {
+                    PlayClickSound();
+                    if (APIManager.Instance == null) return;
+
+                    if (loginError != null) loginError.style.display = DisplayStyle.Flex;
+                    if (errorText != null)
+                    {
+                        errorText.text = "Waiting for browser sign-up...";
+                        errorText.style.color = new StyleColor(Color.white);
+                    }
+
+                    if (LocalAuthServer.Instance != null)
+                        LocalAuthServer.Instance.StartListening();
+
+                    Application.OpenURL(APIManager.Instance.WebRegisterUrl);
+                });
+            }
         }
 
         private void HandleGoogleTokenReceived(string token, string refreshToken)

@@ -4,8 +4,13 @@ using Attrition.Core;
 
 namespace Attrition.Data
 {
-    /// <summary>5 skill nguyên tố tương ứng 5 boss khu vực.</summary>
-    public enum SkillElement { Fire, Wood, Earth, Thunder, Thrust }
+    /// <summary>
+    /// 5 skill nguyên tố tương ứng 5 boss khu vực.
+    /// THỨ TỰ LÀ HỢP ĐỒNG — .asset serialize enum này theo SỐ NGUYÊN (skill_wind = 1,
+    /// skill_water = 4) và PlayerAnimation truyền thẳng index xuống animator. Đổi vị trí
+    /// là repoint toàn bộ asset + animation trong im lặng. Thêm mới thì thêm vào CUỐI.
+    /// </summary>
+    public enum SkillElement { Fire, Wind, Earth, Thunder, Water }
 
     /// <summary>Cách skill gây sát thương: vùng tức thời, đạn bay, hoặc spawn AoE networked.</summary>
     public enum SkillDelivery { AreaInstant, Projectile, SpawnAoE }
