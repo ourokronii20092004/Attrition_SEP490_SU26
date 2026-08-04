@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { useAuth, useConfirm } from "@/lib/providers";
 import { assetsApi } from "@/lib/api/assets";
@@ -13,16 +13,17 @@ import { Pagination } from "@/components/ui/pagination";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { qk } from "@/lib/query-keys";
 import type { AssetDto } from "@/lib/types";
+import { useUrlPage } from "@/lib/hooks/use-url-pagination";
 import { UploadForm } from "./_components/UploadForm";
 import { EditForm } from "./_components/EditForm";
 
 const ASSET_TYPES = ["image", "document", "lore", "concept", "sprite"];
 
-export default function AdminAssetsPage() {
+function AdminAssetsView() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const confirm = useConfirm();
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useUrlPage();
   const [showUpload, setShowUpload] = useState(false);
   const [editing, setEditing] = useState<AssetDto | null>(null);
   const [searchInput, setSearchInput] = useState("");
@@ -64,11 +65,11 @@ export default function AdminAssetsPage() {
       <AdminPageHeader title="Assets" addLabel="Upload Asset" onAdd={() => setShowUpload(true)} />
       <AdminFilterBar
         search={searchInput}
-        onSearch={(v) => { setSearchInput(v); setPage(1); }}
+        onSearch={(v) => setSearchInput(v)}
         searchPlaceholder="Search by file name…"
         filters={[
           {
-            value: typeFilter, onChange: (v) => { setTypeFilter(v); setPage(1); }, ariaLabel: "Filter by type",
+            value: typeFilter, onChange: (v) => setTypeFilter(v), ariaLabel: "Filter by type",
             options: [{ value: "all", label: "All types" }, ...ASSET_TYPES.map((t) => ({ value: t, label: t }))],
           },
         ]}
@@ -118,5 +119,13 @@ export default function AdminAssetsPage() {
         <Pagination page={page} totalPages={totalPages} onChange={setPage} compact />
       )}
     </div>
+  );
+}
+
+export default function AdminAssetsPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminAssetsView />
+    </Suspense>
   );
 }

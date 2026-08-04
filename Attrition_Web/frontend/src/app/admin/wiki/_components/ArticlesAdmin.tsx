@@ -10,7 +10,7 @@ import { PageLoader } from "@/components/ui/spinner";
 import { AdminPageHeader, AdminFilterBar, AdminTable, AdminRow } from "@/components/admin/admin-table";
 import { Pagination } from "@/components/ui/pagination";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
-import { useClientPagination } from "@/lib/hooks/use-client-pagination";
+import { useUrlPagination } from "@/lib/hooks/use-url-pagination";
 import { formatDate } from "@/lib/format-date";
 import { qk } from "@/lib/query-keys";
 import type { WikiArticleListDto } from "@/lib/types";
@@ -58,7 +58,7 @@ export function ArticlesAdmin() {
     if (search && !a.title.toLowerCase().includes(search)) return false;
     return true;
   });
-  const { page, setPage, totalPages, paged } = useClientPagination(filtered, 20);
+  const { page, setPage, totalPages, paged } = useUrlPagination(filtered, 20);
 
   if (articlesLoading || categoriesLoading) return <PageLoader />;
 

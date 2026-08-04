@@ -156,6 +156,7 @@ public class AuthService : IAuthService
 
         var (accessToken, refreshToken) = _tokens.GenerateTokens(user);
         user.Refresh = new() { Token = TokenService.HashToken(refreshToken), ExpiresAt = DateTime.UtcNow.AddDays(_tokens.RefreshExpiryDays) };
+
         await _userRepo.UpdateAsync(user);
 
         return ApiResponse<AuthResponse>.Ok(new AuthResponse(accessToken, refreshToken, TokenService.MapToDto(user)));
@@ -298,6 +299,7 @@ public class AuthService : IAuthService
                     DisplayName = payload.Name,
                     GoogleId = payload.Subject,
                     GoogleAvatarUrl = payload.Picture,
+                    GoogleEmail = payload.Email,
                     AuthProvider = "google",
                     PasswordHash = null
                 };
@@ -349,6 +351,11 @@ public class AuthService : IAuthService
         if (user.PasswordHash == null || !BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash))
             return ApiResponse<AuthResponse>.Fail("Incorrect current password.");
 
+        // Re-using the current password is a no-op that would still re-hash, revoke every other
+        // session and send a "your password changed" email. Reject it instead of doing that work.
+        if (BCrypt.Net.BCrypt.Verify(request.NewPassword, user.PasswordHash))
+            return ApiResponse<AuthResponse>.Fail("Your new password must be different from your current password.");
+
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
         user.MustChangePassword = false;
 
@@ -360,15 +367,34 @@ public class AuthService : IAuthService
         // signed in (its "sat" is >= TokensValidAfter). Everyone else is booted.
         var (accessToken, refreshToken) = _tokens.GenerateTokens(user);
         user.Refresh = new() { Token = TokenService.HashToken(refreshToken), ExpiresAt = DateTime.UtcNow.AddDays(_tokens.RefreshExpiryDays) };
+
+        // Recovery token for the notification email, so "this wasn't me" is one click instead of an
+        // instruction to go find the forgot-password form. It grants nothing the mailbox holder
+        // couldn't already get by requesting a reset, and lasts 24h because someone whose account
+        // was just taken over may not read their mail straight away.
+        var recoveryToken = TokenService.NewRawToken();
+        user.PasswordReset = new() { Token = TokenService.HashToken(recoveryToken), ExpiresAt = DateTime.UtcNow.AddHours(24) };
         await _userRepo.UpdateAsync(user);
 
         // Security confirmation email — best-effort, never blocks the change. Lets the owner react if
         // the change was not made by them.
         if (!string.IsNullOrEmpty(user.Email))
+        {
+            var clientUrl = _config["App:ClientUrl"] ?? "http://localhost:3000";
+            var recoverUrl = $"{clientUrl}/reset-password?token={Uri.EscapeDataString(recoveryToken)}";
             await TrySend(user.Email, "Your Attrition password was changed",
-                $"Hi {user.Username},\n\nThe password on your Attrition account was just changed. " +
-                "If you made this change, no action is needed.\n\nIf this was NOT you, reset your password " +
-                "immediately using \"Forgot password\" and secure your email account.");
+                $"Hi {user.Username},\n\nThe password on your Attrition account was just changed, and every "
+                + "other device has been signed out.\n\nIf you made this change, nothing else is needed.\n\n"
+                + $"If this WASN'T you, set a new password now: {recoverUrl}\n\nThis link is valid for 24 hours.",
+                EmailTemplate.Wrap("Your password was changed",
+                    "If this wasn't you, secure your account now.",
+                    EmailTemplate.Text($"Hi {user.Username},"),
+                    EmailTemplate.Text("The password on your Attrition account was just changed, and every other device has been signed out."),
+                    EmailTemplate.Text("If that was you, nothing else is needed — you can ignore this email."),
+                    EmailTemplate.Warning("If this wasn't you, someone else may have access to your account. Set a new password straight away:"),
+                    EmailTemplate.Button("Secure my account", recoverUrl, danger: true),
+                    EmailTemplate.Muted("This link is valid for 24 hours. It also signs out whoever changed your password.")));
+        }
 
         return ApiResponse<AuthResponse>.Ok(new AuthResponse(accessToken, refreshToken, TokenService.MapToDto(user)));
     }
@@ -399,7 +425,14 @@ public class AuthService : IAuthService
         var clientUrl = _config["App:ClientUrl"] ?? "http://localhost:3000";
         var resetUrl = $"{clientUrl}/reset-password?token={Uri.EscapeDataString(resetToken)}";
         await TrySend(user.Email!, "Reset Your Attrition Password",
-            $"Hi {user.Username},\n\nYou requested a password reset. Reset it here: {resetUrl}");
+            $"Hi {user.Username},\n\nYou requested a password reset. Reset it here: {resetUrl}\n\nThis link is valid for 1 hour.",
+            EmailTemplate.Wrap("Reset your password",
+                "Choose a new password for your Attrition account.",
+                EmailTemplate.Text($"Hi {user.Username},"),
+                EmailTemplate.Text("You asked to reset your Attrition password. Choose a new one here:"),
+                EmailTemplate.Button("Reset my password", resetUrl),
+                EmailTemplate.Muted("This link is valid for 1 hour and can be used once."),
+                EmailTemplate.Muted("If you didn't request this, you can ignore this email — your password won't change.")));
         return generic;
     }
 
@@ -510,6 +543,7 @@ public class AuthService : IAuthService
 
         user.GoogleId = payload.Subject;
         user.GoogleAvatarUrl = payload.Picture;
+        user.GoogleEmail = payload.Email;
         user.AuthProvider = "linked";
         if (string.IsNullOrEmpty(user.Email))
         {
@@ -530,6 +564,7 @@ public class AuthService : IAuthService
 
         user.GoogleId = null;
         user.GoogleAvatarUrl = null;
+        user.GoogleEmail = null;
         user.AuthProvider = "local";
         await _userRepo.UpdateAsync(user);
         return ApiResponse.Ok();
@@ -541,12 +576,18 @@ public class AuthService : IAuthService
         var clientUrl = _config["App:ClientUrl"] ?? "http://localhost:3000";
         var verifyUrl = $"{clientUrl}/verify-email?token={Uri.EscapeDataString(verifyToken)}";
         return TrySend(user.Email, "Verify Your Attrition Account",
-            $"Hi {user.Username},\n\nPlease verify your email: {verifyUrl}");
+            $"Hi {user.Username},\n\nPlease verify your email: {verifyUrl}",
+            EmailTemplate.Wrap("Verify your email address",
+                "Confirm your address to finish setting up your Attrition account.",
+                EmailTemplate.Text($"Hi {user.Username},"),
+                EmailTemplate.Text("Confirm this address to finish setting up your account."),
+                EmailTemplate.Button("Verify my email", verifyUrl),
+                EmailTemplate.Muted("If you didn't create an Attrition account, you can ignore this email.")));
     }
 
-    private async Task TrySend(string to, string subject, string body)
+    private async Task TrySend(string to, string subject, string body, string? htmlBody = null)
     {
-        try { await _email.SendAsync(to, subject, body); }
+        try { await _email.SendAsync(to, subject, body, htmlBody); }
         catch (Exception ex) { _logger.LogWarning(ex, "Failed to send email to {To}", to); }
     }
 }

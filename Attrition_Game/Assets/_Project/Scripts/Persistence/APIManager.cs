@@ -20,6 +20,8 @@ public class APIManager : MonoBehaviour
     [SerializeField] private string webUrl = "https://attrition.io.vn";
     /// <summary>URL trang login web kèm client=unity, để mở trình duyệt cho Google login.</summary>
     public string WebLoginUrl => $"{webUrl}/login?client=unity";
+    /// <summary>URL trang đăng ký web kèm client=unity ("No account? Create one" ở menu login).</summary>
+    public string WebRegisterUrl => $"{webUrl}/register?client=unity";
     public string AccessToken { get; private set; }
     /// <summary>Refresh token (sống 7 ngày) để xin access token mới khi hết hạn — persist qua PlayerPrefs.</summary>
     public string RefreshToken { get; private set; }
@@ -442,6 +444,12 @@ public class APIManager : MonoBehaviour
         public string lastRestPointId;
         public string inventoryJson;
         public string equipmentJson;
+        // Thêm cùng bulk save: số lần chết trong phòng này + số bình HIỆN CÒN (trước chỉ lưu max nên
+        // reopen phòng luôn full bình) + posZ (solo có, coop trước đây thiếu).
+        public int deathCount;
+        public int healthCharges;
+        public int manaCharges;
+        public float posZ;
     }
 
     [System.Serializable]
@@ -464,6 +472,8 @@ public class APIManager : MonoBehaviour
         public string currentScene;
         public System.Collections.Generic.List<CharacterSessionDto> characters;
         public System.Collections.Generic.List<WorldStateDto> worldStates;
+        /// <summary>Fog-of-war cả party đã mở ("scene:cellX:cellY"). Cấp PHÒNG vì coop chung 1 map.</summary>
+        public string fogJson;
     }
 
     [System.Serializable]
@@ -516,6 +526,86 @@ public class APIManager : MonoBehaviour
         public int progress;
     }
 
+    // ── BULK SAVE: gom TẤT CẢ dữ liệu 1 lần đẩy ───────────────────────────────────────────────
+    // Thay cho fan-out cũ (N snapshot + N character-session + 1 meta = 3~4 request/save). Server
+    // ghi mọi row trong 1 transaction nên không còn cảnh player A lưu xong, player B lỗi mạng.
+
+    /// <summary>1 nhân vật trong bulk save. ownerId được server ĐỐI CHIẾU với bảng characters
+    /// (không tin client) nên host không ghi được row của nhân vật không thuộc ai đó.</summary>
+    [System.Serializable]
+    public class BulkCharacterDto
+    {
+        public string characterId;
+        public string ownerId;
+        public short playerRole;
+        public string name;
+        public string archetype;
+        public int currentLevel;
+        public int currentExp;
+        public string allocatedPointsJson;
+        public int maxHp;
+        public int currentHp;
+        public int maxMana;
+        public int currentMana;
+        public int maxStamina;
+        public int potionMaxFlasks;
+        public int potionMaxManaFlasks;
+        public int healthCharges;
+        public int manaCharges;
+        public float attackSpeed;
+        // Chỉ số CUỐI (base + điểm cộng + đồ đang mặc). PlayerStats tính ra mỗi lần chạy chứ không
+        // lưu, và web không có bảng chỉ số của đồ để tự tính lại → phải gửi kết quả đã tính.
+        public int ad;
+        public int ap;
+        public int def;
+        public int res;
+        public float posX;
+        public float posY;
+        public float posZ;
+        public string lastRestPointId;
+        public string inventoryJson; // null = giữ nguyên trên server
+        public string equipmentJson;
+        public int deathCount;
+        public bool isAlive;
+    }
+
+    /// <summary>1 cờ world/quest trong bulk save (boss đã hạ, checkpoint đã mở, tiến trình quest).</summary>
+    [System.Serializable]
+    public class BulkWorldStateDto
+    {
+        public string eventId;
+        public short stateValue;
+        public int progress;
+    }
+
+    /// <summary>Toàn bộ state của party trong 1 payload.</summary>
+    [System.Serializable]
+    public class BulkSaveRequest
+    {
+        public string sessionId;
+        public int playTimeSeconds;
+        public string currentScene;
+        public string fogJson;
+        public string eventType;    // "rest" | "quit"
+        public string roomCode;
+        public System.Collections.Generic.List<BulkCharacterDto> characters;
+        public System.Collections.Generic.List<BulkWorldStateDto> worldStates;
+    }
+
+    /// <summary>
+    /// Server đã ghi được những gì. `skipped` = characterId bị TỪ CHỐI vì ownerId không khớp bảng
+    /// characters — HTTP vẫn 200 nên nếu chỉ xem bool thì lỗi này VÔ HÌNH: người chơi thấy "saved"
+    /// mà tiến trình 1 người không lên. Vì vậy luôn log skipped.
+    /// </summary>
+    [System.Serializable]
+    public class BulkSaveResultDto
+    {
+        public string sessionId;
+        public int charactersSaved;
+        public int worldStatesSaved;
+        public System.Collections.Generic.List<string> skipped;
+    }
+
     /// <summary>Host tạo phòng mới (hoặc reopen nếu gửi roomCode đã có của mình). Trả room đầy đủ.</summary>
     public IEnumerator CreateOrReopenSession(CreateSessionRequest req, System.Action<SessionDetailDto> callback)
         => PostSession("sessions", req, callback);
@@ -531,6 +621,47 @@ public class APIManager : MonoBehaviour
     /// <summary>Host lưu tiến trình quest của phòng (upsert theo sessionId+eventId).</summary>
     public IEnumerator SaveWorldState(SaveWorldStateRequest req, System.Action<bool> callback)
         => PostSessionOk("sessions/world-state", req, callback);
+
+    /// <summary>
+    /// BULK: host đẩy TOÀN BỘ dữ liệu party (stat/đồ/điểm/chết/boss/checkpoint/fog/meta phòng) trong
+    /// 1 request duy nhất. Server commit 1 transaction — không còn save dở dang giữa 2 người chơi.
+    /// Trả BulkSaveResultDto (null = call lỗi) để caller log được `skipped`.
+    /// </summary>
+    public IEnumerator SaveBulk(BulkSaveRequest req, System.Action<BulkSaveResultDto> callback)
+    {
+        string json = JsonConvert.SerializeObject(req);
+        using (UnityWebRequest request = new UnityWebRequest($"{baseUrl}/sessions/bulk", "POST"))
+        {
+            request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
+            request.downloadHandler = new DownloadHandlerBuffer();
+            request.SetRequestHeader("Content-Type", "application/json");
+            if (!string.IsNullOrEmpty(AccessToken))
+                request.SetRequestHeader("Authorization", $"Bearer {AccessToken}");
+
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                BulkSaveResultDto data = null;
+                try
+                {
+                    var resp = JsonConvert.DeserializeObject<ApiResponse<BulkSaveResultDto>>(request.downloadHandler.text);
+                    if (resp != null && resp.success) data = resp.data;
+                }
+                catch (System.Exception e)
+                {
+                    // Body lạ/hỏng: coi như fail để caller báo người chơi, đừng nuốt im lặng.
+                    Debug.LogError($"[Session] POST sessions/bulk parse lỗi: {e.Message} | {request.downloadHandler.text}");
+                }
+                callback?.Invoke(data);
+            }
+            else
+            {
+                Debug.LogError($"[Session] POST sessions/bulk Fail: {request.error} | {request.downloadHandler.text}");
+                callback?.Invoke(null);
+            }
+        }
+    }
 
     /// <summary>Host đọc full room theo id (gồm tiến trình mọi player + quest) để load hành trình đã lưu.</summary>
     public IEnumerator GetSession(string sessionId, System.Action<SessionDetailDto> callback)

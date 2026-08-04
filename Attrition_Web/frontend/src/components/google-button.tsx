@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { LoadingScreen } from "@/components/ui/loading-screen";
+import { stashPendingRedirect } from "@/lib/post-login-redirect";
 import { API_BASE, GOOGLE_CLIENT_ID } from "@/lib/config";
 
 const UNITY_CLIENT_KEY = "attrition_unity_client";
@@ -95,6 +96,10 @@ export function GoogleButton({ label = "Continue with Google" }: { label?: strin
     // Show the loader BEFORE leaving for Google — the account chooser is Google's own page, so this
     // is the only moment we can give in-app feedback. The brief delay lets the overlay paint first.
     setRedirecting(true);
+    // Google's callback lands on "/" and can't carry ?redirect through the OAuth round-trip, so
+    // remember where to return in sessionStorage; AuthProvider consumes it once signed in.
+    const back = searchParams.get("redirect");
+    if (back) stashPendingRedirect(back);
     const url = `${API_BASE}/api/auth/google/start${isUnityClient() ? "?client=unity" : ""}`;
     window.setTimeout(() => { window.location.href = url; }, 150);
   };

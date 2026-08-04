@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { Eye, Ban, ShieldCheck, Trash2 } from "lucide-react";
@@ -15,6 +15,7 @@ import { formatDate } from "@/lib/format-date";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { qk } from "@/lib/query-keys";
 import type { UserListItem } from "@/lib/types";
+import { useUrlPage } from "@/lib/hooks/use-url-pagination";
 
 const SORTS = [
   { value: "newest", label: "Newest" },
@@ -28,13 +29,13 @@ const STATUSES = [
   { value: "deleted", label: "Deleted" },
 ];
 
-export default function AdminUsersPage() {
+function AdminUsersList() {
   const { user: me } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
   const confirm = useConfirm();
   const { toast } = useToast();
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useUrlPage();
   const [searchInput, setSearchInput] = useState("");
   const [sort, setSort] = useState("newest");
   const [status, setStatus] = useState("all");
@@ -115,11 +116,11 @@ export default function AdminUsersPage() {
       <AdminPageHeader title="Users" />
       <AdminFilterBar
         search={searchInput}
-        onSearch={(v) => { setSearchInput(v); setPage(1); }}
+        onSearch={(v) => setSearchInput(v)}
         searchPlaceholder="Search by username…"
         filters={[
-          { value: status, onChange: (v) => { setStatus(v); setPage(1); }, ariaLabel: "Filter by status", options: STATUSES },
-          { value: sort, onChange: (v) => { setSort(v); setPage(1); }, ariaLabel: "Sort", options: SORTS },
+          { value: status, onChange: (v) => setStatus(v), ariaLabel: "Filter by status", options: STATUSES },
+          { value: sort, onChange: (v) => setSort(v), ariaLabel: "Sort", options: SORTS },
         ]}
       />
 
@@ -201,5 +202,13 @@ export default function AdminUsersPage() {
         <Pagination page={page} totalPages={totalPages} onChange={setPage} compact />
       )}
     </div>
+  );
+}
+
+export default function AdminUsersPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminUsersList />
+    </Suspense>
   );
 }

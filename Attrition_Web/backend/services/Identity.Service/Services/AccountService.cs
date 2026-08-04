@@ -23,12 +23,24 @@ public class AccountService : IAccountService
         _logger = logger;
     }
 
-    public async Task<ApiResponse<PublicProfileDto>> GetProfileByUsernameAsync(string username)
+    /// <summary>
+    /// Public profile lookup, honouring the owner's privacy setting.
+    ///
+    /// With ShowBio off the profile is withheld from everyone but the owner and admins; the
+    /// controller turns that into a 403 so the client can show a "hidden profile" page rather
+    /// than a generic not-found.
+    /// </summary>
+    public async Task<ApiResponse<PublicProfileDto>> GetProfileByUsernameAsync(
+        string username, Guid? viewerId = null, bool viewerIsAdmin = false)
     {
         var user = await _userRepo.GetByUsernameAsync(username);
-        return user == null
-            ? ApiResponse<PublicProfileDto>.Fail("User not found.")
-            : ApiResponse<PublicProfileDto>.Ok(TokenService.MapToPublicProfile(user));
+        if (user == null) return ApiResponse<PublicProfileDto>.Fail("User not found.");
+
+        var isOwner = viewerId is { } id && id == user.Id;
+        if (!user.ShowBio && !isOwner && !viewerIsAdmin)
+            return ApiResponse<PublicProfileDto>.Fail(ProfileErrors.Hidden);
+
+        return ApiResponse<PublicProfileDto>.Ok(TokenService.MapToPublicProfile(user));
     }
 
     public async Task<ApiResponse<UserDto>> UpdateProfileAsync(Guid userId, UpdateProfileRequest request)
@@ -36,7 +48,11 @@ public class AccountService : IAccountService
         var user = await _userRepo.GetByIdAsync(userId);
         if (user == null) return ApiResponse<UserDto>.Fail("User not found.");
 
-        user.Bio = request.Bio;
+        // Every field here is patch-style: absent means "leave alone", so a caller that only
+        // updates one setting can't clear the others. Bio used to be assigned unconditionally,
+        // which meant saving a toggle or renaming yourself silently wiped your bio. An explicit
+        // empty string still clears it — only a missing field is ignored.
+        if (request.Bio != null) user.Bio = request.Bio;
         if (request.DisplayName != null)
         {
             var trimmed = request.DisplayName.Trim();
@@ -44,6 +60,8 @@ public class AccountService : IAccountService
         }
         if (request.NotifyOnReply.HasValue) user.NotifyOnReply = request.NotifyOnReply.Value;
         if (request.NotifyOnMention.HasValue) user.NotifyOnMention = request.NotifyOnMention.Value;
+        if (request.ShowBio.HasValue) user.ShowBio = request.ShowBio.Value;
+        if (request.ShowActivity.HasValue) user.ShowActivity = request.ShowActivity.Value;
         user.UpdatedAt = DateTime.UtcNow;
         await _userRepo.UpdateAsync(user);
 
@@ -164,7 +182,14 @@ public class AccountService : IAccountService
             var clientUrl = _config["App:ClientUrl"] ?? "http://localhost:3000";
             var verifyUrl = $"{clientUrl}/verify-email?token={Uri.EscapeDataString(verifyToken)}";
             await _email.SendAsync(request.NewEmail, "Verify Your New Email Address",
-                $"Hi {user.Username},\n\nPlease verify your new email address: {verifyUrl}");
+                $"Hi {user.Username},\n\nPlease verify your new email address: {verifyUrl}",
+                EmailTemplate.Wrap("Verify your new email address",
+                    "Confirm this address to finish moving your Attrition account to it.",
+                    EmailTemplate.Text($"Hi {user.Username},"),
+                    EmailTemplate.Text("You asked to change the email address on your Attrition account to this one. Confirm it here:"),
+                    EmailTemplate.Button("Verify this address", verifyUrl),
+                    EmailTemplate.Muted("Until you confirm, your account keeps using its previous address."),
+                    EmailTemplate.Muted("If you didn't request this, you can ignore this email.")));
         }
         catch (Exception ex) { _logger.LogWarning(ex, "Failed to send email-change verification"); }
 
@@ -194,7 +219,15 @@ public class AccountService : IAccountService
                 $"If this was you, confirm here (link valid 24 hours):\n\n{confirmUrl}\n\n" +
                 "After confirming, your account is deactivated and permanently deleted 90 days later. " +
                 "Sign back in any time within those 90 days to cancel and restore your account.\n\n" +
-                "If you didn't request this, you can ignore this email — nothing will change.");
+                "If you didn't request this, you can ignore this email — nothing will change.",
+                EmailTemplate.Wrap("Confirm account deletion",
+                    "Confirm you want to delete your Attrition account.",
+                    EmailTemplate.Text($"Hi {user.Username},"),
+                    EmailTemplate.Text("We received a request to delete your Attrition account. Confirm below if that was you:"),
+                    EmailTemplate.Button("Confirm deletion", confirmUrl, danger: true),
+                    EmailTemplate.Muted("This link is valid for 24 hours."),
+                    EmailTemplate.Text("After confirming, your account is deactivated immediately and permanently deleted 90 days later. Sign back in any time within those 90 days to cancel and restore it."),
+                    EmailTemplate.Muted("If you didn't request this, you can ignore this email — nothing will change.")));
         }
         catch (Exception ex) { _logger.LogWarning(ex, "Failed to send deletion-confirmation email"); }
 

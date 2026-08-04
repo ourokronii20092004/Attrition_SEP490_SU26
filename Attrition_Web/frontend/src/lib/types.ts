@@ -34,8 +34,12 @@ export interface UserDto {
   pendingEmail: string | null;
   notifyOnReply: boolean;
   notifyOnMention: boolean;
+  showBio: boolean;
+  showActivity: boolean;
   hasPassword: boolean;
   isGoogleLinked: boolean;
+  /** Email of the linked Google account; may differ from `email`. Null when not linked. */
+  googleEmail: string | null;
 }
 
 export interface AuthResponse {
@@ -87,6 +91,8 @@ export interface UpdateProfileRequest {
   email?: string;
   notifyOnReply?: boolean;
   notifyOnMention?: boolean;
+  showBio?: boolean;
+  showActivity?: boolean;
   displayName?: string;
 }
 
@@ -446,6 +452,8 @@ export interface ForumThreadDto {
   likeCount: number;
   dislikeCount: number;
   currentUserReaction: string | null;
+  /** Whether the signed-in viewer muted this thread. Always false when not signed in. */
+  isMuted: boolean;
 }
 
 export interface ForumPostDto {
@@ -866,4 +874,93 @@ export interface SessionStatusDto {
   username: string;
   role: "Admin" | "User";
   isBanned: boolean;
+}
+
+
+// ── Co-op rooms (sessions) ──────────────────────────────────────────────────────────────────────
+// A "room" is one co-op journey. Progress lives per (character, room), so the same character can
+// have different levels/inventories in different rooms. The Unity host pushes the whole party's
+// state in one request; these mirror what it reads back.
+
+/** One character's progress inside a room. */
+export interface CharacterSessionDto {
+  characterId: string;
+  sessionId: string;
+  /** 0 = host, 1 = joining client. */
+  playerRole: number;
+  currentLevel: number;
+  currentExp: number;
+  /** JSON array of 7 self-allocated points: [hp, mana, sta, ad, ap, def, res]. */
+  allocatedPointsJson: string | null;
+  maxHp: number;
+  currentHp: number;
+  maxMana: number;
+  currentMana: number;
+  maxStamina: number;
+  potionMaxFlasks: number;
+  potionMaxManaFlasks: number;
+  attackSpeed: number;
+  /**
+   * Final combat stats: base + allocated points + equipped gear, already combined by the game.
+   * Sent pre-computed because the web has no gear stat table to recompute them from.
+   * 0 across all four = saved by a build older than this field.
+   */
+  ad: number;
+  ap: number;
+  def: number;
+  res: number;
+  posX: number;
+  posY: number;
+  posZ: number;
+  lastRestPointId: string | null;
+  inventoryJson: string | null;
+  equipmentJson: string | null;
+  /** Deaths in THIS room (not lifetime). */
+  deathCount: number;
+  /** Potion charges left at save time. */
+  healthCharges: number;
+  manaCharges: number;
+  updatedAt: string;
+  /** Joined from the characters table; null if that row is gone. */
+  name: string | null;
+  archetype: string | null;
+}
+
+/** One world flag in a room: quest progress ("q:" prefix), discovered checkpoint ("cp:"), or a defeated boss (no prefix). */
+export interface WorldStateDto {
+  eventId: string;
+  stateValue: number;
+  progress: number;
+  updatedAt: string;
+}
+
+export interface SessionSummaryDto {
+  id: string;
+  ownerId: string;
+  roomCode: string;
+  name: string;
+  isMultiplayer: boolean;
+  playTimeSeconds: number;
+  currentScene: string | null;
+  createdAt: string;
+  updatedAt: string;
+  lastPlayedAt: string;
+  characterCount: number;
+}
+
+export interface SessionDetailDto {
+  id: string;
+  ownerId: string;
+  roomCode: string;
+  name: string;
+  isMultiplayer: boolean;
+  playTimeSeconds: number;
+  currentScene: string | null;
+  createdAt: string;
+  updatedAt: string;
+  lastPlayedAt: string;
+  characters: CharacterSessionDto[];
+  worldStates: WorldStateDto[];
+  /** Fog-of-war cells the party revealed, as a JSON array of "scene:cellX:cellY" keys. */
+  fogJson: string | null;
 }

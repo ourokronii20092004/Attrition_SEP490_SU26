@@ -61,10 +61,11 @@ public sealed class TokenService
         u.ThemeMode, u.ThemeAccent, u.Bio, u.AuthProvider, u.JoinedAt,
         u.PostCount, u.ContributionCount, u.MustChangePassword,
         u.IsEmailVerified, u.PendingEmail, u.NotifyOnReply, u.NotifyOnMention,
-        !string.IsNullOrEmpty(u.PasswordHash), !string.IsNullOrEmpty(u.GoogleId));
+        u.ShowBio, u.ShowActivity,
+        !string.IsNullOrEmpty(u.PasswordHash), !string.IsNullOrEmpty(u.GoogleId), u.GoogleEmail);
 
     public static PublicProfileDto MapToPublicProfile(User u) => new(
         u.Id, u.Username, u.DisplayName, u.Role,
         u.AvatarPath ?? u.GoogleAvatarUrl, u.BackgroundUrl,
-        u.Bio, u.JoinedAt, u.PostCount, u.ContributionCount);
+        u.Bio, u.JoinedAt, u.PostCount, u.ContributionCount, u.ShowActivity);
 }

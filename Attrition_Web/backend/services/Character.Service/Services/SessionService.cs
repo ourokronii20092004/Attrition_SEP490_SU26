@@ -20,7 +20,10 @@ public class SessionService : ISessionService
     public async Task<SessionDetailDto?> GetDetailAsync(Guid sessionId)
     {
         var session = await _repo.GetDetailAsync(sessionId);
-        return session == null ? null : ToDetail(session);
+        if (session == null) return null;
+        // Join character names so a room view can show who played instead of raw GUIDs.
+        var names = await _repo.GetCharacterNamesAsync(session.Characters.Select(c => c.CharacterId).ToList());
+        return ToDetail(session, names);
     }
 
     public async Task<SessionDetailDto?> GetByRoomCodeAsync(string roomCode)
@@ -150,8 +153,144 @@ public class SessionService : ISessionService
         return ApiResponse<WorldStateDto>.Ok(ToWorldStateDto(entity));
     }
 
-    public async Task<ApiResponse> DeleteSessionAsync(Guid sessionId)
+    /// <summary>
+    /// Consolidated save: the whole party in one request, one transaction.
+    ///
+    /// SECURITY: the host is authoritative for the ROOM (ownership is checked in the controller),
+    /// but not for arbitrary characters. Each entry's OwnerId is verified against the characters
+    /// table; a character that doesn't exist or belongs to someone else is SKIPPED and reported
+    /// back rather than failing the whole save — one bad entry must not cost the other player
+    /// their progress.
+    /// </summary>
+    public async Task<ApiResponse<BulkSaveResultDto>> BulkSaveAsync(BulkSaveRequest request)
     {
+        if (request.SessionId == Guid.Empty)
+            return ApiResponse<BulkSaveResultDto>.Fail("SessionId is required.");
+
+        // Guard against a malformed payload naming the same row twice: dedupe (last entry wins) and
+        // iterate the DEDUPED lists below. Iterating the raw list would Add a second entity with the
+        // same primary key — a lookup only sees rows already in the graph, not ones added this pass —
+        // and SaveChanges would throw, losing the whole save rather than just the duplicate.
+        var characters = (request.Characters ?? new List<BulkCharacterDto>())
+            .Where(c => c.CharacterId != Guid.Empty)
+            .GroupBy(c => c.CharacterId)
+            .Select(g => g.Last())
+            .ToList();
+        var worldStates = (request.WorldStates ?? new List<BulkWorldStateDto>())
+            .Where(w => !string.IsNullOrWhiteSpace(w.EventId))
+            .GroupBy(w => w.EventId, StringComparer.Ordinal)
+            .Select(g => g.Last())
+            .ToList();
+
+        var characterIds = characters.Select(c => c.CharacterId).ToList();
+        var eventIds = worldStates.Select(w => w.EventId).ToList();
+
+        var graph = await _repo.LoadForBulkAsync(request.SessionId, characterIds, eventIds);
+        if (graph.Session == null) return ApiResponse<BulkSaveResultDto>.Fail("Room not found.");
+
+        var now = DateTime.UtcNow;
+        var skipped = new List<Guid>();
+        var saved = 0;
+
+        foreach (var dto in characters)
+        {
+            // Ownership check: the character must exist AND belong to the claimed owner.
+            var character = graph.Characters.FirstOrDefault(c => c.Id == dto.CharacterId);
+            if (character == null || character.OwnerId != dto.OwnerId)
+            {
+                skipped.Add(dto.CharacterId);
+                continue;
+            }
+
+            var entity = graph.CharacterSessions.FirstOrDefault(cs => cs.CharacterId == dto.CharacterId);
+            if (entity == null)
+            {
+                entity = new CharacterSessionEntity
+                {
+                    CharacterId = dto.CharacterId,
+                    SessionId = request.SessionId,
+                    CreatedAt = now
+                };
+                _repo.AddCharacterSession(entity);
+            }
+
+            entity.PlayerRole = dto.PlayerRole;
+            entity.CurrentLevel = dto.CurrentLevel;
+            entity.CurrentExp = dto.CurrentExp;
+            entity.DeathCount = dto.DeathCount;
+            entity.AllocatedPointsJson = dto.AllocatedPointsJson ?? entity.AllocatedPointsJson;
+            entity.Vitals.MaxHp = dto.MaxHp;
+            entity.Vitals.CurrentHp = dto.CurrentHp;
+            entity.Vitals.MaxMana = dto.MaxMana;
+            entity.Vitals.CurrentMana = dto.CurrentMana;
+            entity.Vitals.MaxStamina = dto.MaxStamina;
+            entity.Combat.PotionMaxFlasks = dto.PotionMaxFlasks;
+            entity.Combat.PotionMaxManaFlasks = dto.PotionMaxManaFlasks;
+            entity.Combat.HealthCharges = dto.HealthCharges;
+            entity.Combat.ManaCharges = dto.ManaCharges;
+            entity.Combat.AttackSpeed = dto.AttackSpeed;
+            entity.Combat.Ad = dto.Ad;
+            entity.Combat.Ap = dto.Ap;
+            entity.Combat.Def = dto.Def;
+            entity.Combat.Res = dto.Res;
+            entity.Position.PosX = dto.PosX;
+            entity.Position.PosY = dto.PosY;
+            entity.Position.PosZ = dto.PosZ;
+            entity.Position.LastRestPointId = dto.LastRestPointId ?? entity.Position.LastRestPointId;
+            // JSON blob null = keep existing (don't wipe inventory when a save omits it).
+            entity.InventoryJson = dto.InventoryJson ?? entity.InventoryJson;
+            entity.EquipmentJson = dto.EquipmentJson ?? entity.EquipmentJson;
+            entity.UpdatedAt = now;
+
+            // Mirror onto the global character row + append snapshot history. This is what makes the
+            // CLIENT's progress visible on the web: the old snapshot path used the host's JWT for
+            // OwnerId, so only the host's character ever got a row.
+            character.InventoryJson = dto.InventoryJson ?? character.InventoryJson;
+            character.EquipmentJson = dto.EquipmentJson ?? character.EquipmentJson;
+            character.UpdatedAt = now;
+            character.Snapshots.Add(new CharacterSnapshot
+            {
+                Level = dto.CurrentLevel,
+                Hp = dto.CurrentHp,
+                MaxHp = dto.MaxHp,
+                Gold = 0,
+                IsAlive = dto.IsAlive,
+                RoomCode = string.IsNullOrWhiteSpace(request.RoomCode) ? graph.Session.RoomCode : request.RoomCode,
+                EventType = string.IsNullOrWhiteSpace(request.EventType) ? "save" : request.EventType,
+                PlaytimeSeconds = request.PlayTimeSeconds,
+                CapturedAt = now
+            });
+
+            saved++;
+        }
+
+        foreach (var dto in worldStates)
+        {
+            var entity = graph.WorldStates.FirstOrDefault(w => w.EventId == dto.EventId);
+            if (entity == null)
+            {
+                entity = new WorldStateEntity { SessionId = request.SessionId, EventId = dto.EventId };
+                _repo.AddWorldState(entity);
+            }
+            entity.StateValue = dto.StateValue;
+            entity.Progress = dto.Progress;
+            entity.UpdatedAt = now;
+        }
+
+        graph.Session.PlayTimeSeconds = request.PlayTimeSeconds;
+        if (!string.IsNullOrWhiteSpace(request.CurrentScene)) graph.Session.CurrentScene = request.CurrentScene;
+        if (request.FogJson != null) graph.Session.FogJson = request.FogJson;
+        graph.Session.UpdatedAt = now;
+        graph.Session.LastPlayedAt = now;
+
+        // Single commit — everything above lands together or not at all.
+        await _repo.SaveChangesAsync();
+
+        return ApiResponse<BulkSaveResultDto>.Ok(
+            new BulkSaveResultDto(request.SessionId, saved, eventIds.Count, skipped));
+    }
+
+    public async Task<ApiResponse> DeleteSessionAsync(Guid sessionId)    {
         if (sessionId == Guid.Empty)
             return ApiResponse.Fail("SessionId is required.");
 
@@ -190,17 +329,32 @@ public class SessionService : ISessionService
         s.PlayTimeSeconds, s.CurrentScene, s.CreatedAt, s.UpdatedAt, s.LastPlayedAt,
         s.Characters.Count);
 
-    private static SessionDetailDto ToDetail(SessionEntity s) => new(
+    private static SessionDetailDto ToDetail(
+        SessionEntity s,
+        Dictionary<Guid, (string Name, string Archetype)>? names = null) => new(
         s.Id, s.OwnerId, s.RoomCode, s.Name, s.IsMultiplayer,
         s.PlayTimeSeconds, s.CurrentScene, s.CreatedAt, s.UpdatedAt, s.LastPlayedAt,
-        s.Characters.Select(ToCharacterSessionDto).ToList(),
-        s.WorldStates.Select(ToWorldStateDto).ToList());
+        s.Characters.Select(c => ToCharacterSessionDto(c, names)).ToList(),
+        s.WorldStates.Select(ToWorldStateDto).ToList(),
+        s.FogJson);
 
-    private static CharacterSessionDto ToCharacterSessionDto(CharacterSessionEntity c) => new(
-        c.CharacterId, c.SessionId, c.PlayerRole, c.CurrentLevel, c.CurrentExp, c.AllocatedPointsJson,
-        c.Vitals.MaxHp, c.Vitals.CurrentHp, c.Vitals.MaxMana, c.Vitals.CurrentMana, c.Vitals.MaxStamina,
-        c.Combat.PotionMaxFlasks, c.Combat.PotionMaxManaFlasks, c.Combat.AttackSpeed, c.Position.PosX, c.Position.PosY,
-        c.Position.LastRestPointId, c.InventoryJson, c.EquipmentJson, c.UpdatedAt);
+    private static CharacterSessionDto ToCharacterSessionDto(
+        CharacterSessionEntity c,
+        Dictionary<Guid, (string Name, string Archetype)>? names = null)
+    {
+        string? name = null, archetype = null;
+        if (names != null && names.TryGetValue(c.CharacterId, out var meta))
+            (name, archetype) = (meta.Name, meta.Archetype);
+
+        return new(
+            c.CharacterId, c.SessionId, c.PlayerRole, c.CurrentLevel, c.CurrentExp, c.AllocatedPointsJson,
+            c.Vitals.MaxHp, c.Vitals.CurrentHp, c.Vitals.MaxMana, c.Vitals.CurrentMana, c.Vitals.MaxStamina,
+            c.Combat.PotionMaxFlasks, c.Combat.PotionMaxManaFlasks, c.Combat.AttackSpeed, c.Position.PosX, c.Position.PosY,
+            c.Position.LastRestPointId, c.InventoryJson, c.EquipmentJson, c.UpdatedAt,
+            c.DeathCount, c.Combat.HealthCharges, c.Combat.ManaCharges, c.Position.PosZ,
+            name, archetype,
+            c.Combat.Ad, c.Combat.Ap, c.Combat.Def, c.Combat.Res);
+    }
 
     private static WorldStateDto ToWorldStateDto(WorldStateEntity w) => new(
         w.EventId, w.StateValue, w.Progress, w.UpdatedAt);

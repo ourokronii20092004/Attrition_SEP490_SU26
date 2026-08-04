@@ -1,70 +1,57 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo } from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Gem } from "lucide-react";
+import { Gem, Search } from "lucide-react";
+import { itemsApi } from "@/lib/api/items";
 import { enemiesApi } from "@/lib/api/enemies";
-import type { EnemyResponse } from "@/lib/types";
+import { resolveMediaUrl } from "@/lib/api/media";
+import { qk } from "@/lib/query-keys";
 import { PageShell } from "@/components/ui/page-shell";
 import { PageTitle } from "@/components/ui/page-title";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { SkeletonGrid } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { SkeletonGrid } from "@/components/ui/skeleton";
 import { Pagination } from "@/components/ui/pagination";
-import { useClientPagination } from "@/lib/hooks/use-client-pagination";
-import { qk } from "@/lib/query-keys";
+import { useUrlPagination, useQueryParam } from "@/lib/hooks/use-url-pagination";
+import { RARITY_ORDER, rarityColor, rarityMatches, rarityRank } from "@/lib/rarity";
+import type { EnemyResponse } from "@/lib/types";
 
-// Thứ bậc hiếm + màu hiển thị (khớp tone accent của site).
-const RARITY_ORDER = ["Common", "Uncommon", "Rare", "Epic", "Legendary"];
-const RARITY_COLOR: Record<string, string> = {
-  Common: "text-fg-muted bg-surface-3",
-  Uncommon: "text-success bg-success/10",
-  Rare: "text-info bg-info/10",
-  Epic: "text-[#a274ff] bg-[#a274ff]/10",
-  Legendary: "text-warning bg-warning/10",
-};
-
-interface AggregatedItem {
-  itemName: string;
-  rarity: string;
-  iconKey: string | null;
-  bestDropChance: number;
-  sources: { enemyId: string; enemyName: string; dropChance: number }[];
-}
-
-// Item không có bảng riêng ở backend — chúng sống trong loot table của từng quái. Trang này tổng
-// hợp toàn bộ item xuất hiện trong loot của mọi quái, gộp theo tên + ghi lại "rơi từ quái nào".
-function aggregateItems(enemies: EnemyResponse[]): AggregatedItem[] {
-  const map = new Map<string, AggregatedItem>();
-  for (const e of enemies) {
-    for (const loot of e.lootTable ?? []) {
+/** Which enemies drop a given item, keyed by item name (loot tables reference items by name). */
+function dropSourcesByItemName(enemies: EnemyResponse[]) {
+  const map = new Map<string, { enemyId: string; enemyName: string; dropChance: number }[]>();
+  for (const enemy of enemies) {
+    for (const loot of enemy.lootTable ?? []) {
       if (!loot.itemName) continue;
-      const existing = map.get(loot.itemName);
-      const source = { enemyId: e.enemyId, enemyName: e.name, dropChance: loot.dropChance };
-      if (existing) {
-        existing.sources.push(source);
-        existing.bestDropChance = Math.max(existing.bestDropChance, loot.dropChance);
-      } else {
-        map.set(loot.itemName, {
-          itemName: loot.itemName,
-          rarity: loot.rarity || "Common",
-          iconKey: loot.iconKey,
-          bestDropChance: loot.dropChance,
-          sources: [source],
-        });
-      }
+      const list = map.get(loot.itemName) ?? [];
+      list.push({ enemyId: enemy.enemyId, enemyName: enemy.name, dropChance: loot.dropChance });
+      map.set(loot.itemName, list);
     }
   }
-  return [...map.values()];
+  return map;
 }
 
-export default function ItemsPage() {
-  const [rarity, setRarity] = useState("");
-  const [search, setSearch] = useState("");
+function ItemsList() {
+  // Filters + page live in the URL, so returning from an item page restores the same view.
+  const [rarity, setRarity] = useQueryParam("rarity");
+  const [search, setSearch] = useQueryParam("q");
 
-  const { data: enemies = [], isPending } = useQuery({
+  // The item catalogue is the source of truth for name/rarity/art. This page used to derive items
+  // from enemy loot tables instead, which meant it showed the loot rows' own denormalised rarity —
+  // stale and almost entirely "Common" — so filtering by Rare or Epic returned nothing.
+  const { data: catalogue = [], isPending } = useQuery({
+    queryKey: qk.items.list(),
+    queryFn: async () => {
+      const res = await itemsApi.list();
+      return res.success ? res.data ?? [] : [];
+    },
+  });
+
+  // Drop sources are still worth showing, and only the loot tables know them.
+  const { data: enemies = [] } = useQuery({
     queryKey: qk.enemies.list(),
     queryFn: async () => {
       const res = await enemiesApi.list();
@@ -72,31 +59,30 @@ export default function ItemsPage() {
     },
   });
 
+  const sources = useMemo(() => dropSourcesByItemName(enemies), [enemies]);
+
   const items = useMemo(() => {
-    let list = aggregateItems(enemies);
-    if (rarity) list = list.filter((i) => i.rarity === rarity);
+    let list = catalogue;
+    if (rarity) list = list.filter((i) => rarityMatches(i.rarity, rarity));
     if (search) {
       const q = search.toLowerCase();
-      list = list.filter((i) => i.itemName.toLowerCase().includes(q));
+      list = list.filter(
+        (i) => i.name.toLowerCase().includes(q) || (i.description ?? "").toLowerCase().includes(q),
+      );
     }
-    return list.sort((a, b) => {
-      const ra = RARITY_ORDER.indexOf(a.rarity);
-      const rb = RARITY_ORDER.indexOf(b.rarity);
-      if (ra !== rb) return rb - ra; // hiếm trước
-      return a.itemName.localeCompare(b.itemName);
+    return [...list].sort((a, b) => {
+      const ra = rarityRank(a.rarity);
+      const rb = rarityRank(b.rarity);
+      if (ra !== rb) return rb - ra; // rarest first
+      return a.name.localeCompare(b.name);
     });
-  }, [enemies, rarity, search]);
+  }, [catalogue, rarity, search]);
 
-  const rarityOptions = [
-    { value: "", label: "All Rarities" },
-    ...RARITY_ORDER.map((r) => ({ value: r, label: r })),
-  ];
-
-  const { page, setPage, totalPages, paged } = useClientPagination(items, 12);
+  const { page, setPage, totalPages, paged } = useUrlPagination(items, 12);
 
   return (
     <PageShell>
-      <PageTitle description="Every item that drops across the Attrition world, and what hunts you for it.">
+      <PageTitle description="Every item in the Attrition world — what it does, and what you have to kill for it.">
         Items
       </PageTitle>
 
@@ -113,8 +99,9 @@ export default function ItemsPage() {
         </div>
         <div className="w-48">
           <Select value={rarity} onChange={(e) => setRarity(e.target.value)} aria-label="Filter by rarity">
-            {rarityOptions.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+            <option value="">All Rarities</option>
+            {RARITY_ORDER.map((r) => (
+              <option key={r} value={r}>{r}</option>
             ))}
           </Select>
         </div>
@@ -126,40 +113,71 @@ export default function ItemsPage() {
         <EmptyState
           icon={Gem}
           title="No items found"
-          description="Items appear here once enemies are configured to drop them."
+          description={
+            catalogue.length
+              ? "No items match that search or rarity."
+              : "Items appear here once they're configured in the admin panel."
+          }
           className="mt-6"
         />
       ) : (
         <div className="stagger mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {paged.map((item, i) => (
-            <Card key={item.itemName} style={{ "--i": i } as React.CSSProperties} className="p-5">
-              <div className="flex items-center justify-between gap-2">
-                <h3 className="truncate font-display text-lg font-semibold text-fg">{item.itemName}</h3>
-                <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${RARITY_COLOR[item.rarity] ?? "text-fg-muted bg-surface-3"}`}>
-                  {item.rarity}
-                </span>
-              </div>
-              <p className="mt-1 text-xs text-fg-muted">
-                Best drop {(item.bestDropChance * 100).toFixed(0)}% · {item.sources.length} source{item.sources.length > 1 ? "s" : ""}
-              </p>
-              <div className="mt-4 space-y-1.5 border-t border-border pt-3">
-                {item.sources.slice(0, 4).map((s) => (
-                  <div key={s.enemyId} className="flex items-center justify-between text-sm">
-                    <span className="truncate text-fg-muted">{s.enemyName}</span>
-                    <span className="shrink-0 tabular-nums text-fg">{(s.dropChance * 100).toFixed(0)}%</span>
+          {paged.map((item, i) => {
+            const drops = sources.get(item.name) ?? [];
+            const image = item.imageUrl ? resolveMediaUrl(item.imageUrl) : null;
+            return (
+              <Link
+                key={item.itemId}
+                href={`/items/${encodeURIComponent(item.itemId)}`}
+                className="group rounded-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
+                <Card
+                  style={{ "--i": i } as React.CSSProperties}
+                  className="h-full overflow-hidden transition-transform group-hover:-translate-y-0.5"
+                >
+                  {image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={image} alt="" className="aspect-[16/9] w-full object-cover" />
+                  ) : (
+                    <div className="flex aspect-[16/9] items-center justify-center bg-surface-2">
+                      <Gem size={38} className="text-accent" aria-hidden />
+                    </div>
+                  )}
+                  <div className="p-5">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="truncate font-display text-lg font-semibold text-fg group-hover:text-accent">
+                        {item.name}
+                      </h3>
+                      <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${rarityColor(item.rarity)}`}>
+                        {item.rarity}
+                      </span>
+                    </div>
+                    <p className="mt-2 line-clamp-2 min-h-10 text-sm text-fg-muted">
+                      {item.description || "No description yet."}
+                    </p>
+                    <p className="mt-4 border-t border-border pt-3 text-xs text-fg-subtle">
+                      {item.category}
+                      {drops.length > 0 && ` · drops from ${drops.length} enem${drops.length > 1 ? "ies" : "y"}`}
+                      {item.isKeyItem && " · key item"}
+                    </p>
                   </div>
-                ))}
-                {item.sources.length > 4 && (
-                  <p className="text-xs text-fg-subtle">+{item.sources.length - 4} more</p>
-                )}
-              </div>
-            </Card>
-          ))}
+                </Card>
+              </Link>
+            );
+          })}
         </div>
       )}
       {!isPending && items.length > 0 && (
         <Pagination page={page} totalPages={totalPages} onChange={setPage} />
       )}
     </PageShell>
+  );
+}
+
+export default function ItemsPage() {
+  return (
+    <Suspense fallback={null}>
+      <ItemsList />
+    </Suspense>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -13,20 +13,21 @@ import { parseApiError } from "@/lib/api/parse-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { RARITY_ORDER, rarityColor } from "@/lib/rarity";
 import { Modal } from "@/components/ui/modal";
 import { PageLoader } from "@/components/ui/spinner";
 import { AdminPageHeader, AdminFilterBar, AdminTable, AdminRow } from "@/components/admin/admin-table";
 import { AssetImageField } from "@/components/admin/asset-image-field";
 import { Pagination } from "@/components/ui/pagination";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
-import { useClientPagination } from "@/lib/hooks/use-client-pagination";
 import { qk } from "@/lib/query-keys";
 import type { ItemResponse, ItemCreateRequest, ItemUpdateRequest } from "@/lib/types";
+import { useUrlPagination } from "@/lib/hooks/use-url-pagination";
 
 const CATEGORIES = ["Equipment", "Accessory", "Material"];
 const STAT_TYPES = ["MaxHP", "MaxMana", "MaxStamina", "AD", "AP", "DEF", "RES", "MoveSpeed", "AttackSpeed"];
 
-export default function AdminItemsPage() {
+function AdminItemsList() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const confirm = useConfirm();
@@ -64,7 +65,7 @@ export default function AdminItemsPage() {
     if (search && !i.name.toLowerCase().includes(search) && !i.itemId.toLowerCase().includes(search)) return false;
     return true;
   });
-  const { page, setPage, totalPages, paged } = useClientPagination(filtered, 20);
+  const { page, setPage, totalPages, paged } = useUrlPagination(filtered, 20);
 
   if (!user || user.role !== "Admin") return null;
   if (loading) return <PageLoader />;
@@ -116,7 +117,11 @@ export default function AdminItemsPage() {
             </td>
             <td className="px-3 py-2 font-medium text-fg">{i.name}</td>
             <td className="px-3 py-2 text-fg-muted">{i.category}</td>
-            <td className="px-3 py-2 text-fg-muted">{i.rarity}</td>
+            <td className="px-3 py-2">
+              {/* Badge rather than bare text, so a legacy free-text value that no longer
+                  matches the ladder is visually obvious and can be corrected. */}
+              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${rarityColor(i.rarity)}`}>{i.rarity}</span>
+            </td>
             <td className="px-3 py-2 tabular-nums text-fg-muted">{i.modifiers.length}</td>
             <td className="px-3 py-2 text-right">
               <div className="flex justify-end gap-2">
@@ -213,7 +218,9 @@ function ItemForm({ initial, onDone, onCancel, onDirtyChange }: { initial: ItemR
         <Select label="Category" {...register("category")}>
           {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
         </Select>
-        <Input label="Rarity" {...register("rarity")} />
+        <Select label="Rarity" {...register("rarity")}>
+          {RARITY_ORDER.map((r) => <option key={r} value={r}>{r}</option>)}
+        </Select>
         <Input label="Icon Key" {...register("iconKey")} />
         <Input label="Max Stack" type="number" error={errors.maxStack?.message} {...register("maxStack")} />
       </div>
@@ -257,3 +264,10 @@ function ItemForm({ initial, onDone, onCancel, onDirtyChange }: { initial: ItemR
   );
 }
 
+export default function AdminItemsPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminItemsList />
+    </Suspense>
+  );
+}

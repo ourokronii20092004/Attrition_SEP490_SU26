@@ -14,13 +14,14 @@ import { AdminPageHeader, AdminFilterBar, AdminTable, AdminRow } from "@/compone
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { formatDate } from "@/lib/format-date";
 import { qk } from "@/lib/query-keys";
+import { useUrlPage } from "@/lib/hooks/use-url-pagination";
 import { Pager } from "./Pager";
 
 export function ThreadsAdmin() {
   const queryClient = useQueryClient();
   const confirm = useConfirm();
   const router = useRouter();
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useUrlPage();
   const [searchInput, setSearchInput] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [showNew, setShowNew] = useState(false);

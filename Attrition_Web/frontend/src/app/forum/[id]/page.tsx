@@ -19,29 +19,18 @@ import { MarkdownContent } from "@/components/post-content";
 import { resolveMediaUrl } from "@/lib/api/media";
 import { qk } from "@/lib/query-keys";
 import { makeOptimisticPost, addPostToPage, replacePostInPage, removePostFromPage } from "@/lib/forum-cache";
+import { buildTree, indentsChildren, type PostNode } from "@/lib/forum-tree";
+import { LIVE_FAST, liveWhenFocused } from "@/lib/live";
+import { useLoginHref } from "@/lib/hooks/use-login-href";
+import { ThreadMuteToggle } from "@/components/thread-mute-toggle";
 import type { ForumPostDto, ForumThreadDto, PaginatedResponse } from "@/lib/types";
-
-type PostNode = ForumPostDto & { children: PostNode[] };
-
-/** Build a reply tree from the flat, chronological post list. Orphans (parent missing/removed)
- * fall back to top-level so nothing is hidden. */
-function buildTree(posts: ForumPostDto[]): PostNode[] {
-  const byId = new Map<string, PostNode>();
-  for (const p of posts) byId.set(p.id, { ...p, children: [] });
-  const roots: PostNode[] = [];
-  for (const node of byId.values()) {
-    const parent = node.parentPostId ? byId.get(node.parentPostId) : null;
-    if (parent) parent.children.push(node);
-    else roots.push(node);
-  }
-  return roots;
-}
 
 // First reply page size. Beyond this, a "Load more replies" button grows the pool and the tree
 // rebuilds incrementally (orphans fall back to top-level, so partial loads stay coherent).
 const REPLY_PAGE_SIZE = 50;
 
 export default function ThreadPage() {
+  const loginHref = useLoginHref();
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const { user } = useAuth();
@@ -70,6 +59,9 @@ export default function ThreadPage() {
     queryKey: postsKey,
     enabled: !!params.id,
     staleTime: 30_000,
+    // New replies should appear while you're reading the thread, not on manual refresh.
+    // Optimistic updates still show your own reply instantly; this catches everyone else's.
+    refetchInterval: liveWhenFocused(LIVE_FAST),
     queryFn: async () => {
       const res = await forumApi.getPosts(params.id, { page: 1, pageSize: limit });
       return res.success ? res.data : null;
@@ -237,7 +229,7 @@ export default function ThreadPage() {
   // Reacting needs an account. Rather than firing a doomed 401, send anonymous users to sign in
   // (returning them to this thread afterwards).
   const handleReact = (postId: string, type: "like" | "dislike") => {
-    if (!user) { router.push(`/login?redirect=/forum/${params.id}`); return; }
+    if (!user) { router.push(loginHref); return; }
     setActionError("");
     reactMutation.mutate({ postId, type });
   };
@@ -296,16 +288,23 @@ export default function ThreadPage() {
             </p>
           ) : !user ? (
             <p className="mt-5 rounded-lg border border-border bg-surface-2 px-4 py-3 text-center text-sm text-fg-muted">
-              <Link href={`/login?redirect=/forum/${params.id}`} className="font-medium text-accent hover:underline">Sign in</Link>{" "}
+              <Link href={loginHref} className="font-medium text-accent hover:underline">Sign in</Link>{" "}
               to join the discussion.
             </p>
           ) : null}
 
           {/* Replies stay in the compact comment style, below the post. */}
           <div className="mt-8">
-            <h2 className="font-display text-lg font-semibold tracking-tight text-fg">
-              {totalReplies} {totalReplies === 1 ? "Reply" : "Replies"}
-            </h2>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="font-display text-lg font-semibold tracking-tight text-fg">
+                {totalReplies} {totalReplies === 1 ? "Reply" : "Replies"}
+              </h2>
+              {/* Sits with the replies because that's what it silences — and it's where you are
+                  when the notifications get annoying. */}
+              {user && thread && (
+                <ThreadMuteToggle threadId={thread.id} isMuted={thread.isMuted} />
+              )}
+            </div>
             <div className="mt-4 space-y-3">
               {tree.map((node) => (
                 <PostNodeView
@@ -553,8 +552,8 @@ function ReplyBox({ label, placeholder, loading, onSubmit, autoFocus }: {
   );
 }
 
-function PostNodeView({ node, canReply, showReport, currentUserId, onReact, onReport, onReply, onDelete, replying }: {
-  node: PostNode; canReply: boolean; showReport: boolean; currentUserId?: string;
+function PostNodeView({ node, level = 0, replyingToName, canReply, showReport, currentUserId, onReact, onReport, onReply, onDelete, replying }: {
+  node: PostNode; level?: number; replyingToName?: string; canReply: boolean; showReport: boolean; currentUserId?: string;
   onReact: (postId: string, type: "like" | "dislike") => void;
   onReport: (postId: string) => void;
   onReply: (content: string, parentPostId: string, attachments: string[]) => void;
@@ -563,6 +562,8 @@ function PostNodeView({ node, canReply, showReport, currentUserId, onReact, onRe
 }) {
   const [replyOpen, setReplyOpen] = useState(false);
   const canDelete = !!currentUserId && node.authorId === currentUserId;
+  // Past the indent cap, deeper replies render flush instead of nesting further (see forum-tree).
+  const indent = indentsChildren(level);
   return (
     <div>
       <Card id={`post-${node.id}`} className="p-4 transition-shadow">
@@ -577,6 +578,12 @@ function PostNodeView({ node, canReply, showReport, currentUserId, onReact, onRe
                 <span className="rounded bg-accent-soft px-1.5 py-0.5 text-xs font-medium text-accent">Admin</span>
               )}
               <span className="text-xs text-fg-subtle"><RelativeTime iso={node.createdAt} /></span>
+              {replyingToName && (
+                <span className="inline-flex items-center gap-1 text-xs text-fg-subtle">
+                  <Reply size={11} aria-hidden /> replying to
+                  <span className="font-medium text-fg-muted">@{replyingToName}</span>
+                </span>
+              )}
             </div>
             <MarkdownContent content={node.content} className="prose-content mt-2 text-sm" />
 
@@ -634,11 +641,15 @@ function PostNodeView({ node, canReply, showReport, currentUserId, onReact, onRe
       </Card>
 
       {node.children.length > 0 && (
-        <div className="mt-3 space-y-3 border-l border-border pl-3 sm:pl-5">
+        <div className={indent ? "mt-3 space-y-3 border-l border-border pl-3 sm:pl-5" : "mt-3 space-y-3"}>
           {node.children.map((child) => (
             <PostNodeView
               key={child.id}
               node={child}
+              level={level + 1}
+              // Once the indent stops, the visual nesting no longer says who is being answered,
+              // so name the parent explicitly on those replies.
+              replyingToName={indent ? undefined : node.authorName}
               canReply={canReply}
               showReport={showReport}
               currentUserId={currentUserId}

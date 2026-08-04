@@ -11,9 +11,10 @@ import { MarkdownContent } from "@/components/post-content";
 import { AdminPageHeader, AdminFilterBar } from "@/components/admin/admin-table";
 import { Pagination } from "@/components/ui/pagination";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
-import { useClientPagination } from "@/lib/hooks/use-client-pagination";
+import { useUrlPagination } from "@/lib/hooks/use-url-pagination";
 import { formatDate } from "@/lib/format-date";
 import { qk } from "@/lib/query-keys";
+import { LIVE_NORMAL, liveWhenFocused } from "@/lib/live";
 
 const STATUS_OPTIONS = [
   { value: "Pending", label: "Pending" },
@@ -32,6 +33,8 @@ export function ContributionQueue() {
 
   const { data: items = [], isPending: loading } = useQuery({
     queryKey: qk.admin.wiki.contributions(),
+    // Contributions arrive while moderators work through the queue.
+    refetchInterval: liveWhenFocused(LIVE_NORMAL),
     queryFn: async () => {
       const res = await wikiApi.getContributions();
       return res.success ? res.data : [];
@@ -56,7 +59,7 @@ export function ContributionQueue() {
     if (search && !c.articleTitle.toLowerCase().includes(search) && !(c.contributorName ?? "").toLowerCase().includes(search)) return false;
     return true;
   });
-  const { page, setPage, totalPages, paged } = useClientPagination(filtered, 10);
+  const { page, setPage, totalPages, paged } = useUrlPagination(filtered, 10);
 
   return (
     <div>

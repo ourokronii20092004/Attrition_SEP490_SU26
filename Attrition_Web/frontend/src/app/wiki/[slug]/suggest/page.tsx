@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { MarkdownContent } from "@/components/post-content";
 import { qk } from "@/lib/query-keys";
+import { useLoginHref } from "@/lib/hooks/use-login-href";
 
 const schema = z.object({
   suggestedContent: z.string().min(10, "Content too short"),
@@ -27,6 +28,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export default function SuggestEditPage() {
+  const loginHref = useLoginHref();
   const params = useParams<{ slug: string }>();
   const { user } = useAuth();
   const router = useRouter();
@@ -70,7 +72,7 @@ export default function SuggestEditPage() {
         <EmptyState
           title="Sign in required"
           description="You must be signed in to suggest edits."
-          action={<Link href="/login"><Button variant="secondary">Sign in</Button></Link>}
+          action={<Link href={loginHref}><Button variant="secondary">Sign in</Button></Link>}
         />
       </PageShell>
     );

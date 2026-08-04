@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Bell, CheckCheck } from "lucide-react";
 import { notificationsApi } from "@/lib/api/notifications";
 import { useAuth } from "@/lib/providers";
+import { LIVE_FAST, liveWhenFocused } from "@/lib/live";
 import { RelativeTime } from "@/components/ui/relative-time";
 
 /**
@@ -20,7 +21,8 @@ export function NotificationBell() {
   const { data: unread = 0 } = useQuery({
     queryKey: ["notifications", "unread"],
     enabled: !!user,
-    refetchInterval: 30_000,
+    // A reply you're waiting on should surface quickly, so this polls at the fast cadence.
+    refetchInterval: liveWhenFocused(LIVE_FAST),
     queryFn: async () => {
       const res = await notificationsApi.unreadCount();
       return res.success ? res.data : 0;

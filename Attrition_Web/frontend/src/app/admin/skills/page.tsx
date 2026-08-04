@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,16 +8,18 @@ import { z } from "zod";
 import { Sparkles } from "lucide-react";
 import { useAuth } from "@/lib/providers";
 import { skillsApi } from "@/lib/api/skills";
-import { resolveMediaUrl } from "@/lib/api/media";
 import { parseApiError } from "@/lib/api/parse-error";
 import { qk } from "@/lib/query-keys";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Modal } from "@/components/ui/modal";
+import { EmptyState } from "@/components/ui/empty-state";
 import { PageLoader } from "@/components/ui/spinner";
-import { AdminPageHeader, AdminTable, AdminRow } from "@/components/admin/admin-table";
+import { AdminPageHeader } from "@/components/admin/admin-table";
 import { AssetImageField } from "@/components/admin/asset-image-field";
+import { SkillTree } from "@/components/skill-tree";
+import { buildSkillTree, ELEMENTS } from "@/lib/skill-tree";
 import type { SkillResponse, SkillUpdateRequest } from "@/lib/types";
 
 const finite = z.coerce.number().finite();
@@ -25,7 +27,7 @@ const nonNegative = finite.min(0);
 const schema = z.object({
   skillId: z.string(), name: z.string().min(1, "Required").max(100), description: z.string().max(2000),
   iconKey: z.string().nullable(), rarity: z.string().min(1).max(50),
-  element: z.enum(["Fire", "Wood", "Earth", "Thunder", "Thrust"]), manaCost: z.coerce.number().int().min(0),
+  element: z.enum(ELEMENTS), manaCost: z.coerce.number().int().min(0),
   castTime: nonNegative, cooldown: nonNegative, activeStartFrac: finite.min(0).max(1), activeEndFrac: finite.min(0).max(1),
   damageType: z.enum(["Physical", "Magic", "True"]), baseDamage: z.coerce.number().int().min(0), apScaling: nonNegative,
   knockbackForce: nonNegative, tickInterval: nonNegative, sweetSpotRadius: nonNegative, sweetSpotMultiplier: nonNegative,
@@ -47,22 +49,18 @@ export default function AdminSkillsPage() {
     queryKey: qk.admin.skills(), enabled: user?.role === "Admin",
     queryFn: async () => { const r = await skillsApi.list(); return r.success ? r.data : []; },
   });
+  // Same tree the players see, so tuning a skill happens in the shape it ships in.
+  const branches = useMemo(() => buildSkillTree(skills ?? []), [skills]);
   if (!user || user.role !== "Admin") return null;
   if (isPending) return <PageLoader />;
   return <div>
-    <AdminPageHeader title="Skills" />
+    <AdminPageHeader title="Skill Tree" />
     <Modal open={!!editing} onClose={() => setEditing(null)} title={editing ? `Edit ${editing.name || editing.skillId}` : "Edit Skill"} size="lg" dirty={dirty}>
       {editing && <SkillForm initial={editing} onDirtyChange={setDirty} onDone={() => { setDirty(false); setEditing(null); client.invalidateQueries({ queryKey: qk.admin.skills() }); }} onCancel={() => { setDirty(false); setEditing(null); }} />}
     </Modal>
-    <AdminTable columns={[{ key: "img", label: "" }, { key: "name", label: "Skill" }, { key: "damage", label: "Damage" }, { key: "timing", label: "Timing" }, { key: "action", label: "", align: "right" }]} empty={!skills.length}>
-      {skills.map((s) => <AdminRow key={s.skillId} onClick={() => setEditing(s)}>
-        <td className="px-3 py-2">{s.imageUrl ? <img src={resolveMediaUrl(s.imageUrl) ?? ""} alt="" className="h-9 w-9 rounded object-cover" /> : <Sparkles size={20} />}</td>
-        <td className="px-3 py-2 font-medium">{s.name || s.skillId}<div className="text-xs text-fg-muted">{s.skillId} · {s.element} · {s.delivery}</div></td>
-        <td className="px-3 py-2 text-fg-muted">{s.baseDamage} + AP×{s.apScaling}</td>
-        <td className="px-3 py-2 text-fg-muted">Cast {s.castTime}s · CD {s.cooldown}s</td>
-        <td className="px-3 py-2 text-right"><Button size="sm" variant="secondary">Edit</Button></td>
-      </AdminRow>)}
-    </AdminTable>
+    {!skills?.length
+      ? <EmptyState icon={Sparkles} title="No skills yet" description="Skills appear here once they sync from the game." />
+      : <SkillTree branches={branches} onSelect={setEditing} />}
   </div>;
 }
 
@@ -89,7 +87,7 @@ function SkillForm({ initial, onDone, onCancel, onDirtyChange }: { initial: Skil
       <label className="block text-sm font-medium text-fg-muted">Description<textarea rows={3} {...register("description")} className="mt-1 w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-fg outline-none focus:border-accent" /></label>
     </Section>
     <Section title="Cost & timing"><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      <Select label="Element" {...register("element")}><option>Fire</option><option>Wood</option><option>Earth</option><option>Thunder</option><option>Thrust</option></Select>
+      <Select label="Element" {...register("element")}>{ELEMENTS.map((x) => <option key={x}>{x}</option>)}</Select>
       {number("manaCost", "Mana cost")}{number("castTime", "Cast time")}{number("cooldown", "Cooldown")}{number("activeStartFrac", "Active start")}{number("activeEndFrac", "Active end")}
     </div></Section>
     <Section title="Damage"><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

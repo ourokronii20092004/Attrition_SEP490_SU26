@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth, useConfirm } from "@/lib/providers";
 import { musicApi } from "@/lib/api/music";
@@ -10,8 +10,8 @@ import { PageLoader } from "@/components/ui/spinner";
 import { AdminPageHeader, AdminFilterBar, AdminTable, AdminRow } from "@/components/admin/admin-table";
 import { Pagination } from "@/components/ui/pagination";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
-import { useClientPagination } from "@/lib/hooks/use-client-pagination";
 import { qk } from "@/lib/query-keys";
+import { useUrlPagination } from "@/lib/hooks/use-url-pagination";
 import { TrackUploadFlow } from "../track-upload-flow";
 
 const fmtDuration = (s: number) => {
@@ -20,7 +20,7 @@ const fmtDuration = (s: number) => {
   return `${m}:${sec.toString().padStart(2, "0")}`;
 };
 
-export default function AdminTracksPage() {
+function AdminTracksList() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const confirm = useConfirm();
@@ -70,7 +70,7 @@ export default function AdminTracksPage() {
     if (featuredFilter === "normal" && t.isFeatured) return false;
     return true;
   });
-  const { page, setPage, totalPages, paged } = useClientPagination(filtered, 20);
+  const { page, setPage, totalPages, paged } = useUrlPagination(filtered, 20);
 
   if (!user || user.role !== "Admin") return null;
 
@@ -130,5 +130,13 @@ export default function AdminTracksPage() {
       )}
       <Pagination page={page} totalPages={totalPages} onChange={setPage} compact />
     </div>
+  );
+}
+
+export default function AdminTracksPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminTracksList />
+    </Suspense>
   );
 }

@@ -20,8 +20,13 @@ public record UserDto(
     string? PendingEmail,
     bool NotifyOnReply,
     bool NotifyOnMention,
+    bool ShowBio,
+    bool ShowActivity,
     bool HasPassword,
-    bool IsGoogleLinked
+    bool IsGoogleLinked,
+    // Which Google account is attached. Shown in settings so "Connected" names the address rather
+    // than leaving the user guessing which of their Google accounts they linked.
+    string? GoogleEmail = null
 );
 
 public record UserListItem(Guid Id, string Username, string Role, bool IsBanned, bool IsDeleted, DateTime JoinedAt);
@@ -62,7 +67,10 @@ public record PublicProfileDto(
     string? Bio,
     DateTime JoinedAt,
     int PostCount,
-    int ContributionCount
+    int ContributionCount,
+    // Lets the profile page know to omit the activity feed. A profile with ShowBio off is never
+    // returned to a stranger at all, so there is no equivalent flag for it here.
+    bool ShowActivity = true
 );
 
 public record UserSummaryDto(Guid Id, string Username, string? DisplayName, string? AvatarUrl, string Role);

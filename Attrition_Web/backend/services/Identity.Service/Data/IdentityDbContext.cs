@@ -28,6 +28,9 @@ public class IdentityDbContext : DbContext
             e.Property(u => u.IsEmailVerified).HasDefaultValue(false);
             e.Property(u => u.NotifyOnReply).HasDefaultValue(true);
             e.Property(u => u.NotifyOnMention).HasDefaultValue(true);
+            // Privacy defaults open so the migration doesn't silently hide existing profiles.
+            e.Property(u => u.ShowBio).HasDefaultValue(true);
+            e.Property(u => u.ShowActivity).HasDefaultValue(true);
 
             // Owned value objects — columns stay on the Users table with explicit names
             // to match the existing schema (zero-migration change).

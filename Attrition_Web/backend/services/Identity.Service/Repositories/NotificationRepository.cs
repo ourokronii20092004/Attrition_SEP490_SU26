@@ -28,6 +28,19 @@ public class NotificationRepository(IdentityDbContext db) : INotificationReposit
     public Task MarkAllReadAsync(Guid userId) => db.Notifications.Where(n => n.UserId == userId && !n.IsRead)
         .ExecuteUpdateAsync(s => s.SetProperty(n => n.IsRead, true));
 
+    /// <summary>
+    /// Clears the backlog for one thread, so muting it also silences the notifications it already
+    /// produced. Matched on the deep link (<c>/forum/{threadId}...</c>) because notifications store
+    /// a link rather than a thread id — Identity owns this table and has no forum schema to join.
+    /// </summary>
+    public Task<int> MarkThreadReadAsync(Guid userId, Guid threadId)
+    {
+        var prefix = $"/forum/{threadId}";
+        return db.Notifications
+            .Where(n => n.UserId == userId && !n.IsRead && n.Link != null && n.Link.StartsWith(prefix))
+            .ExecuteUpdateAsync(s => s.SetProperty(n => n.IsRead, true));
+    }
+
     public async Task CreateAsync(CreateNotificationRequest request)
     {
         var user = request.UserId is { } id
@@ -40,6 +53,33 @@ public class NotificationRepository(IdentityDbContext db) : INotificationReposit
         if (request.Type == NotificationType.Mention && !user.NotifyOnMention) return;
         db.Notifications.Add(new Notification { UserId = user.Id, Type = request.Type, Message = request.Message,
             Link = request.Link, ActorName = request.ActorName });
+        await db.SaveChangesAsync();
+    }
+
+    public async Task CreateManyAsync(CreateNotificationsBulkRequest request)
+    {
+        var ids = request.UserIds.Distinct().ToList();
+        if (ids.Count == 0) return;
+
+        // Resolve in one round-trip and honour the same per-user opt-outs as the single create.
+        var recipients = await db.Users
+            .Where(u => ids.Contains(u.Id))
+            .Select(u => new { u.Id, u.NotifyOnReply, u.NotifyOnMention })
+            .ToListAsync();
+
+        var wanted = recipients.Where(u => request.Type switch
+        {
+            NotificationType.Reply => u.NotifyOnReply,
+            NotificationType.Mention => u.NotifyOnMention,
+            _ => true,
+        }).Select(u => u.Id).ToList();
+        if (wanted.Count == 0) return;
+
+        db.Notifications.AddRange(wanted.Select(userId => new Notification
+        {
+            UserId = userId, Type = request.Type, Message = request.Message,
+            Link = request.Link, ActorName = request.ActorName,
+        }));
         await db.SaveChangesAsync();
     }
 }

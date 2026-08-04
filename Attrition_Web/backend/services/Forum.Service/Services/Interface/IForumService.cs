@@ -12,7 +12,7 @@ public interface IForumService
     Task<PaginatedResponse<ForumThreadListDto>> GetThreadsAsync(string? categorySlug, string? search, int page, int pageSize, Guid? authorId = null);
     Task<ForumThreadDto?> GetThreadAsync(Guid threadId, Guid? currentUserId = null);
     // QOLF-3b: resolve (creating if needed) the comment thread for a wiki article.
-    Task<ApiResponse<ForumThreadDto>> GetOrCreateWikiThreadAsync(Guid articleId, string articleTitle);
+    Task<ApiResponse<ForumThreadDto>> GetOrCreateWikiThreadAsync(Guid articleId, string articleTitle, Guid? currentUserId = null);
     Task<PaginatedResponse<ForumPostDto>> GetPostsAsync(Guid threadId, int page, int pageSize, Guid? currentUserId);
     // A user's forum replies for their public profile (excludes thread-opening posts).
     Task<PaginatedResponse<UserReplyDto>> GetUserRepliesAsync(Guid userId, int page, int pageSize);
@@ -23,7 +23,8 @@ public interface IForumService
     Task<ApiResponse> DeletePostAsync(Guid postId, Guid userId, bool isAdmin);
     Task<ApiResponse> ToggleReactionAsync(Guid postId, Guid userId, ReactRequest request);
     Task<ApiResponse> SavePostAttachmentsAsync(Guid postId, List<string> urls, Guid userId);
-    Task<ApiResponse> ToggleThreadSubscriptionAsync(Guid threadId, Guid userId);
+    /// <summary>Follow or mute a thread. Idempotent: setting the state you already have succeeds without change.</summary>
+    Task<ApiResponse> SetThreadMutedAsync(Guid threadId, Guid userId, bool muted);
     Task<ApiResponse> ReportPostAsync(Guid postId, string reason, Author reporter);
 
     // Moderation

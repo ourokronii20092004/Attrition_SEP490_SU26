@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { useConfirm } from "@/lib/providers";
 
@@ -14,6 +15,11 @@ import { useConfirm } from "@/lib/providers";
  * click outside can't wipe filled-in data. The X button and explicit saves bypass the guard via
  * onClose directly (they're intentional). Programmatic closes (e.g. after save) should set
  * dirty=false first, or call onClose — they aren't intercepted.
+ *
+ * Rendered through a portal to document.body. `position: fixed` is resolved against the nearest
+ * ancestor with a transform, so inside an animated container (`.animate-rise-in` / `.stagger`
+ * keep a transform after finishing, via `animation-fill-mode: both`) the overlay would be trapped
+ * in that box instead of covering the viewport. The portal escapes any such ancestor.
  */
 export function Modal({ open, onClose, title, children, size = "md", dirty = false }: {
   open: boolean;
@@ -24,6 +30,9 @@ export function Modal({ open, onClose, title, children, size = "md", dirty = fal
   dirty?: boolean;
 }) {
   const confirm = useConfirm();
+  // Portals need a real DOM node, which doesn't exist during SSR / first render.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   // Guarded close: when the form is dirty, confirm before discarding (QOLF-6).
   const attemptClose = useCallback(async () => {
@@ -47,11 +56,11 @@ export function Modal({ open, onClose, title, children, size = "md", dirty = fal
     return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
   }, [open, attemptClose]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
   const maxW = size === "sm" ? "max-w-sm" : size === "lg" ? "max-w-3xl" : "max-w-xl";
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[var(--z-modal)] flex items-start justify-center overflow-y-auto bg-black/80 p-4 motion-safe:animate-fade-in sm:p-8"
       role="dialog"
@@ -73,6 +82,7 @@ export function Modal({ open, onClose, title, children, size = "md", dirty = fal
         )}
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

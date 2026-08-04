@@ -34,7 +34,12 @@ public class ForumDbContext(DbContextOptions<ForumDbContext> options) : DbContex
             });
         });
         modelBuilder.Entity<ForumReaction>(e => { e.HasKey(r => r.Id); e.HasIndex(r => new { r.PostId, r.UserId }).IsUnique(); });
-        modelBuilder.Entity<ThreadSubscription>(e => { e.HasKey(s => s.Id); e.HasIndex(s => new { s.ThreadId, s.UserId }).IsUnique(); });
+        modelBuilder.Entity<ThreadSubscription>(e =>
+        {
+            e.HasKey(s => s.Id);
+            e.HasIndex(s => new { s.ThreadId, s.UserId }).IsUnique();
+            e.Property(s => s.IsMuted).HasDefaultValue(false);
+        });
         modelBuilder.Entity<PostReport>(e => { e.HasKey(r => r.Id); e.HasIndex(r => r.Status); e.Property(r => r.Status).HasDefaultValue(ReportStatus.Pending); });
     }
 }

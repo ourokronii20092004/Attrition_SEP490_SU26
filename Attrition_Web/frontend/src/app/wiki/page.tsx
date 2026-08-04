@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { Search, BookOpen } from "lucide-react";
@@ -14,11 +14,14 @@ import { SkeletonGrid } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Pagination } from "@/components/ui/pagination";
 import { qk } from "@/lib/query-keys";
+import { useQueryParam, useUrlPage } from "@/lib/hooks/use-url-pagination";
 
-export default function WikiPage() {
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
+function WikiList() {
+  // Category, search and page live in the URL so returning from an article restores the view.
+  const [selectedCategory, setSelectedCategory] = useQueryParam("category");
+  const [search, setSearch] = useQueryParam("q");
+  // Page feeds the query, so it is read before the response; the hook is told the real
+  // total further down, once it is known, and clamps an out-of-range URL then.
 
   const { data: categories = [] } = useQuery({
     queryKey: qk.wiki.categories(),
@@ -27,6 +30,8 @@ export default function WikiPage() {
       return res.success ? res.data ?? [] : [];
     },
   });
+
+  const [page, setPage] = useUrlPage();
 
   const { data: articles, isPending } = useQuery({
     queryKey: qk.wiki.articles({ selectedCategory, search, page }),
@@ -49,7 +54,7 @@ export default function WikiPage() {
           <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-fg-subtle" />
           <Input
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            onChange={(e) => setSearch(e.target.value)}
             placeholder="Search articles..."
             className="pl-9"
             aria-label="Search articles"
@@ -58,7 +63,7 @@ export default function WikiPage() {
         <div className="w-48">
           <Select
             value={selectedCategory}
-            onChange={(e) => { setSelectedCategory(e.target.value); setPage(1); }}
+            onChange={(e) => setSelectedCategory(e.target.value)}
             aria-label="Filter by category"
           >
             <option value="">All Categories</option>
@@ -99,5 +104,13 @@ export default function WikiPage() {
         </>
       )}
     </PageShell>
+  );
+}
+
+export default function WikiPage() {
+  return (
+    <Suspense fallback={null}>
+      <WikiList />
+    </Suspense>
   );
 }

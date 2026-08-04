@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { Plus, Pin, Lock, MessageSquarePlus, MessagesSquare, Search } from "lucide-react";
@@ -19,13 +19,26 @@ import { RelativeTime } from "@/components/ui/relative-time";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { useAuth } from "@/lib/providers";
 import { qk } from "@/lib/query-keys";
+import { LIVE_NORMAL, liveWhenFocused } from "@/lib/live";
+import { useQueryParam, useUrlPage } from "@/lib/hooks/use-url-pagination";
 
-export default function ForumPage() {
+function ForumList() {
   const { user } = useAuth();
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
-  const [searchInput, setSearchInput] = useState("");
-  const [page, setPage] = useState(1);
+  const [selectedCategory, setSelectedCategory] = useQueryParam("category");
+  // Seeded from the URL so a return trip restores the query; the debounced value is written
+  // back below, so the address updates once the user pauses rather than once per keystroke.
+  const [urlSearch, setUrlSearch] = useQueryParam("q");
+  const [searchInput, setSearchInput] = useState(urlSearch);
+  // `page` feeds the query, so it is read before the response exists. The hook is not given
+  // a total here; the Pagination component below receives the real one once it is known.
+  const [page, setPage] = useUrlPage();
   const search = useDebouncedValue(searchInput.trim(), 300);
+
+  // Mirror the settled search into the URL. Guarded so it only fires on an actual change,
+  // otherwise the replace() would loop against its own re-render.
+  useEffect(() => {
+    if (search !== urlSearch) setUrlSearch(search);
+  }, [search, urlSearch, setUrlSearch]);
 
   const { data: categories = [] } = useQuery({
     queryKey: qk.forum.categories(),
@@ -37,6 +50,8 @@ export default function ForumPage() {
 
   const { data: threads, isPending } = useQuery({
     queryKey: qk.forum.threads({ selectedCategory, search, page }),
+    // Keeps the thread list and its reply counts current.
+    refetchInterval: liveWhenFocused(LIVE_NORMAL),
     queryFn: async () => {
       const res = await forumApi.getThreads({ category: selectedCategory || undefined, search: search || undefined, page, pageSize: 15 });
       return res.success ? res.data : null;
@@ -65,7 +80,7 @@ export default function ForumPage() {
           <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-fg-subtle" />
           <Input
             value={searchInput}
-            onChange={(e) => { setSearchInput(e.target.value); setPage(1); }}
+            onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search threads..."
             className="pl-9"
             aria-label="Search threads"
@@ -76,7 +91,6 @@ export default function ForumPage() {
             value={selectedCategory}
             onChange={(e) => {
               setSelectedCategory(e.target.value);
-              setPage(1);
             }}
             aria-label="Filter by category"
           >
@@ -142,5 +156,13 @@ export default function ForumPage() {
         </>
       )}
     </PageShell>
+  );
+}
+
+export default function ForumPage() {
+  return (
+    <Suspense fallback={null}>
+      <ForumList />
+    </Suspense>
   );
 }

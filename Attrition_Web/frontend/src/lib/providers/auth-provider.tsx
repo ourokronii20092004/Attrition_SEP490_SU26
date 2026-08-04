@@ -1,9 +1,11 @@
 "use client";
 
 import { createContext, useContext, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import { authApi } from "@/lib/api/auth";
 import { charactersApi } from "@/lib/api/characters";
 import { ApiError } from "@/lib/api/client";
+import { takePendingRedirect } from "@/lib/post-login-redirect";
 import { useToast } from "./toast-provider";
 import type { UserDto, LoginRequest, RegisterRequest, AuthResponse } from "@/lib/types";
 
@@ -33,6 +35,7 @@ const AUTH_BROADCAST_KEY = "attrition:auth-broadcast";
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({ user: null, loading: true });
   const { toast } = useToast();
+  const router = useRouter();
 
   // Mirror the current user in a ref so window/storage listeners (registered once) can read the
   // latest value without being torn down and re-added on every user change.
@@ -64,12 +67,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     authApi
       .me()
       .then((res) => {
-        setState({ user: res.success && res.data ? res.data : null, loading: false });
+        const user = res.success && res.data ? res.data : null;
+        setState({ user, loading: false });
+        // Google's callback drops the browser on "/" with no way to carry ?redirect through the
+        // OAuth round-trip, so the destination was stashed before leaving. Consume it here —
+        // this is the moment we learn the round-trip succeeded. Only fires when something was
+        // actually stashed, so a normal visit to "/" is unaffected.
+        if (user) {
+          const back = takePendingRedirect();
+          if (back) router.replace(back);
+        }
       })
       .catch(() => {
         setState({ user: null, loading: false });
       });
-  }, []);
+  }, [router]);
 
   // Drop the user to a clean logged-out state when a token refresh fails mid-session, and tell them
   // why (their session expired) — but only if they were actually signed in, so first-load visitors

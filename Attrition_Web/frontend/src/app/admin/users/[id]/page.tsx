@@ -20,6 +20,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { formatDate } from "@/lib/format-date";
 import { qk } from "@/lib/query-keys";
 import { useAdminPageLabel } from "@/lib/hooks/use-admin-page-label";
+import { PASSWORD_RULES_SUMMARY, firstPasswordError } from "@/lib/password-rules";
 
 function StatusBadge({ detail }: { detail: { isDeleted: boolean; isBanned: boolean } }) {
   if (detail.isDeleted) return <span className="rounded-full bg-surface-2 px-2.5 py-0.5 text-xs font-medium text-fg-subtle">Deleted</span>;
@@ -142,9 +143,17 @@ export default function AdminUserDetailPage() {
   };
 
   const onResetPw = async () => {
-    const pw = window.prompt(`Set a temporary password for @${detail.username} (min 8 chars):`);
+    // ponytail: still a window.prompt — spelling the rules out in the message and validating with
+    // the shared rule set stops an admin setting something the server rejects. Upgrade path: swap
+    // for a Modal with the PasswordChecklist, same as the user-facing forms.
+    const pw = window.prompt(
+      `Set a temporary password for @${detail.username}.
+
+${PASSWORD_RULES_SUMMARY}`,
+    );
     if (!pw) return;
-    if (pw.length < 8) { toast("Password must be at least 8 characters.", "error"); return; }
+    const problem = firstPasswordError(pw);
+    if (problem) { toast(problem, "error"); return; }
     resetPwMutation.mutate(pw);
   };
 

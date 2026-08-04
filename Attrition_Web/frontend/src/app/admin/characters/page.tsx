@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { Heart, MapPin, Clock, Gamepad2 } from "lucide-react";
@@ -13,6 +13,7 @@ import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { formatDate } from "@/lib/format-date";
 import { qk } from "@/lib/query-keys";
 import type { AdminCharacterDto } from "@/lib/types";
+import { useUrlPage } from "@/lib/hooks/use-url-pagination";
 
 const STATUSES = [
   { value: "all", label: "All statuses" },
@@ -20,10 +21,10 @@ const STATUSES = [
   { value: "dead", label: "Dead" },
 ];
 
-export default function AdminCharactersPage() {
+function AdminCharactersList() {
   const { user } = useAuth();
   const router = useRouter();
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useUrlPage();
   const [searchInput, setSearchInput] = useState("");
   const [archetype, setArchetype] = useState("all");
   const [status, setStatus] = useState("all");
@@ -128,5 +129,13 @@ export default function AdminCharactersPage() {
 
       {totalPages > 1 && <Pagination page={page} totalPages={totalPages} onChange={setPage} compact />}
     </div>
+  );
+}
+
+export default function AdminCharactersPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminCharactersList />
+    </Suspense>
   );
 }

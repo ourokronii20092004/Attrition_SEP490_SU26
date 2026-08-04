@@ -12,8 +12,10 @@ import { Input } from "@/components/ui/input";
 import { SkeletonList } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { qk } from "@/lib/query-keys";
+import { useLoginHref } from "@/lib/hooks/use-login-href";
 
 export default function PlaylistsPage() {
+  const loginHref = useLoginHref();
   const { user } = useAuth();
   const { toast } = useToast();
   const confirm = useConfirm();
@@ -75,7 +77,7 @@ export default function PlaylistsPage() {
           icon={ListMusic}
           title="Sign in to see your playlists"
           description="Create playlists and add tracks you love."
-          action={<Link href="/login"><Button variant="secondary">Sign in</Button></Link>}
+          action={<Link href={loginHref}><Button variant="secondary">Sign in</Button></Link>}
         />
       </PageShell>
     );

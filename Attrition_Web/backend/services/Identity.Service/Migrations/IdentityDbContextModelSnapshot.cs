@@ -95,6 +95,9 @@ namespace Identity.Service.Migrations
                     b.Property<string>("GoogleAvatarUrl")
                         .HasColumnType("text");
 
+                    b.Property<string>("GoogleEmail")
+                        .HasColumnType("text");
+
                     b.Property<string>("GoogleId")
                         .HasColumnType("text");
 
@@ -145,6 +148,16 @@ namespace Identity.Service.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("text")
                         .HasDefaultValue("User");
+
+                    b.Property<bool>("ShowActivity")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("ShowBio")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
 
                     b.Property<string>("ThemeAccent")
                         .IsRequired()

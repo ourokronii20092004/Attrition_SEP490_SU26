@@ -16,21 +16,11 @@ import { RelativeTime } from "@/components/ui/relative-time";
 import { MarkdownContent } from "@/components/post-content";
 import { qk } from "@/lib/query-keys";
 import { makeOptimisticPost, addPostToPage, replacePostInPage, applyReactionToPage } from "@/lib/forum-cache";
+import { buildTree, indentsChildren, type PostNode } from "@/lib/forum-tree";
+import { LIVE_FAST, liveWhenFocused } from "@/lib/live";
+import { useLoginHref } from "@/lib/hooks/use-login-href";
+import { ThreadMuteToggle } from "@/components/thread-mute-toggle";
 import type { ForumPostDto, PaginatedResponse } from "@/lib/types";
-
-type PostNode = ForumPostDto & { children: PostNode[] };
-
-function buildTree(posts: ForumPostDto[]): PostNode[] {
-  const byId = new Map<string, PostNode>();
-  for (const p of posts) byId.set(p.id, { ...p, children: [] });
-  const roots: PostNode[] = [];
-  for (const node of byId.values()) {
-    const parent = node.parentPostId ? byId.get(node.parentPostId) : null;
-    if (parent) parent.children.push(node);
-    else roots.push(node);
-  }
-  return roots;
-}
 
 const PAGE_SIZE = 50;
 
@@ -38,6 +28,7 @@ export function WikiComments({ articleId, articleTitle }: { articleId: string; a
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const loginHref = useLoginHref();
   const [limit, setLimit] = useState(PAGE_SIZE);
 
   // Resolve (creating on first view) the article's comment thread.
@@ -57,6 +48,8 @@ export function WikiComments({ articleId, articleTitle }: { articleId: string; a
     enabled: !!threadId,
     // Briefly fresh so an optimistically-added comment isn't refetched away if the read side lags.
     staleTime: 30_000,
+    // New comments from other readers should appear without a manual refresh.
+    refetchInterval: liveWhenFocused(LIVE_FAST),
     queryFn: async () => {
       const res = await forumApi.getPosts(threadId!, { page: 1, pageSize: limit });
       return res.success ? res.data : null;
@@ -123,9 +116,16 @@ export function WikiComments({ articleId, articleTitle }: { articleId: string; a
 
   return (
     <section className="mt-10 border-t border-border pt-6">
-      <h2 className="flex items-center gap-2 font-display text-xl font-bold text-fg">
-        <MessageSquare size={18} /> Comments {total > 0 && <span className="text-sm font-normal text-fg-muted">({total})</span>}
-      </h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="flex items-center gap-2 font-display text-xl font-bold text-fg">
+          <MessageSquare size={18} /> Comments {total > 0 && <span className="text-sm font-normal text-fg-muted">({total})</span>}
+        </h2>
+        {/* Commenting on an article auto-follows its thread, so the way out belongs right here. */}
+        {user && thread && (
+          <ThreadMuteToggle threadId={thread.id} isMuted={thread.isMuted}
+            invalidateKey={qk.wiki.commentThread(articleId)} />
+        )}
+      </div>
 
       {user ? (
         <Card className="mt-4 p-4">
@@ -133,7 +133,7 @@ export function WikiComments({ articleId, articleTitle }: { articleId: string; a
         </Card>
       ) : (
         <p className="mt-4 text-sm text-fg-muted">
-          <Link href="/login" className="text-accent hover:underline">Sign in</Link> to join the discussion.
+          <Link href={loginHref} className="text-accent hover:underline">Sign in</Link> to join the discussion.
         </p>
       )}
 
@@ -223,14 +223,16 @@ function CommentBox({ loading, onSubmit, autoFocus, placeholder }: {
   );
 }
 
-function CommentNode({ node, canReply, showReport, onReact, onReport, onReply, replying }: {
-  node: PostNode; canReply: boolean; showReport: boolean;
+function CommentNode({ node, level = 0, replyingToName, canReply, showReport, onReact, onReport, onReply, replying }: {
+  node: PostNode; level?: number; replyingToName?: string; canReply: boolean; showReport: boolean;
   onReact: (postId: string, type: "like" | "dislike") => void;
   onReport: (postId: string) => void;
   onReply: (content: string, parentPostId: string) => void;
   replying: boolean;
 }) {
   const [replyOpen, setReplyOpen] = useState(false);
+  // Past the indent cap, deeper replies render flush instead of nesting further (see forum-tree).
+  const indent = indentsChildren(level);
   return (
     <div>
       <Card className="p-4">
@@ -243,6 +245,12 @@ function CommentNode({ node, canReply, showReport, onReact, onReport, onReply, r
               </Link>
               {node.authorRole === "Admin" && <span className="rounded bg-accent-soft px-1.5 py-0.5 text-xs font-medium text-accent">Admin</span>}
               <span className="text-xs text-fg-subtle"><RelativeTime iso={node.createdAt} /></span>
+              {replyingToName && (
+                <span className="inline-flex items-center gap-1 text-xs text-fg-subtle">
+                  <Reply size={11} aria-hidden /> replying to
+                  <span className="font-medium text-fg-muted">@{replyingToName}</span>
+                </span>
+              )}
             </div>
             <MarkdownContent content={node.content} className="prose-content mt-2 text-sm" />
             <div className="mt-2 flex items-center gap-1">
@@ -275,9 +283,11 @@ function CommentNode({ node, canReply, showReport, onReact, onReport, onReply, r
         </div>
       </Card>
       {node.children.length > 0 && (
-        <div className="mt-3 space-y-3 border-l border-border pl-3 sm:pl-5">
+        <div className={indent ? "mt-3 space-y-3 border-l border-border pl-3 sm:pl-5" : "mt-3 space-y-3"}>
           {node.children.map((child) => (
-            <CommentNode key={child.id} node={child} canReply={canReply} showReport={showReport}
+            <CommentNode key={child.id} node={child} level={level + 1}
+              replyingToName={indent ? undefined : node.authorName}
+              canReply={canReply} showReport={showReport}
               onReact={onReact} onReport={onReport} onReply={onReply} replying={replying} />
           ))}
         </div>

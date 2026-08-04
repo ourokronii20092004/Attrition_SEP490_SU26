@@ -78,22 +78,16 @@ namespace Character.Service.Migrations
                     b.Property<string>("AllocatedPointsJson")
                         .HasColumnType("jsonb");
 
-                    b.Property<float>("AttackSpeed")
-                        .HasColumnType("real");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("CurrentExp")
                         .HasColumnType("integer");
 
-                    b.Property<int>("CurrentHp")
-                        .HasColumnType("integer");
-
                     b.Property<int>("CurrentLevel")
                         .HasColumnType("integer");
 
-                    b.Property<int>("CurrentMana")
+                    b.Property<int>("DeathCount")
                         .HasColumnType("integer");
 
                     b.Property<string>("EquipmentJson")
@@ -102,33 +96,8 @@ namespace Character.Service.Migrations
                     b.Property<string>("InventoryJson")
                         .HasColumnType("jsonb");
 
-                    b.Property<string>("LastRestPointId")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<int>("MaxHp")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("MaxMana")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("MaxStamina")
-                        .HasColumnType("integer");
-
                     b.Property<short>("PlayerRole")
                         .HasColumnType("smallint");
-
-                    b.Property<float>("PosX")
-                        .HasColumnType("real");
-
-                    b.Property<float>("PosY")
-                        .HasColumnType("real");
-
-                    b.Property<int>("PotionMaxFlasks")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("PotionMaxManaFlasks")
-                        .HasColumnType("integer");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -152,6 +121,9 @@ namespace Character.Service.Migrations
                     b.Property<string>("CurrentScene")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<string>("FogJson")
+                        .HasColumnType("jsonb");
 
                     b.Property<bool>("IsMultiplayer")
                         .HasColumnType("boolean");
@@ -275,7 +247,137 @@ namespace Character.Service.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.OwnsOne("Character.Service.Models.CombatStats", "Combat", b1 =>
+                        {
+                            b1.Property<Guid>("CharacterSessionEntityCharacterId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("CharacterSessionEntitySessionId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<int>("Ad")
+                                .HasColumnType("integer")
+                                .HasColumnName("Ad");
+
+                            b1.Property<int>("Ap")
+                                .HasColumnType("integer")
+                                .HasColumnName("Ap");
+
+                            b1.Property<float>("AttackSpeed")
+                                .HasColumnType("real")
+                                .HasColumnName("AttackSpeed");
+
+                            b1.Property<int>("Def")
+                                .HasColumnType("integer")
+                                .HasColumnName("Def");
+
+                            b1.Property<int>("HealthCharges")
+                                .HasColumnType("integer")
+                                .HasColumnName("HealthCharges");
+
+                            b1.Property<int>("ManaCharges")
+                                .HasColumnType("integer")
+                                .HasColumnName("ManaCharges");
+
+                            b1.Property<int>("PotionMaxFlasks")
+                                .HasColumnType("integer")
+                                .HasColumnName("PotionMaxFlasks");
+
+                            b1.Property<int>("PotionMaxManaFlasks")
+                                .HasColumnType("integer")
+                                .HasColumnName("PotionMaxManaFlasks");
+
+                            b1.Property<int>("Res")
+                                .HasColumnType("integer")
+                                .HasColumnName("Res");
+
+                            b1.HasKey("CharacterSessionEntityCharacterId", "CharacterSessionEntitySessionId");
+
+                            b1.ToTable("character_session", "character");
+
+                            b1.WithOwner()
+                                .HasForeignKey("CharacterSessionEntityCharacterId", "CharacterSessionEntitySessionId");
+                        });
+
+                    b.OwnsOne("Character.Service.Models.Position", "Position", b1 =>
+                        {
+                            b1.Property<Guid>("CharacterSessionEntityCharacterId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("CharacterSessionEntitySessionId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("LastRestPointId")
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("LastRestPointId");
+
+                            b1.Property<float>("PosX")
+                                .HasColumnType("real")
+                                .HasColumnName("PosX");
+
+                            b1.Property<float>("PosY")
+                                .HasColumnType("real")
+                                .HasColumnName("PosY");
+
+                            b1.Property<float>("PosZ")
+                                .HasColumnType("real")
+                                .HasColumnName("PosZ");
+
+                            b1.HasKey("CharacterSessionEntityCharacterId", "CharacterSessionEntitySessionId");
+
+                            b1.ToTable("character_session", "character");
+
+                            b1.WithOwner()
+                                .HasForeignKey("CharacterSessionEntityCharacterId", "CharacterSessionEntitySessionId");
+                        });
+
+                    b.OwnsOne("Character.Service.Models.VitalStats", "Vitals", b1 =>
+                        {
+                            b1.Property<Guid>("CharacterSessionEntityCharacterId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("CharacterSessionEntitySessionId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<int>("CurrentHp")
+                                .HasColumnType("integer")
+                                .HasColumnName("CurrentHp");
+
+                            b1.Property<int>("CurrentMana")
+                                .HasColumnType("integer")
+                                .HasColumnName("CurrentMana");
+
+                            b1.Property<int>("MaxHp")
+                                .HasColumnType("integer")
+                                .HasColumnName("MaxHp");
+
+                            b1.Property<int>("MaxMana")
+                                .HasColumnType("integer")
+                                .HasColumnName("MaxMana");
+
+                            b1.Property<int>("MaxStamina")
+                                .HasColumnType("integer")
+                                .HasColumnName("MaxStamina");
+
+                            b1.HasKey("CharacterSessionEntityCharacterId", "CharacterSessionEntitySessionId");
+
+                            b1.ToTable("character_session", "character");
+
+                            b1.WithOwner()
+                                .HasForeignKey("CharacterSessionEntityCharacterId", "CharacterSessionEntitySessionId");
+                        });
+
+                    b.Navigation("Combat")
+                        .IsRequired();
+
+                    b.Navigation("Position")
+                        .IsRequired();
+
                     b.Navigation("Session");
+
+                    b.Navigation("Vitals")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Character.Service.Models.WorldStateEntity", b =>

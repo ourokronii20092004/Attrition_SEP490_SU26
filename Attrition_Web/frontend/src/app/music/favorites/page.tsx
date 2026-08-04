@@ -1,5 +1,7 @@
 "use client";
 
+import { Suspense } from "react";
+
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { ArrowLeft, Play, Pause, Heart, Headphones, Music as MusicIcon } from "lucide-react";
@@ -13,9 +15,10 @@ import { Button } from "@/components/ui/button";
 import { SkeletonList } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Pagination } from "@/components/ui/pagination";
-import { useClientPagination } from "@/lib/hooks/use-client-pagination";
 import { qk } from "@/lib/query-keys";
 import type { MusicTrackDto, FavoriteTrackDto } from "@/lib/types";
+import { useLoginHref } from "@/lib/hooks/use-login-href";
+import { useUrlPagination } from "@/lib/hooks/use-url-pagination";
 
 const formatDuration = (s: number) => {
   const m = Math.floor(s / 60);
@@ -34,7 +37,8 @@ function toPlayable(f: FavoriteTrackDto): MusicTrackDto {
   };
 }
 
-export default function FavoritesPage() {
+function FavoritesList() {
+  const loginHref = useLoginHref();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { play, pause, resume, currentTrack, isPlaying } = useAudioStore();
@@ -55,7 +59,7 @@ export default function FavoritesPage() {
     queryClient.invalidateQueries({ queryKey: qk.music.favorites() });
   };
 
-  const { page, setPage, totalPages, paged } = useClientPagination(favorites, 25);
+  const { page, setPage, totalPages, paged } = useUrlPagination(favorites, 25);
 
   if (!user) {
     return (
@@ -64,7 +68,7 @@ export default function FavoritesPage() {
           icon={Heart}
           title="Sign in to see your favorites"
           description="Favorite tracks you love and they'll collect here."
-          action={<Link href="/login"><Button variant="secondary">Sign in</Button></Link>}
+          action={<Link href={loginHref}><Button variant="secondary">Sign in</Button></Link>}
         />
       </PageShell>
     );
@@ -136,5 +140,13 @@ export default function FavoritesPage() {
         </div>
       )}
     </PageShell>
+  );
+}
+
+export default function FavoritesPage() {
+  return (
+    <Suspense fallback={null}>
+      <FavoritesList />
+    </Suspense>
   );
 }

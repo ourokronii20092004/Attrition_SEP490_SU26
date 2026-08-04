@@ -15,8 +15,10 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { formatDuration } from "@/lib/format-duration";
 import { qk } from "@/lib/query-keys";
 import type { MusicTrackDto } from "@/lib/types";
+import { useLoginHref } from "@/lib/hooks/use-login-href";
 
 export default function PlaylistDetailPage() {
+  const loginHref = useLoginHref();
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const { user } = useAuth();
@@ -90,7 +92,7 @@ export default function PlaylistDetailPage() {
     return (
       <PageShell>
         <EmptyState icon={ListMusic} title="Sign in to view playlists"
-          action={<Link href="/login"><Button variant="secondary">Sign in</Button></Link>} />
+          action={<Link href={loginHref}><Button variant="secondary">Sign in</Button></Link>} />
       </PageShell>
     );
   }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Heart, MapPin, Clock, ChevronDown, Gamepad2, Backpack } from "lucide-react";
@@ -15,17 +15,19 @@ import { SnapshotTimeline } from "@/components/snapshot-timeline";
 import { InventoryView } from "@/components/inventory-view";
 import { RelativeTime } from "@/components/ui/relative-time";
 import { Pagination } from "@/components/ui/pagination";
-import { useClientPagination } from "@/lib/hooks/use-client-pagination";
 import { qk } from "@/lib/query-keys";
 import type { CharacterSummaryDto, SnapshotDto } from "@/lib/types";
+import { useLoginHref } from "@/lib/hooks/use-login-href";
+import { useUrlPagination } from "@/lib/hooks/use-url-pagination";
 
-export default function CharactersPage() {
+function CharactersList() {
+  const loginHref = useLoginHref();
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user) router.push("/login");
+    if (!user) router.push(loginHref);
   }, [user, authLoading, router]);
 
   const { data: characters = [], isPending } = useQuery({
@@ -37,7 +39,7 @@ export default function CharactersPage() {
     },
   });
 
-  const { page, setPage, totalPages, paged } = useClientPagination(characters, 10);
+  const { page, setPage, totalPages, paged } = useUrlPagination(characters, 10);
 
   if (!user && !authLoading) return null;
 
@@ -135,5 +137,13 @@ function StatLine({ snap }: { snap: SnapshotDto }) {
       {snap.roomCode && <span className="flex items-center gap-1"><MapPin size={12} /> {snap.roomCode}</span>}
       <span className="flex items-center gap-1"><Clock size={12} /> <RelativeTime iso={snap.capturedAt} /></span>
     </div>
+  );
+}
+
+export default function CharactersPage() {
+  return (
+    <Suspense fallback={null}>
+      <CharactersList />
+    </Suspense>
   );
 }

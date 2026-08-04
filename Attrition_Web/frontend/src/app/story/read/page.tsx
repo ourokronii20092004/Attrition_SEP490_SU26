@@ -19,7 +19,7 @@ export default function ChapterIndexPage() {
 
   return (
     <PageShell size="lg">
-      <BackButton href="/story" label="The Story" />
+      <BackButton fallbackHref="/story" label="The Story" />
 
       <Reveal className="mt-6">
         <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-accent">The Manuscript</p>

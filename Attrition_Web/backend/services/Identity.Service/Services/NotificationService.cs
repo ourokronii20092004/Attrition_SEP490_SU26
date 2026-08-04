@@ -15,5 +15,7 @@ public class NotificationService(INotificationRepository repository) : INotifica
 
     public Task MarkReadAsync(Guid userId, Guid notificationId) => repository.MarkReadAsync(userId, notificationId);
     public Task MarkAllReadAsync(Guid userId) => repository.MarkAllReadAsync(userId);
+    public Task<int> MarkThreadReadAsync(Guid userId, Guid threadId) => repository.MarkThreadReadAsync(userId, threadId);
     public Task CreateAsync(CreateNotificationRequest request) => repository.CreateAsync(request);
+    public Task CreateManyAsync(CreateNotificationsBulkRequest request) => repository.CreateManyAsync(request);
 }

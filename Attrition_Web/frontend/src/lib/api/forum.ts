@@ -77,6 +77,10 @@ export const forumApi = {
   report: (postId: string, data: ReportPostReq) =>
     apiFetch<ApiResponse<void>>(`/api/forum/posts/${postId}/report`, { method: "POST", body: data }),
 
+  /** Mute or un-mute a thread. Muting stops its reply notifications, including on your own posts. */
+  setThreadMuted: (threadId: string, muted: boolean) =>
+    apiFetch<ApiResponse<void>>(`/api/forum/threads/${threadId}/mute`, { method: "POST", body: { muted } }),
+
   // Admin
   pinThread: (threadId: string) =>
     apiFetch<ApiResponse<void>>(`/api/forum/threads/${threadId}/pin`, { method: "PUT" }),
