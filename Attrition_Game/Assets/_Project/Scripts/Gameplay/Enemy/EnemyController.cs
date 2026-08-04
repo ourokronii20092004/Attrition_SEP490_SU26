@@ -26,7 +26,9 @@ namespace Attrition.Controllers
         [Header("---- LOOT (khi chết) ----")]
         [Tooltip("itemId trong ItemDatabase mà quái thưởng khi chết. NORMAL: drop ra thế giới (theo dropChance). ELITE/BOSS: thêm THẲNG vào kho mọi player, chỉ 1 lần.")]
         [SerializeField] private string[] lootItemIds = new string[0];
-        [Tooltip("Tỉ lệ rơi cho quái THƯỜNG (0..1). Elite/Boss luôn cho (bỏ qua giá trị này).")]
+        [Tooltip("Tỉ lệ rơi cho TỪNG item trong danh sách trên (0..1), áp cho MỌI tier. Elite/Boss muốn " +
+                 "chắc chắn rơi thì để 1. Mỗi item roll ĐỘC LẬP: 4 item × 0.35 = trung bình 1.4 item/lần " +
+                 "và có ~18% không rơi gì.")]
         [Range(0f, 1f)][SerializeField] private float normalDropChance = 0.35f;
         [Tooltip("Prefab DroppedItem để rơi ra thế giới (quái THƯỜNG). Bỏ trống = không rơi.")]
         [SerializeField] private Fusion.NetworkPrefabRef droppedItemPrefab;
@@ -473,9 +475,10 @@ namespace Attrition.Controllers
             if (hasWeb && tier == Attrition.Data.EnemyTier.Normal)
                 return ov.loot;
 
-            // Baseline từ prefab (SO local). Elite/Boss BỎ QUA normalDropChance (đúng như tooltip của field:
-            // "Elite/Boss luôn cho") — trước đây dùng chung 0.35 nên loot elite chỉ ra 35% số lần.
-            float baseChance = tier == Attrition.Data.EnemyTier.Normal ? normalDropChance : 1f;
+            // Baseline từ prefab (SO local). Dùng ĐÚNG normalDropChance của từng prefab cho MỌI tier —
+            // designer đặt số này có chủ đích: Crab/Cultist/Frogger/Gollux = 0.35 (rơi thưa), còn
+            // NightBorne/Undead + cả 5 boss = 1.0 (chắc chắn rơi). Từng có bản ép Elite/Boss = 1f theo
+            // tooltip cũ ("Elite/Boss luôn cho") → làm mất hẳn ý nghĩa của 0.35, elite rơi đủ món mọi lần.
             var list = new System.Collections.Generic.List<Attrition.Systems.LootRule>();
             if (lootItemIds != null)
             {
@@ -484,7 +487,7 @@ namespace Attrition.Controllers
                     if (string.IsNullOrEmpty(id)) continue;
                     list.Add(new Attrition.Systems.LootRule
                     {
-                        itemId = id, dropChance = baseChance, minQty = 1, maxQty = 1
+                        itemId = id, dropChance = normalDropChance, minQty = 1, maxQty = 1
                     });
                 }
             }

@@ -134,17 +134,22 @@ namespace Attrition.Gameplay.Persistence
             Attrition.Gameplay.Environment.WorldMapState.WriteTo(data);
             // Boss đã hạ — không hồi sinh khi quay lại map / vào lại game.
             Attrition.Gameplay.Environment.BossDefeatState.WriteTo(data);
+            // Vật phá được đã vỡ — không spawn lại (giữ đường tắt đã mở).
+            Attrition.Gameplay.Environment.BreakableState.WriteTo(data);
+            // Elite/Boss đã rơi đồ — quay lại đánh chỉ được EXP, không rơi vật phẩm lần hai.
+            Attrition.Controllers.EnemyLootTracker.WriteTo(data);
 
             SaveManager.SaveSlot(slot, data);
         }
 
         /// <summary>
-        /// Lưu NGAY danh sách boss đã hạ vào slot (solo), không cần chờ mốc rest/quit.
-        /// Boss chết là mốc quan trọng: nếu chờ tới rest mà người chơi tắt game thì mất → boss hồi sinh.
+        /// Lưu NGAY world-state vào slot (solo), không cần chờ mốc rest/quit: boss đã hạ + vật phá được
+        /// đã vỡ. Đây là các mốc quan trọng — chờ tới rest mà người chơi tắt game thì mất, boss hồi sinh
+        /// và tường chắn lại đường đã mở.
         /// Chỉ ghi các field world-state, KHÔNG đụng stat/vị trí player (tránh đè tiến trình bằng
         /// dữ liệu giữa trận, vd HP đang thấp sau khi đánh boss).
         /// </summary>
-        public void SaveBossDefeated()
+        public void SaveWorldState()
         {
             if (GameLaunch.IsOnline) return;   // coop: chỉ giữ trong phiên host
 
@@ -153,6 +158,7 @@ namespace Attrition.Gameplay.Persistence
             if (data == null) return;          // chưa có slot (chưa từng lưu) → bỏ qua, mốc sau sẽ ghi
 
             Attrition.Gameplay.Environment.BossDefeatState.WriteTo(data);
+            Attrition.Gameplay.Environment.BreakableState.WriteTo(data);
             data.quests = Attrition.Gameplay.NPC.NetworkNPC.CaptureAll();
             data.lastSavedUnix = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             SaveManager.SaveSlot(slot, data);

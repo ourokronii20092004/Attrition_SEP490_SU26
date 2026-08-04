@@ -70,6 +70,22 @@ namespace Attrition.Gameplay.World
             _shakeBasePos = shakeTarget.localPosition;
         }
 
+        public override void Spawned()
+        {
+            // ĐÃ VỠ từ lần chơi/lần load trước → despawn ngay, đừng để tường chắn lại đường đã mở.
+            // Chỉ host quyết (Despawn là host-authoritative); client thấy object biến mất qua sync.
+            if (!HasStateAuthority) return;
+
+            // thứ tự Spawned không đảm bảo → nạp lazy tại đây
+            Attrition.Gameplay.Environment.BreakableState.EnsureLoadedForSolo();
+            if (Attrition.Gameplay.Environment.BreakableState.IsBroken(
+                    gameObject.scene.name, transform.position))
+            {
+                Broken = true;
+                Runner.Despawn(Object);
+            }
+        }
+
         public void TakeDamage(int damage, Vector2 knockbackDir, float knockbackForce, Attrition.Core.DamageType type = Attrition.Core.DamageType.Physical)
         {
             // Vật thể không nhận sát thương theo số — mỗi lần trúng = 1 đòn. Chỉ host đếm.
@@ -107,6 +123,20 @@ namespace Attrition.Gameplay.World
         {
             Broken = true;
             RpcOnBreak(transform.position);
+
+            // GHI NHỚ đã vỡ (bền qua load scene + out/vào game). Không có bước này thì đi sang map khác
+            // rồi quay lại là tường chắn lại đường vừa mở. Cùng mô hình BossGateController.FinishDefeat.
+            if (Attrition.Gameplay.Environment.BreakableState.MarkBroken(
+                    gameObject.scene.name, transform.position))
+            {
+                // Solo: ghi ngay vào save slot (tắt game giữa trận vẫn giữ). Coop: chỉ giữ trong phiên host.
+                if (!Attrition.Persistence.GameLaunch.IsOnline)
+                {
+                    var saver = Attrition.Gameplay.Persistence.GameSaveService.EnsureExists();
+                    saver.SaveWorldState();   // ghi cả boss đã hạ + vật đã vỡ
+                }
+            }
+
             Runner.Despawn(Object);
         }
 
