@@ -354,6 +354,16 @@ public class SessionRepository : ISessionRepository
         return (items, total);
     }
 
+    public async Task<(int Rooms, int Multiplayer)> GetRoomStatsAsync()
+    {
+        // One round-trip for both numbers: the dashboard shows them together.
+        var grouped = await _context.Sessions.AsNoTracking()
+            .GroupBy(s => s.IsMultiplayer)
+            .Select(g => new { IsMultiplayer = g.Key, Count = g.Count() })
+            .ToListAsync();
+        return (grouped.Sum(g => g.Count), grouped.Where(g => g.IsMultiplayer).Sum(g => g.Count));
+    }
+
     public async Task<List<RoomStateSaveEntity>> GetRoomStateHistoryAsync(Guid sessionId, int limit) =>
         await _context.RoomStateSaves.AsNoTracking()
             .Where(x => x.SessionId == sessionId)

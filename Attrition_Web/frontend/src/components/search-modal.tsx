@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Search, X, CornerDownLeft, LayoutDashboard, Clock, ArrowRight } from "lucide-react";
 import { searchApi } from "@/lib/api/search";
+import { resolveMediaUrl } from "@/lib/api/media";
 import { ADMIN_ROUTES } from "@/app/admin/admin-routes";
 import {
   SEARCH_SCOPES, PUBLIC_PAGES, parseQuery, backendScope, matchPages, type SearchScope,
@@ -34,10 +35,13 @@ export function SearchModal({ onClose, adminMode = false }: { onClose: () => voi
   const term = parsed.scope ? parsed.term : query.trim();
 
   // Pages matched locally (instant) — the registry covers routes the API can't reach.
+  // Admin mode deliberately matches nothing here: the public site's Story/Lore/Gallery pages are
+  // not what an admin is navigating to, and the admin jump-list below covers /admin routes.
   const pageMatches = useMemo(() => {
+    if (adminMode) return [];
     if (effectiveScope && effectiveScope.id !== "pages") return [];
     return matchPages(term, term ? 6 : PUBLIC_PAGES.length);
-  }, [term, effectiveScope]);
+  }, [term, effectiveScope, adminMode]);
 
   // Admin page jump-list (admin modal only).
   const adminPages = useMemo(() => {
@@ -46,7 +50,10 @@ export function SearchModal({ onClose, adminMode = false }: { onClose: () => voi
     if (q.length === 0) {
       let recentHrefs: string[] = [];
       try { recentHrefs = JSON.parse(typeof window !== "undefined" ? localStorage.getItem(ADMIN_RECENT_KEY) || "[]" : "[]"); } catch { /* ignore */ }
-      return ADMIN_ROUTES.filter((r) => recentHrefs.includes(r.href)).slice(0, 5);
+      const recents = ADMIN_ROUTES.filter((r) => recentHrefs.includes(r.href)).slice(0, 5);
+      // A fresh admin has no history; offer the whole map rather than dropping through to the
+      // public site's Story/Gallery browse grid, which is not what this modal is for.
+      return recents.length > 0 ? recents : ADMIN_ROUTES;
     }
     return ADMIN_ROUTES.filter((r) => r.label.toLowerCase().includes(q) || r.href.includes(q)).slice(0, 6);
   }, [adminMode, term]);
@@ -100,7 +107,10 @@ export function SearchModal({ onClose, adminMode = false }: { onClose: () => voi
   const runRecent = (t: string) => { setActiveScope(null); setQuery(t); inputRef.current?.focus(); };
 
   const filtered = useMemo(() => filterResults(results, effectiveScope), [results, effectiveScope]);
-  const hasResults = !!filtered && (filtered.wiki.length + filtered.users.length + filtered.posts.length + filtered.enemies.length) > 0;
+  const hasResults = !!filtered && (
+    filtered.wiki.length + filtered.users.length + filtered.posts.length +
+    filtered.enemies.length + (filtered.items?.length ?? 0) + (filtered.skills?.length ?? 0)
+  ) > 0;
   const hasAdminPages = adminMode && adminPages.length > 0;
   const isEmpty = term.length < MIN_QUERY;
 
@@ -150,8 +160,8 @@ export function SearchModal({ onClose, adminMode = false }: { onClose: () => voi
 
         {/* Results / empty-state */}
         <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
-          {/* ── EMPTY STATE: recent searches + browse pages ── */}
-          {isEmpty && !hasAdminPages && (
+          {/* ── EMPTY STATE: recent searches + browse pages (public modal only) ── */}
+          {isEmpty && !adminMode && (
             <div className="space-y-4">
               {recent.length > 0 && (
                 <div>
@@ -266,6 +276,32 @@ export function SearchModal({ onClose, adminMode = false }: { onClose: () => voi
                   ))}
                 </SearchSection>
               )}
+              {(filtered.items?.length ?? 0) > 0 && (
+                <SearchSection title="Items">
+                  {filtered.items.map((item) => (
+                    <SearchItem
+                      key={item.itemId}
+                      label={item.name}
+                      sub={`${item.rarity} · ${item.category}`}
+                      image={resolveMediaUrl(item.imageUrl)}
+                      onClick={() => navigate(adminMode ? "/admin/items" : `/items/${encodeURIComponent(item.itemId)}`)}
+                    />
+                  ))}
+                </SearchSection>
+              )}
+              {(filtered.skills?.length ?? 0) > 0 && (
+                <SearchSection title="Skills">
+                  {filtered.skills.map((item) => (
+                    <SearchItem
+                      key={item.skillId}
+                      label={item.name}
+                      sub={`${item.rarity} · ${item.element}`}
+                      image={resolveMediaUrl(item.imageUrl)}
+                      onClick={() => navigate(adminMode ? "/admin/skills" : `/skills#${encodeURIComponent(item.skillId)}`)}
+                    />
+                  ))}
+                </SearchSection>
+              )}
               {filtered.posts.length > 0 && (
                 <SearchSection title="Forum">
                   {filtered.posts.map((item) => (
@@ -313,6 +349,9 @@ function filterResults(results: GlobalSearchResponse | null, scope: SearchScope 
     enemies: scope.kind === "enemy" ? results.enemies : [],
     posts: scope.kind === "forum" ? results.posts : [],
     users: scope.kind === "user" ? results.users : [],
+    // Older service builds predate these buckets, so default rather than assume they're present.
+    items: scope.kind === "item" ? results.items ?? [] : [],
+    skills: scope.kind === "skill" ? results.skills ?? [] : [],
   };
 }
 
@@ -325,11 +364,23 @@ function SearchSection({ title, children }: { title: string; children: React.Rea
   );
 }
 
-function SearchItem({ label, sub, onClick }: { label: string; sub: string; onClick: () => void }) {
+function SearchItem({ label, sub, image, onClick }: {
+  label: string;
+  sub: string;
+  /** Optional thumbnail — item/skill artwork, where a picture identifies the row faster than text. */
+  image?: string | null;
+  onClick: () => void;
+}) {
   return (
-    <button onClick={onClick} className="group block w-full rounded-lg px-3 py-2 text-left transition-colors hover:bg-surface-2">
-      <p className="text-sm font-medium text-fg transition-colors group-hover:text-accent">{label}</p>
-      {sub && <p className="line-clamp-1 text-xs text-fg-muted">{sub}</p>}
+    <button onClick={onClick} className="group flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-colors hover:bg-surface-2">
+      {image && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={image} alt="" className="size-8 shrink-0 rounded bg-surface-2 object-cover" />
+      )}
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-medium text-fg transition-colors group-hover:text-accent">{label}</span>
+        {sub && <span className="block line-clamp-1 text-xs text-fg-muted">{sub}</span>}
+      </span>
     </button>
   );
 }

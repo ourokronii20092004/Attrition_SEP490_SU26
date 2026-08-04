@@ -22,6 +22,7 @@ AddInternalClient<WikiSearchClient>("Wiki");
 AddInternalClient<ForumSearchClient>("Forum");
 AddInternalClient<IdentitySearchClient>("Identity");
 AddInternalClient<EnemySearchClient>("Enemy");
+AddInternalClient<SkillSearchClient>("Skill");
 
 builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddAttritionCache(builder.Configuration, "search");

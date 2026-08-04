@@ -17,5 +17,8 @@ public record AdminStatsDto(
     int? TotalAssets,
     int? TotalMusicAlbums,
     int? TotalMusicTracks,
+    int? TotalCharacters,
+    int? TotalRooms,
+    int? TotalCoopRooms,
     IReadOnlyList<string> UnavailableSources
 );

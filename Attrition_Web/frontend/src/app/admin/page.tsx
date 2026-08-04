@@ -6,6 +6,7 @@ import Link from "next/link";
 import {
   ArrowRight, Users, BookOpen, FileClock, MessagesSquare, MessageSquare, EyeOff,
   Skull, Image as ImageIcon, Disc3, Music, Flag, Gem, Sparkles, Gamepad2, Keyboard,
+  DoorOpen, Users2,
 } from "lucide-react";
 import { adminApi } from "@/lib/api/admin";
 import { Card } from "@/components/ui/card";
@@ -63,6 +64,15 @@ export default function AdminPage() {
         { label: "Music Tracks", value: stats?.totalMusicTracks, href: "/admin/music/tracks", icon: Music },
       ],
     },
+    {
+      // What players have actually done, as opposed to what has been authored for them.
+      title: "Player Activity",
+      cards: [
+        { label: "Characters", value: stats?.totalCharacters, href: "/admin/characters", icon: Gamepad2 },
+        { label: "Rooms", value: stats?.totalRooms, href: "/admin/rooms", icon: DoorOpen },
+        { label: "Co-op Rooms", value: stats?.totalCoopRooms, href: "/admin/rooms", icon: Users2 },
+      ],
+    },
   ];
 
   const quickActions = [
@@ -72,6 +82,7 @@ export default function AdminPage() {
     { label: "Manage skills", href: "/admin/skills", icon: Sparkles },
     { label: "Upload asset", href: "/admin/assets", icon: ImageIcon },
     { label: "Characters", href: "/admin/characters", icon: Gamepad2 },
+    { label: "Co-op rooms", href: "/admin/rooms", icon: DoorOpen },
   ];
 
   return (

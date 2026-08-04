@@ -19,6 +19,7 @@ export const ADMIN_ROUTES: { href: string; label: string }[] = [
   { href: "/admin/music/albums", label: "Music · Albums" },
   { href: "/admin/music/tracks", label: "Music · Tracks" },
   { href: "/admin/characters", label: "Characters" },
+  { href: "/admin/rooms", label: "Co-op Rooms" },
   { href: "/admin/account", label: "My Account" },
 ];
 
@@ -75,4 +76,45 @@ export function adminLabelFor(path: string): string {
     if (parentLabel) return `${parentLabel} · Detail`;
   }
   return last.charAt(0).toUpperCase() + last.slice(1);
+}
+
+/**
+ * The breadcrumb trail for an admin path: every ancestor that is a real page, then the page
+ * itself. `/admin/rooms/<id>` becomes Dashboard › Co-op Rooms › <room code> rather than
+ * Dashboard › <room code>.
+ *
+ * Labels here are standalone, unlike adminLabelFor's, which prefixes parent context ("Users ·
+ * alice") for the recent-pages chips where no parent crumb is shown. Repeating that prefix next to
+ * an explicit parent crumb would read "Users › Users · alice", so the parent segment is stripped.
+ */
+export function adminTrailFor(path: string): { href: string; label: string }[] {
+  const segs = path.split("/").filter(Boolean); // ["admin", ...]
+  const trail: { href: string; label: string }[] = [{ href: "/admin", label: "Dashboard" }];
+
+  for (let i = 2; i <= segs.length; i++) {
+    const href = "/" + segs.slice(0, i).join("/");
+    // Intermediate segments that aren't real pages (no route entry, no resolved label) would
+    // render as dead crumbs, so skip them; the last segment is always shown.
+    const isLast = i === segs.length;
+    const known = ADMIN_ROUTES.some((r) => r.href === href) || !!readCache()[href];
+    if (!isLast && !known) continue;
+    trail.push({ href, label: standaloneLabel(href, trail.map((c) => c.label)) });
+  }
+  return trail;
+}
+
+/**
+ * adminLabelFor minus any leading "<Ancestor> · " parts that earlier crumbs already show, so
+ * "Music · Albums · Detail" under Dashboard › Music › Albums reads simply "Detail". A name that
+ * merely happens to contain " · " is left alone, since its head won't match an ancestor.
+ */
+function standaloneLabel(href: string, ancestors: string[]): string {
+  const sep = " · ";
+  let label = adminLabelFor(href);
+  for (;;) {
+    const cut = label.indexOf(sep);
+    if (cut <= 0) return label;
+    if (!ancestors.includes(label.slice(0, cut))) return label;
+    label = label.slice(cut + sep.length);
+  }
 }

@@ -54,3 +54,5 @@ public sealed class AssetsStatsClient : StatsClient
 { public AssetsStatsClient(HttpClient http, IConfiguration config, ILogger<AssetsStatsClient> logger) : base(http, config, logger) { } }
 public sealed class MusicStatsClient : StatsClient
 { public MusicStatsClient(HttpClient http, IConfiguration config, ILogger<MusicStatsClient> logger) : base(http, config, logger) { } }
+public sealed class CharacterStatsClient : StatsClient
+{ public CharacterStatsClient(HttpClient http, IConfiguration config, ILogger<CharacterStatsClient> logger) : base(http, config, logger) { } }

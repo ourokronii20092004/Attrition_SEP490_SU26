@@ -16,9 +16,7 @@ public class SearchController : ControllerBase
     public async Task<IActionResult> Search([FromQuery] string q, [FromQuery] int limit = 5, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(q))
-            return Ok(ApiResponse<GlobalSearchResponse>.Ok(
-                new GlobalSearchResponse(new List<SearchWikiResultDto>(), new List<SearchUserResultDto>(),
-                    new List<SearchPostResultDto>(), new List<SearchEnemyResultDto>(), new List<string>())));
+            return Ok(ApiResponse<GlobalSearchResponse>.Ok(GlobalSearchResponse.Empty()));
 
         var includeUsers = User.Identity?.IsAuthenticated ?? false;
         var safeLimit = Math.Clamp(limit, 1, 20);

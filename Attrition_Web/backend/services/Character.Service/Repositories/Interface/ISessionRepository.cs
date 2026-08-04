@@ -61,6 +61,9 @@ public interface ISessionRepository
     // ── Admin: who played with whom ──────────────────────────────────────────────────────────
     // Paged rooms with their party, so an admin can see co-op pairings without opening each room.
     Task<(List<SessionEntity> Items, int Total)> GetRoomsPagedAsync(int page, int pageSize);
+
+    /// <summary>Total rooms and how many of them are co-op, for the admin dashboard counters.</summary>
+    Task<(int Rooms, int Multiplayer)> GetRoomStatsAsync();
     Task<List<RoomStateSaveEntity>> GetRoomStateHistoryAsync(Guid sessionId, int limit);
 
     // Oldest-first ids beyond the retention cap, so the caller can prune them in the same commit.

@@ -791,11 +791,29 @@ export interface SearchEnemyResultDto {
   tier: string;
 }
 
+export interface SearchItemResultDto {
+  itemId: string;
+  name: string;
+  category: string;
+  rarity: string;
+  imageUrl: string | null;
+}
+
+export interface SearchSkillResultDto {
+  skillId: string;
+  name: string;
+  element: string;
+  rarity: string;
+  imageUrl: string | null;
+}
+
 export interface GlobalSearchResponse {
   wiki: SearchWikiResultDto[];
   users: SearchUserResultDto[];
   posts: SearchPostResultDto[];
   enemies: SearchEnemyResultDto[];
+  items: SearchItemResultDto[];
+  skills: SearchSkillResultDto[];
   degradedSources: string[];
 }
 
@@ -819,6 +837,9 @@ export interface AdminStatsDto {
   totalAssets: number | null;
   totalMusicAlbums: number | null;
   totalMusicTracks: number | null;
+  totalCharacters: number | null;
+  totalRooms: number | null;
+  totalCoopRooms: number | null;
   unavailableSources: string[];
 }
 

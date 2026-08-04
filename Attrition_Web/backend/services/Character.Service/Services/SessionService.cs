@@ -499,6 +499,9 @@ public class SessionService : ISessionService
         return new AdminRoomListDto(items, total, page, pageSize);
     }
 
+    public Task<(int Rooms, int Multiplayer)> GetRoomStatsAsync(CancellationToken ct = default) =>
+        _repo.GetRoomStatsAsync();
+
     public async Task<AdminRoomDetailDto?> GetRoomDetailForAdminAsync(Guid sessionId, CancellationToken ct = default)
     {
         var room = await _repo.GetDetailAsync(sessionId);

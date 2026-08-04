@@ -19,6 +19,7 @@ export const ADMIN_SHORTCUTS: { keys: string; label: string; href: string }[] = 
   { keys: "g t", label: "Forum Threads", href: "/admin/forum/threads" },
   { keys: "g e", label: "Enemies", href: "/admin/enemies" },
   { keys: "g i", label: "Items", href: "/admin/items" },
+  { keys: "g s", label: "Skills", href: "/admin/skills" },
   { keys: "g a", label: "Assets", href: "/admin/assets" },
   { keys: "g m", label: "Music Tracks", href: "/admin/music/tracks" },
   { keys: "g c", label: "Characters", href: "/admin/characters" },

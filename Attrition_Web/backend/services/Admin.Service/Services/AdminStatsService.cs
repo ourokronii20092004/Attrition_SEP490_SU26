@@ -14,10 +14,12 @@ public class AdminStatsService : IAdminStatsService
     private readonly SkillStatsClient _skill;
     private readonly AssetsStatsClient _assets;
     private readonly MusicStatsClient _music;
+    private readonly CharacterStatsClient _character;
     private readonly ILogger<AdminStatsService> _logger;
 
     public AdminStatsService(IdentityStatsClient identity, WikiStatsClient wiki, ForumStatsClient forum,
-        EnemyStatsClient enemy, SkillStatsClient skill, AssetsStatsClient assets, MusicStatsClient music, ILogger<AdminStatsService> logger)
+        EnemyStatsClient enemy, SkillStatsClient skill, AssetsStatsClient assets, MusicStatsClient music,
+        CharacterStatsClient character, ILogger<AdminStatsService> logger)
     {
         _identity = identity;
         _wiki = wiki;
@@ -26,6 +28,7 @@ public class AdminStatsService : IAdminStatsService
         _skill = skill;
         _assets = assets;
         _music = music;
+        _character = character;
         _logger = logger;
     }
 
@@ -40,8 +43,9 @@ public class AdminStatsService : IAdminStatsService
         var skillT = Safe("skill", () => _skill.GetCountAsync("api/internal/skills/count", ct), down);
         var assetsT = Safe("assets", () => _assets.GetCountAsync("api/internal/assets/count", ct), down);
         var musicT = Safe("music", () => _music.GetObjectAsync("api/internal/music/count", ct), down);
+        var characterT = Safe("character", () => _character.GetObjectAsync("api/internal/characters/stats", ct), down);
 
-        await Task.WhenAll(usersT, wikiT, forumT, enemyT, skillT, assetsT, musicT);
+        await Task.WhenAll(usersT, wikiT, forumT, enemyT, skillT, assetsT, musicT, characterT);
 
         int? wikiArticles = GetInt(wikiT, "articles");
         int? pending = GetInt(wikiT, "pendingContributions");
@@ -53,6 +57,9 @@ public class AdminStatsService : IAdminStatsService
         int? skills = skillT.Result;
         int? albums = GetInt(musicT, "albums");
         int? tracks = GetInt(musicT, "tracks");
+        int? characters = GetInt(characterT, "characters");
+        int? rooms = GetInt(characterT, "rooms");
+        int? coopRooms = GetInt(characterT, "coopRooms");
 
         return new AdminStatsDto(
             TotalUsers: usersT.Result,
@@ -67,6 +74,9 @@ public class AdminStatsService : IAdminStatsService
             TotalAssets: assetsT.Result,
             TotalMusicAlbums: albums,
             TotalMusicTracks: tracks,
+            TotalCharacters: characters,
+            TotalRooms: rooms,
+            TotalCoopRooms: coopRooms,
             UnavailableSources: down.Distinct().ToList());
     }
 

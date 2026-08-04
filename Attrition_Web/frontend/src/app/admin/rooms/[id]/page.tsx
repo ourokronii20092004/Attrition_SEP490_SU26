@@ -15,7 +15,7 @@ import { RelativeTime } from "@/components/ui/relative-time";
 import { CopyButton } from "@/components/admin/copy-button";
 import { formatPlaytime } from "@/lib/format-duration";
 import { formatDateTime } from "@/lib/format-date";
-import { splitWorldStates, parseFog } from "@/lib/world-state";
+import { splitWorldStates } from "@/lib/world-state";
 import { qk } from "@/lib/query-keys";
 import { useAdminPageLabel } from "@/lib/hooks/use-admin-page-label";
 
@@ -37,7 +37,6 @@ function AdminRoomDetail() {
   // Reuses the shared parser rather than re-deriving the eventId prefixes, so the room page and the
   // game agree on what "q:" and "cp:" mean.
   const progress = useMemo(() => splitWorldStates(room?.worldStates), [room?.worldStates]);
-  const fogByScene = useMemo(() => parseFog(room?.fogJson), [room?.fogJson]);
 
   if (!user || user.role !== "Admin") return null;
   if (isPending) return <PageLoader />;
@@ -177,23 +176,6 @@ function AdminRoomDetail() {
             )}
           </Card>
         </div>
-
-        {/* Fog coverage answers "have they actually explored, or just rushed?" */}
-        {fogByScene.size > 0 && (
-          <Card className="mt-4 p-4">
-            <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-fg-subtle">
-              <MapPin size={12} aria-hidden /> Map explored
-            </h3>
-            <ul className="mt-2 grid gap-1 text-sm sm:grid-cols-2">
-              {[...fogByScene.entries()].map(([scene, cells]) => (
-                <li key={scene} className="flex items-center justify-between gap-2">
-                  <span className="truncate text-fg-muted">{scene}</span>
-                  <span className="shrink-0 tabular-nums text-xs text-fg">{cells} cells</span>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        )}
       </section>
 
       {/* ── State history ── */}

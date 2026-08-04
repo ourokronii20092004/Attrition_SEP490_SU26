@@ -5,7 +5,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { ChevronRight, Clock, Search, Keyboard } from "lucide-react";
-import { adminLabelFor, ADMIN_LABEL_EVENT } from "./admin-routes";
+import { adminLabelFor, adminTrailFor, ADMIN_LABEL_EVENT } from "./admin-routes";
 
 // Lazy-load the search modal so its code stays out of the admin shell's initial bundle.
 const SearchModal = dynamic(() => import("@/components/search-modal").then((m) => m.SearchModal), { ssr: false });
@@ -59,11 +59,11 @@ export function AdminTopBar() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Breadcrumb segments: always start at Dashboard, then the current page (if deeper).
+  // Breadcrumb segments: the full ancestor chain, so a room detail reads
+  // Dashboard › Co-op Rooms › <code> rather than Dashboard › <code>.
   // labelTick is read so the breadcrumb re-resolves once a detail page registers its name.
   void labelTick;
-  const crumbs: { href: string; label: string }[] = [{ href: "/admin", label: "Dashboard" }];
-  if (pathname !== "/admin") crumbs.push({ href: pathname, label: adminLabelFor(pathname) });
+  const crumbs = adminTrailFor(pathname);
 
   const recentOthers = recent.filter((p) => p !== pathname).slice(0, 4);
 
