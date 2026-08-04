@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -14,13 +14,13 @@ import { SkeletonList } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { RelativeTime } from "@/components/ui/relative-time";
 import { Pagination } from "@/components/ui/pagination";
-import { useClientPagination } from "@/lib/hooks/use-client-pagination";
+import { useUrlPagination } from "@/lib/hooks/use-url-pagination";
 import { qk } from "@/lib/query-keys";
 import { useLoginHref } from "@/lib/hooks/use-login-href";
 import { formatPlaytime } from "@/lib/format-duration";
 import type { SessionSummaryDto } from "@/lib/types";
 
-export default function RoomsPage() {
+function RoomsList() {
   const loginHref = useLoginHref();
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -39,7 +39,7 @@ export default function RoomsPage() {
     },
   });
 
-  const { page, setPage, totalPages, paged } = useClientPagination(rooms, 10);
+  const { page, setPage, totalPages, paged } = useUrlPagination(rooms, 10);
 
   if (!user && !authLoading) return null;
 
@@ -68,6 +68,14 @@ export default function RoomsPage() {
         </div>
       )}
     </PageShell>
+  );
+}
+
+export default function RoomsPage() {
+  return (
+    <Suspense fallback={null}>
+      <RoomsList />
+    </Suspense>
   );
 }
 

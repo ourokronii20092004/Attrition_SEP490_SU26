@@ -51,4 +51,15 @@ public sealed class EnemySearchClient : InternalClientBase
     public EnemySearchClient(HttpClient http, IConfiguration config) : base(http, config) { }
     public Task<List<SearchEnemyResultDto>> SearchAsync(string q, int limit, CancellationToken ct)
         => GetListAsync<SearchEnemyResultDto>($"api/internal/enemies/search?q={Uri.EscapeDataString(q)}&limit={limit}", ct);
+
+    /// <summary>Items are owned by Enemy.Service, so they reuse this client on a separate path.</summary>
+    public Task<List<SearchItemResultDto>> SearchItemsAsync(string q, int limit, CancellationToken ct)
+        => GetListAsync<SearchItemResultDto>($"api/internal/enemies/items/search?q={Uri.EscapeDataString(q)}&limit={limit}", ct);
+}
+
+public sealed class SkillSearchClient : InternalClientBase
+{
+    public SkillSearchClient(HttpClient http, IConfiguration config) : base(http, config) { }
+    public Task<List<SearchSkillResultDto>> SearchAsync(string q, int limit, CancellationToken ct)
+        => GetListAsync<SearchSkillResultDto>($"api/internal/skills/search?q={Uri.EscapeDataString(q)}&limit={limit}", ct);
 }

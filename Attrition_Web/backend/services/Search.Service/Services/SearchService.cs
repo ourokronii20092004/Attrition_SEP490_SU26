@@ -11,16 +11,18 @@ public class SearchService : ISearchService
     private readonly ForumSearchClient _forum;
     private readonly IdentitySearchClient _identity;
     private readonly EnemySearchClient _enemy;
+    private readonly SkillSearchClient _skill;
     private readonly ICacheService _cache;
     private readonly ILogger<SearchService> _logger;
 
     public SearchService(WikiSearchClient wiki, ForumSearchClient forum, IdentitySearchClient identity,
-        EnemySearchClient enemy, ICacheService cache, ILogger<SearchService> logger)
+        EnemySearchClient enemy, SkillSearchClient skill, ICacheService cache, ILogger<SearchService> logger)
     {
         _wiki = wiki;
         _forum = forum;
         _identity = identity;
         _enemy = enemy;
+        _skill = skill;
         _cache = cache;
         _logger = logger;
     }
@@ -29,9 +31,7 @@ public class SearchService : ISearchService
     {
         var (scope, term) = ParseScope(query);
         if (string.IsNullOrWhiteSpace(term))
-            return new GlobalSearchResponse(
-                new List<SearchWikiResultDto>(), new List<SearchUserResultDto>(),
-                new List<SearchPostResultDto>(), new List<SearchEnemyResultDto>(), new List<string>());
+            return GlobalSearchResponse.Empty();
 
         // Repeated identical queries (autocomplete typing the same term) are common; cache briefly.
         // Skip caching when any source degraded so a transient failure isn't cached as "no results".
@@ -68,6 +68,8 @@ public class SearchService : ISearchService
         var s = new List<SearchSuggestionDto>();
         foreach (var w in result.Wiki) s.Add(new SearchSuggestionDto(w.Title, "wiki", $"/wiki/{w.Slug}"));
         foreach (var e in result.Enemies) s.Add(new SearchSuggestionDto(e.Name, "enemy", $"/bestiary/{e.EnemyId}"));
+        foreach (var i in result.Items) s.Add(new SearchSuggestionDto(i.Name, "item", $"/items/{Uri.EscapeDataString(i.ItemId)}"));
+        foreach (var k in result.Skills) s.Add(new SearchSuggestionDto(k.Name, "skill", $"/skills/{Uri.EscapeDataString(k.SkillId)}"));
         foreach (var p in result.Posts) s.Add(new SearchSuggestionDto(p.ThreadTitle, "thread", $"/forum/{p.ThreadId}"));
         foreach (var u in result.Users) s.Add(new SearchSuggestionDto(u.DisplayName ?? u.Username, "user", $"/u/{u.Username}"));
         return s;
@@ -80,17 +82,22 @@ public class SearchService : ISearchService
         var runWiki = scope is null or "wiki";
         var runForum = scope is null or "forum";
         var runEnemy = scope is null or "enemy";
+        var runItem = scope is null or "item";
+        var runSkill = scope is null or "skill";
         var runUsers = (scope is null or "user") && includeUsers;
 
         var wikiTask = runWiki ? Safe("wiki", () => _wiki.SearchAsync(term, limit, ct), degraded) : Empty<SearchWikiResultDto>();
         var userTask = runUsers ? Safe("identity", () => _identity.SearchAsync(term, limit, ct), degraded) : Empty<SearchUserResultDto>();
         var postTask = runForum ? Safe("forum", () => _forum.SearchAsync(term, limit, ct), degraded) : Empty<SearchPostResultDto>();
         var enemyTask = runEnemy ? Safe("enemy", () => _enemy.SearchAsync(term, limit, ct), degraded) : Empty<SearchEnemyResultDto>();
+        var itemTask = runItem ? Safe("item", () => _enemy.SearchItemsAsync(term, limit, ct), degraded) : Empty<SearchItemResultDto>();
+        var skillTask = runSkill ? Safe("skill", () => _skill.SearchAsync(term, limit, ct), degraded) : Empty<SearchSkillResultDto>();
 
-        await Task.WhenAll(wikiTask, userTask, postTask, enemyTask);
+        await Task.WhenAll(wikiTask, userTask, postTask, enemyTask, itemTask, skillTask);
 
         return new GlobalSearchResponse(
             wikiTask.Result, userTask.Result, postTask.Result, enemyTask.Result,
+            itemTask.Result, skillTask.Result,
             degraded.ToList());
     }
 
@@ -109,6 +116,8 @@ public class SearchService : ISearchService
         {
             "wiki" => ("wiki", rest),
             "enemy" or "bestiary" => ("enemy", rest),
+            "item" or "items" or "loot" or "gear" => ("item", rest),
+            "skill" or "skills" or "ability" => ("skill", rest),
             "forum" or "post" or "thread" => ("forum", rest),
             "user" or "users" or "member" => ("user", rest),
             _ => (null, trimmed),   // unknown prefix → treat the whole thing as a literal search

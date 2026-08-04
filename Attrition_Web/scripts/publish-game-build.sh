@@ -1,15 +1,18 @@
 #!/usr/bin/env bash
 # Publish a game build so the /download page can serve it.
 #
-# The build is deliberately NOT in git: at ~81 MB it would bloat the repo permanently and sits
+# The build is deliberately NOT in git: at ~90 MB it would bloat the repo permanently and sits
 # near GitHub's 100 MB per-file limit. Instead it lives in the assets-data docker volume, which
 # Assets.Service serves as static files under /api/assets/media, and which deploy.py excludes
 # from its project-dir wipe — so the file survives deploys.
 #
 # Usage (on the host running docker compose):
-#   ./scripts/publish-game-build.sh /path/to/Attrition_Game.rar 0.9.4
+#   ./scripts/publish-game-build.sh /path/to/Attrition_Game.zip 1.0
 #
-# Then confirm src/lib/game-build.ts points at the resulting filename.
+# The destination keeps the source file's extension, so .zip and .rar builds can coexist —
+# older versions stay downloadable rather than being overwritten.
+#
+# Then confirm src/lib/game-build.ts has an entry pointing at the resulting filename.
 set -euo pipefail
 
 SRC=${1:-}
@@ -17,7 +20,7 @@ VERSION=${2:-}
 CONTAINER=${CONTAINER:-attrition-assets}
 
 if [[ -z "$SRC" || -z "$VERSION" ]]; then
-  echo "usage: $0 <path-to-build.rar> <version>   e.g. $0 ~/Attrition_Game.rar 0.9.4" >&2
+  echo "usage: $0 <path-to-build> <version>   e.g. $0 ~/Attrition_Game.zip 1.0" >&2
   exit 64
 fi
 if [[ ! -f "$SRC" ]]; then
@@ -29,7 +32,10 @@ if ! docker inspect "$CONTAINER" >/dev/null 2>&1; then
   exit 69
 fi
 
-DEST_NAME="Attrition_Game_${VERSION}.rar"
+# Keep the source extension (.zip / .rar) rather than assuming one, so publishing a zip can't
+# silently land under a .rar name that tells players to reach for WinRAR.
+EXT=".${SRC##*.}"
+DEST_NAME="Attrition_Game_${VERSION}${EXT}"
 DEST_DIR=/app/uploads/builds
 
 echo "Publishing $(basename "$SRC") as $DEST_NAME ..."
@@ -49,6 +55,6 @@ echo "Published OK."
 echo "  sha256: $LOCAL_SUM"
 echo "  served at: /api/assets/media/builds/${DEST_NAME}"
 echo
-echo "Set GAME_BUILD.sha256 in Attrition_Web/frontend/src/lib/game-build.ts to the sha256 above,"
-echo "then rebuild the web image so the page picks up any metadata change:"
+echo "Add/update the v${VERSION} entry in Attrition_Web/frontend/src/lib/game-build.ts with the"
+echo "sha256 above (newest build first), then rebuild the web image so the page picks it up:"
 echo "  docker compose build web && docker compose up -d web"

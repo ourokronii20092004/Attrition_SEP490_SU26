@@ -23,6 +23,7 @@ AddStatsClient<EnemyStatsClient>("Enemy");
 AddStatsClient<SkillStatsClient>("Skill");
 AddStatsClient<AssetsStatsClient>("Assets");
 AddStatsClient<MusicStatsClient>("Music");
+AddStatsClient<CharacterStatsClient>("Character");
 
 builder.Services.AddScoped<IAdminStatsService, AdminStatsService>();
 

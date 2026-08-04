@@ -8,8 +8,15 @@ namespace Character.Service.Services;
 public class SessionService : ISessionService
 {
     private readonly ISessionRepository _repo;
+    private readonly ILogger<SessionService> _logger;
+    private readonly Clients.IdentityClient _identity;
 
-    public SessionService(ISessionRepository repo) => _repo = repo;
+    public SessionService(ISessionRepository repo, ILogger<SessionService> logger, Clients.IdentityClient identity)
+    {
+        _repo = repo;
+        _logger = logger;
+        _identity = identity;
+    }
 
     public async Task<List<SessionSummaryDto>> GetByOwnerAsync(Guid ownerId)
     {
@@ -191,6 +198,7 @@ public class SessionService : ISessionService
         var now = DateTime.UtcNow;
         var skipped = new List<Guid>();
         var saved = 0;
+        var savedCharacterIds = new List<Guid>();
 
         foreach (var dto in characters)
         {
@@ -261,6 +269,47 @@ public class SessionService : ISessionService
                 CapturedAt = now
             });
 
+            // Full save file — the complete state at this moment, which the web renders and which a
+            // delete-newest can roll live state back to. The thin snapshot above is kept because
+            // shipped game builds and the existing timeline UI still read it.
+            _repo.AddCharacterSave(new CharacterSaveEntity
+            {
+                CharacterId = dto.CharacterId,
+                SessionId = request.SessionId,
+                RoomCode = string.IsNullOrWhiteSpace(request.RoomCode) ? graph.Session.RoomCode : request.RoomCode,
+                CurrentScene = string.IsNullOrWhiteSpace(request.CurrentScene) ? graph.Session.CurrentScene : request.CurrentScene,
+                EventType = string.IsNullOrWhiteSpace(request.EventType) ? "rest" : request.EventType,
+                PlayerRole = dto.PlayerRole,
+                CurrentLevel = dto.CurrentLevel,
+                CurrentExp = dto.CurrentExp,
+                DeathCount = dto.DeathCount,
+                PlaytimeSeconds = request.PlayTimeSeconds,
+                IsAlive = dto.IsAlive,
+                AllocatedPointsJson = dto.AllocatedPointsJson,
+                Vitals = new VitalStats
+                {
+                    MaxHp = dto.MaxHp, CurrentHp = dto.CurrentHp,
+                    MaxMana = dto.MaxMana, CurrentMana = dto.CurrentMana,
+                    MaxStamina = dto.MaxStamina,
+                },
+                Combat = new CombatStats
+                {
+                    AttackSpeed = dto.AttackSpeed,
+                    PotionMaxFlasks = dto.PotionMaxFlasks, PotionMaxManaFlasks = dto.PotionMaxManaFlasks,
+                    HealthCharges = dto.HealthCharges, ManaCharges = dto.ManaCharges,
+                    Ad = dto.Ad, Ap = dto.Ap, Def = dto.Def, Res = dto.Res,
+                },
+                Position = new Position
+                {
+                    PosX = dto.PosX, PosY = dto.PosY, PosZ = dto.PosZ,
+                    LastRestPointId = dto.LastRestPointId,
+                },
+                InventoryJson = dto.InventoryJson,
+                EquipmentJson = dto.EquipmentJson,
+                CapturedAt = now,
+            });
+            savedCharacterIds.Add(dto.CharacterId);
+
             saved++;
         }
 
@@ -283,8 +332,73 @@ public class SessionService : ISessionService
         graph.Session.UpdatedAt = now;
         graph.Session.LastPlayedAt = now;
 
+        // Room-state snapshot, captured AFTER the world-state and fog writes above so it reflects
+        // the room as this save left it. Shares `now` with the character saves from the same push,
+        // which is what lets a character save be paired with the room state around it.
+        //
+        // Only written when the save actually recorded something: a push that saved no characters
+        // (all ownership-rejected) has no accompanying moment to snapshot.
+        if (saved > 0)
+        {
+            var allWorldStates = graph.WorldStates
+                .Select(w => new { eventId = w.EventId, stateValue = w.StateValue, progress = w.Progress })
+                .ToList();
+            _repo.AddRoomStateSave(new RoomStateSaveEntity
+            {
+                SessionId = request.SessionId,
+                CapturedAt = now,
+                EventType = string.IsNullOrWhiteSpace(request.EventType) ? "rest" : request.EventType,
+                CurrentScene = graph.Session.CurrentScene,
+                WorldStatesJson = allWorldStates.Count == 0
+                    ? null
+                    : System.Text.Json.JsonSerializer.Serialize(allWorldStates),
+                FogJson = graph.Session.FogJson,
+                PlayTimeSeconds = request.PlayTimeSeconds,
+            });
+        }
+
         // Single commit — everything above lands together or not at all.
         await _repo.SaveChangesAsync();
+
+        // Retention: keep the newest N saves per character. Runs after the commit above because the
+        // rows only get their ids (and their place in the ordering) once written. A failure here
+        // must not fail the save itself — the player's progress is already safely stored, and an
+        // over-long history is a housekeeping problem, not a data-loss one.
+        foreach (var characterId in savedCharacterIds.Distinct())
+        {
+            try
+            {
+                var stale = await _repo.GetSaveIdsBeyondCapAsync(characterId, SaveRetention.MaxPerCharacter);
+                if (stale.Count > 0)
+                {
+                    _repo.RemoveCharacterSaves(stale);
+                    await _repo.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Save retention prune failed for character {CharacterId}", characterId);
+            }
+        }
+
+        // Same cap for the room's own history, so a long-running room doesn't accumulate snapshots
+        // without bound either.
+        if (saved > 0)
+        {
+            try
+            {
+                var staleRooms = await _repo.GetRoomStateIdsBeyondCapAsync(request.SessionId, SaveRetention.MaxPerCharacter);
+                if (staleRooms.Count > 0)
+                {
+                    _repo.RemoveRoomStateSaves(staleRooms);
+                    await _repo.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Room-state retention prune failed for session {SessionId}", request.SessionId);
+            }
+        }
 
         return ApiResponse<BulkSaveResultDto>.Ok(
             new BulkSaveResultDto(request.SessionId, saved, eventIds.Count, skipped));
@@ -358,4 +472,101 @@ public class SessionService : ISessionService
 
     private static WorldStateDto ToWorldStateDto(WorldStateEntity w) => new(
         w.EventId, w.StateValue, w.Progress, w.UpdatedAt);
+
+    // ── Admin: who played with whom ──────────────────────────────────────────────────────────
+
+    public async Task<AdminRoomListDto> GetRoomsForAdminAsync(int page, int pageSize, CancellationToken ct = default)
+    {
+        page = page < 1 ? 1 : page;
+        pageSize = pageSize is < 1 or > 100 ? 20 : pageSize;
+
+        var (rooms, total) = await _repo.GetRoomsPagedAsync(page, pageSize);
+
+        // One batch lookup for every owner on the page rather than a request per room.
+        var ownerIds = rooms.Select(r => r.OwnerId).Distinct().ToList();
+        var names = await _identity.ResolveUsernamesAsync(ownerIds, ct);
+
+        var items = rooms.Select(r => new AdminRoomListItemDto(
+            r.Id, r.RoomCode, r.Name, r.OwnerId,
+            names.TryGetValue(r.OwnerId, out var n) ? n : null,
+            r.IsMultiplayer,
+            r.Characters.Count,
+            r.CurrentScene,
+            r.PlayTimeSeconds,
+            r.LastPlayedAt,
+            r.WorldStates.Count)).ToList();
+
+        return new AdminRoomListDto(items, total, page, pageSize);
+    }
+
+    public Task<(int Rooms, int Multiplayer)> GetRoomStatsAsync(CancellationToken ct = default) =>
+        _repo.GetRoomStatsAsync();
+
+    public async Task<AdminRoomDetailDto?> GetRoomDetailForAdminAsync(Guid sessionId, CancellationToken ct = default)
+    {
+        var room = await _repo.GetDetailAsync(sessionId);
+        if (room == null) return null;
+
+        // Character rows carry only ids, so names come from the characters table and usernames from
+        // Identity — this is the "who played with whom" the admin view exists to answer.
+        var characterIds = room.Characters.Select(c => c.CharacterId).ToList();
+        var characterNames = await _repo.GetCharacterNamesAsync(characterIds);
+
+        var ownerIds = new List<Guid> { room.OwnerId };
+        var names = await _identity.ResolveUsernamesAsync(ownerIds.Distinct().ToList(), ct);
+
+        var party = room.Characters.Select(cs =>
+        {
+            characterNames.TryGetValue(cs.CharacterId, out var info);
+            return new RoomPartyMemberDto(
+                cs.CharacterId,
+                string.IsNullOrWhiteSpace(info.Name) ? "Unknown" : info.Name,
+                // The room's owner is known; a joining player's owner is not recorded on the session
+                // row, so it is left empty rather than guessed at.
+                cs.PlayerRole == 0 ? room.OwnerId : Guid.Empty,
+                cs.PlayerRole == 0 && names.TryGetValue(room.OwnerId, out var hn) ? hn : null,
+                cs.PlayerRole,
+                cs.CurrentLevel,
+                cs.DeathCount,
+                cs.UpdatedAt);
+        })
+        .OrderBy(m => m.PlayerRole)   // host first, then joiners
+        .ToList();
+
+        var history = await _repo.GetRoomStateHistoryAsync(sessionId, SaveRetention.MaxPerCharacter);
+
+        return new AdminRoomDetailDto(
+            room.Id, room.RoomCode, room.Name, room.OwnerId,
+            names.TryGetValue(room.OwnerId, out var on) ? on : null,
+            room.IsMultiplayer, room.CurrentScene, room.PlayTimeSeconds,
+            room.CreatedAt, room.LastPlayedAt,
+            party,
+            room.WorldStates.Select(w => new WorldStateDto(w.EventId, w.StateValue, w.Progress, w.UpdatedAt)).ToList(),
+            room.FogJson,
+            history.Select(h => new RoomStateSaveDto(
+                h.Id, h.CapturedAt, h.EventType, h.CurrentScene, h.PlayTimeSeconds,
+                CountJsonArray(h.WorldStatesJson),
+                CountJsonArray(h.FogJson))).ToList());
+    }
+
+    /// <summary>
+    /// Element count of a JSON array blob, for the "N world states / N fog cells" summaries.
+    /// Malformed or absent JSON counts as 0 rather than throwing — a display summary must not be
+    /// able to fail a request.
+    /// </summary>
+    private static int CountJsonArray(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return 0;
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            return doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Array
+                ? doc.RootElement.GetArrayLength()
+                : 0;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
 }

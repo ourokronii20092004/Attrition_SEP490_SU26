@@ -791,11 +791,29 @@ export interface SearchEnemyResultDto {
   tier: string;
 }
 
+export interface SearchItemResultDto {
+  itemId: string;
+  name: string;
+  category: string;
+  rarity: string;
+  imageUrl: string | null;
+}
+
+export interface SearchSkillResultDto {
+  skillId: string;
+  name: string;
+  element: string;
+  rarity: string;
+  imageUrl: string | null;
+}
+
 export interface GlobalSearchResponse {
   wiki: SearchWikiResultDto[];
   users: SearchUserResultDto[];
   posts: SearchPostResultDto[];
   enemies: SearchEnemyResultDto[];
+  items: SearchItemResultDto[];
+  skills: SearchSkillResultDto[];
   degradedSources: string[];
 }
 
@@ -819,6 +837,9 @@ export interface AdminStatsDto {
   totalAssets: number | null;
   totalMusicAlbums: number | null;
   totalMusicTracks: number | null;
+  totalCharacters: number | null;
+  totalRooms: number | null;
+  totalCoopRooms: number | null;
   unavailableSources: string[];
 }
 
@@ -857,6 +878,130 @@ export interface CharacterDetailDto {
   inventoryJson: string | null;
   equipmentJson: string | null;
   questsJson: string | null;
+}
+
+/** One row in the save-file list. Light: the list shows many, blobs load on open. */
+export interface SaveListItemDto {
+  id: number;
+  sessionId: string | null;
+  roomCode: string | null;
+  currentScene: string | null;
+  eventType: string;
+  currentLevel: number;
+  currentHp: number;
+  maxHp: number;
+  deathCount: number;
+  playtimeSeconds: number;
+  isAlive: boolean;
+  capturedAt: string;
+  /** The newest save — this character's current progress. */
+  isCurrent: boolean;
+}
+
+/** A save file in full: everything needed to re-render the character page as it was. */
+export interface SaveDetailDto {
+  id: number;
+  characterId: string;
+  sessionId: string | null;
+  roomCode: string | null;
+  currentScene: string | null;
+  eventType: string;
+  playerRole: number;
+  currentLevel: number;
+  currentExp: number;
+  deathCount: number;
+  playtimeSeconds: number;
+  isAlive: boolean;
+  allocatedPointsJson: string | null;
+  maxHp: number; currentHp: number;
+  maxMana: number; currentMana: number;
+  maxStamina: number;
+  attackSpeed: number;
+  potionMaxFlasks: number; potionMaxManaFlasks: number;
+  healthCharges: number; manaCharges: number;
+  ad: number; ap: number; def: number; res: number;
+  posX: number; posY: number; posZ: number;
+  lastRestPointId: string | null;
+  inventoryJson: string | null;
+  capturedAt: string;
+  isCurrent: boolean;
+}
+
+export interface SaveListDto {
+  items: SaveListItemDto[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+}
+
+/** What actually happened when a save was deleted — reported, not assumed. */
+export interface DeleteSaveResultDto {
+  wasCurrent: boolean;
+  rolledBackCharacter: boolean;
+  rolledBackWorldState: boolean;
+  nowCurrentAt: string | null;
+  remainingSaves: number;
+}
+
+/** A room-state snapshot in a timeline. */
+export interface RoomStateSaveDto {
+  id: number;
+  capturedAt: string;
+  eventType: string;
+  currentScene: string | null;
+  playTimeSeconds: number;
+  worldStateCount: number;
+  fogCellCount: number;
+}
+
+/** One member of a room's party — who played with whom. */
+export interface RoomPartyMemberDto {
+  characterId: string;
+  characterName: string;
+  ownerId: string;
+  ownerUsername: string | null;
+  playerRole: number;
+  currentLevel: number;
+  deathCount: number;
+  updatedAt: string;
+}
+
+export interface AdminRoomListItemDto {
+  id: string;
+  roomCode: string;
+  name: string;
+  ownerId: string;
+  ownerUsername: string | null;
+  isMultiplayer: boolean;
+  playerCount: number;
+  currentScene: string | null;
+  playTimeSeconds: number;
+  lastPlayedAt: string;
+  worldStateCount: number;
+}
+
+export interface AdminRoomListDto {
+  items: AdminRoomListItemDto[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface AdminRoomDetailDto {
+  id: string;
+  roomCode: string;
+  name: string;
+  ownerId: string;
+  ownerUsername: string | null;
+  isMultiplayer: boolean;
+  currentScene: string | null;
+  playTimeSeconds: number;
+  createdAt: string;
+  lastPlayedAt: string;
+  party: RoomPartyMemberDto[];
+  worldStates: WorldStateDto[];
+  fogJson: string | null;
+  stateHistory: RoomStateSaveDto[];
 }
 
 export interface AdminCharacterDto {

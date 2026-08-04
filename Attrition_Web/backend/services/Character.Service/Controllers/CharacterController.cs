@@ -60,4 +60,38 @@ public class CharacterController : ControllerBase
         var result = await _service.IngestSnapshotAsync(request with { OwnerId = userId });
         return result.Success ? Ok(result) : BadRequest(result);
     }
+
+    // ── Save files ───────────────────────────────────────────────────────────────────────────
+
+    /// <summary>Paged save history for a character, newest first.</summary>
+    [HttpGet("{id:guid}/saves")]
+    public async Task<IActionResult> GetSaves(Guid id, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+    {
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        var result = await _service.GetSavesAsync(id, userId, _user.IsAdmin, page, pageSize);
+        return result.Success ? Ok(result) : NotFound(result);
+    }
+
+    /// <summary>One save in full — every number as it was at that moment.</summary>
+    [HttpGet("{id:guid}/saves/{saveId:long}")]
+    public async Task<IActionResult> GetSave(Guid id, long saveId)
+    {
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        var result = await _service.GetSaveAsync(id, saveId, userId, _user.IsAdmin);
+        return result.Success ? Ok(result) : NotFound(result);
+    }
+
+    /// <summary>
+    /// Delete a save. Deleting the newest rolls live game state back to the previous save; the body
+    /// may additionally ask to roll the room's shared world state back, which is honoured only for
+    /// the room's owner.
+    /// </summary>
+    [HttpDelete("{id:guid}/saves/{saveId:long}")]
+    public async Task<IActionResult> DeleteSave(Guid id, long saveId, [FromBody] DeleteSaveRequest? request = null)
+    {
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        var result = await _service.DeleteSaveAsync(
+            id, saveId, userId, _user.IsAdmin, request?.AlsoRollBackWorldState ?? false);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
 }

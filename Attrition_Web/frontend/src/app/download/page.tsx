@@ -1,19 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { Download, HardDrive, Monitor, FileArchive, ShieldCheck, MessageSquare, Gamepad2 } from "lucide-react";
+import { Download, HardDrive, Monitor, FileArchive, ShieldCheck, MessageSquare, Gamepad2, History } from "lucide-react";
 import { PageShell } from "@/components/ui/page-shell";
 import { PageTitle } from "@/components/ui/page-title";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { GAME_BUILD, GAME_BUILD_AVAILABLE } from "@/lib/game-build";
+import { GAME_BUILD, GAME_BUILD_AVAILABLE, OLDER_BUILDS } from "@/lib/game-build";
 
 export default function DownloadPage() {
   return (
     <PageShell size="md">
       <PageTitle
         eyebrow={`${GAME_BUILD.channel} · v${GAME_BUILD.version}`}
-        description="The open beta build of Attrition for Windows. Bring a friend — co-op runs through the whole campaign."
+        description="Attrition for Windows. Bring a friend — co-op runs through the whole campaign."
       >
         Download Attrition
       </PageTitle>
@@ -55,9 +55,18 @@ export default function DownloadPage() {
           <Fact icon={Monitor} title="Windows only">
             This build ships a Windows 64-bit player. There is no macOS or Linux build yet.
           </Fact>
-          <Fact icon={FileArchive} title="You'll need an extractor">
-            It's a {GAME_BUILD.archive} archive, which Windows can't open on its own — use 7-Zip
-            or WinRAR, then run <code className="font-mono text-xs">{GAME_BUILD.executable}</code>.
+          <Fact icon={FileArchive} title="Extract it first">
+            {GAME_BUILD.archive === ".zip" ? (
+              <>
+                It&apos;s a .zip, which Windows opens on its own — right-click, Extract All, then run{" "}
+                <code className="font-mono text-xs">{GAME_BUILD.executable}</code>.
+              </>
+            ) : (
+              <>
+                It&apos;s a {GAME_BUILD.archive} archive, which Windows can&apos;t open on its own — use
+                7-Zip or WinRAR, then run <code className="font-mono text-xs">{GAME_BUILD.executable}</code>.
+              </>
+            )}
           </Fact>
           <Fact icon={HardDrive} title="Keep the folder together">
             Extract the whole archive and launch from inside it. Moving the executable away from
@@ -76,8 +85,8 @@ export default function DownloadPage() {
             <ShieldCheck size={16} className="mt-0.5 shrink-0 text-accent" aria-hidden />
             <span>
               Optional, but worth doing if the download was interrupted. In PowerShell, run{" "}
-              <code className="font-mono text-xs">Get-FileHash .\{"<file>"}.rar</code> and check the
-              result matches:
+              <code className="font-mono text-xs">Get-FileHash .\{"<file>"}{GAME_BUILD.archive}</code> and check
+              the result matches:
             </span>
           </p>
           <p className="mt-3 break-all rounded-lg bg-surface-2 p-3 font-mono text-xs text-fg-muted">
@@ -86,11 +95,44 @@ export default function DownloadPage() {
         </Card>
       </section>
 
+      {OLDER_BUILDS.length > 0 && (
+        <section className="mt-8">
+          <h2 className="flex items-center gap-2 font-display text-lg font-semibold text-fg">
+            <History size={17} className="text-accent" aria-hidden /> Older builds
+          </h2>
+          <p className="mt-1 text-sm text-fg-muted">
+            Kept available if you&apos;re mid-run on one of these. New players want v{GAME_BUILD.version} above.
+          </p>
+          <Card className="mt-4 divide-y divide-border p-0">
+            {OLDER_BUILDS.map((b) => (
+              <div key={b.version} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+                <div className="min-w-0">
+                  <p className="font-medium text-fg">
+                    Attrition v{b.version}{" "}
+                    <span className="text-xs font-normal text-fg-subtle">{b.channel}</span>
+                  </p>
+                  <p className="mt-0.5 text-xs text-fg-muted">
+                    {b.sizeLabel} · {b.archive} archive · {b.executable}
+                  </p>
+                </div>
+                <a
+                  href={b.url}
+                  download
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border px-4 py-2 text-sm font-medium text-fg-muted transition-colors hover:border-accent/50 hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                >
+                  <Download size={15} aria-hidden /> Download v{b.version}
+                </a>
+              </div>
+            ))}
+          </Card>
+        </section>
+      )}
+
       <section className="mt-8 rounded-card border border-border bg-surface-2/40 p-5">
-        <h2 className="font-display text-lg font-semibold text-fg">It&apos;s a beta</h2>
+        <h2 className="font-display text-lg font-semibold text-fg">Hit a bug?</h2>
         <p className="mt-2 text-sm text-fg-muted">
-          Expect rough edges and the occasional bug. If something breaks, telling us on the forum
-          is the fastest way to get it fixed.
+          Telling us on the forum is the fastest way to get it fixed — include your build version
+          and what you were doing.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           <Link href="/forum"><Button variant="secondary" size="sm">

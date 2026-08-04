@@ -3,6 +3,7 @@ using System;
 using Character.Service.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Character.Service.Migrations
 {
     [DbContext(typeof(CharacterDbContext))]
-    partial class CharacterDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260804051613_AddCharacterSaves")]
+    partial class AddCharacterSaves
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -172,46 +175,6 @@ namespace Character.Service.Migrations
                     b.HasIndex("SessionId");
 
                     b.ToTable("character_session", "character");
-                });
-
-            modelBuilder.Entity("Character.Service.Models.RoomStateSaveEntity", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTime>("CapturedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CurrentScene")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("EventType")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<string>("FogJson")
-                        .HasColumnType("jsonb");
-
-                    b.Property<int>("PlayTimeSeconds")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("SessionId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("WorldStatesJson")
-                        .HasColumnType("jsonb");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SessionId", "CapturedAt")
-                        .IsDescending(false, true);
-
-                    b.ToTable("room_state_saves", "character");
                 });
 
             modelBuilder.Entity("Character.Service.Models.SessionEntity", b =>
@@ -606,15 +569,6 @@ namespace Character.Service.Migrations
                     b.Navigation("Session");
 
                     b.Navigation("Vitals")
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Character.Service.Models.RoomStateSaveEntity", b =>
-                {
-                    b.HasOne("Character.Service.Models.SessionEntity", null)
-                        .WithMany()
-                        .HasForeignKey("SessionId")
-                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 

@@ -41,6 +41,49 @@ public interface ISessionRepository
 
     // Delete a room entirely (session + all child rows).
     Task<bool> DeleteSessionAsync(Guid sessionId);
+
+    // ── Save files (character_saves) ─────────────────────────────────────────────────────────
+    // Append a save to the bulk graph so it commits in the same transaction as the live-state
+    // upsert: a save is one atomic thing, never half-written.
+    void AddCharacterSave(CharacterSaveEntity entity);
+
+    // Room-level snapshot (bosses/quests/fog) captured with the same bulk save.
+    void AddRoomStateSave(RoomStateSaveEntity entity);
+    Task<List<long>> GetRoomStateIdsBeyondCapAsync(Guid sessionId, int keep);
+    void RemoveRoomStateSaves(List<long> ids);
+    // The room snapshot taken at (or just before) a given moment — what a world rollback restores.
+    Task<RoomStateSaveEntity?> GetRoomStateAtOrBeforeAsync(Guid sessionId, DateTime capturedAt);
+
+    // Replace the room's live world state + fog with a snapshot's, in one transaction. Rows added
+    // after the snapshot are removed, not merged: a boss defeated later must not survive a rollback.
+    Task RestoreRoomStateAsync(Guid sessionId, RoomStateSaveEntity snapshot);
+
+    // ── Admin: who played with whom ──────────────────────────────────────────────────────────
+    // Paged rooms with their party, so an admin can see co-op pairings without opening each room.
+    Task<(List<SessionEntity> Items, int Total)> GetRoomsPagedAsync(int page, int pageSize);
+
+    /// <summary>Total rooms and how many of them are co-op, for the admin dashboard counters.</summary>
+    Task<(int Rooms, int Multiplayer)> GetRoomStatsAsync();
+    Task<List<RoomStateSaveEntity>> GetRoomStateHistoryAsync(Guid sessionId, int limit);
+
+    // Oldest-first ids beyond the retention cap, so the caller can prune them in the same commit.
+    Task<List<long>> GetSaveIdsBeyondCapAsync(Guid characterId, int keep);
+    void RemoveCharacterSaves(List<long> ids);
+
+    // Paged history, newest first. Returns (page, totalCount) so the UI can show real page counts.
+    Task<(List<CharacterSaveEntity> Items, int Total)> GetSavesAsync(Guid characterId, int page, int pageSize);
+
+    Task<CharacterSaveEntity?> GetSaveAsync(long saveId);
+
+    // How many saves this character has — used to refuse deleting the last one.
+    Task<int> CountSavesAsync(Guid characterId);
+
+    // The newest save excluding one id: what live state rolls back to when the newest is deleted.
+    Task<CharacterSaveEntity?> GetNewestSaveExcludingAsync(Guid characterId, long excludeSaveId);
+
+    // Delete one save and, when it was the newest, rewrite live state from the previous one — in a
+    // single transaction, so a character can never be left between two saves.
+    Task<bool> DeleteSaveAndRollBackAsync(CharacterSaveEntity save, CharacterSaveEntity? rollBackTo);
 }
 
 /// <summary>

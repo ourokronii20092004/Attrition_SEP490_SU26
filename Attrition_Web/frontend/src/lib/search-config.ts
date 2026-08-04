@@ -1,5 +1,6 @@
 import {
-  BookOpen, Skull, MessagesSquare, Users, Gem, Music, Images, ScrollText, Globe, type LucideIcon,
+  BookOpen, Skull, MessagesSquare, Users, Gem, Music, Images, ScrollText, Globe, Sparkles,
+  type LucideIcon,
 } from "lucide-react";
 
 // Search configuration — a single registry that drives the search modal's scope
@@ -12,7 +13,7 @@ import {
 //   - `pages`: static/client-only routes (Items, Music, Story, …) that the API
 //     search doesn't cover — matched locally by label so they're instantly findable.
 
-export type ResultKind = "wiki" | "enemy" | "forum" | "user";
+export type ResultKind = "wiki" | "enemy" | "forum" | "user" | "item" | "skill";
 
 export interface SearchScope {
   /** Stable id; also the canonical prefix (e.g. "wiki" → type `wiki:`). */
@@ -34,6 +35,8 @@ export interface SearchScope {
 export const SEARCH_SCOPES: SearchScope[] = [
   { id: "wiki", label: "Wiki", icon: BookOpen, aliases: ["lore", "article"], kind: "wiki" },
   { id: "enemy", label: "Bestiary", icon: Skull, aliases: ["bestiary", "monster"], kind: "enemy" },
+  { id: "item", label: "Items", icon: Gem, aliases: ["items", "loot", "gear"], kind: "item" },
+  { id: "skill", label: "Skills", icon: Sparkles, aliases: ["skills", "ability"], kind: "skill" },
   { id: "forum", label: "Forum", icon: MessagesSquare, aliases: ["post", "thread"], kind: "forum" },
   { id: "user", label: "Users", icon: Users, aliases: ["users", "member", "profile"], kind: "user" },
   { id: "pages", label: "Pages", icon: Globe, aliases: ["page", "go", "nav"] },
@@ -91,10 +94,10 @@ export function backendScope(scope: SearchScope | null): string | undefined {
   return scope.backend ?? (scope.kind ? scope.id : undefined);
 }
 
-export function matchPages(term: string, limit = 6): SearchPage[] {
+export function matchPages(term: string, limit = 6, pages: SearchPage[] = PUBLIC_PAGES): SearchPage[] {
   const q = term.trim().toLowerCase();
-  if (!q) return PUBLIC_PAGES;
-  return PUBLIC_PAGES.filter(
+  if (!q) return pages;
+  return pages.filter(
     (p) => p.label.toLowerCase().includes(q) || (p.keywords ?? []).some((k) => k.includes(q)),
   ).slice(0, limit);
 }
