@@ -69,7 +69,7 @@ public class SearchService : ISearchService
         foreach (var w in result.Wiki) s.Add(new SearchSuggestionDto(w.Title, "wiki", $"/wiki/{w.Slug}"));
         foreach (var e in result.Enemies) s.Add(new SearchSuggestionDto(e.Name, "enemy", $"/bestiary/{e.EnemyId}"));
         foreach (var i in result.Items) s.Add(new SearchSuggestionDto(i.Name, "item", $"/items/{Uri.EscapeDataString(i.ItemId)}"));
-        foreach (var k in result.Skills) s.Add(new SearchSuggestionDto(k.Name, "skill", $"/skills#{Uri.EscapeDataString(k.SkillId)}"));
+        foreach (var k in result.Skills) s.Add(new SearchSuggestionDto(k.Name, "skill", $"/skills/{Uri.EscapeDataString(k.SkillId)}"));
         foreach (var p in result.Posts) s.Add(new SearchSuggestionDto(p.ThreadTitle, "thread", $"/forum/{p.ThreadId}"));
         foreach (var u in result.Users) s.Add(new SearchSuggestionDto(u.DisplayName ?? u.Username, "user", $"/u/{u.Username}"));
         return s;

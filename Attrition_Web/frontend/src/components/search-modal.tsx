@@ -297,7 +297,7 @@ export function SearchModal({ onClose, adminMode = false }: { onClose: () => voi
                       label={item.name}
                       sub={`${item.rarity} · ${item.element}`}
                       image={resolveMediaUrl(item.imageUrl)}
-                      onClick={() => navigate(adminMode ? "/admin/skills" : `/skills#${encodeURIComponent(item.skillId)}`)}
+                      onClick={() => navigate(adminMode ? "/admin/skills" : `/skills/${encodeURIComponent(item.skillId)}`)}
                     />
                   ))}
                 </SearchSection>
