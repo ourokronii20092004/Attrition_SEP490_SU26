@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Gem, Search } from "lucide-react";
@@ -16,7 +16,7 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SkeletonGrid } from "@/components/ui/skeleton";
 import { Pagination } from "@/components/ui/pagination";
-import { useClientPagination } from "@/lib/hooks/use-client-pagination";
+import { useUrlPagination, useQueryParam } from "@/lib/hooks/use-url-pagination";
 import { RARITY_ORDER, rarityColor, rarityMatches, rarityRank } from "@/lib/rarity";
 import type { EnemyResponse } from "@/lib/types";
 
@@ -34,9 +34,10 @@ function dropSourcesByItemName(enemies: EnemyResponse[]) {
   return map;
 }
 
-export default function ItemsPage() {
-  const [rarity, setRarity] = useState("");
-  const [search, setSearch] = useState("");
+function ItemsList() {
+  // Filters + page live in the URL, so returning from an item page restores the same view.
+  const [rarity, setRarity] = useQueryParam("rarity");
+  const [search, setSearch] = useQueryParam("q");
 
   // The item catalogue is the source of truth for name/rarity/art. This page used to derive items
   // from enemy loot tables instead, which meant it showed the loot rows' own denormalised rarity —
@@ -77,7 +78,7 @@ export default function ItemsPage() {
     });
   }, [catalogue, rarity, search]);
 
-  const { page, setPage, totalPages, paged } = useClientPagination(items, 12);
+  const { page, setPage, totalPages, paged } = useUrlPagination(items, 12);
 
   return (
     <PageShell>
@@ -170,5 +171,13 @@ export default function ItemsPage() {
         <Pagination page={page} totalPages={totalPages} onChange={setPage} />
       )}
     </PageShell>
+  );
+}
+
+export default function ItemsPage() {
+  return (
+    <Suspense fallback={null}>
+      <ItemsList />
+    </Suspense>
   );
 }

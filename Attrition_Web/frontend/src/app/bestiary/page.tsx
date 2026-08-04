@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { Search, Skull } from "lucide-react";
@@ -14,15 +14,16 @@ import { Select } from "@/components/ui/select";
 import { SkeletonGrid } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Pagination } from "@/components/ui/pagination";
-import { useClientPagination } from "@/lib/hooks/use-client-pagination";
+import { useUrlPagination, useQueryParam } from "@/lib/hooks/use-url-pagination";
 import { ENEMY_TIERS, TIER_COLOR } from "@/lib/enemy-tiers";
 import { qk } from "@/lib/query-keys";
 
 const TIERS = ENEMY_TIERS;
 
-export default function BestiaryPage() {
-  const [tier, setTier] = useState("");
-  const [search, setSearch] = useState("");
+function BestiaryList() {
+  // Filters + page live in the URL so returning from a detail page restores the exact view.
+  const [tier, setTier] = useQueryParam("tier");
+  const [search, setSearch] = useQueryParam("q");
 
   const { data: enemies = [], isPending } = useQuery({
     queryKey: qk.enemies.list({ tier, search }),
@@ -37,7 +38,7 @@ export default function BestiaryPage() {
     ...TIERS.map((t) => ({ value: t, label: t })),
   ];
 
-  const { page, setPage, totalPages, paged } = useClientPagination(enemies, 12);
+  const { page, setPage, totalPages, paged } = useUrlPagination(enemies, 12);
 
   return (
     <PageShell>
@@ -113,6 +114,14 @@ export default function BestiaryPage() {
         <Pagination page={page} totalPages={totalPages} onChange={setPage} />
       )}
     </PageShell>
+  );
+}
+
+export default function BestiaryPage() {
+  return (
+    <Suspense fallback={null}>
+      <BestiaryList />
+    </Suspense>
   );
 }
 
