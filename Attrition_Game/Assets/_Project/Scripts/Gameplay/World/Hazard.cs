@@ -44,6 +44,38 @@ namespace Attrition.Gameplay.World
 
         private void Awake() => _col = GetComponent<Collider2D>();
 
+        // ─── SỔ ĐĂNG KÝ TĨNH ───
+        // PlayerController cần biết "chỗ này có gần bẫy không" trước khi ghi nhớ điểm đất an toàn.
+        // Dùng danh sách tĩnh thay vì FindObjectsByType: hàm hỏi được gọi trong CheckGround (mỗi tick).
+        private static readonly List<Hazard> _all = new List<Hazard>();
+
+        private void OnEnable() { if (!_all.Contains(this)) _all.Add(this); }
+        private void OnDisable() => _all.Remove(this);
+
+        /// <summary>
+        /// Collider này có đang nằm trong/sát vùng bẫy nào không?
+        ///
+        /// VÌ SAO CẦN: `PlayerController.CheckGround` ghi `_lastStableGround` mỗi khi player đứng yên trên
+        /// đất — KỂ CẢ khi đang đứng dưới đáy hố gai. Rơi xuống hố là điểm đó bị ghi thành "đất an toàn",
+        /// nên cú `HazardHit` sau đó kéo player về... chính đáy hố. Đúng lỗi "chết rồi hồi sinh vẫn nằm
+        /// dưới chỗ hazard".
+        ///
+        /// Dùng `Collider2D.Distance` (phép tính trực tiếp) chứ không phải `Physics2D.Overlap*` — Fusion
+        /// chạy physics scene riêng nên query scene mặc định luôn trả 0. Xem ghi chú ở Update().
+        /// </summary>
+        public static bool IsNearAnyHazard(Collider2D playerCol, float margin = 1.5f)
+        {
+            if (playerCol == null) return false;
+            for (int i = 0; i < _all.Count; i++)
+            {
+                var h = _all[i];
+                if (h == null || h._col == null || !h._col.enabled) continue;
+                var d = h._col.Distance(playerCol);
+                if (d.isValid && d.distance <= margin) return true;
+            }
+            return false;
+        }
+
         private void OnTriggerEnter2D(Collider2D other) => TryHit(other);
         private void OnTriggerStay2D(Collider2D other) => TryHit(other);
 

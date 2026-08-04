@@ -25,11 +25,11 @@ MonoBehaviour:
   outlineTint: {r: 0.059, g: 0.108, b: 0.211, a: 1}
   outlineThickness: 2
   checkpoints:
-  - checkpointId: Test
+  - checkpointId: Rest 2 - Castle
+    worldPos: {x: -137.9, y: 29.65}
+  - checkpointId: Rest 4 - Castle
     worldPos: {x: 134.5, y: 19.79}
-  - checkpointId: Test
-    worldPos: {x: -113.56, y: 25.77}
-  - checkpointId: Test
+  - checkpointId: Rest 3 - Castle
+    worldPos: {x: -71.74, y: 33.71}
+  - checkpointId: Rest 1 - Castle
     worldPos: {x: -229.003, y: 1.796}
-  - checkpointId: Test
-    worldPos: {x: 31.17, y: 32.83}

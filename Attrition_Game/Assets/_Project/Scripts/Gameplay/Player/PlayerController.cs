@@ -427,6 +427,7 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
 
         // --- DIALOGUE & TRANSITION LOCK: khóa di chuyển ---
         if (HasInputAuthority && (Attrition.Persistence.DialogueState.IsActive
+                                  || Attrition.Persistence.UiOverlayState.IsBlocking
                                   || Attrition.Gameplay.Environment.SceneFader.IsTransitioning
                                   || Attrition.Gameplay.Environment.WorldMapController.IsOpen))
         {
@@ -751,7 +752,10 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
         IsGrounded = rb.Cast(Vector2.down, _groundFilter, _groundHits, 0.05f) > 0;
 
         // BR-39: ghi nhớ điểm đất an toàn cuối (đứng yên trên đất) để hồi sinh khi rơi bẫy.
-        if (HasStateAuthority && IsGrounded && Mathf.Abs(rb.linearVelocity.y) < 0.1f)
+        // KHÔNG ghi khi đang ở gần bẫy: đáy hố gai cũng là "đất", nếu ghi thì cú HazardHit sau đó kéo
+        // player về đúng đáy hố → kẹt vòng lặp chết. Xem Hazard.IsNearAnyHazard.
+        if (HasStateAuthority && IsGrounded && Mathf.Abs(rb.linearVelocity.y) < 0.1f
+            && !Attrition.Gameplay.World.Hazard.IsNearAnyHazard(playerCollider))
             _lastStableGround = rb.position;
     }
 
@@ -1045,15 +1049,25 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
 
         // BR-39: KÉO LÊN TRƯỚC khi xét damage. Nếu teleport nằm sau `Die()` thì cú hazard chí mạng để lại
         // xác DƯỚI map, mà collider tắt khi chết nên đồng đội không tới đủ gần để hồi sinh → mất tiến trình.
-        if (_lastStableGround != Vector2.zero) TeleportTo(_lastStableGround);
-        else if (Attrition.Gameplay.World.Checkpoint.MostRecentlyActivated != null)
-            TeleportTo(Attrition.Gameplay.World.Checkpoint.MostRecentlyActivated.RespawnPosition);
+        //
+        // Ưu tiên CHECKPOINT trước _lastStableGround khi cú này gây CHẾT: chết rồi thì người chơi kỳ vọng
+        // về checkpoint, mà _lastStableGround chỉ là mẩu đất gần bẫy (dễ rơi lại ngay). Còn cú KHÔNG chết
+        // thì vẫn kéo về mẩu đất gần nhất cho đỡ mất mạch chơi.
+        int max = statsComp != null ? statsComp.MaxHP : maxHP;
+        int dmg = Mathf.Max(1, Mathf.RoundToInt(max * 0.15f)); // BR-38
+        bool willDie = !isInvincible && HP - dmg <= 0;
+
+        var cp = Attrition.Gameplay.World.Checkpoint.MostRecentlyActivated;
+        bool cpValid = cp != null && cp.HasBeenActivated
+                       && cp.gameObject.scene.name == Attrition.Persistence.GameLaunch.GameplayScene;
+
+        if (willDie && cpValid) TeleportTo(cp.RespawnPosition);
+        else if (_lastStableGround != Vector2.zero) TeleportTo(_lastStableGround);
+        else if (cpValid) TeleportTo(cp.RespawnPosition);
 
         // Bất tử từ combat/hồi sinh vẫn miễn damage — chỉ không còn ngăn việc được kéo lên.
         if (isInvincible) return;
 
-        int max = statsComp != null ? statsComp.MaxHP : maxHP;
-        int dmg = Mathf.Max(1, Mathf.RoundToInt(max * 0.15f)); // BR-38
         HP -= dmg;
 
         if (HP <= 0) Die();
@@ -1150,6 +1164,33 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
                    checkpointName, destination);
     }
 
+    /// <summary>
+    /// Chọn chỗ hồi sinh cho player này, theo thứ tự ƯU TIÊN GIẢM DẦN:
+    ///   1. checkpoint đã rest (hợp lệ trong scene hiện tại)
+    ///   2. spawn point mặc định của map
+    ///   3. điểm đất an toàn cuối (không nằm cạnh bẫy — xem CheckGround)
+    ///
+    /// VÌ SAO KHÔNG BAO GIỜ DÙNG `transform.position`: chết vì rơi hố gai thì vị trí hiện tại CHÍNH LÀ
+    /// đáy hố. Bản cũ lấy `p.transform.position` làm giá trị khởi tạo và chỉ ghi đè khi có checkpoint, nên
+    /// map chưa rest lần nào (hoặc checkpoint thuộc scene khác) sẽ hồi sinh ngay tại đáy hố → chết lại
+    /// tức thì, kẹt vòng lặp. Đúng lỗi "nhảy xuống hazard, bấm về checkpoint mà vẫn nằm dưới hazard".
+    /// </summary>
+    private Vector3 ResolveRespawnPoint(Attrition.Gameplay.World.Checkpoint checkpoint, NetworkSpawner spawner)
+    {
+        if (checkpoint != null) return checkpoint.RespawnPosition;
+
+        if (spawner != null && Object != null
+            && spawner.TryGetDefaultSpawn(Object.InputAuthority, out var spawn))
+            return spawn;
+
+        if (_lastStableGround != Vector2.zero) return _lastStableGround;
+
+        Debug.LogError("[Respawn] Map chưa có checkpoint đã rest LẪN spawn point, và chưa ghi được điểm đất " +
+                       "an toàn nào → buộc phải giữ vị trí hiện tại (có thể vẫn trong bẫy). " +
+                       "Hãy gán spawnPoints cho NetworkSpawner của scene này.");
+        return transform.position;
+    }
+
     /// <summary>Host báo mọi peer hiện thanh load fast-travel đồng bộ.</summary>
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RpcTravelLoading()
@@ -1177,15 +1218,7 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
         var spawner = FindFirstObjectByType<NetworkSpawner>();
         var players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
         foreach (var p in players)
-        {
-            Vector3 spawn = hasCheckpoint ? recent.RespawnPosition : p.transform.position;
-            if (!hasCheckpoint && spawner != null && p.Object != null
-                && !spawner.TryGetDefaultSpawn(p.Object.InputAuthority, out spawn))
-            {
-                Debug.LogError("[Respawn] Map hiện tại chưa cấu hình spawn point; giữ vị trí player thay vì dịch về (0,0).");
-            }
-            p.ReviveAndRestore(spawn);
-        }
+            p.ReviveAndRestore(p.ResolveRespawnPoint(hasCheckpoint ? recent : null, spawner));
 
         // Bắn loading về CẢ HAI máy (giống Rest/fast-travel) — màn loading che đúng lúc camera snap về
         // checkpoint nên không thấy cảnh camera kẹt/underground trong lúc chuyển. Camera follow lại đúng

@@ -16,8 +16,8 @@ MonoBehaviour:
   displayName: Elf Valley -Map 3
   silhouette: {fileID: 21300000, guid: a1fc85dc7850a6b46900dd1eccf4feb2, type: 3}
   worldBounds:
-    m_Center: {x: 127.5, y: 83.5, z: 0}
-    m_Extent: {x: 290.5, y: 89.5, z: 0}
+    m_Center: {x: 135, y: 62, z: 0}
+    m_Extent: {x: 298, y: 68, z: 0}
   worldMapOffset: {x: 0, y: 0}
   worldMapScale: 1
   fogCellSize: 2.5
@@ -25,11 +25,13 @@ MonoBehaviour:
   outlineTint: {r: 0.108, g: 0.239, b: 0.248, a: 1}
   outlineThickness: 2
   checkpoints:
-  - checkpointId: Test
-    worldPos: {x: -14.607722, y: 20.793}
-  - checkpointId: Test
-    worldPos: {x: 294.724, y: 8.792}
-  - checkpointId: Test
-    worldPos: {x: -135.491, y: 56.814}
-  - checkpointId: Test
+  - checkpointId: Rest 3 - Elf Valley
     worldPos: {x: 162.97, y: 3.76}
+  - checkpointId: Rest 1 - Elf Valley
+    worldPos: {x: -135.491, y: 56.814}
+  - checkpointId: Rest 2 - Elf Valley
+    worldPos: {x: -14.607722, y: 20.793}
+  - checkpointId: Rest 4 - Elf Valley
+    worldPos: {x: 294.724, y: 8.792}
+  - checkpointId: Rest 5 - Elf Valley
+    worldPos: {x: 282.46, y: 60.68}

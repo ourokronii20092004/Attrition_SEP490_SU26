@@ -69,6 +69,16 @@ namespace Attrition.UI
         private int _pendingExp;
         private bool _isRewardShowing;
 
+        // Frame mà popup thưởng đã "ăn" phím ESC (-1 = chưa). Static vì GameUIController phải đọc được
+        // ngay trong cùng frame, kể cả khi Update của nó chạy TRƯỚC DialogueUI.
+        private static int _escConsumedFrame = -1;
+
+        /// <summary>Popup "Congratulations!" đang hiện? GameUIController đọc để ESC không mở Pause chồng lên.</summary>
+        public static bool IsRewardShowing => Instance != null && Instance._isRewardShowing;
+
+        /// <summary>Popup thưởng vừa dùng ESC trong frame này? (chống double-handle giữa 2 MonoBehaviour)</summary>
+        public static bool EscConsumedThisFrame => _escConsumedFrame == Time.frameCount;
+
         // Quest tracker
         private float _trackerTimer;
 
@@ -166,7 +176,27 @@ namespace Attrition.UI
             KeyCode interactKey = Attrition.Persistence.GameSettings.GetKey(
                 Attrition.Persistence.GameSettings.InputAction.Interact);
 
-            if (!_isDialogueOpen && !_isRewardShowing && Input.GetKeyDown(interactKey))
+            // Popup thưởng "Congratulations!": đóng bằng ESC / ENTER / F thay vì phải rê chuột bấm OK.
+            // Xét TRƯỚC mọi thứ khác và return ngay: popup là modal, không được để cùng frame lọt xuống
+            // luồng thoại (F ở đây sẽ vừa đóng popup vừa lật dòng thoại phía sau).
+            if (_isRewardShowing)
+            {
+                if (Input.GetKeyDown(KeyCode.Escape))
+                {
+                    // Đánh dấu ĐÃ tiêu thụ ESC của frame này để GameUIController không mở Pause chồng lên
+                    // (thứ tự Update giữa 2 MonoBehaviour không xác định — xem chỗ đọc cờ ở đó).
+                    _escConsumedFrame = Time.frameCount;
+                    CloseRewardPopup();
+                }
+                else if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)
+                         || Input.GetKeyDown(interactKey))
+                {
+                    CloseRewardPopup();
+                }
+                return;
+            }
+
+            if (!_isDialogueOpen && Input.GetKeyDown(interactKey))
             {
                 TryOpenFromNearbyNPC();
                 // Mở xong return ngay: tránh cùng frame rơi vào khối advance bên dưới
@@ -198,6 +228,9 @@ namespace Attrition.UI
             }
 
             UpdateInteractPrompt(interactKey);
+
+            // Vừa nhận thưởng xong → mời nhiệm vụ kế trong chuỗi (Summer: elite → boss).
+            TickPendingChainOffer();
 
             if (_isTyping)
             {
@@ -465,12 +498,64 @@ namespace Attrition.UI
                 byte state = _currentNPC.DisplayQuestState;
                 if (state == 2) // Completed → claim
                 {
-                    _currentNPC.RpcClaimReward();
+                    var npc = _currentNPC;
+                    npc.RpcClaimReward();
                     CloseDialogue();
+
+                    // NHẬN THƯỞNG XONG → MỜI LUÔN nhiệm vụ KẾ TIẾP trong chuỗi (nếu có).
+                    //
+                    // VÌ SAO: Summer Fairy giao chuỗi elite → boss. Trước đây nhận thưởng elite là đóng
+                    // thoại, người chơi phải TỰ nhớ bấm F lần nữa mới được mời quest boss. Ai bỏ qua bước
+                    // đó rồi đi hạ boss luôn thì cú giết không tính (quest chưa nhận), mà boss KHÔNG hồi
+                    // sinh → mất thưởng vĩnh viễn. Đúng tình huống user mô tả.
+                    //
+                    // KHÔNG mở lại ngay tại đây dù host đã có state mới: `DistributeRewards` vừa bắn
+                    // RewardEvents nên popup "Congratulations!" đang mở — mở thoại lúc này sẽ nằm DƯỚI popup
+                    // modal. Hẹn lại, `TickPendingChainOffer` sẽ mời sau khi popup đóng. Dùng chung một
+                    // đường cho host lẫn client (client còn phải chờ [Networked] sync).
+                    _pendingChainNpc = npc;
+                    _pendingChainUntil = Time.unscaledTime + PendingChainWindow;
                     return;
                 }
             }
             CloseDialogue();
+        }
+
+        // NPC vừa nhận thưởng — chờ popup thưởng đóng + state sync để mời nhiệm vụ kế trong chuỗi.
+        private Attrition.Gameplay.NPC.NetworkNPC _pendingChainNpc;
+        private float _pendingChainUntil;
+        private const float PendingChainWindow = 2f;
+
+        /// <summary>
+        /// Mời nhiệm vụ KẾ TIẾP sau khi vừa nhận thưởng nhiệm vụ trước. Gọi mỗi frame từ Update.
+        ///
+        /// Chờ hai điều: popup thưởng đã đóng, và `QuestChainIndex`/`QuestState` đã sang nhiệm vụ mới
+        /// (client phải đợi sync). Hết thời gian chờ mà chưa thoả (vd NPC hết chuỗi) thì bỏ, không mở gì.
+        /// </summary>
+        private void TickPendingChainOffer()
+        {
+            if (_pendingChainNpc == null) return;
+
+            // Đang xem popup thưởng / đang mở thoại khác → đẩy hạn chờ, đếm chỉ bắt đầu khi màn hình trống.
+            if (_isRewardShowing || _isDialogueOpen)
+            {
+                _pendingChainUntil = Time.unscaledTime + PendingChainWindow;
+                return;
+            }
+
+            var npc = _pendingChainNpc;
+            if (npc.Object == null || !npc.Object.IsValid) { _pendingChainNpc = null; return; }
+
+            // Đã sang nhiệm vụ kế và đang chờ nhận → mời.
+            if (npc.Quest != null && npc.QuestState == 0 && npc.CanOfferQuest)
+            {
+                _pendingChainNpc = null;
+                OpenDialogue(npc);
+                return;
+            }
+
+            // Chưa sync (hoặc NPC hết chuỗi) → chờ tới khi hết hạn.
+            if (Time.unscaledTime > _pendingChainUntil) _pendingChainNpc = null;
         }
 
         /// <summary>Đóng hội thoại.</summary>
@@ -733,6 +818,10 @@ namespace Attrition.UI
 
             foreach (var npc in npcs)
             {
+                // Bỏ NPC chưa Spawned: đọc [Networked] (QuestChainIndex trong `Quest`) trước khi Fusion
+                // spawn xong sẽ NÉM InvalidOperationException. Tracker chạy mỗi 0.5s nên nó bắn đúng vào
+                // lúc scene mới load, NPC còn đang được spawn dần.
+                if (npc == null || npc.Object == null || !npc.Object.IsValid) continue;
                 if (npc.Quest == null) continue;
                 byte state = npc.QuestState;
                 if (state != 1 && state != 2) continue; // only Active or Completed
@@ -781,7 +870,7 @@ namespace Attrition.UI
             progress.AddToClassList("tracker-entry-progress");
             string objText = q.objectiveType == QuestObjectiveType.Kill ? "defeated" : "completed";
             progress.text = isComplete
-                ? $"Complete — return to {npc.NpcName} to claim your reward"
+                ? $"Complete — return to {npc.TurnInNpcName} to claim your reward"
                 : $"{npc.QuestProgress}/{q.requiredAmount} {objText}";
             entry.Add(progress);
 

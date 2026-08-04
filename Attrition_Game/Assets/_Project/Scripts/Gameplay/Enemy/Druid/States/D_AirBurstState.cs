@@ -93,13 +93,27 @@ namespace Attrition.Gameplay.Enemy.Druid.States
 
         private void BeginPullIn(DruidBossAI ai)
         {
-            float y = _center.y + 1f;
-            // Điểm đầu cũng cách player tối thiểu 1.2 units về phía trước; không spawn ngay tâm khiến
-            // mắt đọc thành "đánh sau lưng". Các điểm sau tiếp tục rải xa hơn cùng hướng nhìn player.
-            float offX = _playerFacingX * (_spawned == 0
-                ? 1.2f
-                : Random.Range(1.2f, Mathf.Max(1.21f, ai.airBurstScatter)));
-            _currentPoint = new Vector2(_center.x + offX, y);
+            // BÁM LẠI vị trí player MỖI ĐÒN, không dùng tâm đã chốt từ Enter().
+            //
+            // VÌ SAO: chuỗi có airBurstCount (mặc định 6) đòn, mỗi đòn mất
+            // airBurstPrepareTime (0.8) + 0.45 + airBurstInterval (0.55) ≈ 1.8s → cả skill dài ~11 GIÂY.
+            // Chốt tâm một lần lúc Enter nghĩa là 5 đòn sau đều nổ ở chỗ player đã rời khỏi từ lâu.
+            // Đây chính là lỗi "airburst spawn cách quá xa player nên không gây được sát thương".
+            //
+            // Vẫn né được: PullIn (damage 0) hiện TRƯỚC airBurstPrepareTime giây tại đúng điểm sắp nổ, nên
+            // cửa sổ né nằm ở đó — khác ThunderSplash (đòn dịch chuyển tức thì nên phải chốt đích từ đầu).
+            if (ai.PlayerTarget != null)
+            {
+                _center = ai.PlayerTarget.position;
+                var pc = ai.PlayerTarget.GetComponentInParent<PlayerController>();
+                _playerFacingX = pc == null || pc.IsFacingRight ? 1f : -1f;
+            }
+
+            // Lệch ra TRƯỚC MẶT player (giữ ý "đâm từ trước tới", không phải sau lưng) nhưng phải nằm
+            // TRONG bán kính AoE của AirBurst — prefab để radius 1.6. Trước đây lệch ngang tới
+            // airBurstScatter (4) cộng lệch cao 1 → cách tâm 4.1 units, quá bán kính nên trượt chắc chắn.
+            _currentPoint = new Vector2(_center.x + _playerFacingX * FrontOffsetX,
+                                        _center.y + FrontOffsetY);
 
             if (ai.HasStateAuthority)
                 ai.SpawnAoE(ai.AirBurstPullInPrefab, _currentPoint, 0);
@@ -107,6 +121,13 @@ namespace Attrition.Gameplay.Enemy.Druid.States
             _phase = Phase.PullIn;
             _elapsed = 0f;
         }
+
+        /// <summary>
+        /// Lệch của điểm nổ so với tâm player. Khoảng cách tổng (~0.96) phải NHỎ HƠN bán kính AoE của
+        /// AirBurst (1.6 trên prefab), nếu không đòn có hình đúng hướng mà không bao giờ trúng.
+        /// </summary>
+        private const float FrontOffsetX = 0.9f;
+        private const float FrontOffsetY = 0.35f;
 
         public override void Exit(DruidBossAI ai) => ai.StopMovement();
     }

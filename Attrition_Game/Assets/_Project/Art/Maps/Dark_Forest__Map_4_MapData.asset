@@ -25,13 +25,13 @@ MonoBehaviour:
   outlineTint: {r: 0.158, g: 0.234, b: 0.108, a: 1}
   outlineThickness: 2
   checkpoints:
-  - checkpointId: Test
-    worldPos: {x: 5.98, y: -14.22}
-  - checkpointId: Test
-    worldPos: {x: 417, y: -16.21}
-  - checkpointId: Test
+  - checkpointId: Rest 5 - Dark Forest
     worldPos: {x: 497.4, y: -13.212}
-  - checkpointId: Test
-    worldPos: {x: 172.9, y: -5.2}
-  - checkpointId: Test
+  - checkpointId: Rest 4 - Dark Forest
+    worldPos: {x: 417, y: -16.21}
+  - checkpointId: Rest 2 - Dark Forest
+    worldPos: {x: 175.35, y: 12.73}
+  - checkpointId: Rest 1 - Dark Forest
+    worldPos: {x: 5.98, y: -14.22}
+  - checkpointId: Rest 3 - Dark Forest
     worldPos: {x: 297.1, y: 18.77}

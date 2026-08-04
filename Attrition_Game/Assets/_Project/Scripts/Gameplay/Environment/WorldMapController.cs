@@ -28,6 +28,10 @@ namespace Attrition.Gameplay.Environment
         [SerializeField] private Sprite remotePlayerIcon;
         [Tooltip("Kích thước icon player trên map (px màn hình, giữ nguyên khi zoom). Tăng để icon to hơn.")]
         [SerializeField] private float playerIconSize = 26f;
+        [Tooltip("Kích thước icon checkpoint trên map (px màn hình, giữ nguyên khi zoom).")]
+        [SerializeField] private float checkpointIconSize = 40f;
+        [Tooltip("Icon checkpoint ĐANG CHỌN to hơn bao nhiêu lần (1.35 = +35%).")]
+        [SerializeField] private float selectedIconScale = 1.35f;
 
         // px hiển thị cho mỗi 1 world-unit ở zoom = 1. Toàn bộ map-space nhân hệ số này.
         private const float PixelsPerUnit = 3f;
@@ -261,6 +265,7 @@ namespace Attrition.Gameplay.Environment
             foreach (var go in _spawned) if (go != null) Destroy(go);
             _spawned.Clear();
             _constantScale.Clear();
+            _markers.Clear();   // các marker vừa bị Destroy ở trên — không xoá sổ là giữ tham chiếu đã chết
             _selected = null; _selectedMap = null;
             if (_travelBtn != null) _travelBtn.interactable = false;
 
@@ -434,18 +439,39 @@ namespace Attrition.Gameplay.Environment
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
             rt.pivot = new Vector2(0.5f, 0.5f);
             rt.anchoredPosition = MapToContent(map, cp.worldPos);
-            rt.sizeDelta = new Vector2(20, 20);
+            rt.sizeDelta = new Vector2(checkpointIconSize, checkpointIconSize);
             var img = mk.AddComponent<Image>();
             img.sprite = teleIcon != null ? teleIcon : CircleSprite();
             img.color = teleIcon != null ? Color.white : new Color(1f, 0.78f, 0.2f, 1f); // vàng nếu dùng chấm mặc định
             _constantScale.Add(mk);   // giữ kích thước màn hình không đổi khi zoom
+
+            // VÒNG HIGHLIGHT (ẩn sẵn) — hiện khi marker này được chọn. Tạo TRƯỚC icon trong hierarchy
+            // (SetAsFirstSibling) để nằm DƯỚI icon, không che mất hình checkpoint.
+            var ringGo = NewElement("Ring", mk.transform, out var ringRt);
+            ringRt.anchorMin = ringRt.anchorMax = new Vector2(0.5f, 0.5f);
+            ringRt.pivot = new Vector2(0.5f, 0.5f);
+            ringRt.anchoredPosition = Vector2.zero;
+            // Vòng to hơn icon để nhìn thấy viền quanh; theo tỉ lệ nên đổi checkpointIconSize vẫn đúng.
+            ringRt.sizeDelta = new Vector2(checkpointIconSize * 1.75f, checkpointIconSize * 1.75f);
+            var ringImg = ringGo.AddComponent<Image>();
+            ringImg.sprite = CircleSprite();
+            ringImg.color = new Color(1f, 0.95f, 0.55f, 0.45f);
+            ringImg.raycastTarget = false;   // không chắn click của Button trên icon
+            ringGo.transform.SetAsFirstSibling();
+            ringGo.SetActive(false);
 
             var capCp = cp; var capMap = map;
             var btn = mk.AddComponent<Button>();
             btn.targetGraphic = img;
             btn.onClick.AddListener(() => SelectMarker(capMap, capCp));
             _spawned.Add(mk);
+
+            // Ghi sổ để SelectMarker bật/tắt highlight mà không phải quét lại cây UI.
+            _markers.Add((cp.checkpointId, mk, ringGo));
         }
+
+        /// <summary>Marker đã vẽ: (id checkpoint, icon, vòng highlight). Dùng để đổi highlight khi chọn.</summary>
+        private readonly List<(string id, GameObject icon, GameObject ring)> _markers = new();
 
         // Vẽ icon vị trí cho MỌI player (local + đồng đội coop). Icon cập nhật mỗi frame trong Update.
         private void BuildPlayerDot()
@@ -506,6 +532,33 @@ namespace Attrition.Gameplay.Environment
             _selected = cp; _selectedMap = map;
             if (_travelBtn != null) _travelBtn.interactable = true;
             _title.text = $"{(string.IsNullOrEmpty(map.displayName) ? map.sceneName : map.displayName)}  -  {cp.checkpointId}";
+            ApplySelectionHighlight(cp.checkpointId);
+        }
+
+        /// <summary>
+        /// Bật vòng highlight + phóng to marker ĐANG CHỌN, trả các marker khác về cỡ thường.
+        ///
+        /// Phóng to bằng sizeDelta (không phải localScale) vì `_constantScale` ghi đè localScale mỗi frame
+        /// để giữ icon không đổi cỡ khi zoom map — set scale ở đây sẽ bị xoá ngay frame sau.
+        /// </summary>
+        private void ApplySelectionHighlight(string selectedId)
+        {
+            float baseSize = checkpointIconSize;
+            float bigSize = checkpointIconSize * Mathf.Max(1f, selectedIconScale);
+
+            foreach (var (id, icon, ring) in _markers)
+            {
+                if (icon == null) continue;
+                bool isSel = id == selectedId;
+
+                var rt = icon.GetComponent<RectTransform>();
+                if (rt != null)
+                {
+                    float s = isSel ? bigSize : baseSize;
+                    rt.sizeDelta = new Vector2(s, s);
+                }
+                if (ring != null) ring.SetActive(isSel);
+            }
         }
 
         private MapDataSO CurrentMap()

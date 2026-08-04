@@ -2048,3 +2048,79 @@
 .tracker-entry-complete { border-color: rgba(100, 200, 100, 0.4); }
 .tracker-entry-complete .tracker-entry-title { color: #A8E8A0; }
 .tracker-entry-complete .tracker-progress-bar-fill { background-color: #80D880; }
+
+/* ============================================================
+   THANH MÁU BOSS TO HƠN (2026-08-03) — user báo khó quan sát.
+   ĐẶT CUỐI FILE để thắng cascade (#hud-boss-* đã được set ở 3 chỗ phía trên).
+   Track 10px → 26px, bề rộng 600 → 860, tên boss 24 → 32px + khung Ornate cho
+   đồng bộ với các thanh khác (HP/Mana/loading đều dùng bar_track.png).
+   ============================================================ */
+#hud-boss {
+    width: 860px;
+    bottom: 74px;
+}
+
+#hud-boss-name {
+    font-size: 32px;
+    letter-spacing: 4px;
+    margin-bottom: 8px;
+}
+
+#hud-boss-track {
+    height: 26px;
+    background-image: url('../Art/UI_Elements/OrnateUI/bar_track.png');
+    -unity-slice-left: 9;
+    -unity-slice-right: 9;
+    -unity-slice-top: 6;
+    -unity-slice-bottom: 6;
+    -unity-slice-scale: 1px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+    padding-left: 4px; padding-right: 4px;
+    padding-top: 4px; padding-bottom: 4px;
+    overflow: hidden;
+}
+
+/* Dải đỏ dùng lại sprite HP ngang (giống #hud-downed-fill) thay vì màu phẳng. */
+#hud-boss-fill {
+    background-image: url('../Art/UI_Elements/Bars/fill_hp_strip.png');
+    -unity-slice-left: 2;
+    -unity-slice-right: 2;
+    -unity-slice-top: 0;
+    -unity-slice-bottom: 0;
+    -unity-slice-scale: 1px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+}
+
+/* ============================================================
+   CON TRỎ BÀN PHÍM cho bảng REST (GameUIController.RestNav.cs).
+   ĐẶT CUỐI FILE để thắng cascade với .bonfire-btn / .ft-row ở trên.
+
+   Vì sao cần class RIÊNG (không dùng :hover): con trỏ bàn phím không phải chuột, và .ft-row còn dùng
+   class `selected` cho "beacon đã chọn để teleport" — hai trạng thái khác nhau, phải phân biệt được.
+   ============================================================ */
+.kb-selected {
+    background-image: url('../Art/UI_Elements/OrnateUI/button_hover.png');
+    -unity-slice-left: 6;
+    -unity-slice-right: 6;
+    -unity-slice-top: 6;
+    -unity-slice-bottom: 7;
+    -unity-slice-scale: 1px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    color: #fff6d8;
+    scale: 1.04;
+}
+
+/* Ô SỐ bình máu/mana (Label, không phải Button) — không có sprite nút nên tô bằng viền + nền vàng. */
+#flask-hp-val.kb-selected,
+#flask-mana-val.kb-selected {
+    background-image: none;
+    background-color: rgba(201, 168, 76, 0.28);
+    border-width: 2px;
+    border-color: #e8c873;
+    border-radius: 4px;
+    scale: 1;
+}

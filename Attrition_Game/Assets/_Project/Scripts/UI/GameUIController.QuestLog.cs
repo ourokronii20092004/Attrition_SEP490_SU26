@@ -29,6 +29,9 @@ namespace Attrition.UI
             foreach (var npc in FindObjectsByType<NetworkNPC>(FindObjectsSortMode.None))
             {
                 if (npc == null) continue;
+                // Chưa Spawned thì [Networked] chưa đọc được (ném InvalidOperationException) — xem
+                // ghi chú ở DialogueUI.RefreshQuestTracker.
+                if (npc.Object == null || !npc.Object.IsValid) continue;
 
                 // Chỉ lấy NPC GIỮ quest. NPC "nhận nộp hộ" (Autumn/Summer) có `Quest` null hoặc trỏ nhiệm
                 // vụ riêng của nó, nên không bị liệt kê trùng cùng một nhiệm vụ hai lần.
@@ -72,8 +75,9 @@ namespace Attrition.UI
             }
 
             // Xong mục tiêu → nhắc đi nộp (player hay quên phải quay lại NPC nào).
+            // TurnInNpcName: NPC NHẬN NỘP, không phải NPC giao (Spring giao → nộp cho Summer).
             var progress = new Label(isComplete
-                ? $"Complete — return to {npc.NpcName} to claim your reward"
+                ? $"Complete — return to {npc.TurnInNpcName} to claim your reward"
                 : $"{npc.QuestProgress}/{q.requiredAmount} "
                   + (q.objectiveType == QuestObjectiveType.Kill ? "defeated" : "completed"));
             progress.AddToClassList("tracker-entry-progress");

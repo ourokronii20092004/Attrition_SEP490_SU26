@@ -394,8 +394,7 @@ MonoBehaviour:
   reviveDelaySeconds: 2.5
   deathClipName: ArchDemon_Death
   despawnFallback: 1.5
-  lootItemIds:
-  - skill_water
+  lootItemIds: []
   normalDropChance: 1
   droppedItemPrefab:
     RawGuidValue: 00000000000000000000000000000000

@@ -83,14 +83,18 @@ namespace Attrition.Gameplay.Environment
         {
             CreateInstance();
             IsTransitioning = true;
-            
+
             if (_instance._fadeImage == null) yield break;
 
             float time = 0;
             Color color = _instance._fadeImage.color;
             while (time < duration)
             {
-                time += Time.deltaTime;
+                // unscaledDeltaTime: fade PHẢI chạy được khi Time.timeScale == 0. Solo dừng game bằng
+                // timeScale (GamePause.SetSoloFreeze) ở overlay/hội thoại/bản đồ, nên nếu dùng deltaTime
+                // thường thì fade ĐỨNG YÊN → màn đen ở lại vĩnh viễn và IsTransitioning kẹt true (kéo theo
+                // khoá input player + chặn banner tên khu). Đúng lỗi "vào phòng boss chỉ thấy màn đen".
+                time += Time.unscaledDeltaTime;
                 color.a = Mathf.Clamp01(time / duration);
                 _instance._fadeImage.color = color;
                 yield return null;
@@ -118,7 +122,7 @@ namespace Attrition.Gameplay.Environment
         {
             IsTransitioning = true;
             SetAlphaImmediate(1f);                       // đen tức thì — không có pha tối dần gây "chớp"
-            yield return new WaitForSeconds(hold);
+            yield return new WaitForSecondsRealtime(hold);   // realtime: timeScale có thể = 0 (xem FadeOut)
             yield return FadeIn(fadeIn);
         }
 
@@ -146,14 +150,14 @@ namespace Attrition.Gameplay.Environment
             Color color = _instance._fadeImage.color;
             while (time < duration)
             {
-                time += Time.deltaTime;
+                time += Time.unscaledDeltaTime;   // xem ghi chú ở FadeOut
                 color.a = 1f - Mathf.Clamp01(time / duration);
                 _instance._fadeImage.color = color;
                 yield return null;
             }
             color.a = 0f;
             _instance._fadeImage.color = color;
-            
+
             IsTransitioning = false;
         }
     }

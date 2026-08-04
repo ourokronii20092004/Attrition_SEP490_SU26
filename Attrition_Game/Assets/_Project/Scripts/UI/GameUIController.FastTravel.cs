@@ -17,6 +17,9 @@ namespace Attrition.UI
     {
         private MapDataSO _ftMap;
         private MapDataSO.CheckpointMarker? _ftSelected;
+
+        /// <summary>Các dòng beacon đang hiện (marker + Button) — điều hướng bàn phím cần để gọi SelectFtRow.</summary>
+        private readonly List<(MapDataSO.CheckpointMarker marker, Button row)> _ftRows = new();
         
         // Provisional Level Up
         private int _provUnspent;
@@ -79,6 +82,9 @@ namespace Attrition.UI
         {
             HideAllBonfireMenus();
             _root.Q<VisualElement>("ft-main-menu")?.RemoveFromClassList("hidden");
+            _bonfireMenu = BonfireMenu.Main;
+            EnsureBonfireHint();
+            BuildMainNav();
         }
 
         // --- LEVEL UP ---
@@ -90,6 +96,8 @@ namespace Attrition.UI
             for(int i=0; i<6; i++) _provStats[i] = 0;
             if (_stats != null) _provUnspent = _stats.UnspentPoints;
             RefreshLevelUpUI();
+            _bonfireMenu = BonfireMenu.LevelUp;
+            BuildLevelUpNav();
         }
 
         private void RefreshLevelUpUI()
@@ -145,6 +153,8 @@ namespace Attrition.UI
                 }
             }
             RefreshFlasksUI();
+            _bonfireMenu = BonfireMenu.Flasks;
+            BuildFlasksNav();
         }
 
         private void ChangeFlasks(int hpDelta, int manaDelta)
@@ -195,6 +205,9 @@ namespace Attrition.UI
             _root.Q<VisualElement>("ft-travel-menu")?.RemoveFromClassList("hidden");
             _ftMap = MapRegistrySO.Load()?.GetByScene(GameLaunch.GameplayScene);
             if (_ftMap == null) _ftMap = AvailableFastTravelMaps().FirstOrDefault();
+            // Đặt TRƯỚC RefreshFastTravelList: hàm đó dựng lại nav, mà BuildTravelNav chỉ đúng khi
+            // _bonfireMenu đã là Travel (ESC phải về menu chính chứ không đóng cả bảng).
+            _bonfireMenu = BonfireMenu.Travel;
             RefreshFastTravelList();
         }
 
@@ -228,6 +241,7 @@ namespace Attrition.UI
             if (list == null) return;
             list.Clear();
             _ftSelected = null;
+            _ftRows.Clear();
 
             var maps = AvailableFastTravelMaps();
             if (_ftMap == null || !maps.Contains(_ftMap)) _ftMap = maps.FirstOrDefault();
@@ -245,6 +259,10 @@ namespace Attrition.UI
                     row.AddToClassList("ft-row");
                     row.clicked += () => SelectFtRow(captured, row);
                     list.Add(row);
+                    // Ghi lại cặp (marker, row) để điều hướng bàn phím gọi SelectFtRow trực tiếp —
+                    // ENTER không thể giả lập click: Button.clicked do manipulator Clickable phát từ
+                    // PointerDown/Up, gửi ClickEvent tay không chắc chạy qua mọi phiên bản UI Toolkit.
+                    _ftRows.Add((captured, row));
                 }
             }
 
@@ -254,6 +272,10 @@ namespace Attrition.UI
             _root.Q<Button>("ft-go")?.SetEnabled(false);
             _root.Q<Button>("ft-map-prev")?.SetEnabled(maps.Count > 1);
             _root.Q<Button>("ft-map-next")?.SetEnabled(maps.Count > 1);
+
+            // Dòng beacon vừa bị dựng lại → nav phải dựng theo, nếu không con trỏ trỏ vào element đã chết.
+            // Chỉ khi đang ở bảng Travel: ShowOverlay(FastTravel) cũng gọi hàm này lúc menu chính đang mở.
+            if (_bonfireMenu == BonfireMenu.Travel) BuildTravelNav();
         }
 
         private void SelectFtRow(MapDataSO.CheckpointMarker marker, Button row)

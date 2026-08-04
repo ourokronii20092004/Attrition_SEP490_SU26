@@ -146,7 +146,9 @@ namespace Attrition.Gameplay.Environment
             ClearLocalCameraConfiner();
 
             // Đợi network đồng bộ + camera kịp di chuyển.
-            yield return new WaitForSeconds(0.2f);
+            // Realtime: timeScale có thể = 0 (solo dừng game ở overlay/hội thoại) → WaitForSeconds thường
+            // sẽ treo mãi ở đây, kẹt luôn màn đen vừa fade ra. Xem ghi chú ở SceneFader.FadeOut.
+            yield return new WaitForSecondsRealtime(0.2f);
 
             yield return StartCoroutine(SceneFader.FadeIn(0.5f));
 
