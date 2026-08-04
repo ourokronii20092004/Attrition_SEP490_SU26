@@ -330,6 +330,31 @@ public class SessionService : ISessionService
         graph.Session.UpdatedAt = now;
         graph.Session.LastPlayedAt = now;
 
+        // Room-state snapshot, captured AFTER the world-state and fog writes above so it reflects
+        // the room as this save left it. Shares `now` with the character saves from the same push,
+        // which is what lets a character save be paired with the room state around it.
+        //
+        // Only written when the save actually recorded something: a push that saved no characters
+        // (all ownership-rejected) has no accompanying moment to snapshot.
+        if (saved > 0)
+        {
+            var allWorldStates = graph.WorldStates
+                .Select(w => new { eventId = w.EventId, stateValue = w.StateValue, progress = w.Progress })
+                .ToList();
+            _repo.AddRoomStateSave(new RoomStateSaveEntity
+            {
+                SessionId = request.SessionId,
+                CapturedAt = now,
+                EventType = string.IsNullOrWhiteSpace(request.EventType) ? "rest" : request.EventType,
+                CurrentScene = graph.Session.CurrentScene,
+                WorldStatesJson = allWorldStates.Count == 0
+                    ? null
+                    : System.Text.Json.JsonSerializer.Serialize(allWorldStates),
+                FogJson = graph.Session.FogJson,
+                PlayTimeSeconds = request.PlayTimeSeconds,
+            });
+        }
+
         // Single commit — everything above lands together or not at all.
         await _repo.SaveChangesAsync();
 
@@ -351,6 +376,25 @@ public class SessionService : ISessionService
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Save retention prune failed for character {CharacterId}", characterId);
+            }
+        }
+
+        // Same cap for the room's own history, so a long-running room doesn't accumulate snapshots
+        // without bound either.
+        if (saved > 0)
+        {
+            try
+            {
+                var staleRooms = await _repo.GetRoomStateIdsBeyondCapAsync(request.SessionId, SaveRetention.MaxPerCharacter);
+                if (staleRooms.Count > 0)
+                {
+                    _repo.RemoveRoomStateSaves(staleRooms);
+                    await _repo.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Room-state retention prune failed for session {SessionId}", request.SessionId);
             }
         }
 

@@ -258,4 +258,89 @@ public class SessionRepository : ISessionRepository
         });
         return ok;
     }
+
+    // ── Room-state snapshots ─────────────────────────────────────────────────────────────────
+
+    public void AddRoomStateSave(RoomStateSaveEntity entity) => _context.RoomStateSaves.Add(entity);
+
+    public async Task<List<long>> GetRoomStateIdsBeyondCapAsync(Guid sessionId, int keep) =>
+        await _context.RoomStateSaves
+            .Where(x => x.SessionId == sessionId)
+            .OrderByDescending(x => x.CapturedAt).ThenByDescending(x => x.Id)
+            .Skip(keep)
+            .Select(x => x.Id)
+            .ToListAsync();
+
+    public void RemoveRoomStateSaves(List<long> ids)
+    {
+        if (ids.Count == 0) return;
+        foreach (var id in ids)
+            _context.RoomStateSaves.Remove(new RoomStateSaveEntity { Id = id });
+    }
+
+    /// <summary>
+    /// The room snapshot for a given moment. Matches at-or-before rather than exactly, because a
+    /// bulk save that rejected every character writes no room snapshot — so the nearest earlier one
+    /// is the correct thing to restore.
+    /// </summary>
+    public async Task<RoomStateSaveEntity?> GetRoomStateAtOrBeforeAsync(Guid sessionId, DateTime capturedAt) =>
+        await _context.RoomStateSaves.AsNoTracking()
+            .Where(x => x.SessionId == sessionId && x.CapturedAt <= capturedAt)
+            .OrderByDescending(x => x.CapturedAt).ThenByDescending(x => x.Id)
+            .FirstOrDefaultAsync();
+
+    /// <summary>
+    /// Replace the room's world state and fog with a snapshot's.
+    ///
+    /// Deletes every existing world_state row for the room and re-inserts the snapshot's, rather
+    /// than upserting: a boss defeated *after* the snapshot has no row in it, so a merge would leave
+    /// that kill in place and the "rollback" would be a lie. Fog is overwritten wholesale for the
+    /// same reason.
+    ///
+    /// Room-scoped by design — character rows are untouched, so one player's rollback of the shared
+    /// world never rewrites another player's own progress.
+    /// </summary>
+    public async Task RestoreRoomStateAsync(Guid sessionId, RoomStateSaveEntity snapshot)
+    {
+        var strategy = _context.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(async () =>
+        {
+            await using var tx = await _context.Database.BeginTransactionAsync();
+
+            await _context.WorldStates.Where(w => w.SessionId == sessionId).ExecuteDeleteAsync();
+
+            if (!string.IsNullOrWhiteSpace(snapshot.WorldStatesJson))
+            {
+                var rows = System.Text.Json.JsonSerializer.Deserialize<List<RestoredWorldState>>(
+                    snapshot.WorldStatesJson,
+                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                foreach (var r in rows ?? new List<RestoredWorldState>())
+                {
+                    if (string.IsNullOrWhiteSpace(r.EventId)) continue;
+                    _context.WorldStates.Add(new WorldStateEntity
+                    {
+                        SessionId = sessionId,
+                        EventId = r.EventId,
+                        StateValue = r.StateValue,
+                        Progress = r.Progress,
+                        UpdatedAt = DateTime.UtcNow,
+                    });
+                }
+            }
+
+            var session = await _context.Sessions.FirstOrDefaultAsync(x => x.Id == sessionId);
+            if (session != null)
+            {
+                session.FogJson = snapshot.FogJson;
+                if (!string.IsNullOrWhiteSpace(snapshot.CurrentScene)) session.CurrentScene = snapshot.CurrentScene;
+                session.UpdatedAt = DateTime.UtcNow;
+            }
+
+            await _context.SaveChangesAsync();
+            await tx.CommitAsync();
+        });
+    }
+
+    /// <summary>Shape of one entry in RoomStateSaveEntity.WorldStatesJson.</summary>
+    private sealed record RestoredWorldState(string EventId, short StateValue, int Progress);
 }

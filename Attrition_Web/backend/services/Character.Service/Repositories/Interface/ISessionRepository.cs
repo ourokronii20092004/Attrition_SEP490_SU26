@@ -47,6 +47,17 @@ public interface ISessionRepository
     // upsert: a save is one atomic thing, never half-written.
     void AddCharacterSave(CharacterSaveEntity entity);
 
+    // Room-level snapshot (bosses/quests/fog) captured with the same bulk save.
+    void AddRoomStateSave(RoomStateSaveEntity entity);
+    Task<List<long>> GetRoomStateIdsBeyondCapAsync(Guid sessionId, int keep);
+    void RemoveRoomStateSaves(List<long> ids);
+    // The room snapshot taken at (or just before) a given moment — what a world rollback restores.
+    Task<RoomStateSaveEntity?> GetRoomStateAtOrBeforeAsync(Guid sessionId, DateTime capturedAt);
+
+    // Replace the room's live world state + fog with a snapshot's, in one transaction. Rows added
+    // after the snapshot are removed, not merged: a boss defeated later must not survive a rollback.
+    Task RestoreRoomStateAsync(Guid sessionId, RoomStateSaveEntity snapshot);
+
     // Oldest-first ids beyond the retention cap, so the caller can prune them in the same commit.
     Task<List<long>> GetSaveIdsBeyondCapAsync(Guid characterId, int keep);
     void RemoveCharacterSaves(List<long> ids);

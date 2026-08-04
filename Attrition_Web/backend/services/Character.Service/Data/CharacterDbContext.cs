@@ -12,6 +12,7 @@ public class CharacterDbContext : DbContext
     public DbSet<CharacterSessionEntity> CharacterSessions => Set<CharacterSessionEntity>();
     public DbSet<WorldStateEntity> WorldStates => Set<WorldStateEntity>();
     public DbSet<CharacterSaveEntity> CharacterSaves => Set<CharacterSaveEntity>();
+    public DbSet<RoomStateSaveEntity> RoomStateSaves => Set<RoomStateSaveEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -149,6 +150,25 @@ public class CharacterDbContext : DbContext
                 b.Property(pp => pp.PosZ).HasColumnName("PosZ");
                 b.Property(pp => pp.LastRestPointId).HasColumnName("LastRestPointId").HasMaxLength(50);
             });
+        });
+
+        modelBuilder.Entity<RoomStateSaveEntity>(e =>
+        {
+            e.ToTable("room_state_saves");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.EventType).HasMaxLength(20);
+            e.Property(x => x.CurrentScene).HasMaxLength(100);
+            e.Property(x => x.WorldStatesJson).HasColumnType("jsonb");
+            e.Property(x => x.FogJson).HasColumnType("jsonb");
+
+            // Read newest-first per room; the retention prune wants the oldest. One index does both.
+            e.HasIndex(x => new { x.SessionId, x.CapturedAt }).IsDescending(false, true);
+
+            // Deleting a room takes its state history with it, like every other child row.
+            e.HasOne<SessionEntity>()
+                .WithMany()
+                .HasForeignKey(x => x.SessionId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // Quest/world-event progress for a room (host-authoritative). Composite PK (SessionId, EventId).

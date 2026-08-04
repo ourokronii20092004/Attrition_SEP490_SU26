@@ -44,4 +44,13 @@ public class CharacterRepository : Repository<CharacterEntity>, ICharacterReposi
         await _context.Characters
             .Include(c => c.Snapshots)
             .FirstOrDefaultAsync(c => c.OwnerId == ownerId && c.Name == name);
+
+    public async Task<(Guid OwnerId, string Name)?> GetOwnerAndNameAsync(Guid id)
+    {
+        var row = await _context.Characters.AsNoTracking()
+            .Where(c => c.Id == id)
+            .Select(c => new { c.OwnerId, c.Name })
+            .FirstOrDefaultAsync();
+        return row == null ? null : (row.OwnerId, row.Name);
+    }
 }
