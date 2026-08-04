@@ -183,9 +183,7 @@ namespace Attrition.UI
                 logoutBtn.RegisterCallback<ClickEvent>(evt =>
                 {
                     PlayClickSound();
-                    if (APIManager.Instance != null) APIManager.Instance.ClearTokens();
-                    PlayerPrefs.DeleteKey("SavedUserId");
-                    PlayerPrefs.Save();
+                    if (APIManager.Instance != null) APIManager.Instance.ClearTokens(); // xoá cả SavedUserId
                     _isLoggedIn = false;
                     _currentUserId = null;
                     UpdateGlobalProfileVisibility();

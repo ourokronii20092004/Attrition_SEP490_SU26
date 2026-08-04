@@ -31,6 +31,8 @@ public class APIManager : MonoBehaviour
     private const string RefreshTokenPrefKey = "AttritionRefreshToken";
     private const string AccessTokenPrefKey = "AttritionAccessToken";
     private const string UsernamePrefKey = "AttritionUsername";
+    /// <summary>Key user id do menu ghi khi login (MainMenuUIController) — logout phải xoá cùng token.</summary>
+    private const string UserIdPrefKey = "SavedUserId";
 
     void Awake()
     {
@@ -129,6 +131,27 @@ public class APIManager : MonoBehaviour
         PlayerPrefs.DeleteKey(RefreshTokenPrefKey);
         PlayerPrefs.DeleteKey(AccessTokenPrefKey);
         PlayerPrefs.DeleteKey(UsernamePrefKey);
+        PlayerPrefs.DeleteKey(UserIdPrefKey);
+        PlayerPrefs.Save();
+    }
+
+    /// <summary>
+    /// Thoát game = logout. Token persist xuống đĩa để sống qua đổi scene (Menu → gameplay → Menu),
+    /// nhưng KHÔNG được sống qua lần chạy sau: mở lại game phải đăng nhập mới vào được coop.
+    /// CHỈ xoá bản trên đĩa, GIỮ token trong RAM: thứ tự OnApplicationQuit giữa các component là
+    /// không xác định, nên component nào còn kịp save online lúc thoát vẫn có access token để gọi API.
+    /// </summary>
+    // ponytail: chỉ xoá khi thoát "đàng hoàng" — bị kill bằng Task Manager / crash thì token còn lại
+    // trên đĩa nên lần mở sau vẫn đăng nhập. Nếu cần chắc chắn: ghi cờ "đang chạy" xuống PlayerPrefs
+    // ở Awake, thấy cờ còn sót lúc khởi động thì ClearTokens (đổi lại: domain reload trong Editor sẽ
+    // logout giữa phiên).
+    private void OnApplicationQuit()
+    {
+        if (Instance != this) return;
+        PlayerPrefs.DeleteKey(RefreshTokenPrefKey);
+        PlayerPrefs.DeleteKey(AccessTokenPrefKey);
+        PlayerPrefs.DeleteKey(UsernamePrefKey);
+        PlayerPrefs.DeleteKey(UserIdPrefKey);
         PlayerPrefs.Save();
     }
 
