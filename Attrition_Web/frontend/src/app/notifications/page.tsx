@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
@@ -19,6 +19,7 @@ import { RelativeTime } from "@/components/ui/relative-time";
 import type { NotificationDto } from "@/lib/types";
 import { LIVE_FAST, liveWhenFocused } from "@/lib/live";
 import { useLoginHref } from "@/lib/hooks/use-login-href";
+import { useQueryParam, useUrlPage } from "@/lib/hooks/use-url-pagination";
 
 const PAGE_SIZE = 20;
 
@@ -32,14 +33,18 @@ function typeIcon(type: string) {
   }
 }
 
-export default function NotificationsPage() {
+function NotificationsList() {
   const loginHref = useLoginHref();
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const [page, setPage] = useState(1);
-  const [filter, setFilter] = useState<"all" | "unread">("all");
+  // `page` feeds the query, so it is read before the response exists. The hook is not given
+  // a total here; the Pagination component below receives the real one once it is known.
+  const [page, setPage] = useUrlPage();
+  const [filterParam, setFilterParam] = useQueryParam("filter");
+  const filter: "all" | "unread" = filterParam === "unread" ? "unread" : "all";
+  const setFilter = (next: "all" | "unread") => setFilterParam(next === "all" ? "" : next);
 
   useEffect(() => {
     if (authLoading) return;
@@ -87,7 +92,7 @@ export default function NotificationsPage() {
         <div className="w-44">
           <Select
             value={filter}
-            onChange={(e) => { setFilter(e.target.value as "all" | "unread"); setPage(1); }}
+            onChange={(e) => setFilter(e.target.value as "all" | "unread")}
             aria-label="Filter notifications"
           >
             <option value="all">All notifications</option>
@@ -201,5 +206,13 @@ function NotificationRow({ notification: n, onMarkRead }: { notification: Notifi
         </button>
       )}
     </div>
+  );
+}
+
+export default function NotificationsPage() {
+  return (
+    <Suspense fallback={null}>
+      <NotificationsList />
+    </Suspense>
   );
 }

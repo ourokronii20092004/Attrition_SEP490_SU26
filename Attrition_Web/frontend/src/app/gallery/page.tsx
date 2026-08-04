@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { X, Images, ChevronLeft, ChevronRight } from "lucide-react";
 import { assetsApi } from "@/lib/api/assets";
@@ -12,9 +12,12 @@ import { SkeletonGrid } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Pagination } from "@/components/ui/pagination";
 import { qk } from "@/lib/query-keys";
+import { useUrlPage } from "@/lib/hooks/use-url-pagination";
 
-export default function GalleryPage() {
-  const [page, setPage] = useState(1);
+function GalleryView() {
+  // `page` feeds the query, so it is read before the response exists. The hook is not given
+  // a total here; the Pagination component below receives the real one once it is known.
+  const [page, setPage] = useUrlPage();
   // Lightbox tracks an index into the current page's items so prev/next can navigate.
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
@@ -151,5 +154,13 @@ export default function GalleryPage() {
         </div>
       )}
     </PageShell>
+  );
+}
+
+export default function GalleryPage() {
+  return (
+    <Suspense fallback={null}>
+      <GalleryView />
+    </Suspense>
   );
 }
