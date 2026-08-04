@@ -27,4 +27,8 @@ public interface ISessionService
 
     // Delete a room entirely (session + all child data). Irreversible.
     Task<ApiResponse> DeleteSessionAsync(Guid sessionId);
+
+    // ── Admin: who played with whom, where, and with what world progress ─────────────────────
+    Task<AdminRoomListDto> GetRoomsForAdminAsync(int page, int pageSize, CancellationToken ct = default);
+    Task<AdminRoomDetailDto?> GetRoomDetailForAdminAsync(Guid sessionId, CancellationToken ct = default);
 }

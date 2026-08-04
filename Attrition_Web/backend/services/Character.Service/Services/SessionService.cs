@@ -9,11 +9,13 @@ public class SessionService : ISessionService
 {
     private readonly ISessionRepository _repo;
     private readonly ILogger<SessionService> _logger;
+    private readonly Clients.IdentityClient _identity;
 
-    public SessionService(ISessionRepository repo, ILogger<SessionService> logger)
+    public SessionService(ISessionRepository repo, ILogger<SessionService> logger, Clients.IdentityClient identity)
     {
         _repo = repo;
         _logger = logger;
+        _identity = identity;
     }
 
     public async Task<List<SessionSummaryDto>> GetByOwnerAsync(Guid ownerId)
@@ -470,4 +472,98 @@ public class SessionService : ISessionService
 
     private static WorldStateDto ToWorldStateDto(WorldStateEntity w) => new(
         w.EventId, w.StateValue, w.Progress, w.UpdatedAt);
+
+    // ── Admin: who played with whom ──────────────────────────────────────────────────────────
+
+    public async Task<AdminRoomListDto> GetRoomsForAdminAsync(int page, int pageSize, CancellationToken ct = default)
+    {
+        page = page < 1 ? 1 : page;
+        pageSize = pageSize is < 1 or > 100 ? 20 : pageSize;
+
+        var (rooms, total) = await _repo.GetRoomsPagedAsync(page, pageSize);
+
+        // One batch lookup for every owner on the page rather than a request per room.
+        var ownerIds = rooms.Select(r => r.OwnerId).Distinct().ToList();
+        var names = await _identity.ResolveUsernamesAsync(ownerIds, ct);
+
+        var items = rooms.Select(r => new AdminRoomListItemDto(
+            r.Id, r.RoomCode, r.Name, r.OwnerId,
+            names.TryGetValue(r.OwnerId, out var n) ? n : null,
+            r.IsMultiplayer,
+            r.Characters.Count,
+            r.CurrentScene,
+            r.PlayTimeSeconds,
+            r.LastPlayedAt,
+            r.WorldStates.Count)).ToList();
+
+        return new AdminRoomListDto(items, total, page, pageSize);
+    }
+
+    public async Task<AdminRoomDetailDto?> GetRoomDetailForAdminAsync(Guid sessionId, CancellationToken ct = default)
+    {
+        var room = await _repo.GetDetailAsync(sessionId);
+        if (room == null) return null;
+
+        // Character rows carry only ids, so names come from the characters table and usernames from
+        // Identity — this is the "who played with whom" the admin view exists to answer.
+        var characterIds = room.Characters.Select(c => c.CharacterId).ToList();
+        var characterNames = await _repo.GetCharacterNamesAsync(characterIds);
+
+        var ownerIds = new List<Guid> { room.OwnerId };
+        var names = await _identity.ResolveUsernamesAsync(ownerIds.Distinct().ToList(), ct);
+
+        var party = room.Characters.Select(cs =>
+        {
+            characterNames.TryGetValue(cs.CharacterId, out var info);
+            return new RoomPartyMemberDto(
+                cs.CharacterId,
+                string.IsNullOrWhiteSpace(info.Name) ? "Unknown" : info.Name,
+                // The room's owner is known; a joining player's owner is not recorded on the session
+                // row, so it is left empty rather than guessed at.
+                cs.PlayerRole == 0 ? room.OwnerId : Guid.Empty,
+                cs.PlayerRole == 0 && names.TryGetValue(room.OwnerId, out var hn) ? hn : null,
+                cs.PlayerRole,
+                cs.CurrentLevel,
+                cs.DeathCount,
+                cs.UpdatedAt);
+        })
+        .OrderBy(m => m.PlayerRole)   // host first, then joiners
+        .ToList();
+
+        var history = await _repo.GetRoomStateHistoryAsync(sessionId, SaveRetention.MaxPerCharacter);
+
+        return new AdminRoomDetailDto(
+            room.Id, room.RoomCode, room.Name, room.OwnerId,
+            names.TryGetValue(room.OwnerId, out var on) ? on : null,
+            room.IsMultiplayer, room.CurrentScene, room.PlayTimeSeconds,
+            room.CreatedAt, room.LastPlayedAt,
+            party,
+            room.WorldStates.Select(w => new WorldStateDto(w.EventId, w.StateValue, w.Progress, w.UpdatedAt)).ToList(),
+            room.FogJson,
+            history.Select(h => new RoomStateSaveDto(
+                h.Id, h.CapturedAt, h.EventType, h.CurrentScene, h.PlayTimeSeconds,
+                CountJsonArray(h.WorldStatesJson),
+                CountJsonArray(h.FogJson))).ToList());
+    }
+
+    /// <summary>
+    /// Element count of a JSON array blob, for the "N world states / N fog cells" summaries.
+    /// Malformed or absent JSON counts as 0 rather than throwing — a display summary must not be
+    /// able to fail a request.
+    /// </summary>
+    private static int CountJsonArray(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return 0;
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            return doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Array
+                ? doc.RootElement.GetArrayLength()
+                : 0;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
 }
