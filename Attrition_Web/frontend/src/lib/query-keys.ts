@@ -61,6 +61,17 @@ export const qk = {
   characters: {
     mine: () => ["characters", "mine"] as const,
     detail: (id: string) => ["character", id] as const,
+    // Save history is paged separately from the character itself, so deleting a save can refetch
+    // the list without pulling the character's own record again.
+    saves: (id: string, page?: number) =>
+      page === undefined ? (["character", id, "saves"] as const) : (["character", id, "saves", page] as const),
+    save: (id: string, saveId: number) => ["character", id, "save", saveId] as const,
+  },
+
+  rooms: {
+    adminList: (page?: number) =>
+      page === undefined ? (["admin", "rooms"] as const) : (["admin", "rooms", page] as const),
+    adminDetail: (id: string) => ["admin", "room", id] as const,
   },
 
   sessions: {

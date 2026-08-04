@@ -1,9 +1,10 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Heart, MapPin, Clock, ChevronDown, Gamepad2, Backpack } from "lucide-react";
+import { Heart, MapPin, Clock, Gamepad2, ChevronRight, Skull } from "lucide-react";
 import { charactersApi } from "@/lib/api/characters";
 import { useAuth } from "@/lib/providers";
 import { PageShell } from "@/components/ui/page-shell";
@@ -11,14 +12,13 @@ import { PageTitle } from "@/components/ui/page-title";
 import { Card } from "@/components/ui/card";
 import { SkeletonList } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
-import { SnapshotTimeline } from "@/components/snapshot-timeline";
-import { InventoryView } from "@/components/inventory-view";
 import { RelativeTime } from "@/components/ui/relative-time";
 import { Pagination } from "@/components/ui/pagination";
 import { qk } from "@/lib/query-keys";
-import type { CharacterSummaryDto, SnapshotDto } from "@/lib/types";
+import type { CharacterSummaryDto } from "@/lib/types";
 import { useLoginHref } from "@/lib/hooks/use-login-href";
 import { useUrlPagination } from "@/lib/hooks/use-url-pagination";
+import { formatPlaytime } from "@/lib/format-duration";
 
 function CharactersList() {
   const loginHref = useLoginHref();
@@ -28,7 +28,7 @@ function CharactersList() {
   useEffect(() => {
     if (authLoading) return;
     if (!user) router.push(loginHref);
-  }, [user, authLoading, router]);
+  }, [user, authLoading, router, loginHref]);
 
   const { data: characters = [], isPending } = useQuery({
     queryKey: qk.characters.mine(),
@@ -45,7 +45,9 @@ function CharactersList() {
 
   return (
     <PageShell size="lg">
-      <PageTitle description="Your characters and their progression across runs.">Character Status</PageTitle>
+      <PageTitle description="Every character you've played, with its save history. Open one to inspect its stats and saves.">
+        Your Characters
+      </PageTitle>
 
       {authLoading || isPending ? (
         <SkeletonList rows={4} />
@@ -59,7 +61,7 @@ function CharactersList() {
         <div className="stagger space-y-3">
           {paged.map((c, i) => (
             <div key={c.id} style={{ "--i": i } as React.CSSProperties}>
-              <CharacterCard character={c} />
+              <CharacterRow character={c} />
             </div>
           ))}
           <Pagination page={page} totalPages={totalPages} onChange={setPage} />
@@ -69,74 +71,64 @@ function CharactersList() {
   );
 }
 
-function CharacterCard({ character }: { character: CharacterSummaryDto }) {
-  const [expanded, setExpanded] = useState(false);
+/**
+ * A character in the list. Was an accordion that lazily loaded inventory inline; now a link, because
+ * the detail page has to exist anyway to host the save-file rail, and two places rendering the same
+ * stats would drift apart.
+ */
+function CharacterRow({ character }: { character: CharacterSummaryDto }) {
   const snap = character.latestSnapshot;
 
-  const { data: detail, isFetching: loadingDetail } = useQuery({
-    queryKey: qk.characters.detail(character.id),
-    enabled: expanded,
-    queryFn: async () => {
-      const res = await charactersApi.get(character.id);
-      return res.success ? res.data : null;
-    },
-  });
-
-  const toggle = () => setExpanded((v) => !v);
-
   return (
-    <Card className="overflow-hidden p-0">
-      <button onClick={toggle} className="flex w-full items-center gap-4 p-4 text-left transition-colors hover:bg-surface-2">
+    <Link
+      href={`/characters/${encodeURIComponent(character.id)}`}
+      className="group block rounded-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+    >
+      <Card className="flex items-center gap-4 p-4 transition-colors group-hover:bg-surface-2">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-accent-soft font-display text-lg font-bold text-accent">
           {character.name[0]?.toUpperCase() ?? "?"}
         </div>
+
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="truncate font-medium text-fg">{character.name}</h3>
+            <h3 className="truncate font-medium text-fg group-hover:text-accent">{character.name}</h3>
             <span className="rounded-full bg-surface-3 px-2 py-0.5 text-xs text-fg-muted">{character.archetype}</span>
             {snap && (
-              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${snap.isAlive ? "bg-success/10 text-success" : "bg-danger/10 text-danger"}`}>
-                {snap.isAlive ? "Alive" : "Dead"}
+              <span
+                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+                  snap.isAlive ? "bg-success/10 text-success" : "bg-danger/10 text-danger"
+                }`}
+              >
+                {snap.isAlive ? "Alive" : <><Skull size={11} aria-hidden /> Dead</>}
               </span>
             )}
           </div>
+
           {snap ? (
-            <StatLine snap={snap} />
+            <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-fg-muted">
+              <span>Lv.{snap.level}</span>
+              <span className="flex items-center gap-1"><Heart size={12} aria-hidden /> {snap.hp}/{snap.maxHp}</span>
+              {snap.roomCode && (
+                <span className="flex items-center gap-1"><MapPin size={12} aria-hidden /> {snap.roomCode}</span>
+              )}
+              {snap.playtimeSeconds > 0 && <span>{formatPlaytime(snap.playtimeSeconds)}</span>}
+              <span className="flex items-center gap-1">
+                <Clock size={12} aria-hidden /> <RelativeTime iso={snap.capturedAt} />
+              </span>
+            </div>
           ) : (
             <p className="mt-1 text-xs text-fg-subtle">No status reported yet</p>
           )}
         </div>
-        <ChevronDown size={18} className={`shrink-0 text-fg-subtle transition-transform duration-200 ${expanded ? "rotate-180" : ""}`} />
-      </button>
 
-      {expanded && (
-        <div className="border-t border-border bg-surface-2/40 px-4 py-3">
-          <h4 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-fg-subtle"><Backpack size={12} /> Inventory</h4>
-          {loadingDetail ? (
-            <p className="py-4 text-center text-sm text-fg-muted">Loading...</p>
-          ) : (
-            <InventoryView json={detail?.inventoryJson} />
-          )}
-          <h4 className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wider text-fg-subtle">History</h4>
-          {loadingDetail ? (
-            <p className="py-4 text-center text-sm text-fg-muted">Loading...</p>
-          ) : (
-            <SnapshotTimeline snapshots={detail?.snapshots ?? []} />
-          )}
+        <div className="shrink-0 text-right">
+          <p className="text-xs text-fg-subtle">
+            {character.snapshotCount} {character.snapshotCount === 1 ? "save" : "saves"}
+          </p>
         </div>
-      )}
-    </Card>
-  );
-}
-
-function StatLine({ snap }: { snap: SnapshotDto }) {
-  return (
-    <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-fg-muted">
-      <span>Lv.{snap.level}</span>
-      <span className="flex items-center gap-1"><Heart size={12} /> {snap.hp}/{snap.maxHp}</span>
-      {snap.roomCode && <span className="flex items-center gap-1"><MapPin size={12} /> {snap.roomCode}</span>}
-      <span className="flex items-center gap-1"><Clock size={12} /> <RelativeTime iso={snap.capturedAt} /></span>
-    </div>
+        <ChevronRight size={18} className="shrink-0 text-fg-subtle transition-colors group-hover:text-accent" aria-hidden />
+      </Card>
+    </Link>
   );
 }
 
