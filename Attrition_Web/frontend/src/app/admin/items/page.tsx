@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -20,14 +20,14 @@ import { AdminPageHeader, AdminFilterBar, AdminTable, AdminRow } from "@/compone
 import { AssetImageField } from "@/components/admin/asset-image-field";
 import { Pagination } from "@/components/ui/pagination";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
-import { useClientPagination } from "@/lib/hooks/use-client-pagination";
 import { qk } from "@/lib/query-keys";
 import type { ItemResponse, ItemCreateRequest, ItemUpdateRequest } from "@/lib/types";
+import { useUrlPagination } from "@/lib/hooks/use-url-pagination";
 
 const CATEGORIES = ["Equipment", "Accessory", "Material"];
 const STAT_TYPES = ["MaxHP", "MaxMana", "MaxStamina", "AD", "AP", "DEF", "RES", "MoveSpeed", "AttackSpeed"];
 
-export default function AdminItemsPage() {
+function AdminItemsList() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const confirm = useConfirm();
@@ -65,7 +65,7 @@ export default function AdminItemsPage() {
     if (search && !i.name.toLowerCase().includes(search) && !i.itemId.toLowerCase().includes(search)) return false;
     return true;
   });
-  const { page, setPage, totalPages, paged } = useClientPagination(filtered, 20);
+  const { page, setPage, totalPages, paged } = useUrlPagination(filtered, 20);
 
   if (!user || user.role !== "Admin") return null;
   if (loading) return <PageLoader />;
@@ -264,3 +264,10 @@ function ItemForm({ initial, onDone, onCancel, onDirtyChange }: { initial: ItemR
   );
 }
 
+export default function AdminItemsPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminItemsList />
+    </Suspense>
+  );
+}

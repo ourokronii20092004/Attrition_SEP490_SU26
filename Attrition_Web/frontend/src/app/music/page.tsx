@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { Music as MusicIcon, Heart, ListMusic } from "lucide-react";
@@ -14,11 +14,12 @@ import { Button } from "@/components/ui/button";
 import { SkeletonGrid } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { qk } from "@/lib/query-keys";
+import { useUrlPage } from "@/lib/hooks/use-url-pagination";
 
 const PAGE_SIZE = 24;
 
-export default function MusicPage() {
-  const [page, setPage] = useState(1);
+function MusicList() {
+  const [page, setPage] = useUrlPage();
   const { user } = useAuth();
 
   const { data, isPending } = useQuery({
@@ -90,13 +91,21 @@ export default function MusicPage() {
 
           {totalPages > 1 && (
             <div className="mt-8 flex items-center justify-center gap-3">
-              <Button size="sm" variant="secondary" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Prev</Button>
+              <Button size="sm" variant="secondary" disabled={page <= 1} onClick={() => setPage(page - 1)}>Prev</Button>
               <span className="text-sm text-fg-muted">Page {page} of {totalPages}</span>
-              <Button size="sm" variant="secondary" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>Next</Button>
+              <Button size="sm" variant="secondary" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>Next</Button>
             </div>
           )}
         </>
       )}
     </PageShell>
+  );
+}
+
+export default function MusicPage() {
+  return (
+    <Suspense fallback={null}>
+      <MusicList />
+    </Suspense>
   );
 }

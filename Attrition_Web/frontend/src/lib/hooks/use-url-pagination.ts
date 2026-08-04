@@ -103,14 +103,17 @@ export function useUrlPagination<T>(items: T[], pageSize = 20) {
  * Just the page number from the URL, for lists the server pages (the query takes `page`, so the
  * data isn't sliced client-side and `totalPages` comes from the response).
  *
+ * `key` names the query param, so sibling lists on one route (the profile activity tabs)
+ * can each keep their own page without colliding.
+ *
  * `totalPages` is optional because it usually isn't known until the first response lands; pass it
  * once available and out-of-range values get corrected the same way as `useUrlPagination`.
  */
-export function useUrlPage(totalPages?: number) {
+export function useUrlPage(totalPages?: number, key = "page") {
   const searchParams = useSearchParams();
   const setParams = useSetQueryParams();
 
-  const raw = Number(searchParams.get("page"));
+  const raw = Number(searchParams.get(key));
   const requested = Number.isFinite(raw) && raw >= 1 ? Math.floor(raw) : 1;
   const page = totalPages && totalPages >= 1 ? Math.min(requested, totalPages) : requested;
 
@@ -118,17 +121,17 @@ export function useUrlPage(totalPages?: number) {
     (next: number) => {
       const floored = Math.max(1, Math.floor(next));
       const clamped = totalPages && totalPages >= 1 ? Math.min(floored, totalPages) : floored;
-      setParams({ page: clamped === 1 ? null : clamped });
+      setParams({ [key]: clamped === 1 ? null : clamped });
     },
-    [setParams, totalPages],
+    [setParams, totalPages, key],
   );
 
   // A hand-typed or now-stale ?page beyond the end gets rewritten once the real total is known.
   useEffect(() => {
     if (totalPages && totalPages >= 1 && requested > totalPages) {
-      setParams({ page: totalPages === 1 ? null : totalPages });
+      setParams({ [key]: totalPages === 1 ? null : totalPages });
     }
-  }, [requested, totalPages, setParams]);
+  }, [requested, totalPages, setParams, key]);
 
   return [page, setPage] as const;
 }

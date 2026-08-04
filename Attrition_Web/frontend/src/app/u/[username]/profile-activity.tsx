@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { RelativeTime } from "@/components/ui/relative-time";
 import type { ForumThreadListDto, UserWikiContributionDto, UserReplyDto } from "@/lib/types";
+import { useQueryParam, useUrlPage } from "@/lib/hooks/use-url-pagination";
 
 const PAGE_SIZE = 5;
 type Tab = "threads" | "replies" | "articles";
@@ -27,7 +28,10 @@ function plainSnippet(md: string, max = 160): string {
 }
 
 export function ProfileActivity({ userId, username }: { userId: string; username: string }) {
-  const [tab, setTab] = useState<Tab>("threads");
+  // Tab in the URL too, so returning restores the tab as well as its page.
+  const [tabParam, setTabParam] = useQueryParam("tab");
+  const tab: Tab = tabParam === "replies" || tabParam === "articles" ? tabParam : "threads";
+  const setTab = (next: Tab) => setTabParam(next === "threads" ? "" : next);
 
   return (
     <section>
@@ -116,7 +120,7 @@ function Pager({ page, total, onPage }: { page: number; total: number; onPage: (
 function ThreadsList({ userId, username }: { userId: string; username: string }) {
   const [items, setItems] = useState<ForumThreadListDto[]>([]);
   const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useUrlPage(undefined, "tp");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -157,7 +161,7 @@ function ThreadsList({ userId, username }: { userId: string; username: string })
 function RepliesList({ userId, username }: { userId: string; username: string }) {
   const [items, setItems] = useState<UserReplyDto[]>([]);
   const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useUrlPage(undefined, "rp");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -197,7 +201,7 @@ function RepliesList({ userId, username }: { userId: string; username: string })
  * articles they authored (admins). The endpoint returns the full list; we page it client-side. */
 function ContributionsList({ userId, username }: { userId: string; username: string }) {
   const [items, setItems] = useState<UserWikiContributionDto[]>([]);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useUrlPage(undefined, "wp");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

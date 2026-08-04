@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -16,14 +16,15 @@ import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { formatDate } from "@/lib/format-date";
 import type { AdminUserReportDto } from "@/lib/types";
 import { LIVE_NORMAL, liveWhenFocused } from "@/lib/live";
+import { useUrlPage } from "@/lib/hooks/use-url-pagination";
 
-export default function AdminUserReportsPage() {
+function AdminUserReportsList() {
   const { user: me } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   const queryClient = useQueryClient();
   const [status, setStatus] = useState("Pending");
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useUrlPage();
   const [searchInput, setSearchInput] = useState("");
   const [resolving, setResolving] = useState<AdminUserReportDto | null>(null);
   const search = useDebouncedValue(searchInput.trim().toLowerCase(), 200);
@@ -70,7 +71,7 @@ export default function AdminUserReportsPage() {
         searchPlaceholder="Search reported user, reporter, or reason…"
         filters={[
           {
-            value: status, onChange: (v) => { setStatus(v); setPage(1); }, ariaLabel: "Filter by status",
+            value: status, onChange: (v) => setStatus(v), ariaLabel: "Filter by status",
             options: [{ value: "Pending", label: "Pending" }, { value: "Resolved", label: "Resolved" }, { value: "Dismissed", label: "Dismissed" }],
           },
         ]}
@@ -188,5 +189,13 @@ function ResolveModal({ report, onClose, onConfirm, loading }: {
         </div>
       )}
     </Modal>
+  );
+}
+
+export default function AdminUserReportsPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminUserReportsList />
+    </Suspense>
   );
 }

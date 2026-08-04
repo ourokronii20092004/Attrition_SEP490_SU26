@@ -13,7 +13,7 @@ import { PageLoader } from "@/components/ui/spinner";
 import { AdminPageHeader, AdminFilterBar, AdminTable, AdminRow } from "@/components/admin/admin-table";
 import { Pagination } from "@/components/ui/pagination";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
-import { useClientPagination } from "@/lib/hooks/use-client-pagination";
+import { useUrlPagination } from "@/lib/hooks/use-url-pagination";
 import { qk } from "@/lib/query-keys";
 
 export function CategoriesAdmin() {
@@ -49,7 +49,7 @@ export function CategoriesAdmin() {
   const filtered = search
     ? categories.filter((c) => c.name.toLowerCase().includes(search) || c.slug.toLowerCase().includes(search))
     : categories;
-  const { page, setPage, totalPages, paged } = useClientPagination(filtered, 20);
+  const { page, setPage, totalPages, paged } = useUrlPagination(filtered, 20);
 
   return (
     <div>

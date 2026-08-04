@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -20,12 +20,12 @@ import { AdminPageHeader, AdminFilterBar, AdminTable, AdminRow } from "@/compone
 import { AssetImageField } from "@/components/admin/asset-image-field";
 import { Pagination } from "@/components/ui/pagination";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
-import { useClientPagination } from "@/lib/hooks/use-client-pagination";
 import { ENEMY_TIERS } from "@/lib/enemy-tiers";
 import { qk } from "@/lib/query-keys";
 import type { EnemyResponse, EnemyCreateRequest, EnemyUpdateRequest } from "@/lib/types";
+import { useUrlPagination } from "@/lib/hooks/use-url-pagination";
 
-export default function AdminEnemiesPage() {
+function AdminEnemiesList() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const confirm = useConfirm();
@@ -62,7 +62,7 @@ export default function AdminEnemiesPage() {
     if (search && !e.name.toLowerCase().includes(search) && !(e.spawnBiome ?? "").toLowerCase().includes(search)) return false;
     return true;
   });
-  const { page, setPage, totalPages, paged } = useClientPagination(filtered, 20);
+  const { page, setPage, totalPages, paged } = useUrlPagination(filtered, 20);
 
   if (!user || user.role !== "Admin") return null;
   if (loading) return <PageLoader />;
@@ -299,5 +299,13 @@ function EnemyForm({ initial, onDone, onCancel, onDirtyChange }: { initial: Enem
         <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
       </div>
     </form>
+  );
+}
+
+export default function AdminEnemiesPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminEnemiesList />
+    </Suspense>
   );
 }

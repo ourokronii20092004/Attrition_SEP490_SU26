@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -13,15 +13,16 @@ import { formatDate } from "@/lib/format-date";
 import { qk } from "@/lib/query-keys";
 import { Pager } from "../../_components/Pager";
 import { useAdminPageLabel } from "@/lib/hooks/use-admin-page-label";
+import { useUrlPage } from "@/lib/hooks/use-url-pagination";
 
-export default function AdminCategoryThreadsPage() {
+function AdminCategoryThreadsList() {
   const { user } = useAuth();
   const params = useParams<{ id: string }>();
   const categoryId = Number(params.id);
   const queryClient = useQueryClient();
   const confirm = useConfirm();
   const { toast } = useToast();
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useUrlPage();
 
   const { data: categories = [] } = useQuery({
     queryKey: qk.forum.categories(),
@@ -108,5 +109,13 @@ export default function AdminCategoryThreadsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function AdminCategoryThreadsPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminCategoryThreadsList />
+    </Suspense>
   );
 }

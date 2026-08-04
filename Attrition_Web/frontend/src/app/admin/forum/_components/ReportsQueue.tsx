@@ -10,11 +10,12 @@ import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { formatDate } from "@/lib/format-date";
 import { qk } from "@/lib/query-keys";
 import { LIVE_NORMAL, liveWhenFocused } from "@/lib/live";
+import { useUrlPage } from "@/lib/hooks/use-url-pagination";
 import { Pager } from "./Pager";
 
 export function ReportsQueue() {
   const queryClient = useQueryClient();
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useUrlPage();
   const [statusFilter, setStatusFilter] = useState("Pending");
   const [searchInput, setSearchInput] = useState("");
   const search = useDebouncedValue(searchInput.trim().toLowerCase(), 200);
