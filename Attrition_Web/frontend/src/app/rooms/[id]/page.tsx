@@ -68,7 +68,7 @@ export default function RoomDetailPage() {
 
   if (!user && !authLoading) return null;
 
-  const back = <div className="mb-5"><BackButton href="/rooms" label="Back to rooms" /></div>;
+  const back = <div className="mb-5"><BackButton fallbackHref="/rooms" label="Back to rooms" /></div>;
 
   if (authLoading || isPending) {
     return (
