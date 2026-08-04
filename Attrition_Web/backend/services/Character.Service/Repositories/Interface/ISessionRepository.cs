@@ -58,6 +58,11 @@ public interface ISessionRepository
     // after the snapshot are removed, not merged: a boss defeated later must not survive a rollback.
     Task RestoreRoomStateAsync(Guid sessionId, RoomStateSaveEntity snapshot);
 
+    // ── Admin: who played with whom ──────────────────────────────────────────────────────────
+    // Paged rooms with their party, so an admin can see co-op pairings without opening each room.
+    Task<(List<SessionEntity> Items, int Total)> GetRoomsPagedAsync(int page, int pageSize);
+    Task<List<RoomStateSaveEntity>> GetRoomStateHistoryAsync(Guid sessionId, int limit);
+
     // Oldest-first ids beyond the retention cap, so the caller can prune them in the same commit.
     Task<List<long>> GetSaveIdsBeyondCapAsync(Guid characterId, int keep);
     void RemoveCharacterSaves(List<long> ids);

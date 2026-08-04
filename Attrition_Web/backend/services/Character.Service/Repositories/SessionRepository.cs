@@ -341,6 +341,26 @@ public class SessionRepository : ISessionRepository
         });
     }
 
+    public async Task<(List<SessionEntity> Items, int Total)> GetRoomsPagedAsync(int page, int pageSize)
+    {
+        var query = _context.Sessions.AsNoTracking();
+        var total = await query.CountAsync();
+        var items = await query
+            .Include(s => s.Characters)
+            .Include(s => s.WorldStates)
+            .OrderByDescending(s => s.LastPlayedAt)
+            .Skip((page - 1) * pageSize).Take(pageSize)
+            .ToListAsync();
+        return (items, total);
+    }
+
+    public async Task<List<RoomStateSaveEntity>> GetRoomStateHistoryAsync(Guid sessionId, int limit) =>
+        await _context.RoomStateSaves.AsNoTracking()
+            .Where(x => x.SessionId == sessionId)
+            .OrderByDescending(x => x.CapturedAt).ThenByDescending(x => x.Id)
+            .Take(limit)
+            .ToListAsync();
+
     /// <summary>Shape of one entry in RoomStateSaveEntity.WorldStatesJson.</summary>
     private sealed record RestoredWorldState(string EventId, short StateValue, int Progress);
 }
