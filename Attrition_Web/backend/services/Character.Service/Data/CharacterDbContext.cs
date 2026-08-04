@@ -11,6 +11,7 @@ public class CharacterDbContext : DbContext
     public DbSet<SessionEntity> Sessions => Set<SessionEntity>();
     public DbSet<CharacterSessionEntity> CharacterSessions => Set<CharacterSessionEntity>();
     public DbSet<WorldStateEntity> WorldStates => Set<WorldStateEntity>();
+    public DbSet<CharacterSaveEntity> CharacterSaves => Set<CharacterSaveEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -102,6 +103,52 @@ public class CharacterDbContext : DbContext
                 .WithMany(s => s.Characters)
                 .HasForeignKey(x => x.SessionId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CharacterSaveEntity>(e =>
+        {
+            e.ToTable("character_saves");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.RoomCode).HasMaxLength(32);
+            e.Property(x => x.CurrentScene).HasMaxLength(100);
+            e.Property(x => x.EventType).HasMaxLength(20);
+            e.Property(x => x.AllocatedPointsJson).HasColumnType("jsonb");
+            e.Property(x => x.InventoryJson).HasColumnType("jsonb");
+            e.Property(x => x.EquipmentJson).HasColumnType("jsonb");
+
+            // Every read is "this character's saves, newest first", and the retention prune needs
+            // the oldest — both served by this one descending index.
+            e.HasIndex(x => new { x.CharacterId, x.CapturedAt }).IsDescending(false, true);
+
+            // Same owned value objects as character_session, so a save and the live row can be
+            // compared field-for-field without a mapping layer in between.
+            e.OwnsOne(x => x.Vitals, b =>
+            {
+                b.Property(v => v.MaxHp).HasColumnName("MaxHp");
+                b.Property(v => v.CurrentHp).HasColumnName("CurrentHp");
+                b.Property(v => v.MaxMana).HasColumnName("MaxMana");
+                b.Property(v => v.CurrentMana).HasColumnName("CurrentMana");
+                b.Property(v => v.MaxStamina).HasColumnName("MaxStamina");
+            });
+            e.OwnsOne(x => x.Combat, b =>
+            {
+                b.Property(c => c.AttackSpeed).HasColumnName("AttackSpeed");
+                b.Property(c => c.PotionMaxFlasks).HasColumnName("PotionMaxFlasks");
+                b.Property(c => c.PotionMaxManaFlasks).HasColumnName("PotionMaxManaFlasks");
+                b.Property(c => c.HealthCharges).HasColumnName("HealthCharges");
+                b.Property(c => c.ManaCharges).HasColumnName("ManaCharges");
+                b.Property(c => c.Ad).HasColumnName("Ad");
+                b.Property(c => c.Ap).HasColumnName("Ap");
+                b.Property(c => c.Def).HasColumnName("Def");
+                b.Property(c => c.Res).HasColumnName("Res");
+            });
+            e.OwnsOne(x => x.Position, b =>
+            {
+                b.Property(pp => pp.PosX).HasColumnName("PosX");
+                b.Property(pp => pp.PosY).HasColumnName("PosY");
+                b.Property(pp => pp.PosZ).HasColumnName("PosZ");
+                b.Property(pp => pp.LastRestPointId).HasColumnName("LastRestPointId").HasMaxLength(50);
+            });
         });
 
         // Quest/world-event progress for a room (host-authoritative). Composite PK (SessionId, EventId).

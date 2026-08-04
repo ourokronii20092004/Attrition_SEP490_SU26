@@ -8,8 +8,13 @@ namespace Character.Service.Services;
 public class SessionService : ISessionService
 {
     private readonly ISessionRepository _repo;
+    private readonly ILogger<SessionService> _logger;
 
-    public SessionService(ISessionRepository repo) => _repo = repo;
+    public SessionService(ISessionRepository repo, ILogger<SessionService> logger)
+    {
+        _repo = repo;
+        _logger = logger;
+    }
 
     public async Task<List<SessionSummaryDto>> GetByOwnerAsync(Guid ownerId)
     {
@@ -191,6 +196,7 @@ public class SessionService : ISessionService
         var now = DateTime.UtcNow;
         var skipped = new List<Guid>();
         var saved = 0;
+        var savedCharacterIds = new List<Guid>();
 
         foreach (var dto in characters)
         {
@@ -261,6 +267,47 @@ public class SessionService : ISessionService
                 CapturedAt = now
             });
 
+            // Full save file — the complete state at this moment, which the web renders and which a
+            // delete-newest can roll live state back to. The thin snapshot above is kept because
+            // shipped game builds and the existing timeline UI still read it.
+            _repo.AddCharacterSave(new CharacterSaveEntity
+            {
+                CharacterId = dto.CharacterId,
+                SessionId = request.SessionId,
+                RoomCode = string.IsNullOrWhiteSpace(request.RoomCode) ? graph.Session.RoomCode : request.RoomCode,
+                CurrentScene = string.IsNullOrWhiteSpace(request.CurrentScene) ? graph.Session.CurrentScene : request.CurrentScene,
+                EventType = string.IsNullOrWhiteSpace(request.EventType) ? "rest" : request.EventType,
+                PlayerRole = dto.PlayerRole,
+                CurrentLevel = dto.CurrentLevel,
+                CurrentExp = dto.CurrentExp,
+                DeathCount = dto.DeathCount,
+                PlaytimeSeconds = request.PlayTimeSeconds,
+                IsAlive = dto.IsAlive,
+                AllocatedPointsJson = dto.AllocatedPointsJson,
+                Vitals = new VitalStats
+                {
+                    MaxHp = dto.MaxHp, CurrentHp = dto.CurrentHp,
+                    MaxMana = dto.MaxMana, CurrentMana = dto.CurrentMana,
+                    MaxStamina = dto.MaxStamina,
+                },
+                Combat = new CombatStats
+                {
+                    AttackSpeed = dto.AttackSpeed,
+                    PotionMaxFlasks = dto.PotionMaxFlasks, PotionMaxManaFlasks = dto.PotionMaxManaFlasks,
+                    HealthCharges = dto.HealthCharges, ManaCharges = dto.ManaCharges,
+                    Ad = dto.Ad, Ap = dto.Ap, Def = dto.Def, Res = dto.Res,
+                },
+                Position = new Position
+                {
+                    PosX = dto.PosX, PosY = dto.PosY, PosZ = dto.PosZ,
+                    LastRestPointId = dto.LastRestPointId,
+                },
+                InventoryJson = dto.InventoryJson,
+                EquipmentJson = dto.EquipmentJson,
+                CapturedAt = now,
+            });
+            savedCharacterIds.Add(dto.CharacterId);
+
             saved++;
         }
 
@@ -285,6 +332,27 @@ public class SessionService : ISessionService
 
         // Single commit — everything above lands together or not at all.
         await _repo.SaveChangesAsync();
+
+        // Retention: keep the newest N saves per character. Runs after the commit above because the
+        // rows only get their ids (and their place in the ordering) once written. A failure here
+        // must not fail the save itself — the player's progress is already safely stored, and an
+        // over-long history is a housekeeping problem, not a data-loss one.
+        foreach (var characterId in savedCharacterIds.Distinct())
+        {
+            try
+            {
+                var stale = await _repo.GetSaveIdsBeyondCapAsync(characterId, SaveRetention.MaxPerCharacter);
+                if (stale.Count > 0)
+                {
+                    _repo.RemoveCharacterSaves(stale);
+                    await _repo.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Save retention prune failed for character {CharacterId}", characterId);
+            }
+        }
 
         return ApiResponse<BulkSaveResultDto>.Ok(
             new BulkSaveResultDto(request.SessionId, saved, eventIds.Count, skipped));

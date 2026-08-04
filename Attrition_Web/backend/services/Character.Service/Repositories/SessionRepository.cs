@@ -148,4 +148,114 @@ public class SessionRepository : ISessionRepository
         await _context.SaveChangesAsync();
         return true;
     }
+
+    // ── Save files ───────────────────────────────────────────────────────────────────────────
+
+    public void AddCharacterSave(CharacterSaveEntity entity) => _context.CharacterSaves.Add(entity);
+
+    public async Task<List<long>> GetSaveIdsBeyondCapAsync(Guid characterId, int keep) =>
+        await _context.CharacterSaves
+            .Where(x => x.CharacterId == characterId)
+            .OrderByDescending(x => x.CapturedAt).ThenByDescending(x => x.Id)
+            .Skip(keep)
+            .Select(x => x.Id)
+            .ToListAsync();
+
+    public void RemoveCharacterSaves(List<long> ids)
+    {
+        if (ids.Count == 0) return;
+        // Stubs rather than a load: only the key matters for a delete.
+        foreach (var id in ids)
+            _context.CharacterSaves.Remove(new CharacterSaveEntity { Id = id });
+    }
+
+    public async Task<(List<CharacterSaveEntity> Items, int Total)> GetSavesAsync(Guid characterId, int page, int pageSize)
+    {
+        var query = _context.CharacterSaves.AsNoTracking().Where(x => x.CharacterId == characterId);
+        var total = await query.CountAsync();
+        // Id breaks ties: two saves can share a CapturedAt at second resolution, and an unstable
+        // order would make "newest" ambiguous — which decides whether a delete rolls back.
+        var items = await query
+            .OrderByDescending(x => x.CapturedAt).ThenByDescending(x => x.Id)
+            .Skip((page - 1) * pageSize).Take(pageSize)
+            .ToListAsync();
+        return (items, total);
+    }
+
+    public async Task<CharacterSaveEntity?> GetSaveAsync(long saveId) =>
+        await _context.CharacterSaves.AsNoTracking().FirstOrDefaultAsync(x => x.Id == saveId);
+
+    public async Task<int> CountSavesAsync(Guid characterId) =>
+        await _context.CharacterSaves.CountAsync(x => x.CharacterId == characterId);
+
+    public async Task<CharacterSaveEntity?> GetNewestSaveExcludingAsync(Guid characterId, long excludeSaveId) =>
+        await _context.CharacterSaves.AsNoTracking()
+            .Where(x => x.CharacterId == characterId && x.Id != excludeSaveId)
+            .OrderByDescending(x => x.CapturedAt).ThenByDescending(x => x.Id)
+            .FirstOrDefaultAsync();
+
+    /// <summary>
+    /// Delete a save and, when <paramref name="rollBackTo"/> is given, rewrite the live
+    /// character_session row from it — both inside one transaction.
+    ///
+    /// Only fields the game actually consumes on spawn are restored. Per SAVE_PAYLOAD_FORMAT.md,
+    /// Ad/Ap/Def/Res are display-only: PlayerStats recomputes them from the base sheet plus gear,
+    /// and never reads the stored values back. Writing them into live state would put numbers there
+    /// that the game will immediately contradict, so they are deliberately left alone.
+    /// </summary>
+    public async Task<bool> DeleteSaveAndRollBackAsync(CharacterSaveEntity save, CharacterSaveEntity? rollBackTo)
+    {
+        var strategy = _context.Database.CreateExecutionStrategy();
+        var ok = false;
+        await strategy.ExecuteAsync(async () =>
+        {
+            await using var tx = await _context.Database.BeginTransactionAsync();
+
+            var rows = await _context.CharacterSaves.Where(x => x.Id == save.Id).ExecuteDeleteAsync();
+            if (rows == 0) { await tx.RollbackAsync(); ok = false; return; }
+
+            // Roll back live state only when the deleted save was the newest AND it belonged to a
+            // room. A save taken outside a room (character creation) has no live row to restore.
+            if (rollBackTo != null && save.SessionId is { } sessionId)
+            {
+                var live = await _context.CharacterSessions
+                    .FirstOrDefaultAsync(x => x.CharacterId == save.CharacterId && x.SessionId == sessionId);
+                if (live != null)
+                {
+                    live.CurrentLevel = rollBackTo.CurrentLevel;
+                    live.CurrentExp = rollBackTo.CurrentExp;
+                    live.DeathCount = rollBackTo.DeathCount;
+                    live.AllocatedPointsJson = rollBackTo.AllocatedPointsJson;
+
+                    live.Vitals.MaxHp = rollBackTo.Vitals.MaxHp;
+                    live.Vitals.CurrentHp = rollBackTo.Vitals.CurrentHp;
+                    live.Vitals.MaxMana = rollBackTo.Vitals.MaxMana;
+                    live.Vitals.CurrentMana = rollBackTo.Vitals.CurrentMana;
+                    live.Vitals.MaxStamina = rollBackTo.Vitals.MaxStamina;
+
+                    // Flask capacity and remaining charges ARE read back on spawn.
+                    live.Combat.PotionMaxFlasks = rollBackTo.Combat.PotionMaxFlasks;
+                    live.Combat.PotionMaxManaFlasks = rollBackTo.Combat.PotionMaxManaFlasks;
+                    live.Combat.HealthCharges = rollBackTo.Combat.HealthCharges;
+                    live.Combat.ManaCharges = rollBackTo.Combat.ManaCharges;
+                    live.Combat.AttackSpeed = rollBackTo.Combat.AttackSpeed;
+                    // Ad/Ap/Def/Res intentionally not restored - see the summary above.
+
+                    live.Position.PosX = rollBackTo.Position.PosX;
+                    live.Position.PosY = rollBackTo.Position.PosY;
+                    live.Position.PosZ = rollBackTo.Position.PosZ;
+                    live.Position.LastRestPointId = rollBackTo.Position.LastRestPointId;
+
+                    live.InventoryJson = rollBackTo.InventoryJson;
+                    live.UpdatedAt = DateTime.UtcNow;
+
+                    await _context.SaveChangesAsync();
+                }
+            }
+
+            await tx.CommitAsync();
+            ok = true;
+        });
+        return ok;
+    }
 }

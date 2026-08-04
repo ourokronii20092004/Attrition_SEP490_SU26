@@ -41,6 +41,30 @@ public interface ISessionRepository
 
     // Delete a room entirely (session + all child rows).
     Task<bool> DeleteSessionAsync(Guid sessionId);
+
+    // ── Save files (character_saves) ─────────────────────────────────────────────────────────
+    // Append a save to the bulk graph so it commits in the same transaction as the live-state
+    // upsert: a save is one atomic thing, never half-written.
+    void AddCharacterSave(CharacterSaveEntity entity);
+
+    // Oldest-first ids beyond the retention cap, so the caller can prune them in the same commit.
+    Task<List<long>> GetSaveIdsBeyondCapAsync(Guid characterId, int keep);
+    void RemoveCharacterSaves(List<long> ids);
+
+    // Paged history, newest first. Returns (page, totalCount) so the UI can show real page counts.
+    Task<(List<CharacterSaveEntity> Items, int Total)> GetSavesAsync(Guid characterId, int page, int pageSize);
+
+    Task<CharacterSaveEntity?> GetSaveAsync(long saveId);
+
+    // How many saves this character has — used to refuse deleting the last one.
+    Task<int> CountSavesAsync(Guid characterId);
+
+    // The newest save excluding one id: what live state rolls back to when the newest is deleted.
+    Task<CharacterSaveEntity?> GetNewestSaveExcludingAsync(Guid characterId, long excludeSaveId);
+
+    // Delete one save and, when it was the newest, rewrite live state from the previous one — in a
+    // single transaction, so a character can never be left between two saves.
+    Task<bool> DeleteSaveAndRollBackAsync(CharacterSaveEntity save, CharacterSaveEntity? rollBackTo);
 }
 
 /// <summary>
