@@ -15,7 +15,7 @@ MonoBehaviour:
   itemId: leather_legs
   displayName: Leather Legguards
   description: 
-  icon: {fileID: -193673065031039659, guid: 86c52e9d4845f9d4185176b2b50a5905, type: 3}
+  icon: {fileID: 1446551620, guid: 86c52e9d4845f9d4185176b2b50a5905, type: 3}
   maxStack: 1
   isKeyItem: 0
   slot: 2

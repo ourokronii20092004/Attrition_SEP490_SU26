@@ -280,7 +280,10 @@ namespace Attrition.Controllers
 
                     IsKnockbackActive = true;
                     knockbackTimer = TickTimer.CreateFromSeconds(Runner, stunDuration);
-                    combatComp.CancelAllActions(); // Ngắt TOÀN BỘ hành động (attack, dash, leap, freeze anim)
+                    // Ngắt TOÀN BỘ hành động (attack, dash, leap, freeze anim).
+                    // Null-check: boss 2/3/4/5 không có EnemyCombat (xem ghi chú ở DieFinal) — thiếu guard
+                    // là NRE ngay giữa RPC_TakeDamage, boss mất máu nhưng phần còn lại của đòn bị bỏ.
+                    if (combatComp != null) combatComp.CancelAllActions();
 
                     // SỬA: Nếu quái không có trọng lực (quái bay), loại bỏ lực đẩy thẳng đứng để không bị bay tuốt lên trời
                     if (rb != null && rb.gravityScale == 0)
@@ -318,7 +321,9 @@ namespace Attrition.Controllers
         private void BeginDownedPhase()
         {
             IsAwaitingRevive = true;
-            combatComp.IsAttacking = false;
+            // Null-check: quái không có EnemyCombat (xem ghi chú ở DieFinal). Dòng dưới đã guard sẵn,
+            // chỉ dòng này bị bỏ sót → NRE khi quái có extraLivesAfterHpZero > 0 mà thiếu EnemyCombat.
+            if (combatComp != null) combatComp.IsAttacking = false;
             IsKnockbackActive = false;
             reviveTimer = TickTimer.CreateFromSeconds(Runner, reviveDelaySeconds);
 
@@ -338,8 +343,14 @@ namespace Attrition.Controllers
         }
 
         private void DieFinal()
-        {            isDeadNetworked = true;
-            combatComp.IsAttacking = false;
+        {
+            isDeadNetworked = true;
+            // combatComp CÓ THỂ NULL: boss 2/3/4/5 (Druid/Elf/DemonKin/ArchDemon) không có component
+            // EnemyCombat — chúng đánh bằng state machine riêng. Thiếu guard ở đây là NRE ngay dòng đầu
+            // DieFinal → THOÁT hàm trước khi kịp gọi NotifyEnemyKilled + GrantLoot.
+            // Đó chính là lý do "boss 2/3/4 không rơi đồ và không hiện popup" mà boss 1 thì bình thường
+            // (SeveredFang là boss DUY NHẤT có EnemyCombat).
+            if (combatComp != null) combatComp.IsAttacking = false;
             IsKnockbackActive = false;
 
             // Coop: cộng EXP NHƯ NHAU cho mọi player (không qua orb nhặt — concept "exp như nhau").
@@ -445,25 +456,52 @@ namespace Attrition.Controllers
         /// <summary>
         /// Loot hiệu lực: ưu tiên cấu hình admin trên WEB (qua EnemyStatProvider theo enemyId);
         /// rỗng/offline → fallback lootItemIds + normalDropChance trong SO. Trả list rule đã chuẩn hoá.
+        ///
+        /// ELITE/BOSS: web KHÔNG thay thế hoàn toàn mà GỘP với lootItemIds trên prefab (rule web thắng nếu
+        /// cùng itemId). Vì sao: bảng loot trên web thường chỉ điền phần thưởng chính (skill), nên nếu để
+        /// "có web thì bỏ hẳn prefab" thì mọi item designer đã gán trong prefab bị mất im lặng — đúng lỗi
+        /// "boss 1 chỉ rơi skill_fire mà không rơi iron_chest dù đã setup".
+        /// Quái THƯỜNG giữ nguyên luật thay thế: admin cần giảm/bỏ drop của mob thì phải làm được.
         /// </summary>
-        private System.Collections.Generic.List<Attrition.Systems.LootRule> ResolveLootRules(string enemyId)
+        private System.Collections.Generic.List<Attrition.Systems.LootRule> ResolveLootRules(
+            string enemyId, Attrition.Data.EnemyTier tier)
         {
             var prov = Attrition.Persistence.EnemyStatProvider.Instance;
             var ov = prov != null ? prov.GetOverride(enemyId) : null;
-            if (ov != null && ov.loot != null && ov.loot.Count > 0)
+            bool hasWeb = ov != null && ov.loot != null && ov.loot.Count > 0;
+
+            if (hasWeb && tier == Attrition.Data.EnemyTier.Normal)
                 return ov.loot;
 
-            // Fallback: SO local (solo/offline hoặc web chưa cấu hình loot cho quái này).
-            if (lootItemIds == null || lootItemIds.Length == 0) return null;
-            var list = new System.Collections.Generic.List<Attrition.Systems.LootRule>(lootItemIds.Length);
-            foreach (var id in lootItemIds)
+            // Baseline từ prefab (SO local). Elite/Boss BỎ QUA normalDropChance (đúng như tooltip của field:
+            // "Elite/Boss luôn cho") — trước đây dùng chung 0.35 nên loot elite chỉ ra 35% số lần.
+            float baseChance = tier == Attrition.Data.EnemyTier.Normal ? normalDropChance : 1f;
+            var list = new System.Collections.Generic.List<Attrition.Systems.LootRule>();
+            if (lootItemIds != null)
             {
-                if (string.IsNullOrEmpty(id)) continue;
-                list.Add(new Attrition.Systems.LootRule
+                foreach (var id in lootItemIds)
                 {
-                    itemId = id, dropChance = normalDropChance, minQty = 1, maxQty = 1
-                });
+                    if (string.IsNullOrEmpty(id)) continue;
+                    list.Add(new Attrition.Systems.LootRule
+                    {
+                        itemId = id, dropChance = baseChance, minQty = 1, maxQty = 1
+                    });
+                }
             }
+
+            if (hasWeb)
+            {
+                foreach (var w in ov.loot)
+                {
+                    // LootRule là struct → không so null được; rule rỗng nhận ra qua itemId trống.
+                    if (string.IsNullOrEmpty(w.itemId)) continue;
+                    var rule = w;
+                    int at = list.FindIndex(r => r.itemId == rule.itemId);
+                    if (at >= 0) list[at] = rule;   // web thắng khi trùng itemId
+                    else list.Add(rule);
+                }
+            }
+
             return list.Count > 0 ? list : null;
         }
 
@@ -481,7 +519,7 @@ namespace Attrition.Controllers
             var tier = statsComp != null ? statsComp.Tier : Attrition.Data.EnemyTier.Normal;
             string enemyId = statsComp != null ? statsComp.EnemyId : name;
 
-            var rules = ResolveLootRules(enemyId);
+            var rules = ResolveLootRules(enemyId, tier);
             if (rules == null || rules.Count == 0)
             {
                 // Boss/Elite mà không có rule nào = cấu hình sai, KHÔNG phải thiết kế. Trước đây return

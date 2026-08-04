@@ -128,6 +128,41 @@ namespace Attrition.Gameplay.NPC
         public bool IsClaimProxy => claimForNpc != null;
 
         /// <summary>
+        /// NPC mà player phải QUAY LẠI để NỘP quest của NPC này — nghịch đảo của `claimForNpc`.
+        ///
+        /// VÌ SAO CẦN: chuỗi thiết kế là "Spring giao → nộp cho Summer; Summer giao quest boss → nộp cho
+        /// Autumn". Mọi chỗ nhắc người chơi (toast, tracker HUD, bảng quest Tab) trước đây in `NpcName` của
+        /// NPC GIỮ quest, tức là bảo quay lại Spring — trong khi Spring không nhận nộp. Người chơi đi lộn
+        /// NPC rồi tưởng quest lỗi. Đây đúng là lỗi "NPC để trả nhiệm vụ không đúng".
+        ///
+        /// Không có ai nhận hộ → trả chính mình (NPC tự nhận nộp quest của nó, mặc định).
+        /// </summary>
+        public NetworkNPC TurnInNpc
+        {
+            get
+            {
+                // Cache: quan hệ này do `claimForNpc` (field Inspector) quyết định nên KHÔNG đổi lúc chạy,
+                // mà getter bị gọi từ tracker HUD (làm mới mỗi 0.5s) → không cache là quét cả scene liên tục.
+                if (_turnInNpc != null) return _turnInNpc;
+
+                // Include inactive: NPC nhận nộp có thể đang tắt (vd fairy sau cửa ending Map 5). Bỏ qua nó
+                // thì cache dính luôn giá trị "tự nhận nộp" sai và không bao giờ tự sửa.
+                foreach (var npc in FindObjectsByType<NetworkNPC>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                    if (npc != null && npc != this && npc.claimForNpc == this) { _turnInNpc = npc; return npc; }
+
+                _turnInNpc = this;    // không ai nhận hộ → tự nhận nộp
+                return this;
+            }
+        }
+        private NetworkNPC _turnInNpc;
+
+        /// <summary>Tên NPC cần quay lại để nộp quest (xem <see cref="TurnInNpc"/>).</summary>
+        public string TurnInNpcName
+        {
+            get { var n = TurnInNpc; return n != null ? n.NpcName : npcName; }
+        }
+
+        /// <summary>
         /// Đang có việc NỘP HỘ cần xử lý: NPC mình nhận hộ đang có quest DỞ (Active) hoặc XONG MỤC TIÊU
         /// (Completed, chờ trao thưởng).
         ///
@@ -269,7 +304,10 @@ namespace Attrition.Gameplay.NPC
             // → không lệ thuộc thứ tự spawn. Online: server là nguồn, không nạp từ slot.
             RestoreSavedProgress();
             if (HasStateAuthority && autoStartQuest && Quest != null && QuestState == 0)
+            {
                 QuestState = 1;
+                CreditAlreadyDefeatedBosses();   // boss có thể đã hạ trước khi quest tự bật
+            }
         }
 
         private void LateUpdate()
@@ -388,6 +426,55 @@ namespace Attrition.Gameplay.NPC
             if (Quest == null || QuestState != 0) return;
             QuestState = 1; // Active
             QuestProgress = 0;
+            QuestTargetMask = 0;
+            CreditAlreadyDefeatedBosses();
+        }
+
+        /// <summary>
+        /// Vừa nhận quest → cộng NGAY tiến độ cho boss ĐÃ HẠ TRƯỚC KHI nhận.
+        ///
+        /// VÌ SAO CẦN: <see cref="NotifyEnemyKilled"/> chỉ cộng cho quest đang Active (state 1), mà boss đã
+        /// hạ thì KHÔNG BAO GIỜ hồi sinh (BossDefeatState + BossGateController despawn xác lúc Spawned).
+        /// Nên nếu player giết boss TRƯỚC khi nhận quest boss thì cú giết đó mất trắng: quest kẹt vĩnh viễn
+        /// ở 0/1, không còn cách nào hoàn thành → không có Claim Reward, không popup, không skill/item.
+        /// Đây đúng là lỗi "đã đánh chết boss rồi mà nhiệm vụ báo chưa tiêu diệt được".
+        ///
+        /// Rất dễ gặp vì chuỗi 3 chặng: Summer chỉ giao được quest boss SAU khi quest elite của Spring đã
+        /// nộp xong, nhưng phòng boss thì mở sẵn — player nào đánh boss trước khi đi hết chuỗi fairy đều dính.
+        ///
+        /// Chỉ dựa vào BossDefeatState (chỉ ghi BOSS), nên quái thường/elite vẫn phải giết sau khi nhận quest.
+        /// </summary>
+        private void CreditAlreadyDefeatedBosses()
+        {
+            var q = Quest;
+            if (q == null || q.objectiveType != QuestObjectiveType.Kill) return;
+
+            // Solo: đảm bảo danh sách boss đã hạ được nạp từ save (thứ tự Spawned không đảm bảo).
+            Attrition.Gameplay.Environment.BossDefeatState.EnsureLoadedForSolo();
+
+            if (q.requiredTargetIds != null && q.requiredTargetIds.Length > 0)
+            {
+                int n = Mathf.Min(q.requiredTargetIds.Length, 31);   // mask chỉ có 31 bit dùng được
+                for (int i = 0; i < n; i++)
+                {
+                    if (!Attrition.Gameplay.Environment.BossDefeatState.IsDefeated(q.requiredTargetIds[i])) continue;
+                    int bit = 1 << i;
+                    if ((QuestTargetMask & bit) != 0) continue;
+                    QuestTargetMask |= bit;
+                    QuestProgress++;
+                }
+            }
+            else if (Attrition.Gameplay.Environment.BossDefeatState.IsDefeated(q.targetId))
+            {
+                // Mục tiêu đơn: boss là duy nhất toàn game nên hạ rồi = đủ số lượng.
+                QuestProgress = q.requiredAmount;
+            }
+
+            if (QuestProgress >= q.requiredAmount)
+            {
+                QuestState = autoFinishWithoutReward ? (byte)3 : (byte)2;
+                if (QuestState == 2) RpcNotifyObjectiveComplete(q.title);
+            }
         }
 
         /// <summary>Player nhấn Decline → không nhận quest, đóng dialogue.</summary>
@@ -448,6 +535,8 @@ namespace Attrition.Gameplay.NPC
             var npcs = FindObjectsByType<NetworkNPC>(FindObjectsSortMode.None);
             foreach (var npc in npcs)
             {
+                // Chưa Spawned → [Networked] chưa đọc được (HasStateAuthority cũng ném).
+                if (npc == null || npc.Object == null || !npc.Object.IsValid) continue;
                 if (!npc.HasStateAuthority) continue;
                 var active = npc.Quest;
                 if (active == null || npc.QuestState != 1) continue;
@@ -509,7 +598,8 @@ namespace Attrition.Gameplay.NPC
         [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
         private void RpcNotifyObjectiveComplete(string questTitle)
         {
-            Attrition.Controllers.QuestNotifyEvents.RaiseObjectiveComplete(questTitle, NpcName);
+            // Tên NPC NHẬN NỘP (không phải NPC giao) — xem TurnInNpc.
+            Attrition.Controllers.QuestNotifyEvents.RaiseObjectiveComplete(questTitle, TurnInNpcName);
         }
 
         //  SAVE / LOAD — Host gom & khôi phục tiến trình quest

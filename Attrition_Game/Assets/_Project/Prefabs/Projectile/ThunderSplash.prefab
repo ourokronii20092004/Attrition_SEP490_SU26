@@ -154,8 +154,8 @@ MonoBehaviour:
   lifetime: 1
   damageDelay: 0.08
   knockbackForce: 4
-  snapToGround: 0
+  snapToGround: 1
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
-  groundOffset: 0.3
+  groundOffset: 0.05

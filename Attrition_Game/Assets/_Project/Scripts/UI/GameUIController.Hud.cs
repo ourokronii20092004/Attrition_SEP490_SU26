@@ -36,6 +36,11 @@ namespace Attrition.UI
                 Attrition.Persistence.GamePause.Freeze.Overlay,
                 o != Overlay.None && o != Overlay.Loading);
 
+            // COOP: SetSoloFreeze no-op nên phải khoá di chuyển riêng, nếu không điều hướng bằng WASD sẽ
+            // vừa chọn menu vừa chạy/ngồi (S = Crouch, A/D = Horizontal). Loading không tính: lúc đó
+            // player còn chưa spawn, mà giữ cờ bật thì sau khi load xong dễ kẹt khoá.
+            Attrition.Persistence.UiOverlayState.IsBlocking = o != Overlay.None && o != Overlay.Loading;
+
             if (o == Overlay.Inventory)
             {
                 RefreshCharacterPanel();

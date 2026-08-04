@@ -105,6 +105,8 @@ namespace Attrition.UI
             // Reset cờ hội thoại (static, sống xuyên phiên). Thoát/đổi scene lúc đang mở hội thoại →
             // IsActive kẹt true → phiên sau PlayerController đọc thấy → KHÓA di chuyển. Reset ở đây.
             Attrition.Persistence.DialogueState.IsActive = false;
+            // Cùng lý do: thoát scene lúc đang mở overlay → cờ kẹt true → phiên sau player bị khoá.
+            Attrition.Persistence.UiOverlayState.IsBlocking = false;
             if (_stats != null)
             {
                 _stats.OnStatsChanged -= RefreshCharacterPanel;
@@ -173,9 +175,25 @@ namespace Attrition.UI
                 }
             }
 
+            // Bảng REST: điều khiển hoàn toàn bằng bàn phím (W/S chọn, A/D đổi, ENTER xác nhận, ESC lùi).
+            // Phải chạy TRƯỚC khối ESC bên dưới và return nếu nó đã "ăn" ESC — hai bên cùng đọc ESC trong
+            // Update nên nếu không chặn thì một lần nhấn vừa lùi menu vừa mở Pause.
+            if (_overlay == Overlay.FastTravel)
+            {
+                if (HandleBonfireKeys()) return;
+            }
+
             // ESC luôn mở Pause trên cùng; Loading là trạng thái duy nhất không cho can thiệp.
             if (Input.GetKeyDown(KeyCode.Escape) && _overlay != Overlay.Loading)
             {
+                // Popup thưởng "Congratulations!" dùng ESC để đóng → không mở Pause chồng lên.
+                // Phải xét CẢ HAI vì thứ tự Update giữa 2 MonoBehaviour là KHÔNG xác định:
+                //  • DialogueUI chạy sau  → popup còn hiện ở đây  → IsRewardShowing bắt được.
+                //  • DialogueUI chạy trước → popup đã đóng mất    → dấu frame bắt được.
+                // Cố tình KHÔNG dùng DialogueState.IsActive: cờ đó cũng bật lúc đang thoại NPC, mà ESC
+                // giữa lúc thoại vẫn phải mở được Pause (hành vi cũ).
+                if (DialogueUI.IsRewardShowing || DialogueUI.EscConsumedThisFrame) return;
+
                 if (_overlay == Overlay.Settings) ShowOverlay(Overlay.Pause);
                 else if (_overlay == Overlay.Pause) ResumeFromPause();
                 // Inventory + đang mở bảng EQUIP/DROP → ESC chỉ đóng bảng đó, giữ nguyên inventory.

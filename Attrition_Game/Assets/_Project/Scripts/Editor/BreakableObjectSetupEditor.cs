@@ -43,12 +43,16 @@ namespace Attrition.Editor
             sr.sortingOrder = 4;
 
             var breakable = go.AddComponent<BreakableObject>();
-            SetPrivate(breakable, "hitsToBreak", 5);
+            SetPrivate(breakable, "hitsToBreak", 6);
             SetPrivate(breakable, "shakeTarget", visual.transform);
+            // Mặc định chỉ vỡ khi đánh TỪ BÊN PHẢI (đánh từ trái chỉ rung). Đổi ở Inspector:
+            // Any = phía nào cũng vỡ, FromLeft = ngược lại.
+            SetPrivate(breakable, "breakOnlyFromSide", (int)BreakableObject.BreakSide.FromRight);
 
             Selection.activeGameObject = go;
             EditorGUIUtility.PingObject(go);
-            Debug.Log("[Attrition] Đã tạo Breakable Object. Gán sprite cho 'Visual', chỉnh Hits To Break, " +
+            Debug.Log("[Attrition] Đã tạo Breakable Object (6 đòn, chỉ vỡ khi đánh TỪ PHẢI). " +
+                      "Gán sprite cho 'Visual', chỉnh Hits To Break / Break Only From Side nếu cần, " +
                       "đảm bảo layer nằm trong targetLayers của PlayerCombat, rồi SAVE scene để Fusion bake NetworkObject.");
         }
 
@@ -60,6 +64,7 @@ namespace Attrition.Editor
 
             switch (value)
             {
+                // enum lưu dưới dạng int trong SerializedProperty → dùng chung nhánh với int.
                 case int n: prop.intValue = n; break;
                 case bool b: prop.boolValue = b; break;
                 case Object o: prop.objectReferenceValue = o; break;
