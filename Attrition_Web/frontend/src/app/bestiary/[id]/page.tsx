@@ -5,6 +5,8 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Crosshair } from "lucide-react";
 import { enemiesApi } from "@/lib/api/enemies";
+import { itemsApi } from "@/lib/api/items";
+import { skillsApi } from "@/lib/api/skills";
 import { resolveMediaUrl } from "@/lib/api/media";
 import { PageShell } from "@/components/ui/page-shell";
 import { BackButton } from "@/components/ui/back-button";
@@ -14,6 +16,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { TIER_COLOR } from "@/lib/enemy-tiers";
+import { rarityColor } from "@/lib/rarity";
+import { resolveLootTarget } from "@/lib/loot-target";
 import { qk } from "@/lib/query-keys";
 
 export default function EnemyDetailPage() {
@@ -25,6 +29,23 @@ export default function EnemyDetailPage() {
     queryFn: async () => {
       const res = await enemiesApi.get(params.id);
       return res.success ? res.data : null;
+    },
+  });
+
+  // Both catalogues, so a loot row can be resolved to whichever it names. Cheap and cached: the
+  // items and skills lists are small and shared with their own pages.
+  const { data: items = [] } = useQuery({
+    queryKey: qk.items.list(),
+    queryFn: async () => {
+      const res = await itemsApi.list();
+      return res.success ? res.data ?? [] : [];
+    },
+  });
+  const { data: skills = [] } = useQuery({
+    queryKey: qk.skills.list(),
+    queryFn: async () => {
+      const res = await skillsApi.list();
+      return res.success ? res.data ?? [] : [];
     },
   });
 
@@ -110,14 +131,31 @@ export default function EnemyDetailPage() {
                 </tr>
               </thead>
               <tbody>
-                {enemy.lootTable.map((loot, i) => (
-                  <tr key={i} className="border-b border-border/50 last:border-0 transition-colors hover:bg-surface-2/50">
-                    <td className="px-4 py-2.5 font-medium text-fg">{loot.itemName}</td>
-                    <td className="px-4 py-2.5 text-fg-muted">{loot.rarity}</td>
-                    <td className="px-4 py-2.5 tabular-nums text-fg-muted">{(loot.dropChance * 100).toFixed(1)}%</td>
-                    <td className="px-4 py-2.5 tabular-nums text-fg-muted">{loot.minQty}-{loot.maxQty}</td>
-                  </tr>
-                ))}
+                {enemy.lootTable.map((loot, i) => {
+                  // A loot row's name points at either the item catalogue or the skill catalogue:
+                  // bosses drop their element's skill. Resolving both makes the row a real link and
+                  // shows the catalogue's rarity instead of the loot row's stale copy.
+                  const target = resolveLootTarget(loot.itemName, loot.rarity, items, skills);
+                  return (
+                    <tr key={i} className="border-b border-border/50 last:border-0 transition-colors hover:bg-surface-2/50">
+                      <td className="px-4 py-2.5 font-medium text-fg">
+                        {target.href ? (
+                          <Link href={target.href} className="transition-colors hover:text-accent">{target.name}</Link>
+                        ) : (
+                          target.name
+                        )}
+                        {target.kind === "skill" && (
+                          <span className="ml-2 rounded-full bg-accent/10 px-2 py-0.5 text-[11px] font-medium text-accent">Skill</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2.5">
+                        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${rarityColor(target.rarity)}`}>{target.rarity}</span>
+                      </td>
+                      <td className="px-4 py-2.5 tabular-nums text-fg-muted">{(loot.dropChance * 100).toFixed(1)}%</td>
+                      <td className="px-4 py-2.5 tabular-nums text-fg-muted">{loot.minQty}-{loot.maxQty}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </Card>
