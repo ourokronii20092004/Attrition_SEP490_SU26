@@ -13,6 +13,7 @@ import { parseApiError } from "@/lib/api/parse-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { RARITY_ORDER, rarityColor } from "@/lib/rarity";
 import { Modal } from "@/components/ui/modal";
 import { PageLoader } from "@/components/ui/spinner";
 import { AdminPageHeader, AdminFilterBar, AdminTable, AdminRow } from "@/components/admin/admin-table";
@@ -116,7 +117,11 @@ export default function AdminItemsPage() {
             </td>
             <td className="px-3 py-2 font-medium text-fg">{i.name}</td>
             <td className="px-3 py-2 text-fg-muted">{i.category}</td>
-            <td className="px-3 py-2 text-fg-muted">{i.rarity}</td>
+            <td className="px-3 py-2">
+              {/* Badge rather than bare text, so a legacy free-text value that no longer
+                  matches the ladder is visually obvious and can be corrected. */}
+              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${rarityColor(i.rarity)}`}>{i.rarity}</span>
+            </td>
             <td className="px-3 py-2 tabular-nums text-fg-muted">{i.modifiers.length}</td>
             <td className="px-3 py-2 text-right">
               <div className="flex justify-end gap-2">
@@ -213,7 +218,9 @@ function ItemForm({ initial, onDone, onCancel, onDirtyChange }: { initial: ItemR
         <Select label="Category" {...register("category")}>
           {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
         </Select>
-        <Input label="Rarity" {...register("rarity")} />
+        <Select label="Rarity" {...register("rarity")}>
+          {RARITY_ORDER.map((r) => <option key={r} value={r}>{r}</option>)}
+        </Select>
         <Input label="Icon Key" {...register("iconKey")} />
         <Input label="Max Stack" type="number" error={errors.maxStack?.message} {...register("maxStack")} />
       </div>

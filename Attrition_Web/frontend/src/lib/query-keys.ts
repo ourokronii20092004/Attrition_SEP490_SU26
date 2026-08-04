@@ -18,6 +18,11 @@ export const qk = {
     detail: (id: string) => ["skill", id] as const,
   },
 
+  items: {
+    list: () => ["items"] as const,
+    detail: (id: string) => ["item", id] as const,
+  },
+
   wiki: {
     categories: () => ["wiki", "categories"] as const,
     articles: (filter?: unknown) =>
