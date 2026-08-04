@@ -299,6 +299,8 @@ namespace Attrition.Gameplay.Player.Inventory
                     string questsJson = BuildQuestsJson(detail.worldStates);
                     Attrition.Persistence.GameLaunch.CoopQuestsJson = questsJson;
                     Attrition.Gameplay.NPC.NetworkNPC.ApplyAllJson(questsJson);
+
+                    ApplyCoopWorldProgress(detail);
                 });
             }
 
@@ -306,7 +308,9 @@ namespace Attrition.Gameplay.Player.Inventory
         }
 
         /// <summary>Map worldStates (per session: eventId/stateValue/progress) → QuestProgressList JSON
-        /// mà NetworkNPC.ApplyAllJson hiểu (questId/state/progress). eventId chính là questId.</summary>
+        /// mà NetworkNPC.ApplyAllJson hiểu (questId/state/progress).
+        /// CHỈ lấy row có prefix "q:" — cùng bảng world-state còn chứa boss đã hạ và checkpoint đã mở,
+        /// nhét chúng vào đây thì NetworkNPC nhận quest rác.</summary>
         private static string BuildQuestsJson(System.Collections.Generic.List<APIManager.WorldStateDto> states)
         {
             if (states == null || states.Count == 0) return "";
@@ -314,10 +318,12 @@ namespace Attrition.Gameplay.Player.Inventory
             var entries = new System.Collections.Generic.List<Attrition.Persistence.QuestProgressEntry>();
             foreach (var ws in states)
             {
-                if (ws == null || string.IsNullOrEmpty(ws.eventId)) continue;
+                if (ws == null) continue;
+                string questId = Attrition.Gameplay.Persistence.GameSaveService.ParseQuestEventId(ws.eventId);
+                if (string.IsNullOrEmpty(questId)) continue;
                 entries.Add(new Attrition.Persistence.QuestProgressEntry
                 {
-                    questId = ws.eventId,
+                    questId = questId,
                     state = (byte)ws.stateValue,
                     progress = ws.progress
                 });
@@ -325,6 +331,52 @@ namespace Attrition.Gameplay.Player.Inventory
             if (entries.Count == 0) return "";
             list.quests = entries.ToArray();
             return UnityEngine.JsonUtility.ToJson(list);
+        }
+
+        /// <summary>
+        /// COOP: khôi phục tiến trình cấp PHÒNG từ session detail — boss đã hạ, checkpoint đã khám phá,
+        /// fog đã mở. Trước đây 3 thứ này chỉ nằm trong RAM host nên reopen phòng là boss sống lại,
+        /// bản đồ tối lại và fast-travel mất điểm đến.
+        /// </summary>
+        private static void ApplyCoopWorldProgress(APIManager.SessionDetailDto detail)
+        {
+            var bosses = new System.Collections.Generic.List<string>();
+            var checkpoints = new System.Collections.Generic.List<string>();
+
+            if (detail.worldStates != null)
+            {
+                foreach (var ws in detail.worldStates)
+                {
+                    if (ws == null || ws.stateValue <= 0) continue;
+
+                    string cp = Attrition.Gameplay.Persistence.GameSaveService.ParseCheckpointEventId(ws.eventId);
+                    if (!string.IsNullOrEmpty(cp)) { checkpoints.Add(cp); continue; }
+
+                    if (Attrition.Gameplay.Persistence.GameSaveService.IsBossEventId(ws.eventId))
+                        bosses.Add(ws.eventId);
+                }
+            }
+
+            Attrition.Gameplay.Environment.BossDefeatState.LoadFromIds(bosses);
+
+            // fogJson hỏng → giữ fog đang có (null) thay vì xoá sạch bản đồ của người chơi.
+            System.Collections.Generic.List<string> fog = null;
+            if (!string.IsNullOrEmpty(detail.fogJson))
+            {
+                try
+                {
+                    fog = Newtonsoft.Json.JsonConvert
+                        .DeserializeObject<System.Collections.Generic.List<string>>(detail.fogJson);
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogWarning($"[SessionLoad] fogJson lỗi, giữ fog hiện tại: {e.Message}");
+                }
+            }
+            Attrition.Gameplay.Environment.WorldMapState.LoadFromCoop(fog, checkpoints);
+
+            // Beacon checkpoint: Spawned() của chúng có thể đã chạy trước khi fetch về → quét lại.
+            Attrition.Gameplay.World.Checkpoint.ApplyCoopDiscovered();
         }
 
         /// <summary>Phát item khởi đầu cho nhân vật mới (host-only, chỉ khi túi trống).</summary>
@@ -1035,6 +1087,11 @@ namespace Attrition.Gameplay.Player.Inventory
         }
 
 
+        // Vị trí ô được mã hoá bằng CHỈ SỐ trong list: ghi ra ĐỦ mọi ô kể cả ô trống để index i trong
+        // JSON = ô i trong túi. DeserializeArray đọc lại theo đúng chỉ số đó.
+        // ponytail: mã hoá theo vị trí rất dễ vỡ — đổi Capacity của túi, hay bất cứ ai lọc bỏ ô trống
+        // trước khi lưu, là lệch toàn bộ lưới. Nâng cấp: thêm `slotIndex` vào SlotSaveData và đọc theo
+        // field đó, fallback về vị trí trong list khi slotIndex khuyết (save cũ).
         private void SerializeArray(NetworkArray<InventorySlot> src, List<SlotSaveData> dest)
         {
             dest.Clear();

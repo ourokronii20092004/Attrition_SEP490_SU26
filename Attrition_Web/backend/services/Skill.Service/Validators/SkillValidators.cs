@@ -9,7 +9,7 @@ internal static class SkillRules
         System.Text.RegularExpressions.Regex.IsMatch(value, "^[a-z0-9]+(?:_[a-z0-9]+)*$");
     internal static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
     internal static bool OwnedImage(string? value) => value == null || value.StartsWith("/api/assets/media/", StringComparison.Ordinal);
-    internal static readonly string[] Elements = ["Fire", "Wood", "Earth", "Thunder", "Thrust"];
+    internal static readonly string[] Elements = ["Fire", "Wind", "Earth", "Thunder", "Water"];
     internal static readonly string[] DamageTypes = ["Physical", "Magic", "True"];
     internal static readonly string[] Deliveries = ["AreaInstant", "Projectile", "SpawnAoE"];
     internal static readonly string[] Shapes = ["Cone", "Circle", "Rectangle"];

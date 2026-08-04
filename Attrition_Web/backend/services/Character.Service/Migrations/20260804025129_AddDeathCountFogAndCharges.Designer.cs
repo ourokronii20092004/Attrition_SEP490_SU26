@@ -3,6 +3,7 @@ using System;
 using Character.Service.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Character.Service.Migrations
 {
     [DbContext(typeof(CharacterDbContext))]
-    partial class CharacterDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260804025129_AddDeathCountFogAndCharges")]
+    partial class AddDeathCountFogAndCharges
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -255,21 +258,9 @@ namespace Character.Service.Migrations
                             b1.Property<Guid>("CharacterSessionEntitySessionId")
                                 .HasColumnType("uuid");
 
-                            b1.Property<int>("Ad")
-                                .HasColumnType("integer")
-                                .HasColumnName("Ad");
-
-                            b1.Property<int>("Ap")
-                                .HasColumnType("integer")
-                                .HasColumnName("Ap");
-
                             b1.Property<float>("AttackSpeed")
                                 .HasColumnType("real")
                                 .HasColumnName("AttackSpeed");
-
-                            b1.Property<int>("Def")
-                                .HasColumnType("integer")
-                                .HasColumnName("Def");
 
                             b1.Property<int>("HealthCharges")
                                 .HasColumnType("integer")
@@ -286,10 +277,6 @@ namespace Character.Service.Migrations
                             b1.Property<int>("PotionMaxManaFlasks")
                                 .HasColumnType("integer")
                                 .HasColumnName("PotionMaxManaFlasks");
-
-                            b1.Property<int>("Res")
-                                .HasColumnType("integer")
-                                .HasColumnName("Res");
 
                             b1.HasKey("CharacterSessionEntityCharacterId", "CharacterSessionEntitySessionId");
 

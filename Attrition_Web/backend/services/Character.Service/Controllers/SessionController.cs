@@ -97,6 +97,21 @@ public class SessionController : ControllerBase
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
+    /// <summary>
+    /// Consolidated save: the host pushes the WHOLE party's progress (both players' stats,
+    /// inventory, deaths, world flags, fog and room meta) in one request, committed in one
+    /// transaction. Replaces the old fan-out of N snapshots + N character-saves + 1 meta call.
+    /// Room ownership is checked here; per-character ownership is verified in the service.
+    /// </summary>
+    [HttpPost("bulk")]
+    public async Task<IActionResult> BulkSave([FromBody] BulkSaveRequest request)
+    {
+        if (this.RequireUserId(_user, out var userId) is { } error) return error;
+        if (await RequireOwnership(request.SessionId, userId) is { } denied) return denied;
+        var result = await _service.BulkSaveAsync(request);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
     /// <summary>Host deletes a room entirely.</summary>
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> DeleteSession(Guid id)

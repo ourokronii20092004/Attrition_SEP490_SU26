@@ -112,7 +112,7 @@ public class PlayerAnimation : NetworkBehaviour
         if (sr != null) sr.enabled = true;
     }
 
-    /// <summary>Phát animation cast skill. element = (int)SkillElement (Fire/Wood/Earth/Thunder/Thrust).</summary>
+    /// <summary>Phát animation cast skill. element = (int)SkillElement (Fire/Wind/Earth/Thunder/Water).</summary>
     public void PlaySkillCast(int element)
     {
         if (anim == null) return;

@@ -8,7 +8,7 @@ import type { SkillResponse } from "@/lib/types";
 export const RARITY_TIERS = ["Common", "Uncommon", "Rare", "Epic", "Legendary"] as const;
 
 /** Elements, in the order the game presents them. Each becomes one branch of the tree. */
-export const ELEMENTS = ["Fire", "Wood", "Earth", "Thunder", "Thrust"] as const;
+export const ELEMENTS = ["Fire", "Wind", "Earth", "Thunder", "Water"] as const;
 
 /** Per-tier accent, reused for the node ring and the tier label. */
 export const TIER_COLOR: Record<string, string> = {

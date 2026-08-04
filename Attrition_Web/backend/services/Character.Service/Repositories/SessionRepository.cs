@@ -34,6 +34,17 @@ public class SessionRepository : ISessionRepository
             .Select(s => (Guid?)s.OwnerId)
             .FirstOrDefaultAsync();
 
+    public async Task<Dictionary<Guid, (string Name, string Archetype)>> GetCharacterNamesAsync(List<Guid> characterIds)
+    {
+        if (characterIds.Count == 0) return new();
+        var rows = await _context.Characters
+            .AsNoTracking()
+            .Where(c => characterIds.Contains(c.Id))
+            .Select(c => new { c.Id, c.Name, c.Archetype })
+            .ToListAsync();
+        return rows.ToDictionary(r => r.Id, r => (r.Name, r.Archetype));
+    }
+
     public async Task<SessionEntity> AddAsync(SessionEntity session)
     {
         _context.Sessions.Add(session);
@@ -83,9 +94,48 @@ public class SessionRepository : ISessionRepository
         await _context.SaveChangesAsync();
     }
 
-    // Delete a room entirely: session row + all character progress + world state.
-    public async Task<bool> DeleteSessionAsync(Guid sessionId)
+    // ── Consolidated bulk save ───────────────────────────────────────────────────────────────
+    // Load everything one push touches in 4 queries, TRACKED (no AsNoTracking) so the service can
+    // mutate the graph in place. Characters are fetched by id AND by owner-scoped snapshot need:
+    // the global rows carry snapshot history and are what we check ownership against.
+    public async Task<BulkSaveGraph> LoadForBulkAsync(Guid sessionId, List<Guid> characterIds, List<string> eventIds)
     {
+        var session = await _context.Sessions.FirstOrDefaultAsync(s => s.Id == sessionId);
+
+        var characterSessions = characterIds.Count == 0
+            ? new List<CharacterSessionEntity>()
+            : await _context.CharacterSessions
+                .Where(cs => cs.SessionId == sessionId && characterIds.Contains(cs.CharacterId))
+                .ToListAsync();
+
+        var worldStates = eventIds.Count == 0
+            ? new List<WorldStateEntity>()
+            : await _context.WorldStates
+                .Where(w => w.SessionId == sessionId && eventIds.Contains(w.EventId))
+                .ToListAsync();
+
+        // Snapshots is an owned collection — Include it so appending a snapshot doesn't wipe the
+        // existing timeline when EF materializes the parent without its children.
+        var characters = characterIds.Count == 0
+            ? new List<CharacterEntity>()
+            : await _context.Characters
+                .Include(c => c.Snapshots)
+                .Where(c => characterIds.Contains(c.Id))
+                .ToListAsync();
+
+        return new BulkSaveGraph(session, characterSessions, worldStates, characters);
+    }
+
+    public void AddCharacterSession(CharacterSessionEntity entity) => _context.CharacterSessions.Add(entity);
+
+    public void AddWorldState(WorldStateEntity entity) => _context.WorldStates.Add(entity);
+
+    // One commit for the whole party — a partial save would leave two players inconsistent.
+    public Task SaveChangesAsync() => _context.SaveChangesAsync();
+
+
+    // Delete a room entirely: session row + all character progress + world state.
+    public async Task<bool> DeleteSessionAsync(Guid sessionId)    {
         var session = await _context.Sessions
             .Include(s => s.Characters)
             .Include(s => s.WorldStates)

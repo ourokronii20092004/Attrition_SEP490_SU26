@@ -9,4 +9,5 @@ export { assetsApi } from "./assets";
 export { musicApi, getStreamUrl, getDownloadUrl } from "./music";
 export { searchApi } from "./search";
 export { charactersApi } from "./characters";
+export { sessionsApi } from "./sessions";
 export { adminApi } from "./admin";

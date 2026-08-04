@@ -21,6 +21,10 @@ public interface ISessionService
     Task<ApiResponse<CharacterSessionDto>> SaveCharacterSessionAsync(SaveCharacterSessionRequest request);
     Task<ApiResponse<WorldStateDto>> SaveWorldStateAsync(SaveWorldStateRequest request);
 
+    // Consolidated save: the whole party (both players' progress, world flags, room meta and fog)
+    // in ONE request, committed in ONE transaction. Replaces the per-player fan-out.
+    Task<ApiResponse<BulkSaveResultDto>> BulkSaveAsync(BulkSaveRequest request);
+
     // Delete a room entirely (session + all child data). Irreversible.
     Task<ApiResponse> DeleteSessionAsync(Guid sessionId);
 }

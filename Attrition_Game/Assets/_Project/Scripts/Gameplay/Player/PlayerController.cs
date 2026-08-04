@@ -885,6 +885,11 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
     private void Die()
     {
         isDeadNetworked = true;
+
+        // Đếm số lần chết để đẩy lên web. Chạy ở StateAuthority (cả 2 call site của Die() đều nằm
+        // trong RPC RpcTargets.StateAuthority) nên host ghi được cả cho client. Cả 2 call site cũng
+        // early-return khi isDeadNetworked → không cộng trùng cho cùng 1 lần chết.
+        if (statsComp != null) statsComp.DeathCount += 1;
     }
 
     /// <summary>

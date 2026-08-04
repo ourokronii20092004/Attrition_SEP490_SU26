@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Search, Menu, X, User, LogOut, Shield, Gamepad2, Settings as SettingsIcon, ListMusic, Heart } from "lucide-react";
+import { Search, Menu, X, User, LogOut, Shield, Gamepad2, DoorOpen, Settings as SettingsIcon, ListMusic, Heart } from "lucide-react";
 import { useAuth } from "@/lib/providers";
 import { SITE_NAME } from "@/lib/config";
 import { loginHref } from "@/lib/post-login-redirect";
@@ -115,6 +115,9 @@ export function Header() {
                         </MenuLink>
                         <MenuLink href="/characters" icon={Gamepad2} onClick={() => setUserMenuOpen(false)}>
                           Characters
+                        </MenuLink>
+                        <MenuLink href="/rooms" icon={DoorOpen} onClick={() => setUserMenuOpen(false)}>
+                          Rooms
                         </MenuLink>
                         <MenuLink href="/music/playlists" icon={ListMusic} onClick={() => setUserMenuOpen(false)}>
                           Playlists

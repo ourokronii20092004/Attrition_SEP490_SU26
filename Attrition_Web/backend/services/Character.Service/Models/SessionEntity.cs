@@ -27,6 +27,10 @@ public class SessionEntity
     // Scene/map the party was last in, so a re-open loads the right level.
     public string? CurrentScene { get; set; }
 
+    // Fog-of-war cells the party has revealed, as a JSON array of "scene:cellX:cellY" keys.
+    // Room-level because co-op players explore one shared map. Null = nothing revealed yet.
+    public string? FogJson { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     public DateTime LastPlayedAt { get; set; } = DateTime.UtcNow;
