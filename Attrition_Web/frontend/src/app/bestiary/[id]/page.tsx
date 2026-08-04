@@ -75,7 +75,7 @@ export default function EnemyDetailPage() {
 
   return (
     <PageShell>
-      <BackButton href="/bestiary" label="Bestiary" />
+      <BackButton fallbackHref="/bestiary" label="Bestiary" />
 
       <Reveal className="mt-6">
         {enemy.imageUrl && (

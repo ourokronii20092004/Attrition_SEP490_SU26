@@ -35,7 +35,7 @@ export default async function StoryEntryPage({ params }: { params: Promise<{ slu
 
   return (
     <PageShell size="md">
-      <BackButton href="/story" label="The Story" />
+      <BackButton fallbackHref="/story" label="The Story" />
 
       <Reveal as="article" className="mt-6">
         <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-accent">

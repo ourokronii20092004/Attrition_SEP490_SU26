@@ -60,7 +60,7 @@ export default function WikiArticlePage() {
 
   return (
     <PageShell size="md">
-      <BackButton href="/wiki" label="Wiki" />
+      <BackButton fallbackHref="/wiki" label="Wiki" />
 
       <Reveal className="mt-6">
         <div className="flex items-start justify-between gap-4">

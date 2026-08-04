@@ -32,7 +32,7 @@ export default function SkillDetailPage() {
 
   const projectile = skill.delivery === "Projectile";
   return <PageShell>
-    <BackButton href="/skills" label="Skills" />
+    <BackButton fallbackHref="/skills" label="Skills" />
     <Reveal className="mt-6">
       {skill.imageUrl ? <div className="aspect-[21/9] overflow-hidden rounded-xl border border-border bg-surface-2"><img src={resolveMediaUrl(skill.imageUrl) ?? ""} alt={skill.name} className="h-full w-full object-cover" /></div> : <div className="flex aspect-[21/9] items-center justify-center rounded-xl border border-border bg-surface-2"><Sparkles size={72} className="text-accent" /></div>}
       <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.3em] text-accent">{skill.element} skill</p>
