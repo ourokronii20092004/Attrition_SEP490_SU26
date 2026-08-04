@@ -54,6 +54,8 @@ namespace Attrition.Persistence
         public List<string> discoveredCheckpoints = new List<string>(); // id (DisplayName) các checkpoint ĐÃ REST
         public List<string> fogVisited = new List<string>();            // "scene:cellX:cellY" các ô fog đã xua
         public List<string> defeatedBosses = new List<string>();        // bossId các boss ĐÃ HẠ (không hồi sinh lại)
+        public List<string> brokenObjects = new List<string>();          // "scene@x,y" vật phá được ĐÃ VỠ (không spawn lại)
+        public List<string> lootedElites = new List<string>();            // "scene|enemyId@x,y" elite/boss ĐÃ rơi đồ (không rơi lần hai)
 
         public string ToDisplayPlaytime()
         {

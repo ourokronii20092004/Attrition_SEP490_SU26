@@ -880,6 +880,7 @@ namespace Attrition.UI
             Attrition.Gameplay.Environment.TutorialPrompt.ClearShown();
             Attrition.Gameplay.Environment.TeamCreditsPanel.ClearShown();
             Attrition.Gameplay.Environment.BossDefeatState.Clear();
+            Attrition.Gameplay.Environment.BreakableState.Clear();
             Attrition.Gameplay.Environment.WorldMapState.Clear();
             Attrition.Controllers.EnemyLootTracker.Clear();
             Attrition.Gameplay.World.Checkpoint.ClearRuntimeState();

@@ -238,7 +238,7 @@ namespace Attrition.Gameplay.Environment
                 if (!Attrition.Persistence.GameLaunch.IsOnline)
                 {
                     var saver = Attrition.Gameplay.Persistence.GameSaveService.EnsureExists();
-                    saver.SaveBossDefeated();
+                    saver.SaveWorldState();
                 }
             }
 
