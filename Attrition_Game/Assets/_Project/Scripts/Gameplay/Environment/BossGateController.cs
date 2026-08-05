@@ -128,7 +128,11 @@ namespace Attrition.Gameplay.Environment
 
             if (DeathStarted) return;
 
-            if (!EntrySealed && entryDoor != null && BossEncounter != null && !BossEncounter.IsWaitingForTrigger)
+            // Dùng EncounterStarted ([Networked]) chứ KHÔNG dùng IsWaitingForTrigger: cái sau là bool
+            // thường trên AI, chỉ đúng ở host. Cả hai đều chạy ở nhánh host này nên kết quả như nhau,
+            // nhưng EncounterStarted là nguồn sự thật đã đồng bộ — trận đã bắt đầu thì cửa phải đóng,
+            // kể cả khi boss được đánh thức bằng đường khác (bị đánh trước) chứ không qua trigger.
+            if (!EntrySealed && entryDoor != null && BossEncounter != null && BossEncounter.EncounterStarted)
             {
                 EntrySealed = true;
                 entryDoor.Close();
@@ -234,10 +238,18 @@ namespace Attrition.Gameplay.Environment
             string id = BossId;
             if (BossDefeatState.MarkDefeated(id))
             {
-                // Solo: ghi ngay vào save slot. Coop: chỉ giữ trong phiên host (theo quyết định thiết kế).
-                if (!Attrition.Persistence.GameLaunch.IsOnline)
+                var saver = Attrition.Gameplay.Persistence.GameSaveService.EnsureExists();
+                if (Attrition.Persistence.GameLaunch.IsOnline)
                 {
-                    var saver = Attrition.Gameplay.Persistence.GameSaveService.EnsureExists();
+                    // COOP: ghi NGAY 1 row lên server. Trước đây nhánh này không làm gì ("chỉ giữ trong
+                    // phiên host") nên boss vừa hạ chỉ nằm trong RAM tới lần rest kế tiếp — host thoát
+                    // trước đó là boss sống lại nguyên máu. Không dùng bulk save: nó ghi cả HP/vị trí
+                    // đang dở giữa trận của mọi player.
+                    saver.SaveBossDefeatOnline(id);
+                }
+                else
+                {
+                    // Solo: ghi ngay vào save slot.
                     saver.SaveWorldState();
                 }
             }

@@ -76,26 +76,37 @@ namespace Attrition.Gameplay.Environment
         /// COOP: nạp từ dữ liệu phòng trên server (fog lưu ở SessionEntity.FogJson, checkpoint lưu
         /// thành world-state row). Trước đây coop mất sạch fog + checkpoint khi reopen phòng.
         /// Truyền null cho phần nào không có để giữ nguyên phần đó.
+        ///
+        /// <paramref name="sessionId"/> quyết định cách hoà (giống <see cref="BossDefeatState.LoadFromIds"/>):
+        /// phòng KHÁC → thay thế; CÙNG phòng (fetch lại khi đổi map) → HỢP NHẤT. Bản cũ luôn Clear()
+        /// nên đổi map là mất fog + checkpoint vừa mở của map trước (server chưa kịp lưu).
         /// </summary>
-        public static void LoadFromCoop(IEnumerable<string> fogCells, IEnumerable<string> checkpointIds)
+        public static void LoadFromCoop(IEnumerable<string> fogCells, IEnumerable<string> checkpointIds,
+                                       string sessionId)
         {
-            if (fogCells != null)
+            bool differentSession = _loadedSessionId != sessionId;
+            if (differentSession)
             {
                 _fog.Clear();
-                foreach (var k in fogCells) if (!string.IsNullOrEmpty(k)) _fog.Add(k);
-            }
-            if (checkpointIds != null)
-            {
                 _checkpoints.Clear();
-                foreach (var c in checkpointIds) if (!string.IsNullOrEmpty(c)) _checkpoints.Add(c);
+                _loadedSessionId = sessionId;
             }
+
+            if (fogCells != null)
+                foreach (var k in fogCells) if (!string.IsNullOrEmpty(k)) _fog.Add(k);
+            if (checkpointIds != null)
+                foreach (var c in checkpointIds) if (!string.IsNullOrEmpty(c)) _checkpoints.Add(c);
         }
+
+        // Phòng coop đã nạp (null = chưa nạp). Xem LoadFromCoop.
+        private static string _loadedSessionId;
 
         /// <summary>Xoá sạch (vd khi bắt đầu game mới). Không đụng save.</summary>
         public static void Clear()
         {
             _fog.Clear();
             _checkpoints.Clear();
+            _loadedSessionId = null;
             PendingTravelScene = null;
             PendingTravelCheckpointId = null;
         }

@@ -242,10 +242,14 @@ namespace Attrition.Gameplay.Player.Inventory
                 if (Attrition.Persistence.GameLaunch.SessionRestPosByChar.TryGetValue(charId, out var rest)
                     && (rest.x != 0f || rest.y != 0f))
                 {
-                    if (!string.IsNullOrEmpty(rest.scene) && rest.scene != activeScene)
+                    // ĐÒI KHỚP DƯƠNG: chỉ teleport khi biết CHẮC toạ độ thuộc scene hiện tại. Nhãn rỗng =
+                    // "không rõ map nào" (xem chỗ ghi cache) và trước đây nhánh đó được coi là hợp lệ →
+                    // toạ độ map cũ áp vào map mới, lọt vào lòng địa hình vì bounds các map chồng lấn.
+                    // Không rõ thì dùng spawnPoint của map: sai chỗ đứng còn sửa được, kẹt trong đất thì không.
+                    if (rest.scene != activeScene)
                     {
-                        Debug.LogWarning($"[Spawn] char {charId}: scene rest '{rest.scene}' ≠ scene hiện tại "
-                                         + $"'{activeScene}' → spawnPoint mặc định (rest ở map khác).");
+                        Debug.LogWarning($"[Spawn] char {charId}: vị trí rest ({rest.x:F1},{rest.y:F1}) thuộc "
+                                         + $"scene '{rest.scene ?? "?"}' ≠ '{activeScene}' → spawnPoint mặc định.");
                     }
                     else
                     {
@@ -286,9 +290,21 @@ namespace Attrition.Gameplay.Player.Inventory
                         {
                             if (cs == null || string.IsNullOrEmpty(cs.characterId)) continue;
                             Attrition.Persistence.GameLaunch.SessionInventoryByChar[cs.characterId] = cs.inventoryJson;
-                            // Cache vị trí rest đã lưu (theo scene của room) để spawn đúng checkpoint.
+                            // Cache vị trí rest đã lưu để spawn đúng checkpoint. Scene của vị trí phải suy
+                            // từ CHECKPOINT RIÊNG của nhân vật, KHÔNG phải detail.currentScene: cái sau là
+                            // map PHÒNG đang chơi, còn posX/posY là của RIÊNG nhân vật này. Hai thứ lệch
+                            // nhau khi một người rời phòng ở map cũ rồi người còn lại đi tiếp sang map mới
+                            // — bulk save chỉ ghi row của player CÒN TRONG PHÒNG, nên row người kia giữ
+                            // toạ độ map CŨ mà lại được dán nhãn map MỚI → guard scene bên dưới cho qua và
+                            // teleport thẳng vào lòng địa hình (bounds 5 map chồng lấn nhau nên toạ độ map
+                            // A gần như luôn "trông hợp lệ" ở map B) → đúng lỗi "camera nằm dưới đất".
+                            // Không tra được id (chưa rest lần nào, hoặc row lưu trước thay đổi này) → để
+                            // nhãn RỖNG, tức "không biết toạ độ này thuộc map nào". Tuyệt đối KHÔNG rơi về
+                            // detail.currentScene: đoán sai chính là nguồn của bug trên.
+                            var restMap = Attrition.Gameplay.Environment.MapRegistrySO.Load()
+                                ?.GetByCheckpoint(cs.lastRestPointId);
                             Attrition.Persistence.GameLaunch.SessionRestPosByChar[cs.characterId] =
-                                (cs.posX, cs.posY, detail.currentScene);
+                                (cs.posX, cs.posY, restMap != null ? restMap.sceneName : null);
                             // Cache DTO stat đầy đủ (level/exp/điểm cộng/HP/Mana/số bình) để PlayerStats
                             // hydrate stat coop khi spawn — đối xứng với solo đọc save slot.
                             Attrition.Persistence.GameLaunch.SessionStatsByChar[cs.characterId] = cs;
@@ -357,7 +373,10 @@ namespace Attrition.Gameplay.Player.Inventory
                 }
             }
 
-            Attrition.Gameplay.Environment.BossDefeatState.LoadFromIds(bosses);
+            // Hợp nhất theo session: fetch lại CÙNG phòng (đổi map) KHÔNG được xoá boss/fog vừa mở mà
+            // server chưa kịp lưu; sang phòng khác thì thay thế sạch.
+            string sessionId = Attrition.Persistence.GameLaunch.SessionId;
+            Attrition.Gameplay.Environment.BossDefeatState.LoadFromIds(bosses, sessionId);
 
             // fogJson hỏng → giữ fog đang có (null) thay vì xoá sạch bản đồ của người chơi.
             System.Collections.Generic.List<string> fog = null;
@@ -373,7 +392,7 @@ namespace Attrition.Gameplay.Player.Inventory
                     Debug.LogWarning($"[SessionLoad] fogJson lỗi, giữ fog hiện tại: {e.Message}");
                 }
             }
-            Attrition.Gameplay.Environment.WorldMapState.LoadFromCoop(fog, checkpoints);
+            Attrition.Gameplay.Environment.WorldMapState.LoadFromCoop(fog, checkpoints, sessionId);
 
             // Beacon checkpoint: Spawned() của chúng có thể đã chạy trước khi fetch về → quét lại.
             Attrition.Gameplay.World.Checkpoint.ApplyCoopDiscovered();

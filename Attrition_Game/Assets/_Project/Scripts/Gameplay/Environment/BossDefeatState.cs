@@ -42,14 +42,31 @@ namespace Attrition.Gameplay.Environment
         /// <summary>
         /// COOP: nạp từ world-state của phòng (server) thay vì save slot. Trước đây coop chỉ giữ
         /// trong RAM host nên reopen phòng là boss sống lại — giờ bulk save đẩy lên DB nên nạp lại được.
+        ///
+        /// <paramref name="sessionId"/> quyết định cách hoà dữ liệu:
+        ///  - Phòng KHÁC (hoặc lần đầu) → THAY THẾ: không để boss của phòng trước lẫn sang phòng này.
+        ///  - CÙNG phòng (fetch lại khi đổi map / người thứ 2 vào muộn) → HỢP NHẤT (union).
+        ///
+        /// Vì sao phải union trong cùng phòng: RAM đang giữ boss vừa hạ mà server có thể CHƯA biết
+        /// (bulk save chạy sau, hoặc lần đó lỗi mạng). Bản cũ luôn Clear() nên mỗi lần đổi map là xoá
+        /// sạch boss vừa đánh → quay lại map cũ thấy boss sống nguyên máu. Đúng lỗi user báo.
         /// </summary>
-        public static void LoadFromIds(IEnumerable<string> bossIds)
+        public static void LoadFromIds(IEnumerable<string> bossIds, string sessionId)
         {
-            _defeated.Clear();
+            if (_loadedSessionId != sessionId)
+            {
+                _defeated.Clear();
+                _loadedSessionId = sessionId;
+            }
+
             if (bossIds == null) return;
             foreach (var id in bossIds)
                 if (!string.IsNullOrEmpty(id)) _defeated.Add(id);
         }
+
+        // Phòng coop đã nạp (null = chưa nạp phòng nào). Phân biệt "fetch lại cùng phòng" với "sang
+        // phòng khác" — xem LoadFromIds.
+        private static string _loadedSessionId;
 
         // Slot đã nạp (-1 = chưa nạp). Dùng để nạp LAZY đúng 1 lần cho mỗi slot.
         private static int _loadedSlot = -1;
@@ -86,6 +103,7 @@ namespace Attrition.Gameplay.Environment
         {
             _defeated.Clear();
             _loadedSlot = -1;
+            _loadedSessionId = null;
         }
     }
 }

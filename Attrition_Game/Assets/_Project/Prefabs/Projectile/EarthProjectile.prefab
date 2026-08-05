@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 5595464570764090296}
   - component: {fileID: 9147373789878109117}
   - component: {fileID: 5232713744480053085}
+  - component: {fileID: 8049721523959110943}
   m_Layer: 0
   m_Name: EarthProjectile
   m_TagString: Untagged
@@ -53,6 +54,7 @@ MonoBehaviour:
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 5232713744480053085}
+  - {fileID: 8049721523959110943}
   ForceRemoteRenderTimeframe: 0
 --- !u!212 &5595464570764090296
 SpriteRenderer:
@@ -157,3 +159,20 @@ MonoBehaviour:
   impactPrefab:
     RawGuidValue: 00000000000000000000000000000000
   impactDamage: 0
+--- !u!114 &8049721523959110943
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5149684094686250922}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 158639473, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkTransform
+  _stateAuthorityChangeErrorCorrectionDelta: 0
+  SyncScale: 0
+  SyncParent: 0
+  _autoAOIOverride: 1
+  DisableSharedModeInterpolation: 0

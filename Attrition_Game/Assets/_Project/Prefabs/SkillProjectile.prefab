@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 7029852129388088118}
   - component: {fileID: 1356542672120654270}
   - component: {fileID: 7464133756882187045}
+  - component: {fileID: 7095625679151513338}
   m_Layer: 0
   m_Name: SkillProjectile
   m_TagString: Untagged
@@ -148,6 +149,7 @@ MonoBehaviour:
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 7464133756882187045}
+  - {fileID: 7095625679151513338}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &7464133756882187045
 MonoBehaviour:
@@ -168,3 +170,23 @@ MonoBehaviour:
     m_Bits: 0
   hitboxRadius: 0.2
   rotationOffset: 0
+  impactPrefab:
+    RawGuidValue: 00000000000000000000000000000000
+  impactDamage: 0
+--- !u!114 &7095625679151513338
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3600591529241529704}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 158639473, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkTransform
+  _stateAuthorityChangeErrorCorrectionDelta: 0
+  SyncScale: 0
+  SyncParent: 0
+  _autoAOIOverride: 1
+  DisableSharedModeInterpolation: 0

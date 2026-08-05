@@ -1,9 +1,20 @@
 using UnityEngine;
 using Attrition.Gameplay.Player;
-using System.Collections.Generic;
 
 namespace Attrition.Gameplay.Environment
 {
+    /// <summary>
+    /// Vùng kích hoạt trận boss: đủ người sống bước vào → gọi StartIntroSequence.
+    ///
+    /// KHÔNG dùng OnTriggerEnter2D/Exit2D + HashSet nữa. Cách đó giữ TRẠNG THÁI TÍCH LUỸ nên sai bền:
+    /// player bị teleport ra (checkpoint, wipe, chuyển phòng) hoặc chết/hồi sinh thì Exit không chắc nổ
+    /// → danh sách còn tên người không còn trong vùng, hoặc thiếu người đang đứng trong vùng. Trigger
+    /// kẹt vĩnh viễn, boss đứng im tới khi bị đánh (đường knockback trong RunAILogic đánh thức
+    /// state machine) — đúng lỗi "2 người vào phòng mà Druid không đánh, chỉ đánh khi mình đánh trước".
+    ///
+    /// Thay bằng ĐỌC THẲNG vị trí player mỗi frame và so với bounds của vùng: không trạng thái tích luỹ,
+    /// không phụ thuộc callback, tự đúng sau mọi lần teleport/hồi sinh.
+    /// </summary>
     [RequireComponent(typeof(BoxCollider2D))]
     public class BossEncounterTrigger : MonoBehaviour
     {
@@ -20,7 +31,9 @@ namespace Attrition.Gameplay.Environment
 
 
         private bool _isTriggered;
-        private HashSet<PlayerController> _playersInTrigger = new HashSet<PlayerController>();
+        private Collider2D _zone;
+
+        private void Awake() => _zone = GetComponent<Collider2D>();
 
         /// <summary>
         /// CHỈ HOST được quyết định kích hoạt boss. Client dùng
@@ -45,78 +58,41 @@ namespace Attrition.Gameplay.Environment
         /// </summary>
         private void Update()
         {
-            if (_isTriggered || _playersInTrigger.Count == 0) return;
+            if (_isTriggered) return;
             CheckTrigger();
         }
 
         /// <summary>
         /// Cho phép kích hoạt lại trigger (dùng khi cả team chết mà boss còn sống → player quay lại đánh).
-        /// Xoá danh sách player đang đứng trong vùng vì lúc wipe player đã bị teleport về checkpoint —
-        /// nếu giữ lại, lần vào phòng sau sẽ đếm nhầm (tưởng vẫn còn người trong vùng).
         /// </summary>
         public void ResetTrigger()
         {
             _isTriggered = false;
-            _playersInTrigger.Clear();
-        }
-
-        private void OnTriggerEnter2D(Collider2D other)
-        {
-            if (_isTriggered) return;
-
-            if (other.CompareTag("Player"))
-            {
-                var player = other.GetComponentInParent<PlayerController>();
-                if (player != null && !_playersInTrigger.Contains(player))
-                {
-                    _playersInTrigger.Add(player);
-                    CheckTrigger();
-                }
-            }
-        }
-
-        private void OnTriggerExit2D(Collider2D other)
-        {
-            if (_isTriggered) return;
-
-            if (other.CompareTag("Player"))
-            {
-                var player = other.GetComponentInParent<PlayerController>();
-                if (player != null && _playersInTrigger.Contains(player))
-                {
-                    _playersInTrigger.Remove(player);
-                }
-            }
         }
 
         private void CheckTrigger()
         {
             if (_isTriggered) return;
             if (!IsHost) return;   // xem IsHost: client không thấy trigger của đồng đội
+            if (_zone == null) return;
 
-            int requiredPlayers = 1;
-
-            if (Attrition.Persistence.GameLaunch.Mode == Attrition.Persistence.LaunchMode.Coop)
+            var bounds = _zone.bounds;
+            int alive = 0, inZone = 0;
+            foreach (var p in FindObjectsByType<PlayerController>(FindObjectsSortMode.None))
             {
-                var allPlayers = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
-                int activePlayers = 0;
-                foreach (var p in allPlayers)
-                {
-                    if (p != null && p.Object != null && p.Object.IsValid && !p.isDeadNetworked)
-                        activePlayers++;
-                }
-                requiredPlayers = Mathf.Max(1, activePlayers);
+                if (p == null || p.Object == null || !p.Object.IsValid || p.isDeadNetworked) continue;
+                alive++;
+                // Test 2D: bounds của collider là 3D, player có thể lệch Z so với vùng trigger.
+                Vector3 pos = p.transform.position;
+                if (pos.x >= bounds.min.x && pos.x <= bounds.max.x
+                    && pos.y >= bounds.min.y && pos.y <= bounds.max.y) inZone++;
             }
 
-            // Chỉ tính player CÒN SỐNG & hợp lệ (xác chết trong vùng không tính).
-            int inTrigger = 0;
-            foreach (var p in _playersInTrigger)
-            {
-                if (p != null && p.Object != null && p.Object.IsValid && !p.isDeadNetworked)
-                    inTrigger++;
-            }
+            // Solo (hoặc chỉ còn 1 người sống trong coop) → 1 người là đủ.
+            int required = Attrition.Persistence.GameLaunch.Mode == Attrition.Persistence.LaunchMode.Coop
+                ? Mathf.Max(1, alive) : 1;
 
-            if (inTrigger >= requiredPlayers)
+            if (inZone >= required)
             {
                 _isTriggered = true;
                 BossEncounter?.StartIntroSequence();
