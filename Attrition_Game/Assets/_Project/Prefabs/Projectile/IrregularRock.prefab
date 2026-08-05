@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 2937677643168646333}
   - component: {fileID: 8858114304975156217}
   - component: {fileID: 2468565199400921953}
+  - component: {fileID: 2662554054996824567}
   m_Layer: 0
   m_Name: IrregularRock
   m_TagString: Untagged
@@ -53,6 +54,7 @@ MonoBehaviour:
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 2468565199400921953}
+  - {fileID: 2662554054996824567}
   ForceRemoteRenderTimeframe: 0
 --- !u!212 &2937677643168646333
 SpriteRenderer:
@@ -159,3 +161,20 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   groundOffset: 0.3
+--- !u!114 &2662554054996824567
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6842844996031963532}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 158639473, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkTransform
+  _stateAuthorityChangeErrorCorrectionDelta: 0
+  SyncScale: 0
+  SyncParent: 0
+  _autoAOIOverride: 1
+  DisableSharedModeInterpolation: 0

@@ -29,6 +29,7 @@ namespace Attrition.Gameplay.World
         [Networked] private int DropTick { get; set; }
 
         private SpriteRenderer _sr;
+        private int _appliedIconIndex = -1;
 
         /// <summary>Gán người vứt + tick lúc vứt (host gọi trong OnBeforeSpawned).</summary>
         public void InitDrop(PlayerRef dropper, int dropTick)
@@ -41,14 +42,7 @@ namespace Attrition.Gameplay.World
         {
             _sr = GetComponent<SpriteRenderer>();
 
-            // Hiện icon item
-            var db = ItemDatabaseSO.Instance;
-            if (db != null)
-            {
-                var item = db.GetItem(ItemIndex);
-                if (item != null && _sr != null)
-                    _sr.sprite = item.icon;
-            }
+            ApplyIcon();
 
             // Raycast xuống tìm sàn (BR-43). PHẢI dùng physics scene của Fusion (Runner),
             // KHÔNG dùng Physics2D static (query nhầm scene mặc định → luôn trượt).
@@ -66,6 +60,29 @@ namespace Attrition.Gameplay.World
                 }
             }
         }
+
+        /// <summary>
+        /// Gán icon theo ItemIndex. Gọi lại ở Render vì trên CLIENT cả hai thứ cần thiết đều có thể tới
+        /// SAU Spawned(): `ItemIndex` là [Networked] (Fusion gửi state ở tick kế tiếp) và
+        /// `ItemDatabaseSO.Instance` do GameBootstrap.Awake gán (thứ tự với Spawned không đảm bảo).
+        /// Chỉ gán 1 lần cho mỗi index nên rẻ; không có bước này thì client thấy item VÔ HÌNH
+        /// (sprite null) dù vẫn nhặt được — đúng lỗi user báo.
+        /// </summary>
+        private void ApplyIcon()
+        {
+            if (_sr == null || _appliedIconIndex == ItemIndex) return;
+
+            var db = ItemDatabaseSO.Instance;
+            if (db == null) return;
+
+            var item = db.GetItem(ItemIndex);
+            if (item == null) return;
+
+            _sr.sprite = item.icon;
+            _appliedIconIndex = ItemIndex;
+        }
+
+        public override void Render() => ApplyIcon();
 
         private void OnTriggerEnter2D(Collider2D other) => TryPickup(other);
         private void OnTriggerStay2D(Collider2D other) => TryPickup(other);

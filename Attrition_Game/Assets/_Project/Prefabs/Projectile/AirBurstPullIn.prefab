@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 1523525965841828708}
   - component: {fileID: 2126045761382056733}
   - component: {fileID: 4559312726852669283}
+  - component: {fileID: 8352829195694466007}
   m_Layer: 0
   m_Name: AirBurstPullIn
   m_TagString: Untagged
@@ -53,6 +54,7 @@ MonoBehaviour:
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 4559312726852669283}
+  - {fileID: 8352829195694466007}
   ForceRemoteRenderTimeframe: 0
 --- !u!212 &1523525965841828708
 SpriteRenderer:
@@ -159,3 +161,20 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   groundOffset: 0.3
+--- !u!114 &8352829195694466007
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3704842630850699469}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 158639473, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkTransform
+  _stateAuthorityChangeErrorCorrectionDelta: 0
+  SyncScale: 0
+  SyncParent: 0
+  _autoAOIOverride: 1
+  DisableSharedModeInterpolation: 0

@@ -23,7 +23,7 @@ namespace Attrition.Gameplay.Persistence
     {
         public static GameSaveService Instance { get; private set; }
 
-        public enum SaveEvent { Rest, Quit, Death, LevelUp }
+        public enum SaveEvent { Rest, Quit, Death, LevelUp, MapChange }
 
         private float _sessionStartTime;
         private int _basePlaytimeSeconds; // playtime tích lũy từ slot đã load
@@ -57,10 +57,12 @@ namespace Attrition.Gameplay.Persistence
             _basePlaytimeSeconds + Mathf.FloorToInt(Time.time - _sessionStartTime);
 
         /// <summary>
-        /// Lưu tiến trình của local player. Gọi tại mốc: rest checkpoint, quit, chết, lên cấp.
+        /// Lưu tiến trình của local player. Gọi tại mốc: rest checkpoint, quit, chết, lên cấp, ĐỔI MAP.
         /// An toàn gọi từ host/single; no-op nếu không tìm thấy local player.
+        /// Trả về Coroutine của lần lưu ONLINE (null nếu solo / không phải host) để caller CHỜ được
+        /// (xem <see cref="SaveAndWait"/>).
         /// </summary>
-        public void Save(SaveEvent evt, string checkpointId = null, Vector3? checkpointPos = null)
+        public Coroutine Save(SaveEvent evt, string checkpointId = null, Vector3? checkpointPos = null)
         {
             // ONLINE COOP: host-authoritative — chỉ HOST (server) lưu, và lưu hộ MỌI player
             // (host + client) theo character của từng người. Client KHÔNG tự lưu (tránh ghi đè).
@@ -69,9 +71,8 @@ namespace Attrition.Gameplay.Persistence
                 var anyPlayer = FindLocalPlayer();
                 bool isServer = anyPlayer != null && anyPlayer.Object != null
                                 && anyPlayer.Object.Runner != null && anyPlayer.Object.Runner.IsServer;
-                if (!isServer) return; // client coop: host lo việc lưu
-                StartCoroutine(SaveAllOnline(evt, checkpointId, checkpointPos));
-                return;
+                if (!isServer) return null; // client coop: host lo việc lưu
+                return StartCoroutine(SaveAllOnline(evt, checkpointId, checkpointPos));
             }
 
             // SOLO: lưu local player vào slot JSON.
@@ -79,15 +80,47 @@ namespace Attrition.Gameplay.Persistence
             if (player == null)
             {
                 Debug.LogWarning("[Save] Không tìm thấy local player để lưu.");
-                return;
+                return null;
             }
 
             var stats = player.GetComponent<PlayerStats>();
             var prog = player.GetComponent<PlayerProgression>();
             var potions = player.GetComponent<PotionSystem>();
-            if (stats == null) return;
+            if (stats == null) return null;
 
             SaveLocal(evt, stats, prog, potions, player, checkpointId, checkpointPos);
+            return null; // solo ghi đĩa đồng bộ — xong ngay khi hàm trả về.
+        }
+
+        /// <summary>
+        /// Lưu rồi CHỜ xong, có hạn thời gian — dùng cho mốc "không lưu là mất" mà caller phải chặn
+        /// lại: ĐỔI MAP (xem RoomTransitionZone). Solo trả về ngay (ghi đĩa đồng bộ).
+        ///
+        /// Có timeout vì SaveBulk không đặt UnityWebRequest.timeout: mạng treo thì không có timeout ở
+        /// đây sẽ khoá cứng người chơi trong màn fade đen. Hết hạn → vẫn đi tiếp (mất tiến trình lần này
+        /// còn hơn treo game), và SaveNotifyEvents đã báo lỗi cho người chơi.
+        /// </summary>
+        public IEnumerator SaveAndWait(SaveEvent evt, float timeoutSeconds = 8f)
+        {
+            bool done = false;
+            StartCoroutine(RunSaveThen(evt, () => done = true));
+
+            float elapsed = 0f;
+            while (!done && elapsed < timeoutSeconds)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                yield return null;
+            }
+
+            if (!done)
+                Debug.LogWarning($"[Save] {evt}: quá {timeoutSeconds}s chưa lưu xong — đi tiếp để không treo game.");
+        }
+
+        private IEnumerator RunSaveThen(SaveEvent evt, System.Action onDone)
+        {
+            var running = Save(evt);
+            if (running != null) yield return running;
+            onDone?.Invoke();
         }
 
         private void SaveLocal(SaveEvent evt, PlayerStats stats, PlayerProgression prog,
@@ -151,7 +184,9 @@ namespace Attrition.Gameplay.Persistence
         /// </summary>
         public void SaveWorldState()
         {
-            if (GameLaunch.IsOnline) return;   // coop: chỉ giữ trong phiên host
+            // Coop KHÔNG dùng slot JSON (tiến trình nằm ở server theo phòng). Boss đã hạ ở coop đi qua
+            // SaveBossDefeatOnline; vật phá được vẫn chỉ giữ trong phiên.
+            if (GameLaunch.IsOnline) return;
 
             int slot = GameLaunch.SelectedSlot;
             var data = SaveManager.LoadSlot(slot);
@@ -162,6 +197,74 @@ namespace Attrition.Gameplay.Persistence
             data.quests = Attrition.Gameplay.NPC.NetworkNPC.CaptureAll();
             data.lastSavedUnix = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             SaveManager.SaveSlot(slot, data);
+        }
+
+        /// <summary>
+        /// COOP: ghi NGAY 1 boss đã hạ lên server (đúng 1 row world-state), không chờ mốc
+        /// rest/quit/death/levelup.
+        ///
+        /// Vì sao cần: nhánh coop của <see cref="SaveWorldState"/> return ngay, nên boss vừa hạ CHỈ
+        /// nằm trong RAM host tới lần save kế tiếp. Host thoát/crash/mất mạng trước đó → boss chưa hề
+        /// lên DB → vào lại phòng thấy boss sống nguyên máu. Đây là nguyên nhân THẬT của "boss sống
+        /// lại", không phải chuyện hoà dữ liệu trong RAM.
+        ///
+        /// Dùng endpoint 1-row (`sessions/world-state`) thay vì bulk save vì bulk ghi cả stat/vị trí
+        /// mọi player — gọi ngay sau trận boss sẽ đóng băng HP thấp giữa trận vào save. Endpoint này
+        /// chỉ đụng đúng row boss, khớp đúng ngữ nghĩa nhánh solo (SaveWorldState).
+        /// </summary>
+        public void SaveBossDefeatOnline(string bossId)
+        {
+            if (!GameLaunch.IsOnline || string.IsNullOrEmpty(bossId)) return;
+            if (APIManager.Instance == null) return;
+            StartCoroutine(SaveBossDefeatRoutine(bossId));
+        }
+
+        private IEnumerator SaveBossDefeatRoutine(string bossId)
+        {
+            if (string.IsNullOrEmpty(GameLaunch.SessionId)) yield return EnsureSessionOnServer();
+            if (string.IsNullOrEmpty(GameLaunch.SessionId))
+            {
+                Debug.LogWarning($"[Save:BOSS] '{bossId}' chưa lưu được: không có SessionId.");
+                yield break;
+            }
+
+            bool ok = false;
+            yield return APIManager.Instance.SaveWorldState(new APIManager.SaveWorldStateRequest
+            {
+                sessionId = GameLaunch.SessionId,
+                eventId = bossId,     // boss = eventId KHÔNG prefix (xem IsBossEventId)
+                stateValue = 1,
+                progress = 0
+            }, r => ok = r);
+
+            if (!ok) Debug.LogWarning($"[Save:BOSS] '{bossId}' ghi lên server THẤT BẠI — mốc save sau sẽ thử lại.");
+        }
+
+        /// <summary>
+        /// Bảo đảm có SessionId, tạo lại nếu thiếu. `CreateHostSessionOnServer()` ở menu là
+        /// fire-and-forget KHÔNG retry: một cú chớp mạng lúc mở phòng = SessionId rỗng VĨNH VIỄN cả
+        /// phiên → mọi lần rest sau đó đều chết ở guard "chưa có SessionId" trong SaveAllOnline
+        /// ("lỗi không save được ở checkpoint"), và boss hạ xong cũng không lên DB.
+        /// Reopen theo roomCode là idempotent (host đã sở hữu mã đó thì server trả đúng room cũ —
+        /// xem CreateOrReopenAsync) nên retry ở đây an toàn, không tạo phòng rác.
+        /// </summary>
+        private IEnumerator EnsureSessionOnServer()
+        {
+            if (APIManager.Instance == null) yield break;
+            if (string.IsNullOrEmpty(GameLaunch.OwnerId) || string.IsNullOrEmpty(GameLaunch.RoomCode)) yield break;
+
+            yield return APIManager.Instance.CreateOrReopenSession(new APIManager.CreateSessionRequest
+            {
+                ownerId = GameLaunch.OwnerId,
+                name = string.IsNullOrEmpty(GameLaunch.RoomName) ? $"Room {GameLaunch.RoomCode}" : GameLaunch.RoomName,
+                roomCode = GameLaunch.RoomCode,
+                currentScene = GameLaunch.GameplayScene
+            }, session =>
+            {
+                if (session == null) return;
+                GameLaunch.SessionId = session.id;
+                Debug.Log($"[Save:ONLINE] Tạo lại được SessionId={session.id} (lúc mở phòng đã lỗi).");
+            });
         }
 
         /// <summary>
@@ -191,6 +294,12 @@ namespace Attrition.Gameplay.Persistence
             }
 
             // Không có SessionId (tạo room trên server thất bại) thì không biết ghi vào phòng nào.
+            // THỬ TẠO LẠI trước khi bỏ: `CreateHostSessionOnServer()` ở menu không retry, nên một cú
+            // chớp mạng lúc mở phòng làm SessionId rỗng cả phiên → MỌI lần rest đều chết ở đây. Đó là
+            // "lâu lâu không save được ở checkpoint": không phải rest lỗi, mà phòng chưa hề có trên
+            // server. Reopen theo roomCode idempotent nên không tạo phòng rác.
+            if (string.IsNullOrEmpty(GameLaunch.SessionId)) yield return EnsureSessionOnServer();
+
             if (string.IsNullOrEmpty(GameLaunch.SessionId))
             {
                 Debug.LogWarning("[Save:ONLINE] BỎ QUA: chưa có SessionId (host chưa tạo được room trên server).");
@@ -215,16 +324,28 @@ namespace Attrition.Gameplay.Persistence
                 string ownerId = inv != null ? inv.OwnerUserId.ToString() : "";
                 string charId = inv != null ? inv.OwnerCharacterId.ToString() : "";
 
+                // Nhân vật host = peer có InputAuthority (trên máy host chỉ player của host có).
+                bool isHostOwnPlayer = player.Object != null && player.Object.HasInputAuthority;
+
+                // RIÊNG player của HOST: networked field rỗng thì lấy từ GameLaunch — đây là máy host nên
+                // GameLaunch.* CHÍNH LÀ danh tính của người này (không có nguy cơ gán nhầm sang client).
+                // Vì sao cần: PlayerInventory.Spawned ghi 2 field này từ GameLaunch, nhưng nếu lúc đó
+                // GameLaunch.CharacterId còn rỗng (fetch danh sách nhân vật chưa xong khi vào phòng) thì
+                // host bị `continue` ở dưới → payload CHỈ CÓ CLIENT → web chỉ thấy tiến trình người chơi 2,
+                // host chơi bao lâu cũng mất. Đúng triệu chứng user báo.
+                if (isHostOwnPlayer)
+                {
+                    if (string.IsNullOrEmpty(ownerId)) ownerId = GameLaunch.OwnerId ?? "";
+                    if (string.IsNullOrEmpty(charId)) charId = GameLaunch.CharacterId ?? "";
+                }
+
                 // Thiếu danh tính (chưa kịp sync / player lạ) → bỏ qua, tránh ghi nhầm người.
                 if (string.IsNullOrEmpty(ownerId) || string.IsNullOrEmpty(charId))
                 {
                     Debug.LogWarning($"[Save:BULK] BỎ QUA 1 player: ownerId='{ownerId}' charId='{charId}' "
-                                     + "(client chưa resolve characterId trên server).");
+                                     + $"isHost={isHostOwnPlayer} (client chưa resolve characterId trên server).");
                     continue;
                 }
-
-                // Nhân vật host = peer có InputAuthority (trên máy host chỉ player của host có).
-                bool isHostOwnPlayer = player.Object != null && player.Object.HasInputAuthority;
 
                 // Vị trí: checkpoint (khi rest) hoặc vị trí hiện tại. checkpointPos là của HOST nên chỉ
                 // áp cho player host; client vẫn lưu đúng chỗ nó đang đứng.
@@ -260,9 +381,13 @@ namespace Attrition.Gameplay.Persistence
                     posX = pos.x,
                     posY = pos.y,
                     posZ = pos.z,
-                    // checkpointId là của host (điểm host vừa rest) → chỉ gán cho host, tránh ghi
-                    // sai điểm hồi sinh của client. null = server giữ giá trị cũ.
-                    lastRestPointId = isHostOwnPlayer ? checkpointId : null,
+                    // Rest trong coop là sự kiện CỦA CẢ PARTY: DoRest gọi RestoreAllPlayersAt(RestPoint)
+                    // teleport MỌI người (kể cả người đang gục) về đúng bench đó, nên bench là điểm rest
+                    // của cả hai — không riêng host. Trước đây chỉ ghi id cho host, để client mang toạ độ
+                    // bench mà KHÔNG có id → lúc nạp lại không suy ra được toạ độ đó thuộc map nào, phải
+                    // đoán bằng scene của phòng và đoán sai thì spawn vào lòng địa hình.
+                    // null (save không phải Rest) = server giữ giá trị cũ.
+                    lastRestPointId = checkpointId,
                     inventoryJson = inv != null ? inv.ExportJson() : null,
                     equipmentJson = null,   // đồ đang trang bị nằm trong inventoryJson (equipped*)
                     deathCount = stats.DeathCount,

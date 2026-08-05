@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 5446855990813968057}
   - component: {fileID: 1811475694233659314}
   - component: {fileID: 2962260349972648579}
+  - component: {fileID: 2194901141475299019}
   m_Layer: 0
   m_Name: PlayerWindSword
   m_TagString: Untagged
@@ -53,6 +54,7 @@ MonoBehaviour:
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 2962260349972648579}
+  - {fileID: 2194901141475299019}
   ForceRemoteRenderTimeframe: 0
 --- !u!212 &5446855990813968057
 SpriteRenderer:
@@ -157,3 +159,20 @@ MonoBehaviour:
   impactPrefab:
     RawGuidValue: 00000000000000000000000000000000
   impactDamage: 0
+--- !u!114 &2194901141475299019
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4804060314447524957}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 158639473, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkTransform
+  _stateAuthorityChangeErrorCorrectionDelta: 0
+  SyncScale: 0
+  SyncParent: 0
+  _autoAOIOverride: 1
+  DisableSharedModeInterpolation: 0

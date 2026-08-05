@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 2442050561366721419}
   - component: {fileID: 3934693730212262668}
   - component: {fileID: 8637624399348897291}
+  - component: {fileID: 5814493212369518095}
   m_Layer: 0
   m_Name: ThunderBird
   m_TagString: Untagged
@@ -53,6 +54,7 @@ MonoBehaviour:
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 8637624399348897291}
+  - {fileID: 5814493212369518095}
   ForceRemoteRenderTimeframe: 0
 --- !u!212 &2442050561366721419
 SpriteRenderer:
@@ -157,3 +159,20 @@ MonoBehaviour:
   impactPrefab:
     RawGuidValue: 00000000000000000000000000000000
   impactDamage: 0
+--- !u!114 &5814493212369518095
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3272773861306622444}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 158639473, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkTransform
+  _stateAuthorityChangeErrorCorrectionDelta: 0
+  SyncScale: 0
+  SyncParent: 0
+  _autoAOIOverride: 1
+  DisableSharedModeInterpolation: 0

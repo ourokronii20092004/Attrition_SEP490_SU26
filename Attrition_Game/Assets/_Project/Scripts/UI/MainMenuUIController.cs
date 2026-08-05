@@ -301,29 +301,7 @@ namespace Attrition.UI
             {
                 if (APIManager.Instance != null && !string.IsNullOrEmpty(APIManager.Instance.AccessToken))
                 {
-                    StartCoroutine(APIManager.Instance.GetCharacters((characters) => {
-                        for (int i = 0; i < SaveManager.SlotCount; i++)
-                        {
-                            if (characters != null && i < characters.Count)
-                            {
-                                var c = characters[i];
-                                _characterIds[i] = c.id;
-                                _saveSlots[i] = new SaveSlotData { 
-                                    characterName = c.name, 
-                                    level = c.latestSnapshot?.level ?? 1, 
-                                    location = "Server Save", 
-                                    playtime = c.latestSnapshot?.playtimeSeconds.ToString() ?? "0", 
-                                    deaths = 0 
-                                };
-                            }
-                            else
-                            {
-                                _characterIds[i] = null;
-                                _saveSlots[i] = null;
-                            }
-                            RenderSaveSlot(i, _saveSlots[i]);
-                        }
-                    }));
+                    StartCoroutine(APIManager.Instance.GetCharacters(ApplyServerCharacters));
                 }
                 else
                 {
@@ -353,6 +331,38 @@ namespace Attrition.UI
                 }
             }
         }
+
+        /// <summary>
+        /// Đổ danh sách nhân vật SERVER vào slot UI (slot i = characters[i]) + cache id.
+        /// Tách riêng để luồng "tạo nhân vật rồi vào phòng" (<see cref="RefreshCharacterIdsThen"/>)
+        /// dùng CHUNG một chỗ — trước đây nó chỉ ghi _characterIds nên _saveSlots còn dữ liệu cũ,
+        /// mà SetCoopLaunchContext lại đọc _saveSlots để lấy tên + level hiển thị.
+        /// </summary>
+        private void ApplyServerCharacters(System.Collections.Generic.List<APIManager.CharacterSummaryDto> characters)
+        {
+            for (int i = 0; i < SaveManager.SlotCount; i++)
+            {
+                if (characters != null && i < characters.Count)
+                {
+                    var c = characters[i];
+                    _characterIds[i] = c.id;
+                    _saveSlots[i] = new SaveSlotData {
+                        characterName = c.name,
+                        level = c.latestSnapshot?.level ?? 1,
+                        location = "Server Save",
+                        playtime = c.latestSnapshot?.playtimeSeconds.ToString() ?? "0",
+                        deaths = 0
+                    };
+                }
+                else
+                {
+                    _characterIds[i] = null;
+                    _saveSlots[i] = null;
+                }
+                RenderSaveSlot(i, _saveSlots[i]);
+            }
+        }
+
         private void RenderSaveSlot(int index, SaveSlotData data)
         {
             var slotBtn = _root.Q<Button>($"save-slot-{index}");
@@ -837,8 +847,14 @@ namespace Attrition.UI
                     
                     StartCoroutine(APIManager.Instance.PostSnapshot(req, success =>
                     {
-                        if (success) LoadSavesFromDisk(); // Refresh danh sách để lấy ID
-                        ProceedOnlineFlow();
+                        // PHẢI có characterId của nhân vật VỪA TẠO trước khi SetCoopLaunchContext đọc
+                        // _characterIds. Trước đây gọi LoadSavesFromDisk() (fetch NỀN, coroutine riêng)
+                        // rồi chạy ProceedOnlineFlow() NGAY → SetCoopLaunchContext đọc _characterIds còn
+                        // RỖNG → GameLaunch.CharacterId = "" → PlayerInventory.OwnerCharacterId của HOST
+                        // rỗng → SaveAllOnline BỎ QUA host ("BỎ QUA 1 player: charId=''"). Đúng lỗi:
+                        // web chỉ có tiến trình của client, không có của host.
+                        if (success) StartCoroutine(RefreshCharacterIdsThen(name, ProceedOnlineFlow));
+                        else ProceedOnlineFlow();
                     }));
                 }
                 else
@@ -873,6 +889,46 @@ namespace Attrition.UI
                     });
                 }
             }
+        }
+
+        /// <summary>
+        /// Fetch lại danh sách nhân vật server và CHỜ xong mới chạy <paramref name="next"/>.
+        /// Cần cho luồng "tạo nhân vật coop mới → vào phòng": SetCoopLaunchContext đọc _characterIds
+        /// nên id của nhân vật vừa tạo phải có TRƯỚC đó, nếu không GameLaunch.CharacterId = "" và
+        /// host bị SaveAllOnline bỏ qua (web không có tiến trình host).
+        ///
+        /// PHẢI dò theo TÊN, không theo vị trí slot: online mode map slot i = characters[i], mà server
+        /// trả danh sách sắp theo UpdatedAt GIẢM DẦN (CharacterRepository.GetByOwnerWithSnapshotsAsync).
+        /// Nhân vật vừa tạo là mới nhất → nhảy về index 0, KHÔNG nằm ở slot FindFirstEmptySlot() đã
+        /// chọn lúc trước. Nếu tài khoản đã có nhân vật khác, đọc theo slot cũ sẽ lấy nhầm id của
+        /// NHÂN VẬT CŨ → ghi đè tiến trình người ta. Tên là duy nhất theo owner (unique index
+        /// (OwnerId, Name)) nên dò tên là chính xác.
+        /// Fetch lỗi / không thấy tên → vẫn chạy next: thà vào phòng với id rỗng còn hơn kẹt ở menu.
+        /// </summary>
+        private System.Collections.IEnumerator RefreshCharacterIdsThen(string createdName, System.Action next)
+        {
+            if (APIManager.Instance == null) { next?.Invoke(); yield break; }
+
+            int foundSlot = -1;
+            yield return APIManager.Instance.GetCharacters(characters =>
+            {
+                if (characters == null) return;
+                ApplyServerCharacters(characters);
+                for (int i = 0; i < SaveManager.SlotCount && i < characters.Count; i++)
+                    if (characters[i].name == createdName) { foundSlot = i; break; }
+            });
+
+            if (foundSlot >= 0)
+            {
+                _selectedSaveSlot = foundSlot;
+            }
+            else
+            {
+                Debug.LogWarning($"[Coop] Không tìm thấy nhân vật '{createdName}' trên server sau khi tạo — "
+                                 + "tiến trình của người chơi này sẽ KHÔNG lưu được lên server.");
+            }
+
+            next?.Invoke();
         }
 
         private static void ResetFreshCharacterState()

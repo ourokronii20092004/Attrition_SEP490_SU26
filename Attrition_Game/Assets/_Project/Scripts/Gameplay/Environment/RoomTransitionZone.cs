@@ -153,6 +153,16 @@ namespace Attrition.Gameplay.Environment
 
             // Màn đen dần trên MỌI máy.
             yield return SceneFader.FadeOut(fadeOutDuration);
+
+            // LƯU TRƯỚC KHI SANG MAP — và CHỜ lưu xong.
+            // Boss đã hạ giờ tự ghi 1 row ngay lúc chết (BossGateController.FinishDefeat →
+            // SaveBossDefeatOnline), nhưng EXP/đồ/skill/level từ lần rest gần nhất thì KHÔNG: coop bulk
+            // save chỉ chạy ở mốc Rest/Quit/Death/LevelUp. Hạ boss → sang map 2 mà không rest → host
+            // thoát/crash = mất sạch phần đó. Cửa nối map là mốc "không lưu là mất" rõ nhất nên lưu ngay.
+            // Chỉ host thực sự lưu (Save() no-op ở client) nên chỉ host phải chờ.
+            var saver = Attrition.Gameplay.Persistence.GameSaveService.EnsureExists();
+            yield return saver.SaveAndWait(Attrition.Gameplay.Persistence.GameSaveService.SaveEvent.MapChange);
+
             if (showEndingTitle)
                 yield return EndingTitleCard.Show("ATTRITION");
 
