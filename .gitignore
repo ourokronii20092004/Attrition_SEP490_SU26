@@ -76,3 +76,14 @@ uploads/
 Attrition_Game_clone_*/
 *_clone_*/
 .ParrelSyncArguments
+
+# =============================================
+# Scratch docs and helper scripts
+# =============================================
+# Working notes and one-off scripts live at the repo root and are not part of the
+# delivered project. Content the app actually serves (the story chapters under
+# frontend/src/content) and per-directory READMEs stay tracked.
+/*.md
+!/README.md
+/*.sh
+/*.py
