@@ -20,7 +20,11 @@ public static class SceneEntryRegistry
     public static void Register(string id, Vector3 pos, object owner = null)
     {
         if (string.IsNullOrEmpty(id)) return;
-        _points[id] = pos;
+        // z PHẢI về 0. Điểm vào thường là con của một object đã bị đẩy z (vd BossExitGate ở Map 2 có
+        // z = 3.59) nên position thừa hưởng z đó. Player là 2D: teleport tới z ≠ 0 làm nhân vật nằm
+        // SAU lớp tilemap nền → nhìn như "spawn dưới lòng đất", dù x/y hoàn toàn đúng.
+        // Chuẩn hoá tại đây chứ không ở chỗ đọc, để mọi nguồn đăng ký đều sạch.
+        _points[id] = new Vector3(pos.x, pos.y, 0f);
         _owners[id] = owner;
     }
 

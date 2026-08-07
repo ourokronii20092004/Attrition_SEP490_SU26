@@ -334,7 +334,7 @@ MonoBehaviour:
   attackAngle: 75
   targetLayers:
     serializedVersion: 2
-    m_Bits: 768
+    m_Bits: 8960
   normalAttackType: 0
   chargeAttackType: 0
   _IsAttacking:
@@ -501,7 +501,7 @@ MonoBehaviour:
   castPoint: {fileID: 4851926045855186506}
   targetLayers:
     serializedVersion: 2
-    m_Bits: 768
+    m_Bits: 8960
   _IsCasting:
     _value: 0
 --- !u!114 &817566648311922267

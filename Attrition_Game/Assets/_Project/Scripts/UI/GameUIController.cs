@@ -198,6 +198,8 @@ namespace Attrition.UI
                 else if (_overlay == Overlay.Pause) ResumeFromPause();
                 // Inventory + đang mở bảng EQUIP/DROP → ESC chỉ đóng bảng đó, giữ nguyên inventory.
                 else if (_overlay == Overlay.Inventory && IsDetailOpen) CloseInventoryDetail();
+                // Inventory đang mở (không có bảng con) → ESC đóng luôn, không mở Pause chồng lên.
+                else if (_overlay == Overlay.Inventory) ShowOverlay(Overlay.None);
                 else
                 {
                     _overlayBeforePause = _overlay;

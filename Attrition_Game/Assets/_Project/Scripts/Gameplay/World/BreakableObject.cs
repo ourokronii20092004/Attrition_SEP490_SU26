@@ -14,7 +14,8 @@ namespace Attrition.Gameplay.World
     /// Đánh được vì implement IDamageable (PlayerCombat.DealDamage quét IDamageable trong tầm). Số đòn
     /// đã trúng là [Networked] nên đồng bộ host↔client; chỉ host đếm + despawn, client thấy rung qua RPC.
     /// Gắn lên GameObject có Collider2D KHÔNG trigger (để lọt vào OverlapCircle của đòn đánh) + NetworkObject.
-    /// Đặt layer nằm trong targetLayers của PlayerCombat (thường là 'Enemy' hoặc layer đánh được).
+    /// Đặt layer = 'Breakable' (đã nằm trong targetLayers của PlayerCombat/PlayerSkillCaster). ĐỪNG dùng layer
+    /// 'Enemy': matrix Physics2D tắt Player↔Enemy nên vật sẽ bị player đi xuyên qua dù có collider rắn.
     /// </summary>
     [RequireComponent(typeof(Collider2D))]
     public class BreakableObject : NetworkBehaviour, IDamageable

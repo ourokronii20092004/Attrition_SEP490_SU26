@@ -22,9 +22,10 @@ namespace Attrition.Editor
             var sv = SceneView.lastActiveSceneView;
             if (sv != null) go.transform.position = sv.pivot;
 
-            // Layer 'Enemy' để đòn đánh player (targetLayers) quét trúng. Đổi nếu dự án dùng layer khác.
-            int enemyLayer = LayerMask.NameToLayer("Enemy");
-            if (enemyLayer >= 0) go.layer = enemyLayer;
+            // Layer 'Breakable' (KHÔNG dùng 'Enemy'): matrix Physics2D tắt Player↔Enemy nên vật trên layer
+            // Enemy sẽ bị player đi xuyên qua. Breakable vẫn nằm trong targetLayers của PlayerCombat.
+            int breakableLayer = LayerMask.NameToLayer("Breakable");
+            if (breakableLayer >= 0) go.layer = breakableLayer;
 
             go.AddComponent<NetworkObject>();
 
@@ -51,9 +52,9 @@ namespace Attrition.Editor
 
             Selection.activeGameObject = go;
             EditorGUIUtility.PingObject(go);
-            Debug.Log("[Attrition] Đã tạo Breakable Object (6 đòn, chỉ vỡ khi đánh TỪ PHẢI). " +
+            Debug.Log("[Attrition] Đã tạo Breakable Object (6 đòn, chỉ vỡ khi đánh TỪ PHẢI, layer 'Breakable'). " +
                       "Gán sprite cho 'Visual', chỉnh Hits To Break / Break Only From Side nếu cần, " +
-                      "đảm bảo layer nằm trong targetLayers của PlayerCombat, rồi SAVE scene để Fusion bake NetworkObject.");
+                      "rồi SAVE scene để Fusion bake NetworkObject.");
         }
 
         private static void SetPrivate(Object target, string field, object value)

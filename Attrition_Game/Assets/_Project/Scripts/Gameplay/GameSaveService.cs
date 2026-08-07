@@ -468,6 +468,13 @@ namespace Attrition.Gameplay.Persistence
         {
             string questsJson = Attrition.Gameplay.NPC.NetworkNPC.CaptureAllJson();
             if (string.IsNullOrEmpty(questsJson)) return;
+
+            // Cập nhật holder quest coop bằng tiến trình VỪA gom. Holder trước đây chỉ được ghi 1 lần
+            // lúc fetch session (PlayerInventory.EnsureSessionLoaded), nhưng NPC là object CỦA SCENE —
+            // đổi map là despawn, quay lại là spawn mới và RestoreSavedProgress đọc lại holder này.
+            // Không cập nhật → đi map khác rồi quay lại thấy quest tụt về trạng thái lúc mới vào phòng.
+            Attrition.Persistence.GameLaunch.CoopQuestsJson = questsJson;
+
             try
             {
                 var list = JsonConvert.DeserializeObject<QuestProgressList>(questsJson);

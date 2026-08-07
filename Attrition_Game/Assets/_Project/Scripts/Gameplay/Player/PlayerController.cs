@@ -1100,6 +1100,20 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
         Attrition.Gameplay.Environment.WorldMapState.PendingTravelCheckpointId = checkpointName;
         RpcTravelLoading();
 
+        StartCoroutine(SaveThenTravel(targetScene));
+    }
+
+    /// <summary>
+    /// LƯU rồi CHỜ xong TRƯỚC khi load scene đích. Fast-travel cross-map là mốc "không lưu là mất"
+    /// giống cửa nối map (xem RoomTransitionZone): bulk save coop chỉ chạy ở mốc Rest/Quit/MapChange,
+    /// nên travel thẳng mà không lưu = mất sạch EXP/đồ/level kể từ lần rest gần nhất nếu host
+    /// thoát/crash sau đó. SaveAndWait có timeout riêng nên mạng treo cũng không kẹt màn đen.
+    /// </summary>
+    private System.Collections.IEnumerator SaveThenTravel(string targetScene)
+    {
+        var saver = Attrition.Gameplay.Persistence.GameSaveService.EnsureExists();
+        yield return saver.SaveAndWait(Attrition.Gameplay.Persistence.GameSaveService.SaveEvent.MapChange);
+
         var launcher = Attrition.Networking.NetworkLauncher.Instance;
         if (launcher != null) launcher.BeginGameplay(targetScene);
         else Debug.LogWarning("[FastTravel] Không tìm thấy NetworkLauncher.");
