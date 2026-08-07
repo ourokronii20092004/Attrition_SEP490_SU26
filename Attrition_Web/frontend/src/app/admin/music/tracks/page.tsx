@@ -6,8 +6,10 @@ import { useAuth, useConfirm } from "@/lib/providers";
 import { musicApi } from "@/lib/api/music";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
-import { PageLoader } from "@/components/ui/spinner";
-import { AdminPageHeader, AdminFilterBar, AdminTable, AdminRow } from "@/components/admin/admin-table";
+import {
+  AdminPageHeader, AdminFilterBar, AdminTable, AdminRow, AdminSelectCell, AdminBulkBar, applySort,
+  type SortState,
+} from "@/components/admin/admin-table";
 import { Pagination } from "@/components/ui/pagination";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { qk } from "@/lib/query-keys";
@@ -28,6 +30,8 @@ function AdminTracksList() {
   const [searchInput, setSearchInput] = useState("");
   const [albumFilter, setAlbumFilter] = useState("all");
   const [featuredFilter, setFeaturedFilter] = useState("all");
+  const [sort, setSort] = useState<SortState>({ key: "title", dir: "asc" });
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const search = useDebouncedValue(searchInput.trim().toLowerCase(), 200);
 
   const { data: albums = [] } = useQuery({
@@ -63,6 +67,21 @@ function AdminTracksList() {
     deleteMutation.mutate(id);
   };
 
+  const handleBulkDelete = async () => {
+    const ids = [...selected];
+    if (ids.length === 0) return;
+    const ok = await confirm({
+      title: `Delete ${ids.length} track${ids.length === 1 ? "" : "s"}?`,
+      message: "This permanently removes the selected tracks. It can't be undone.",
+      danger: true,
+      confirmLabel: `Delete ${ids.length}`,
+    });
+    if (!ok) return;
+    await Promise.allSettled(ids.map((id) => musicApi.deleteTrack(Number(id))));
+    setSelected(new Set());
+    invalidate();
+  };
+
   const filtered = tracks.filter((t) => {
     if (search && !t.title.toLowerCase().includes(search) && !t.artists.join(" ").toLowerCase().includes(search)) return false;
     if (albumFilter !== "all" && String(t.albumId) !== albumFilter) return false;
@@ -70,13 +89,30 @@ function AdminTracksList() {
     if (featuredFilter === "normal" && t.isFeatured) return false;
     return true;
   });
-  const { page, setPage, totalPages, paged } = useUrlPagination(filtered, 20);
+  const sorted = applySort(filtered, sort, {
+    title: (t) => t.title,
+    album: (t) => t.albumTitle,
+    num: (t) => t.trackNumber,
+    plays: (t) => t.playCount,
+    dur: (t) => t.duration,
+  });
+  const { page, setPage, totalPages, paged } = useUrlPagination(sorted, 20);
 
   if (!user || user.role !== "Admin") return null;
 
+  const selection = {
+    selected,
+    onChange: setSelected,
+    pageIds: paged.map((t) => String(t.trackId)),
+  };
+
   return (
     <div>
-      <AdminPageHeader title="Tracks" addLabel="Upload Track" onAdd={() => setShowUpload(true)} />
+      <AdminPageHeader title="Tracks" addLabel="Upload Track" onAdd={() => setShowUpload(true)}>
+        <AdminBulkBar count={selected.size} onClear={() => setSelected(new Set())}>
+          <Button size="sm" variant="danger" onClick={handleBulkDelete}>Delete</Button>
+        </AdminBulkBar>
+      </AdminPageHeader>
       <AdminFilterBar
         search={searchInput}
         onSearch={setSearchInput}
@@ -97,37 +133,40 @@ function AdminTracksList() {
         <TrackUploadFlow albums={albums} onDone={() => { setShowUpload(false); invalidate(); }} onCancel={() => setShowUpload(false)} />
       </Modal>
 
-      {isPending ? (
-        <PageLoader />
-      ) : (
-        <AdminTable
-          columns={[
-            { key: "title", label: "Title" },
-            { key: "album", label: "Album" },
-            { key: "num", label: "#" },
-            { key: "plays", label: "Plays" },
-            { key: "dur", label: "Length" },
-            { key: "actions", label: "Actions", align: "right" },
-          ]}
-          empty={filtered.length === 0}
-        >
-          {paged.map((t) => (
-            <AdminRow key={t.trackId}>
-              <td className="px-3 py-2">
-                <span className="font-medium text-fg">{t.title}</span>
-                {t.isFeatured && <span className="ml-2 rounded bg-accent-soft px-1.5 py-0.5 text-[10px] font-medium text-accent">Featured</span>}
-              </td>
-              <td className="px-3 py-2 text-fg-muted">{t.albumTitle ?? "—"}</td>
-              <td className="px-3 py-2 text-fg-muted tabular-nums">{t.trackNumber}</td>
-              <td className="px-3 py-2 text-fg-muted tabular-nums">{t.playCount}</td>
-              <td className="px-3 py-2 text-fg-muted tabular-nums">{fmtDuration(t.duration)}</td>
-              <td className="px-3 py-2 text-right">
-                <Button size="sm" variant="danger" onClick={() => handleDelete(t.trackId)}>Delete</Button>
-              </td>
-            </AdminRow>
-          ))}
-        </AdminTable>
-      )}
+      <AdminTable
+        columns={[
+          { key: "title", label: "Title", sortable: true },
+          { key: "album", label: "Album", sortable: true },
+          { key: "num", label: "#", align: "right", sortable: true },
+          { key: "plays", label: "Plays", align: "right", sortable: true },
+          { key: "dur", label: "Length", align: "right", sortable: true },
+          { key: "actions", label: "Actions", align: "right" },
+        ]}
+        sort={sort}
+        onSortChange={setSort}
+        selection={selection}
+        loading={isPending}
+        empty={filtered.length === 0}
+        emptyLabel={tracks.length === 0 ? "No tracks yet." : "No tracks match these filters."}
+        emptyHint={tracks.length === 0 ? "Use Upload Track to add the first one." : "Try a different search, album, or featured filter."}
+      >
+        {paged.map((t) => (
+          <AdminRow key={t.trackId} selected={selected.has(String(t.trackId))}>
+            <AdminSelectCell id={String(t.trackId)} selection={selection} />
+            <td className="px-3 py-2">
+              <span className="font-medium text-fg">{t.title}</span>
+              {t.isFeatured && <span className="ml-2 rounded bg-accent-soft px-1.5 py-0.5 text-[10px] font-medium text-accent">Featured</span>}
+            </td>
+            <td className="px-3 py-2 text-fg-muted">{t.albumTitle ?? "—"}</td>
+            <td className="px-3 py-2 text-right text-fg-muted tabular-nums">{t.trackNumber}</td>
+            <td className="px-3 py-2 text-right text-fg-muted tabular-nums">{t.playCount}</td>
+            <td className="px-3 py-2 text-right text-fg-muted tabular-nums">{fmtDuration(t.duration)}</td>
+            <td className="px-3 py-2 text-right">
+              <Button size="sm" variant="danger" onClick={() => handleDelete(t.trackId)}>Delete</Button>
+            </td>
+          </AdminRow>
+        ))}
+      </AdminTable>
       <Pagination page={page} totalPages={totalPages} onChange={setPage} compact />
     </div>
   );

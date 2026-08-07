@@ -41,18 +41,37 @@ function stripWikilinks(s: string): string {
 }
 
 function parseFrontmatter(raw: string): { data: Record<string, string>; body: string } {
-  const m = raw.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
-  if (!m) return { data: {}, body: raw };
+  // Normalize CRLF -> LF before anything else. The chapter files are authored on Windows (and
+  // .gitattributes only forces LF for *.sh), so a \n-anchored frontmatter regex silently failed
+  // on every chapter — leaking the whole YAML block (title/tags/pov/stratum) into the prose.
+  const text = raw.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  const m = text.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+  if (!m) return { data: {}, body: text };
   const data: Record<string, string> = {};
+  let lastKey: string | null = null;
   for (const line of m[1].split("\n")) {
+    // YAML block-sequence item ("  - chapter") belonging to the previous key. Collect it so a
+    // list-valued key can never fall through and be mistaken for body text.
+    const item = line.match(/^\s*-\s+(.*)$/);
+    if (item && lastKey) {
+      const v = item[1].trim().replace(/^["']|["']$/g, "");
+      data[lastKey] = data[lastKey] ? `${data[lastKey]}, ${v}` : v;
+      continue;
+    }
     const kv = line.match(/^([a-zA-Z0-9_]+):\s*(.*)$/);
-    if (kv) data[kv[1]] = kv[2].trim().replace(/^["']|["']$/g, "");
+    if (kv) {
+      lastKey = kv[1];
+      data[kv[1]] = kv[2].trim().replace(/^["']|["']$/g, "");
+    }
   }
   return { data, body: m[2] };
 }
 
 function cleanBody(body: string): string {
   let out = body;
+  // Belt-and-braces: if a file ever lacks the closing "---", strip a leading YAML-ish block so it
+  // still can't render as prose.
+  out = out.replace(/^---\n[\s\S]*?\n---\n?/, "");
   // Remove the first markdown H1 (the "# Ch01 · Arrival" title line) — the page renders its own title.
   out = out.replace(/^\s*#\s+.*\n/, "");
   // Flatten any wikilinks that appear in the prose to plain text.

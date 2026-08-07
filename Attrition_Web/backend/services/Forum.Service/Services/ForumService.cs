@@ -130,10 +130,18 @@ public class ForumService : IForumService
             isMuted = subs.FirstOrDefault()?.IsMuted ?? false;
         }
 
+        // Same fresh-avatar resolve as the thread list and the reply list. Without it the opening
+        // post is the one byline on the page rendering an initials fallback while its author's own
+        // replies right below show their real picture: AuthorAvatar is only a write-time snapshot,
+        // and it is null for every thread created before the avatar was set (or via a path that
+        // never captured one).
+        var threadAvatars = await _identity.ResolveUsersAsync(new[] { thread.AuthorId });
+
         return new ForumThreadDto(thread.Id, thread.Title ?? "Discussion", category?.Slug ?? string.Empty,
             thread.AuthorId, thread.AuthorName ?? "Unknown", thread.IsPinned, thread.IsLocked,
             thread.ReplyCount, thread.CreatedAt, thread.Content, ParseAttachments(thread.Attachments),
-            thread.AuthorAvatar, thread.AuthorRole, thread.UpdatedAt,
+            threadAvatars.GetValueOrDefault(thread.AuthorId)?.AvatarUrl ?? thread.AuthorAvatar,
+            thread.AuthorRole, thread.UpdatedAt,
             reactions.Count(r => r.ReactionType == ReactionType.Like),
             reactions.Count(r => r.ReactionType == ReactionType.Dislike),
             currentUserId.HasValue ? reactions.FirstOrDefault(r => r.UserId == currentUserId.Value)?.ReactionType : null,
@@ -336,8 +344,14 @@ public class ForumService : IForumService
             await _notify.NotifyUsernameAsync(username, NotifyType.Mention,
                 $"{author.Name} mentioned you in a post", link, author.Name, default);
 
+        // Resolve the avatar the same way the read paths do, so the reply the client renders from
+        // this response matches what it will show after the next refetch (the stored snapshot is
+        // null whenever the caller's token carried no avatar claim).
+        var authorAvatars = await _identity.ResolveUsersAsync(new[] { newPost.AuthorId });
+
         return ApiResponse<ForumPostDto>.Ok(new ForumPostDto(newPost.Id, threadId, newPost.ParentPostId,
-            newPost.Depth, newPost.AuthorId, newPost.AuthorName ?? "Unknown", newPost.AuthorAvatar,
+            newPost.Depth, newPost.AuthorId, newPost.AuthorName ?? "Unknown",
+            authorAvatars.GetValueOrDefault(newPost.AuthorId)?.AvatarUrl ?? newPost.AuthorAvatar,
             newPost.AuthorRole, newPost.Content, ParseAttachments(newPost.Attachments), newPost.CreatedAt,
             newPost.UpdatedAt, 0, 0, null));
     }

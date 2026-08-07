@@ -6,8 +6,10 @@ import { useConfirm } from "@/lib/providers";
 import { wikiApi } from "@/lib/api/wiki";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
-import { PageLoader } from "@/components/ui/spinner";
-import { AdminPageHeader, AdminFilterBar, AdminTable, AdminRow } from "@/components/admin/admin-table";
+import {
+  AdminPageHeader, AdminFilterBar, AdminTable, AdminRow, AdminSelectCell, AdminBulkBar, applySort,
+  type SortState,
+} from "@/components/admin/admin-table";
 import { Pagination } from "@/components/ui/pagination";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { useUrlPagination } from "@/lib/hooks/use-url-pagination";
@@ -23,6 +25,8 @@ export function ArticlesAdmin() {
   const [formDirty, setFormDirty] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [sort, setSort] = useState<SortState>({ key: "updated", dir: "desc" });
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const search = useDebouncedValue(searchInput.trim().toLowerCase(), 200);
 
   const { data: articles = [], isPending: articlesLoading } = useQuery({
@@ -53,18 +57,46 @@ export function ArticlesAdmin() {
     removeMutation.mutate(id);
   };
 
+  const handleBulkDelete = async () => {
+    const ids = [...selected];
+    if (ids.length === 0) return;
+    const ok = await confirm({
+      title: `Delete ${ids.length} article${ids.length === 1 ? "" : "s"}?`,
+      message: "This permanently removes the selected articles. It can't be undone.",
+      danger: true,
+      confirmLabel: `Delete ${ids.length}`,
+    });
+    if (!ok) return;
+    await Promise.allSettled(ids.map((id) => wikiApi.deleteArticle(id)));
+    setSelected(new Set());
+    invalidate();
+  };
+
   const filtered = articles.filter((a) => {
     if (categoryFilter !== "all" && a.categorySlug !== categoryFilter) return false;
     if (search && !a.title.toLowerCase().includes(search)) return false;
     return true;
   });
-  const { page, setPage, totalPages, paged } = useUrlPagination(filtered, 20);
+  const sorted = applySort(filtered, sort, {
+    title: (a) => a.title,
+    category: (a) => a.categorySlug,
+    updated: (a) => a.updatedAt,
+  });
+  const { page, setPage, totalPages, paged } = useUrlPagination(sorted, 20);
 
-  if (articlesLoading || categoriesLoading) return <PageLoader />;
+  const selection = {
+    selected,
+    onChange: setSelected,
+    pageIds: paged.map((a) => a.id),
+  };
 
   return (
     <div>
-      <AdminPageHeader title="Wiki Articles" addLabel="New Article" onAdd={() => setEditing("new")} />
+      <AdminPageHeader title="Wiki Articles" addLabel="New Article" onAdd={() => setEditing("new")}>
+        <AdminBulkBar count={selected.size} onClear={() => setSelected(new Set())}>
+          <Button size="sm" variant="danger" onClick={handleBulkDelete}>Delete</Button>
+        </AdminBulkBar>
+      </AdminPageHeader>
       <AdminFilterBar
         search={searchInput}
         onSearch={setSearchInput}
@@ -97,15 +129,22 @@ export function ArticlesAdmin() {
 
       <AdminTable
         columns={[
-          { key: "title", label: "Title" },
-          { key: "category", label: "Category" },
-          { key: "updated", label: "Updated" },
+          { key: "title", label: "Title", sortable: true },
+          { key: "category", label: "Category", sortable: true },
+          { key: "updated", label: "Updated", sortable: true },
           { key: "actions", label: "Actions", align: "right" },
         ]}
+        sort={sort}
+        onSortChange={setSort}
+        selection={selection}
+        loading={articlesLoading || categoriesLoading}
         empty={filtered.length === 0}
+        emptyLabel={articles.length === 0 ? "No articles yet." : "No articles match these filters."}
+        emptyHint={articles.length === 0 ? "Use New Article to write the first one." : "Try a different search or category."}
       >
         {paged.map((a) => (
-          <AdminRow key={a.id} onClick={() => setEditing(a)}>
+          <AdminRow key={a.id} onClick={() => setEditing(a)} selected={selected.has(a.id)}>
+            <AdminSelectCell id={a.id} selection={selection} />
             <td className="px-3 py-2 font-medium text-fg">{a.title}</td>
             <td className="px-3 py-2 text-fg-muted">{a.categorySlug}</td>
             <td className="px-3 py-2 text-fg-muted">{formatDate(a.updatedAt)}</td>

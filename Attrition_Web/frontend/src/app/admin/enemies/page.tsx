@@ -15,12 +15,14 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { ItemPicker } from "@/components/ui/item-picker";
 import { Modal } from "@/components/ui/modal";
-import { PageLoader } from "@/components/ui/spinner";
-import { AdminPageHeader, AdminFilterBar, AdminTable, AdminRow } from "@/components/admin/admin-table";
+import {
+  AdminPageHeader, AdminFilterBar, AdminTable, AdminRow, AdminSelectCell, AdminBulkBar, applySort,
+  type SortState,
+} from "@/components/admin/admin-table";
 import { AssetImageField } from "@/components/admin/asset-image-field";
 import { Pagination } from "@/components/ui/pagination";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
-import { ENEMY_TIERS } from "@/lib/enemy-tiers";
+import { ENEMY_TIERS, tierRank } from "@/lib/enemy-tiers";
 import { qk } from "@/lib/query-keys";
 import type { EnemyResponse, EnemyCreateRequest, EnemyUpdateRequest } from "@/lib/types";
 import { useUrlPagination } from "@/lib/hooks/use-url-pagination";
@@ -34,6 +36,8 @@ function AdminEnemiesList() {
   const [formDirty, setFormDirty] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [tierFilter, setTierFilter] = useState("all");
+  const [sort, setSort] = useState<SortState>({ key: "name", dir: "asc" });
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const search = useDebouncedValue(searchInput.trim().toLowerCase(), 200);
 
   const { data: enemies = [], isPending: loading } = useQuery({
@@ -57,19 +61,50 @@ function AdminEnemiesList() {
     deleteMutation.mutate(id);
   };
 
+  const handleBulkDelete = async () => {
+    const ids = [...selected];
+    if (ids.length === 0) return;
+    const ok = await confirm({
+      title: `Delete ${ids.length} enem${ids.length === 1 ? "y" : "ies"}?`,
+      message: "This permanently removes the selected enemies. It can't be undone.",
+      danger: true,
+      confirmLabel: `Delete ${ids.length}`,
+    });
+    if (!ok) return;
+    await Promise.allSettled(ids.map((id) => enemiesApi.delete(id)));
+    setSelected(new Set());
+    invalidate();
+  };
+
   const filtered = enemies.filter((e) => {
     if (tierFilter !== "all" && e.tier !== tierFilter) return false;
     if (search && !e.name.toLowerCase().includes(search) && !(e.spawnBiome ?? "").toLowerCase().includes(search)) return false;
     return true;
   });
-  const { page, setPage, totalPages, paged } = useUrlPagination(filtered, 20);
+  // Tier sorts by threat ladder (Normal → Elite → Boss), not alphabetically.
+  const sorted = applySort(filtered, sort, {
+    name: (e) => e.name,
+    tier: (e) => tierRank(e.tier),
+    biome: (e) => e.spawnBiome,
+    drops: (e) => e.lootTable.length,
+  });
+  const { page, setPage, totalPages, paged } = useUrlPagination(sorted, 20);
 
   if (!user || user.role !== "Admin") return null;
-  if (loading) return <PageLoader />;
+
+  const selection = {
+    selected,
+    onChange: setSelected,
+    pageIds: paged.map((e) => e.enemyId),
+  };
 
   return (
     <div>
-      <AdminPageHeader title="Enemies" addLabel="Add Enemy" onAdd={() => { setEditing(null); setShowForm(true); }} />
+      <AdminPageHeader title="Enemies" addLabel="Add Enemy" onAdd={() => { setEditing(null); setShowForm(true); }}>
+        <AdminBulkBar count={selected.size} onClear={() => setSelected(new Set())}>
+          <Button size="sm" variant="danger" onClick={handleBulkDelete}>Delete</Button>
+        </AdminBulkBar>
+      </AdminPageHeader>
       <AdminFilterBar
         search={searchInput}
         onSearch={setSearchInput}
@@ -94,16 +129,27 @@ function AdminEnemiesList() {
       <AdminTable
         columns={[
           { key: "img", label: "" },
-          { key: "name", label: "Name" },
-          { key: "tier", label: "Tier" },
-          { key: "biome", label: "Biome" },
-          { key: "drops", label: "Drops" },
+          { key: "name", label: "Name", sortable: true },
+          { key: "tier", label: "Tier", sortable: true },
+          { key: "biome", label: "Biome", sortable: true },
+          { key: "drops", label: "Drops", align: "right", sortable: true },
           { key: "actions", label: "Actions", align: "right" },
         ]}
+        sort={sort}
+        onSortChange={setSort}
+        selection={selection}
+        loading={loading}
         empty={filtered.length === 0}
+        emptyLabel={enemies.length === 0 ? "No enemies yet." : "No enemies match these filters."}
+        emptyHint={enemies.length === 0 ? "Use Add Enemy to create the first one." : "Try a different search or tier."}
       >
         {paged.map((e) => (
-          <AdminRow key={e.enemyId} onClick={() => { setEditing(e); setShowForm(true); }}>
+          <AdminRow
+            key={e.enemyId}
+            onClick={() => { setEditing(e); setShowForm(true); }}
+            selected={selected.has(e.enemyId)}
+          >
+            <AdminSelectCell id={e.enemyId} selection={selection} />
             <td className="px-3 py-2">
               {e.imageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -115,7 +161,7 @@ function AdminEnemiesList() {
             <td className="px-3 py-2 font-medium text-fg">{e.name}</td>
             <td className="px-3 py-2 text-fg-muted">{e.tier}</td>
             <td className="px-3 py-2 text-fg-muted">{e.spawnBiome || "—"}</td>
-            <td className="px-3 py-2 tabular-nums text-fg-muted">{e.lootTable.length}</td>
+            <td className="px-3 py-2 text-right tabular-nums text-fg-muted">{e.lootTable.length}</td>
             <td className="px-3 py-2 text-right">
               <div className="flex justify-end gap-2">
                 <Button size="sm" variant="secondary" onClick={(ev) => { ev.stopPropagation(); setEditing(e); setShowForm(true); }}>Edit</Button>
@@ -278,7 +324,7 @@ function EnemyForm({ initial, onDone, onCancel, onDirtyChange }: { initial: Enem
               value={watch(`lootTable.${i}.itemName`) ?? ""}
               error={errors.lootTable?.[i]?.itemName?.message}
               onSelect={(it) => {
-                // Ghi itemId (= ItemSO.itemId game dùng tra) + auto-fill rarity/icon từ item DB.
+                // Writes itemId (the ItemSO.itemId the game looks up) + auto-fills rarity/icon from the item DB.
                 setValue(`lootTable.${i}.itemName`, it.itemId, { shouldDirty: true, shouldValidate: true });
                 setValue(`lootTable.${i}.rarity`, it.rarity, { shouldDirty: true });
                 setValue(`lootTable.${i}.iconKey`, it.iconKey, { shouldDirty: true });

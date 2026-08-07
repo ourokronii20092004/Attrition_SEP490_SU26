@@ -1,5 +1,5 @@
 import { clsx } from "clsx";
-import { forwardRef, useState } from "react";
+import { forwardRef, useId, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -8,7 +8,11 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(({ label, error, className, id, type, ...props }, ref) => {
-  const inputId = id ?? label?.toLowerCase().replace(/\s+/g, "-");
+  // A stable generated fallback: deriving the id from the label alone collided whenever two fields
+  // shared a label on one page (two "Name" inputs pointed the same htmlFor at the first one).
+  const generatedId = useId();
+  const inputId = id ?? (label ? `${label.toLowerCase().replace(/\s+/g, "-")}-${generatedId}` : generatedId);
+  const errorId = `${inputId}-error`;
   // Password fields get a reveal toggle so users can check what they typed (register/login/settings).
   const isPassword = type === "password";
   const [reveal, setReveal] = useState(false);
@@ -26,6 +30,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({ label, error, c
           ref={ref}
           id={inputId}
           type={effectiveType}
+          // Without these, a screen reader reads the field as valid and never reaches the error
+          // text sitting next to it in the DOM.
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
           className={clsx(
             "w-full rounded-md border border-border bg-surface-2/60 px-3.5 py-2.5 text-fg outline-none transition-colors",
             "placeholder:text-fg-subtle focus:border-accent focus:bg-surface-2 focus:ring-1 focus:ring-accent",
@@ -47,7 +55,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({ label, error, c
           </button>
         )}
       </div>
-      {error && <p className="text-xs text-danger">{error}</p>}
+      {error && <p id={errorId} className="text-xs text-danger">{error}</p>}
     </div>
   );
 });

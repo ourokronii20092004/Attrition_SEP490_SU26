@@ -4,8 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { forumApi } from "@/lib/api/forum";
 import { Button } from "@/components/ui/button";
-import { PageLoader } from "@/components/ui/spinner";
-import { AdminPageHeader, AdminFilterBar, AdminTable, AdminRow } from "@/components/admin/admin-table";
+import { AdminFilterBar, AdminTable, AdminRow } from "@/components/admin/admin-table";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { formatDate } from "@/lib/format-date";
 import { qk } from "@/lib/query-keys";
@@ -33,7 +32,11 @@ export function ReportsQueue() {
   const reports = data?.items ?? [];
   const totalPages = data?.totalPages ?? 1;
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: qk.admin.forum.reports() });
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: qk.admin.forum.reports() });
+    // Keep the tab badge honest the moment a report leaves the pending list.
+    queryClient.invalidateQueries({ queryKey: ["admin", "reports", "pending-count"] });
+  };
 
   const dismissMutation = useMutation({
     mutationFn: async (id: string) => { await forumApi.dismissReport(id); },
@@ -44,15 +47,12 @@ export function ReportsQueue() {
     onSuccess: invalidate,
   });
 
-  if (loading) return <PageLoader />;
-
   const filtered = search
     ? reports.filter((r) => r.authorName.toLowerCase().includes(search) || r.reporterName.toLowerCase().includes(search) || r.reason.toLowerCase().includes(search))
     : reports;
 
   return (
     <div>
-      <AdminPageHeader title="Forum Reports" />
       <AdminFilterBar
         search={searchInput}
         onSearch={setSearchInput}
@@ -73,7 +73,10 @@ export function ReportsQueue() {
           { key: "when", label: "When" },
           { key: "actions", label: "Actions", align: "right" },
         ]}
+        loading={loading}
         empty={filtered.length === 0}
+        emptyLabel={statusFilter === "Pending" ? "Nothing to moderate." : `No ${statusFilter.toLowerCase()} reports.`}
+        emptyHint={statusFilter === "Pending" ? "Reported posts will appear here." : "Try a different status or search."}
       >
         {filtered.map((r) => (
           <AdminRow key={r.id}>

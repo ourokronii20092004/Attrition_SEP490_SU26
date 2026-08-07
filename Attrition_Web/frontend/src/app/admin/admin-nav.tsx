@@ -17,7 +17,12 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
       { href: "/admin/users", label: "Users", icon: Users },
-      { href: "/admin/user-reports", label: "User Reports", icon: Flag },
+      // Post reports and user reports are one tabbed workspace now — a single "is anything waiting?"
+      // destination rather than two entries in two different groups.
+      { href: "/admin/forum/reports", label: "Reports", icon: Flag, children: [
+        { href: "/admin/forum/reports", label: "Post reports" },
+        { href: "/admin/user-reports", label: "User reports" },
+      ] },
     ],
   },
   {
@@ -29,7 +34,6 @@ const NAV_GROUPS: NavGroup[] = [
         { href: "/admin/wiki/categories", label: "Categories" },
       ] },
       { href: "/admin/forum", label: "Forum", icon: MessagesSquare, children: [
-        { href: "/admin/forum/reports", label: "Reports" },
         { href: "/admin/forum/threads", label: "Threads" },
         { href: "/admin/forum/categories", label: "Categories" },
       ] },
@@ -54,8 +58,16 @@ const NAV_GROUPS: NavGroup[] = [
 
 export function AdminNav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
-  const isActive = (href: string, exact?: boolean) =>
-    exact ? pathname === href : pathname === href || pathname.startsWith(href + "/");
+  // Items with children own an explicit route list, so their parent link only lights up for its
+  // own exact path or one of those listed children — a blanket prefix match would also catch
+  // sibling routes that happen to nest under the same segment (e.g. /admin/forum/reports living
+  // under "Reports", not "Forum", even though both start with /admin/forum).
+  const isActive = (item: NavItem) => {
+    if (item.children) {
+      return pathname === item.href || item.children.some((c) => pathname === c.href || pathname.startsWith(c.href + "/"));
+    }
+    return item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(item.href + "/");
+  };
 
   return (
     <nav className="space-y-5">
@@ -66,8 +78,9 @@ export function AdminNav({ onNavigate }: { onNavigate?: () => void }) {
               {group.label}
             </p>
           )}
-          {group.items.map(({ href, label, icon: Icon, exact, children }) => {
-            const active = isActive(href, exact);
+          {group.items.map((item) => {
+            const { href, label, icon: Icon, children } = item;
+            const active = isActive(item);
             return (
               <div key={href}>
                 <Link

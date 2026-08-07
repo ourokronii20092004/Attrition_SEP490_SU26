@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Keyboard, X } from "lucide-react";
+import { useFocusTrap } from "@/lib/hooks/use-focus-trap";
 
 /**
  * Admin keyboard shortcuts. Each top-level destination is reachable with a "g then <key>" chord
@@ -43,6 +44,7 @@ export const ADMIN_HELP_EVENT = "attrition:admin:help";
 export function AdminHotkeys() {
   const router = useRouter();
   const [helpOpen, setHelpOpen] = useState(false);
+  const panelRef = useFocusTrap<HTMLDivElement>(helpOpen);
 
   useEffect(() => {
     const open = () => setHelpOpen(true);
@@ -89,7 +91,7 @@ export function AdminHotkeys() {
       aria-label="Keyboard shortcuts"
       onClick={() => setHelpOpen(false)}
     >
-      <div className="card w-full max-w-md p-5 shadow-[var(--shadow-lg)]" onClick={(e) => e.stopPropagation()}>
+      <div ref={panelRef} className="card w-full max-w-md p-5 shadow-[var(--shadow-lg)]" onClick={(e) => e.stopPropagation()}>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="flex items-center gap-2 font-display text-lg font-semibold text-fg">
             <Keyboard size={18} /> Keyboard shortcuts
