@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Sparkles } from "lucide-react";
 import { skillsApi } from "@/lib/api/skills";
@@ -13,11 +13,14 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { SkeletonGrid } from "@/components/ui/skeleton";
 import { SkillTree } from "@/components/skill-tree";
 import { buildSkillTree, ELEMENTS } from "@/lib/skill-tree";
+import { useQueryParam } from "@/lib/hooks/use-url-pagination";
 
-export default function SkillsPage() {
-  const [search, setSearch] = useState("");
-  const [element, setElement] = useState("");
-  const [damageType, setDamageType] = useState("");
+function SkillsBrowser() {
+  // Filters live in the URL so opening a skill and pressing Back restores the exact view —
+  // the behaviour bestiary/items/wiki/forum already have.
+  const [search, setSearch] = useQueryParam("q");
+  const [element, setElement] = useQueryParam("element");
+  const [damageType, setDamageType] = useQueryParam("damage");
   const { data: skills = [], isPending } = useQuery({
     queryKey: qk.skills.list(),
     queryFn: async () => { const r = await skillsApi.list(); return r.success ? r.data ?? [] : []; },
@@ -42,4 +45,13 @@ export default function SkillsPage() {
         <SkillTree branches={branches} renderHref={(s) => `/skills/${encodeURIComponent(s.skillId)}`} />
       </div>}
   </PageShell>;
+}
+
+export default function SkillsPage() {
+  // useSearchParams (via useQueryParam) needs a Suspense boundary.
+  return (
+    <Suspense fallback={null}>
+      <SkillsBrowser />
+    </Suspense>
+  );
 }

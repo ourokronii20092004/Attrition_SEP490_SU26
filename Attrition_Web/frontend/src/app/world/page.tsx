@@ -21,8 +21,8 @@ interface WorldArea {
   bossCount: number;
 }
 
-// World/Map chưa có bảng riêng ở backend — nhưng mỗi quái mang spawnBiome (khu vực nó xuất hiện).
-// Trang này gom quái theo biome để tạo "bản đồ thế giới": mỗi area liệt kê cư dân của nó.
+// The backend has no dedicated World/Map table — but every enemy carries a spawnBiome (the area it
+// appears in). This page groups enemies by biome to build a "world map": each area lists its residents.
 function aggregateAreas(enemies: EnemyResponse[]): WorldArea[] {
   const map = new Map<string, WorldArea>();
   for (const e of enemies) {

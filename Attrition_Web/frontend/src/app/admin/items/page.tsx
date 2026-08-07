@@ -13,10 +13,12 @@ import { parseApiError } from "@/lib/api/parse-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { RARITY_ORDER, rarityColor } from "@/lib/rarity";
+import { RARITY_ORDER, rarityColor, rarityRank } from "@/lib/rarity";
 import { Modal } from "@/components/ui/modal";
-import { PageLoader } from "@/components/ui/spinner";
-import { AdminPageHeader, AdminFilterBar, AdminTable, AdminRow } from "@/components/admin/admin-table";
+import {
+  AdminPageHeader, AdminFilterBar, AdminTable, AdminRow, AdminSelectCell, AdminBulkBar, applySort,
+  type SortState,
+} from "@/components/admin/admin-table";
 import { AssetImageField } from "@/components/admin/asset-image-field";
 import { Pagination } from "@/components/ui/pagination";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
@@ -36,6 +38,8 @@ function AdminItemsList() {
   const [formDirty, setFormDirty] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [sort, setSort] = useState<SortState>({ key: "name", dir: "asc" });
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const search = useDebouncedValue(searchInput.trim().toLowerCase(), 200);
 
   const { data: items = [], isPending: loading } = useQuery({
@@ -59,20 +63,52 @@ function AdminItemsList() {
     deleteMutation.mutate(id);
   };
 
+  const handleBulkDelete = async () => {
+    const ids = [...selected];
+    if (ids.length === 0) return;
+    const ok = await confirm({
+      title: `Delete ${ids.length} item${ids.length === 1 ? "" : "s"}?`,
+      message: "This permanently removes the selected items. It can't be undone.",
+      danger: true,
+      confirmLabel: `Delete ${ids.length}`,
+    });
+    if (!ok) return;
+    await Promise.allSettled(ids.map((id) => itemsApi.delete(id)));
+    setSelected(new Set());
+    invalidate();
+  };
+
   const filtered = items.filter((i) => {
     if (i.category === "Skill") return false;
     if (categoryFilter !== "all" && i.category !== categoryFilter) return false;
     if (search && !i.name.toLowerCase().includes(search) && !i.itemId.toLowerCase().includes(search)) return false;
     return true;
   });
-  const { page, setPage, totalPages, paged } = useUrlPagination(filtered, 20);
+  // Rarity sorts by ladder position, not alphabetically — "Epic" before "Legendary" is meaningless
+  // to an operator scanning for the strongest gear.
+  const sorted = applySort(filtered, sort, {
+    name: (i) => i.name,
+    category: (i) => i.category,
+    rarity: (i) => rarityRank(i.rarity),
+    mods: (i) => i.modifiers.length,
+  });
+  const { page, setPage, totalPages, paged } = useUrlPagination(sorted, 20);
 
   if (!user || user.role !== "Admin") return null;
-  if (loading) return <PageLoader />;
+
+  const selection = {
+    selected,
+    onChange: setSelected,
+    pageIds: paged.map((i) => i.itemId),
+  };
 
   return (
     <div>
-      <AdminPageHeader title="Items" addLabel="Add Item" onAdd={() => { setEditing(null); setShowForm(true); }} />
+      <AdminPageHeader title="Items" addLabel="Add Item" onAdd={() => { setEditing(null); setShowForm(true); }}>
+        <AdminBulkBar count={selected.size} onClear={() => setSelected(new Set())}>
+          <Button size="sm" variant="danger" onClick={handleBulkDelete}>Delete</Button>
+        </AdminBulkBar>
+      </AdminPageHeader>
       <AdminFilterBar
         search={searchInput}
         onSearch={setSearchInput}
@@ -97,16 +133,27 @@ function AdminItemsList() {
       <AdminTable
         columns={[
           { key: "img", label: "" },
-          { key: "name", label: "Name" },
-          { key: "category", label: "Category" },
-          { key: "rarity", label: "Rarity" },
-          { key: "mods", label: "Modifiers" },
+          { key: "name", label: "Name", sortable: true },
+          { key: "category", label: "Category", sortable: true },
+          { key: "rarity", label: "Rarity", sortable: true },
+          { key: "mods", label: "Modifiers", align: "right", sortable: true },
           { key: "actions", label: "Actions", align: "right" },
         ]}
+        sort={sort}
+        onSortChange={setSort}
+        selection={selection}
+        loading={loading}
         empty={filtered.length === 0}
+        emptyLabel={items.length === 0 ? "No items yet." : "No items match these filters."}
+        emptyHint={items.length === 0 ? "Use Add Item to create the first one." : "Try a different search or category."}
       >
         {paged.map((i) => (
-          <AdminRow key={i.itemId} onClick={() => { setEditing(i); setShowForm(true); }}>
+          <AdminRow
+            key={i.itemId}
+            onClick={() => { setEditing(i); setShowForm(true); }}
+            selected={selected.has(i.itemId)}
+          >
+            <AdminSelectCell id={i.itemId} selection={selection} />
             <td className="px-3 py-2">
               {i.imageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -122,7 +169,7 @@ function AdminItemsList() {
                   matches the ladder is visually obvious and can be corrected. */}
               <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${rarityColor(i.rarity)}`}>{i.rarity}</span>
             </td>
-            <td className="px-3 py-2 tabular-nums text-fg-muted">{i.modifiers.length}</td>
+            <td className="px-3 py-2 text-right tabular-nums text-fg-muted">{i.modifiers.length}</td>
             <td className="px-3 py-2 text-right">
               <div className="flex justify-end gap-2">
                 <Button size="sm" variant="secondary" onClick={(ev) => { ev.stopPropagation(); setEditing(i); setShowForm(true); }}>Edit</Button>
@@ -226,7 +273,7 @@ function ItemForm({ initial, onDone, onCancel, onDirtyChange }: { initial: ItemR
       </div>
       <label className="flex items-center gap-2 text-sm text-fg-muted">
         <input type="checkbox" {...register("isKeyItem")} className="rounded border-border" />
-        Key Item (không thể drop/bán/hủy)
+        Key Item (cannot be dropped, sold, or destroyed)
       </label>
       <div className="space-y-1">
         <label htmlFor="item-desc" className="block text-sm font-medium text-fg-muted">Description</label>

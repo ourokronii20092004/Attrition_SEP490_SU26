@@ -87,3 +87,8 @@ Attrition_Game_clone_*/
 !/README.md
 /*.sh
 /*.py
+
+# =============================================
+# Local UI review scratch (not part of delivery)
+# =============================================
+.ui-review/

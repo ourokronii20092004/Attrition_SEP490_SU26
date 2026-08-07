@@ -1,8 +1,9 @@
 "use client";
 
-import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useFocusTrap } from "@/lib/hooks/use-focus-trap";
 
 interface ConfirmOptions {
   title?: string;
@@ -34,6 +35,22 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
     setOpts(null);
   }, []);
 
+  const panelRef = useFocusTrap<HTMLDivElement>(!!opts);
+
+  // Escape must cancel. A React onKeyDown on the overlay div only fires while focus is inside it,
+  // so a document-level listener is what actually makes Escape work.
+  useEffect(() => {
+    if (!opts) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") settle(false); };
+    document.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [opts, settle]);
+
   return (
     <ConfirmContext.Provider value={confirm}>
       {children}
@@ -45,9 +62,8 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
           aria-labelledby="confirm-title"
           aria-describedby="confirm-message"
           onClick={() => settle(false)}
-          onKeyDown={(e) => { if (e.key === "Escape") settle(false); }}
         >
-          <div className="card w-full max-w-sm p-5 shadow-[var(--shadow-lg)]" onClick={(e) => e.stopPropagation()}>
+          <div ref={panelRef} className="card w-full max-w-sm p-5 shadow-[var(--shadow-lg)]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start gap-3">
               {opts.danger && (
                 <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-danger/10 text-danger">
@@ -62,10 +78,11 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
               </div>
             </div>
             <div className="mt-5 flex justify-end gap-2">
-              <Button variant="secondary" onClick={() => settle(false)}>Cancel</Button>
+              {/* Cancel takes initial focus and is the safe default: for a destructive confirm,
+                  landing focus on "Delete" means a reflexive Enter destroys data. */}
+              <Button variant="secondary" data-autofocus onClick={() => settle(false)}>Cancel</Button>
               <Button
                 variant={opts.danger ? "danger" : "primary"}
-                autoFocus
                 onClick={() => settle(true)}
               >
                 {opts.confirmLabel ?? "Confirm"}

@@ -9,3 +9,14 @@ export const TIER_COLOR: Record<string, string> = {
   Elite: "text-info bg-info/10",
   Boss: "text-danger bg-danger/10",
 };
+
+/**
+ * Ladder position for sorting (Normal < Elite < Boss). Sorting the raw string would order
+ * Boss/Elite/Normal alphabetically, which tells an operator nothing about threat.
+ * Unrecognised values sort before Normal rather than vanishing.
+ */
+export function tierRank(value: string | null | undefined): number {
+  if (!value) return -1;
+  const needle = value.trim().toLowerCase();
+  return ENEMY_TIERS.findIndex((t) => t.toLowerCase() === needle);
+}

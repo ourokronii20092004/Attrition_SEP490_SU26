@@ -9,8 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Modal } from "@/components/ui/modal";
-import { PageLoader } from "@/components/ui/spinner";
-import { AdminPageHeader, AdminFilterBar, AdminTable, AdminRow } from "@/components/admin/admin-table";
+import {
+  AdminPageHeader, AdminFilterBar, AdminTable, AdminRow, AdminSelectCell, AdminBulkBar, applySort,
+  type SortState,
+} from "@/components/admin/admin-table";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { formatDate } from "@/lib/format-date";
 import { qk } from "@/lib/query-keys";
@@ -25,6 +27,8 @@ export function ThreadsAdmin() {
   const [searchInput, setSearchInput] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [showNew, setShowNew] = useState(false);
+  const [sort, setSort] = useState<SortState>({ key: "activity", dir: "desc" });
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const search = useDebouncedValue(searchInput.trim().toLowerCase(), 200);
 
   const { data, isPending: loading } = useQuery({
@@ -49,7 +53,20 @@ export function ThreadsAdmin() {
     removeMutation.mutate(id);
   };
 
-  if (loading) return <PageLoader />;
+  const handleBulkDelete = async () => {
+    const ids = [...selected];
+    if (ids.length === 0) return;
+    const ok = await confirm({
+      title: `Delete ${ids.length} thread${ids.length === 1 ? "" : "s"}?`,
+      message: "This permanently removes the selected threads and all their posts. It can't be undone.",
+      danger: true,
+      confirmLabel: `Delete ${ids.length}`,
+    });
+    if (!ok) return;
+    await Promise.allSettled(ids.map((id) => forumApi.deleteThread(id)));
+    setSelected(new Set());
+    invalidate();
+  };
 
   const filtered = threads.filter((t) => {
     if (statusFilter === "pinned" && !t.isPinned) return false;
@@ -57,10 +74,26 @@ export function ThreadsAdmin() {
     if (search && !t.title.toLowerCase().includes(search) && !(t.authorName ?? "").toLowerCase().includes(search)) return false;
     return true;
   });
+  const sorted = applySort(filtered, sort, {
+    title: (t) => t.title,
+    author: (t) => t.authorName,
+    replies: (t) => t.replyCount,
+    activity: (t) => t.lastReplyAt,
+  });
+
+  const selection = {
+    selected,
+    onChange: setSelected,
+    pageIds: sorted.map((t) => t.id),
+  };
 
   return (
     <div>
-      <AdminPageHeader title="Forum Threads" addLabel="New Thread" onAdd={() => setShowNew(true)} />
+      <AdminPageHeader title="Forum Threads" addLabel="New Thread" onAdd={() => setShowNew(true)}>
+        <AdminBulkBar count={selected.size} onClear={() => setSelected(new Set())}>
+          <Button size="sm" variant="danger" onClick={handleBulkDelete}>Delete</Button>
+        </AdminBulkBar>
+      </AdminPageHeader>
       <AdminFilterBar
         search={searchInput}
         onSearch={setSearchInput}
@@ -79,23 +112,34 @@ export function ThreadsAdmin() {
 
       <AdminTable
         columns={[
-          { key: "title", label: "Thread" },
-          { key: "author", label: "Author" },
-          { key: "replies", label: "Replies" },
-          { key: "activity", label: "Last reply" },
+          { key: "title", label: "Thread", sortable: true },
+          { key: "author", label: "Author", sortable: true },
+          { key: "replies", label: "Replies", align: "right", sortable: true },
+          { key: "activity", label: "Last reply", sortable: true },
           { key: "actions", label: "Actions", align: "right" },
         ]}
+        sort={sort}
+        onSortChange={setSort}
+        selection={selection}
+        loading={loading}
         empty={filtered.length === 0}
+        emptyLabel={threads.length === 0 ? "No threads yet." : "No threads match these filters."}
+        emptyHint={threads.length === 0 ? "Use New Thread to start the first one." : "Try a different search or status."}
       >
-        {filtered.map((t) => (
-          <AdminRow key={t.id} onClick={() => router.push(`/admin/forum/threads/${t.id}`)}>
+        {sorted.map((t) => (
+          <AdminRow
+            key={t.id}
+            onClick={() => router.push(`/admin/forum/threads/${t.id}`)}
+            selected={selected.has(t.id)}
+          >
+            <AdminSelectCell id={t.id} selection={selection} />
             <td className="px-3 py-2">
               {t.isPinned && <span className="mr-1 text-xs font-medium text-accent">[Pinned]</span>}
               {t.isLocked && <span className="mr-1 text-xs font-medium text-warning">[Locked]</span>}
               <span className="font-medium text-fg">{t.title}</span>
             </td>
             <td className="px-3 py-2 text-fg-muted">{t.authorName ?? "Unknown"}</td>
-            <td className="px-3 py-2 tabular-nums text-fg-muted">{t.replyCount}</td>
+            <td className="px-3 py-2 text-right tabular-nums text-fg-muted">{t.replyCount}</td>
             <td className="px-3 py-2 text-fg-muted">{formatDate(t.lastReplyAt)}</td>
             <td className="px-3 py-2 text-right">
               <div className="flex justify-end gap-2">

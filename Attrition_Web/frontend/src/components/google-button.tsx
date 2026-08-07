@@ -38,8 +38,8 @@ export function GoogleButton({ label = "Continue with Google" }: { label?: strin
   const [retryIn, setRetryIn] = useState(0); // rate-limit countdown (seconds)
   const [redirecting, setRedirecting] = useState(false);
 
-  // Game mở web với ?client=unity. Lưu cờ này NGAY khi trang load để giữ ý định "về game" kể cả khi
-  // query bị rớt trước lúc người dùng bấm nút.
+  // The game opens the web app with ?client=unity. Save this flag IMMEDIATELY on page load to preserve
+  // the "return to game" intent even if the query string gets dropped before the user clicks the button.
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (new URLSearchParams(window.location.search).get("client") === "unity") {

@@ -8,8 +8,9 @@ import { musicApi } from "@/lib/api/music";
 import { resolveMediaUrl } from "@/lib/api/media";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
-import { PageLoader } from "@/components/ui/spinner";
-import { AdminPageHeader, AdminFilterBar, AdminTable, AdminRow } from "@/components/admin/admin-table";
+import {
+  AdminPageHeader, AdminFilterBar, AdminTable, AdminRow, applySort, type SortState,
+} from "@/components/admin/admin-table";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { qk } from "@/lib/query-keys";
 import { AlbumForm } from "../album-form";
@@ -22,6 +23,7 @@ export default function AdminAlbumsPage() {
   const [showForm, setShowForm] = useState(false);
   const [formDirty, setFormDirty] = useState(false);
   const [searchInput, setSearchInput] = useState("");
+  const [sort, setSort] = useState<SortState>({ key: "album", dir: "asc" });
   const search = useDebouncedValue(searchInput.trim().toLowerCase(), 200);
 
   const { data: albums = [], isPending } = useQuery({
@@ -50,6 +52,11 @@ export default function AdminAlbumsPage() {
   const filtered = search
     ? albums.filter((a) => a.title.toLowerCase().includes(search) || a.artists.join(" ").toLowerCase().includes(search))
     : albums;
+  const sorted = applySort(filtered, sort, {
+    album: (a) => a.title,
+    artists: (a) => a.artists.join(", "),
+    tracks: (a) => a.trackCount,
+  });
 
   return (
     <div>
@@ -64,37 +71,38 @@ export default function AdminAlbumsPage() {
         />
       </Modal>
 
-      {isPending ? (
-        <PageLoader />
-      ) : (
-        <AdminTable
-          columns={[
-            { key: "album", label: "Album" },
-            { key: "artists", label: "Artists" },
-            { key: "tracks", label: "Tracks" },
-            { key: "actions", label: "Actions", align: "right" },
-          ]}
-          empty={filtered.length === 0}
-        >
-          {filtered.map((album) => (
-            <AdminRow key={album.albumId} onClick={() => router.push(`/admin/music/albums/${album.albumId}`)}>
-              <td className="px-3 py-2">
-                <div className="flex items-center gap-3">
-                  {album.coverPath
-                    ? <img src={resolveMediaUrl(album.coverPath) ?? ""} alt="" className="h-9 w-9 shrink-0 rounded object-cover" />
-                    : <div className="h-9 w-9 shrink-0 rounded bg-surface-2" />}
-                  <span className="font-medium text-fg">{album.title}</span>
-                </div>
-              </td>
-              <td className="px-3 py-2 text-fg-muted">{album.artists.join(", ")}</td>
-              <td className="px-3 py-2 text-fg-muted tabular-nums">{album.trackCount}</td>
-              <td className="px-3 py-2 text-right">
-                <Button size="sm" variant="danger" onClick={(e) => { e.stopPropagation(); handleDelete(album.albumId); }}>Delete</Button>
-              </td>
-            </AdminRow>
-          ))}
-        </AdminTable>
-      )}
+      <AdminTable
+        columns={[
+          { key: "album", label: "Album", sortable: true },
+          { key: "artists", label: "Artists", sortable: true },
+          { key: "tracks", label: "Tracks", align: "right", sortable: true },
+          { key: "actions", label: "Actions", align: "right" },
+        ]}
+        sort={sort}
+        onSortChange={setSort}
+        loading={isPending}
+        empty={sorted.length === 0}
+        emptyLabel={albums.length === 0 ? "No albums yet." : "No albums match this search."}
+        emptyHint={albums.length === 0 ? "Use New Album to create the first one." : "Try a different album or artist name."}
+      >
+        {sorted.map((album) => (
+          <AdminRow key={album.albumId} onClick={() => router.push(`/admin/music/albums/${album.albumId}`)}>
+            <td className="px-3 py-2">
+              <div className="flex items-center gap-3">
+                {album.coverPath
+                  ? <img src={resolveMediaUrl(album.coverPath) ?? ""} alt="" className="h-9 w-9 shrink-0 rounded object-cover" />
+                  : <div className="h-9 w-9 shrink-0 rounded bg-surface-2" />}
+                <span className="font-medium text-fg">{album.title}</span>
+              </div>
+            </td>
+            <td className="px-3 py-2 text-fg-muted">{album.artists.join(", ")}</td>
+            <td className="px-3 py-2 text-right text-fg-muted tabular-nums">{album.trackCount}</td>
+            <td className="px-3 py-2 text-right">
+              <Button size="sm" variant="danger" onClick={(e) => { e.stopPropagation(); handleDelete(album.albumId); }}>Delete</Button>
+            </td>
+          </AdminRow>
+        ))}
+      </AdminTable>
     </div>
   );
 }

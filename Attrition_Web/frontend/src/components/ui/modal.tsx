@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { useConfirm } from "@/lib/providers";
+import { useFocusTrap } from "@/lib/hooks/use-focus-trap";
 
 /**
  * Generic modal dialog for admin create/edit forms. Backdrop + Escape close, focus-friendly,
@@ -33,6 +34,9 @@ export function Modal({ open, onClose, title, children, size = "md", dirty = fal
   // Portals need a real DOM node, which doesn't exist during SSR / first render.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+  // Focus moves into the panel on open, cycles inside while open, and returns to the trigger on
+  // close. Without this, keyboard/SR users tab straight out into the page behind the overlay.
+  const panelRef = useFocusTrap<HTMLDivElement>(open && mounted);
 
   // Guarded close: when the form is dirty, confirm before discarding (QOLF-6).
   const attemptClose = useCallback(async () => {
@@ -69,6 +73,7 @@ export function Modal({ open, onClose, title, children, size = "md", dirty = fal
       onClick={attemptClose}
     >
       <div
+        ref={panelRef}
         className={`card my-auto w-full ${maxW} p-5 shadow-[var(--shadow-lg)]`}
         onClick={(e) => e.stopPropagation()}
       >

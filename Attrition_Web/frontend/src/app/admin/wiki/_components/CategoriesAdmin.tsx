@@ -11,8 +11,9 @@ import { parseApiError } from "@/lib/api/parse-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
-import { PageLoader } from "@/components/ui/spinner";
-import { AdminPageHeader, AdminFilterBar, AdminTable, AdminRow } from "@/components/admin/admin-table";
+import {
+  AdminPageHeader, AdminFilterBar, AdminTable, AdminRow, applySort, type SortState,
+} from "@/components/admin/admin-table";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { qk } from "@/lib/query-keys";
 
@@ -27,6 +28,7 @@ export function CategoriesAdmin() {
   const confirm = useConfirm();
   const [showForm, setShowForm] = useState(false);
   const [searchInput, setSearchInput] = useState("");
+  const [sort, setSort] = useState<SortState>({ key: "name", dir: "asc" });
   const search = useDebouncedValue(searchInput.trim().toLowerCase(), 200);
 
   const { data: categories = [], isPending: loading } = useQuery({
@@ -52,6 +54,11 @@ export function CategoriesAdmin() {
   const filtered = search
     ? categories.filter((c) => c.name.toLowerCase().includes(search) || c.slug.toLowerCase().includes(search))
     : categories;
+  const sorted = applySort(filtered, sort, {
+    name: (c) => c.name,
+    articles: (c) => c.articleCount,
+    slug: (c) => c.slug,
+  });
 
   return (
     <div>
@@ -62,34 +69,35 @@ export function CategoriesAdmin() {
         <CategoryForm onDone={() => { setShowForm(false); invalidate(); }} onCancel={() => setShowForm(false)} />
       </Modal>
 
-      {loading ? (
-        <PageLoader />
-      ) : (
-        <AdminTable
-          columns={[
-            { key: "name", label: "Category" },
-            { key: "articles", label: "Articles" },
-            { key: "slug", label: "Slug" },
-            { key: "actions", label: "Actions", align: "right" },
-          ]}
-          empty={filtered.length === 0}
-        >
-          {filtered.map((c) => (
-            <AdminRow key={c.id}>
-              <td className="px-3 py-2 font-medium text-fg">{c.name}</td>
-              <td className="px-3 py-2 tabular-nums text-fg-muted">{c.articleCount}</td>
-              <td className="px-3 py-2 text-fg-subtle">{c.slug}</td>
-              <td className="px-3 py-2 text-right">
-                <Button size="sm" variant="danger" disabled={c.articleCount > 0}
-                  loading={removeMutation.isPending && removeMutation.variables === c.id}
-                  onClick={() => remove(c.id)}>
-                  Delete
-                </Button>
-              </td>
-            </AdminRow>
-          ))}
-        </AdminTable>
-      )}
+      <AdminTable
+        columns={[
+          { key: "name", label: "Category", sortable: true },
+          { key: "articles", label: "Articles", sortable: true },
+          { key: "slug", label: "Slug", sortable: true },
+          { key: "actions", label: "Actions", align: "right" },
+        ]}
+        sort={sort}
+        onSortChange={setSort}
+        loading={loading}
+        empty={filtered.length === 0}
+        emptyLabel={categories.length === 0 ? "No categories yet." : "No categories match this search."}
+        emptyHint={categories.length === 0 ? "Use New Category to create the first one." : "Try a different search."}
+      >
+        {sorted.map((c) => (
+          <AdminRow key={c.id}>
+            <td className="px-3 py-2 font-medium text-fg">{c.name}</td>
+            <td className="px-3 py-2 tabular-nums text-fg-muted">{c.articleCount}</td>
+            <td className="px-3 py-2 text-fg-subtle">{c.slug}</td>
+            <td className="px-3 py-2 text-right">
+              <Button size="sm" variant="danger" disabled={c.articleCount > 0}
+                loading={removeMutation.isPending && removeMutation.variables === c.id}
+                onClick={() => remove(c.id)}>
+                Delete
+              </Button>
+            </td>
+          </AdminRow>
+        ))}
+      </AdminTable>
     </div>
   );
 }

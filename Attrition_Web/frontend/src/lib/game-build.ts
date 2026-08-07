@@ -31,10 +31,23 @@ export interface GameBuild {
   /** Executable inside the archive. */
   executable: string;
   url: string;
+  /** ISO date the build was published — drives the "released" line on the download list. */
+  released: string;
 }
 
 /** Newest first. GAME_BUILD (the download button) is always the head of this list. */
 export const GAME_BUILDS: readonly GameBuild[] = [
+  {
+    version: "1.0.1",
+    channel: "Release",
+    platform: "Windows 10 / 11 (64-bit)",
+    sizeLabel: "90.2 MB",
+    sha256: "c4ac2e8e69453b0df72c417678ee23f2f51e0eba28a77e8a47b5dec5727ddcee",
+    archive: ".zip",
+    executable: "Attrition_Game.exe",
+    url: process.env.NEXT_PUBLIC_GAME_DOWNLOAD_URL ?? "/api/assets/media/builds/Attrition_Game_1.0.1.zip",
+    released: "2026-08-07",
+  },
   {
     version: "1.0",
     channel: "Release",
@@ -43,7 +56,8 @@ export const GAME_BUILDS: readonly GameBuild[] = [
     sha256: "229cfb0ecad7c18ec219f4af3b2686880e7bab781fcccefc7ce44656f14e8c2b",
     archive: ".zip",
     executable: "Attrition_Game.exe",
-    url: process.env.NEXT_PUBLIC_GAME_DOWNLOAD_URL ?? "/api/assets/media/builds/Attrition_Game_1.0.zip",
+    url: "/api/assets/media/builds/Attrition_Game_1.0.zip",
+    released: "2026-08-04",
   },
   {
     version: "0.9.4",
@@ -55,6 +69,7 @@ export const GAME_BUILDS: readonly GameBuild[] = [
     /** Spelled "Attrion", not "Attrition", in this build — fixed in 1.0. */
     executable: "Attrion.exe",
     url: "/api/assets/media/builds/Attrition_Game_0.9.4.rar",
+    released: "2026-08-03",
   },
 ];
 

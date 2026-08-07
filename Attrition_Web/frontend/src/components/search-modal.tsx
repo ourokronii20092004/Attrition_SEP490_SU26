@@ -10,6 +10,7 @@ import {
   SEARCH_SCOPES, PUBLIC_PAGES, parseQuery, backendScope, matchPages, type SearchScope,
 } from "@/lib/search-config";
 import { useRecentSearches } from "./use-recent-searches";
+import { useFocusTrap } from "@/lib/hooks/use-focus-trap";
 import type { GlobalSearchResponse, SearchSuggestionDto } from "@/lib/types";
 
 const ADMIN_RECENT_KEY = "attrition:admin:recent";
@@ -27,6 +28,9 @@ export function SearchModal({ onClose, adminMode = false }: { onClose: () => voi
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const suggestRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { recent, add: addRecent, remove: removeRecent, clear: clearRecent } = useRecentSearches();
+  // The search overlay is a dialog; Tab must stay inside it and focus must return to the trigger
+  // (header search button / ⌘K) on close. The query input is the trap's preferred first stop.
+  const panelRef = useFocusTrap<HTMLDivElement>(true);
 
   // The effective scope is whichever chip is active, OR a prefix typed into the box
   // ("wiki:foo"). Typed prefix wins so power users keep that path; chips are the fast path.
@@ -123,6 +127,7 @@ export function SearchModal({ onClose, adminMode = false }: { onClose: () => voi
       aria-label="Site search"
     >
       <div
+        ref={panelRef}
         className="card flex max-h-[78vh] w-full max-w-2xl origin-top flex-col rounded-2xl shadow-[var(--shadow-lg)] motion-safe:animate-rise-in"
         onClick={(e) => e.stopPropagation()}
       >
