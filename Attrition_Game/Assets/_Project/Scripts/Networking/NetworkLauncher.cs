@@ -331,7 +331,15 @@ namespace Attrition.Networking
                 return;
             }
 
-            Attrition.Persistence.GameLaunch.ClearSessionInventoryCache();
+            // KHÔNG clear cache session ở đây. Đổi map TRONG CÙNG phòng đi qua đúng callback này, mà
+            // NetworkObject của player SỐNG SÓT qua Fusion LoadScene → PlayerInventory.Spawned() KHÔNG
+            // chạy lại → không ai gọi EnsureSessionLoaded để fetch bù. Clear ở đây là mất trắng:
+            // CoopQuestsJson rỗng khiến NPC ở map mới quay về NotStarted (RestoreSavedProgress đọc
+            // holder này), và cache stat/đồ/vị-trí-rest cũng mất — rồi mốc save kế tiếp GHI ĐÈ row
+            // trên server bằng dữ liệu đã rỗng. Đúng lỗi "fast-travel về map 1/2 mất dữ liệu".
+            // Các đường THỰC SỰ cần fetch mới đều đã tự clear: StartCoopLobby (vào phòng),
+            // OnShutdown (về menu), PrefetchThenSpawnLatePlayer (client join muộn — player object mới
+            // nên Spawned() có chạy và fetch lại).
 
             // (EnemyLootTracker tự reset qua SceneManager.sceneLoaded — nó ở assembly Gameplay, Networking
             //  không ref được nên không gọi Clear() ở đây.)

@@ -265009,7 +265009,7 @@ GameObject:
   - component: {fileID: 1492519387}
   - component: {fileID: 1492519386}
   - component: {fileID: 1492519385}
-  m_Layer: 8
+  m_Layer: 13
   m_Name: Breakable_0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
