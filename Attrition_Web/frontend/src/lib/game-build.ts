@@ -38,6 +38,17 @@ export interface GameBuild {
 /** Newest first. GAME_BUILD (the download button) is always the head of this list. */
 export const GAME_BUILDS: readonly GameBuild[] = [
   {
+    version: "1.0.2",
+    channel: "Release",
+    platform: "Windows 10 / 11 (64-bit)",
+    sizeLabel: "90.1 MB",
+    sha256: "526bdbbdb5e4f624b51258cb72ec622cee3a744370096574826955b459b9b285",
+    archive: ".zip",
+    executable: "Attrition_Game.exe",
+    url: process.env.NEXT_PUBLIC_GAME_DOWNLOAD_URL ?? "/api/assets/media/builds/Attrition_Game_1.0.2.zip",
+    released: "2026-08-08",
+  },
+  {
     version: "1.0.1",
     channel: "Release",
     platform: "Windows 10 / 11 (64-bit)",

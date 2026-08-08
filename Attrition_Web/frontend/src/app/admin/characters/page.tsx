@@ -115,7 +115,7 @@ function AdminCharactersList() {
                 <div className="min-w-0 flex-1">
                   {g.ownerUsername ? (
                     <Link
-                      href={`/u/${encodeURIComponent(g.ownerUsername)}`}
+                      href={`/admin/users/${g.ownerId}`}
                       className="truncate font-medium text-fg transition-colors hover:text-accent"
                     >
                       {g.ownerUsername}
