@@ -18,6 +18,7 @@ public sealed class CsrfCookieMiddleware
         new(StringComparer.OrdinalIgnoreCase) { "GET", "HEAD", "OPTIONS", "TRACE" };
 
     private readonly RequestDelegate _next;
+
     public CsrfCookieMiddleware(RequestDelegate next) => _next = next;
 
     public async Task Invoke(HttpContext ctx)

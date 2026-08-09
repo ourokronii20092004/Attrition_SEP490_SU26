@@ -7,7 +7,9 @@ public interface ISessionService
 {
     // Player-facing reads (JWT). A host sees only rooms they own.
     Task<List<SessionSummaryDto>> GetByOwnerAsync(Guid ownerId);
+
     Task<SessionDetailDto?> GetDetailAsync(Guid sessionId);
+
     Task<SessionDetailDto?> GetByRoomCodeAsync(string roomCode);
 
     // Ownership guard helper: the owner of a room, or null if the room doesn't exist.
@@ -15,10 +17,12 @@ public interface ISessionService
 
     // Game-client ingestion (internal). Create-or-reopen a room with a fixed unique code.
     Task<ApiResponse<SessionDetailDto>> CreateOrReopenAsync(CreateSessionRequest request);
+
     Task<ApiResponse<SessionDetailDto>> UpdateMetaAsync(UpdateSessionRequest request);
 
     // Upsert one character's progress / world state for a room.
     Task<ApiResponse<CharacterSessionDto>> SaveCharacterSessionAsync(SaveCharacterSessionRequest request);
+
     Task<ApiResponse<WorldStateDto>> SaveWorldStateAsync(SaveWorldStateRequest request);
 
     // Consolidated save: the whole party (both players' progress, world flags, room meta and fog)
@@ -30,6 +34,7 @@ public interface ISessionService
 
     // ── Admin: who played with whom, where, and with what world progress ─────────────────────
     Task<AdminRoomListDto> GetRoomsForAdminAsync(int page, int pageSize, CancellationToken ct = default);
+
     Task<AdminRoomDetailDto?> GetRoomDetailForAdminAsync(Guid sessionId, CancellationToken ct = default);
 
     /// <summary>Room counts for the admin dashboard: total rooms, and how many are co-op.</summary>

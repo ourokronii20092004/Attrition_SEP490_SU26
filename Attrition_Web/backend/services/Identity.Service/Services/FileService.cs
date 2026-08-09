@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Http;
-
 namespace Identity.Service.Services;
 
 public class FileService : IFileService

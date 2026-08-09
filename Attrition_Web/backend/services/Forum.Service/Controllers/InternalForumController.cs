@@ -1,7 +1,6 @@
 using BuildingBlocks.Authentication;
 using BuildingBlocks.Contracts;
 using Forum.Service.DTOs;
-using Forum.Service.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Forum.Service.Controllers;

@@ -62,7 +62,6 @@ public class SessionRepository : ISessionRepository
     public async Task<bool> RoomCodeIsFreeAsync(string roomCode) =>
         !await _context.Sessions.AnyAsync(s => s.RoomCode == roomCode);
 
-
     public async Task<CharacterSessionEntity?> GetCharacterSessionAsync(Guid characterId, Guid sessionId) =>
         await _context.CharacterSessions
             .FirstOrDefaultAsync(cs => cs.CharacterId == characterId && cs.SessionId == sessionId);
@@ -77,7 +76,6 @@ public class SessionRepository : ISessionRepository
             _context.Entry(existing).CurrentValues.SetValues(entity);
         await _context.SaveChangesAsync();
     }
-
 
     public async Task<WorldStateEntity?> GetWorldStateAsync(Guid sessionId, string eventId) =>
         await _context.WorldStates
@@ -133,9 +131,9 @@ public class SessionRepository : ISessionRepository
     // One commit for the whole party — a partial save would leave two players inconsistent.
     public Task SaveChangesAsync() => _context.SaveChangesAsync();
 
-
     // Delete a room entirely: session row + all character progress + world state.
-    public async Task<bool> DeleteSessionAsync(Guid sessionId)    {
+    public async Task<bool> DeleteSessionAsync(Guid sessionId)
+    {
         var session = await _context.Sessions
             .Include(s => s.Characters)
             .Include(s => s.WorldStates)

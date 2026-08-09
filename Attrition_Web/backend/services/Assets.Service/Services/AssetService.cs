@@ -1,12 +1,9 @@
-using System.Linq.Expressions;
-using System.Security.Cryptography;
 using Assets.Service.DTOs;
 using Assets.Service.Models;
-using Assets.Service.Repositories;
 using BuildingBlocks.Contracts;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
+using System.Linq.Expressions;
+using System.Security.Cryptography;
 
 namespace Assets.Service.Services;
 
@@ -172,10 +169,18 @@ public class AssetService : IAssetService
             {
                 existing = new Asset
                 {
-                    FileName = file.FileName, FilePath = newPath, AssetType = "sprite",
-                    MimeType = ResolveMime(ext), FileSize = file.Length, Title = sourceId,
-                    Tags = $"unity,{sourceType}", SourceType = $"unity-{sourceType}", SourceId = sourceId,
-                    ContentHash = hash, UploadedById = userId, UploadedByName = userName
+                    FileName = file.FileName,
+                    FilePath = newPath,
+                    AssetType = "sprite",
+                    MimeType = ResolveMime(ext),
+                    FileSize = file.Length,
+                    Title = sourceId,
+                    Tags = $"unity,{sourceType}",
+                    SourceType = $"unity-{sourceType}",
+                    SourceId = sourceId,
+                    ContentHash = hash,
+                    UploadedById = userId,
+                    UploadedByName = userName
                 };
                 await _repo.AddTrackedAsync(existing);
                 await _repo.SaveAsync();

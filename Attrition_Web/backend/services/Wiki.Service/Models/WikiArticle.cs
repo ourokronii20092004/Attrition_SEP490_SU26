@@ -10,6 +10,7 @@ public class WikiArticle
 
     // Author refs: plain Guid + denormalized snapshot (no cross-schema FK to identity).
     public Guid? CreatedById { get; set; }
+
     public string? CreatedByName { get; set; }
     public Guid? LastEditedById { get; set; }
     public string? LastEditedByName { get; set; }

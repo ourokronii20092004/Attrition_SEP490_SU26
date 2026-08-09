@@ -1,7 +1,6 @@
-using System.Net.Http.Json;
-using System.Text.Json;
 using BuildingBlocks.Contracts;
 using Character.Service.DTOs;
+using System.Text.Json;
 
 namespace Character.Service.Clients;
 

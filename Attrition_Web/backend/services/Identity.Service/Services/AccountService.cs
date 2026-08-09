@@ -1,7 +1,5 @@
 using BuildingBlocks.Contracts;
 using Identity.Service.DTOs;
-using Identity.Service.Repositories;
-using Microsoft.AspNetCore.Http;
 
 namespace Identity.Service.Services;
 

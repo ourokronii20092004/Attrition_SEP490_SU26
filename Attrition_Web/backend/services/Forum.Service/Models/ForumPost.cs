@@ -6,11 +6,13 @@ public class ForumPost
 
     // A root post owns the discussion. Replies point to it and may also point to another reply.
     public Guid? RootPostId { get; set; }
+
     public Guid? ParentPostId { get; set; }
     public int Depth { get; set; }
 
     // Root-only discussion metadata; null on replies. Wiki roots intentionally have no category.
     public int? CategoryId { get; set; }
+
     public string? Title { get; set; }
     public Guid? WikiArticleId { get; set; }
     public bool IsPinned { get; set; }

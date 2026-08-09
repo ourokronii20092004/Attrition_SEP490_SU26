@@ -12,6 +12,8 @@ public interface IMusicRepository
     IRepository<UserFavorite> Favorites { get; }
     IRepository<MusicPlaylist> Playlists { get; }
     IRepository<PlaylistTrack> PlaylistTracks { get; }
+
     Task<List<AlbumTrackStats>> GetNewestAlbumStatsAsync(int limit);
+
     Task<bool> IncrementPlayCountAsync(int trackId, int amount);
 }

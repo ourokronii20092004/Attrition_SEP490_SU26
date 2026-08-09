@@ -1,11 +1,10 @@
-using System.Linq.Expressions;
 using BuildingBlocks.Caching;
 using BuildingBlocks.Contracts;
 using BuildingBlocks.Web;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 using Wiki.Service.DTOs;
 using Wiki.Service.Models;
-using Wiki.Service.Repositories;
 
 namespace Wiki.Service.Services;
 

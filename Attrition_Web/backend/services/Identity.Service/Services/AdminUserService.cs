@@ -1,6 +1,5 @@
 using BuildingBlocks.Contracts;
 using Identity.Service.DTOs;
-using Identity.Service.Repositories;
 
 namespace Identity.Service.Services;
 

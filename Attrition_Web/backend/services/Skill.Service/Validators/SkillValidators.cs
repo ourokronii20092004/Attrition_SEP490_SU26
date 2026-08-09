@@ -7,8 +7,11 @@ internal static class SkillRules
 {
     internal static bool StableId(string value) => !string.IsNullOrWhiteSpace(value) && value.Length <= 64 &&
         System.Text.RegularExpressions.Regex.IsMatch(value, "^[a-z0-9]+(?:_[a-z0-9]+)*$");
+
     internal static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
+
     internal static bool OwnedImage(string? value) => value == null || value.StartsWith("/api/assets/media/", StringComparison.Ordinal);
+
     internal static readonly string[] Elements = ["Fire", "Wind", "Earth", "Thunder", "Water"];
     internal static readonly string[] DamageTypes = ["Physical", "Magic", "True"];
     internal static readonly string[] Deliveries = ["AreaInstant", "Projectile", "SpawnAoE"];
@@ -22,6 +25,7 @@ public class SkillImportDtoValidator : AbstractValidator<SkillImportDto>
         RuleFor(x => x.SkillId).Must(SkillRules.StableId);
         AddCommon(this);
     }
+
     internal static void AddCommon<T>(AbstractValidator<T> v) where T : SkillImportDto
     {
         v.RuleFor(x => x.Name).NotEmpty().MaximumLength(100);

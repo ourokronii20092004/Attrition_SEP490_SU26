@@ -1,10 +1,9 @@
-using System.Text.Json;
 using BuildingBlocks.Contracts;
 using Google.Apis.Auth;
 using Identity.Service.DTOs;
 using Identity.Service.Models;
-using Identity.Service.Repositories;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace Identity.Service.Services;
 

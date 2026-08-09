@@ -16,6 +16,7 @@ public class UserReport
 
     // Moderation audit trail (set when an admin acts on the report).
     public string? ActionTaken { get; set; }       // None | Banned | Warned
+
     public string? ModeratorNote { get; set; }
     public string? ResolvedByName { get; set; }
     public DateTime? ResolvedAt { get; set; }

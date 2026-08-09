@@ -1,4 +1,3 @@
-using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -89,12 +88,18 @@ namespace Forum.Service.Migrations
                 name: "ForumThreads", schema: "forum",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false), CategoryId = table.Column<int>(type: "integer", nullable: false),
-                    Title = table.Column<string>(type: "text", nullable: false), AuthorId = table.Column<Guid>(type: "uuid", nullable: false),
-                    AuthorName = table.Column<string>(type: "text", nullable: true), AuthorAvatar = table.Column<string>(type: "text", nullable: true),
-                    IsPinned = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false), IsLocked = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false), LastReplyAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ReplyCount = table.Column<int>(type: "integer", nullable: false), WikiArticleId = table.Column<Guid>(type: "uuid", nullable: true)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    CategoryId = table.Column<int>(type: "integer", nullable: false),
+                    Title = table.Column<string>(type: "text", nullable: false),
+                    AuthorId = table.Column<Guid>(type: "uuid", nullable: false),
+                    AuthorName = table.Column<string>(type: "text", nullable: true),
+                    AuthorAvatar = table.Column<string>(type: "text", nullable: true),
+                    IsPinned = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    IsLocked = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastReplyAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ReplyCount = table.Column<int>(type: "integer", nullable: false),
+                    WikiArticleId = table.Column<Guid>(type: "uuid", nullable: true)
                 }, constraints: table => table.PrimaryKey("PK_ForumThreads", x => x.Id));
             migrationBuilder.Sql("""
                 INSERT INTO forum."ForumThreads" ("Id","CategoryId","Title","AuthorId","AuthorName","AuthorAvatar","IsPinned","IsLocked","CreatedAt","LastReplyAt","ReplyCount","WikiArticleId")

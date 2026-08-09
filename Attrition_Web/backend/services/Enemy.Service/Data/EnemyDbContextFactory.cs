@@ -1,7 +1,5 @@
-using Enemy.Service.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
-using Microsoft.Extensions.Configuration;
 
 namespace Enemy.Service.Data;
 

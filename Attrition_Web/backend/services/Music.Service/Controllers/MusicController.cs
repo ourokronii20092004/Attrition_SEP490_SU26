@@ -3,7 +3,6 @@ using BuildingBlocks.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Music.Service.DTOs;
-using Music.Service.Models;
 using Music.Service.Services;
 
 namespace Music.Service.Controllers;

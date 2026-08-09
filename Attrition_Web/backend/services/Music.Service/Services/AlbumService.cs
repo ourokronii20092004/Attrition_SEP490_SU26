@@ -1,7 +1,5 @@
 using BuildingBlocks.Contracts;
 using BuildingBlocks.Web;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 using Music.Service.DTOs;
 using Music.Service.Models;
 

@@ -1,10 +1,10 @@
+using Identity.Service.DTOs;
+using Identity.Service.Models;
+using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using Identity.Service.DTOs;
-using Identity.Service.Models;
-using Microsoft.IdentityModel.Tokens;
 
 namespace Identity.Service.Services;
 
@@ -12,6 +12,7 @@ namespace Identity.Service.Services;
 public sealed class TokenService
 {
     private readonly IConfiguration _config;
+
     public TokenService(IConfiguration config) => _config = config;
 
     public static string HashToken(string token)

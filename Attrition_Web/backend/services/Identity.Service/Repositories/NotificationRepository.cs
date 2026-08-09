@@ -23,8 +23,10 @@ public class NotificationRepository(IdentityDbContext db) : INotificationReposit
     }
 
     public Task<int> UnreadCountAsync(Guid userId) => db.Notifications.CountAsync(n => n.UserId == userId && !n.IsRead);
+
     public Task MarkReadAsync(Guid userId, Guid notificationId) => db.Notifications.Where(n => n.Id == notificationId && n.UserId == userId)
         .ExecuteUpdateAsync(s => s.SetProperty(n => n.IsRead, true));
+
     public Task MarkAllReadAsync(Guid userId) => db.Notifications.Where(n => n.UserId == userId && !n.IsRead)
         .ExecuteUpdateAsync(s => s.SetProperty(n => n.IsRead, true));
 
@@ -51,8 +53,14 @@ public class NotificationRepository(IdentityDbContext db) : INotificationReposit
         if (user == null) return;
         if (request.Type == NotificationType.Reply && !user.NotifyOnReply) return;
         if (request.Type == NotificationType.Mention && !user.NotifyOnMention) return;
-        db.Notifications.Add(new Notification { UserId = user.Id, Type = request.Type, Message = request.Message,
-            Link = request.Link, ActorName = request.ActorName });
+        db.Notifications.Add(new Notification
+        {
+            UserId = user.Id,
+            Type = request.Type,
+            Message = request.Message,
+            Link = request.Link,
+            ActorName = request.ActorName
+        });
         await db.SaveChangesAsync();
     }
 
@@ -77,8 +85,11 @@ public class NotificationRepository(IdentityDbContext db) : INotificationReposit
 
         db.Notifications.AddRange(wanted.Select(userId => new Notification
         {
-            UserId = userId, Type = request.Type, Message = request.Message,
-            Link = request.Link, ActorName = request.ActorName,
+            UserId = userId,
+            Type = request.Type,
+            Message = request.Message,
+            Link = request.Link,
+            ActorName = request.ActorName,
         }));
         await db.SaveChangesAsync();
     }

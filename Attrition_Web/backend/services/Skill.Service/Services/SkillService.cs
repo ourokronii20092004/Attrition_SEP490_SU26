@@ -1,9 +1,9 @@
-using System.Text.Json;
 using BuildingBlocks.Caching;
 using BuildingBlocks.Contracts;
 using BuildingBlocks.Web;
 using Skill.Service.DTOs;
 using Skill.Service.Models;
+using System.Text.Json;
 
 namespace Skill.Service.Services;
 
@@ -109,6 +109,7 @@ public class SkillService(ISkillRepository repository, ICacheService cache) : IS
             d.SweetSpotMultiplier, d.Delivery, d.HitShape, d.Range, d.Angle, d.RectWidth, d.RectHeight,
             d.OffsetX, d.OffsetY, d.ProjectileSpeed, d.ProjectileCount, d.SpreadAngle, d.VfxLifetime, d.ImageUrl);
     }
+
     private static void Apply(SkillEntity s, SkillUpdateRequest d)
     {
         s.Name = d.Name; s.Description = Clean(d.Description); s.IconKey = d.IconKey; s.Rarity = d.Rarity;
@@ -117,7 +118,9 @@ public class SkillService(ISkillRepository repository, ICacheService cache) : IS
             d.SweetSpotMultiplier, d.Delivery, d.HitShape, d.Range, d.Angle, d.RectWidth, d.RectHeight,
             d.OffsetX, d.OffsetY, d.ProjectileSpeed, d.ProjectileCount, d.SpreadAngle, d.VfxLifetime, d.ImageUrl);
     }
+
     private static string? Clean(string? value) => value is null ? null : ContentSanitizer.Sanitize(value);
+
     private static void ApplyConfig(SkillEntity s, string element, int mana, float cast, float cooldown,
         float start, float end, string damageType, int damage, float scaling, float knockback, float tick,
         float sweetRadius, float sweetMultiplier, string delivery, string shape, float range, float angle,
@@ -131,6 +134,7 @@ public class SkillService(ISkillRepository repository, ICacheService cache) : IS
         s.OffsetX = x; s.OffsetY = y; s.ProjectileSpeed = speed; s.ProjectileCount = count;
         s.SpreadAngle = spread; s.VfxLifetime = lifetime; s.ImageUrl = image;
     }
+
     private static SkillDto ToDto(SkillEntity s) => new(s.SkillId, s.Name, s.Description, s.IconKey, s.Rarity,
         s.Element, s.ManaCost, s.CastTime, s.Cooldown, s.ActiveStartFrac, s.ActiveEndFrac, s.DamageType,
         s.BaseDamage, s.ApScaling, s.KnockbackForce, s.TickInterval, s.SweetSpotRadius, s.SweetSpotMultiplier,

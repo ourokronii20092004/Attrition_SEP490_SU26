@@ -40,7 +40,11 @@ internal static class SeedData
     private static ItemEntity I(string id, string name, string category, string rarity, int maxStack, params (string stat, int amount)[] mods) =>
         new()
         {
-            ItemId = id, Name = name, Category = category, Rarity = rarity, MaxStack = maxStack,
+            ItemId = id,
+            Name = name,
+            Category = category,
+            Rarity = rarity,
+            MaxStack = maxStack,
             Modifiers = mods.Select(m => new ItemModifierEntry { Stat = m.stat, Amount = m.amount }).ToList()
         };
 

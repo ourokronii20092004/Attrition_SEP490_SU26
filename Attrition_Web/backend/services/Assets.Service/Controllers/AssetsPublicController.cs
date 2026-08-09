@@ -1,5 +1,4 @@
 using Assets.Service.DTOs;
-using Assets.Service.Services;
 using BuildingBlocks.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,6 +10,7 @@ namespace Assets.Service.Controllers;
 public class AssetsPublicController : ControllerBase
 {
     private readonly IAssetService _assets;
+
     public AssetsPublicController(IAssetService assets) => _assets = assets;
 
     [HttpGet]

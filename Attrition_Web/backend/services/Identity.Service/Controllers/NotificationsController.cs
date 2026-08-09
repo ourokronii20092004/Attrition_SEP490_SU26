@@ -1,7 +1,6 @@
 using BuildingBlocks.Authentication;
 using BuildingBlocks.Contracts;
 using Identity.Service.DTOs;
-using Identity.Service.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

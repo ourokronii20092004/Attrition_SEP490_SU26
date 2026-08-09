@@ -6,7 +6,6 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using Skill.Service.Data;
-using Skill.Service.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<SkillDbContext>(opt => opt.UseNpgsql(

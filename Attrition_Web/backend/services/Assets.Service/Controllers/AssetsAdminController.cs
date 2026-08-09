@@ -1,5 +1,4 @@
 using Assets.Service.DTOs;
-using Assets.Service.Services;
 using BuildingBlocks.Authentication;
 using BuildingBlocks.Contracts;
 using Microsoft.AspNetCore.Authorization;

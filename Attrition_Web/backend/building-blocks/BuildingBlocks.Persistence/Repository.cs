@@ -1,5 +1,5 @@
-using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace BuildingBlocks.Persistence;
 
@@ -15,7 +15,9 @@ public class Repository<T> : IRepository<T> where T : class
     }
 
     public virtual async Task<T?> GetByIdAsync(Guid id) => await _dbSet.FindAsync(id);
+
     public virtual async Task<T?> GetByIdAsync(int id) => await _dbSet.FindAsync(id);
+
     public virtual async Task<T?> GetByIdAsync(string id) => await _dbSet.FindAsync(id);
 
     public virtual async Task<IEnumerable<T>> GetAllAsync() => await _dbSet.AsNoTracking().ToListAsync();

@@ -1,0 +1,41 @@
+name: Backend CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "Attrition_Web/backend/**"
+      - ".github/workflows/backend-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: Attrition_Web/backend
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: Attrition_Web/backend/global.json
+
+      - name: Restore
+        run: dotnet restore Attrition.sln
+
+      - name: Build
+        run: dotnet build Attrition.sln --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test Attrition.sln --configuration Release --no-build --no-restore

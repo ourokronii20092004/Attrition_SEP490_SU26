@@ -38,6 +38,7 @@ public class CharacterSessionEntity
 
     // Inventory + equipped gear as JSON blobs (client is source of truth).
     public string? InventoryJson { get; set; }
+
     public string? EquipmentJson { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

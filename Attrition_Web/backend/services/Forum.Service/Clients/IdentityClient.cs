@@ -1,6 +1,5 @@
-using System.Net.Http.Json;
-using System.Text.Json;
 using BuildingBlocks.Contracts;
+using System.Text.Json;
 
 namespace Forum.Service.Clients;
 

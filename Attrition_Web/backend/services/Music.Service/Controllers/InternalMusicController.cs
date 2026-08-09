@@ -1,7 +1,6 @@
 using BuildingBlocks.Authentication;
 using BuildingBlocks.Contracts;
 using Microsoft.AspNetCore.Mvc;
-using Music.Service.Services;
 
 namespace Music.Service.Controllers;
 

@@ -1,7 +1,6 @@
 using BuildingBlocks.Authentication;
 using BuildingBlocks.Contracts;
 using Character.Service.DTOs;
-using Character.Service.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -40,6 +39,7 @@ public class CharacterController : ControllerBase
             return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Fail("You do not have access to this character."));
         return Ok(ApiResponse<CharacterDetailDto>.Ok(character));
     }
+
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {

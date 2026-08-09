@@ -2,7 +2,6 @@ using BuildingBlocks.Contracts;
 using Character.Service.Clients;
 using Character.Service.DTOs;
 using Character.Service.Models;
-using Character.Service.Repositories;
 
 namespace Character.Service.Services;
 

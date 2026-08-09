@@ -1,6 +1,5 @@
 using BuildingBlocks.Contracts;
 using Enemy.Service.DTOs;
-using Enemy.Service.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,6 +10,7 @@ namespace Enemy.Service.Controllers;
 public class ItemController : ControllerBase
 {
     private readonly IItemService _service;
+
     public ItemController(IItemService service) => _service = service;
 
     [HttpGet]

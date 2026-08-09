@@ -1,11 +1,9 @@
-using System.Linq.Expressions;
 using BuildingBlocks.Caching;
 using BuildingBlocks.Contracts;
 using BuildingBlocks.Web;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 using Music.Service.DTOs;
 using Music.Service.Models;
+using System.Linq.Expressions;
 
 namespace Music.Service.Services;
 
@@ -267,8 +265,14 @@ public class TrackService : ITrackService
             await _repository.Albums.AddAsync(gameAlbum);
         }
         var albumTracks = await _repository.Tracks.ListAsync(t => t.AlbumId == gameAlbum.AlbumId);
-        var upload = await UploadTrackAsync(new UploadTrackRequest { AlbumId = gameAlbum.AlbumId, Title = req.Title,
-            Artists = ["Attrition OST"], TrackNumber = albumTracks.Count == 0 ? 1 : albumTracks.Max(x => x.TrackNumber) + 1, File = req.File });
+        var upload = await UploadTrackAsync(new UploadTrackRequest
+        {
+            AlbumId = gameAlbum.AlbumId,
+            Title = req.Title,
+            Artists = ["Attrition OST"],
+            TrackNumber = albumTracks.Count == 0 ? 1 : albumTracks.Max(x => x.TrackNumber) + 1,
+            File = req.File
+        });
         if (!upload.success || upload.data == null) return upload;
 
         var created = await _repository.Tracks.GetByIdAsync(upload.data.TrackId);

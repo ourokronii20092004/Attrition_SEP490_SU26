@@ -1,6 +1,5 @@
 using BuildingBlocks.Contracts;
 using Character.Service.DTOs;
-using Character.Service.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,6 +12,7 @@ namespace Character.Service.Controllers;
 public class AdminCharacterController : ControllerBase
 {
     private readonly ICharacterService _service;
+
     public AdminCharacterController(ICharacterService service) => _service = service;
 
     [HttpGet]

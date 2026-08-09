@@ -45,6 +45,7 @@ public class CharacterSaveEntity
 
     // ── Progression ───────────────────────────────────────────────────────────
     public int CurrentLevel { get; set; } = 1;
+
     public int CurrentExp { get; set; }
     public int DeathCount { get; set; }
     public int PlaytimeSeconds { get; set; }
@@ -56,6 +57,7 @@ public class CharacterSaveEntity
     // ── Stats, reusing the same owned value objects as character_session so the
     //    two tables can be compared field-for-field without a mapping layer. ──
     public VitalStats Vitals { get; set; } = new();
+
     public CombatStats Combat { get; set; } = new();
     public Position Position { get; set; } = new();
 

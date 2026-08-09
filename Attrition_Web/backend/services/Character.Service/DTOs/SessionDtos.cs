@@ -1,6 +1,5 @@
 namespace Character.Service.DTOs;
 
-
 // One character's progress within a room (for the room detail / load view).
 public record CharacterSessionDto(
     Guid CharacterId, Guid SessionId, short PlayerRole,
@@ -38,7 +37,6 @@ public record SessionDetailDto(
     // per-character: co-op players explore one shared map.
     string? FogJson = null);
 
-
 // Host creates (or re-opens) a room. RoomCode null/empty → server generates a fixed unique code.
 // When RoomCode matches an existing row owned by OwnerId, that room is returned (re-open), not duplicated.
 public record CreateSessionRequest(
@@ -58,7 +56,6 @@ public record SaveWorldStateRequest(Guid SessionId, string EventId, short StateV
 
 // Host reports room-level metadata on save/quit (playtime, current scene).
 public record UpdateSessionRequest(Guid SessionId, int PlayTimeSeconds, string? CurrentScene = null);
-
 
 // ── Consolidated save (one push per save) ────────────────────────────────────────────────────
 // Replaces the old fan-out of N snapshots + N character-sessions + 1 meta call with a single

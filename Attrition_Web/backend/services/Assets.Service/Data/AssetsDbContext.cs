@@ -5,7 +5,9 @@ namespace Assets.Service.Data;
 
 public class AssetsDbContext : DbContext
 {
-    public AssetsDbContext(DbContextOptions<AssetsDbContext> options) : base(options) { }
+    public AssetsDbContext(DbContextOptions<AssetsDbContext> options) : base(options)
+    {
+    }
 
     public DbSet<Asset> Assets => Set<Asset>();
 

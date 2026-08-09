@@ -1,5 +1,5 @@
-using Wiki.Service.Models;
 using Microsoft.EntityFrameworkCore;
+using Wiki.Service.Models;
 
 namespace Wiki.Service.Data;
 

@@ -5,7 +5,9 @@ namespace Character.Service.Data;
 
 public class CharacterDbContext : DbContext
 {
-    public CharacterDbContext(DbContextOptions<CharacterDbContext> options) : base(options) { }
+    public CharacterDbContext(DbContextOptions<CharacterDbContext> options) : base(options)
+    {
+    }
 
     public DbSet<CharacterEntity> Characters => Set<CharacterEntity>();
     public DbSet<SessionEntity> Sessions => Set<SessionEntity>();

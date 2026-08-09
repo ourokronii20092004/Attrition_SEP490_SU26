@@ -6,10 +6,15 @@ namespace Character.Service.Services.Interface;
 public interface ICharacterService
 {
     Task<List<CharacterSummaryDto>> GetByOwnerAsync(Guid ownerId);
+
     Task<CharacterDetailDto?> GetDetailAsync(Guid id);
+
     Task<PaginatedResponse<AdminCharacterDto>> GetAllAsync(int page, int pageSize, CancellationToken ct = default);
+
     Task<ApiResponse<CharacterDetailDto>> IngestSnapshotAsync(SnapshotIngestRequest request);
+
     Task<ApiResponse> DeleteAsync(Guid id, Guid ownerId, bool isAdmin);
+
     Task<int> CountAsync();
 
     // ── Save files ───────────────────────────────────────────────────────────────────────────
@@ -17,6 +22,7 @@ public interface ICharacterService
     // than trusting a caller-supplied owner id.
 
     Task<ApiResponse<SaveListDto>> GetSavesAsync(Guid characterId, Guid callerId, bool isAdmin, int page, int pageSize);
+
     Task<ApiResponse<SaveDetailDto>> GetSaveAsync(Guid characterId, long saveId, Guid callerId, bool isAdmin);
 
     /// <summary>
