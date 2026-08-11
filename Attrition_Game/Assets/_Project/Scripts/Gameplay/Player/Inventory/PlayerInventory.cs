@@ -73,6 +73,13 @@ namespace Attrition.Gameplay.Player.Inventory
         // grid + chỉ số gear (MaxHP/DEF...) của client KHÔNG BAO GIỜ cập nhật khi host sync đồ xuống.
         private int _lastInvChecksum = int.MinValue;
 
+        /// <summary>
+        /// Đã nạp tiến trình từ cache session lên CHÍNH object này chưa. Chặn `LoadOnlineInventory`
+        /// chạy lần hai đè ảnh chụp cũ lên đồ/level hiện tại. Cờ instance (không static) — xem lý do
+        /// chi tiết ở chỗ dùng trong `LoadOnlineInventory`.
+        /// </summary>
+        private bool _hydratedThisObject;
+
         public override void Spawned()
         {
             _stats = GetComponent<PlayerStats>();
@@ -203,6 +210,24 @@ namespace Attrition.Gameplay.Player.Inventory
         {
             yield return EnsureSessionLoaded(isOwningPeerHere);
 
+            // CHẶN NẠP LẦN HAI TRÊN CÙNG MỘT OBJECT. Cache session là ẢNH CHỤP tại lần save gần nhất,
+            // KHÔNG có đồ/exp kiếm được sau đó. Nếu hàm này chạy lại trên player ĐANG SỐNG (vd
+            // RpcSetOwnerIdentity tới muộn, hoặc coroutine chạy hai lần) thì Hydrate + ImportJson dưới
+            // đây ĐÈ ảnh chụp cũ lên tiến trình hiện tại → mất đồ + level. Đúng lỗi user báo khi đi
+            // map 2 → map 3.
+            //
+            // CỐ TÌNH dùng cờ INSTANCE, không phải static theo charId: player NetworkObject thường sống
+            // sót qua LoadScene (cờ còn true → bỏ qua, giữ tiến trình), nhưng nếu Fusion CÓ despawn +
+            // respawn thì object mới có cờ false → vẫn nạp lại được. Cờ static sẽ chặn cả ca thứ hai và
+            // để player với túi rỗng + level 1 — tệ hơn hẳn.
+            if (_hydratedThisObject)
+            {
+                Debug.Log($"[Hydrate] BỎ QUA nạp lại cho char {charId} trên player đang sống — "
+                          + "giữ tiến trình hiện tại thay vì ghi đè bằng ảnh chụp cũ.");
+                yield break;
+            }
+            if (HasStateAuthority) _hydratedThisObject = true;
+
             // Hydrate STAT coop (level/exp/điểm cộng/HP/Mana/số bình) TRƯỚC khi nạp đồ — đồ đắp lên có
             // thể đổi MaxHP nên set CurrentHP xong ở đây rồi đồ điều chỉnh max sau là đúng thứ tự. Chỉ
             // host (StateAuthority trên player này). Không có cache = char mới → giữ mặc định.
@@ -226,7 +251,11 @@ namespace Attrition.Gameplay.Player.Inventory
                 ImportJson(invJson);
             }
 
-            SeedStartingItems(); // chỉ seed nếu túi vẫn trống sau khi nạp từ session
+            // Fetch session THẤT BẠI → túi trống là do đọc lỗi, KHÔNG phải "char mới". Seed lúc này là
+            // phát đồ tân thủ cho nhân vật đã có tiến trình; save đã bị chặn nên đồ seed không ghi được
+            // lên server, nhưng người chơi vẫn thấy túi sai suốt phiên. Bỏ seed cho đúng trạng thái.
+            if (!Attrition.Persistence.GameLaunch.SessionLoadFailed)
+                SeedStartingItems(); // chỉ seed nếu túi vẫn trống sau khi nạp từ session
 
             // COOP save-on-load: sau khi host's own player hydrate xong stat/đồ từ session, đẩy 1 bản
             // chụp đầy đủ lên server (SaveEvent.Load). Chạy ĐÚNG 1 lần mỗi phiên qua cờ _initialLoadSaved
@@ -291,7 +320,18 @@ namespace Attrition.Gameplay.Player.Inventory
             {
                 yield return APIManager.Instance.GetSession(sessionId, detail =>
                 {
-                    if (detail == null) { Debug.LogWarning("[SessionLoad] GetSession trả null → không nạp được stat/đồ."); return; }
+                    if (detail == null)
+                    {
+                        // Server CÓ phòng (có SessionId) mà đọc không được → cache trống là SAI, không
+                        // phải "char mới". Bật cờ để GameSaveService TỪ CHỐI lưu, nếu không mốc save kế
+                        // tiếp ghi stat/đồ mặc định đè lên row cũ = mất tiến trình vĩnh viễn.
+                        Attrition.Persistence.GameLaunch.SessionLoadFailed = true;
+                        Debug.LogError("[SessionLoad] GetSession THẤT BẠI → KHÔNG nạp được stat/đồ. "
+                                       + "Đã CHẶN save để không ghi đè tiến trình trên server.");
+                        Attrition.Controllers.SaveNotifyEvents.RaiseFailed(
+                            "Could not load your saved progress. Saving is paused to protect it — please rejoin.");
+                        return;
+                    }
 
                     if (detail.characters != null)
                     {

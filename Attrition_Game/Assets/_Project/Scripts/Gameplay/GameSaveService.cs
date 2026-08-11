@@ -28,6 +28,18 @@ namespace Attrition.Gameplay.Persistence
         private float _sessionStartTime;
         private int _basePlaytimeSeconds; // playtime tích lũy từ slot đã load
 
+        /// <summary>
+        /// Đang có 1 lần lưu ONLINE chạy dở. Chặn lưu chồng nhau.
+        ///
+        /// VÌ SAO CẦN: mỗi lần `SaveAllOnline` đều `yield return RefreshAccessToken(...)` ở đầu, và
+        /// refresh token ĐƯỢC LUÂN CHUYỂN (server trả token mới, `StoreTokens` ghi đè). Hai lần lưu
+        /// chồng nhau (vd rest xong đi cửa map ngay, hoặc đổi tỷ lệ bình liên tục) → lần thứ hai
+        /// refresh bằng token đã bị lần đầu luân chuyển → 401, và call về muộn có thể ghi access token
+        /// CŨ lên cái mới làm các lần lưu sau cũng 401. Nối tiếp thì tránh được hẳn.
+        /// Lần lưu bị bỏ KHÔNG mất dữ liệu: lần đang chạy chụp trạng thái mới hơn hoặc bằng.
+        /// </summary>
+        private bool _onlineSaveInFlight;
+
         private void Awake()
         {
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
@@ -68,11 +80,21 @@ namespace Attrition.Gameplay.Persistence
             // (host + client) theo character của từng người. Client KHÔNG tự lưu (tránh ghi đè).
             if (GameLaunch.IsOnline)
             {
+                // CHẶN CỨNG: fetch session đã thất bại → cache stat/đồ trống KHÔNG phản ánh server.
+                // Lưu lúc này là ghi giá trị mặc định (level 1, túi seed tân thủ) đè lên row thật.
+                // Thà không lưu còn hơn xoá tiến trình — xem GameLaunch.SessionLoadFailed.
+                if (GameLaunch.SessionLoadFailed)
+                {
+                    Debug.LogError("[Save:ONLINE] BỎ QUA: chưa nạp được tiến trình từ server "
+                                   + "(SessionLoadFailed) → lưu bây giờ sẽ ghi đè dữ liệu thật.");
+                    return null;
+                }
+
                 var anyPlayer = FindLocalPlayer();
                 bool isServer = anyPlayer != null && anyPlayer.Object != null
                                 && anyPlayer.Object.Runner != null && anyPlayer.Object.Runner.IsServer;
                 if (!isServer) return null; // client coop: host lo việc lưu
-                return StartCoroutine(SaveAllOnline(evt, checkpointId, checkpointPos));
+                return StartCoroutine(SaveAllOnlineSerialized(evt, checkpointId, checkpointPos));
             }
 
             // SOLO: lưu local player vào slot JSON.
@@ -296,6 +318,41 @@ namespace Attrition.Gameplay.Persistence
         /// CHỈ ghi cho nhân vật host (server lấy OwnerId từ JWT) nên tiến trình client không lên web.
         /// Nay mỗi entry mang ownerId riêng và server tự đối chiếu bảng characters trước khi ghi.
         /// </summary>
+        /// <summary>
+        /// Bọc <see cref="SaveAllOnline"/> để các lần lưu chạy NỐI TIẾP, không chồng nhau.
+        /// CHỜ (thay vì bỏ) lần đang chạy: MapChange/Quit là mốc "không lưu là mất", bỏ đi thì
+        /// caller `SaveAndWait` tưởng đã lưu xong rồi load scene / thoát luôn.
+        /// Xem <see cref="_onlineSaveInFlight"/> để biết vì sao chồng nhau gây 401.
+        /// </summary>
+        private IEnumerator SaveAllOnlineSerialized(SaveEvent evt, string checkpointId, Vector3? checkpointPos)
+        {
+            // Hạn chờ để không treo vô hạn nếu lần trước kẹt (mạng chết giữa request).
+            // PHẢI NHỎ HƠN timeout 8s của SaveAndWait: chờ lâu hơn thì caller (MapChange/Quit) đã hết
+            // hạn và đi tiếp TRƯỚC KHI ta kịp chạy → mốc "không lưu là mất" mất thật. 5s để còn ~3s
+            // cho chính lần lưu này.
+            const float MaxWaitForPrevious = 5f;
+            float waited = 0f;
+            while (_onlineSaveInFlight && waited < MaxWaitForPrevious)
+            {
+                waited += Time.unscaledDeltaTime;
+                yield return null;
+            }
+            if (_onlineSaveInFlight)
+                Debug.LogWarning($"[Save:ONLINE] Lần lưu trước quá {MaxWaitForPrevious}s chưa xong — chạy tiếp lần mới.");
+
+            _onlineSaveInFlight = true;
+            // try/finally: lỗi giữa đường (exception / yield break) vẫn phải nhả cờ, nếu không MỌI lần
+            // lưu sau đó đều phải chờ hết 10s rồi mới chạy.
+            try
+            {
+                yield return SaveAllOnline(evt, checkpointId, checkpointPos);
+            }
+            finally
+            {
+                _onlineSaveInFlight = false;
+            }
+        }
+
         private IEnumerator SaveAllOnline(SaveEvent evt, string checkpointId = null, Vector3? checkpointPos = null)
         {
             if (APIManager.Instance == null)
@@ -476,7 +533,65 @@ namespace Attrition.Gameplay.Persistence
                 yield break;
             }
 
+
+            // LÀM TƯƠI CACHE SESSION bằng đúng payload vừa ghi thành công. Cache này là ảnh chụp lúc
+            // fetch session (vào phòng) và trước đây KHÔNG bao giờ được cập nhật, nên nó "cũ dần" suốt
+            // phiên. Bất cứ đường nào nạp lại từ cache (PlayerInventory.LoadOnlineInventory) sẽ ĐÈ ảnh
+            // chụp cũ lên tiến trình hiện tại → mất đồ + level. Giữ cache đồng bộ với server là cách
+            // sửa TẬN GỐC; cờ _hydratedThisObject chỉ là lưới an toàn thứ hai.
+            // Cập nhật CẢ vị trí rest (kèm nhãn scene) để lần nạp sau spawn đúng map.
+            foreach (var c in characters)
+            {
+                if (string.IsNullOrEmpty(c.characterId)) continue;
+
+                GameLaunch.SessionInventoryByChar[c.characterId] = c.inventoryJson;
+
+                // Stat: dựng DTO đúng hình dạng mà HydrateFromCoopSession đọc. Giữ lastRestPointId cũ
+                // khi save này không phải Rest (c.lastRestPointId == null) — cùng ngữ nghĩa "null = server
+                // giữ giá trị cũ" ở payload.
+                GameLaunch.SessionStatsByChar.TryGetValue(c.characterId, out var prevStat);
+                GameLaunch.SessionStatsByChar[c.characterId] = new APIManager.CharacterSessionDto
+                {
+                    characterId = c.characterId,
+                    sessionId = GameLaunch.SessionId,
+                    playerRole = c.playerRole,
+                    currentLevel = c.currentLevel,
+                    currentExp = c.currentExp,
+                    allocatedPointsJson = c.allocatedPointsJson,
+                    maxHp = c.maxHp,
+                    currentHp = c.currentHp,
+                    maxMana = c.maxMana,
+                    currentMana = c.currentMana,
+                    maxStamina = c.maxStamina,
+                    potionMaxFlasks = c.potionMaxFlasks,
+                    potionMaxManaFlasks = c.potionMaxManaFlasks,
+                    healthCharges = c.healthCharges,
+                    manaCharges = c.manaCharges,
+                    attackSpeed = c.attackSpeed,
+                    posX = c.posX,
+                    posY = c.posY,
+                    posZ = c.posZ,
+                    lastRestPointId = c.lastRestPointId ?? prevStat?.lastRestPointId,
+                    inventoryJson = c.inventoryJson,
+                    equipmentJson = c.equipmentJson,
+                    deathCount = c.deathCount,
+                };
+
+                // Vị trí rest: chỉ cập nhật khi save này CÓ checkpoint (Rest/fast-travel). Save kiểu
+                // MapChange/Quit mang vị trí đứng hiện tại, không phải bench — ghi vào đây sẽ làm lần
+                // nạp sau spawn ở giữa map thay vì ở checkpoint.
+                if (!string.IsNullOrEmpty(c.lastRestPointId))
+                {
+                    var restMap = Attrition.Gameplay.Environment.MapRegistrySO.Load()
+                        ?.GetByCheckpoint(c.lastRestPointId);
+                    GameLaunch.SessionRestPosByChar[c.characterId] =
+                        (c.posX, c.posY, restMap != null ? restMap.sceneName : null);
+                }
+            }
+
+
             Attrition.Controllers.SaveNotifyEvents.RaiseOk(evt == SaveEvent.Load ? "Auto-save successful." : "Progress saved.");
+
         }
 
         /// <summary>
