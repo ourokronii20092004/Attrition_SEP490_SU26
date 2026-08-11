@@ -7,6 +7,7 @@ import { z } from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useConfirm } from "@/lib/providers";
 import { wikiApi } from "@/lib/api/wiki";
+import type { WikiCategoryDto } from "@/lib/types";
 import { parseApiError } from "@/lib/api/parse-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,7 @@ export function CategoriesAdmin() {
   const queryClient = useQueryClient();
   const confirm = useConfirm();
   const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<WikiCategoryDto | null>(null);
   const [searchInput, setSearchInput] = useState("");
   const [sort, setSort] = useState<SortState>({ key: "name", dir: "asc" });
   const search = useDebouncedValue(searchInput.trim().toLowerCase(), 200);
@@ -65,8 +67,16 @@ export function CategoriesAdmin() {
       <AdminPageHeader title="Wiki Categories" addLabel="New Category" onAdd={() => setShowForm(true)} />
       <AdminFilterBar search={searchInput} onSearch={setSearchInput} searchPlaceholder="Search categories…" />
 
-      <Modal open={showForm} onClose={() => setShowForm(false)} title="New Category">
-        <CategoryForm onDone={() => { setShowForm(false); invalidate(); }} onCancel={() => setShowForm(false)} />
+      <Modal
+        open={showForm}
+        onClose={() => { setShowForm(false); setEditing(null); }}
+        title={editing ? "Edit Category" : "New Category"}
+      >
+        <CategoryForm
+          initial={editing ?? undefined}
+          onDone={() => { setShowForm(false); setEditing(null); invalidate(); }}
+          onCancel={() => { setShowForm(false); setEditing(null); }}
+        />
       </Modal>
 
       <AdminTable
@@ -89,11 +99,17 @@ export function CategoriesAdmin() {
             <td className="px-3 py-2 tabular-nums text-fg-muted">{c.articleCount}</td>
             <td className="px-3 py-2 text-fg-subtle">{c.slug}</td>
             <td className="px-3 py-2 text-right">
-              <Button size="sm" variant="danger" disabled={c.articleCount > 0}
-                loading={removeMutation.isPending && removeMutation.variables === c.id}
-                onClick={() => remove(c.id)}>
-                Delete
-              </Button>
+              <div className="flex justify-end gap-1.5">
+                <Button size="sm" variant="secondary"
+                  onClick={() => { setEditing(c); setShowForm(true); }}>
+                  Edit
+                </Button>
+                <Button size="sm" variant="danger" disabled={c.articleCount > 0}
+                  loading={removeMutation.isPending && removeMutation.variables === c.id}
+                  onClick={() => remove(c.id)}>
+                  Delete
+                </Button>
+              </div>
             </td>
           </AdminRow>
         ))}
@@ -102,23 +118,26 @@ export function CategoriesAdmin() {
   );
 }
 
-function CategoryForm({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) {
+function CategoryForm({ initial, onDone, onCancel }: {
+  initial?: WikiCategoryDto; onDone: () => void; onCancel: () => void;
+}) {
   const [error, setError] = useState<string | null>(null);
   const {
     register, handleSubmit, watch,
     formState: { errors, isSubmitting },
   } = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
-    defaultValues: { name: "", description: "" },
+    defaultValues: { name: initial?.name ?? "", description: initial?.description ?? "" },
   });
 
   const onSubmit = handleSubmit(async (values) => {
     setError(null);
     try {
-      await wikiApi.createCategory({ name: values.name, description: values.description });
+      if (initial) await wikiApi.updateCategory(initial.id, { name: values.name, description: values.description });
+      else await wikiApi.createCategory({ name: values.name, description: values.description });
       onDone();
     } catch (err) {
-      setError(parseApiError(err, "Failed to create the category. Please try again."));
+      setError(parseApiError(err, initial ? "Failed to update the category. Please try again." : "Failed to create the category. Please try again."));
     }
   });
 
@@ -128,7 +147,9 @@ function CategoryForm({ onDone, onCancel }: { onDone: () => void; onCancel: () =
       <Input label="Category name" error={errors.name?.message} {...register("name")} />
       <Input label="Description" {...register("description")} />
       <div className="flex gap-2">
-        <Button type="submit" loading={isSubmitting} disabled={!watch("name")?.trim()}>Add Category</Button>
+        <Button type="submit" loading={isSubmitting} disabled={!watch("name")?.trim()}>
+          {initial ? "Save Changes" : "Add Category"}
+        </Button>
         <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
       </div>
     </form>

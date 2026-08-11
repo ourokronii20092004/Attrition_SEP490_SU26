@@ -15,6 +15,8 @@ import { ImageCropper } from "@/components/image-cropper";
 import { PageLoader } from "@/components/ui/spinner";
 import { resolveMediaUrl } from "@/lib/api/media";
 import { parseApiError } from "@/lib/api/parse-error";
+import { ProfileName } from "@/app/u/[username]/profile-edit";
+import { PrivacySection, ConnectionsSection, DangerSection } from "@/components/account-sections";
 import { Sun, Moon } from "lucide-react";
 
 /** Compact panel used across the admin account grid — tighter than the user SettingsCard. */
@@ -131,12 +133,14 @@ export default function AdminAccountPage() {
 
   return (
     <div>
-      {/* Identity header — avatar + name + inline avatar controls, all on one line */}
+      {/* Identity header — avatar + name (inline-editable) + avatar controls, on one line */}
       <div className="flex items-center gap-4 rounded-lg border border-border bg-surface/50 p-4">
         <Avatar src={user.avatarUrl} name={user.displayName ?? user.username} size="lg" />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="font-display text-xl font-bold text-fg">{user.displayName ?? user.username}</h1>
+            {/* Reuse the public profile's inline name editor: admins can't reach /u/[username]
+                (AppFrame bounces them), so this is the only place they edit their display name. */}
+            <ProfileName profile={user} isOwner onEdited={refreshUser} />
             <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent">Admin</span>
           </div>
           <p className="text-sm text-fg-muted">@{user.username}</p>
@@ -155,7 +159,7 @@ export default function AdminAccountPage() {
           page; admins get it here since they work out of the dashboard.) */}
       <div className="mt-4 rounded-lg border border-border bg-surface/50 p-4">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-fg-subtle">Cover image</h2>
-        <div className="relative mt-3 h-40 w-full overflow-hidden rounded-lg border border-border bg-surface-2 sm:h-48">
+        <div className="relative mt-3 aspect-[16/6] w-full overflow-hidden rounded-lg border border-border bg-surface-2">
           {coverUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={coverUrl} alt="" className="h-full w-full object-cover" />
@@ -254,6 +258,16 @@ export default function AdminAccountPage() {
         </Panel>
       </div>
 
+      {/* Newest account features — reuse the user-settings sections so admin and user stay in
+          lockstep. They carry their own card styling; the grid keeps the two-column rhythm. */}
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        <PrivacySection user={user} setUser={setUser} />
+        <ConnectionsSection />
+      </div>
+      <div className="mt-4">
+        <DangerSection logout={() => {}} />
+      </div>
+
       {cropFile && (
         <ImageCropper file={cropFile} aspect={1} round onCancel={() => setCropFile(null)} onCropped={onCropped} />
       )}
@@ -263,4 +277,3 @@ export default function AdminAccountPage() {
     </div>
   );
 }
-

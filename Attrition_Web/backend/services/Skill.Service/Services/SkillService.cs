@@ -31,6 +31,16 @@ public class SkillService(ISkillRepository repository, ICacheService cache) : IS
         return ApiResponse<SkillDto>.Ok(ToDto(skill));
     }
 
+    public async Task<ApiResponse> DeleteAsync(string id)
+    {
+        var skill = await repository.GetByIdAsync(id, tracked: true);
+        if (skill == null) return ApiResponse.Fail("Skill not found. It may already be gone.");
+        repository.Remove(skill);
+        await repository.SaveChangesAsync();
+        await cache.RemoveAsync("skill-bundle:all");
+        return ApiResponse.Ok();
+    }
+
     public async Task<ApiResponse<SkillImportResult>> ImportAsync(SkillImportRequest request)
     {
         var ids = request.Skills.Select(x => x.SkillId).ToList();

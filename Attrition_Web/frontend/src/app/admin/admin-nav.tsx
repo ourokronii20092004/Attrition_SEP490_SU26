@@ -46,10 +46,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/items", label: "Items", icon: Gem },
       { href: "/admin/skills", label: "Skills", icon: Sparkles },
       { href: "/admin/assets", label: "Assets", icon: ImageIcon },
-      { href: "/admin/music", label: "Music", icon: Music, children: [
-        { href: "/admin/music/albums", label: "Albums" },
-        { href: "/admin/music/tracks", label: "Tracks" },
-      ] },
+      { href: "/admin/music", label: "Music", icon: Music },
       { href: "/admin/characters", label: "Characters", icon: Gamepad2 },
       { href: "/admin/rooms", label: "Co-op Rooms", icon: DoorOpen },
     ],

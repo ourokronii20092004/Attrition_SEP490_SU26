@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { forumApi } from "@/lib/api/forum";
+import type { ForumCategoryDto } from "@/lib/types";
 import { parseApiError } from "@/lib/api/parse-error";
 import { useConfirm, useToast } from "@/lib/providers";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ export function CategoriesAdmin() {
   const { toast } = useToast();
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<ForumCategoryDto | null>(null);
   const [searchInput, setSearchInput] = useState("");
   const [sort, setSort] = useState<SortState>({ key: "name", dir: "asc" });
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -90,8 +92,16 @@ export function CategoriesAdmin() {
       </AdminPageHeader>
       <AdminFilterBar search={searchInput} onSearch={setSearchInput} searchPlaceholder="Search categories…" />
 
-      <Modal open={showForm} onClose={() => setShowForm(false)} title="New Category">
-        <CategoryForm onDone={() => { setShowForm(false); invalidate(); }} onCancel={() => setShowForm(false)} />
+      <Modal
+        open={showForm}
+        onClose={() => { setShowForm(false); setEditing(null); }}
+        title={editing ? "Edit Category" : "New Category"}
+      >
+        <CategoryForm
+          initial={editing ?? undefined}
+          onDone={() => { setShowForm(false); setEditing(null); invalidate(); }}
+          onCancel={() => { setShowForm(false); setEditing(null); }}
+        />
       </Modal>
 
       <AdminTable
@@ -120,11 +130,17 @@ export function CategoriesAdmin() {
             <td className="px-3 py-2 text-right tabular-nums text-fg-muted">{c.threadCount}</td>
             <td className="px-3 py-2 text-fg-subtle">{c.slug}</td>
             <td className="px-3 py-2 text-right">
-              <Button size="sm" variant="danger"
-                loading={deleteMutation.isPending && deleteMutation.variables === c.id}
-                onClick={(e) => { e.stopPropagation(); remove(c.id, c.name); }}>
-                Delete
-              </Button>
+              <div className="flex justify-end gap-1.5">
+                <Button size="sm" variant="secondary"
+                  onClick={(e) => { e.stopPropagation(); setEditing(c); setShowForm(true); }}>
+                  Edit
+                </Button>
+                <Button size="sm" variant="danger"
+                  loading={deleteMutation.isPending && deleteMutation.variables === c.id}
+                  onClick={(e) => { e.stopPropagation(); remove(c.id, c.name); }}>
+                  Delete
+                </Button>
+              </div>
             </td>
           </AdminRow>
         ))}
@@ -134,15 +150,20 @@ export function CategoriesAdmin() {
   );
 }
 
-function CategoryForm({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+function CategoryForm({ initial, onDone, onCancel }: {
+  initial?: ForumCategoryDto; onDone: () => void; onCancel: () => void;
+}) {
+  const [name, setName] = useState(initial?.name ?? "");
+  const [description, setDescription] = useState(initial?.description ?? "");
   const [error, setError] = useState<string | null>(null);
 
-  const createMutation = useMutation({
-    mutationFn: async () => { await forumApi.createCategory({ name, description }); },
+  const mutation = useMutation({
+    mutationFn: async () => {
+      if (initial) await forumApi.updateCategory(initial.id, { name, description });
+      else await forumApi.createCategory({ name, description });
+    },
     onSuccess: onDone,
-    onError: (err) => setError(parseApiError(err, "Failed to create the category.")),
+    onError: (err) => setError(parseApiError(err, initial ? "Failed to update the category." : "Failed to create the category.")),
   });
 
   return (
@@ -151,7 +172,9 @@ function CategoryForm({ onDone, onCancel }: { onDone: () => void; onCancel: () =
       <Input label="Category name" value={name} onChange={(e) => setName(e.target.value)} />
       <Input label="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
       <div className="flex gap-2">
-        <Button onClick={() => createMutation.mutate()} loading={createMutation.isPending} disabled={!name.trim()}>Add Category</Button>
+        <Button onClick={() => mutation.mutate()} loading={mutation.isPending} disabled={!name.trim()}>
+          {initial ? "Save Changes" : "Add Category"}
+        </Button>
         <Button variant="secondary" onClick={onCancel}>Cancel</Button>
       </div>
     </div>

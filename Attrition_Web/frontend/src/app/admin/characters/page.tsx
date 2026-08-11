@@ -3,7 +3,7 @@
 import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { Heart, MapPin, Clock, Gamepad2, User, ChevronRight, Skull } from "lucide-react";
+import { Heart, MapPin, Clock, User, ChevronRight, Skull, Shield, Swords, Sparkles, Wand2, Crosshair } from "lucide-react";
 import { charactersApi } from "@/lib/api/characters";
 import { useAuth } from "@/lib/providers";
 import { PageLoader } from "@/components/ui/spinner";
@@ -22,6 +22,17 @@ const STATUSES = [
   { value: "alive", label: "Alive" },
   { value: "dead", label: "Dead" },
 ];
+
+/** Map the free-text archetype to a recognizable glyph; unknown values fall back to a generic one. */
+function ArchetypeIcon({ archetype }: { archetype: string }) {
+  const key = archetype.toLowerCase();
+  let Icon = Swords;
+  if (key.includes("shield") || key.includes("guard") || key.includes("tank")) Icon = Shield;
+  else if (key.includes("mage") || key.includes("wizard") || key.includes("sorcer") || key.includes("wand")) Icon = Wand2;
+  else if (key.includes("rogue") || key.includes("assassin") || key.includes("ranger") || key.includes("hunt") || key.includes("archer")) Icon = Crosshair;
+  else if (key.includes("spark") || key.includes("wanderer") || key.includes("default")) Icon = Sparkles;
+  return <Icon size={14} aria-hidden />;
+}
 
 interface OwnerGroup {
   ownerId: string;
@@ -137,8 +148,8 @@ function AdminCharactersList() {
                       href={`/admin/characters/${c.id}`}
                       className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-surface-2"
                     >
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-3 text-fg-muted">
-                        <Gamepad2 size={15} aria-hidden />
+                      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${c.latestSnapshot && !c.latestSnapshot.isAlive ? "bg-danger/10 text-danger" : "bg-accent-soft text-accent"}`}>
+                        <ArchetypeIcon archetype={c.archetype} />
                       </span>
 
                       <div className="min-w-0 flex-1">
@@ -159,10 +170,18 @@ function AdminCharactersList() {
                         </div>
 
                         {c.latestSnapshot ? (
-                          <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-fg-muted">
+                          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-fg-muted">
                             <span className="font-medium text-fg">Lv.{c.latestSnapshot.level}</span>
-                            <span className="flex items-center gap-1">
-                              <Heart size={11} aria-hidden /> {c.latestSnapshot.hp}/{c.latestSnapshot.maxHp}
+                            {/* HP bar — instant read on how close to death this character is */}
+                            <span className="flex items-center gap-1.5">
+                              <Heart size={11} aria-hidden />
+                              <span className="inline-flex h-1.5 w-16 items-center overflow-hidden rounded-full bg-surface-3">
+                                <span
+                                  className={`h-full rounded-full ${c.latestSnapshot.isAlive ? "bg-success" : "bg-danger"}`}
+                                  style={{ width: `${Math.max(0, Math.min(100, (c.latestSnapshot.hp / Math.max(1, c.latestSnapshot.maxHp)) * 100))}%` }}
+                                />
+                              </span>
+                              <span className="tabular-nums text-fg-subtle">{c.latestSnapshot.hp}/{c.latestSnapshot.maxHp}</span>
                             </span>
                             {c.latestSnapshot.roomCode && (
                               <span className="flex items-center gap-1">
