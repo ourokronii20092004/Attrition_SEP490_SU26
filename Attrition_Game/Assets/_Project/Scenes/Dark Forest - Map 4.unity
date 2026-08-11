@@ -698,7 +698,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
+  m_Offset: {x: 0, y: 0.47539806}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -708,7 +708,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1, y: 3}
+  m_Size: {x: 1, y: 3.9507961}
   m_EdgeRadius: 0
 --- !u!114 &63317704
 MonoBehaviour:
@@ -772,7 +772,7 @@ Transform:
   m_GameObject: {fileID: 70809539}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 30}
+  m_LocalPosition: {x: 0.06, y: -0.49, z: 30}
   m_LocalScale: {x: 4, y: 4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -976,7 +976,7 @@ Transform:
   m_GameObject: {fileID: 100723898}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 45}
+  m_LocalPosition: {x: 0.06, y: -0.92, z: 45}
   m_LocalScale: {x: 4, y: 4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1169,6 +1169,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.World.PuzzlePlate
   latching: 0
+  playerLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
   _IsActive:
     _value: 0
 --- !u!1 &149645006
@@ -3972,7 +3975,7 @@ Transform:
   m_GameObject: {fileID: 708253519}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 20}
+  m_LocalPosition: {x: 0.18, y: -0.67, z: 20}
   m_LocalScale: {x: 4, y: 4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -21618,7 +21621,7 @@ Transform:
   m_GameObject: {fileID: 1094784470}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 50}
+  m_LocalPosition: {x: 0.06, y: -0.74, z: 50}
   m_LocalScale: {x: 4, y: 4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -24259,7 +24262,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
+  m_Offset: {x: 0, y: 0.4903884}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -24269,7 +24272,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1, y: 3}
+  m_Size: {x: 1, y: 3.9807768}
   m_EdgeRadius: 0
 --- !u!114 &1404507548
 MonoBehaviour:
@@ -25251,7 +25254,7 @@ Transform:
   m_GameObject: {fileID: 1626531538}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 40}
+  m_LocalPosition: {x: 0.12, y: -0.67, z: 40}
   m_LocalScale: {x: 4, y: 4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -25887,6 +25890,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.World.PuzzlePlate
   latching: 0
+  playerLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
   _IsActive:
     _value: 0
 --- !u!1 &1800786581
@@ -26285,6 +26291,8 @@ MonoBehaviour:
   localPlayerIcon: {fileID: 0}
   remotePlayerIcon: {fileID: 0}
   playerIconSize: 30
+  checkpointIconSize: 40
+  selectedIconScale: 1.35
 --- !u!4 &1898541218
 Transform:
   m_ObjectHideFlags: 0
@@ -26763,7 +26771,7 @@ Transform:
   m_GameObject: {fileID: 1928137391}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 35}
+  m_LocalPosition: {x: 0, y: -0.18, z: 35}
   m_LocalScale: {x: 4, y: 4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -314392,7 +314400,7 @@ Transform:
   m_GameObject: {fileID: 2139300596}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 25}
+  m_LocalPosition: {x: 0.12, y: -0.55, z: 25}
   m_LocalScale: {x: 4, y: 4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

@@ -2124,3 +2124,58 @@
     border-radius: 4px;
     scale: 1;
 }
+
+/* ============================================================
+   SỬA LẦN 10 — Chỉ số item bị CẮT khi số lớn (tăng chỉ số trên web)
+   User báo: chỉ số cộng ĐÚNG nhưng panel không đủ chỗ chứa số.
+
+   NGUYÊN NHÂN: UI Toolkit mặc định `white-space: nowrap` cho Label. Dòng
+   ".detail-mod" (tạo runtime trong GameUIController.Inventory.Refresh.cs) không hề
+   khai white-space, nên khi admin nâng amount trên web (StatModifier.amount là int,
+   có thể 4-5 chữ số) chuỗi "AttackDamage +12500" dài hơn 400px của #inv-detail và bị
+   cắt cứng — không xuống dòng, không ellipsis, không scroll.
+   Panel cha (#inv-detail) lại nằm trong #inv-panel có `overflow: hidden` nên phần
+   tràn biến mất hẳn thay vì đè ra ngoài.
+
+   ĐẶT CUỐI FILE để thắng cascade — .detail-mod / .stat-cell-val đều khai nhiều lần ở trên.
+   ============================================================ */
+
+/* (a) DÒNG CHỈ SỐ ITEM — cho xuống dòng thay vì cắt. */
+.detail-mod {
+    white-space: normal;
+    flex-shrink: 0;             /* không bị bóp khi panel chật */
+}
+
+/* Panel item: nới rộng để chuỗi "Stat +số" dài có chỗ, và cao ra theo nội dung.
+   KHÔNG đặt max-height: #inv-detail không có overflow riêng, nhưng nó nằm trong #inv-panel
+   (overflow: hidden) — chặn chiều cao ở đây chỉ khiến dòng cuối bị cắt lại. Panel cao 780px,
+   item nhiều nhất 4 modifier nên chiều cao tự nhiên vẫn nằm trong khung. */
+#inv-detail {
+    width: 440px;              /* 400 → 440 */
+}
+
+/* Khối chứa các dòng chỉ số: để nó CAO RA theo nội dung, đừng bóp.
+   KHÔNG dùng `overflow: scroll` — UI Toolkit chỉ nhận visible/hidden cho overflow, muốn cuộn
+   phải bọc bằng element ScrollView trong UXML. Đặt max-height rồi hidden sẽ lại CẮT mất số,
+   đúng cái bug đang sửa. Item thực tế chỉ có 2-4 modifier nên chiều cao tự nhiên là đủ. */
+#inv-detail-mods {
+    flex-shrink: 0;
+}
+
+/* (b) Ô CHỈ SỐ TRONG TAB (DEF/RES/AD/AP) — số lớn từ web cũng bị bóp ở đây.
+   .stat-cell là flex-row chứa key + val; val phải được ưu tiên giữ nguyên bề rộng,
+   còn key mới là phần được phép co lại. */
+.stat-cell { min-width: 0; }
+
+.stat-cell-key {
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.stat-cell-val {
+    flex-shrink: 0;            /* KHÔNG bóp con số */
+    white-space: nowrap;
+    -unity-text-align: middle-right;
+    padding-left: 6px;
+}

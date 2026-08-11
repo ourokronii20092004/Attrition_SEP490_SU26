@@ -7,10 +7,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Toggle } from "@/components/ui/toggle";
-import type { MusicAlbumDto, ScanTrackResponse } from "@/lib/types";
+import type { ScanTrackResponse } from "@/lib/types";
+
+/** The album fields the upload flow reads — both the list and detail DTOs satisfy it. */
+interface UploadAlbum {
+  albumId: number;
+  title: string;
+}
 
 interface Props {
-  albums: MusicAlbumDto[];
+  albums: UploadAlbum[];
+  /** When uploading from inside an album's detail page, pre-lock the destination album. */
+  defaultAlbumId?: number;
   onDone: () => void;
   onCancel: () => void;
 }
@@ -18,9 +26,10 @@ interface Props {
 /**
  * Two-step admin track upload: (1) pick a file → we scan its ID3 tags; (2) confirm/edit the
  * detected metadata, then upload. If the file has an album tag, the backend auto-creates or
- * matches the album; the admin can still override by picking an existing album.
+ * matches the album; the admin can still override by picking an existing album. When launched
+ * from an album detail page (`defaultAlbumId`), the destination album is preselected.
  */
-export function TrackUploadFlow({ albums, onDone, onCancel }: Props) {
+export function TrackUploadFlow({ albums, defaultAlbumId, onDone, onCancel }: Props) {
   const [step, setStep] = useState<"pick" | "confirm">("pick");
   const [file, setFile] = useState<File | null>(null);
   const [scanning, setScanning] = useState(false);
@@ -32,8 +41,8 @@ export function TrackUploadFlow({ albums, onDone, onCancel }: Props) {
   const [artists, setArtists] = useState("");
   const [genre, setGenre] = useState("");
   const [trackNumber, setTrackNumber] = useState(1);
-  const [albumMode, setAlbumMode] = useState<"auto" | "existing">("auto");
-  const [albumId, setAlbumId] = useState<number>(albums[0]?.albumId ?? 0);
+  const [albumMode, setAlbumMode] = useState<"auto" | "existing">(defaultAlbumId ? "existing" : "auto");
+  const [albumId, setAlbumId] = useState<number>(defaultAlbumId ?? albums[0]?.albumId ?? 0);
   const [isFeatured, setIsFeatured] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -51,7 +60,8 @@ export function TrackUploadFlow({ albums, onDone, onCancel }: Props) {
         setGenre(d.genre ?? "");
         setTrackNumber(d.trackNumber || 1);
         // No album tag and albums exist → default to picking one; otherwise let the backend auto-create.
-        setAlbumMode(d.album ? "auto" : albums.length ? "existing" : "auto");
+        // Launching from an album detail page locks the destination, so skip the auto-detection.
+        if (!defaultAlbumId) setAlbumMode(d.album ? "auto" : albums.length ? "existing" : "auto");
         setStep("confirm");
       } else {
         setError(res.error || "Could not scan this file.");
@@ -127,14 +137,17 @@ export function TrackUploadFlow({ albums, onDone, onCancel }: Props) {
         <Input label="Track number" type="number" value={trackNumber} onChange={(e) => setTrackNumber(+e.target.value)} />
       </div>
 
-      <Select label="Album" value={albumMode} onChange={(e) => setAlbumMode(e.target.value as "auto" | "existing")}>
+      <Select label="Album" value={albumMode} onChange={(e) => setAlbumMode(e.target.value as "auto" | "existing")} disabled={!!defaultAlbumId}>
         <option value="auto">{scan?.album ? `Auto (from tag: ${scan.album})` : "Auto-create from tag"}</option>
         {albums.length > 0 && <option value="existing">Pick an existing album</option>}
       </Select>
-      {albumMode === "existing" && (
+      {albumMode === "existing" && !defaultAlbumId && (
         <Select label="Existing album" value={albumId} onChange={(e) => setAlbumId(+e.target.value)}>
           {albums.map((a) => <option key={a.albumId} value={a.albumId}>{a.title}</option>)}
         </Select>
+      )}
+      {defaultAlbumId && albums.find((a) => a.albumId === defaultAlbumId) && (
+        <p className="text-xs text-fg-subtle">Will be added to <span className="font-medium text-fg">{albums.find((a) => a.albumId === defaultAlbumId)!.title}</span></p>
       )}
 
       <Toggle checked={isFeatured} onChange={setIsFeatured} label="Feature this track" />

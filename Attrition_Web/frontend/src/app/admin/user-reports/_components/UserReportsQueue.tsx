@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ExternalLink, ShieldAlert } from "lucide-react";
+import { ShieldAlert, ChevronRight } from "lucide-react";
 import { userReportsApi } from "@/lib/api/user-reports";
 import { useAuth, useToast } from "@/lib/providers";
 import { Button } from "@/components/ui/button";
@@ -108,9 +108,9 @@ export function UserReportsQueue() {
           <AdminRow key={r.id} onClick={() => router.push(`/admin/users/${r.reportedUserId}`)}>
             <td className="px-3 py-2">
               <span className="font-medium text-fg">{r.reportedUserName}</span>
-              <Link href={`/u/${encodeURIComponent(r.reportedUserName)}`} target="_blank" onClick={(e) => e.stopPropagation()}
+              <Link href={`/admin/users/${r.reportedUserId}`} onClick={(e) => e.stopPropagation()}
                 className="ml-2 inline-flex items-center gap-0.5 text-xs text-fg-subtle hover:text-accent">
-                profile <ExternalLink size={11} />
+                manage <ChevronRight size={11} />
               </Link>
             </td>
             <td className="px-3 py-2"><span className="line-clamp-1 max-w-sm text-fg-muted">{r.reason}</span></td>

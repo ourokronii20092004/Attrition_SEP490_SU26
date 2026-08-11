@@ -237,8 +237,10 @@ namespace Attrition.Editor
             if (puzzle == null) { Debug.LogWarning("[RemainingMaps] Map 4 không có CoopSequentialLeverPuzzle."); return; }
 
             var plates = new List<PuzzlePlate>();
+            var doors = new List<Door>();
             for (int i = 0; i < 2; i++)
             {
+                // --- Plate ---
                 string oldName = $"Lever_{i}";
                 string newName = $"Plate_{i}";
                 var go = FindChildByName(puzzle.transform.root, newName) ?? FindChildByName(puzzle.transform.root, oldName);
@@ -253,9 +255,46 @@ namespace Attrition.Editor
                 col.size = new Vector2(1.2f, 0.4f);
                 var plate = go.GetComponent<PuzzlePlate>() ?? go.AddComponent<PuzzlePlate>();
                 plates.Add(plate);
+
+                // --- Door (khớp index với plate) ---
+                string doorName = $"Door_{i}";
+                var doorGo = FindChildByName(puzzle.transform.root, doorName);
+                if (doorGo == null)
+                {
+                    // Tạo door mới cạnh plate (offset sang phải 3 unit)
+                    doorGo = new GameObject(doorName);
+                    doorGo.transform.SetParent(puzzle.transform, false);
+                    doorGo.transform.localPosition = go.transform.localPosition + new Vector3(3f, 1.5f, 0f);
+                    doorGo.AddComponent<NetworkObject>();
+                    var doorCol = doorGo.AddComponent<BoxCollider2D>();
+                    doorCol.size = new Vector2(1f, 3f);
+                    doorCol.isTrigger = false;
+                    var door = doorGo.AddComponent<Door>();
+                    SetRef(door, "blockingCollider", doorCol);
+                    SetBool(door, "startOpen", false);
+                    doors.Add(door);
+                    Debug.Log($"[RemainingMaps] Map 4: tạo {doorName} mới (cần chỉnh vị trí trong scene).");
+                }
+                else
+                {
+                    var door = doorGo.GetComponent<Door>();
+                    if (door == null)
+                    {
+                        doorGo.AddComponent<NetworkObject>();
+                        var doorCol = doorGo.GetComponent<BoxCollider2D>() ?? doorGo.AddComponent<BoxCollider2D>();
+                        doorCol.size = new Vector2(1f, 3f);
+                        doorCol.isTrigger = false;
+                        door = doorGo.AddComponent<Door>();
+                        SetRef(door, "blockingCollider", doorCol);
+                        SetBool(door, "startOpen", false);
+                    }
+                    doors.Add(door);
+                }
             }
 
             SetArray(puzzle, "plates", plates.ToArray());
+            SetArray(puzzle, "doors", doors.ToArray());
+            Debug.Log($"[RemainingMaps] Map 4: plates={plates.Count}, doors={doors.Count} đã gán vào CoopSequentialLeverPuzzle.");
         }
 
         private static GameObject FindChildByName(Transform root, string name)

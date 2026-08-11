@@ -183,6 +183,17 @@ namespace Attrition.Gameplay.World
         }
 
         /// <summary>
+        /// Host: xoá mọi item CÒN NẰM TRÊN SÀN chưa ai nhặt (rơi từ quái hoặc do player vứt ra).
+        /// Rest = "thế giới nạp lại" nên loot cũ không được giữ lại — nhặt kịp trước khi Rest thì được,
+        /// không thì mất. ForceCleanup tự kiểm HasStateAuthority + Consumed nên gọi thẳng là an toàn.
+        /// </summary>
+        public static void ClearDroppedItems()
+        {
+            foreach (var item in FindObjectsByType<DroppedItem>(FindObjectsSortMode.None))
+                if (item != null) item.ForceCleanup();
+        }
+
+        /// <summary>
         /// Gọi bởi player đang đứng trong vùng khi nhấn R (bất kỳ peer nào).
         /// Tự định tuyến: client → RPC lên host; host xử lý trực tiếp.
         /// </summary>
@@ -212,6 +223,9 @@ namespace Attrition.Gameplay.World
 
             // 2) Reset/hồi sinh quái thường + elite (boss đã đánh chết KHÔNG hồi sinh).
             ResetEnemiesExceptBoss();
+
+            // 2b) Xoá item còn nằm trên sàn chưa ai nhặt (rơi từ quái hoặc player vứt) — Rest làm mất.
+            ClearDroppedItems();
 
             // Rest gần nhất → điểm hồi sinh hiện hành + bật beacon trên mọi máy (đã gồm RpcOnRested).
             MarkAsLastCheckpoint();

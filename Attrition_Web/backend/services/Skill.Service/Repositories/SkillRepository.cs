@@ -17,7 +17,7 @@ public class SkillRepository(SkillDbContext db) : ISkillRepository
         db.Skills.Where(x => ids.Contains(x.SkillId)).ToDictionaryAsync(x => x.SkillId, StringComparer.Ordinal);
 
     public void Add(SkillEntity skill) => db.Skills.Add(skill);
-
+    public void Remove(SkillEntity skill) => db.Skills.Remove(skill);
     public Task SaveChangesAsync() => db.SaveChangesAsync();
 
     public async Task<(DateTime? MaxUpdatedAt, int Count)> GetVersionInfoAsync()
