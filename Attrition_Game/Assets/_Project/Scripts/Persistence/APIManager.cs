@@ -19,6 +19,9 @@ public class APIManager : MonoBehaviour
     [Tooltip("Base URL web frontend (cho Google login mở trình duyệt). Override qua " +
              "ATTRITION_WEB_URL hoặc StreamingAssets/web_base_url.txt.")]
     [SerializeField] private string webUrl = "https://attrition.io.vn";
+    /// <summary>URL gốc web frontend (đọc-only). Khác BaseUrl: KHÔNG có hậu tố /api. Dùng để nối
+    /// đường dẫn tương đối như /api/account/media/... (avatar) — nối vào BaseUrl sẽ thành /api/api/... </summary>
+    public string WebUrl => webUrl;
     /// <summary>URL trang login web kèm client=unity, để mở trình duyệt cho Google login.</summary>
     public string WebLoginUrl => $"{webUrl}/login?client=unity";
     /// <summary>URL trang đăng ký web kèm client=unity ("No account? Create one" ở menu login).</summary>

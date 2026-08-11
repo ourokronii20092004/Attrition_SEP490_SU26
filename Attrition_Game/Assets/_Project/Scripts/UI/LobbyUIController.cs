@@ -270,9 +270,12 @@ namespace Attrition.UI
 
         private IEnumerator LoadAvatarRoutine(string avatarUrl, VisualElement avatarEl)
         {
+            // Nối vào WebUrl (gốc web, KHÔNG có /api) chứ KHÔNG phải BaseUrl: avatarUrl từ server là
+            // /api/account/media/... (path tương đối ĐÃ có /api) → nối BaseUrl (vốn đã chứa /api) sinh
+            // https://host/api/api/... → 404. Google avatar là URL tuyệt đối nên dùng nguyên.
             string full = avatarUrl.StartsWith("http") ? avatarUrl
                 : (APIManager.Instance != null
-                    ? APIManager.Instance.BaseUrl + "/" + avatarUrl.TrimStart('/')
+                    ? APIManager.Instance.WebUrl + "/" + avatarUrl.TrimStart('/')
                     : avatarUrl);
 
             using (var req = UnityEngine.Networking.UnityWebRequestTexture.GetTexture(full))
@@ -288,6 +291,10 @@ namespace Attrition.UI
                         _avatarCache[avatarUrl] = tex;
                         ApplyAvatar(avatarEl, tex);
                     }
+                }
+                else
+                {
+                    Debug.LogWarning($"[LobbyAvatar] Tải '{full}' lỗi: {req.error}");
                 }
             }
         }

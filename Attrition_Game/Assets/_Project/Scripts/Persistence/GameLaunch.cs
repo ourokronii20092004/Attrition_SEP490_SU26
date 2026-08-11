@@ -91,6 +91,12 @@ namespace Attrition.Persistence
         /// </summary>
         public static int SessionPlaytimeSeconds = 0;
 
+        /// <summary>
+        /// True khi fetch session THẤT BẠI (mất mạng/lỗi server) → chặn lưu online: lưu lúc này sẽ ghi
+        /// đè tiến trình thật bằng trạng thái rỗng/tân thủ. Xem GameSaveService + PlayerInventory.
+        /// </summary>
+        public static bool SessionLoadFailed = false;
+
         /// <summary>Xoá cache inventory-theo-session (gọi khi rời room / đổi session / reset).</summary>
         public static void ClearSessionInventoryCache()
         {
@@ -99,6 +105,7 @@ namespace Attrition.Persistence
             SessionStatsByChar.Clear();
             SessionInventoryFetchStarted = false;
             SessionInventoryLoaded = false;
+            SessionLoadFailed = false;
             SessionPlaytimeSeconds = 0;
             CoopQuestsJson = "";
         }
