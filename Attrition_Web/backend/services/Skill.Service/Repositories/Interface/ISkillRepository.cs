@@ -8,6 +8,7 @@ public interface ISkillRepository
     Task<SkillEntity?> GetByIdAsync(string id, bool tracked = false);
     Task<Dictionary<string, SkillEntity>> GetByIdsAsync(IEnumerable<string> ids);
     void Add(SkillEntity skill);
+    void Remove(SkillEntity skill);
     Task SaveChangesAsync();
     Task<(DateTime? MaxUpdatedAt, int Count)> GetVersionInfoAsync();
 }

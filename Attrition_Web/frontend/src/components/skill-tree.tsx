@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Trash2 } from "lucide-react";
 import { resolveMediaUrl } from "@/lib/api/media";
 import { TIER_COLOR, type SkillBranch } from "@/lib/skill-tree";
 import type { SkillResponse } from "@/lib/types";
@@ -16,23 +16,25 @@ import type { SkillResponse } from "@/lib/types";
  * Nodes are buttons when `onSelect` is given (admin: open the editor) and links otherwise
  * (public: go to the skill page). The caller decides; this component only draws.
  */
-export function SkillTree({ branches, onSelect, renderHref }: {
+export function SkillTree({ branches, onSelect, onDelete, renderHref }: {
   branches: SkillBranch[];
   onSelect?: (skill: SkillResponse) => void;
+  onDelete?: (skill: SkillResponse) => void;
   renderHref?: (skill: SkillResponse) => string;
 }) {
   return (
     <div className="space-y-8">
       {branches.map((branch) => (
-        <BranchColumn key={branch.element} branch={branch} onSelect={onSelect} renderHref={renderHref} />
+        <BranchColumn key={branch.element} branch={branch} onSelect={onSelect} onDelete={onDelete} renderHref={renderHref} />
       ))}
     </div>
   );
 }
 
-function BranchColumn({ branch, onSelect, renderHref }: {
+function BranchColumn({ branch, onSelect, onDelete, renderHref }: {
   branch: SkillBranch;
   onSelect?: (skill: SkillResponse) => void;
+  onDelete?: (skill: SkillResponse) => void;
   renderHref?: (skill: SkillResponse) => string;
 }) {
   return (
@@ -65,6 +67,7 @@ function BranchColumn({ branch, onSelect, renderHref }: {
                   key={skill.skillId}
                   skill={skill}
                   onSelect={onSelect}
+                  onDelete={onDelete}
                   href={renderHref?.(skill)}
                 />
               ))}
@@ -104,9 +107,10 @@ function NodeBody({ skill }: { skill: SkillResponse }) {
  * One node on the branch. The short horizontal stub on the left is what visually ties the node
  * back to its tier's trunk, so the row reads as connected rather than as a loose grid of cards.
  */
-function SkillNode({ skill, onSelect, href }: {
+function SkillNode({ skill, onSelect, onDelete, href }: {
   skill: SkillResponse;
   onSelect?: (skill: SkillResponse) => void;
+  onDelete?: (skill: SkillResponse) => void;
   href?: string;
 }) {
   const shell =
@@ -128,6 +132,17 @@ function SkillNode({ skill, onSelect, href }: {
         <span className={`${shell} w-56 max-w-full`}>
           <NodeBody skill={skill} />
         </span>
+      )}
+      {onDelete && (
+        <button
+          type="button"
+          onClick={() => onDelete(skill)}
+          aria-label={`Delete ${skill.name || skill.skillId}`}
+          title="Delete skill"
+          className="ml-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-fg-subtle transition-colors hover:bg-danger/10 hover:text-danger"
+        >
+          <Trash2 size={14} />
+        </button>
       )}
     </span>
   );

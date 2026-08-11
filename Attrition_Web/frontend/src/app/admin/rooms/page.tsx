@@ -83,7 +83,7 @@ function AdminRoomsList() {
               className="group block rounded-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               <Card className="flex items-center gap-3 p-4 transition-colors group-hover:bg-surface-2">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent">
+                <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${r.playerCount > 1 ? "bg-accent-soft text-accent" : "bg-surface-3 text-fg-muted"}`}>
                   <DoorOpen size={17} aria-hidden />
                 </span>
 

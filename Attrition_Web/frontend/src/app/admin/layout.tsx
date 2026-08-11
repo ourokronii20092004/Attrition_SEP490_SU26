@@ -7,6 +7,7 @@ import { Menu, X, Shield, LogOut } from "lucide-react";
 import { useAuth, useConfirm } from "@/lib/providers";
 import { Avatar } from "@/components/ui/avatar";
 import { PageLoader } from "@/components/ui/spinner";
+import { AdminMusicPlayer } from "@/components/admin-music-player";
 import { AdminNav } from "./admin-nav";
 import { AdminTopBar } from "./admin-top-bar";
 import { AdminHotkeys } from "./admin-hotkeys";
@@ -126,6 +127,10 @@ function AdminAccountBlock({ user, onLogout, onNavigate }: {
           <p className="truncate text-xs text-fg-muted">@{user.username}</p>
         </div>
       </Link>
+
+      {/* Mini now-playing line: only while a track is loaded; vanishes on stop. */}
+      <AdminMusicPlayer />
+
       <div className="mt-1">
         <button
           onClick={() => { onNavigate?.(); onLogout(); }}

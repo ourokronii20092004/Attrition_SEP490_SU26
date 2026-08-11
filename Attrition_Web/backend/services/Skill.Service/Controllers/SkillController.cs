@@ -29,6 +29,14 @@ public class SkillController(ISkillService service) : ControllerBase
         return result.Success ? Ok(result) : NotFound(result);
     }
 
+    [Authorize(Roles = Roles.Admin)]
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(string id)
+    {
+        var result = await service.DeleteAsync(id);
+        return result.Success ? Ok(result) : NotFound(result);
+    }
+
     [HttpGet("/api/skillconfig")]
     public async Task<IActionResult> Config() => Ok(ApiResponse<SkillConfigBundle>.Ok(await service.GetConfigBundleAsync()));
 }

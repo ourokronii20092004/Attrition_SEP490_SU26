@@ -8,6 +8,7 @@ public interface ISkillService
     Task<List<SkillDto>> GetAllAsync();
     Task<SkillDto?> GetByIdAsync(string id);
     Task<ApiResponse<SkillDto>> UpdateAsync(string id, SkillUpdateRequest request);
+    Task<ApiResponse> DeleteAsync(string id);
     Task<ApiResponse<SkillImportResult>> ImportAsync(SkillImportRequest request);
     Task<SkillConfigBundle> GetConfigBundleAsync();
     Task<int> CountAsync();

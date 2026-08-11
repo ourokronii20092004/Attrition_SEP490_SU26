@@ -13,6 +13,7 @@ import {
 } from "@/components/admin/admin-table";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { qk } from "@/lib/query-keys";
+import type { MusicAlbumDto } from "@/lib/types";
 import { AlbumForm } from "../album-form";
 
 export default function AdminAlbumsPage() {
@@ -21,6 +22,7 @@ export default function AdminAlbumsPage() {
   const queryClient = useQueryClient();
   const confirm = useConfirm();
   const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<MusicAlbumDto | null>(null);
   const [formDirty, setFormDirty] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [sort, setSort] = useState<SortState>({ key: "album", dir: "asc" });
@@ -63,11 +65,17 @@ export default function AdminAlbumsPage() {
       <AdminPageHeader title="Albums" addLabel="New Album" onAdd={() => setShowForm(true)} />
       <AdminFilterBar search={searchInput} onSearch={setSearchInput} searchPlaceholder="Search albums or artists…" />
 
-      <Modal open={showForm} onClose={() => setShowForm(false)} title="New Album" dirty={formDirty}>
+      <Modal
+        open={showForm}
+        onClose={() => { setShowForm(false); setEditing(null); }}
+        title={editing ? "Edit Album" : "New Album"}
+        dirty={formDirty}
+      >
         <AlbumForm
+          initial={editing ?? undefined}
           onDirtyChange={setFormDirty}
-          onDone={() => { setFormDirty(false); setShowForm(false); invalidate(); }}
-          onCancel={() => { setFormDirty(false); setShowForm(false); }}
+          onDone={() => { setFormDirty(false); setShowForm(false); setEditing(null); invalidate(); }}
+          onCancel={() => { setFormDirty(false); setShowForm(false); setEditing(null); }}
         />
       </Modal>
 
@@ -98,7 +106,10 @@ export default function AdminAlbumsPage() {
             <td className="px-3 py-2 text-fg-muted">{album.artists.join(", ")}</td>
             <td className="px-3 py-2 text-right text-fg-muted tabular-nums">{album.trackCount}</td>
             <td className="px-3 py-2 text-right">
-              <Button size="sm" variant="danger" onClick={(e) => { e.stopPropagation(); handleDelete(album.albumId); }}>Delete</Button>
+              <div className="flex justify-end gap-1.5">
+                <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); setEditing(album); setShowForm(true); }}>Edit</Button>
+                <Button size="sm" variant="danger" onClick={(e) => { e.stopPropagation(); handleDelete(album.albumId); }}>Delete</Button>
+              </div>
             </td>
           </AdminRow>
         ))}

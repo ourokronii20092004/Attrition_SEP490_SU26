@@ -48,8 +48,13 @@ public class AlbumService : IAlbumService
         return new AlbumDetailDto(album.AlbumId, album.Title, album.Slug, album.Artists, album.Description,
             album.CoverPath, album.IsCoverUserDefined, album.ReleaseDate, album.AlbumType, album.Genre,
             album.TrackCount, album.TotalDuration, album.CreatedAt,
+            // AlbumTitle/AlbumCoverPath must be filled in here: tracks rarely carry their own
+            // CoverPath, and the players fall back to `coverPath ?? albumCoverPath`. Omitting
+            // both left the player thumbnail blank on the album page even though the album
+            // itself had a cover.
             tracks.Select(t => new MusicTrackDto(t.TrackId, t.AlbumId, t.Title, t.Slug, t.TrackNumber,
                 t.Artists, t.Duration, t.Genre, t.CoverPath, t.PlayCount, t.IsFeatured, t.FileSize ?? 0,
+                AlbumTitle: album.Title, AlbumCoverPath: album.CoverPath,
                 GameUsages: t.GameUsages)));
     }
 

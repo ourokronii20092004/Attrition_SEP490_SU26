@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Sparkles } from "lucide-react";
-import { useAuth } from "@/lib/providers";
+import { useAuth, useConfirm } from "@/lib/providers";
 import { skillsApi } from "@/lib/api/skills";
 import { parseApiError } from "@/lib/api/parse-error";
 import { qk } from "@/lib/query-keys";
@@ -43,6 +43,7 @@ type NumberField = Exclude<keyof Values, "skillId" | "name" | "description" | "i
 export default function AdminSkillsPage() {
   const { user } = useAuth();
   const client = useQueryClient();
+  const confirm = useConfirm();
   const [editing, setEditing] = useState<SkillResponse | null>(null);
   const [dirty, setDirty] = useState(false);
   const { data: skills = [], isPending } = useQuery({
@@ -51,6 +52,23 @@ export default function AdminSkillsPage() {
   });
   // Same tree the players see, so tuning a skill happens in the shape it ships in.
   const branches = useMemo(() => buildSkillTree(skills ?? []), [skills]);
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => skillsApi.remove(id),
+    onSuccess: () => client.invalidateQueries({ queryKey: qk.admin.skills() }),
+  });
+
+  const handleDelete = async (skill: SkillResponse) => {
+    const ok = await confirm({
+      title: `Delete "${skill.name || skill.skillId}"?`,
+      message: "This removes the skill for all players. It can't be undone — the next Unity sync will not restore it.",
+      danger: true,
+      confirmLabel: "Delete",
+    });
+    if (!ok) return;
+    deleteMutation.mutate(skill.skillId);
+  };
+
   if (!user || user.role !== "Admin") return null;
   if (isPending) return <PageLoader />;
   return <div>
@@ -60,7 +78,7 @@ export default function AdminSkillsPage() {
     </Modal>
     {!skills?.length
       ? <EmptyState icon={Sparkles} title="No skills yet" description="Skills appear here once they sync from the game." />
-      : <SkillTree branches={branches} onSelect={setEditing} />}
+      : <SkillTree branches={branches} onSelect={setEditing} onDelete={handleDelete} />}
   </div>;
 }
 
