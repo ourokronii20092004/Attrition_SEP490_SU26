@@ -1,0 +1,70 @@
+name: Unity CI
+
+# Chạy toàn bộ unit test của game Attrition (EditMode + PlayMode — hiện 126 test)
+# trên GitHub Actions. Dùng game-ci/unity-test-runner (ảnh Unity headless trên Ubuntu).
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "Attrition_Game/**"
+      - ".github/workflows/unity-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: unity-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Unity ${{ matrix.testMode }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        testMode: [editmode, playmode]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      # Unity yêu cầu license kể cả chạy test batchmode. Cần 3 secrets (xem README bên dưới):
+      #   UNITY_EMAIL, UNITY_PASSWORD, UNITY_SERIAL
+      # (Free Personal license: bỏ trống UNITY_SERIAL — action tự xin license personal.)
+      - name: Activate Unity license
+        uses: game-ci/unity-license-activate@v3
+        with:
+          unityVersion: 6000.3.15f1
+        env:
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+
+      - name: Run ${{ matrix.testMode }} tests
+        id: tests
+        uses: game-ci/unity-test-runner@v4
+        with:
+          projectPath: Attrition_Game
+          unityVersion: 6000.3.15f1
+          testMode: ${{ matrix.testMode }}
+          # EditMode tests cần editor-only assembly; playmode chạy scene trống.
+          # Không dùng customParameters — mặc định headless đã đủ.
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Unity test results (${{ matrix.testMode }})
+          path: ${{ steps.tests.outputs.artifactsPath }}
+
+# ── Secrets cần cấu hình trong repo (Settings → Secrets and variables → Actions):
+#    UNITY_EMAIL   — email tài khoản Unity đăng ký license
+#    UNITY_PASSWORD— mật khẩu tài khoản Unity
+#    UNITY_SERIAL  — serial (rỗng nếu dùng Unity Personal free)
+#
+# Cách lấy/license: dùng Unity Personal là đủ cho test. Nếu workflow fail vì license,
+# tạo manual activation file qua Unity Editor → chạy 1 lần → Upload .alf lên license.unity3d.com.
+# Ghi chú đầy đủ: https://game.ci/docs/github/activation
