@@ -107,6 +107,12 @@ public class NetworkSpawner : MonoBehaviour
         if (SceneEntryRegistry.TryGetPendingPosition(out var entryPos))
             spawnPos = entryPos;
 
+        // FAST-TRAVEL cross-map: đích là 1 CHECKPOINT cụ thể do PendingTravelSpawner đặt. Player sống
+        // sót qua LoadScene nên nếu ở đây cũng dời nó (về spawnPoint đầu map) thì ta ĐUA và GHI ĐÈ vị
+        // trí checkpoint vừa đặt → chọn "Rest 3" mà hiện ra ở đầu map (cạnh "Rest 1"). Nhường hoàn
+        // toàn cho PendingTravelSpawner. Xem SceneEntryRegistry.PendingTravelActive.
+        bool travelOwnsPlacement = SceneEntryRegistry.PendingTravelActive;
+
         // Nhân vật SỐNG SÓT qua Fusion LoadScene (NetworkObject không bị huỷ khi đổi scene). Trước đây
         // chỗ này return luôn → player giữ NGUYÊN toạ độ của map CŨ khi sang map mới, mà toạ độ đó
         // thường là khoảng không ở map mới → RƠI RA NGOÀI MAP. Giờ: KHÔNG spawn trùng, nhưng DỊCH CHUYỂN
@@ -114,6 +120,10 @@ public class NetworkSpawner : MonoBehaviour
         // (Fast-travel CROSS-MAP: PendingTravelSpawner đặt lại đúng checkpoint đích SAU đó — vẫn đúng.)
         if (runner.TryGetPlayerObject(player, out var existing) && existing != null && existing.IsValid)
         {
+            // Fast-travel cross-map: KHÔNG dời — PendingTravelSpawner sở hữu việc đặt vị trí và nó
+            // chạy TRƯỚC ta (player đã tồn tại nên vòng chờ của nó thoả ngay). Dời ở đây là ghi đè.
+            if (travelOwnsPlacement) return;
+
             // Dùng ITeleportable (Attrition.Core) chứ KHÔNG ref PlayerController: Gameplay → Networking
             // là một chiều, ref ngược sẽ tạo vòng lặp asmdef.
             var tp = existing.GetComponent<ITeleportable>();

@@ -82,6 +82,15 @@ namespace Attrition.Persistence
         /// <summary>True khi fetch session đã XONG (các player khác chờ cờ này rồi mới đọc cache).</summary>
         public static bool SessionInventoryLoaded = false;
 
+        /// <summary>
+        /// True khi ĐÃ CÓ SessionId nhưng fetch session detail THẤT BẠI (mạng/401/server lỗi).
+        /// Khác hẳn "phòng chưa có trên server" (SessionId rỗng → seed tân thủ là đúng): ở đây server
+        /// CÓ dữ liệu mà client không đọc được, nên cache trống là SAI. Nếu vẫn cho save thì bulk save
+        /// sẽ ghi stat/đồ MẶC ĐỊNH lên đúng row cũ = mất tiến trình vĩnh viễn. GameSaveService đọc cờ
+        /// này để TỪ CHỐI lưu thay vì ghi đè.
+        /// </summary>
+        public static bool SessionLoadFailed = false;
+
         /// <summary>Xoá cache inventory-theo-session (gọi khi rời room / đổi session / reset).</summary>
         public static void ClearSessionInventoryCache()
         {
@@ -90,6 +99,7 @@ namespace Attrition.Persistence
             SessionStatsByChar.Clear();
             SessionInventoryFetchStarted = false;
             SessionInventoryLoaded = false;
+            SessionLoadFailed = false;
             CoopQuestsJson = "";
         }
     }

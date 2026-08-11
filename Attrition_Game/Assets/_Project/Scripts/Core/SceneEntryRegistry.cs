@@ -17,6 +17,24 @@ public static class SceneEntryRegistry
     /// <summary>ID điểm vào đang CHỜ áp dụng cho scene kế tiếp (cửa nối ghi trước khi load scene).</summary>
     public static string PendingEntryId;
 
+    /// <summary>
+    /// True khi đang FAST-TRAVEL cross-map: đích đến là 1 CHECKPOINT cụ thể, không phải cửa nối.
+    ///
+    /// VÌ SAO CẦN: player NetworkObject sống sót qua LoadScene, nên sau khi scene mới load, CẢ HAI bên
+    /// cùng muốn đặt lại vị trí và chúng ĐUA nhau:
+    ///   • `PendingTravelSpawner` (Gameplay) đặt player tại checkpoint đích — và vì player đã tồn tại
+    ///     sẵn nên vòng chờ "players.Length > 0" thoả NGAY, nó chạy TRƯỚC.
+    ///   • `NetworkSpawner.ServerSpawnPlayer` (Networking) sau đó teleport player về `Player_SpawnPoint`
+    ///     (đầu map) → GHI ĐÈ vị trí checkpoint vừa đặt.
+    /// Kết quả: chọn "Rest 3" nhưng lại xuất hiện ở đầu map, tức cạnh "Rest 1". Đúng lỗi user báo
+    /// "teleport từ map 2 về map 1 nhận diện sai checkpoint". Travel TRONG CÙNG map không bị vì không
+    /// có LoadScene → `ServerSpawnPlayer` không chạy.
+    ///
+    /// Cờ này để `ServerSpawnPlayer` biết KHÔNG được dời player đang sống sót; `PendingTravelSpawner`
+    /// mới là nơi quyết định vị trí. Đặt ở Core vì Networking KHÔNG ref được Gameplay (WorldMapState).
+    /// </summary>
+    public static bool PendingTravelActive;
+
     public static void Register(string id, Vector3 pos, object owner = null)
     {
         if (string.IsNullOrEmpty(id)) return;
@@ -50,6 +68,16 @@ public static class SceneEntryRegistry
         return _points.TryGetValue(PendingEntryId, out pos);
     }
 
-    /// <summary>Xoá lệnh chờ (sau khi đã đặt xong mọi player) để không dính sang lần chuyển scene sau.</summary>
-    public static void ClearPending() => PendingEntryId = null;
+    /// <summary>
+    /// Xoá lệnh chờ (sau khi đã đặt xong mọi player) để không dính sang lần chuyển scene sau.
+    /// Xoá luôn <see cref="PendingTravelActive"/> làm LƯỚI AN TOÀN: nếu scene đích thiếu
+    /// `PendingTravelSpawner` (nó là nơi bình thường xoá cờ) thì cờ sẽ kẹt true vĩnh viễn và MỌI lần
+    /// đổi map sau đó player không được dời về cửa nối nữa. Gọi sau khi đã đặt xong mọi player nên
+    /// xoá ở đây không ảnh hưởng lần travel hiện tại.
+    /// </summary>
+    public static void ClearPending()
+    {
+        PendingEntryId = null;
+        PendingTravelActive = false;
+    }
 }
