@@ -35,7 +35,10 @@ jobs:
       #   UNITY_EMAIL, UNITY_PASSWORD, UNITY_SERIAL
       # (Free Personal license: bỏ trống UNITY_SERIAL — action tự xin license personal.)
       - name: Activate Unity license
-        uses: game-ci/unity-activate@v2.0.0
+        # v2.0.0 (release mới nhất) chưa hỗ trợ Unity 6 ("6000.3.15f1" → "Invalid version").
+        # Fix "Unity 6 Support" đã merge vào main (commit 350d0d7) nhưng chưa có release tag,
+        # nên pin theo commit SHA. Khi game-ci release bản mới, nâng về tag.
+        uses: game-ci/unity-activate@350d0d718a342023c4b99135bbe6c0b0a70e0a33
         with:
           unityVersion: 6000.3.15f1
         env:
@@ -54,7 +57,9 @@ jobs:
           # Không dùng customParameters — mặc định headless đã đủ.
 
       - name: Upload test results
-        if: always()
+        # always() nhưng guard artifactsPath: nếu bước test fail sớm (license...), path rỗng
+        # → upload-artifact báo "Input required and not supplied: path".
+        if: always() && steps.tests.outputs.artifactsPath != ''
         uses: actions/upload-artifact@v4
         with:
           name: Unity test results (${{ matrix.testMode }})
