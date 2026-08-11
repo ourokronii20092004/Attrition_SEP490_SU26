@@ -35,7 +35,7 @@ jobs:
       #   UNITY_EMAIL, UNITY_PASSWORD, UNITY_SERIAL
       # (Free Personal license: bỏ trống UNITY_SERIAL — action tự xin license personal.)
       - name: Activate Unity license
-        uses: game-ci/unity-license-activate@0.1.0
+        uses: game-ci/unity-activate@v2.0.0
         with:
           unityVersion: 6000.3.15f1
         env:
