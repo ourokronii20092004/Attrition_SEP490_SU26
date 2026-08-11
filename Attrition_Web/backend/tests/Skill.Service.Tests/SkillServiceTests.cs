@@ -58,7 +58,11 @@ public class SkillServiceTests
         _repo.GetByIdAsync("fireball").Returns(Entity()); Assert.Equal("fireball", (await Sut.GetByIdAsync("fireball"))!.SkillId);
     }
 
-    [Fact] public async Task Overview_UTCID03_UnknownId_ReturnsNull() => Assert.Null(await Sut.GetByIdAsync("unknown"));
+    [Fact]
+    public async Task Overview_UTCID03_UnknownId_ReturnsNull()
+    {
+        Assert.Null(await Sut.GetByIdAsync("unknown"));
+    }
 
     [Fact]
     public async Task Overview_UTCID04_BundleVersion_UsesNewestTimestampAndCount()
@@ -130,13 +134,29 @@ public class SkillServiceTests
     public async Task List_Count_ReturnsVersionInfoCount(int count, string _)
     { _repo.GetVersionInfoAsync().Returns((null, count)); Assert.Equal(count, await Sut.CountAsync()); }
 
-    [Fact] public async Task Edit_UTCID01_UpdatesAndInvalidates() => await AssertEdit(Update(), "Updated", 20);
+    [Fact]
+    public async Task Edit_UTCID01_UpdatesAndInvalidates()
+    {
+        await AssertEdit(Update(), "Updated", 20);
+    }
 
-    [Fact] public async Task Edit_UTCID03_HtmlDescription_IsSanitized() => await AssertEdit(Update("<script>x</script><b>safe</b>"), "Updated", 20, true);
+    [Fact]
+    public async Task Edit_UTCID03_HtmlDescription_IsSanitized()
+    {
+        await AssertEdit(Update("<script>x</script><b>safe</b>"), "Updated", 20, true);
+    }
 
-    [Fact] public async Task Edit_UTCID04_NullDescription_RemainsNull() => await AssertEdit(Update(null), "Updated", 20);
+    [Fact]
+    public async Task Edit_UTCID04_NullDescription_RemainsNull()
+    {
+        await AssertEdit(Update(null), "Updated", 20);
+    }
 
-    [Fact] public async Task Edit_UTCID05_NegativeMana_IsStoredAsCurrentServiceAllows() => await AssertEdit(Update(mana: -1), "Updated", -1);
+    [Fact]
+    public async Task Edit_UTCID05_NegativeMana_IsStoredAsCurrentServiceAllows()
+    {
+        await AssertEdit(Update(mana: -1), "Updated", -1);
+    }
 
     private async Task AssertEdit(SkillUpdateRequest request, string name, int mana, bool sanitized = false)
     {

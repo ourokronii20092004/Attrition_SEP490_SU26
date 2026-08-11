@@ -27,7 +27,11 @@ public class AssetServiceTests
         var a = Asset(); repo.GetByIdAsync(a.Id).Returns(a); Assert.Equal(a.Id, (await Sut().GetAssetAsync(a.Id))!.Id);
     }
 
-    [Fact] public async Task Gallery_UTCID02_GetUnknown_ReturnsNull() => Assert.Null(await Sut().GetAssetAsync(Guid.NewGuid()));
+    [Fact]
+    public async Task Gallery_UTCID02_GetUnknown_ReturnsNull()
+    {
+        Assert.Null(await Sut().GetAssetAsync(Guid.NewGuid()));
+    }
 
     [Fact]
     public async Task Gallery_UTCID03_List_ReturnsPagedRows()

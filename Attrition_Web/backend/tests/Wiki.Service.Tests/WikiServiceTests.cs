@@ -93,7 +93,11 @@ public class WikiServiceTests
         var r = new WikiRevision { ArticleId = Guid.NewGuid() }; _revisions.GetByIdAsync(r.Id).Returns(r); Assert.Null(await Sut.GetRevisionByIdAsync(Guid.NewGuid(), r.Id));
     }
 
-    [Fact] public async Task Revision_UTCID04_UnknownRevision_ReturnsNull() => Assert.Null(await Sut.GetRevisionByIdAsync(Guid.NewGuid(), Guid.NewGuid()));
+    [Fact]
+    public async Task Revision_UTCID04_UnknownRevision_ReturnsNull()
+    {
+        Assert.Null(await Sut.GetRevisionByIdAsync(Guid.NewGuid(), Guid.NewGuid()));
+    }
 
     [Fact]
     public async Task Submit_UTCID01_ExistingArticle_AddsSanitizedContribution()
@@ -445,6 +449,7 @@ internal sealed class Cache : ICacheService
     { if (v.TryGetValue(k, out var x)) return (T)x; var r = await f(); v[k] = r!; return r; }
 
     public Task<T?> GetAsync<T>(string k, CancellationToken c = default) => Task.FromResult(v.TryGetValue(k, out var x) ? (T?)x : default); public Task SetAsync<T>(string k, T x, TimeSpan? t = null, CancellationToken c = default)
+
     { v[k] = x!; return Task.CompletedTask; }
 
     public Task RemoveAsync(string k, CancellationToken c = default)

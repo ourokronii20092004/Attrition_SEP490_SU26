@@ -12,8 +12,16 @@ namespace Character.Service.Tests;
 
 public class CharacterServiceTests
 {
-    private readonly ICharacterRepository repo = Substitute.For<ICharacterRepository>(); private readonly ISessionRepository sessions = Substitute.For<ISessionRepository>();
-    private CharacterService Sut => new(repo, new IdentityClient(new HttpClient(new Handler()) { BaseAddress = new Uri("http://test/") }, new ConfigurationBuilder().Build(), NullLogger<IdentityClient>.Instance), sessions, NullLogger<CharacterService>.Instance);
+    private readonly ICharacterRepository repo = Substitute.For<ICharacterRepository>();
+    private readonly ISessionRepository sessions = Substitute.For<ISessionRepository>();
+
+    private CharacterService Sut => new
+        (
+        repo,
+        new IdentityClient(new HttpClient(new Handler()) { BaseAddress = new Uri("http://test/") }, new ConfigurationBuilder().Build(), NullLogger<IdentityClient>.Instance),
+        sessions,
+        NullLogger<CharacterService>.Instance
+        );
 
     private static CharacterEntity Character() => new() { OwnerId = Guid.NewGuid(), Name = "Hero", Archetype = "Vanguard", InventoryJson = "old-inv", EquipmentJson = "old-eq", QuestsJson = "old-q", Snapshots = new() { new() { Level = 2, Hp = 50, MaxHp = 100, CapturedAt = DateTime.UtcNow.AddMinutes(-2) }, new() { Level = 3, Hp = 70, MaxHp = 100, CapturedAt = DateTime.UtcNow } } };
 
@@ -22,7 +30,12 @@ public class CharacterServiceTests
     [Fact]
     public async Task Progress_UTCID01_OwnerList_MapsLatestSnapshot()
     {
-        var c = Character(); repo.GetByOwnerWithSnapshotsAsync(c.OwnerId).Returns(new List<CharacterEntity> { c }); var r = await Sut.GetByOwnerAsync(c.OwnerId); Assert.Single(r); Assert.Equal(3, r[0].LatestSnapshot!.Level); Assert.Equal(2, r[0].SnapshotCount);
+        var c = Character();
+        repo.GetByOwnerWithSnapshotsAsync(c.OwnerId).Returns(new List<CharacterEntity> { c });
+        var r = await Sut.GetByOwnerAsync(c.OwnerId);
+        Assert.Single(r);
+        Assert.Equal(3, r[0].LatestSnapshot!.Level);
+        Assert.Equal(2, r[0].SnapshotCount);
     }
 
     [Fact]
@@ -37,7 +50,11 @@ public class CharacterServiceTests
         var c = Character(); repo.GetWithSnapshotsAsync(c.Id).Returns(c); var r = await Sut.GetDetailAsync(c.Id); Assert.NotNull(r); Assert.Equal(3, r.Snapshots[0].Level);
     }
 
-    [Fact] public async Task Progress_UTCID04_UnknownDetail_ReturnsNull() => Assert.Null(await Sut.GetDetailAsync(Guid.NewGuid()));
+    [Fact]
+    public async Task Progress_UTCID04_UnknownDetail_ReturnsNull()
+    {
+        Assert.Null(await Sut.GetDetailAsync(Guid.NewGuid()));
+    }
 
     [Fact]
     public async Task Progress_UTCID05_NoSnapshots_HasNullLatest()
@@ -72,7 +89,12 @@ public class CharacterServiceTests
     [Fact]
     public async Task Sync_UTCID05_ConcurrentCreateWinner_IsRefetchedAndUpdated()
     {
-        var c = Character(); repo.TryAddAsync(Arg.Any<CharacterEntity>()).Returns(false); repo.FindByOwnerAndNameAsync(c.OwnerId, c.Name).Returns((CharacterEntity?)null, c); var r = await Sut.IngestSnapshotAsync(Request(c.OwnerId)); Assert.True(r.Success); await repo.Received(1).UpdateAsync(c);
+        var c = Character();
+        repo.TryAddAsync(Arg.Any<CharacterEntity>()).Returns(false);
+        repo.FindByOwnerAndNameAsync(c.OwnerId, c.Name).Returns((CharacterEntity?)null, c);
+        var r = await Sut.IngestSnapshotAsync(Request(c.OwnerId));
+        Assert.True(r.Success);
+        await repo.Received(1).UpdateAsync(c);
     }
 
     [Fact]
@@ -168,6 +190,6 @@ public class CharacterServiceTests
     private static CharacterSaveEntity Save(Guid character, long id) => new() { Id = id, CharacterId = character, CurrentLevel = 3, IsAlive = true, CapturedAt = DateTime.UtcNow.AddMinutes(id), Vitals = new(), Combat = new(), Position = new() };
 }
 
-
 internal sealed class Handler : HttpMessageHandler
+
 { protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage r, CancellationToken c) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{\"data\":[]}") }); }

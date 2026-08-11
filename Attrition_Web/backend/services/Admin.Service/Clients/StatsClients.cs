@@ -97,7 +97,6 @@ public sealed class MusicStatsClient : StatsClient
 
 public sealed class CharacterStatsClient : StatsClient
 
-
 {
     public CharacterStatsClient(HttpClient http, IConfiguration config, ILogger<CharacterStatsClient> logger) : base(http, config, logger)
     {

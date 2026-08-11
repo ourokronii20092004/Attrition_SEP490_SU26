@@ -38,14 +38,18 @@ public class EnemyServiceTests
     {
         _repo.GetAllWithLootAsync(tier, search).Returns(new List<EnemyEntity> { Enemy() });
         var result = await Sut.GetAllAsync(tier, search);
-        Assert.Single(result); Assert.Single(result[0].LootTable);
+        Assert.Single(result);
+        Assert.Single(result[0].LootTable);
     }
 
     [Fact]
     public async Task Browse_UTCID04_GetExistingById_ReturnsStatsAndLoot()
     {
         _repo.GetWithLootAsync("armored_crab").Returns(Enemy());
-        var result = await Sut.GetByIdAsync("armored_crab"); Assert.NotNull(result); Assert.Equal(100, result.Hp); Assert.Single(result.LootTable);
+        var result = await Sut.GetByIdAsync("armored_crab");
+        Assert.NotNull(result);
+        Assert.Equal(100, result.Hp);
+        Assert.Single(result.LootTable);
     }
 
     [Fact]
@@ -56,36 +60,52 @@ public class EnemyServiceTests
     [InlineData("UTCID07")]
     public async Task Browse_EmptyLoot_IsMappedAsEmptyList(string caseId)
     {
-        if (caseId == "UTCID06") { _repo.GetWithLootAsync("armored_crab").Returns(Enemy(loot: false)); Assert.Empty((await Sut.GetByIdAsync("armored_crab"))!.LootTable); }
-        else { _repo.GetAllWithLootAsync(null, null).Returns(new List<EnemyEntity> { Enemy(loot: false) }); Assert.Empty((await Sut.GetAllAsync(null, null))[0].LootTable); }
+        if (caseId == "UTCID06")
+        {
+            _repo.GetWithLootAsync("armored_crab").Returns(Enemy(loot: false));
+            Assert.Empty((await Sut.GetByIdAsync("armored_crab"))!.LootTable);
+        }
+        else
+        {
+            _repo.GetAllWithLootAsync(null, null).Returns(new List<EnemyEntity> { Enemy(loot: false) });
+            Assert.Empty((await Sut.GetAllAsync(null, null))[0].LootTable);
+        }
     }
 
     [Fact]
     public async Task Add_UTCID01_FreeId_CreatesAndInvalidatesCaches()
     {
-        EnemyEntity? added = null; _repo.TryAddAsync(Arg.Do<EnemyEntity>(x => added = x)).Returns(true);
-        Assert.True((await Sut.CreateAsync(Create())).Success); Assert.Equal("stone_golem", added!.EnemyId);
-        Assert.Contains("list:", _cache.Removed); Assert.Contains("bundle:all", _cache.Removed);
+        EnemyEntity? added = null;
+        _repo.TryAddAsync(Arg.Do<EnemyEntity>(x => added = x)).Returns(true);
+        var result = await Sut.CreateAsync(Create());
+        Assert.True(result.Success);
+        Assert.Equal("stone_golem", added!.EnemyId);
+        Assert.Contains("list:", _cache.Removed);
+        Assert.Contains("bundle:all", _cache.Removed);
     }
 
     [Fact]
     public async Task Add_UTCID02_ExistingId_FailsBeforeInsert()
     {
-        _repo.GetByIdAsync("armored_crab").Returns(Enemy()); var result = await Sut.CreateAsync(Create("armored_crab"));
-        Assert.False(result.Success); Assert.Contains("already exists", result.Error!);
+        _repo.GetByIdAsync("armored_crab").Returns(Enemy());
+        var result = await Sut.CreateAsync(Create("armored_crab"));
+        Assert.False(result.Success);
+        Assert.Contains("already exists", result.Error!);
     }
 
     [Fact]
     public async Task Add_UTCID03_EmptyId_IsRejectedByValidator()
     {
         var result = await new Enemy.Service.Validators.EnemyCreateRequestValidator().ValidateAsync(Create(""));
-        Assert.False(result.IsValid); Assert.Contains(result.Errors, e => e.PropertyName == "EnemyId");
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.PropertyName == "EnemyId");
     }
 
     [Fact]
     public async Task Add_UTCID04_LootRows_AreMapped()
     {
-        EnemyEntity? added = null; _repo.TryAddAsync(Arg.Do<EnemyEntity>(x => added = x)).Returns(true);
+        EnemyEntity? added = null;
+        _repo.TryAddAsync(Arg.Do<EnemyEntity>(x => added = x)).Returns(true);
         await Sut.CreateAsync(Create(loot: new() { new("Shell", "Rare", null, .5f, 1, 2), new("Gold", "Common", null, 1, 1, 3) }));
         Assert.Equal(2, added!.LootTable.Count);
     }
@@ -97,7 +117,8 @@ public class EnemyServiceTests
     {
         _repo.TryAddAsync(Arg.Any<EnemyEntity>()).Returns(false);
         var result = await Sut.CreateAsync(Create(loot: _ == "UTCID06" ? new() { new("Shell", "Rare", null, .5f, 1, 2) } : null));
-        Assert.False(result.Success); Assert.Contains("already exists", result.Error!);
+        Assert.False(result.Success);
+        Assert.Contains("already exists", result.Error!);
     }
 
     [Theory]
@@ -114,28 +135,53 @@ public class EnemyServiceTests
 
     [Fact]
     public async Task AdminList_UTCID06_Count_IsForwarded()
-    { _repo.CountAsync().Returns(7); Assert.Equal(7, await Sut.CountAsync()); }
+    {
+        _repo.CountAsync().Returns(7);
+        Assert.Equal(7, await Sut.CountAsync());
+    }
 
     [Fact]
     public async Task AdminList_UTCID07_Stats_AreForwarded()
-    { _repo.GetStatsAsync().Returns((7, 12)); Assert.Equal((7, 12), await Sut.GetStatsAsync()); }
+    {
+        _repo.GetStatsAsync().Returns((7, 12));
+        Assert.Equal((7, 12), await Sut.GetStatsAsync());
+    }
 
     [Fact]
-    public async Task Edit_UTCID01_NullLoot_KeepsRowsAndUpdatesStats() => await AssertEdit(null, 1);
+    public async Task Edit_UTCID01_NullLoot_KeepsRowsAndUpdatesStats()
+    {
+        await AssertEdit(null, 1);
+    }
 
     [Fact]
-    public async Task Edit_UTCID02_NewLoot_ReplacesRows() => await AssertEdit(new() { new("Gold", "Common", null, 1, 1, 2) }, 1, "Gold");
+    public async Task Edit_UTCID02_NewLoot_ReplacesRows()
+    {
+        await AssertEdit(new() { new("Gold", "Common", null, 1, 1, 2) }, 1, "Gold");
+    }
 
     [Fact]
-    public async Task Edit_UTCID03_EmptyLoot_ClearsRows() => await AssertEdit(new(), 0);
+    public async Task Edit_UTCID03_EmptyLoot_ClearsRows()
+    {
+        await AssertEdit(new(), 0);
+    }
 
     private async Task AssertEdit(List<LootEntryDto>? loot, int count, string? first = null)
     {
-        var enemy = Enemy(); _repo.GetWithLootAsync(enemy.EnemyId).Returns(enemy); var before = enemy.UpdatedAt;
+        var enemy = Enemy();
+        _repo.GetWithLootAsync(enemy.EnemyId).Returns(enemy);
+        var before = enemy.UpdatedAt;
+
         var result = await Sut.UpdateAsync(enemy.EnemyId, Update(loot));
-        Assert.True(result.Success); Assert.Equal(200, enemy.Hp); Assert.Equal(count, enemy.LootTable.Count);
-        if (first != null) Assert.Equal(first, enemy.LootTable[0].ItemName); Assert.True(enemy.UpdatedAt >= before);
-        await _repo.Received(1).SaveTrackedAsync(); Assert.Contains("list:", _cache.Removed);
+        Assert.True(result.Success);
+        Assert.Equal(200, enemy.Hp);
+        Assert.Equal(count, enemy.LootTable.Count);
+        if (first != null)
+        {
+            Assert.Equal(first, enemy.LootTable[0].ItemName);
+        }
+        Assert.True(enemy.UpdatedAt >= before);
+        await _repo.Received(1).SaveTrackedAsync();
+        Assert.Contains("list:", _cache.Removed);
     }
 
     [Theory]

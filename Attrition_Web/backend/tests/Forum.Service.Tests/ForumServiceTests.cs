@@ -366,7 +366,11 @@ public class ForumServiceTests
         var p = new ForumPost { RootPostId = Guid.NewGuid() }; repo.GetByIdAsync(p.Id).Returns(p); Assert.Null(await Sut.GetThreadAsync(p.Id));
     }
 
-    [Fact] public async Task View_UTCID07_UnknownThread_ReturnsNull() => Assert.Null(await Sut.GetThreadAsync(Guid.NewGuid()));
+    [Fact]
+    public async Task View_UTCID07_UnknownThread_ReturnsNull()
+    {
+        Assert.Null(await Sut.GetThreadAsync(Guid.NewGuid()));
+    }
 
     [Fact]
     public async Task CreateThread_UTCID04_EmptyBody_IsAccepted()
@@ -386,9 +390,17 @@ public class ForumServiceTests
         var p = new ForumPost { AuthorId = Guid.NewGuid() }; posts.GetByIdAsync(p.Id).Returns(p); Assert.False((await Sut.UpdatePostAsync(p.Id, new("x"), Guid.NewGuid())).Success);
     }
 
-    [Fact] public async Task Edit_UTCID07_MissingOwnPost_Fails() => Assert.False((await Sut.UpdatePostAsync(Guid.NewGuid(), new("x"), Guid.NewGuid())).Success);
+    [Fact]
+    public async Task Edit_UTCID07_MissingOwnPost_Fails()
+    {
+        Assert.False((await Sut.UpdatePostAsync(Guid.NewGuid(), new("x"), Guid.NewGuid())).Success);
+    }
 
-    [Fact] public async Task Delete_UTCID08_MissingOwnPost_Fails() => Assert.False((await Sut.DeletePostAsync(Guid.NewGuid(), Guid.NewGuid(), false)).Success);
+    [Fact]
+    public async Task Delete_UTCID08_MissingOwnPost_Fails()
+    {
+        Assert.False((await Sut.DeletePostAsync(Guid.NewGuid(), Guid.NewGuid(), false)).Success);
+    }
 
     [Theory]
     [InlineData(ReactionType.Dislike, "UTCID02")]
@@ -428,19 +440,25 @@ public class ForumServiceTests
 }
 
 internal sealed class Cache : ICacheService
-{ private readonly Dictionary<string, object> v = new(); internal void Seed<T>(string k, T x) => v[k] = x!; public async Task<T> GetOrSetAsync<T>(string k, Func<Task<T>> f, TimeSpan? t = null, CancellationToken c = default)
+{
+    private readonly Dictionary<string, object> v = new(); internal void Seed<T>(string k, T x) => v[k] = x!; public async Task<T> GetOrSetAsync<T>(string k, Func<Task<T>> f, TimeSpan? t = null, CancellationToken c = default)
+
     {
         if (v.TryGetValue(k, out var x)) return (T)x; return await f();
     }
-    public Task<T?> GetAsync<T>(string k, CancellationToken c = default) => Task.FromResult(default(T)); public Task SetAsync<T>(string k, T x, TimeSpan? t = null, CancellationToken c = default) => Task.CompletedTask; public Task RemoveAsync(string k, CancellationToken c = default) => Task.CompletedTask; public Task RemoveByPrefixAsync(string p, CancellationToken c = default) => Task.CompletedTask; public Task<long?> IncrementAsync(string k, long b = 1, TimeSpan? t = null, CancellationToken c = default) => Task.FromResult<long?>(null); }
+
+    public Task<T?> GetAsync<T>(string k, CancellationToken c = default) => Task.FromResult(default(T)); public Task SetAsync<T>(string k, T x, TimeSpan? t = null, CancellationToken c = default) => Task.CompletedTask; public Task RemoveAsync(string k, CancellationToken c = default) => Task.CompletedTask; public Task RemoveByPrefixAsync(string p, CancellationToken c = default) => Task.CompletedTask; public Task<long?> IncrementAsync(string k, long b = 1, TimeSpan? t = null, CancellationToken c = default) => Task.FromResult<long?>(null);
+}
 
 internal sealed class CaptureHandler : HttpMessageHandler
-{ internal List<string> Calls { get; } = new(); protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage r, CancellationToken c)
+{
+    internal List<string> Calls { get; } = new(); protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage r, CancellationToken c)
     {
         Calls.Add(r.RequestUri!.AbsolutePath); return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK));
     }
 }
 
-
 internal sealed class IdentityHandler : HttpMessageHandler
+
+
 { protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage r, CancellationToken c) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{\"data\":[]}") }); }

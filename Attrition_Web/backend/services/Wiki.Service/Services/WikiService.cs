@@ -374,6 +374,7 @@ public class WikiService : IWikiService
     }
 
     public Task<int> CountArticlesAsync() => _wikiRepo.CountAsync(a => a.Status == ArticleStatus.Published);
+
     public Task<int> CountPendingContributionsAsync() => _wikiRepo.Contributions.CountAsync(c => c.Status == ContributionStatus.Pending);
 
     // A user's wiki contributions = published articles they authored (admins) + suggested edits of

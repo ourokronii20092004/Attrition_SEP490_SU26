@@ -19,17 +19,32 @@ internal sealed class TestCache : ICacheService
 
     internal void Seed<T>(string key, T value) => _values[key] = value!;
 
-    public Task<T?> GetAsync<T>(string key, CancellationToken ct = default) =>
-        Task.FromResult(_values.TryGetValue(key, out var value) ? (T?)value : default);
+    public Task<T?> GetAsync<T>(string key, CancellationToken ct = default)
+    {
+        return Task.FromResult(_values.TryGetValue(key, out var value) ? (T?)value : default);
+    }
 
     public Task SetAsync<T>(string key, T value, TimeSpan? ttl = null, CancellationToken ct = default)
-    { _values[key] = value!; return Task.CompletedTask; }
+    {
+        _values[key] = value!;
+        return Task.CompletedTask;
+    }
 
     public Task RemoveAsync(string key, CancellationToken ct = default)
-    { Removed.Add(key); _values.Remove(key); return Task.CompletedTask; }
+    {
+        Removed.Add(key);
+        _values.Remove(key);
+        return Task.CompletedTask;
+    }
 
     public Task RemoveByPrefixAsync(string prefix, CancellationToken ct = default)
-    { Removed.Add(prefix); return Task.CompletedTask; }
+    {
+        Removed.Add(prefix);
+        return Task.CompletedTask;
+    }
 
-    public Task<long?> IncrementAsync(string key, long by = 1, TimeSpan? ttl = null, CancellationToken ct = default) => Task.FromResult<long?>(null);
+    public Task<long?> IncrementAsync(string key, long by = 1, TimeSpan? ttl = null, CancellationToken ct = default)
+    {
+        return Task.FromResult<long?>(null);
+    }
 }
