@@ -6,16 +6,21 @@ import Link from "next/link";
 import {
   ArrowRight, Users, BookOpen, FileClock, MessagesSquare, MessageSquare, EyeOff,
   Skull, Image as ImageIcon, Disc3, Music, Flag, Gem, Sparkles, Gamepad2, Keyboard,
-  DoorOpen, Users2,
+  DoorOpen, Users2, ShieldAlert, Activity,
 } from "lucide-react";
 import { adminApi } from "@/lib/api/admin";
+import { userReportsApi } from "@/lib/api/user-reports";
+import { charactersApi } from "@/lib/api/characters";
+import { musicApi } from "@/lib/api/music";
 import { Card } from "@/components/ui/card";
 import { PageTitle } from "@/components/ui/page-title";
 import { Skeleton } from "@/components/ui/skeleton";
+import { RelativeTime } from "@/components/ui/relative-time";
 import { qk } from "@/lib/query-keys";
 import { LIVE_NORMAL, liveWhenFocused } from "@/lib/live";
 import { getLastAdminPage } from "./admin-top-bar";
 import { adminLabelFor } from "./admin-routes";
+import { resolveMediaUrl } from "@/lib/api/media";
 
 type StatCard = {
   label: string; value: number | null | undefined; href: string;
@@ -33,6 +38,31 @@ export default function AdminPage() {
     queryFn: async () => {
       const res = await adminApi.getStats();
       return res.success ? res.data : null;
+    },
+  });
+
+  // Live moderation + activity feeds for the dashboard.
+  const { data: pendingReports = [] } = useQuery({
+    queryKey: qk.admin.forum.reports("pending"),
+    enabled: !!(stats?.totalUsers != null),
+    queryFn: async () => {
+      const res = await userReportsApi.adminList({ status: "Pending", page: 1, pageSize: 8 });
+      return res.success ? res.data.items : [];
+    },
+  });
+  const { data: recentRooms = [] } = useQuery({
+    queryKey: ["admin", "recent", "rooms"],
+    queryFn: async () => {
+      const res = await charactersApi.getAdminRooms({ page: 1, pageSize: 5 });
+      return res.success ? res.data.items : [];
+    },
+  });
+  const { data: recentTracks = [] } = useQuery({
+    queryKey: ["admin", "recent", "tracks"],
+    queryFn: async () => {
+      const res = await musicApi.getTracks();
+      if (!res.success) return [];
+      return [...res.data].sort((a, b) => b.playCount - a.playCount).slice(0, 5);
     },
   });
 
@@ -61,7 +91,7 @@ export default function AdminPage() {
         { label: "Skills", value: stats?.totalSkills, href: "/admin/skills", icon: Sparkles },
         { label: "Assets", value: stats?.totalAssets, href: "/admin/assets", icon: ImageIcon },
         { label: "Music Albums", value: stats?.totalMusicAlbums, href: "/admin/music/albums", icon: Disc3 },
-        { label: "Music Tracks", value: stats?.totalMusicTracks, href: "/admin/music/tracks", icon: Music },
+        { label: "Music Tracks", value: stats?.totalMusicTracks, href: "/admin/music", icon: Music },
       ],
     },
     {
@@ -117,6 +147,74 @@ export default function AdminPage() {
           </Link>
         ))}
       </div>
+
+      {/* ── Live attention + activity: what actually needs an admin right now ── */}
+      <div className="mb-6 grid gap-4 lg:grid-cols-2">
+        <Card className="p-4">
+          <h2 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-fg-subtle">
+            <ShieldAlert size={13} /> Needs attention
+          </h2>
+          {pendingReports.length === 0 ? (
+            <p className="mt-3 text-sm text-fg-muted">No pending user reports. Clear.</p>
+          ) : (
+            <ul className="mt-2 divide-y divide-border/60">
+              {pendingReports.map((r) => (
+                <li key={r.id}>
+                  <Link href={`/admin/user-reports`} className="flex items-center justify-between gap-3 py-2 text-sm transition-colors hover:text-accent">
+                    <span className="truncate text-fg">{r.reportedUserName}</span>
+                    <span className="shrink-0 text-xs text-fg-subtle">{r.reason}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
+        <Card className="p-4">
+          <h2 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-fg-subtle">
+            <Activity size={13} /> Recent co-op rooms
+          </h2>
+          {recentRooms.length === 0 ? (
+            <p className="mt-3 text-sm text-fg-muted">No rooms yet.</p>
+          ) : (
+            <ul className="mt-2 divide-y divide-border/60">
+              {recentRooms.map((r) => (
+                <li key={r.id}>
+                  <Link href={`/admin/rooms/${r.id}`} className="flex items-center justify-between gap-3 py-2 text-sm transition-colors hover:text-accent">
+                    <span className="truncate font-medium text-fg">{r.roomCode} <span className="font-normal text-fg-muted">{r.name}</span></span>
+                    <span className="shrink-0 text-xs text-fg-subtle"><RelativeTime iso={r.lastPlayedAt} /></span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      </div>
+
+      {/* ── Most-played tracks ── */}
+      {recentTracks.length > 0 && (
+        <Card className="mb-6 p-4">
+          <h2 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-fg-subtle">
+            <Music size={13} /> Most played
+          </h2>
+          <ul className="mt-2 divide-y divide-border/60">
+            {recentTracks.map((t, i) => (
+              <li key={t.trackId}>
+                <Link href={`/admin/music/albums/${t.albumId}`} className="flex items-center gap-3 py-2 text-sm transition-colors hover:text-accent">
+                  <span className="w-4 shrink-0 text-right text-xs tabular-nums text-fg-subtle">{i + 1}</span>
+                  {t.coverPath || t.albumCoverPath ? (
+                    <img src={resolveMediaUrl(t.coverPath ?? t.albumCoverPath) ?? ""} alt="" className="h-8 w-8 shrink-0 rounded object-cover" />
+                  ) : (
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-surface-2 text-fg-subtle"><Disc3 size={14} /></span>
+                  )}
+                  <span className="min-w-0 flex-1 truncate font-medium text-fg">{t.title}</span>
+                  <span className="shrink-0 text-xs tabular-nums text-fg-subtle">{t.playCount} plays</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       {groups.map((group) => (
         <div key={group.title} className="mb-6">

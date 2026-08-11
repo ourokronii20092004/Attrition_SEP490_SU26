@@ -94,6 +94,14 @@ namespace Attrition.Gameplay.Environment
         {
             WorldMapState.PendingTravelScene = null;
             WorldMapState.PendingTravelCheckpointId = null;
+
+            // CỐ TÌNH KHÔNG nhả `SceneEntryRegistry.PendingTravelActive` ở đây.
+            // Hàm này chạy RẤT SỚM: player sống sót qua LoadScene nên vòng chờ "có player" thoả ngay
+            // trong frame đầu, còn `NetworkSpawner.ServerSpawnPlayer` chỉ chạy SAU khi
+            // `PrefetchThenSpawnGameplay` yield xong `PrefetchGameConfig()` (một request web).
+            // Nhả cờ tại đây = tới lúc ServerSpawnPlayer chạy thì cờ đã false → nó lại dời player về
+            // spawnPoint đầu map và ghi đè checkpoint ta vừa đặt (đúng bug đang sửa).
+            // Cờ được nhả trong `SceneEntryRegistry.ClearPending()` — gọi SAU khi đã đặt xong mọi player.
         }
     }
 }

@@ -1098,6 +1098,9 @@ public class PlayerController : NetworkBehaviour, IDamageable, ITeleportable
 
         Attrition.Gameplay.Environment.WorldMapState.PendingTravelScene = targetScene;
         Attrition.Gameplay.Environment.WorldMapState.PendingTravelCheckpointId = checkpointName;
+        // Báo NetworkSpawner: ĐỪNG dời player về spawnPoint đầu map sau khi load — đích là checkpoint
+        // do PendingTravelSpawner đặt. Cờ ở Core vì Networking không ref được Gameplay/WorldMapState.
+        SceneEntryRegistry.PendingTravelActive = true;
         RpcTravelLoading();
 
         StartCoroutine(SaveThenTravel(targetScene));

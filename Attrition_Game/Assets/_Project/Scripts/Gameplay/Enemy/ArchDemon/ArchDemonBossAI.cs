@@ -394,8 +394,9 @@ namespace Attrition.Gameplay.Enemy.ArchDemon
             if (!HasStateAuthority || !prefab.IsValid) return;
             Runner.Spawn(prefab, pos, Quaternion.identity, null, (runner, obj) =>
             {
+                // Damage = AD/AP stats của boss (bỏ qua damage gốc từng skill — user chốt "AD trực tiếp").
                 Attrition.Gameplay.Combat.ProjectileInitializer.Init(
-                    obj, dir, damage, speed, Attrition.Core.DamageType.Magic);
+                    obj, dir, BossStatDamage(Attrition.Core.DamageType.Magic), speed, Attrition.Core.DamageType.Magic);
             });
         }
 
@@ -405,7 +406,7 @@ namespace Attrition.Gameplay.Enemy.ArchDemon
             Runner.Spawn(prefab, pos, Quaternion.identity, null, (runner, obj) =>
             {
                 Attrition.Gameplay.Combat.ProjectileInitializer.Init(
-                    obj, Vector2.zero, damage,
+                    obj, Vector2.zero, BossStatDamage(Attrition.Core.DamageType.Magic),
                     Attrition.Gameplay.Combat.ProjectileInitializer.DefaultSpeed,
                     Attrition.Core.DamageType.Magic);
             });
@@ -427,7 +428,7 @@ namespace Attrition.Gameplay.Enemy.ArchDemon
                     if (aoe != null) aoe.lifetime = lifetime;
                 }
                 Attrition.Gameplay.Combat.ProjectileInitializer.Init(
-                    obj, Vector2.zero, damage,
+                    obj, Vector2.zero, BossStatDamage(Attrition.Core.DamageType.Magic),
                     Attrition.Gameplay.Combat.ProjectileInitializer.DefaultSpeed,
                     Attrition.Core.DamageType.Magic);
             });

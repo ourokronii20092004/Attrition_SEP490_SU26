@@ -14,14 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.QuestSO
   questId: q_m1_elite_shadowdash
   title: Trial of Shadows
-  description: '[Map 1] Slay 1 cultist. Reward: Shadow Cloak.'
+  description: '[Map 1] Slay 1 cultist. Reward: Ember Charm (co-op only).'
   objectiveType: 0
   targetId: cultist
   requiredTargetIds: []
   requiredAmount: 1
   expReward: 100
   itemRewards:
-  - itemId: acc_shadow_dash
+  - itemId: acc_burn
     amount: 1
   dialogueNotStarted: {fileID: 11400000, guid: cab3cf99488a2b54fa16d36c03384357, type: 2}
   dialogueInProgress: {fileID: 11400000, guid: 1c8f536366ecc2143baf618525babb9e, type: 2}

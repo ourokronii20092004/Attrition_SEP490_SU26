@@ -17,7 +17,6 @@ export const ADMIN_ROUTES: { href: string; label: string }[] = [
   { href: "/admin/assets", label: "Assets" },
   { href: "/admin/music", label: "Music" },
   { href: "/admin/music/albums", label: "Music · Albums" },
-  { href: "/admin/music/tracks", label: "Music · Tracks" },
   { href: "/admin/characters", label: "Characters" },
   { href: "/admin/rooms", label: "Co-op Rooms" },
   { href: "/admin/account", label: "My Account" },

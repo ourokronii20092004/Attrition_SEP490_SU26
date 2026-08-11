@@ -179,9 +179,15 @@ namespace Attrition.UI
 
         private void AppendMods(VisualElement parent, ItemSO item)
         {
+            // Đọc modifier QUA ItemRuntimeConfig, KHÔNG đọc thẳng SO: admin sửa chỉ số trên web thì
+            // override nằm ở ItemConfigProvider, còn SO vẫn giữ số cũ. Chỉ số cộng vào người chơi đã
+            // dùng override (PlayerStats.BuildItemModifierOverrides) nên nếu panel đọc SO thì hai bên
+            // LỆCH NHAU: cộng đúng số mới mà hiển thị số cũ.
             StatModifier[] arr = null;
-            if (item is EquipmentSO eq) arr = eq.modifiers;
-            else if (item is AccessorySO acc && acc.kind == AccessoryKind.DamageEffect) arr = acc.modifiers;
+            if (item is EquipmentSO eq)
+                arr = Attrition.Persistence.ItemRuntimeConfig.Modifiers(eq, eq.modifiers);
+            else if (item is AccessorySO acc && acc.kind == AccessoryKind.DamageEffect)
+                arr = Attrition.Persistence.ItemRuntimeConfig.Modifiers(acc, acc.modifiers);
             else if (item is SkillSO sk)
             {
                 var runtime = Attrition.Persistence.SkillRuntimeConfig.From(sk);
@@ -190,7 +196,10 @@ namespace Attrition.UI
                 return;
             }
             if (arr == null) return;
-            foreach (var m in arr) parent.Add(MakeModLabel($"{m.stat} +{m.amount}"));
+            // Dấu theo giá trị: admin có thể nhập số ÂM trên web (đồ đánh đổi: +AD nhưng -DEF).
+            // Chuỗi cũ luôn ghép "+" nên số âm hiện thành "+-50".
+            foreach (var m in arr)
+                parent.Add(MakeModLabel($"{m.stat} {(m.amount < 0 ? "-" : "+")}{Mathf.Abs(m.amount)}"));
         }
 
         private Label MakeModLabel(string text)

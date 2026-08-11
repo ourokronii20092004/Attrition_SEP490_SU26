@@ -372,8 +372,9 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
 
             Runner.Spawn(fireExplosionPrefab, position, Quaternion.identity, null, (runner, obj) =>
             {
+                // Damage = AD/AP stats của boss (bỏ qua damage gốc từng skill — user chốt "AD trực tiếp").
                 Attrition.Gameplay.Combat.ProjectileInitializer.Init(
-                    obj, Vector2.zero, damage,
+                    obj, Vector2.zero, BossStatDamage(Attrition.Core.DamageType.Magic),
                     Attrition.Gameplay.Combat.ProjectileInitializer.DefaultSpeed,
                     Attrition.Core.DamageType.Magic);
             });
@@ -391,7 +392,7 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
             Runner.Spawn(prefab, position, Quaternion.identity, null, (runner, obj) =>
             {
                 Attrition.Gameplay.Combat.ProjectileInitializer.Init(
-                    obj, Vector2.zero, damage,
+                    obj, Vector2.zero, BossStatDamage(Attrition.Core.DamageType.Magic),
                     Attrition.Gameplay.Combat.ProjectileInitializer.DefaultSpeed,
                     Attrition.Core.DamageType.Magic);
             });
@@ -404,7 +405,7 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
             Runner.Spawn(fireBoltPrefab, spawnPos, Quaternion.identity, null, (runner, obj) =>
             {
                 Attrition.Gameplay.Combat.ProjectileInitializer.Init(
-                    obj, dir, damage, speed,
+                    obj, dir, BossStatDamage(Attrition.Core.DamageType.Magic), speed,
                     Attrition.Core.DamageType.Magic);
             });
         }
@@ -417,7 +418,7 @@ namespace Attrition.Gameplay.Enemy.SeveredFang
             return Runner.Spawn(fireBoltPrefab, spawnPos, Quaternion.identity, null, (runner, obj) =>
             {
                 Attrition.Gameplay.Combat.ProjectileInitializer.Init(
-                    obj, dir, damage, speed,
+                    obj, dir, BossStatDamage(Attrition.Core.DamageType.Magic), speed,
                     Attrition.Core.DamageType.Magic);
             });
         }

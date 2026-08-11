@@ -6,4 +6,6 @@ export const skillsApi = {
   get: (id: string) => apiFetch<ApiResponse<SkillResponse>>(`/api/skills/${encodeURIComponent(id)}`, { auth: false }),
   update: (id: string, data: SkillUpdateRequest) =>
     apiFetch<ApiResponse<SkillResponse>>(`/api/skills/${id}`, { method: "PUT", body: data }),
+  remove: (id: string) =>
+    apiFetch<ApiResponse<void>>(`/api/skills/${id}`, { method: "DELETE" }),
 };

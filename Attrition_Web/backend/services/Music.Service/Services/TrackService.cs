@@ -1,4 +1,4 @@
-using BuildingBlocks.Caching;
+using System.Linq.Expressions;
 using BuildingBlocks.Contracts;
 using BuildingBlocks.Web;
 using Music.Service.DTOs;
@@ -10,24 +10,14 @@ namespace Music.Service.Services;
 public class TrackService : ITrackService
 {
     private readonly IMusicRepository _repository;
-    private readonly ICacheService _cache;
     private readonly ILogger<TrackService> _logger;
     private readonly string _uploadPath;
     private readonly string _publicPrefix;
 
-    // Write-behind: count plays in Redis and only flush to Postgres every Nth play.
-    // Durability tradeoff: Redis is an ephemeral cache (no persistence, allkeys-lru eviction),
-    // so up to (PlayFlushEvery - 1) buffered plays per track can be lost on a Redis restart or
-    // eviction. The counter also carries a 1-day TTL, so a track with fewer than PlayFlushEvery
-    // plays in 24h may not flush until the next play tips it over. Accepted on purpose: play
-    // counts are informational, not transactional. Lower this value to shrink the loss window.
-    private const int PlayFlushEvery = 10;
-
     public TrackService(IMusicRepository repository,
-        ICacheService cache, IConfiguration config, ILogger<TrackService> logger)
+        IConfiguration config, ILogger<TrackService> logger)
     {
         _repository = repository;
-        _cache = cache;
         _logger = logger;
         _uploadPath = config["FileUpload:UploadPath"] ?? "/app/uploads";
         _publicPrefix = config["FileUpload:PublicPrefix"] ?? "/api/music/media";
@@ -159,28 +149,10 @@ public class TrackService : ITrackService
         return (filePath, fileName, true);
     }
 
-    public async Task<bool> IncrementPlayCountAsync(int id)
-    {
-        // Write-behind: buffer the play in Redis; flush to Postgres once PlayFlushEvery accrue.
-        // If Redis is unavailable, IncrementAsync returns null and we fall back to a direct DB write.
-        var buffered = await _cache.IncrementAsync($"plays:{id}", 1, TimeSpan.FromDays(1));
-        if (buffered == null)
-        {
-            return await _repository.IncrementPlayCountAsync(id, 1);
-        }
-
-        if (buffered % PlayFlushEvery == 0)
-        {
-            var updated = await _repository.IncrementPlayCountAsync(id, PlayFlushEvery);
-            if (!updated)
-            {
-                // Track no longer exists — drop the buffered counter so it can't leak.
-                await _cache.RemoveAsync($"plays:{id}");
-                return false;
-            }
-        }
-        return true;
-    }
+    // Plays are written straight to Postgres, one row update per counted listen. The previous
+    // write-behind buffer only flushed every 10th play, so on this site's traffic a single
+    // listen never reached the DB and the count appeared stuck at 0 after a reload.
+    public Task<bool> IncrementPlayCountAsync(int id) => _repository.IncrementPlayCountAsync(id, 1);
 
     public async Task<(bool success, string? error, ScanTrackResponse? data)> ScanTrackAsync(IFormFile file)
     {

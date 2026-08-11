@@ -1,87 +1,94 @@
+using System.Collections.Generic;
+using System.Linq;
 using Fusion;
 using UnityEngine;
 
 namespace Attrition.Gameplay.World
 {
     /// <summary>
-    /// Bệ kích hoạt (pressure plate) cho puzzle. Active khi có ít nhất 1 player đứng lên.
-    /// Mặc định: nhả ra thì tắt (momentary). Bật "latching" để giữ active sau lần đầu đạp.
-    /// IsActive là Networked → PuzzleController (host) đọc để kiểm tra điều kiện giải.
-    /// Gắn lên GameObject có Collider2D (isTrigger).
+    /// Bệ kích hoạt (pressure plate). Máy SỞ HỮU player bắt trigger cục bộ rồi báo host qua RPC;
+    /// host giữ IsActive [Networked] để các puzzle/cửa đọc cùng một nguồn sự thật.
     /// </summary>
     [RequireComponent(typeof(Collider2D))]
     public class PuzzlePlate : NetworkBehaviour
     {
-        [Tooltip("True = đạp 1 lần là giữ luôn (cho puzzle cần đạp đúng tổ hợp). False = nhả ra thì tắt.")]
-        [SerializeField] private bool latching = false;
-
-        [Tooltip("Layer của player. Để quét xem có ai đứng trên bệ. Phải chứa layer 'Player'.")]
-        [SerializeField] private LayerMask playerLayers = ~0;
+        [Tooltip("True = đạp 1 lần là giữ luôn. False = rời bệ thì tắt.")]
+        [SerializeField] private bool latching;
 
         [Networked] public NetworkBool IsActive { get; set; }
 
-        private Collider2D _col;
-
-        // Dùng lại giữa các tick — quét mỗi tick mà cấp phát mảng mới là rác GC thuần vô ích.
-        private static readonly Collider2D[] _hits = new Collider2D[8];
-
-        private void Awake()
-        {
-            _col = GetComponent<Collider2D>();
-        }
+        // Một player prefab có thể có nhiều collider. Đếm collider để chỉ gửi enter đầu tiên / exit cuối.
+        private readonly Dictionary<PlayerController, int> _localOccupants = new Dictionary<PlayerController, int>();
+        // Host cần biết từng peer đang đứng trên bệ; một người rời không được tắt bệ nếu người kia còn đứng.
+        private readonly HashSet<PlayerRef> _occupants = new HashSet<PlayerRef>();
 
         private void Reset()
         {
             var col = GetComponent<Collider2D>();
             if (col != null) col.isTrigger = true;
+        }
 
-            int player = LayerMask.NameToLayer("Player");
-            if (player >= 0) playerLayers = 1 << player;
+        public override void Spawned()
+        {
+            if (HasStateAuthority) IsActive = false;
+        }
+
+        public override void FixedUpdateNetwork()
+        {
+            if (!HasStateAuthority || latching || _occupants.Count == 0) return;
+
+            // Peer ngắt kết nối khi đang đứng trên plate sẽ không gửi Exit → bỏ PlayerRef đã rời,
+            // nếu không plate/door bị kẹt mở vĩnh viễn.
+            _occupants.RemoveWhere(p => !Runner.ActivePlayers.Contains(p));
+            IsActive = _occupants.Count > 0;
+        }
+
+        private void OnTriggerEnter2D(Collider2D other)
+        {
+            var player = other.GetComponentInParent<PlayerController>();
+            if (player == null || !player.HasInputAuthority || player.IsDead) return;
+
+            _localOccupants.TryGetValue(player, out int count);
+            _localOccupants[player] = count + 1;
+            if (count > 0) return;
+
+            RpcSetOccupied(true);
+        }
+
+        private void OnTriggerExit2D(Collider2D other)
+        {
+            var player = other.GetComponentInParent<PlayerController>();
+            if (player == null || !player.HasInputAuthority) return;
+            if (!_localOccupants.TryGetValue(player, out int count)) return;
+
+            if (count > 1) { _localOccupants[player] = count - 1; return; }
+            _localOccupants.Remove(player);
+            RpcSetOccupied(false);
         }
 
         /// <summary>
-        /// HOST tự QUÉT xem có player nào đứng trên bệ, mỗi tick — KHÔNG dùng OnTriggerEnter2D/Exit2D.
-        ///
-        /// VÌ SAO: trigger callback của Unity chỉ đáng tin cho object mà peer này thực sự simulate.
-        /// Host KHÔNG simulate player của client (cùng lý do đã ghi ở RoomTransitionZone.FixedUpdateNetwork),
-        /// nên client đứng lên bệ thì host không nhận được callback → IsActive không bao giờ bật →
-        /// CoopPlateDoorController thấy thiếu nút và cửa không mở. Mà puzzle này CỐ Ý bắt 2 người mỗi
-        /// người 1 nút, nên luôn có 1 bệ do client đạp → gần như không bao giờ giải được.
-        /// Quét chủ động ở đây thấy được MỌI player vì host có StateAuthority trên tất cả.
+        /// Trigger của player client không đáng tin trên host vì host không simulate physics local của
+        /// client. Ngược lại, mỗi peer luôn thấy trigger của CHÍNH player mình. Gửi kết quả đó lên host
+        /// thay vì quét nhầm PhysicsScene2D của runner như bản trước (quét trả 0 → plate0 không bật).
         /// </summary>
-        public override void FixedUpdateNetwork()
+        [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+        private void RpcSetOccupied(NetworkBool occupied, RpcInfo info = default)
         {
-            if (!HasStateAuthority || _col == null) return;
-            if (latching && IsActive) return;   // đã chốt → khỏi quét nữa
+            if (latching && IsActive) return;
 
-            bool occupied = HasPlayerOnPlate();
-            if (occupied) IsActive = true;
+            // Không nhận PlayerRef từ payload (client có thể khai người khác). Fusion tự gắn peer gửi RPC.
+            // Host gọi RPC cho chính mình có thể trả Source=None tuỳ GameMode → dùng LocalPlayer.
+            PlayerRef player = info.Source;
+            if (player == PlayerRef.None && Runner != null && Runner.IsServer)
+                player = Runner.LocalPlayer;
+            // Trust boundary: chỉ peer đang thực sự ở trong room mới được đổi trạng thái plate.
+            if (player == PlayerRef.None || Runner == null || !Runner.ActivePlayers.Contains(player)) return;
+
+            if (occupied) _occupants.Add(player);
+            else _occupants.Remove(player);
+
+            if (_occupants.Count > 0) IsActive = true;
             else if (!latching) IsActive = false;
-        }
-
-        private bool HasPlayerOnPlate()
-        {
-            var bounds = _col.bounds;
-
-            // BẮT BUỘC dùng Runner.GetPhysicsScene2D() thay vì Physics2D tĩnh — cùng lý do như
-            // PlayerController.CheckGround: physics của Fusion nằm ở scene riêng của runner.
-            var filter = new ContactFilter2D
-            {
-                useLayerMask = true,
-                layerMask = playerLayers,
-                useTriggers = true,   // collider player có thể là trigger tuỳ setup
-            };
-            int n = Runner.GetPhysicsScene2D().OverlapBox(
-                bounds.center, bounds.size, 0f, filter, _hits);
-
-            for (int i = 0; i < n; i++)
-            {
-                if (_hits[i] == null) continue;
-                var pc = _hits[i].GetComponentInParent<PlayerController>();
-                // Xác chết nằm trên bệ KHÔNG tính (giống luật ở RoomTransitionZone).
-                if (pc != null && !pc.IsDead) return true;
-            }
-            return false;
         }
     }
 }

@@ -24,15 +24,17 @@ export function ConnectionsSection() {
   // Handle the redirect back from the OAuth callback, then strip the query so a refresh won't repeat it.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    // Strip to the current path (not a hardcoded route) so this works from both /settings and the
+    // admin account page, which reuses this section.
     if (params.get("linked")) {
       toast("Google connected.", "success");
       refreshUser();
-      window.history.replaceState(null, "", "/settings");
+      window.history.replaceState(null, "", window.location.pathname);
     } else if (params.get("link_error")) {
       const m = params.get("link_error")!;
       setMsg(m);
       toast(m, "error");
-      window.history.replaceState(null, "", "/settings");
+      window.history.replaceState(null, "", window.location.pathname);
     }
   }, [refreshUser, toast]);
 

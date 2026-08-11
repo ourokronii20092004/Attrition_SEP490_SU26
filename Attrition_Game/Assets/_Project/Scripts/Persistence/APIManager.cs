@@ -4,6 +4,7 @@ using System.Collections;
 using System.Text;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
+using Attrition.Persistence;
 
 public class APIManager : MonoBehaviour
 {
@@ -18,6 +19,9 @@ public class APIManager : MonoBehaviour
     [Tooltip("Base URL web frontend (cho Google login mở trình duyệt). Override qua " +
              "ATTRITION_WEB_URL hoặc StreamingAssets/web_base_url.txt.")]
     [SerializeField] private string webUrl = "https://attrition.io.vn";
+    /// <summary>URL gốc web frontend (đọc-only). Khác BaseUrl: KHÔNG có hậu tố /api. Dùng để nối
+    /// đường dẫn tương đối như /api/account/media/... (avatar) — nối vào BaseUrl sẽ thành /api/api/... </summary>
+    public string WebUrl => webUrl;
     /// <summary>URL trang login web kèm client=unity, để mở trình duyệt cho Google login.</summary>
     public string WebLoginUrl => $"{webUrl}/login?client=unity";
     /// <summary>URL trang đăng ký web kèm client=unity ("No account? Create one" ở menu login).</summary>
@@ -198,6 +202,7 @@ public class APIManager : MonoBehaviour
         public string id;
         public string username;
         public string displayName;
+        public string avatarUrl; // từ web: /api/account/media/... (uploaded) hoặc URL tuyệt đối (Google)
     }
 
     public class AuthResponseData
@@ -237,6 +242,7 @@ public class APIManager : MonoBehaviour
                     string userId = response.data.user.id;
                     StoreTokens(response.data.accessToken, response.data.refreshToken);
                     StoreUsername(response.data.user.username);
+                    GameLaunch.AvatarUrl = response.data.user.avatarUrl ?? "";
                     callback?.Invoke(userId);
                 }
                 else
@@ -273,6 +279,7 @@ public class APIManager : MonoBehaviour
                     StoreTokens(token, refreshToken);
                     string userId = response.data.id;
                     StoreUsername(response.data.username);
+                    GameLaunch.AvatarUrl = response.data.avatarUrl ?? "";
                     callback?.Invoke(userId);
                 }
                 else
