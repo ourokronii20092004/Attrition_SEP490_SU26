@@ -2,6 +2,12 @@ name: Unity CI
 
 # Chạy toàn bộ unit test của game Attrition (EditMode + PlayMode — hiện 126 test)
 # trên GitHub Actions. Dùng game-ci/unity-test-runner (ảnh Unity headless trên Ubuntu).
+#
+# LƯU Ý về license: game-ci/unity-test-runner TỰ xử lý activation — chỉ cần secret UNITY_LICENSE
+# (nội dung file .ulf cho license Personal, hoặc file license Pro). KHÔNG dùng game-ci/unity-activate:
+# action đó (kể cả main mới nhất) build image với hậu tố dockerRepoVersion = 1, mà ảnh Unity 6
+# trên Docker Hub chỉ có hậu tố 3/3.2/3.2.2 → "unityci/editor:ubuntu-6000.3.15f1-linux-il2cpp-1:
+# not found". test-runner dùng containerRegistryImageVersion mặc định = 3 → pull ảnh hợp lệ.
 
 on:
   pull_request:
@@ -31,27 +37,14 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      # Unity yêu cầu license kể cả chạy test batchmode. Cần 3 secrets (xem README bên dưới):
-      #   UNITY_EMAIL, UNITY_PASSWORD, UNITY_SERIAL
-      # (Free Personal license: bỏ trống UNITY_SERIAL — action tự xin license personal.)
-      - name: Activate Unity license
-        # v2.0.0 (release mới nhất) chưa hỗ trợ Unity 6 ("6000.3.15f1" → "Invalid version").
-        # Fix "Unity 6 Support" đã merge vào main (commit 350d0d7) nhưng chưa có release tag,
-        # nên pin theo commit SHA. Khi game-ci release bản mới, nâng về tag.
-        uses: game-ci/unity-activate@350d0d718a342023c4b99135bbe6c0b0a70e0a33
-        with:
-          unityVersion: 6000.3.15f1
-        env:
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
-
       - name: Run ${{ matrix.testMode }} tests
         id: tests
         uses: game-ci/unity-test-runner@v4.3.1
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
         with:
           projectPath: Attrition_Game
-          unityVersion: 6000.3.15f1
+          unityVersion: auto
           testMode: ${{ matrix.testMode }}
           # EditMode tests cần editor-only assembly; playmode chạy scene trống.
           # Không dùng customParameters — mặc định headless đã đủ.
@@ -65,11 +58,10 @@ jobs:
           name: Unity test results (${{ matrix.testMode }})
           path: ${{ steps.tests.outputs.artifactsPath }}
 
-# ── Secrets cần cấu hình trong repo (Settings → Secrets and variables → Actions):
-#    UNITY_EMAIL   — email tài khoản Unity đăng ký license
-#    UNITY_PASSWORD— mật khẩu tài khoản Unity
-#    UNITY_SERIAL  — serial (rỗng nếu dùng Unity Personal free)
-#
-# Cách lấy/license: dùng Unity Personal là đủ cho test. Nếu workflow fail vì license,
-# tạo manual activation file qua Unity Editor → chạy 1 lần → Upload .alf lên license.unity3d.com.
+# ── Secret cần cấu hình trong repo (Settings → Secrets and variables → Actions):
+#    UNITY_LICENSE — nội dung file license Unity dưới dạng text.
+#      * Unity Personal: activate qua Unity Editor (Window → Manage License → Manual Activation),
+#        tải file .ulf, đặt NỘI DUNG text của file đó vào secret.
+#      * Unity Pro / Plus (serial): có thể dùng UNITY_SERIAL (27 ký tự) thay cho UNITY_LICENSE.
+#    test-runner cũng đọc UNITY_SERIAL nếu set (xem docs game.ci activation).
 # Ghi chú đầy đủ: https://game.ci/docs/github/activation
