@@ -4,6 +4,7 @@ using System.Collections;
 using System.Text;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
+using Attrition.Persistence;
 
 public class APIManager : MonoBehaviour
 {
@@ -198,6 +199,7 @@ public class APIManager : MonoBehaviour
         public string id;
         public string username;
         public string displayName;
+        public string avatarUrl; // từ web: /api/account/media/... (uploaded) hoặc URL tuyệt đối (Google)
     }
 
     public class AuthResponseData
@@ -237,6 +239,7 @@ public class APIManager : MonoBehaviour
                     string userId = response.data.user.id;
                     StoreTokens(response.data.accessToken, response.data.refreshToken);
                     StoreUsername(response.data.user.username);
+                    GameLaunch.AvatarUrl = response.data.user.avatarUrl ?? "";
                     callback?.Invoke(userId);
                 }
                 else
@@ -273,6 +276,7 @@ public class APIManager : MonoBehaviour
                     StoreTokens(token, refreshToken);
                     string userId = response.data.id;
                     StoreUsername(response.data.username);
+                    GameLaunch.AvatarUrl = response.data.avatarUrl ?? "";
                     callback?.Invoke(userId);
                 }
                 else

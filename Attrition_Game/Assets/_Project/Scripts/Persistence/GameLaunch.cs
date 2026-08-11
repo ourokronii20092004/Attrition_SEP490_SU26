@@ -24,6 +24,8 @@ namespace Attrition.Persistence
 
         /// <summary>UserId (OwnerId) từ đăng nhập. Rỗng = chưa login → chỉ lưu local.</summary>
         public static string OwnerId = "";
+        /// <summary>Avatar URL từ login (web gửi trong UserDto.avatarUrl). Rỗng = chưa có.</summary>
+        public static string AvatarUrl = "";
         /// <summary>CharacterId trên server (nếu đã có). Rỗng = server tự resolve theo (owner, name).</summary>
         public static string CharacterId = "";
         /// <summary>Tên nhân vật đang chơi (dùng cho snapshot online + hiển thị). Coop: tên CHARACTER server.</summary>
@@ -82,6 +84,13 @@ namespace Attrition.Persistence
         /// <summary>True khi fetch session đã XONG (các player khác chờ cờ này rồi mới đọc cache).</summary>
         public static bool SessionInventoryLoaded = false;
 
+        /// <summary>
+        /// Playtime phòng đã lưu trên server (detail.playTimeSeconds, lấy khi fetch session). Coop dùng
+        /// làm baseline để playtime CỘNG DỒN khi vào lại phòng thay vì reset về 0 (đối xứng với solo
+        /// đọc save slot trong PlayerStats.ApplyLoadedProgress). 0 = phòng mới/chưa có tiến trình.
+        /// </summary>
+        public static int SessionPlaytimeSeconds = 0;
+
         /// <summary>Xoá cache inventory-theo-session (gọi khi rời room / đổi session / reset).</summary>
         public static void ClearSessionInventoryCache()
         {
@@ -90,6 +99,7 @@ namespace Attrition.Persistence
             SessionStatsByChar.Clear();
             SessionInventoryFetchStarted = false;
             SessionInventoryLoaded = false;
+            SessionPlaytimeSeconds = 0;
             CoopQuestsJson = "";
         }
     }

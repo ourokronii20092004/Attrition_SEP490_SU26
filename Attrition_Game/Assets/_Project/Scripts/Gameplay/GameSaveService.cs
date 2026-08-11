@@ -23,7 +23,7 @@ namespace Attrition.Gameplay.Persistence
     {
         public static GameSaveService Instance { get; private set; }
 
-        public enum SaveEvent { Rest, Quit, Death, LevelUp, MapChange }
+        public enum SaveEvent { Rest, Quit, Death, LevelUp, MapChange, Load }
 
         private float _sessionStartTime;
         private int _basePlaytimeSeconds; // playtime tích lũy từ slot đã load
@@ -238,6 +238,26 @@ namespace Attrition.Gameplay.Persistence
             }, r => ok = r);
 
             if (!ok) Debug.LogWarning($"[Save:BOSS] '{bossId}' ghi lên server THẤT BẠI — mốc save sau sẽ thử lại.");
+            else Attrition.Controllers.SaveNotifyEvents.RaiseOk("Auto-save successful.");
+        }
+
+        /// <summary>
+        /// COOP: đẩy 1 bản chụp ĐẦY ĐỦ lên server NGAY khi vào game thành công (host player spawn xong).
+        /// Đảm bảo server có tiến trình (stat/đồ/boss/fog/checkpoint/playtime) kể cả khi cả phòng thoát
+        /// ngay sau đó, và khi reopen phòng tiến trình khớp đúng lần chơi gần nhất.
+        ///
+        /// Dùng bulk save (SaveEvent.Load) — CÙNG payload với mốc rest/quit, không phải row-only như
+        /// SaveBossDefeatOnline. An toàn ở load vì host player vừa hydrate xong stat/đồ từ session nên
+        /// bản chụp này GHI LẠI chính giá trị vừa load, không ghi đè bằng giá trị rỗng.
+        ///
+        /// Chỉ gọi từ LoadOnlineInventory của host's own player → tự nhiên chạy đúng 1 lần mỗi lần vào
+        /// phòng: spawn tươi (vào phòng mới / vào lại) là 1 lần, còn đổi map thì player object SỐNG SÓT
+        /// qua Fusion LoadScene nên Spawned()/LoadOnlineInventory không chạy lại → không save trùng.
+        /// </summary>
+        public void SaveOnCoopLoad()
+        {
+            if (!GameLaunch.IsOnline) return;
+            Save(SaveEvent.Load);
         }
 
         /// <summary>
@@ -456,7 +476,7 @@ namespace Attrition.Gameplay.Persistence
                 yield break;
             }
 
-            Attrition.Controllers.SaveNotifyEvents.RaiseOk("Progress saved.");
+            Attrition.Controllers.SaveNotifyEvents.RaiseOk(evt == SaveEvent.Load ? "Auto-save successful." : "Progress saved.");
         }
 
         /// <summary>

@@ -175,6 +175,20 @@ public class EnemyAI : NetworkBehaviour
     private PlayerRef cachedChasePlayer;
     protected EnemyStats statsComp;
 
+    // ═══════════════════════════════════════════════════════════════
+    // BOSS DAMAGE (skill/đạn theo AD-AP stats — user chốt "Damage = AD trực tiếp")
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Damage cố định theo stats boss: Physical → AD, Magic → AP (True → AP). Bỏ qua damage gốc từng skill.
+    /// Fallback 1 = ít nhất còn gây được chút (nếu statsComp chưa gán).
+    /// </summary>
+    protected int BossStatDamage(Attrition.Core.DamageType type)
+    {
+        if (statsComp == null) return 1;
+        return type == Attrition.Core.DamageType.Physical ? statsComp.AD : statsComp.AP;
+    }
+
     // Sleep timers
     private float noPlayerTimer;
     private float wakeUpAnimTimer;

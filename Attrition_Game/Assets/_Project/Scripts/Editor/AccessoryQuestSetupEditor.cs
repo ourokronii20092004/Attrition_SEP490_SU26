@@ -10,8 +10,8 @@ namespace Attrition.Editor
     /// Sinh 10 QUEST NPC trao 10 accessory, theo ĐÚNG THỨ TỰ user chốt (2026-07-30).
     ///
     /// BẢNG TIẾN TRÌNH (mọi accessory đều qua quest — KHÔNG còn món nhặt tự do ngoài map):
-    ///   Map 1: elite → shadow_dash          | boss → double_jump
-    ///   Map 2: elite → burn (coop-only)     | boss → regen
+    ///   Map 1: elite → burn (coop-only)  | boss → shadow_dash
+    ///   Map 2: elite → double_jump        | boss → regen
     ///   Map 3: elite → shield (coop-only)   | boss → stamina
     ///          NPC đầu map kể tình hình khu vực → báo cho NPC cuối map → acc_potion (coop-only)
     ///   Map 4: elite → slow (coop-only)     | boss → postskill
@@ -74,23 +74,23 @@ namespace Attrition.Editor
             new Q { map = 1, kind = QKind.Elite, questId = "q_m1_elite_shadowdash",
                     title = "Trial of Shadows",
                     targetId = "cultist", amount = 1,
-                    rewardItemId = "acc_shadow_dash", rewardName = "Shadow Cloak", exp = 180,
+                    rewardItemId = "acc_burn", rewardName = "Ember Charm", exp = 180,
                     npcName = "Summer Fairy",
                     flavor = "The cultists bend the dark to their will. Break them, and the dark will carry you instead." },
             new Q { map = 1, kind = QKind.Boss, questId = "q_m1_boss_doublejump",
                     title = "The Severed Fang",
                     targetId = "severed_fang", amount = 1,
-                    rewardItemId = "acc_double_jump", rewardName = "Feather Charm", exp = 400,
+                    rewardItemId = "acc_shadow_dash", rewardName = "Shadow Cloak", exp = 400,
                     npcName = "Summer Fairy",
-                    flavor = "A blade of fire guards the way onward. End it, and the wind will lift you twice." },
+                    flavor = "A blade of fire guards the way onward. End it, and take the dark as your own." },
 
             // ── MAP 2 ── công cụ tấn công + duy trì
             new Q { map = 2, kind = QKind.Elite, questId = "q_m2_elite_burn",
                     title = "Embers in the Grove",
                     targetId = "gollux", amount = 1,
-                    rewardItemId = "acc_burn", rewardName = "Ember Charm", exp = 320,
+                    rewardItemId = "acc_double_jump", rewardName = "Feather Charm", exp = 320,
                     npcName = "Summer Fairy",
-                    flavor = "A stone giant guards the grove. Break it, and take its ember for yourself." },
+                    flavor = "A stone giant guards the grove. Break it, and the wind will lift you twice." },
             new Q { map = 2, kind = QKind.Boss, questId = "q_m2_boss_regen",
                     title = "Warden of the Wood",
                     targetId = "druid", amount = 1,
@@ -124,10 +124,10 @@ namespace Attrition.Editor
             // ── MAP 4 ── kiểm soát + thưởng kỹ năng
             new Q { map = 4, kind = QKind.Elite, questId = "q_m4_elite_slow",
                     title = "Shadows of the Dark Wood",
-                    targetId = "undead", amount = 1,
+                    targetId = "nightborne", amount = 1,
                     rewardItemId = "acc_slow", rewardName = "Frost Charm", exp = 780,
                     npcName = "Summer Fairy",
-                    flavor = "The dead still walk beneath the dark wood. Lay one to rest, and frost will heed your strikes." },
+                    flavor = "The nightborne stalk the dark wood. Lay one to rest, and frost will heed your strikes." },
             new Q { map = 4, kind = QKind.Boss, questId = "q_m4_boss_postskill",
                     title = "Kin of the Abyss",
                     targetId = "demon_kin", amount = 1,

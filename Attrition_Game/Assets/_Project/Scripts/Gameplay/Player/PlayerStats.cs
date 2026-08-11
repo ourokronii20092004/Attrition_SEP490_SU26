@@ -131,6 +131,11 @@ namespace Attrition.Gameplay.Player
         {
             if (!HasStateAuthority || cs == null) return;
 
+            // Playtime phòng (cấp session, không per-player) làm baseline → vào lại phòng playtime cộng
+            // dồn thay vì reset về 0 (đối xứng solo đọc save slot trong ApplyLoadedProgress).
+            Attrition.Gameplay.Persistence.GameSaveService.EnsureExists()
+                .SetBasePlaytime(Attrition.Persistence.GameLaunch.SessionPlaytimeSeconds);
+
             // Level + điểm cộng
             var prog = GetComponent<PlayerProgression>();
             if (cs.currentLevel > 0)
