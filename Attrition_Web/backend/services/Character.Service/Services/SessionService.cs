@@ -1,7 +1,6 @@
 using BuildingBlocks.Contracts;
 using Character.Service.DTOs;
 using Character.Service.Models;
-using Character.Service.Repositories;
 
 namespace Character.Service.Services;
 
@@ -288,20 +287,29 @@ public class SessionService : ISessionService
                 AllocatedPointsJson = dto.AllocatedPointsJson,
                 Vitals = new VitalStats
                 {
-                    MaxHp = dto.MaxHp, CurrentHp = dto.CurrentHp,
-                    MaxMana = dto.MaxMana, CurrentMana = dto.CurrentMana,
+                    MaxHp = dto.MaxHp,
+                    CurrentHp = dto.CurrentHp,
+                    MaxMana = dto.MaxMana,
+                    CurrentMana = dto.CurrentMana,
                     MaxStamina = dto.MaxStamina,
                 },
                 Combat = new CombatStats
                 {
                     AttackSpeed = dto.AttackSpeed,
-                    PotionMaxFlasks = dto.PotionMaxFlasks, PotionMaxManaFlasks = dto.PotionMaxManaFlasks,
-                    HealthCharges = dto.HealthCharges, ManaCharges = dto.ManaCharges,
-                    Ad = dto.Ad, Ap = dto.Ap, Def = dto.Def, Res = dto.Res,
+                    PotionMaxFlasks = dto.PotionMaxFlasks,
+                    PotionMaxManaFlasks = dto.PotionMaxManaFlasks,
+                    HealthCharges = dto.HealthCharges,
+                    ManaCharges = dto.ManaCharges,
+                    Ad = dto.Ad,
+                    Ap = dto.Ap,
+                    Def = dto.Def,
+                    Res = dto.Res,
                 },
                 Position = new Position
                 {
-                    PosX = dto.PosX, PosY = dto.PosY, PosZ = dto.PosZ,
+                    PosX = dto.PosX,
+                    PosY = dto.PosY,
+                    PosZ = dto.PosZ,
                     LastRestPointId = dto.LastRestPointId,
                 },
                 InventoryJson = dto.InventoryJson,
@@ -404,7 +412,8 @@ public class SessionService : ISessionService
             new BulkSaveResultDto(request.SessionId, saved, eventIds.Count, skipped));
     }
 
-    public async Task<ApiResponse> DeleteSessionAsync(Guid sessionId)    {
+    public async Task<ApiResponse> DeleteSessionAsync(Guid sessionId)
+    {
         if (sessionId == Guid.Empty)
             return ApiResponse.Fail("SessionId is required.");
 
@@ -417,6 +426,7 @@ public class SessionService : ISessionService
     // Fixed per room: generated once at creation and never changes, so a host can re-open the
     // same journey and invite the same friend back with the same code.
     private const string CodeAlphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no O/0/I/1 to avoid confusion
+
     private static readonly Random Rng = new();
 
     private async Task<string> GenerateUniqueRoomCodeAsync()

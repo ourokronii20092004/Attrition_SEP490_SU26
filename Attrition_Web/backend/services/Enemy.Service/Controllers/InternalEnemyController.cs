@@ -1,7 +1,6 @@
 using BuildingBlocks.Authentication;
 using BuildingBlocks.Contracts;
 using Enemy.Service.DTOs;
-using Enemy.Service.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Enemy.Service.Controllers;

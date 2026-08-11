@@ -1,7 +1,6 @@
 using BuildingBlocks.Authentication;
 using BuildingBlocks.Contracts;
 using Forum.Service.DTOs;
-using Forum.Service.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -25,6 +24,7 @@ public class ForumController : ControllerBase
 
     // Soft email-verification gate: unverified users may browse but not contribute.
     private const string VerifyMessage = "Please verify your email address before posting.";
+
     private IActionResult? RequireVerified() =>
         _user.IsEmailVerified ? null : StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Fail(VerifyMessage));
 

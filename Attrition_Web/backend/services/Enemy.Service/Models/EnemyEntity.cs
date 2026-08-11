@@ -28,6 +28,7 @@ public class EnemyEntity
 
     // Baseline enables three-way merge without overwriting admin edits.
     public string? UnityBaselineJson { get; set; }
+
     public DateTime? ImportedAt { get; set; }
 
     public int Poise { get; set; }

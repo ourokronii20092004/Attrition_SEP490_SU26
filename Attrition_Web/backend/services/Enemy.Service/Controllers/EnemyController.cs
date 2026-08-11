@@ -1,6 +1,5 @@
 using BuildingBlocks.Contracts;
 using Enemy.Service.DTOs;
-using Enemy.Service.Services;
 using Enemy.Service.Validators;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,6 +12,7 @@ public class EnemyController : ControllerBase
 {
     private readonly IEnemyService _service;
     private readonly IItemService _itemService;
+
     public EnemyController(IEnemyService service, IItemService itemService)
     {
         _service = service;

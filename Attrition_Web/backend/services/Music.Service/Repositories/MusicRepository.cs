@@ -1,7 +1,7 @@
 using BuildingBlocks.Persistence;
+using Microsoft.EntityFrameworkCore;
 using Music.Service.Data;
 using Music.Service.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace Music.Service.Repositories;
 

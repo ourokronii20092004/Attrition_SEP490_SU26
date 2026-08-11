@@ -2,7 +2,6 @@ using BuildingBlocks.Authentication;
 using BuildingBlocks.Contracts;
 using Microsoft.AspNetCore.Mvc;
 using Wiki.Service.DTOs;
-using Wiki.Service.Services;
 
 namespace Wiki.Service.Controllers;
 

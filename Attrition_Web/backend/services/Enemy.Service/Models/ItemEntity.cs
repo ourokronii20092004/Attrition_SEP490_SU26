@@ -23,6 +23,7 @@ public class ItemEntity
 
     // Stacking + key-item (BR-41/42/45 trong game).
     public int MaxStack { get; set; } = 1;
+
     public bool IsKeyItem { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -30,6 +31,7 @@ public class ItemEntity
 
     // Baseline enables three-way merge without overwriting admin edits.
     public string? UnityBaselineJson { get; set; }
+
     public DateTime? ImportedAt { get; set; }
 
     // Cộng chỉ số (StatType + amount) — owned, giống loot của enemy. Game áp khi build item runtime.

@@ -1,6 +1,6 @@
-using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
+using System.Text.Json;
 
 namespace BuildingBlocks.Caching;
 

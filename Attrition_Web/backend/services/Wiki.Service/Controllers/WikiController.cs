@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Wiki.Service.DTOs;
 using Wiki.Service.Models;
-using Wiki.Service.Services;
 
 namespace Wiki.Service.Controllers;
 

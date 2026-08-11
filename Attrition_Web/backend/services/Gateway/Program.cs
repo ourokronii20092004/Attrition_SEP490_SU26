@@ -1,6 +1,5 @@
-using System.Threading.RateLimiting;
 using Gateway;
-using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 

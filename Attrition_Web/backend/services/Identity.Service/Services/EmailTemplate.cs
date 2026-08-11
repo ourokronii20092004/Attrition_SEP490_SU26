@@ -17,6 +17,7 @@ public static class EmailTemplate
 {
     // Site palette, hard-coded because var(--color-*) does not exist in an email client.
     private const string Bg = "#0f1115";
+
     private const string Panel = "#171a21";
     private const string Border = "#272b35";
     private const string Fg = "#e8e6e3";

@@ -2,7 +2,6 @@ using BuildingBlocks.Authentication;
 using BuildingBlocks.Contracts;
 using Forum.Service.DTOs;
 using Forum.Service.Models;
-using Forum.Service.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

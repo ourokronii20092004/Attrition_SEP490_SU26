@@ -1,6 +1,5 @@
 using BuildingBlocks.Contracts;
 using Enemy.Service.DTOs;
-using Enemy.Service.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,6 +11,7 @@ namespace Enemy.Service.Controllers;
 public class GameDataImportController : ControllerBase
 {
     private readonly IGameDataImportService _service;
+
     public GameDataImportController(IGameDataImportService service) => _service = service;
 
     [HttpPost("import")]

@@ -35,6 +35,3 @@ problems/
 deploy.py
 *.txt
 test-data/
-
-# Test projects (local-only)
-backend/tests/

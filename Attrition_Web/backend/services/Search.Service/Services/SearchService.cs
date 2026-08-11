@@ -1,7 +1,7 @@
-using System.Collections.Concurrent;
 using BuildingBlocks.Caching;
 using Search.Service.Clients;
 using Search.Service.DTOs;
+using System.Collections.Concurrent;
 
 namespace Search.Service.Services;
 

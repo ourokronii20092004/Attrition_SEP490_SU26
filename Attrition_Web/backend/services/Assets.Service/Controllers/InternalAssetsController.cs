@@ -1,4 +1,3 @@
-using Assets.Service.Services;
 using BuildingBlocks.Authentication;
 using BuildingBlocks.Contracts;
 using Microsoft.AspNetCore.Mvc;

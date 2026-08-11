@@ -5,7 +5,9 @@ namespace Music.Service.Data;
 
 public class MusicDbContext : DbContext
 {
-    public MusicDbContext(DbContextOptions<MusicDbContext> options) : base(options) { }
+    public MusicDbContext(DbContextOptions<MusicDbContext> options) : base(options)
+    {
+    }
 
     public DbSet<MusicAlbum> MusicAlbums => Set<MusicAlbum>();
     public DbSet<MusicTrack> MusicTracks => Set<MusicTrack>();

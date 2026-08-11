@@ -3,7 +3,6 @@ using BuildingBlocks.Contracts;
 using BuildingBlocks.Web;
 using Enemy.Service.DTOs;
 using Enemy.Service.Models;
-using Enemy.Service.Repositories;
 
 namespace Enemy.Service.Services;
 

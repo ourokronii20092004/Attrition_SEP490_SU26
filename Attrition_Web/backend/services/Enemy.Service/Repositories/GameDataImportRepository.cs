@@ -41,8 +41,15 @@ public class GameDataImportRepository(EnemyDbContext db) : IGameDataImportReposi
             var baseline = JsonSerializer.Serialize(dto, JsonOptions);
             if (!existing.TryGetValue(dto.ItemId, out var item))
             {
-                item = new ItemEntity { ItemId = dto.ItemId, IconKey = dto.ItemId,
-                    UnityBaselineJson = baseline, ImportedAt = now, CreatedAt = now, UpdatedAt = now };
+                item = new ItemEntity
+                {
+                    ItemId = dto.ItemId,
+                    IconKey = dto.ItemId,
+                    UnityBaselineJson = baseline,
+                    ImportedAt = now,
+                    CreatedAt = now,
+                    UpdatedAt = now
+                };
                 Apply(item, dto);
                 db.Items.Add(item); created++;
             }
@@ -99,9 +106,13 @@ public class GameDataImportRepository(EnemyDbContext db) : IGameDataImportReposi
         enemy.ChaseSpeed = dto.ChaseSpeed; enemy.AttackSpeed = dto.AttackSpeed; enemy.ExpReward = dto.ExpReward;
         enemy.ImageUrl = dto.ImageUrl ?? enemy.ImageUrl;
         enemy.LootTable.Clear();
-        enemy.LootTable.AddRange((dto.LootTable ?? []).Select(x => new EnemyLootEntry {
-            ItemName = itemNames.GetValueOrDefault(x.ItemId, x.ItemId), IconKey = x.ItemId,
-            DropChance = x.DropChance, MinQty = x.MinQty, MaxQty = x.MaxQty
+        enemy.LootTable.AddRange((dto.LootTable ?? []).Select(x => new EnemyLootEntry
+        {
+            ItemName = itemNames.GetValueOrDefault(x.ItemId, x.ItemId),
+            IconKey = x.ItemId,
+            DropChance = x.DropChance,
+            MinQty = x.MinQty,
+            MaxQty = x.MaxQty
         }));
     }
 
@@ -128,6 +139,9 @@ public class GameDataImportRepository(EnemyDbContext db) : IGameDataImportReposi
         (d.LootTable ?? []).OrderBy(x => x.ItemId).Select(x => new object?[] { x.ItemId, x.DropChance, x.MinQty, x.MaxQty }) }, JsonOptions);
 
     private static string? Clean(string? value) => value == null ? null : ContentSanitizer.Sanitize(value);
-    private static async Task<(DateTime? max, int count)> VersionInfo(IQueryable<DateTime> query) { var count = await query.CountAsync(); return count == 0 ? (null, 0) : (await query.MaxAsync(x => (DateTime?)x), count); }
+
+    private static async Task<(DateTime? max, int count)> VersionInfo(IQueryable<DateTime> query)
+    { var count = await query.CountAsync(); return count == 0 ? (null, 0) : (await query.MaxAsync(x => (DateTime?)x), count); }
+
     private static string Version(DateTime? max, int count) => max is null ? "0" : $"{max:O}|{count}";
 }

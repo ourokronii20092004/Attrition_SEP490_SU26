@@ -1,6 +1,6 @@
+using BuildingBlocks.Contracts;
 using FluentValidation;
 using Identity.Service.DTOs;
-using BuildingBlocks.Contracts;
 
 namespace Identity.Service.Validators;
 

@@ -1,6 +1,5 @@
 using BuildingBlocks.Authentication;
 using BuildingBlocks.Contracts;
-using Character.Service.Services.Interface;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Character.Service.Controllers;

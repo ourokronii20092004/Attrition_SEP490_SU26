@@ -1,6 +1,5 @@
 using BuildingBlocks.Contracts;
 using Identity.Service.DTOs;
-using Identity.Service.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,6 +11,7 @@ namespace Identity.Service.Controllers;
 public class AdminUsersController : ControllerBase
 {
     private readonly IAdminUserService _admin;
+
     public AdminUsersController(IAdminUserService admin) => _admin = admin;
 
     // A "not found" failure should be 404, not 400. The service reports it via the error message.

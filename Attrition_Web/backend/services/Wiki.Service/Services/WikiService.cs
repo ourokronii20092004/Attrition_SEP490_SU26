@@ -1,11 +1,10 @@
-using System.Linq.Expressions;
 using BuildingBlocks.Caching;
 using BuildingBlocks.Contracts;
 using BuildingBlocks.Web;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 using Wiki.Service.DTOs;
 using Wiki.Service.Models;
-using Wiki.Service.Repositories;
 
 namespace Wiki.Service.Services;
 
@@ -375,6 +374,7 @@ public class WikiService : IWikiService
     }
 
     public Task<int> CountArticlesAsync() => _wikiRepo.CountAsync(a => a.Status == ArticleStatus.Published);
+
     public Task<int> CountPendingContributionsAsync() => _wikiRepo.Contributions.CountAsync(c => c.Status == ContributionStatus.Pending);
 
     // A user's wiki contributions = published articles they authored (admins) + suggested edits of

@@ -2,7 +2,6 @@ using BuildingBlocks.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Skill.Service.DTOs;
-using Skill.Service.Services;
 
 namespace Skill.Service.Controllers;
 

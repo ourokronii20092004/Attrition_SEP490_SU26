@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Http;
-
 namespace Music.Service.DTOs;
 
 public record CreateAlbumRequest(

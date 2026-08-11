@@ -1,10 +1,10 @@
-using System.Net;
-using System.Text.Json;
 using BuildingBlocks.Contracts;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Net;
+using System.Text.Json;
 
 namespace BuildingBlocks.Web;
 

@@ -11,9 +11,12 @@ public static class AuthCookies
 {
     public const string AccessToken = "attrition_access";
     public const string RefreshToken = "attrition_refresh";
+
     /// <summary>Non-HttpOnly, readable by JS for the double-submit CSRF check.</summary>
     public const string Csrf = "attrition_csrf";
+
     public const string CsrfHeader = "X-CSRF";
+
     /// <summary>Records the "remember me" choice ("1" persistent, "0" session) so token refreshes
     /// can keep the same cookie persistence.</summary>
     public const string Remember = "attrition_remember";

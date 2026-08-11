@@ -5,7 +5,9 @@ namespace Identity.Service.Data;
 
 public class IdentityDbContext : DbContext
 {
-    public IdentityDbContext(DbContextOptions<IdentityDbContext> options) : base(options) { }
+    public IdentityDbContext(DbContextOptions<IdentityDbContext> options) : base(options)
+    {
+    }
 
     public DbSet<User> Users => Set<User>();
     public DbSet<Notification> Notifications => Set<Notification>();

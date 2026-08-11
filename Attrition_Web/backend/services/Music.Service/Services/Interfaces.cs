@@ -1,6 +1,3 @@
-using Music.Service.DTOs;
-using Music.Service.Models;
-
 namespace Music.Service.Services;
 
 /// <summary>Shared helpers for music services.</summary>

@@ -1,12 +1,11 @@
-using System.Linq.Expressions;
-using System.Text.RegularExpressions;
 using BuildingBlocks.Caching;
 using BuildingBlocks.Contracts;
 using BuildingBlocks.Web;
 using Forum.Service.Clients;
 using Forum.Service.DTOs;
 using Forum.Service.Models;
-using Forum.Service.Repositories;
+using System.Linq.Expressions;
+using System.Text.RegularExpressions;
 
 namespace Forum.Service.Services;
 

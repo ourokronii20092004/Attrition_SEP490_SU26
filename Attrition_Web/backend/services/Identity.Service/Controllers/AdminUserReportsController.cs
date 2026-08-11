@@ -1,7 +1,6 @@
 using BuildingBlocks.Authentication;
 using BuildingBlocks.Contracts;
 using Identity.Service.DTOs;
-using Identity.Service.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,6 +14,7 @@ public class AdminUserReportsController : ControllerBase
 {
     private readonly IUserReportService _reports;
     private readonly ICurrentUser _user;
+
     public AdminUserReportsController(IUserReportService reports, ICurrentUser user)
     {
         _reports = reports;

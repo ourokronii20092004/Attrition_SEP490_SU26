@@ -51,7 +51,6 @@ internal static class EnemyStatRules
         v.RuleFor(patrol).Must(x => float.IsFinite(x) && x >= 0);
         v.RuleFor(chase).Must(x => float.IsFinite(x) && x >= 0);
     }
-
 }
 
 public class EnemyCreateRequestValidator : AbstractValidator<EnemyCreateRequest>

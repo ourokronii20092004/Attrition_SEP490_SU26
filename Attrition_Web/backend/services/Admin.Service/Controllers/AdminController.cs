@@ -1,5 +1,4 @@
 using Admin.Service.DTOs;
-using Admin.Service.Services;
 using BuildingBlocks.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,6 +17,7 @@ namespace Admin.Service.Controllers;
 public class AdminController : ControllerBase
 {
     private readonly IAdminStatsService _stats;
+
     public AdminController(IAdminStatsService stats) => _stats = stats;
 
     [HttpGet("stats")]

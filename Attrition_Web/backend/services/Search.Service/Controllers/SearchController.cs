@@ -1,7 +1,6 @@
 using BuildingBlocks.Contracts;
 using Microsoft.AspNetCore.Mvc;
 using Search.Service.DTOs;
-using Search.Service.Services;
 
 namespace Search.Service.Controllers;
 
@@ -10,6 +9,7 @@ namespace Search.Service.Controllers;
 public class SearchController : ControllerBase
 {
     private readonly ISearchService _search;
+
     public SearchController(ISearchService search) => _search = search;
 
     [HttpGet]

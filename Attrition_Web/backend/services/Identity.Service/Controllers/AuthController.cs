@@ -1,7 +1,6 @@
 using BuildingBlocks.Authentication;
 using BuildingBlocks.Contracts;
 using Identity.Service.DTOs;
-using Identity.Service.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Cryptography;
@@ -16,6 +15,7 @@ public class AuthController : ControllerBase
     private readonly IAuthService _auth;
     private readonly ICurrentUser _user;
     private readonly IConfiguration _config;
+
     public AuthController(IAuthService auth, ICurrentUser user, IConfiguration config)
     {
         _auth = auth;
@@ -25,6 +25,7 @@ public class AuthController : ControllerBase
 
     private TimeSpan AccessTtl =>
         TimeSpan.FromMinutes(double.TryParse(_config["Jwt:AccessTokenExpiryMinutes"], out var m) ? m : 15);
+
     private TimeSpan RefreshTtl =>
         TimeSpan.FromDays(double.TryParse(_config["Jwt:RefreshTokenExpiryDays"], out var d) ? d : 7);
 

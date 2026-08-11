@@ -1,7 +1,6 @@
-using System.Net.Http.Json;
-using System.Text.Json;
 using BuildingBlocks.Contracts;
 using Search.Service.DTOs;
+using System.Text.Json;
 
 namespace Search.Service.Clients;
 
@@ -27,28 +26,40 @@ public abstract class InternalClientBase
 
 public sealed class WikiSearchClient : InternalClientBase
 {
-    public WikiSearchClient(HttpClient http, IConfiguration config) : base(http, config) { }
+    public WikiSearchClient(HttpClient http, IConfiguration config) : base(http, config)
+    {
+    }
+
     public Task<List<SearchWikiResultDto>> SearchAsync(string q, int limit, CancellationToken ct)
         => GetListAsync<SearchWikiResultDto>($"api/internal/wiki/search?q={Uri.EscapeDataString(q)}&limit={limit}", ct);
 }
 
 public sealed class ForumSearchClient : InternalClientBase
 {
-    public ForumSearchClient(HttpClient http, IConfiguration config) : base(http, config) { }
+    public ForumSearchClient(HttpClient http, IConfiguration config) : base(http, config)
+    {
+    }
+
     public Task<List<SearchPostResultDto>> SearchAsync(string q, int limit, CancellationToken ct)
         => GetListAsync<SearchPostResultDto>($"api/internal/forum/search?q={Uri.EscapeDataString(q)}&limit={limit}", ct);
 }
 
 public sealed class IdentitySearchClient : InternalClientBase
 {
-    public IdentitySearchClient(HttpClient http, IConfiguration config) : base(http, config) { }
+    public IdentitySearchClient(HttpClient http, IConfiguration config) : base(http, config)
+    {
+    }
+
     public Task<List<SearchUserResultDto>> SearchAsync(string q, int limit, CancellationToken ct)
         => GetListAsync<SearchUserResultDto>($"api/internal/users/search?q={Uri.EscapeDataString(q)}&limit={limit}", ct);
 }
 
 public sealed class EnemySearchClient : InternalClientBase
 {
-    public EnemySearchClient(HttpClient http, IConfiguration config) : base(http, config) { }
+    public EnemySearchClient(HttpClient http, IConfiguration config) : base(http, config)
+    {
+    }
+
     public Task<List<SearchEnemyResultDto>> SearchAsync(string q, int limit, CancellationToken ct)
         => GetListAsync<SearchEnemyResultDto>($"api/internal/enemies/search?q={Uri.EscapeDataString(q)}&limit={limit}", ct);
 
@@ -59,7 +70,10 @@ public sealed class EnemySearchClient : InternalClientBase
 
 public sealed class SkillSearchClient : InternalClientBase
 {
-    public SkillSearchClient(HttpClient http, IConfiguration config) : base(http, config) { }
+    public SkillSearchClient(HttpClient http, IConfiguration config) : base(http, config)
+    {
+    }
+
     public Task<List<SearchSkillResultDto>> SearchAsync(string q, int limit, CancellationToken ct)
         => GetListAsync<SearchSkillResultDto>($"api/internal/skills/search?q={Uri.EscapeDataString(q)}&limit={limit}", ct);
 }

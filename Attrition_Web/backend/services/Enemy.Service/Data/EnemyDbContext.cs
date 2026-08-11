@@ -5,7 +5,9 @@ namespace Enemy.Service.Data;
 
 public class EnemyDbContext : DbContext
 {
-    public EnemyDbContext(DbContextOptions<EnemyDbContext> options) : base(options) { }
+    public EnemyDbContext(DbContextOptions<EnemyDbContext> options) : base(options)
+    {
+    }
 
     public DbSet<EnemyEntity> Enemies => Set<EnemyEntity>();
     public DbSet<ItemEntity> Items => Set<ItemEntity>();

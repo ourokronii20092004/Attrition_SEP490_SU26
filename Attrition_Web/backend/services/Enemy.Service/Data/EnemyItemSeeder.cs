@@ -1,4 +1,3 @@
-using Enemy.Service.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Enemy.Service.Data;

@@ -5,7 +5,9 @@ namespace Wiki.Service.Data;
 
 public class WikiDbContext : DbContext
 {
-    public WikiDbContext(DbContextOptions<WikiDbContext> options) : base(options) { }
+    public WikiDbContext(DbContextOptions<WikiDbContext> options) : base(options)
+    {
+    }
 
     public DbSet<WikiCategory> WikiCategories => Set<WikiCategory>();
     public DbSet<WikiArticle> WikiArticles => Set<WikiArticle>();

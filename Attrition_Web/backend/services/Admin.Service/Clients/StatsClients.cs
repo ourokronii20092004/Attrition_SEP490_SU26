@@ -1,6 +1,5 @@
-using System.Net.Http.Json;
-using System.Text.Json;
 using BuildingBlocks.Contracts;
+using System.Text.Json;
 
 namespace Admin.Service.Clients;
 
@@ -41,18 +40,65 @@ public class StatsClient
 }
 
 public sealed class IdentityStatsClient : StatsClient
-{ public IdentityStatsClient(HttpClient http, IConfiguration config, ILogger<IdentityStatsClient> logger) : base(http, config, logger) { } }
+
+{
+    public IdentityStatsClient(HttpClient http, IConfiguration config, ILogger<IdentityStatsClient> logger) : base(http, config, logger)
+    {
+    }
+}
+
 public sealed class WikiStatsClient : StatsClient
-{ public WikiStatsClient(HttpClient http, IConfiguration config, ILogger<WikiStatsClient> logger) : base(http, config, logger) { } }
+
+{
+    public WikiStatsClient(HttpClient http, IConfiguration config, ILogger<WikiStatsClient> logger) : base(http, config, logger)
+    {
+    }
+}
+
 public sealed class ForumStatsClient : StatsClient
-{ public ForumStatsClient(HttpClient http, IConfiguration config, ILogger<ForumStatsClient> logger) : base(http, config, logger) { } }
+
+{
+    public ForumStatsClient(HttpClient http, IConfiguration config, ILogger<ForumStatsClient> logger) : base(http, config, logger)
+    {
+    }
+}
+
 public sealed class EnemyStatsClient : StatsClient
-{ public EnemyStatsClient(HttpClient http, IConfiguration config, ILogger<EnemyStatsClient> logger) : base(http, config, logger) { } }
+
+{
+    public EnemyStatsClient(HttpClient http, IConfiguration config, ILogger<EnemyStatsClient> logger) : base(http, config, logger)
+    {
+    }
+}
+
 public sealed class SkillStatsClient : StatsClient
-{ public SkillStatsClient(HttpClient http, IConfiguration config, ILogger<SkillStatsClient> logger) : base(http, config, logger) { } }
+
+{
+    public SkillStatsClient(HttpClient http, IConfiguration config, ILogger<SkillStatsClient> logger) : base(http, config, logger)
+    {
+    }
+}
+
 public sealed class AssetsStatsClient : StatsClient
-{ public AssetsStatsClient(HttpClient http, IConfiguration config, ILogger<AssetsStatsClient> logger) : base(http, config, logger) { } }
+
+{
+    public AssetsStatsClient(HttpClient http, IConfiguration config, ILogger<AssetsStatsClient> logger) : base(http, config, logger)
+    {
+    }
+}
+
 public sealed class MusicStatsClient : StatsClient
-{ public MusicStatsClient(HttpClient http, IConfiguration config, ILogger<MusicStatsClient> logger) : base(http, config, logger) { } }
+
+{
+    public MusicStatsClient(HttpClient http, IConfiguration config, ILogger<MusicStatsClient> logger) : base(http, config, logger)
+    {
+    }
+}
+
 public sealed class CharacterStatsClient : StatsClient
-{ public CharacterStatsClient(HttpClient http, IConfiguration config, ILogger<CharacterStatsClient> logger) : base(http, config, logger) { } }
+
+{
+    public CharacterStatsClient(HttpClient http, IConfiguration config, ILogger<CharacterStatsClient> logger) : base(http, config, logger)
+    {
+    }
+}
