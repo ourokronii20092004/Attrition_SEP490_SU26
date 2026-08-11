@@ -374,8 +374,9 @@ namespace Attrition.Gameplay.Enemy.DemonKin
             if (!HasStateAuthority || !prefab.IsValid) return;
             Runner.Spawn(prefab, pos, Quaternion.identity, null, (runner, obj) =>
             {
+                // Damage = AD/AP stats của boss (bỏ qua damage gốc từng skill — user chốt "AD trực tiếp").
                 Attrition.Gameplay.Combat.ProjectileInitializer.Init(
-                    obj, dir, damage, speed, Attrition.Core.DamageType.Magic);
+                    obj, dir, BossStatDamage(Attrition.Core.DamageType.Magic), speed, Attrition.Core.DamageType.Magic);
             });
         }
 
@@ -385,7 +386,7 @@ namespace Attrition.Gameplay.Enemy.DemonKin
             Runner.Spawn(prefab, pos, Quaternion.identity, null, (runner, obj) =>
             {
                 Attrition.Gameplay.Combat.ProjectileInitializer.Init(
-                    obj, Vector2.zero, damage,
+                    obj, Vector2.zero, BossStatDamage(Attrition.Core.DamageType.Magic),
                     Attrition.Gameplay.Combat.ProjectileInitializer.DefaultSpeed,
                     Attrition.Core.DamageType.Magic);
             });
@@ -415,7 +416,7 @@ namespace Attrition.Gameplay.Enemy.DemonKin
                         proj.lifetime = distance / actualSpeed + 0.2f;
                 }
                 Attrition.Gameplay.Combat.ProjectileInitializer.Init(
-                    obj, dir, damage, speed, Attrition.Core.DamageType.Magic);
+                    obj, dir, BossStatDamage(Attrition.Core.DamageType.Magic), speed, Attrition.Core.DamageType.Magic);
             });
         }
 
@@ -434,7 +435,7 @@ namespace Attrition.Gameplay.Enemy.DemonKin
                 var s = obj.transform.localScale;
                 obj.transform.localScale = new Vector3(flipX ? -s.x * scale : s.x * scale, s.y * scale, s.z);
                 Attrition.Gameplay.Combat.ProjectileInitializer.Init(
-                    obj, Vector2.zero, damage,
+                    obj, Vector2.zero, BossStatDamage(Attrition.Core.DamageType.Magic),
                     Attrition.Gameplay.Combat.ProjectileInitializer.DefaultSpeed,
                     Attrition.Core.DamageType.Magic);
             });
@@ -447,7 +448,7 @@ namespace Attrition.Gameplay.Enemy.DemonKin
             {
                 obj.transform.localScale = obj.transform.localScale * scale;
                 Attrition.Gameplay.Combat.ProjectileInitializer.Init(
-                    obj, Vector2.zero, damage,
+                    obj, Vector2.zero, BossStatDamage(Attrition.Core.DamageType.Magic),
                     Attrition.Gameplay.Combat.ProjectileInitializer.DefaultSpeed,
                     Attrition.Core.DamageType.Magic);
             });

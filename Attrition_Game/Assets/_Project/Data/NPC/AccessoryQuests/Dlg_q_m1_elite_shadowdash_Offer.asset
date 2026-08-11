@@ -17,4 +17,7 @@ MonoBehaviour:
     text: The cultists bend the dark to their will. Break them, and the dark will
       carry you instead.
   - speakerName: Summer Fairy
-    text: Slay 1 cultist, and the Shadow Cloak is yours.
+    text: Slay 1 cultist, and the Ember Charm is yours.
+  - speakerName: Summer Fairy
+    text: But a charm like this only binds when two souls walk together. Alone, you
+      will earn nothing but the deed.

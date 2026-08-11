@@ -14,14 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.QuestSO
   questId: q_m2_elite_burn
   title: Embers in the Grove
-  description: '[Map 2] Slay 1 gollux. Reward: Ember Charm (co-op only).'
+  description: '[Map 2] Slay 1 gollux. Reward: Feather Charm.'
   objectiveType: 0
   targetId: gollux
   requiredTargetIds: []
   requiredAmount: 1
   expReward: 300
   itemRewards:
-  - itemId: acc_burn
+  - itemId: acc_double_jump
     amount: 1
   dialogueNotStarted: {fileID: 11400000, guid: 514892dcd57e4fa4db098c08050b6617, type: 2}
   dialogueInProgress: {fileID: 11400000, guid: f7542ccf998c6b74eaf60ddf15647c84, type: 2}

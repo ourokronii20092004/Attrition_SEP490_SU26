@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
@@ -27,6 +28,10 @@ namespace Attrition.UI
         private bool _clientReady;
 
         private Coroutine _rosterCoroutine;
+
+        // Avatar đã tải (cache theo URL) → không tải lại mỗi 0.5s poll.
+        private readonly Dictionary<string, Texture2D> _avatarCache = new Dictionary<string, Texture2D>();
+        private readonly HashSet<string> _avatarLoading = new HashSet<string>();
 
         private void OnEnable()
         {
@@ -194,6 +199,7 @@ namespace Attrition.UI
                         string n = hostLp.DisplayName.Value;
                         SetText("coop-host-name", string.IsNullOrEmpty(n) ? "Wanderer" : n);
                         SetText("coop-host-level", $"LEVEL {Mathf.Max(1, hostLp.Level)}");
+                        LoadAvatar("coop-card-host", "coop-avatar", hostLp.AvatarUrl.Value);
                         string room = hostLp.RoomName.Value;
                         if (!string.IsNullOrEmpty(room)) SetText("coop-room-name", room);
                     }
@@ -205,6 +211,7 @@ namespace Attrition.UI
                         bool ready = clientLp.IsReady;
                         SetText("coop-client-name", string.IsNullOrEmpty(n) ? "Wanderer" : n);
                         SetText("coop-client-level", $"LEVEL {Mathf.Max(1, clientLp.Level)}  •  {(ready ? "READY" : "NOT READY")}");
+                        LoadAvatar("coop-card-client", "coop-avatar", clientLp.AvatarUrl.Value);
                         if (clientCard != null) clientCard.style.opacity = 1f;
                         _clientPresent = true;
                         _clientReady = ready;
@@ -233,6 +240,63 @@ namespace Attrition.UI
 
                 yield return wait;
             }
+        }
+
+        /// <summary>
+        /// Tải avatar từ web vào element `avatarClass` trong card `cardName` (host/client).
+        /// Đường dẫn tương đối (/api/account/media/...) được nối với baseUrl; URL tuyệt đối (Google)
+        /// dùng nguyên. Bỏ qua nếu chưa có avatar hoặc đang tải. Load 1 lần rồi cache.
+        /// </summary>
+        private void LoadAvatar(string cardName, string avatarClass, string avatarUrl)
+        {
+            if (string.IsNullOrEmpty(avatarUrl)) return;
+
+            var card = _root.Q<VisualElement>(cardName);
+            if (card == null) return;
+
+            var avatarEl = card.Q<VisualElement>(className: avatarClass);
+            if (avatarEl == null) return;
+
+            if (_avatarCache.TryGetValue(avatarUrl, out var cached))
+            {
+                ApplyAvatar(avatarEl, cached);
+                return;
+            }
+            if (_avatarLoading.Contains(avatarUrl)) return;
+
+            _avatarLoading.Add(avatarUrl);
+            StartCoroutine(LoadAvatarRoutine(avatarUrl, avatarEl));
+        }
+
+        private IEnumerator LoadAvatarRoutine(string avatarUrl, VisualElement avatarEl)
+        {
+            string full = avatarUrl.StartsWith("http") ? avatarUrl
+                : (APIManager.Instance != null
+                    ? APIManager.Instance.BaseUrl + "/" + avatarUrl.TrimStart('/')
+                    : avatarUrl);
+
+            using (var req = UnityEngine.Networking.UnityWebRequestTexture.GetTexture(full))
+            {
+                yield return req.SendWebRequest();
+                _avatarLoading.Remove(avatarUrl);
+
+                if (req.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
+                {
+                    var tex = ((UnityEngine.Networking.DownloadHandlerTexture)req.downloadHandler).texture;
+                    if (tex != null)
+                    {
+                        _avatarCache[avatarUrl] = tex;
+                        ApplyAvatar(avatarEl, tex);
+                    }
+                }
+            }
+        }
+
+        private void ApplyAvatar(VisualElement el, Texture2D tex)
+        {
+            // Dùng ảnh làm background, cover cho vừa khung tròn 120px.
+            el.style.backgroundImage = new StyleBackground(new Background(tex));
+            el.style.backgroundSize = new StyleBackgroundSize(new BackgroundSize(BackgroundSizeType.Cover));
         }
 
         private void SetText(string elementName, string value)

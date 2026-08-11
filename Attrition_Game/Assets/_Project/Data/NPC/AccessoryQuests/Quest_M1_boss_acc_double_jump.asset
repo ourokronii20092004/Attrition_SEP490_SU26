@@ -14,14 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.QuestSO
   questId: q_m1_boss_doublejump
   title: The Severed Fang
-  description: '[Map 1] Defeat the boss (severed fang). Reward: Feather Charm.'
+  description: '[Map 1] Defeat the boss (severed fang). Reward: Shadow Cloak.'
   objectiveType: 0
   targetId: severed_fang
   requiredTargetIds: []
   requiredAmount: 1
   expReward: 200
   itemRewards:
-  - itemId: acc_double_jump
+  - itemId: acc_shadow_dash
     amount: 1
   dialogueNotStarted: {fileID: 11400000, guid: 86f4a516bd222d349a7bad96cbdedacb, type: 2}
   dialogueInProgress: {fileID: 11400000, guid: d68b54ef06e9e75449ba13a3b833996d, type: 2}

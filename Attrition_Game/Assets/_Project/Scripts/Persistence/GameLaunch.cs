@@ -24,6 +24,8 @@ namespace Attrition.Persistence
 
         /// <summary>UserId (OwnerId) từ đăng nhập. Rỗng = chưa login → chỉ lưu local.</summary>
         public static string OwnerId = "";
+        /// <summary>Avatar URL từ login (web gửi trong UserDto.avatarUrl). Rỗng = chưa có.</summary>
+        public static string AvatarUrl = "";
         /// <summary>CharacterId trên server (nếu đã có). Rỗng = server tự resolve theo (owner, name).</summary>
         public static string CharacterId = "";
         /// <summary>Tên nhân vật đang chơi (dùng cho snapshot online + hiển thị). Coop: tên CHARACTER server.</summary>
@@ -83,13 +85,11 @@ namespace Attrition.Persistence
         public static bool SessionInventoryLoaded = false;
 
         /// <summary>
-        /// True khi ĐÃ CÓ SessionId nhưng fetch session detail THẤT BẠI (mạng/401/server lỗi).
-        /// Khác hẳn "phòng chưa có trên server" (SessionId rỗng → seed tân thủ là đúng): ở đây server
-        /// CÓ dữ liệu mà client không đọc được, nên cache trống là SAI. Nếu vẫn cho save thì bulk save
-        /// sẽ ghi stat/đồ MẶC ĐỊNH lên đúng row cũ = mất tiến trình vĩnh viễn. GameSaveService đọc cờ
-        /// này để TỪ CHỐI lưu thay vì ghi đè.
+        /// Playtime phòng đã lưu trên server (detail.playTimeSeconds, lấy khi fetch session). Coop dùng
+        /// làm baseline để playtime CỘNG DỒN khi vào lại phòng thay vì reset về 0 (đối xứng với solo
+        /// đọc save slot trong PlayerStats.ApplyLoadedProgress). 0 = phòng mới/chưa có tiến trình.
         /// </summary>
-        public static bool SessionLoadFailed = false;
+        public static int SessionPlaytimeSeconds = 0;
 
         /// <summary>Xoá cache inventory-theo-session (gọi khi rời room / đổi session / reset).</summary>
         public static void ClearSessionInventoryCache()
@@ -99,7 +99,7 @@ namespace Attrition.Persistence
             SessionStatsByChar.Clear();
             SessionInventoryFetchStarted = false;
             SessionInventoryLoaded = false;
-            SessionLoadFailed = false;
+            SessionPlaytimeSeconds = 0;
             CoopQuestsJson = "";
         }
     }

@@ -67,8 +67,8 @@ namespace Attrition.Gameplay.Enemy
             Color color; float size;
             switch (tier)
             {
-                case Attrition.Data.EnemyTier.Boss:  color = new Color(1f, 0.4f, 0.35f); size = 4.2f; break;
-                case Attrition.Data.EnemyTier.Elite: color = new Color(1f, 0.7f, 0.3f);  size = 3.4f; break;
+                case Attrition.Data.EnemyTier.Boss:  color = new Color(1f, 0.4f, 0.35f); size = 5.2f; break;
+                case Attrition.Data.EnemyTier.Elite: color = new Color(1f, 0.7f, 0.3f);  size = 4.6f; break;
                 default:                             color = new Color(0.85f, 0.82f, 0.78f); size = 3f; break;
             }
 
