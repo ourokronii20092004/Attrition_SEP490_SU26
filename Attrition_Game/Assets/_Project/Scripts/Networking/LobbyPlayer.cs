@@ -21,6 +21,9 @@ namespace Attrition.Networking
         [Networked] public NetworkBool IsReady { get; set; }
         // Tên phòng do host đặt (chỉ host ghi). Client đọc từ LobbyPlayer của host để hiển thị.
         [Networked] public NetworkString<_32> RoomName { get; set; }
+        // Avatar URL từ login (đường dẫn tương đối /api/account/media/... hoặc tuyệt đối Google).
+        // Client gửi kèm RpcSetIdentity; host tự ghi. Lobby UI load ảnh từ đó.
+        [Networked] public NetworkString<_256> AvatarUrl { get; set; }
 
         public override void Spawned()
         {
@@ -34,6 +37,8 @@ namespace Attrition.Networking
             if (name.Length > 16) name = name.Substring(0, 16);
 
             int level = Mathf.Max(1, Attrition.Persistence.GameLaunch.CharacterLevel);
+            string avatar = Attrition.Persistence.GameLaunch.AvatarUrl ?? "";
+            if (avatar.Length > 256) avatar = avatar.Substring(0, 256);
 
             if (HasStateAuthority)
             {
@@ -42,6 +47,7 @@ namespace Attrition.Networking
                 Level = level;
                 IsHostPlayer = true;
                 IsReady = true;
+                AvatarUrl = avatar;
                 string room = Attrition.Persistence.GameLaunch.RoomName;
                 if (!string.IsNullOrEmpty(room))
                 {
@@ -51,17 +57,18 @@ namespace Attrition.Networking
             }
             else
             {
-                RpcSetIdentity(name, level);
+                RpcSetIdentity(name, level, avatar);
             }
         }
 
-        /// <summary>Client gửi tên + level lên host để hiện ở thẻ lobby.</summary>
+        /// <summary>Client gửi tên + level + avatar lên host để hiện ở thẻ lobby.</summary>
         [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
-        private void RpcSetIdentity(NetworkString<_16> name, int level)
+        private void RpcSetIdentity(NetworkString<_16> name, int level, NetworkString<_256> avatar)
         {
             DisplayName = name;
             Level = level > 0 ? level : 1;
             IsHostPlayer = false;
+            AvatarUrl = avatar;
         }
 
         /// <summary>Client bật/tắt sẵn sàng. Host bỏ qua (luôn ready).</summary>

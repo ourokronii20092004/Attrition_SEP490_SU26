@@ -228,6 +228,15 @@ namespace Attrition.Gameplay.Player.Inventory
 
             SeedStartingItems(); // chỉ seed nếu túi vẫn trống sau khi nạp từ session
 
+            // COOP save-on-load: sau khi host's own player hydrate xong stat/đồ từ session, đẩy 1 bản
+            // chụp đầy đủ lên server (SaveEvent.Load). Chạy ĐÚNG 1 lần mỗi phiên qua cờ _initialLoadSaved
+            // trong GameSaveService; đổi map trong phòng KHÔNG gọi lại (NetworkObject sống sót qua Fusion
+            // LoadScene nên Spawned()/LoadOnlineInventory không chạy lại). Chỉ host's own player
+            // (isOwningPeerHere: true) gọi — client's player có guard HasStateAuthority nhưng isOwningPeerHere
+            // false nên không trùng.
+            if (isOwningPeerHere && HasStateAuthority)
+                Attrition.Gameplay.Persistence.GameSaveService.EnsureExists().SaveOnCoopLoad();
+
             // Spawn ĐÚNG checkpoint đã lưu của session: host (StateAuthority trên player này) teleport
             // tới vị trí rest đã lưu nếu thuộc scene hiện tại. Làm SAU EnsureSessionLoaded để chắc
             // chắn cache vị trí đã có. Chưa rest / scene khác → giữ nguyên spawnPoint mặc định.
@@ -315,6 +324,10 @@ namespace Attrition.Gameplay.Player.Inventory
                     string questsJson = BuildQuestsJson(detail.worldStates);
                     Attrition.Persistence.GameLaunch.CoopQuestsJson = questsJson;
                     Attrition.Gameplay.NPC.NetworkNPC.ApplyAllJson(questsJson);
+
+                    // Playtime phòng làm baseline để coop cộng dồn khi vào lại phòng (đọc bởi
+                    // PlayerStats.HydrateFromCoopSession).
+                    Attrition.Persistence.GameLaunch.SessionPlaytimeSeconds = detail.playTimeSeconds;
 
                     ApplyCoopWorldProgress(detail);
                 });
@@ -832,9 +845,11 @@ namespace Attrition.Gameplay.Player.Inventory
         {
             if (!HasStateAuthority || !droppedItemPrefab.IsValid || amount <= 0) return;
 
-            // Lệch ngang nhỏ để raycast xuống vẫn trúng sàn dưới chân.
+            // Vứt RA TRƯỚC MẶT một đoạn (không phải ngay dưới chân): người đang đứng yên không đè
+            // lên item vừa vứt nên trigger không kích hoạt lại → không tự nhặt lại. 1.5 units đủ để
+            // player collider tách khỏi collider của DroppedItem.
             float face = transform.localScale.x >= 0 ? 1f : -1f;
-            Vector3 spawnPos = transform.position + new Vector3(0.25f * face, 0.2f, 0f);
+            Vector3 spawnPos = transform.position + new Vector3(1.5f * face, 0.2f, 0f);
             Runner.Spawn(droppedItemPrefab, spawnPos, Quaternion.identity, null, (runner, obj) =>
             {
                 var dropped = obj.GetComponent<Attrition.Gameplay.World.DroppedItem>();

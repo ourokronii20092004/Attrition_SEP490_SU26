@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.QuestSO
   questId: q_m4_elite_slow
   title: Shadows of the Dark Wood
-  description: '[Map 4] Slay 1 undead. Reward: Frost Charm (co-op only).'
+  description: '[Map 4] Slay 1 nightborne. Reward: Frost Charm (co-op only).'
   objectiveType: 0
-  targetId: undead
+  targetId: nightborne
   requiredTargetIds: []
   requiredAmount: 1
   expReward: 800
