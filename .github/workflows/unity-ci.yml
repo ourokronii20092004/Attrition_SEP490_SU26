@@ -35,7 +35,7 @@ jobs:
       #   UNITY_EMAIL, UNITY_PASSWORD, UNITY_SERIAL
       # (Free Personal license: bỏ trống UNITY_SERIAL — action tự xin license personal.)
       - name: Activate Unity license
-        uses: game-ci/unity-license-activate@v3
+        uses: game-ci/unity-license-activate@0.1.0
         with:
           unityVersion: 6000.3.15f1
         env:
@@ -45,7 +45,7 @@ jobs:
 
       - name: Run ${{ matrix.testMode }} tests
         id: tests
-        uses: game-ci/unity-test-runner@v4
+        uses: game-ci/unity-test-runner@v4.3.1
         with:
           projectPath: Attrition_Game
           unityVersion: 6000.3.15f1
