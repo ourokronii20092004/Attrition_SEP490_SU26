@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.DialogueSO
   lines:
   - speakerName: Summer Fairy
-    text: The dead still walk beneath the dark wood. Lay one to rest, and frost will
-      heed your strikes.
+    text: A shadow-born stalker haunts the dark wood. Lay it to rest, and frost
+      will heed your strikes.
   - speakerName: Summer Fairy
     text: Slay 1 nightborne, and the Frost Charm is yours.
   - speakerName: Summer Fairy

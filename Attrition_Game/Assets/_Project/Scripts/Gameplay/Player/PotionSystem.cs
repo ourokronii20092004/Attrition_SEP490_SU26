@@ -134,7 +134,19 @@ namespace Attrition.Gameplay.Player
                 if (p == null || !p.HasStateAuthority) continue;
                 int deficit = best - p.TotalCharges;
                 if (deficit <= 0) continue;
-                p.MaxHealthCharges = Mathf.Min(p.hardMaxHealthCharges, p.MaxHealthCharges + deficit);
+
+                // Đổ phần bù vào MÁU trước (đúng yêu cầu), phần TRÀN qua hard cap máu thì chuyển sang
+                // MANA thay vì bị Mathf.Min cắt mất. Trước đây clamp thẳng vào máu nên ai đã gần trần
+                // (hardMaxHealthCharges = 9) sẽ mất trắng phần dư — nhặt nhiều bình mà chỉ thấy +1.
+                int toHealth = Mathf.Min(deficit, p.hardMaxHealthCharges - p.MaxHealthCharges);
+                if (toHealth > 0)
+                {
+                    p.MaxHealthCharges += toHealth;
+                    deficit -= toHealth;
+                }
+
+                if (deficit > 0)
+                    p.MaxManaCharges = Mathf.Min(p.hardMaxManaCharges, p.MaxManaCharges + deficit);
             }
         }
 

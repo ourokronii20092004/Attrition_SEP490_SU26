@@ -14,10 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.DialogueSO
   lines:
   - speakerName: Spring Fairy
-    text: The corruption is fading. You gave this land another spring.
+    text: The rot is fading. You gave this land its spring back — the first in an
+      age.
   - speakerName: Summer Fairy
-    text: Your strength carried hope through the darkest road.
+    text: You crossed every trial and freed every pillar. Your strength carried hope
+      through the darkest road.
   - speakerName: Autumn Fairy
-    text: Every sacrifice brought us to this peaceful end.
+    text: You let everything end as it should. Every soul released — that is the
+      gift you gave this dead world.
   - speakerName: Winter Fairy
-    text: Thank you. Your journey will be remembered.
+    text: You let them rest instead of staying frozen mid-death. Thank you. Your
+      journey will be remembered.

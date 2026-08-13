@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.DialogueSO
   lines:
   - speakerName: Druid
-    text: The wind... has chosen another bearer.
+    text: I only meant to keep them safe. I never meant to hold them past their end.
   - speakerName: Druid
-    text: Go. Free what remains of this forest.
+    text: Perhaps keeping too long is its own death. Forgive me. Let them go.

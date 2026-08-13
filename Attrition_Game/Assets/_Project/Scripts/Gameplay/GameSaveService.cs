@@ -191,6 +191,8 @@ namespace Attrition.Gameplay.Persistence
             Attrition.Gameplay.Environment.BossDefeatState.WriteTo(data);
             // Vật phá được đã vỡ — không spawn lại (giữ đường tắt đã mở).
             Attrition.Gameplay.Environment.BreakableState.WriteTo(data);
+            // Pickup đặt sẵn đã nhặt (bình máu ẩn) — không spawn lại để farm max charge.
+            Attrition.Gameplay.Environment.PickupState.WriteTo(data);
             // Elite/Boss đã rơi đồ — quay lại đánh chỉ được EXP, không rơi vật phẩm lần hai.
             Attrition.Controllers.EnemyLootTracker.WriteTo(data);
 
@@ -216,6 +218,7 @@ namespace Attrition.Gameplay.Persistence
 
             Attrition.Gameplay.Environment.BossDefeatState.WriteTo(data);
             Attrition.Gameplay.Environment.BreakableState.WriteTo(data);
+            Attrition.Gameplay.Environment.PickupState.WriteTo(data);
             data.quests = Attrition.Gameplay.NPC.NetworkNPC.CaptureAll();
             data.lastSavedUnix = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             SaveManager.SaveSlot(slot, data);

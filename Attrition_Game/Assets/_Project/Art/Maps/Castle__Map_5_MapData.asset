@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Castle - Map 5
   silhouette: {fileID: 21300000, guid: fc35f207c30b55a48b69aba31d0b3862, type: 3}
   worldBounds:
-    m_Center: {x: 19, y: 39, z: 0}
+    m_Center: {x: 19, y: 31, z: 0}
     m_Extent: {x: 274, y: 45, z: 0}
   worldMapOffset: {x: 0, y: 0}
   worldMapScale: 1
@@ -25,11 +25,11 @@ MonoBehaviour:
   outlineTint: {r: 0.059, g: 0.108, b: 0.211, a: 1}
   outlineThickness: 2
   checkpoints:
-  - checkpointId: Rest 2 - Castle
-    worldPos: {x: -137.9, y: 29.65}
+  - checkpointId: Rest 1 - Castle
+    worldPos: {x: -229.003, y: 1.796}
   - checkpointId: Rest 4 - Castle
     worldPos: {x: 134.5, y: 19.79}
   - checkpointId: Rest 3 - Castle
     worldPos: {x: -71.74, y: 33.71}
-  - checkpointId: Rest 1 - Castle
-    worldPos: {x: -229.003, y: 1.796}
+  - checkpointId: Rest 2 - Castle
+    worldPos: {x: -137.9, y: 29.65}

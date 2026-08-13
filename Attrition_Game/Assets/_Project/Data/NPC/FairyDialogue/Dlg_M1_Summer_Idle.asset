@@ -14,4 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.DialogueSO
   lines:
   - speakerName: Summer Fairy
-    text: Power in this region will not come willingly. Go and claim it.
+    text: This world once stood on five pillars: the Shield, the Hearth, the Flame,
+      the Memory, and the Crown. They are all frozen mid-duty now.
+  - speakerName: Summer Fairy
+    text: Do not stop. Each pillar you free makes you stronger — and brings you closer
+      to the one who stopped them all.

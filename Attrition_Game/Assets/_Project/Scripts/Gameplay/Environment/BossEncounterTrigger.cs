@@ -76,6 +76,19 @@ namespace Attrition.Gameplay.Environment
             if (!IsHost) return;   // xem IsHost: client không thấy trigger của đồng đội
             if (_zone == null) return;
 
+            // CHẨN ĐOÁN: log 1 lần xem ref boss có bị null ở runtime hay không — điểm nghi vấn chính
+            // của "vào phòng boss Map 4 không kích hoạt". Boss là prefab instance trong scene; nếu
+            // `boss` null hoặc cast IBossEncounter fail thì StartIntroSequence không bao giờ được gọi.
+            if (!_loggedRefState)
+            {
+                _loggedRefState = true;
+                var enc = BossEncounter;
+                Debug.Log($"[BossTrigger:{name}] bossRefNull={boss == null} "
+                          + $"bossEncounterNull={enc == null} zoneNull={_zone == null} "
+                          + $"bossType={(boss != null ? boss.GetType().Name : "NULL")} "
+                          + $"Mode={Attrition.Persistence.GameLaunch.Mode}");
+            }
+
             var bounds = _zone.bounds;
             int alive = 0, inZone = 0;
             foreach (var p in FindObjectsByType<PlayerController>(FindObjectsSortMode.None))
@@ -98,5 +111,7 @@ namespace Attrition.Gameplay.Environment
                 BossEncounter?.StartIntroSequence();
             }
         }
+
+        private bool _loggedRefState;
     }
 }

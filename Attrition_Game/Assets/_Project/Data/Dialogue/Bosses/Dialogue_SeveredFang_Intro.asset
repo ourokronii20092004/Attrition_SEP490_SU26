@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.DialogueSO
   lines:
   - speakerName: Severed Fang
-    text: Another trespasser steps into my domain.
+    text: Another trespasser enters my ground.
   - speakerName: Severed Fang
-    text: Your fear gives you away. Draw your weapon.
+    text: I am no beast. I am the last of the line — and none have given me leave
+      to stand down.

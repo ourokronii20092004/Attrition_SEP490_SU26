@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Dialogue_ArchDemon_Death
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.DialogueSO
   lines:
-  - speakerName: Nameless Tyrant
-    text: Impossible... the throne cannot fall...
-  - speakerName: Nameless Tyrant
-    text: Go, then. See what remains when the last tyrant is gone.
+  - speakerName: Maren, the Crown
+    text: The seal... may fall now.
+  - speakerName: Maren, the Crown
+    text: You are the last of Eldravir. You gave me leave to let go. Thank you —
+      let them rest, and let me rest.

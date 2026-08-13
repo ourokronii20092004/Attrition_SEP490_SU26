@@ -56,6 +56,7 @@ namespace Attrition.Persistence
         public List<string> defeatedBosses = new List<string>();        // bossId các boss ĐÃ HẠ (không hồi sinh lại)
         public List<string> brokenObjects = new List<string>();          // "scene@x,y" vật phá được ĐÃ VỠ (không spawn lại)
         public List<string> lootedElites = new List<string>();            // "scene|enemyId@x,y" elite/boss ĐÃ rơi đồ (không rơi lần hai)
+        public List<string> collectedPickups = new List<string>();        // "scene@x,y" pickup ĐẶT SẴN đã nhặt (bình máu ẩn... không spawn lại)
 
         public string ToDisplayPlaytime()
         {
