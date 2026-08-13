@@ -13,7 +13,9 @@ MonoBehaviour:
   m_Name: Dialogue_ArchDemon_Intro
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.DialogueSO
   lines:
-  - speakerName: Nameless Tyrant
-    text: Every road you survived ends at my throne.
-  - speakerName: Nameless Tyrant
-    text: There is nowhere left to run.
+  - speakerName: Maren, the Crown
+    text: Every road you survived ends here — at the throne of the one who raised
+      the seal.
+  - speakerName: Maren, the Crown
+    text: I am no tyrant, wanderer. I chose to keep my people — when the only other
+      door was the Void.

@@ -185,7 +185,7 @@ private IEnumerator WaitWhileSuppressed(float duration)
 }
 
 private const float StepFadeSeconds = 1.5f;
-private const float StepHoldSeconds = 2.5f;
+private const float StepHoldSeconds = 1f;   // 2.5 → 1: hướng dẫn đầu map 1 quá dài, user yêu cầu ngắn lại
 
         /// <summary>
         /// Đọc chuỗi phím trong Inspector thành danh sách KeyCode. Hỗ trợ nhiều phím cách nhau bởi

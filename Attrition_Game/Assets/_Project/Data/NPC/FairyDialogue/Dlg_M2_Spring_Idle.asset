@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.DialogueSO
   lines:
   - speakerName: Spring Fairy
-    text: This land is losing itself to corruption. There is 1 hidden health flask
-      in this region, beyond the usual paths.
+    text: The Shield has fallen. But deeper in this wood, a healer keeps her patients
+      alive past their time. Free her — so the kept may finally rest.

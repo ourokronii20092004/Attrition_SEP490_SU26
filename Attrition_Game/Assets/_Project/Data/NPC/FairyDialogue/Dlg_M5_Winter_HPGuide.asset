@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.DialogueSO
   lines:
   - speakerName: Winter Fairy
-    text: A health flask is hidden away from the main path. Search the quiet passage
-      before facing the tyrant.
+    text: A health flask waits on the path above me. Follow the high road before
+      the final fight — the last chance to heal before the Crown.

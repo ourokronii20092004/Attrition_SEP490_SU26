@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.DialogueSO
   lines:
   - speakerName: Fallen Elf
-    text: At last... the thunder is quiet.
+    text: My lie kept them at peace for an age. But it was never true.
   - speakerName: Fallen Elf
-    text: Carry its strength beyond this ruined valley.
+    text: You were right. Better they know the truth — however it hurts — than wait
+      for what never comes.

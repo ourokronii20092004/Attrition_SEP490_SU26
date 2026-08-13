@@ -14,4 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.DialogueSO
   lines:
   - speakerName: Autumn Fairy
-    text: Defeat the guardian ahead and return. Beyond it lies the corrupted forest.
+    text: I am autumn — the season of endings. Here, nothing is allowed to end.
+      That is the seal's curse.
+  - speakerName: Autumn Fairy
+    text: Your task is not to kill. It is to let them finish. Remember this when
+      you face each pillar.

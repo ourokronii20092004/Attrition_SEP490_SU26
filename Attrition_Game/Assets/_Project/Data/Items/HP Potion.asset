@@ -16,5 +16,5 @@ MonoBehaviour:
   displayName: Health Potion
   icon: {fileID: 21300000, guid: 5675952efb7f68e40bfc6f3f96aaf79e, type: 3}
   kind: 0
-  flatRestore: 30
+  flatRestore: 60
   percentOfMax: 0

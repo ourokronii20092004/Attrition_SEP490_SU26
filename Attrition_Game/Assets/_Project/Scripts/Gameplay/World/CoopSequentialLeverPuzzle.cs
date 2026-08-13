@@ -40,16 +40,49 @@ namespace Attrition.Gameplay.World
             }
         }
 
+        // CHẨN ĐOÁN: chỉ log KHI ĐỔI trạng thái, không log mỗi tick (60 dòng/giây là vô dụng).
+        private bool[] _lastLoggedActive;
+
         public override void FixedUpdateNetwork()
         {
-            if (_soloHandled || !HasStateAuthority || plates == null || doors == null) return;
+            if (_soloHandled || plates == null || doors == null) return;
+
+            // Log 1 lần nếu không phải state authority — để biết controller có quyền chạy hay không.
+            if (!HasStateAuthority)
+            {
+                if (!_loggedNoAuthority)
+                {
+                    _loggedNoAuthority = true;
+                    Debug.Log($"[SeqPuzzle:{name}] KHÔNG có StateAuthority → không mở cửa. "
+                              + "Đây là bản proxy (client). Bình thường nếu bạn đang xem máy client.");
+                }
+                return;
+            }
 
             int n = Mathf.Min(plates.Length, doors.Length);
+            if (_lastLoggedActive == null || _lastLoggedActive.Length != n) _lastLoggedActive = new bool[n];
+
             for (int i = 0; i < n; i++)
             {
-                if (plates[i] != null && doors[i] != null && plates[i].IsActive)
-                    doors[i].Open(); // idempotent; mở vĩnh viễn (không đóng lại)
+                if (plates[i] == null || doors[i] == null)
+                {
+                    Debug.LogError($"[SeqPuzzle:{name}] chặng {i}: plate={(plates[i] == null ? "NULL" : "ok")} "
+                                   + $"door={(doors[i] == null ? "NULL" : "ok")} → chặng này KHÔNG BAO GIỜ mở.");
+                    continue;
+                }
+
+                bool active = plates[i].IsActive;
+                if (active != _lastLoggedActive[i])
+                {
+                    _lastLoggedActive[i] = active;
+                    Debug.Log($"[SeqPuzzle:{name}] plate[{i}].IsActive → {active} "
+                              + $"(door[{i}].IsOpen hiện tại = {doors[i].IsOpen})");
+                }
+
+                if (active) doors[i].Open(); // idempotent; mở vĩnh viễn (không đóng lại)
             }
         }
+
+        private bool _loggedNoAuthority;
     }
 }

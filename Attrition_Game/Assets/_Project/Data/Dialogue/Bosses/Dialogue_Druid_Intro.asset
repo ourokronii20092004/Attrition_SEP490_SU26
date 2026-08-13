@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.DialogueSO
   lines:
   - speakerName: Druid
-    text: The grove no longer welcomes your kind.
+    text: You would hurt the ones I keep?
   - speakerName: Druid
-    text: The wind itself will cast you out.
+    text: I have kept them safe for an age. You cannot understand.

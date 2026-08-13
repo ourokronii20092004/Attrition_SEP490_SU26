@@ -664,6 +664,7 @@ MonoBehaviour:
   openVfxPrefab: {fileID: 0}
   _IsOpen:
     _value: 0
+  closedColor: {r: 0.627451, g: 0.3215686, b: 0.1764706, a: 1}
 --- !u!61 &63317703
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -772,7 +773,7 @@ Transform:
   m_GameObject: {fileID: 70809539}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.06, y: -0.49, z: 30}
+  m_LocalPosition: {x: 0.2667, y: -1.627, z: 30}
   m_LocalScale: {x: 4, y: 4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -847,7 +848,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 2
-  m_Size: {x: 15.36, y: 2.88}
+  m_Size: {x: 15.463363, y: 3.4485083}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -976,7 +977,7 @@ Transform:
   m_GameObject: {fileID: 100723898}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.06, y: -0.92, z: 45}
+  m_LocalPosition: {x: 0.3184, y: -0.92, z: 45}
   m_LocalScale: {x: 4, y: 4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1051,7 +1052,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 2
-  m_Size: {x: 15.36, y: 1.33}
+  m_Size: {x: 15.489208, y: 1.33}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -1169,9 +1170,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.World.PuzzlePlate
   latching: 0
-  playerLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
   _IsActive:
     _value: 0
 --- !u!1 &149645006
@@ -1831,15 +1829,15 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 1064449108}
   m_Color: {r: 0.4, g: 0.25, b: 0.15, a: 1}
   m_FlipX: 0
   m_FlipY: 0
-  m_DrawMode: 1
+  m_DrawMode: 0
   m_Size: {x: 1, y: 3}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 0
+  m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
 --- !u!4 &220279990
 Transform:
@@ -1850,8 +1848,8 @@ Transform:
   m_GameObject: {fileID: 220279988}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: -0.0169, y: 0.4649, z: 0}
+  m_LocalScale: {x: 0.9661843, y: 4.016303, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1404507549}
@@ -2217,6 +2215,7 @@ MonoBehaviour:
   openVfxPrefab: {fileID: 0}
   _IsOpen:
     _value: 0
+  closedColor: {r: 0.4, g: 0.25, b: 0.15, a: 1}
 --- !u!61 &358062368
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -3975,7 +3974,7 @@ Transform:
   m_GameObject: {fileID: 708253519}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.18, y: -0.67, z: 20}
+  m_LocalPosition: {x: 0.4384, y: -1.9104, z: 20}
   m_LocalScale: {x: 4, y: 4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4050,7 +4049,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 2
-  m_Size: {x: 15.36, y: 2.88}
+  m_Size: {x: 15.489208, y: 3.5001907}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -20935,15 +20934,15 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 1064449108}
   m_Color: {r: 0.4, g: 0.25, b: 0.15, a: 1}
   m_FlipX: 0
   m_FlipY: 0
-  m_DrawMode: 1
+  m_DrawMode: 0
   m_Size: {x: 1, y: 3}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 0
+  m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
 --- !u!4 &1051119438
 Transform:
@@ -20954,8 +20953,8 @@ Transform:
   m_GameObject: {fileID: 1051119436}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: -0.0073, y: 0.4793, z: 0}
+  m_LocalScale: {x: 0.98537076, y: 3.993763, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 63317705}
@@ -21621,7 +21620,7 @@ Transform:
   m_GameObject: {fileID: 1094784470}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.06, y: -0.74, z: 50}
+  m_LocalPosition: {x: -0.095, y: -2.6523, z: 50}
   m_LocalScale: {x: 4, y: 4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -21696,7 +21695,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 2
-  m_Size: {x: 15.36, y: 2.88}
+  m_Size: {x: 15.282477, y: 3.8361275}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -24228,6 +24227,7 @@ MonoBehaviour:
   openVfxPrefab: {fileID: 0}
   _IsOpen:
     _value: 0
+  closedColor: {r: 0.4, g: 0.25, b: 0.15, a: 1}
 --- !u!61 &1404507547
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -25254,7 +25254,7 @@ Transform:
   m_GameObject: {fileID: 1626531538}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.12, y: -0.67, z: 40}
+  m_LocalPosition: {x: 0.2234, y: -1.8587, z: 40}
   m_LocalScale: {x: 4, y: 4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -25329,7 +25329,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 2
-  m_Size: {x: 15.36, y: 2.88}
+  m_Size: {x: 15.411681, y: 3.4743497}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -25587,7 +25587,7 @@ Transform:
   m_GameObject: {fileID: 1695708725}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 128.27798, y: 1.6376351, z: 0}
+  m_LocalPosition: {x: 128.2, y: 0.3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -25890,9 +25890,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Attrition.Gameplay::Attrition.Gameplay.World.PuzzlePlate
   latching: 0
-  playerLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
   _IsActive:
     _value: 0
 --- !u!1 &1800786581
@@ -26771,7 +26768,7 @@ Transform:
   m_GameObject: {fileID: 1928137391}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.18, z: 35}
+  m_LocalPosition: {x: 0.2067, y: -0.2317, z: 35}
   m_LocalScale: {x: 4, y: 4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -26846,7 +26843,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 2
-  m_Size: {x: 15.299999, y: 1.49}
+  m_Size: {x: 15.403365, y: 1.5158414}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -94414,16 +94411,6 @@ Tilemap:
       m_TileObjectToInstantiateIndex: 65535
       dummyAlignment: 0
       m_AllTileFlags: 1073741825
-  - first: {x: 460, y: -17, z: 0}
-    second:
-      serializedVersion: 2
-      m_TileIndex: 0
-      m_TileSpriteIndex: 0
-      m_TileMatrixIndex: 0
-      m_TileColorIndex: 0
-      m_TileObjectToInstantiateIndex: 65535
-      dummyAlignment: 0
-      m_AllTileFlags: 1073741825
   - first: {x: 465, y: -17, z: 0}
     second:
       serializedVersion: 2
@@ -96334,16 +96321,6 @@ Tilemap:
       m_TileObjectToInstantiateIndex: 65535
       dummyAlignment: 0
       m_AllTileFlags: 1073741825
-  - first: {x: 460, y: -16, z: 0}
-    second:
-      serializedVersion: 2
-      m_TileIndex: 0
-      m_TileSpriteIndex: 0
-      m_TileMatrixIndex: 0
-      m_TileColorIndex: 0
-      m_TileObjectToInstantiateIndex: 65535
-      dummyAlignment: 0
-      m_AllTileFlags: 1073741825
   - first: {x: 465, y: -16, z: 0}
     second:
       serializedVersion: 2
@@ -98140,16 +98117,6 @@ Tilemap:
       m_TileIndex: 43
       m_TileSpriteIndex: 56
       m_TileMatrixIndex: 4
-      m_TileColorIndex: 0
-      m_TileObjectToInstantiateIndex: 65535
-      dummyAlignment: 0
-      m_AllTileFlags: 1073741825
-  - first: {x: 460, y: -15, z: 0}
-    second:
-      serializedVersion: 2
-      m_TileIndex: 0
-      m_TileSpriteIndex: 0
-      m_TileMatrixIndex: 0
       m_TileColorIndex: 0
       m_TileObjectToInstantiateIndex: 65535
       dummyAlignment: 0
@@ -100309,16 +100276,6 @@ Tilemap:
       serializedVersion: 2
       m_TileIndex: 87
       m_TileSpriteIndex: 87
-      m_TileMatrixIndex: 0
-      m_TileColorIndex: 0
-      m_TileObjectToInstantiateIndex: 65535
-      dummyAlignment: 0
-      m_AllTileFlags: 1073741825
-  - first: {x: 460, y: -14, z: 0}
-    second:
-      serializedVersion: 2
-      m_TileIndex: 0
-      m_TileSpriteIndex: 0
       m_TileMatrixIndex: 0
       m_TileColorIndex: 0
       m_TileObjectToInstantiateIndex: 65535
@@ -109984,16 +109941,6 @@ Tilemap:
       m_TileObjectToInstantiateIndex: 65535
       dummyAlignment: 0
       m_AllTileFlags: 1073741825
-  - first: {x: 421, y: -11, z: 0}
-    second:
-      serializedVersion: 2
-      m_TileIndex: 0
-      m_TileSpriteIndex: 0
-      m_TileMatrixIndex: 0
-      m_TileColorIndex: 0
-      m_TileObjectToInstantiateIndex: 65535
-      dummyAlignment: 0
-      m_AllTileFlags: 1073741825
   - first: {x: 432, y: -11, z: 0}
     second:
       serializedVersion: 2
@@ -112844,16 +112791,6 @@ Tilemap:
       m_TileObjectToInstantiateIndex: 65535
       dummyAlignment: 0
       m_AllTileFlags: 1073741825
-  - first: {x: 421, y: -10, z: 0}
-    second:
-      serializedVersion: 2
-      m_TileIndex: 0
-      m_TileSpriteIndex: 0
-      m_TileMatrixIndex: 0
-      m_TileColorIndex: 0
-      m_TileObjectToInstantiateIndex: 65535
-      dummyAlignment: 0
-      m_AllTileFlags: 1073741825
   - first: {x: 434, y: -10, z: 0}
     second:
       serializedVersion: 2
@@ -115574,16 +115511,6 @@ Tilemap:
       m_TileObjectToInstantiateIndex: 65535
       dummyAlignment: 0
       m_AllTileFlags: 1073741825
-  - first: {x: 421, y: -9, z: 0}
-    second:
-      serializedVersion: 2
-      m_TileIndex: 0
-      m_TileSpriteIndex: 0
-      m_TileMatrixIndex: 0
-      m_TileColorIndex: 0
-      m_TileObjectToInstantiateIndex: 65535
-      dummyAlignment: 0
-      m_AllTileFlags: 1073741825
   - first: {x: 436, y: -9, z: 0}
     second:
       serializedVersion: 2
@@ -117869,16 +117796,6 @@ Tilemap:
       serializedVersion: 2
       m_TileIndex: 85
       m_TileSpriteIndex: 84
-      m_TileMatrixIndex: 0
-      m_TileColorIndex: 0
-      m_TileObjectToInstantiateIndex: 65535
-      dummyAlignment: 0
-      m_AllTileFlags: 1073741825
-  - first: {x: 421, y: -8, z: 0}
-    second:
-      serializedVersion: 2
-      m_TileIndex: 0
-      m_TileSpriteIndex: 0
       m_TileMatrixIndex: 0
       m_TileColorIndex: 0
       m_TileObjectToInstantiateIndex: 65535
@@ -312836,7 +312753,7 @@ Tilemap:
       m_AllTileFlags: 1073741825
   m_AnimatedTiles: {}
   m_TileAssetArray:
-  - m_RefCount: 8141
+  - m_RefCount: 8133
     m_Data: {fileID: 11400000, guid: c16a69da4ef31264f9d407b686140682, type: 2}
   - m_RefCount: 11791
     m_Data: {fileID: 11400000, guid: 1a87078d447ce954ea3e491cff338d2f, type: 2}
@@ -313207,7 +313124,7 @@ Tilemap:
   - m_RefCount: 2
     m_Data: {fileID: 11400000, guid: 95b2e15cca8a78a448162d883195cbe9, type: 2}
   m_TileSpriteArray:
-  - m_RefCount: 8141
+  - m_RefCount: 8133
     m_Data: {fileID: 76235141, guid: c461bfc967fc2d74a9e30ba7e574f03a, type: 3}
   - m_RefCount: 11791
     m_Data: {fileID: 1452642284, guid: c461bfc967fc2d74a9e30ba7e574f03a, type: 3}
@@ -313578,7 +313495,7 @@ Tilemap:
   - m_RefCount: 2
     m_Data: {fileID: -9137202733848781849, guid: 0d9c30cf6bd98c14f8970e37a1323714, type: 3}
   m_TileMatrixArray:
-  - m_RefCount: 27845
+  - m_RefCount: 27837
     m_Data:
       e00: 1
       e01: 0
@@ -313669,7 +313586,7 @@ Tilemap:
       e32: 0
       e33: 1
   m_TileColorArray:
-  - m_RefCount: 28535
+  - m_RefCount: 28527
     m_Data: {r: 1, g: 1, b: 1, a: 1}
   m_TileObjectToInstantiateArray: []
   m_AnimationFrameRate: 1
@@ -313895,6 +313812,7 @@ MonoBehaviour:
   openVfxPrefab: {fileID: 0}
   _IsOpen:
     _value: 0
+  closedColor: {r: 0.4, g: 0.25, b: 0.15, a: 1}
 --- !u!61 &2089267473
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -314400,7 +314318,7 @@ Transform:
   m_GameObject: {fileID: 2139300596}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.12, y: -0.55, z: 25}
+  m_LocalPosition: {x: 0.3267, y: -1.9454, z: 25}
   m_LocalScale: {x: 4, y: 4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -314475,7 +314393,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 2
-  m_Size: {x: 15.36, y: 2.88}
+  m_Size: {x: 15.4633665, y: 3.5777147}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1

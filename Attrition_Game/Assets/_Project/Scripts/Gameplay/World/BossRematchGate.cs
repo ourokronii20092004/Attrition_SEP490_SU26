@@ -64,8 +64,11 @@ namespace Attrition.Gameplay.World
         /// <summary>
         /// Đã hạ hết boss yêu cầu?
         ///
-        /// Boss bị despawn sau khi chết (EnemyController tự Despawn) → tham chiếu thành null. Coi NULL LÀ
-        /// ĐÃ HẠ, nếu không cổng sẽ không bao giờ mở khi boss vừa biến mất.
+        /// Kiểm qua `BossDefeatState` (khóa "rematch:") thay vì dò object. KHÔNG coi null là đã hạ:
+        /// lúc `Spawned` chạy, 3 boss phụ là prefab scene-placed có thể CHƯA được Fusion spawn → tham
+        /// chiếu null tạm thời; nếu coi null = đã hạ thì cửa boss cuối mở toang ngay khi vào Map 5,
+        /// hiển thị visual + đi xuyên (đúng lỗi user báo). `RematchBossDoor` ghi `rematch:{enemyId}`
+        /// vào state ĐÚNG LÚC boss chết, nên đây là nguồn sự thật đáng tin.
         /// Danh sách rỗng → chưa cấu hình, KHÔNG mở (thà cửa khoá còn hơn mở toang vì thiếu setup).
         /// </summary>
         private bool AllBossesDown()
@@ -74,11 +77,29 @@ namespace Attrition.Gameplay.World
 
             foreach (var b in requiredBosses)
             {
-                if (b == null) continue;                       // đã chết + despawn
-                if (b.Object == null || !b.Object.IsValid) continue;
-                if (!b.IsDead) return false;                   // còn sống → chưa đủ
+                // Boss còn sống (object hợp lệ) → chưa hạ.
+                if (b != null && b.Object != null && b.Object.IsValid)
+                {
+                    if (!b.IsDead) return false;
+                    continue;
+                }
+
+                // Boss null/despawn → phải được đánh dấu ĐÃ HẠ trong state, nếu không coi là chưa hạ
+                // (có thể chỉ là chưa spawn). RematchBossDoor ghi khóa "rematch:{enemyId}".
+                if (!IsDefeatedRematch(b)) return false;
             }
             return true;
+        }
+
+        private static bool IsDefeatedRematch(EnemyController boss)
+        {
+            // Boss đã hoàn toàn bị destroy (Unity null) → chỉ có thể do đã hạ + despawn, không có cách
+            // nào khác để mất tham chiếu scene-placed object. Coi là đã hạ.
+            if (boss == null) return true;
+
+            var es = boss.GetComponent<Attrition.Gameplay.Enemy.EnemyStats>();
+            if (es == null || string.IsNullOrEmpty(es.EnemyId)) return false;
+            return Attrition.Gameplay.Environment.BossDefeatState.IsDefeated("rematch:" + es.EnemyId);
         }
 
         [Rpc(RpcSources.StateAuthority, RpcTargets.All)]

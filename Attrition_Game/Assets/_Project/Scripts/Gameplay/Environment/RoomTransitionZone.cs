@@ -144,7 +144,15 @@ namespace Attrition.Gameplay.Environment
             {
                 bool done = false;
                 Attrition.Data.DialogueEvents.OnOpenCustomDialogue.Invoke(endingDialogue, () => done = true);
-                while (!done) yield return null;
+                // TIMEOUT chống kẹt: nếu DialogueUI bận (dialogue khác đang mở) thì OpenCustomDialogue
+                // return sớm và KHÔNG set callback → `done` không bao giờ true → kẹt mãi ở đây, ending
+                // hiện chữ xong mà không về menu (đúng lỗi user báo). 8s rồi đi tiếp là an toàn.
+                float wait = 0f;
+                while (!done && wait < 8f)
+                {
+                    wait += Time.unscaledDeltaTime;
+                    yield return null;
+                }
             }
 
             // Ghi điểm vào cho scene ĐÍCH trên MỌI máy (static local, không networked).

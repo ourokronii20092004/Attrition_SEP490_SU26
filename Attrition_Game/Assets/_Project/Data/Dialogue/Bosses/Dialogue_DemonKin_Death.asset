@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.DialogueSO
   lines:
   - speakerName: Demon Kin
-    text: The abyss does not forgive defeat...
+    text: I feared being forgotten... so I imprisoned the whole world to avoid it.
   - speakerName: Demon Kin
-    text: The castle awaits you. It will finish what I could not.
+    text: Thank you. Carry them out. Do not keep them as I did — carry them.

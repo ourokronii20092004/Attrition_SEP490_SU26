@@ -43,6 +43,37 @@ namespace Attrition.Gameplay.World
 
         [Networked] private NetworkBool Consumed { get; set; }
 
+        /// <summary>
+        /// Vị trí lúc SPAWN — dùng làm khoá ghi nhớ "đã nhặt". Chốt ở Spawned thay vì đọc
+        /// transform.position lúc nhặt: pickup có FloatBobEffect (nhấp nhô lên xuống) nên toạ độ y
+        /// lúc chạm khác lúc spawn, làm khoá lệch và lần sau vào map lại nhặt được nữa.
+        /// </summary>
+        private Vector3 _spawnPos;
+
+        public override void Spawned()
+        {
+            _spawnPos = transform.position;
+
+            // ĐÃ NHẶT từ lần chơi/lần load trước → despawn ngay, đừng cho nhặt lại (farm max HP charge).
+            // Chỉ host quyết (Despawn là host-authoritative); client thấy object biến mất qua sync.
+            if (!HasStateAuthority) return;
+
+            // Thứ tự Spawned không đảm bảo → nạp lazy tại đây (giống BreakableObject).
+            Attrition.Gameplay.Environment.PickupState.EnsureLoadedForSolo();
+            if (Attrition.Gameplay.Environment.PickupState.IsCollected(SceneKey, _spawnPos))
+            {
+                Consumed = true;
+                Runner.Despawn(Object);
+            }
+        }
+
+        /// <summary>
+        /// Tên map dùng làm khoá. KHÔNG dùng gameObject.scene.name: coop load additive nên nó có thể
+        /// trả scene runner riêng của Fusion, không phải tên map. GameLaunch.GameplayScene là nguồn
+        /// duy nhất đáng tin và cũng là giá trị phần save đang dùng.
+        /// </summary>
+        private static string SceneKey => Attrition.Persistence.GameLaunch.GameplayScene;
+
         private void OnTriggerEnter2D(Collider2D other)
         {
             // Chỉ host quyết định ai nhặt được (tránh double-pickup giữa host/client).
@@ -54,6 +85,15 @@ namespace Attrition.Gameplay.World
             if (!ApplyTo(stats)) return;
 
             Consumed = true;
+
+            // GHI NHỚ BỀN: chỉ cho pickup ĐẶT SẴN trong scene (bình máu ẩn...). Đồ quái rơi ra dùng
+            // DroppedItem nên không đi qua đây — ghi nhớ theo vị trí sẽ làm món rơi trúng chỗ cũ biến mất.
+            if (Attrition.Gameplay.Environment.PickupState.MarkCollected(SceneKey, _spawnPos))
+            {
+                // Lưu NGAY: chờ tới mốc rest mà người chơi thoát game thì bình lại hiện ra để nhặt lần nữa.
+                Attrition.Gameplay.Persistence.GameSaveService.EnsureExists().SaveWorldState();
+            }
+
             RpcOnCollected(transform.position);
             Runner.Despawn(Object);
         }

@@ -14,5 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.DialogueSO
   lines:
   - speakerName: Spring Fairy
-    text: This land is losing itself to corruption. There is 1 hidden health flask
-      in this region, beyond the usual paths.
+    text: You woke in a world that died long ago — frozen mid-death. I am its last
+      spring. While I hold this warmth, the rot cannot take what remains.
+  - speakerName: Spring Fairy
+    text: The keeper of the line still stands ahead. Free him — and the flame will
+      guide you onward.

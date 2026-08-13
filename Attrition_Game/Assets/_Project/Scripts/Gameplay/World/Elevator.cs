@@ -111,8 +111,9 @@ namespace Attrition.Gameplay.World
                 return;
             }
 
-            int required = Attrition.Persistence.GameLaunch.Mode == Attrition.Persistence.LaunchMode.Coop ? 2 : 1;
-            if (_playersOnPlatform.Count < required) return;
+            // COOP chỉ cần 1 người đứng lên là thang chạy (trước đây bắt đủ 2). Người còn lại có thể
+            // đang đánh nhau / chưa tới, bắt đủ 2 làm thang thành nút thắt bắt cả hai phải đi cùng nhau.
+            if (_playersOnPlatform.Count < 1) return;
 
             Toggle();
             _mustClearBeforeNextTrip = true;

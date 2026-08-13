@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.DialogueSO
   lines:
   - speakerName: Demon Kin
-    text: You crossed the dark wood only to kneel before me.
+    text: You would have me forget everything?
   - speakerName: Demon Kin
-    text: Come. Let the earth become your grave.
+    text: I hold every soul, every memory — because if I let go, they vanish forever.

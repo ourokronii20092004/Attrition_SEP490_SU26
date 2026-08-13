@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.DialogueSO
   lines:
   - speakerName: Severed Fang
-    text: So this blade has finally found its end...
+    text: You... have given me leave to put down the shield.
   - speakerName: Severed Fang
-    text: Take the flame. The road ahead will show you no mercy.
+    text: Thank you. For the first time in an age, I rest.

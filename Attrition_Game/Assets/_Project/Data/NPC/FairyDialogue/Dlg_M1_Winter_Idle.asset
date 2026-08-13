@@ -14,5 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.DialogueSO
   lines:
   - speakerName: Winter Fairy
-    text: The hidden health flask lies away from the main road. Listen for a hollow
-      wall and search beyond it.
+    text: A health flask waits on the path above me. Take the high road and follow
+      it east.
+  - speakerName: Winter Fairy
+    text: Another flask hides near the elite's ground. Search the area where the
+      strong one prowls.

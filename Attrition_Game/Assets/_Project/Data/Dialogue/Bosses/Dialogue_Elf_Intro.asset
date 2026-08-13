@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.DialogueSO
   lines:
   - speakerName: Fallen Elf
-    text: Turn back. Nothing living leaves this valley unchanged.
+    text: You would snuff the hope of my people?
   - speakerName: Fallen Elf
-    text: If you advance, the storm will judge you.
+    text: They sing because rescue is coming. You have no right to take that.

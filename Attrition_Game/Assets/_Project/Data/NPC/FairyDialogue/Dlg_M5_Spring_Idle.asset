@@ -14,5 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.DialogueSO
   lines:
   - speakerName: Spring Fairy
-    text: This land is losing itself to corruption. No hidden health flasks remain
-      here; only rewards taken from powerful foes.
+    text: The Crown still sits on the throne — the one who raised the seal to keep
+      her people from the Void. She is no tyrant. She chose a door with no exit.
+  - speakerName: Spring Fairy
+    text: Tell her the seal may fall. You are the last child of this world — the
+      only one with the right to say it.

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f5dd02ff52707c43b05c98491aafe6a, type: 3}
   m_Name: PotionConfig
   m_EditorClassIdentifier: Attrition.Data::Attrition.Data.PotionConfigSO
-  startingHealthCharges: 2
-  startingManaCharges: 2
+  startingHealthCharges: 0
+  startingManaCharges: 0
   hardMaxHealthCharges: 11
-  hardMaxManaCharges: 8
+  hardMaxManaCharges: 5
