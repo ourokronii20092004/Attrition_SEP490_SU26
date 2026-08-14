@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Download, HardDrive, Monitor, FileArchive, Gamepad2, MessageSquare, Check, Copy,
@@ -9,12 +9,23 @@ import { PageShell } from "@/components/ui/page-shell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LobbyScene } from "@/components/lobby-scene";
-import { GAME_BUILD, GAME_BUILD_AVAILABLE, OLDER_BUILDS, type GameBuild } from "@/lib/game-build";
+import { GAME_BUILDS, fetchGameBuilds, type GameBuild } from "@/lib/game-build";
 
 const dateFmt = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" });
 const formatReleased = (iso: string) => dateFmt.format(new Date(`${iso}T00:00:00Z`));
 
 export default function DownloadPage() {
+  // Start from the bundled list so the page is never blank, then swap in the live manifest
+  // (newest first — its head is the hero). On fetch failure the bundled fallback simply stays.
+  const [builds, setBuilds] = useState<readonly GameBuild[]>(GAME_BUILDS);
+  useEffect(() => {
+    fetchGameBuilds().then(setBuilds).catch(() => {});
+  }, []);
+
+  const hero = builds[0];
+  const older = builds.slice(1);
+  const heroAvailable = hero.url.length > 0;
+
   return (
     <div>
       {/* ─── The build itself is the hero: one obvious action, over the world you're downloading ─── */}
@@ -31,16 +42,16 @@ export default function DownloadPage() {
           </p>
 
           <div className="animate-rise-in mt-9 [animation-delay:300ms]">
-            {GAME_BUILD_AVAILABLE ? (
+            {heroAvailable ? (
               // A styled anchor, not a Button: the browser must treat this as a file download,
               // and `download` only works on an anchor.
               <a
-                href={GAME_BUILD.url}
+                href={hero.url}
                 download
                 className="group inline-flex items-center gap-2.5 rounded-md bg-accent px-8 py-4 text-sm font-semibold uppercase tracking-[0.15em] text-accent-fg shadow-[0_0_0_1px_color-mix(in_srgb,var(--color-accent)_45%,transparent)] transition-[transform,box-shadow,filter] duration-200 hover:shadow-[var(--shadow-glow)] hover:brightness-105 active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               >
                 <Download size={18} className="transition-transform duration-200 group-hover:-translate-y-0.5" aria-hidden />
-                Download v{GAME_BUILD.version}
+                Download v{hero.version}
               </a>
             ) : (
               <Button size="lg" disabled>
@@ -49,7 +60,7 @@ export default function DownloadPage() {
               </Button>
             )}
             <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.2em] text-fg-muted">
-              {GAME_BUILD.channel} · {GAME_BUILD.sizeLabel} · Windows 64-bit
+              {hero.channel} · {hero.sizeLabel} · Windows 64-bit
             </p>
           </div>
         </div>
@@ -66,8 +77,8 @@ export default function DownloadPage() {
           </div>
 
           <ul className="mt-6 space-y-3">
-            <BuildRow build={GAME_BUILD} current />
-            {OLDER_BUILDS.map((b) => (
+            <BuildRow build={hero} current />
+            {older.map((b) => (
               <BuildRow key={b.version} build={b} />
             ))}
           </ul>
@@ -81,16 +92,16 @@ export default function DownloadPage() {
               Every build ships a Windows 64-bit player. There is no macOS or Linux build yet.
             </Fact>
             <Fact icon={FileArchive} title="Extract it first">
-              {GAME_BUILD.archive === ".zip" ? (
+              {hero.archive === ".zip" ? (
                 <>
                   It&rsquo;s a .zip, which Windows opens on its own — right-click, Extract All, then
-                  run <code className="font-mono text-xs">{GAME_BUILD.executable}</code>.
+                  run <code className="font-mono text-xs">{hero.executable}</code>.
                 </>
               ) : (
                 <>
-                  It&rsquo;s a {GAME_BUILD.archive} archive, which Windows can&rsquo;t open on its own —
+                  It&rsquo;s a {hero.archive} archive, which Windows can&rsquo;t open on its own —
                   use 7-Zip or WinRAR, then run{" "}
-                  <code className="font-mono text-xs">{GAME_BUILD.executable}</code>.
+                  <code className="font-mono text-xs">{hero.executable}</code>.
                 </>
               )}
             </Fact>
@@ -163,7 +174,7 @@ function BuildRow({ build, current = false }: { build: GameBuild; current?: bool
             {build.sizeLabel} · {build.archive} · {build.platform}
           </p>
           <p className="mt-0.5 text-xs text-fg-subtle">
-            Released {formatReleased(build.released)} · {build.executable}
+            {build.released ? `Released ${formatReleased(build.released)}` : "Releasing soon"} · {build.executable}
           </p>
         </div>
 
@@ -188,7 +199,8 @@ function BuildRow({ build, current = false }: { build: GameBuild; current?: bool
         )}
       </div>
 
-      <ChecksumRow sha256={build.sha256} archive={build.archive} />
+      {/* No verify affordance until the archive exists and we have its real hash. */}
+      {build.sha256 && <ChecksumRow sha256={build.sha256} archive={build.archive} />}
     </li>
   );
 }
