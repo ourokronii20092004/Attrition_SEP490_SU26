@@ -8,15 +8,18 @@
  * `/api/assets/media`, and the gateway already routes `/api/assets/{**catch-all}`, so no new route
  * or nginx rule is needed.
  *
- * To publish a new build, copy it into the volume and prepend an entry to GAME_BUILDS:
- *   docker cp Attrition_Game_1.0.zip attrition-assets:/app/uploads/builds/
+ * The runtime source of truth is a JSON manifest in the same volume, served at MANIFEST_URL.
+ * Publishing a new build means uploading the archive and adding one entry to that file on the
+ * server — no frontend redeploy:
+ *   scp Attrition_Game_1.0.3.zip root@192.168.1.110:/tmp/
+ *   ssh root@192.168.1.110 'docker cp /tmp/Attrition_Game_1.0.3.zip attrition-assets:/app/uploads/builds/ && rm /tmp/Attrition_Game_1.0.3.zip'
+ *   ...then add the entry to builds.json (attrition-assets:/app/uploads/builds/builds.json).
  *
- * Older entries stay listed so a player on a slower machine — or one mid-run on an old save — can
- * still get the build they were playing.
+ * The newest entry is always the hero download. Older entries stay listed so a player on a slower
+ * machine — or one mid-run on an old save — can still get the build they were playing.
  *
- * NEXT_PUBLIC_GAME_DOWNLOAD_URL overrides the current build's location (e.g. to point at an
- * external mirror if the build outgrows self-hosting). Empty string disables the download and the
- * page says the build is being prepared, rather than offering a link that 404s.
+ * GAME_BUILDS below is the bundled fallback: it renders while the manifest is loading, and if the
+ * fetch fails, so the page never goes blank. Keep it roughly in sync with the live manifest.
  */
 export interface GameBuild {
   version: string;
@@ -25,17 +28,20 @@ export interface GameBuild {
   platform: string;
   sizeLabel: string;
   /** sha256 of the archive, so players can verify it after downloading. */
-  sha256: string;
+  sha256?: string;
   /** Archive extension. `.zip` opens natively on Windows; `.rar` needs 7-Zip / WinRAR. */
   archive: string;
   /** Executable inside the archive. */
   executable: string;
   url: string;
   /** ISO date the build was published — drives the "released" line on the download list. */
-  released: string;
+  released?: string;
 }
 
-/** Newest first. GAME_BUILD (the download button) is always the head of this list. */
+/** Where the live manifest is served from (Assets.Service static files, gateway-routed). */
+export const MANIFEST_URL = "/api/assets/media/builds/builds.json";
+
+/** Bundled fallback, newest first — mirrors the manifest as of the last deploy. */
 export const GAME_BUILDS: readonly GameBuild[] = [
   {
     version: "1.0.2",
@@ -45,7 +51,7 @@ export const GAME_BUILDS: readonly GameBuild[] = [
     sha256: "526bdbbdb5e4f624b51258cb72ec622cee3a744370096574826955b459b9b285",
     archive: ".zip",
     executable: "Attrition_Game.exe",
-    url: process.env.NEXT_PUBLIC_GAME_DOWNLOAD_URL ?? "/api/assets/media/builds/Attrition_Game_1.0.2.zip",
+    url: "/api/assets/media/builds/Attrition_Game_1.0.2.zip",
     released: "2026-08-08",
   },
   {
@@ -56,7 +62,7 @@ export const GAME_BUILDS: readonly GameBuild[] = [
     sha256: "c4ac2e8e69453b0df72c417678ee23f2f51e0eba28a77e8a47b5dec5727ddcee",
     archive: ".zip",
     executable: "Attrition_Game.exe",
-    url: process.env.NEXT_PUBLIC_GAME_DOWNLOAD_URL ?? "/api/assets/media/builds/Attrition_Game_1.0.1.zip",
+    url: "/api/assets/media/builds/Attrition_Game_1.0.1.zip",
     released: "2026-08-07",
   },
   {
@@ -84,11 +90,36 @@ export const GAME_BUILDS: readonly GameBuild[] = [
   },
 ];
 
-/** The build the download button points at. */
-export const GAME_BUILD = GAME_BUILDS[0];
+/** Numeric version comparison ("1.0.10" > "1.0.9"); non-numeric segments compare as 0. */
+function compareVersions(a: string, b: string): number {
+  const pa = a.split(".").map((n) => Number.parseInt(n, 10) || 0);
+  const pb = b.split(".").map((n) => Number.parseInt(n, 10) || 0);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const d = (pa[i] ?? 0) - (pb[i] ?? 0);
+    if (d !== 0) return d;
+  }
+  return 0;
+}
 
-/** Everything still downloadable but superseded. */
-export const OLDER_BUILDS = GAME_BUILDS.slice(1);
+/** True when the value plausibly came from the manifest rather than a broken/garbage response. */
+function isGameBuild(b: unknown): b is GameBuild {
+  return (
+    typeof b === "object" && b !== null &&
+    typeof (b as GameBuild).version === "string" &&
+    typeof (b as GameBuild).url === "string"
+  );
+}
 
-/** False when no build is published, so the page can degrade instead of linking nowhere. */
-export const GAME_BUILD_AVAILABLE = GAME_BUILD.url.length > 0;
+/**
+ * Fetch the live manifest and return it newest-first. Rejects (so the caller keeps the bundled
+ * fallback) on network errors, non-JSON responses, or payloads with no usable entries.
+ */
+export async function fetchGameBuilds(): Promise<GameBuild[]> {
+  const res = await fetch(MANIFEST_URL, { cache: "no-store" });
+  if (!res.ok) throw new Error(`manifest ${res.status}`);
+  const json: unknown = await res.json();
+  if (!Array.isArray(json)) throw new Error("manifest is not an array");
+  const builds = json.filter(isGameBuild);
+  if (builds.length === 0) throw new Error("manifest has no builds");
+  return builds.sort((a, b) => compareVersions(b.version, a.version));
+}
