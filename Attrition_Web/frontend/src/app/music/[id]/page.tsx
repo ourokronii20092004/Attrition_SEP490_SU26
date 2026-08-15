@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { ArrowLeft, Play, Pause, Download, Music as MusicIcon, Heart, Headphones } from "lucide-react";
+import { ArrowLeft, Play, Pause, Download, Music as MusicIcon, Heart, Headphones, Sparkles } from "lucide-react";
 import { musicApi, getDownloadUrl } from "@/lib/api/music";
 import { resolveMediaUrl } from "@/lib/api/media";
 import { useAudioStore } from "@/lib/stores/audio-store";
@@ -161,7 +161,14 @@ export default function AlbumPage() {
                   )}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className={`block truncate text-sm ${active ? "font-medium text-accent" : "text-fg"}`}>{track.title}</span>
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    <span className={`truncate text-sm ${active ? "font-medium text-accent" : "text-fg"}`}>{track.title}</span>
+                    {track.isFeatured && (
+                      <span className="inline-flex shrink-0 items-center gap-0.5 rounded bg-accent-soft px-1.5 py-0.5 text-[10px] font-medium text-accent" title="Featured by the Attrition team">
+                        <Sparkles size={9} /> Featured
+                      </span>
+                    )}
+                  </span>
                   {!!track.gameUsages?.length && (
                     <span className="mt-0.5 block truncate text-xs text-fg-subtle">Used in game: {track.gameUsages.join(" · ")}</span>
                   )}

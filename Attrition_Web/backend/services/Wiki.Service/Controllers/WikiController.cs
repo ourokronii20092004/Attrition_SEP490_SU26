@@ -27,9 +27,11 @@ public class WikiController : ControllerBase
     [HttpGet("articles")]
     public async Task<IActionResult> GetArticles([FromQuery] string? category = null,
         [FromQuery] string? search = null, [FromQuery] Guid? authorId = null,
-        [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        [FromQuery] int page = 1, [FromQuery] int pageSize = 20,
+        [FromQuery] bool includeDrafts = false)
         => Ok(ApiResponse<PaginatedResponse<WikiArticleListDto>>.Ok(
-            await _wiki.GetArticlesAsync(category, search, page, pageSize, authorId)));
+            // includeDrafts is honored for admins only; anonymous/regular users always get published articles.
+            await _wiki.GetArticlesAsync(category, search, page, pageSize, authorId, includeDrafts && _currentUser.IsAdmin)));
 
     [HttpGet("articles/{slug}")]
     public async Task<IActionResult> GetArticle(string slug)

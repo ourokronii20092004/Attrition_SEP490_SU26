@@ -36,7 +36,7 @@ public record ForumCategoryRequest(string Name, string? Description);
 
 // Moderation views
 public record AdminForumThreadDto(Guid Id, string Title, bool IsPinned, bool IsLocked, int ReplyCount,
-    DateTime CreatedAt, DateTime LastReplyAt, string? AuthorName);
+    DateTime CreatedAt, DateTime LastReplyAt, string? AuthorName, bool IsRemoved);
 
 public record AdminForumPostDto(Guid Id, Guid ThreadId, string Content, DateTime CreatedAt, DateTime? UpdatedAt,
     bool IsRemoved, string? RemovedReason, DateTime? RemovedAt, string? AuthorName, string? RemovedByName);

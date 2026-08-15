@@ -334,6 +334,7 @@ export interface WikiArticleListDto {
   authorId: string | null;
   authorName: string | null;
   updatedAt: string;
+  status: string; // "Draft" | "Published"
 }
 
 export interface WikiArticleDto {
@@ -534,6 +535,7 @@ export interface AdminForumThreadDto {
   createdAt: string;
   lastReplyAt: string;
   authorName: string | null;
+  isRemoved: boolean;
 }
 
 export interface AdminForumPostDto {

@@ -188,6 +188,42 @@ export default function ThreadPage() {
     },
   });
 
+  // Edit a post the current user owns (the backend enforces authorship too). Rewrite the content
+  // optimistically and roll back on failure; the OP lives in the thread query, replies in the
+  // posts window, so each cache is patched where it stores the post.
+  const editMutation = useMutation({
+    mutationFn: async ({ postId, content }: { postId: string; content: string }) => {
+      const res = await forumApi.updatePost(postId, { content });
+      if (!res.success) throw new Error(res.error ?? "Failed to save");
+    },
+    onMutate: async ({ postId, content }) => {
+      await queryClient.cancelQueries({ queryKey: postsKey });
+      const prev = queryClient.getQueryData<PaginatedResponse<ForumPostDto>>(postsKey);
+      queryClient.setQueryData<PaginatedResponse<ForumPostDto>>(postsKey, (old) =>
+        old ? { ...old, items: old.items.map((p) => (p.id === postId ? { ...p, content } : p)) } : old);
+      const prevThread = queryClient.getQueryData<ForumThreadDto | null>(qk.forum.thread(params.id));
+      if (postId === params.id) {
+        queryClient.setQueryData<ForumThreadDto | null>(qk.forum.thread(params.id), (old) => (old ? { ...old, content } : old));
+      }
+      return { prev, prevThread };
+    },
+    onSuccess: () => toast("Post updated.", "success"),
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(postsKey, ctx.prev);
+      if (ctx?.prevThread) queryClient.setQueryData(qk.forum.thread(params.id), ctx.prevThread);
+      toast("Couldn't save your changes. Please try again.", "error");
+    },
+    onSettled: (_d, _e, vars) => {
+      invalidatePosts();
+      if (vars.postId === params.id) queryClient.invalidateQueries({ queryKey: qk.forum.thread(params.id) });
+    },
+  });
+
+  const handleEdit = (postId: string, content: string) => {
+    setActionError("");
+    editMutation.mutate({ postId, content });
+  };
+
   const handleReport = (postId: string) => {
     const reason = window.prompt("Why are you reporting this post?");
     if (!reason?.trim()) return;
@@ -264,9 +300,12 @@ export default function ThreadPage() {
               replyCount={totalReplies}
               canReport={!!user}
               canDelete={!!user && originalPost.authorId === user.id}
+              canEdit={!!user && originalPost.authorId === user.id}
+              editPending={editMutation.isPending}
               onReact={(type) => handleReact(originalPost.id, type)}
               onReport={() => handleReport(originalPost.id)}
               onDelete={handleDeleteOriginalPost}
+              onEdit={(content) => handleEdit(originalPost.id, content)}
             />
           )}
 
@@ -317,7 +356,9 @@ export default function ThreadPage() {
                   onReport={handleReport}
                   onReply={(content, parentPostId, attachments) => replyMutation.mutate({ content, parentPostId, attachments })}
                   onDelete={handleDelete}
+                  onEdit={handleEdit}
                   replying={replyMutation.isPending}
+                  editSaving={editMutation.isPending}
                 />
               ))}
               {tree.length === 0 && (
@@ -346,16 +387,20 @@ export default function ThreadPage() {
  * title and full-size markdown body in the middle, and an action bar (reactions + reply count) at
  * the bottom. Deliberately distinct from the compact reply cards below it.
  */
-function ThreadPost({ post, thread, replyCount, canReport, canDelete, onReact, onReport, onDelete }: {
+function ThreadPost({ post, thread, replyCount, canReport, canDelete, canEdit, editPending, onReact, onReport, onDelete, onEdit }: {
   post: ForumPostDto;
   thread: ForumThreadDto;
   replyCount: number;
   canReport: boolean;
   canDelete: boolean;
+  canEdit: boolean;
+  editPending: boolean;
   onReact: (type: "like" | "dislike") => void;
   onReport: () => void;
   onDelete: () => void;
+  onEdit: (content: string) => void;
 }) {
+  const [editing, setEditing] = useState(false);
   return (
     <Card id={`post-${post.id}`} className="mt-6 p-5 transition-shadow sm:p-7">
       {/* Byline — author on the left, report tucked into the top-right corner. */}
@@ -381,7 +426,7 @@ function ThreadPost({ post, thread, replyCount, canReport, canDelete, onReact, o
             )}
           </div>
         </div>
-        {(canReport || canDelete) && (
+        {(canReport || canDelete || canEdit) && (
           <div className="-mr-1.5 -mt-1.5 flex shrink-0 items-center gap-0.5">
             {canReport && (
               <button
@@ -390,6 +435,15 @@ function ThreadPost({ post, thread, replyCount, canReport, canDelete, onReact, o
                 className="rounded-lg p-2 text-fg-subtle transition-colors hover:bg-surface-2 hover:text-warning"
               >
                 <Flag size={16} />
+              </button>
+            )}
+            {canEdit && (
+              <button
+                onClick={() => setEditing(true)}
+                aria-label="Edit post"
+                className="rounded-lg p-2 text-fg-subtle transition-colors hover:bg-surface-2 hover:text-accent"
+              >
+                <Pencil size={16} />
               </button>
             )}
             {canDelete && (
@@ -405,13 +459,27 @@ function ThreadPost({ post, thread, replyCount, canReport, canDelete, onReact, o
         )}
       </div>
 
-      {/* Title + body, both inside the post card. */}
+      {/* Title + body, both inside the post card. Editing swaps the rendered body for the
+          composer; the title is not editable (backend accepts content only). */}
       <h1 className="mt-4 break-words font-display text-2xl font-bold leading-tight tracking-tight text-balance text-fg sm:text-3xl">
         {thread.title}
       </h1>
-      <MarkdownContent content={post.content} className="prose-content mt-3" />
+      {editing ? (
+        <div className="mt-3">
+          <ReplyBox
+            initialValue={post.content}
+            submitLabel="Save changes"
+            loading={editPending}
+            autoFocus
+            onCancel={() => setEditing(false)}
+            onSubmit={(content) => { onEdit(content); setEditing(false); }}
+          />
+        </div>
+      ) : (
+        <MarkdownContent content={post.content} className="prose-content mt-3" />
+      )}
 
-      {post.attachments.length > 0 && (
+      {!editing && post.attachments.length > 0 && (
         <div className="mt-4 flex flex-wrap gap-2">
           {post.attachments.map((url) => (
             <a key={url} href={resolveMediaUrl(url) ?? ""} target="_blank" rel="noopener noreferrer">
@@ -478,12 +546,15 @@ function ThreadPostSkeleton() {
   );
 }
 
-function ReplyBox({ label, placeholder, loading, onSubmit, autoFocus }: {
+function ReplyBox({ label, placeholder, loading, onSubmit, onCancel, autoFocus, initialValue, submitLabel }: {
   label?: string; placeholder?: string; loading: boolean;
-  onSubmit: (content: string, attachments: string[]) => void; autoFocus?: boolean;
+  onSubmit: (content: string, attachments: string[]) => void;
+  /** Shows a Cancel button — set when the box doubles as an editor for an existing post. */
+  onCancel?: () => void;
+  autoFocus?: boolean; initialValue?: string; submitLabel?: string;
 }) {
   const { toast } = useToast();
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState(initialValue ?? "");
   const [preview, setPreview] = useState(false);
   const [uploading, setUploading] = useState(false);
   const taRef = useRef<HTMLTextAreaElement | null>(null);
@@ -546,21 +617,27 @@ function ReplyBox({ label, placeholder, loading, onSubmit, autoFocus }: {
             {preview ? <><Pencil size={14} /> Edit</> : <><Eye size={14} /> Preview</>}
           </button>
         </div>
-        <Button size="sm" onClick={submit} loading={loading} disabled={uploading || !value.trim()}>Reply</Button>
+        <div className="flex gap-2">
+          <Button size="sm" onClick={submit} loading={loading} disabled={uploading || !value.trim()}>{submitLabel ?? "Reply"}</Button>
+          {onCancel && <Button size="sm" variant="secondary" onClick={onCancel}>Cancel</Button>}
+        </div>
       </div>
     </div>
   );
 }
 
-function PostNodeView({ node, level = 0, replyingToName, canReply, showReport, currentUserId, onReact, onReport, onReply, onDelete, replying }: {
+function PostNodeView({ node, level = 0, replyingToName, canReply, showReport, currentUserId, onReact, onReport, onReply, onDelete, onEdit, replying, editSaving }: {
   node: PostNode; level?: number; replyingToName?: string; canReply: boolean; showReport: boolean; currentUserId?: string;
   onReact: (postId: string, type: "like" | "dislike") => void;
   onReport: (postId: string) => void;
   onReply: (content: string, parentPostId: string, attachments: string[]) => void;
   onDelete: (postId: string) => void;
+  onEdit: (postId: string, content: string) => void;
   replying: boolean;
+  editSaving: boolean;
 }) {
   const [replyOpen, setReplyOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const canDelete = !!currentUserId && node.authorId === currentUserId;
   // Past the indent cap, deeper replies render flush instead of nesting further (see forum-tree).
   const indent = indentsChildren(level);
@@ -585,16 +662,31 @@ function PostNodeView({ node, level = 0, replyingToName, canReply, showReport, c
                 </span>
               )}
             </div>
-            <MarkdownContent content={node.content} className="prose-content mt-2 text-sm" />
-
-            {node.attachments.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {node.attachments.map((url) => (
-                  <a key={url} href={resolveMediaUrl(url) ?? ""} target="_blank" rel="noopener noreferrer">
-                    <img src={resolveMediaUrl(url) ?? ""} alt="" className="max-h-48 rounded-lg border border-border object-cover" />
-                  </a>
-                ))}
+            {editOpen ? (
+              <div className="mt-2">
+                <ReplyBox
+                  initialValue={node.content}
+                  submitLabel="Save"
+                  loading={editSaving}
+                  autoFocus
+                  onCancel={() => setEditOpen(false)}
+                  onSubmit={(content) => { onEdit(node.id, content); setEditOpen(false); }}
+                />
               </div>
+            ) : (
+              <>
+                <MarkdownContent content={node.content} className="prose-content mt-2 text-sm" />
+
+                {node.attachments.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {node.attachments.map((url) => (
+                      <a key={url} href={resolveMediaUrl(url) ?? ""} target="_blank" rel="noopener noreferrer">
+                        <img src={resolveMediaUrl(url) ?? ""} alt="" className="max-h-48 rounded-lg border border-border object-cover" />
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
 
             <div className="mt-3 flex items-center gap-1">
@@ -616,6 +708,12 @@ function PostNodeView({ node, level = 0, replyingToName, canReply, showReport, c
                 <button onClick={() => onReport(node.id)}
                   className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-fg-subtle transition-colors hover:bg-surface-2 hover:text-warning">
                   <Flag size={14} /> Report
+                </button>
+              )}
+              {canDelete && (
+                <button onClick={() => setEditOpen((v) => !v)}
+                  className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-fg-subtle transition-colors hover:bg-surface-2 hover:text-accent">
+                  <Pencil size={14} /> Edit
                 </button>
               )}
               {canDelete && (
@@ -657,7 +755,9 @@ function PostNodeView({ node, level = 0, replyingToName, canReply, showReport, c
               onReport={onReport}
               onReply={onReply}
               onDelete={onDelete}
+              onEdit={onEdit}
               replying={replying}
+              editSaving={editSaving}
             />
           ))}
         </div>

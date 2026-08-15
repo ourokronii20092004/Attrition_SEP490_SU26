@@ -537,8 +537,10 @@ public class ForumService : IForumService
     {
         var (threads, total) = await _threadRepo.GetPagedAsync(page, pageSize, p => p.RootPostId == null,
             q => q.OrderByDescending(t => t.LastReplyAt));
+        // IsRemoved is included so the admin list can flag zombie threads — the public thread
+        // endpoint 404s on them, so without the flag they're unopenable and unexplained.
         var items = threads.Select(t => new AdminForumThreadDto(t.Id, t.Title ?? "Discussion", t.IsPinned, t.IsLocked,
-            t.ReplyCount, t.CreatedAt, t.LastReplyAt, t.AuthorName)).ToList();
+            t.ReplyCount, t.CreatedAt, t.LastReplyAt, t.AuthorName, t.Moderation.IsRemoved)).ToList();
         return new PaginatedResponse<AdminForumThreadDto>(items, total, page, pageSize);
     }
 

@@ -19,19 +19,22 @@ export const wikiApi = {
   getCategories: () =>
     apiFetch<ApiResponse<WikiCategoryDto[]>>("/api/wiki/categories", { auth: false }),
 
-  getArticles: (params?: { category?: string; search?: string; authorId?: string; page?: number; pageSize?: number }) => {
+  getArticles: (params?: { category?: string; search?: string; authorId?: string; page?: number; pageSize?: number; includeDrafts?: boolean }) => {
     const sp = new URLSearchParams();
     if (params?.category) sp.set("category", params.category);
     if (params?.search) sp.set("search", params.search);
     if (params?.authorId) sp.set("authorId", params.authorId);
     if (params?.page) sp.set("page", String(params.page));
     if (params?.pageSize) sp.set("pageSize", String(params.pageSize));
+    // Admin-only: the backend ignores includeDrafts for non-admin callers.
+    if (params?.includeDrafts) sp.set("includeDrafts", "true");
     const qs = sp.toString();
-    return apiFetch<ApiResponse<PaginatedResponse<WikiArticleListDto>>>(`/api/wiki/articles${qs ? `?${qs}` : ""}`, { auth: false });
+    return apiFetch<ApiResponse<PaginatedResponse<WikiArticleListDto>>>(`/api/wiki/articles${qs ? `?${qs}` : ""}`, { auth: !!params?.includeDrafts });
   },
 
+  // auth: true so an admin's session can refresh — drafts only resolve for recognized admins.
   getArticle: (slug: string) =>
-    apiFetch<ApiResponse<WikiArticleDto>>(`/api/wiki/articles/${encodeURIComponent(slug)}`, { auth: false }),
+    apiFetch<ApiResponse<WikiArticleDto>>(`/api/wiki/articles/${encodeURIComponent(slug)}`),
 
   // A user's total wiki contributions (authored articles + approved suggested edits).
   getUserContributionCount: (userId: string) =>
@@ -59,8 +62,9 @@ export const wikiApi = {
   deleteArticle: (id: string) =>
     apiFetch<ApiResponse<void>>(`/api/wiki/articles/${id}`, { method: "DELETE" }),
 
-  getContributions: () =>
-    apiFetch<ApiResponse<WikiContributionDto[]>>("/api/wiki/contributions"),
+  // status: Pending (default) | Approved | Rejected | all
+  getContributions: (status?: string) =>
+    apiFetch<ApiResponse<WikiContributionDto[]>>(`/api/wiki/contributions${status ? `?status=${encodeURIComponent(status)}` : ""}`),
 
   reviewContribution: (id: string, data: ReviewContributionRequest) =>
     apiFetch<ApiResponse<void>>(`/api/wiki/contributions/${id}/review`, { method: "POST", body: data }),

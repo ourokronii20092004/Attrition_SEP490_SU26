@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.0.3",
+    "channel": "Release",
+    "platform": "Windows 10 / 11 (64-bit)",
+    "sizeLabel": "90.0 MB",
+    "sha256": "6A9321CD6A71163AED33F37B4EEFA3F28C25EE94E5D0C43E1C14AD14484FAE86",
+    "archive": ".zip",
+    "executable": "Attrition_Game.exe",
+    "url": "/api/assets/media/builds/Attrition_Game_1.0.3.zip",
+    "released": "2026-08-14"
+  },
+  {
     "version": "1.0.2",
     "channel": "Release",
     "platform": "Windows 10 / 11 (64-bit)",

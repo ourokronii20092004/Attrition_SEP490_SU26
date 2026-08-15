@@ -42,6 +42,10 @@ export function ReportsQueue() {
     mutationFn: async (id: string) => { await forumApi.dismissReport(id); },
     onSuccess: invalidate,
   });
+  const resolveMutation = useMutation({
+    mutationFn: async (id: string) => { await forumApi.resolveReport(id); },
+    onSuccess: invalidate,
+  });
   const removePostMutation = useMutation({
     mutationFn: async ({ postId, reason }: { postId: string; reason: string }) => { await forumApi.removePost(postId, { reason }); },
     onSuccess: invalidate,
@@ -93,6 +97,9 @@ export function ReportsQueue() {
                   <Button size="sm" variant="danger"
                     loading={removePostMutation.isPending && removePostMutation.variables?.postId === r.postId}
                     onClick={() => removePostMutation.mutate({ postId: r.postId, reason: r.reason })}>Remove Post</Button>
+                  <Button size="sm" variant="secondary"
+                    loading={resolveMutation.isPending && resolveMutation.variables === r.id}
+                    onClick={() => resolveMutation.mutate(r.id)}>Resolve</Button>
                   <Button size="sm" variant="secondary"
                     loading={dismissMutation.isPending && dismissMutation.variables === r.id}
                     onClick={() => dismissMutation.mutate(r.id)}>Dismiss</Button>
