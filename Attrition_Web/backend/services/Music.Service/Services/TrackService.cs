@@ -90,9 +90,20 @@ public class TrackService : ITrackService
 
     public async Task<FeaturedTracksResponse> GetFeaturedTracksAsync()
     {
-        var lastMonth = DateTime.UtcNow.AddDays(-30);
-        var (featured, _) = await _repository.Tracks.GetPagedAsync(1, 10, t => t.CreatedAt >= lastMonth,
+        // Admin-flagged tracks lead; fill the remainder with the most played of the last 30 days,
+        // then all-time most played — never repeating a track already picked.
+        var (featured, _) = await _repository.Tracks.GetPagedAsync(1, 10, t => t.IsFeatured,
             q => q.OrderByDescending(t => t.PlayCount));
+
+        if (featured.Count < 10)
+        {
+            var lastMonth = DateTime.UtcNow.AddDays(-30);
+            var excluded = featured.Select(t => t.TrackId).ToList();
+            var (recent, _) = await _repository.Tracks.GetPagedAsync(1, 10 - featured.Count,
+                t => !excluded.Contains(t.TrackId) && t.CreatedAt >= lastMonth,
+                q => q.OrderByDescending(t => t.PlayCount));
+            featured.AddRange(recent);
+        }
 
         if (featured.Count < 10)
         {
@@ -102,7 +113,8 @@ public class TrackService : ITrackService
             featured.AddRange(fallback);
         }
 
-        var sorted = featured.OrderByDescending(t => t.PlayCount).ToList();
+        // Admin-flagged tracks lead; within each group, most played first.
+        var sorted = featured.OrderByDescending(t => t.IsFeatured).ThenByDescending(t => t.PlayCount).ToList();
         var albumMap = await LoadAlbumsAsync(sorted.Select(t => t.AlbumId));
         var featuredDtos = sorted.Select(t =>
         {

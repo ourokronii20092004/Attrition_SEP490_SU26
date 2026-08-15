@@ -47,6 +47,8 @@ export function ThreadsAdmin() {
   const pinMutation = useMutation({ mutationFn: (id: string) => forumApi.pinThread(id), onSuccess: invalidate });
   const lockMutation = useMutation({ mutationFn: (id: string) => forumApi.lockThread(id), onSuccess: invalidate });
   const removeMutation = useMutation({ mutationFn: (id: string) => forumApi.deleteThread(id), onSuccess: invalidate });
+  // A removed thread's root post is still a post, so restore goes through the post-restore endpoint.
+  const restoreMutation = useMutation({ mutationFn: (id: string) => forumApi.restorePost(id), onSuccess: invalidate });
 
   const remove = async (id: string) => {
     if (!(await confirm({ message: "Delete this thread and all its posts?", danger: true, confirmLabel: "Delete" }))) return;
@@ -71,6 +73,7 @@ export function ThreadsAdmin() {
   const filtered = threads.filter((t) => {
     if (statusFilter === "pinned" && !t.isPinned) return false;
     if (statusFilter === "locked" && !t.isLocked) return false;
+    if (statusFilter === "removed" && !t.isRemoved) return false;
     if (search && !t.title.toLowerCase().includes(search) && !(t.authorName ?? "").toLowerCase().includes(search)) return false;
     return true;
   });
@@ -101,7 +104,7 @@ export function ThreadsAdmin() {
         filters={[
           {
             value: statusFilter, onChange: setStatusFilter, ariaLabel: "Filter by status",
-            options: [{ value: "all", label: "All threads" }, { value: "pinned", label: "Pinned" }, { value: "locked", label: "Locked" }],
+            options: [{ value: "all", label: "All threads" }, { value: "pinned", label: "Pinned" }, { value: "locked", label: "Locked" }, { value: "removed", label: "Removed" }],
           },
         ]}
       />
@@ -129,22 +132,31 @@ export function ThreadsAdmin() {
         {sorted.map((t) => (
           <AdminRow
             key={t.id}
-            onClick={() => router.push(`/admin/forum/threads/${t.id}`)}
+            // Removed threads 404 on the detail page (the public thread endpoint hides them),
+            // so don't navigate — Restore in the actions column is the way back.
+            onClick={() => { if (!t.isRemoved) router.push(`/admin/forum/threads/${t.id}`); }}
             selected={selected.has(t.id)}
           >
             <AdminSelectCell id={t.id} selection={selection} />
             <td className="px-3 py-2">
+              {t.isRemoved && <span className="mr-1 text-xs font-medium text-danger">[Removed]</span>}
               {t.isPinned && <span className="mr-1 text-xs font-medium text-accent">[Pinned]</span>}
               {t.isLocked && <span className="mr-1 text-xs font-medium text-warning">[Locked]</span>}
-              <span className="font-medium text-fg">{t.title}</span>
+              <span className={`font-medium ${t.isRemoved ? "text-fg-muted line-through decoration-fg-subtle" : "text-fg"}`}>{t.title}</span>
             </td>
             <td className="px-3 py-2 text-fg-muted">{t.authorName ?? "Unknown"}</td>
             <td className="px-3 py-2 text-right tabular-nums text-fg-muted">{t.replyCount}</td>
             <td className="px-3 py-2 text-fg-muted">{formatDate(t.lastReplyAt)}</td>
             <td className="px-3 py-2 text-right">
               <div className="flex justify-end gap-2">
-                <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); pinMutation.mutate(t.id); }}>{t.isPinned ? "Unpin" : "Pin"}</Button>
-                <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); lockMutation.mutate(t.id); }}>{t.isLocked ? "Unlock" : "Lock"}</Button>
+                {t.isRemoved ? (
+                  <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); restoreMutation.mutate(t.id); }}>Restore</Button>
+                ) : (
+                  <>
+                    <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); pinMutation.mutate(t.id); }}>{t.isPinned ? "Unpin" : "Pin"}</Button>
+                    <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); lockMutation.mutate(t.id); }}>{t.isLocked ? "Unlock" : "Lock"}</Button>
+                  </>
+                )}
                 <Button size="sm" variant="danger" onClick={(e) => { e.stopPropagation(); remove(t.id); }}>Delete</Button>
               </div>
             </td>

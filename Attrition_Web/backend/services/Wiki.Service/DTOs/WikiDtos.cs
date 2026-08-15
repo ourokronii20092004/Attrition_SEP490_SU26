@@ -2,7 +2,7 @@ namespace Wiki.Service.DTOs;
 
 public record WikiCategoryDto(int Id, string Name, string Slug, string Description, string? IconUrl, int ArticleCount);
 
-public record WikiArticleListDto(Guid Id, string Title, string Slug, string CategorySlug, Guid? AuthorId, string? AuthorName, DateTime UpdatedAt);
+public record WikiArticleListDto(Guid Id, string Title, string Slug, string CategorySlug, Guid? AuthorId, string? AuthorName, DateTime UpdatedAt, string Status);
 
 public record WikiArticleDto(
     Guid Id, string Title, string Slug, string CategorySlug, string Content,

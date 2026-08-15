@@ -32,11 +32,13 @@ export function ContributionQueue() {
   const search = useDebouncedValue(searchInput.trim().toLowerCase(), 200);
 
   const { data: items = [], isPending: loading } = useQuery({
-    queryKey: qk.admin.wiki.contributions(),
+    queryKey: [...qk.admin.wiki.contributions(), statusFilter],
     // Contributions arrive while moderators work through the queue.
     refetchInterval: liveWhenFocused(LIVE_NORMAL),
     queryFn: async () => {
-      const res = await wikiApi.getContributions();
+      // Server-side status filter — the backend defaults to Pending, so without this the
+      // Approved/Rejected/All views would always come back empty.
+      const res = await wikiApi.getContributions(statusFilter);
       return res.success ? res.data : [];
     },
   });

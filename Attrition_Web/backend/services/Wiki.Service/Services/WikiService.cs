@@ -41,7 +41,7 @@ public class WikiService : IWikiService
     /// own scoped invalidator rather than widening this back to a blanket wiki:* wipe.</summary>
     private Task InvalidateAsync() => _cache.RemoveAsync("categories");
 
-    public async Task<PaginatedResponse<WikiArticleListDto>> GetArticlesAsync(string? categorySlug, string? search, int page, int pageSize, Guid? authorId = null)
+    public async Task<PaginatedResponse<WikiArticleListDto>> GetArticlesAsync(string? categorySlug, string? search, int page, int pageSize, Guid? authorId = null, bool includeUnpublished = false)
     {
         int? categoryId = null;
 
@@ -54,9 +54,10 @@ public class WikiService : IWikiService
         }
 
         var search_ = search?.ToLower();
-        // Published only; layer on the optional category, search, and author filters.
+        // Published only for public callers; admins may pass includeUnpublished to also see drafts.
+        // Layer on the optional category, search, and author filters.
         Expression<Func<WikiArticle, bool>> filter = a =>
-            a.Status == ArticleStatus.Published &&
+            (includeUnpublished || a.Status == ArticleStatus.Published) &&
             (categoryId == null || a.CategoryId == categoryId.Value) &&
             (search_ == null || a.Title.ToLower().Contains(search_)) &&
             (authorId == null || a.CreatedById == authorId.Value);
@@ -69,7 +70,7 @@ public class WikiService : IWikiService
         {
             var category = await _wikiRepo.GetCategoryByIdAsync(a.CategoryId);
             dtos.Add(new WikiArticleListDto(a.Id, a.Title, a.Slug, category?.Slug ?? string.Empty,
-                a.CreatedById, a.CreatedByName, a.UpdatedAt));
+                a.CreatedById, a.CreatedByName, a.UpdatedAt, a.Status));
         }
         return new PaginatedResponse<WikiArticleListDto>(dtos, total, page, pageSize);
     }
@@ -235,8 +236,10 @@ public class WikiService : IWikiService
 
     public async Task<List<WikiContributionDto>> GetContributionsAsync(string status)
     {
+        // "all" returns every contribution regardless of review state (admin queue filter);
+        // anything else is an exact status match.
         var contributions = await _wikiRepo.Contributions.ListAsync(
-            c => c.Status == status, q => q.OrderByDescending(c => c.SubmittedAt));
+            status == "all" ? null : c => c.Status == status, q => q.OrderByDescending(c => c.SubmittedAt));
 
         var articleIds = contributions.Select(c => c.ArticleId).Distinct().ToList();
         var articles = (await _wikiRepo.ListAsync(a => articleIds.Contains(a.Id)))

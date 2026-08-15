@@ -25,6 +25,7 @@ export function ArticlesAdmin() {
   const [formDirty, setFormDirty] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [sort, setSort] = useState<SortState>({ key: "updated", dir: "desc" });
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const search = useDebouncedValue(searchInput.trim().toLowerCase(), 200);
@@ -32,7 +33,8 @@ export function ArticlesAdmin() {
   const { data: articles = [], isPending: articlesLoading } = useQuery({
     queryKey: qk.admin.wiki.articles(),
     queryFn: async () => {
-      const res = await wikiApi.getArticles({ pageSize: 100 });
+      // includeDrafts so drafts are visible here — they can't be published/edited/deleted otherwise.
+      const res = await wikiApi.getArticles({ pageSize: 100, includeDrafts: true });
       return res.success ? res.data.items : [];
     },
   });
@@ -49,6 +51,11 @@ export function ArticlesAdmin() {
 
   const removeMutation = useMutation({
     mutationFn: async (id: string) => { await wikiApi.deleteArticle(id); },
+    onSuccess: invalidate,
+  });
+
+  const setStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => { await wikiApi.updateArticle(id, { status }); },
     onSuccess: invalidate,
   });
 
@@ -74,6 +81,7 @@ export function ArticlesAdmin() {
 
   const filtered = articles.filter((a) => {
     if (categoryFilter !== "all" && a.categorySlug !== categoryFilter) return false;
+    if (statusFilter !== "all" && a.status !== statusFilter) return false;
     if (search && !a.title.toLowerCase().includes(search)) return false;
     return true;
   });
@@ -105,6 +113,10 @@ export function ArticlesAdmin() {
           {
             value: categoryFilter, onChange: setCategoryFilter, ariaLabel: "Filter by category",
             options: [{ value: "all", label: "All categories" }, ...categories.map((c) => ({ value: c.slug, label: c.name }))],
+          },
+          {
+            value: statusFilter, onChange: setStatusFilter, ariaLabel: "Filter by status",
+            options: [{ value: "all", label: "All statuses" }, { value: "Published", label: "Published" }, { value: "Draft", label: "Draft" }],
           },
         ]}
       />
@@ -145,11 +157,17 @@ export function ArticlesAdmin() {
         {paged.map((a) => (
           <AdminRow key={a.id} onClick={() => setEditing(a)} selected={selected.has(a.id)}>
             <AdminSelectCell id={a.id} selection={selection} />
-            <td className="px-3 py-2 font-medium text-fg">{a.title}</td>
+            <td className="px-3 py-2">
+              {a.status === "Draft" && <span className="mr-1 text-xs font-medium text-warning">[Draft]</span>}
+              <span className="font-medium text-fg">{a.title}</span>
+            </td>
             <td className="px-3 py-2 text-fg-muted">{a.categorySlug}</td>
             <td className="px-3 py-2 text-fg-muted">{formatDate(a.updatedAt)}</td>
             <td className="px-3 py-2 text-right">
               <div className="flex justify-end gap-2">
+                <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); setStatusMutation.mutate({ id: a.id, status: a.status === "Draft" ? "Published" : "Draft" }); }}>
+                  {a.status === "Draft" ? "Publish" : "Unpublish"}
+                </Button>
                 <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); setEditing(a); }}>Edit</Button>
                 <Button size="sm" variant="danger" onClick={(e) => { e.stopPropagation(); remove(a.id); }}>Delete</Button>
               </div>

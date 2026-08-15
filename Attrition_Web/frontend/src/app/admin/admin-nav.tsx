@@ -35,6 +35,7 @@ const NAV_GROUPS: NavGroup[] = [
       ] },
       { href: "/admin/forum", label: "Forum", icon: MessagesSquare, children: [
         { href: "/admin/forum/threads", label: "Threads" },
+        { href: "/admin/forum/posts", label: "Removed Posts" },
         { href: "/admin/forum/categories", label: "Categories" },
       ] },
     ],

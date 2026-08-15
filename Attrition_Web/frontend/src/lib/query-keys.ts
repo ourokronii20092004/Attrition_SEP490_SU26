@@ -48,6 +48,7 @@ export const qk = {
     albums: (page?: number) =>
       page === undefined ? (["music", "albums"] as const) : (["music", "albums", page] as const),
     album: (id: string) => ["album", id] as const,
+    featured: () => ["music", "featured"] as const,
     favorites: () => ["music", "favorites"] as const,
     playlists: () => ["music", "playlists"] as const,
     playlist: (id: string) => ["music", "playlist", id] as const,
@@ -107,6 +108,8 @@ export const qk = {
         filter === undefined ? (["admin", "forum", "reports"] as const) : (["admin", "forum", "reports", filter] as const),
       threads: (page?: number) =>
         page === undefined ? (["admin", "forum", "threads"] as const) : (["admin", "forum", "threads", page] as const),
+      posts: (page?: number) =>
+        page === undefined ? (["admin", "forum", "posts"] as const) : (["admin", "forum", "posts", page] as const),
     },
     wiki: {
       articles: () => ["admin", "wiki", "articles"] as const,
